@@ -57,6 +57,12 @@ const Index = () => {
     setChildren(prev => [...prev, newChild]);
   };
 
+  const handleUpdateChild = (childId: string, updatedData: Omit<Child, "id">) => {
+    setChildren(prev => prev.map(child => 
+      child.id === childId ? { ...updatedData, id: childId } : child
+    ));
+  };
+
   const handleDeleteChild = (childId: string) => {
     setChildren(prev => prev.filter(child => child.id !== childId));
   };
@@ -79,17 +85,17 @@ const Index = () => {
             </Button>
             <Button
               variant="ghost"
-              onClick={() => setCurrentView("profiles")}
-              className="text-primary-foreground hover:bg-primary-foreground/10"
-            >
-              Profils
-            </Button>
-            <Button
-              variant="ghost"
               onClick={() => setCurrentView("library")}
               className="text-primary-foreground hover:bg-primary-foreground/10"
             >
               Bibliothèque
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setCurrentView("profiles")}
+              className="text-primary-foreground hover:bg-primary-foreground/10"
+            >
+              Enfants
             </Button>
           </nav>
         </div>
@@ -116,7 +122,7 @@ const Index = () => {
                 onClick={() => setCurrentView("profiles")}
                 className="border-primary text-primary hover:bg-primary/10 px-8 py-6 text-lg"
               >
-                Gérer les profils
+                Gérer les enfants
               </Button>
             </div>
           </div>
@@ -132,6 +138,7 @@ const Index = () => {
           <ChildrenProfiles
             children={children}
             onAddChild={handleAddChild}
+            onUpdateChild={handleUpdateChild}
             onDeleteChild={handleDeleteChild}
           />
         )}
