@@ -5,11 +5,12 @@ import StoryLibrary from "@/components/StoryLibrary";
 import ChildrenProfiles from "@/components/ChildrenProfiles";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, Users, Home, Library, User, Menu } from "lucide-react";
+import { BookOpen, Users, Home, Library, Settings } from "lucide-react";
+import MobileMenu from "@/components/MobileMenu";
 import type { Child } from "@/types/child";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<"home" | "create" | "library" | "reader" | "profiles">("home");
+  const [currentView, setCurrentView] = useState<"home" | "create" | "library" | "reader" | "profiles" | "settings">("home");
   const [currentStory, setCurrentStory] = useState<string>("");
   const [stories, setStories] = useState([
     {
@@ -108,19 +109,26 @@ const Index = () => {
                 currentView === "profiles" ? "text-secondary border-b-2 border-secondary" : "text-muted-foreground"
               }`}
             >
-              <User className="h-5 w-5" />
+              <Users className="h-5 w-5" />
               Enfants
             </Button>
           </nav>
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-6 w-6" />
-          </Button>
+          <MobileMenu currentView={currentView} onViewChange={setCurrentView} />
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto p-6 pt-24">
         {currentView === "home" && (
-          <div className="text-center space-y-8 animate-fade-in">
+          <div className="text-center space-y-8 animate-fade-in relative">
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-20 left-10 opacity-10">
+                <div className="w-20 h-20 rounded-full bg-primary animate-pulse"></div>
+              </div>
+              <div className="absolute top-40 right-10 opacity-10">
+                <div className="w-16 h-16 rounded-full bg-accent animate-pulse delay-300"></div>
+              </div>
+            </div>
+            
             <h2 className="text-4xl font-bold mb-4 text-secondary">
               Bienvenue sur Calmi
             </h2>
@@ -130,14 +138,14 @@ const Index = () => {
             <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
               <Button
                 onClick={() => setCurrentView("create")}
-                className="bg-accent hover:bg-accent/90 text-accent-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg transition-all hover:shadow-xl"
               >
                 <BookOpen className="h-5 w-5 mr-2" />
                 Créer une histoire
               </Button>
               <Button
                 onClick={() => setCurrentView("profiles")}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg transition-all hover:shadow-xl"
               >
                 <Users className="h-5 w-5 mr-2" />
                 Gérer les enfants
@@ -149,6 +157,15 @@ const Index = () => {
         {currentView === "create" && (
           <div className="max-w-md mx-auto">
             <StoryForm onSubmit={handleCreateStory} children={children} />
+            {children.length === 0 && (
+              <Button
+                onClick={() => setCurrentView("profiles")}
+                className="w-full mt-4 bg-primary hover:bg-primary/90"
+              >
+                <Users className="h-5 w-5 mr-2" />
+                Créer un profil enfant
+              </Button>
+            )}
           </div>
         )}
 
@@ -177,6 +194,15 @@ const Index = () => {
             story={currentStory}
             onClose={() => setCurrentView("library")}
           />
+        )}
+
+        {currentView === "settings" && (
+          <div className="text-center mt-8">
+            <h2 className="text-2xl font-semibold text-secondary">Paramètres</h2>
+            <p className="text-muted-foreground mt-4">
+              Cette section est en cours de développement.
+            </p>
+          </div>
         )}
       </main>
     </div>

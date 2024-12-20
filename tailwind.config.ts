@@ -47,6 +47,20 @@ export default {
       backgroundImage: {
         'gradient-serene': 'linear-gradient(135deg, #A8DADC 0%, #D6CDEA 100%)',
       },
+      animation: {
+        'slide-down': 'slideDown 0.2s ease-out',
+        'slide-up': 'slideUp 0.2s ease-out',
+      },
+      keyframes: {
+        slideDown: {
+          '0%': { transform: 'translateY(-100%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(0)', opacity: '1' },
+          '100%': { transform: 'translateY(-100%)', opacity: '0' },
+        },
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],
