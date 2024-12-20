@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import StoryForm, { StoryFormData } from "@/components/StoryForm";
 import StoryReader from "@/components/StoryReader";
 import StoryLibrary from "@/components/StoryLibrary";
+import ChildrenProfiles from "@/components/ChildrenProfiles";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import type { Child } from "@/types/child";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<"home" | "create" | "library" | "reader">("home");
+  const [currentView, setCurrentView] = useState<"home" | "create" | "library" | "reader" | "profiles">("home");
   const [currentStory, setCurrentStory] = useState<string>("");
   const [stories, setStories] = useState([
     {
@@ -17,13 +19,19 @@ const Index = () => {
       objective: "sleep",
     },
   ]);
+  const [children, setChildren] = useState<Child[]>([]);
   const { toast } = useToast();
 
   const handleCreateStory = async (formData: StoryFormData) => {
     try {
+      const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
+      const childrenNames = selectedChildren.map(child => child.name).join(" et ");
+      
       // TODO: Implement OpenAI integration
-      const mockStory = `Il était une fois un enfant nommé ${formData.childName} qui aimait beaucoup les ${
-        formData.theme === "animals" ? "animaux" : formData.theme === "magic" ? "tours de magie" : "aventures"
+      const mockStory = `Il était une fois ${childrenNames} qui ${
+        formData.objective === "sleep" ? "se préparaient pour dormir" : 
+        formData.objective === "relax" ? "voulaient se détendre" : 
+        "cherchaient à se concentrer"
       }...`;
       
       setCurrentStory(mockStory);
@@ -41,6 +49,18 @@ const Index = () => {
     setStories((prevStories) => prevStories.filter((story) => story.id !== storyId));
   };
 
+  const handleAddChild = (childData: Omit<Child, "id">) => {
+    const newChild: Child = {
+      ...childData,
+      id: Math.random().toString(36).substr(2, 9),
+    };
+    setChildren(prev => [...prev, newChild]);
+  };
+
+  const handleDeleteChild = (childId: string) => {
+    setChildren(prev => prev.filter(child => child.id !== childId));
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary p-4 shadow-md">
@@ -56,6 +76,13 @@ const Index = () => {
               className="text-primary-foreground hover:bg-primary-foreground/10"
             >
               Accueil
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setCurrentView("profiles")}
+              className="text-primary-foreground hover:bg-primary-foreground/10"
+            >
+              Profils
             </Button>
             <Button
               variant="ghost"
@@ -86,10 +113,10 @@ const Index = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setCurrentView("library")}
+                onClick={() => setCurrentView("profiles")}
                 className="border-primary text-primary hover:bg-primary/10 px-8 py-6 text-lg"
               >
-                Voir la bibliothèque
+                Gérer les profils
               </Button>
             </div>
           </div>
@@ -97,8 +124,16 @@ const Index = () => {
 
         {currentView === "create" && (
           <div className="max-w-md mx-auto">
-            <StoryForm onSubmit={handleCreateStory} />
+            <StoryForm onSubmit={handleCreateStory} children={children} />
           </div>
+        )}
+
+        {currentView === "profiles" && (
+          <ChildrenProfiles
+            children={children}
+            onAddChild={handleAddChild}
+            onDeleteChild={handleDeleteChild}
+          />
         )}
 
         {currentView === "library" && (
