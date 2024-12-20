@@ -5,6 +5,7 @@ import StoryLibrary from "@/components/StoryLibrary";
 import ChildrenProfiles from "@/components/ChildrenProfiles";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { BookOpen, Users, Home, Library, User, Menu } from "lucide-react";
 import type { Child } from "@/types/child";
 
 const Index = () => {
@@ -68,60 +69,77 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-primary p-4 shadow-md">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <img src="/lovable-uploads/08b9555a-5430-4317-9aa0-2652884e8414.png" alt="Calmi Logo" className="h-12 w-auto" />
-            <span className="text-xl font-semibold text-primary-foreground">Calmi</span>
+    <div className="min-h-screen bg-gradient-serene">
+      <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm shadow-sm z-50">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <img 
+              src="/lovable-uploads/08b9555a-5430-4317-9aa0-2652884e8414.png" 
+              alt="Calmi Logo" 
+              className="h-8 w-auto"
+            />
+            <span className="text-xl font-semibold text-secondary">Calmi</span>
           </div>
-          <nav className="space-x-4">
+          <nav className="hidden md:flex items-center space-x-1">
             <Button
               variant="ghost"
               onClick={() => setCurrentView("home")}
-              className="text-primary-foreground hover:bg-primary-foreground/10"
+              className={`flex items-center gap-2 min-h-[48px] ${
+                currentView === "home" ? "text-secondary border-b-2 border-secondary" : "text-muted-foreground"
+              }`}
             >
+              <Home className="h-5 w-5" />
               Accueil
             </Button>
             <Button
               variant="ghost"
               onClick={() => setCurrentView("library")}
-              className="text-primary-foreground hover:bg-primary-foreground/10"
+              className={`flex items-center gap-2 min-h-[48px] ${
+                currentView === "library" ? "text-secondary border-b-2 border-secondary" : "text-muted-foreground"
+              }`}
             >
+              <Library className="h-5 w-5" />
               Bibliothèque
             </Button>
             <Button
               variant="ghost"
               onClick={() => setCurrentView("profiles")}
-              className="text-primary-foreground hover:bg-primary-foreground/10"
+              className={`flex items-center gap-2 min-h-[48px] ${
+                currentView === "profiles" ? "text-secondary border-b-2 border-secondary" : "text-muted-foreground"
+              }`}
             >
+              <User className="h-5 w-5" />
               Enfants
             </Button>
           </nav>
+          <Button variant="ghost" size="icon" className="md:hidden">
+            <Menu className="h-6 w-6" />
+          </Button>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-6">
+      <main className="max-w-7xl mx-auto p-6 pt-24">
         {currentView === "home" && (
           <div className="text-center space-y-8 animate-fade-in">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4 text-secondary">
               Bienvenue sur Calmi
             </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
               Créez des histoires personnalisées pour le bien-être de vos enfants
             </p>
-            <div className="space-x-4">
+            <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
               <Button
                 onClick={() => setCurrentView("create")}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg"
               >
+                <BookOpen className="h-5 w-5 mr-2" />
                 Créer une histoire
               </Button>
               <Button
-                variant="outline"
                 onClick={() => setCurrentView("profiles")}
-                className="border-primary text-primary hover:bg-primary/10 px-8 py-6 text-lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg"
               >
+                <Users className="h-5 w-5 mr-2" />
                 Gérer les enfants
               </Button>
             </div>
