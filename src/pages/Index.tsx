@@ -43,7 +43,7 @@ const Index = () => {
       <header className="bg-primary p-4 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <img src="/calmi-logo.png" alt="Calmi Logo" className="h-12 w-auto" />
+            <img src="/lovable-uploads/08b9555a-5430-4317-9aa0-2652884e8414.png" alt="Calmi Logo" className="h-12 w-auto" />
           </div>
           <nav className="space-x-4">
             <Button
