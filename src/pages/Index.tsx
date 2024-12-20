@@ -36,14 +36,15 @@ const Index = () => {
       theme: "magic",
       objective: "sleep",
     },
-    // Add more mock stories here
   ];
 
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary p-4 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary-foreground">Calmi</h1>
+          <div className="flex items-center gap-2">
+            <img src="/calmi-logo.png" alt="Calmi Logo" className="h-12 w-auto" />
+          </div>
           <nav className="space-x-4">
             <Button
               variant="ghost"
