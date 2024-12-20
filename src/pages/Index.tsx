@@ -40,23 +40,24 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-primary p-4 shadow-sm">
+      <header className="bg-primary p-4 shadow-md">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <img src="/lovable-uploads/08b9555a-5430-4317-9aa0-2652884e8414.png" alt="Calmi Logo" className="h-12 w-auto" />
+            <span className="text-xl font-semibold text-primary-foreground">Calmi</span>
           </div>
           <nav className="space-x-4">
             <Button
               variant="ghost"
               onClick={() => setCurrentView("home")}
-              className="text-primary-foreground"
+              className="text-primary-foreground hover:bg-primary-foreground/10"
             >
               Accueil
             </Button>
             <Button
               variant="ghost"
               onClick={() => setCurrentView("library")}
-              className="text-primary-foreground"
+              className="text-primary-foreground hover:bg-primary-foreground/10"
             >
               Bibliothèque
             </Button>
@@ -64,23 +65,26 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-4">
+      <main className="max-w-7xl mx-auto p-6">
         {currentView === "home" && (
           <div className="text-center space-y-8 animate-fade-in">
-            <h2 className="text-4xl font-bold mb-4">Bienvenue sur Calmi</h2>
-            <p className="text-lg text-gray-600 mb-8">
+            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Bienvenue sur Calmi
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
               Créez des histoires personnalisées pour le bien-être de vos enfants
             </p>
             <div className="space-x-4">
               <Button
                 onClick={() => setCurrentView("create")}
-                className="bg-accent hover:bg-accent/90"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
               >
                 Créer une histoire
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setCurrentView("library")}
+                className="border-primary text-primary hover:bg-primary/10 px-8 py-6 text-lg"
               >
                 Voir la bibliothèque
               </Button>

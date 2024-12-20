@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 interface StoryFormProps {
@@ -39,26 +38,30 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit }) => {
     onSubmit(formData);
   };
 
+  const selectClass = "w-full p-2 border rounded-md bg-background hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
+    <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in bg-white p-8 rounded-lg shadow-lg">
+      <h2 className="text-2xl font-semibold text-center mb-6 text-primary">Créer une histoire</h2>
+      
       <div className="space-y-2">
-        <Label htmlFor="childName">Prénom de l'enfant</Label>
+        <Label htmlFor="childName" className="text-secondary">Prénom de l'enfant</Label>
         <Input
           id="childName"
           value={formData.childName}
           onChange={(e) => setFormData({ ...formData, childName: e.target.value })}
-          className="w-full"
+          className="w-full border-muted focus:border-primary"
           placeholder="Entrez le prénom"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="age">Âge</Label>
+        <Label htmlFor="age" className="text-secondary">Âge</Label>
         <select
           id="age"
           value={formData.age}
           onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) })}
-          className="w-full p-2 border rounded-md bg-background"
+          className={selectClass}
         >
           {Array.from({ length: 12 }, (_, i) => i + 1).map((age) => (
             <option key={age} value={age}>
@@ -69,12 +72,12 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit }) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="theme">Thème</Label>
+        <Label htmlFor="theme" className="text-secondary">Thème</Label>
         <select
           id="theme"
           value={formData.theme}
           onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
-          className="w-full p-2 border rounded-md bg-background"
+          className={selectClass}
         >
           <option value="animals">Animaux</option>
           <option value="magic">Magie</option>
@@ -83,12 +86,12 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit }) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="objective">Objectif</Label>
+        <Label htmlFor="objective" className="text-secondary">Objectif</Label>
         <select
           id="objective"
           value={formData.objective}
           onChange={(e) => setFormData({ ...formData, objective: e.target.value })}
-          className="w-full p-2 border rounded-md bg-background"
+          className={selectClass}
         >
           <option value="sleep">Endormissement</option>
           <option value="relax">Relaxation</option>
@@ -96,7 +99,7 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit }) => {
         </select>
       </div>
 
-      <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
+      <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white">
         Générer l'histoire
       </Button>
     </form>
