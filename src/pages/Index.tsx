@@ -8,6 +8,15 @@ import { useToast } from "@/hooks/use-toast";
 const Index = () => {
   const [currentView, setCurrentView] = useState<"home" | "create" | "library" | "reader">("home");
   const [currentStory, setCurrentStory] = useState<string>("");
+  const [stories, setStories] = useState([
+    {
+      id: "1",
+      title: "L'aventure magique",
+      preview: "Une histoire enchantée pour les petits rêveurs...",
+      theme: "magic",
+      objective: "sleep",
+    },
+  ]);
   const { toast } = useToast();
 
   const handleCreateStory = async (formData: StoryFormData) => {
@@ -28,15 +37,9 @@ const Index = () => {
     }
   };
 
-  const mockStories = [
-    {
-      id: "1",
-      title: "L'aventure magique",
-      preview: "Une histoire enchantée pour les petits rêveurs...",
-      theme: "magic",
-      objective: "sleep",
-    },
-  ];
+  const handleDeleteStory = (storyId: string) => {
+    setStories((prevStories) => prevStories.filter((story) => story.id !== storyId));
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,11 +103,12 @@ const Index = () => {
 
         {currentView === "library" && (
           <StoryLibrary
-            stories={mockStories}
+            stories={stories}
             onSelectStory={(story) => {
               setCurrentStory(story.preview);
               setCurrentView("reader");
             }}
+            onDeleteStory={handleDeleteStory}
           />
         )}
 
