@@ -1,0 +1,45 @@
+import React from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+interface Story {
+  id: string;
+  title: string;
+  preview: string;
+  theme: string;
+  objective: string;
+}
+
+interface StoryLibraryProps {
+  stories: Story[];
+  onSelectStory: (story: Story) => void;
+}
+
+const StoryLibrary: React.FC<StoryLibraryProps> = ({ stories, onSelectStory }) => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+      {stories.map((story) => (
+        <Card key={story.id} className="p-4 hover:shadow-lg transition-shadow animate-slide-in">
+          <h3 className="text-lg font-semibold mb-2">{story.title}</h3>
+          <p className="text-sm text-gray-600 mb-4">{story.preview}</p>
+          <div className="flex gap-2 mb-4">
+            <span className="text-xs bg-primary px-2 py-1 rounded-full">
+              {story.theme}
+            </span>
+            <span className="text-xs bg-secondary px-2 py-1 rounded-full">
+              {story.objective}
+            </span>
+          </div>
+          <Button
+            onClick={() => onSelectStory(story)}
+            className="w-full bg-accent hover:bg-accent/90"
+          >
+            Lire
+          </Button>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
+export default StoryLibrary;
