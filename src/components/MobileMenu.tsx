@@ -2,17 +2,16 @@ import React from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, Home, Library, Users, Settings } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+
+type ViewType = "home" | "library" | "profiles" | "settings" | "create" | "reader";
 
 interface MobileMenuProps {
-  currentView: string;
-  onViewChange: (view: string) => void;
+  currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) => {
-  const navigate = useNavigate();
-
-  const handleNavigation = (view: string) => {
+  const handleNavigation = (view: ViewType) => {
     onViewChange(view);
   };
 

@@ -9,8 +9,10 @@ import { BookOpen, Users, Home, Library, Settings } from "lucide-react";
 import MobileMenu from "@/components/MobileMenu";
 import type { Child } from "@/types/child";
 
+type ViewType = "home" | "create" | "library" | "reader" | "profiles" | "settings";
+
 const Index = () => {
-  const [currentView, setCurrentView] = useState<"home" | "create" | "library" | "reader" | "profiles" | "settings">("home");
+  const [currentView, setCurrentView] = useState<ViewType>("home");
   const [currentStory, setCurrentStory] = useState<string>("");
   const [stories, setStories] = useState([
     {
