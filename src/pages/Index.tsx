@@ -3,13 +3,11 @@ import StoryForm, { StoryFormData } from "@/components/StoryForm";
 import StoryReader from "@/components/StoryReader";
 import StoryLibrary from "@/components/StoryLibrary";
 import ChildrenProfiles from "@/components/ChildrenProfiles";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, Users, Home, Library, Settings } from "lucide-react";
 import MobileMenu from "@/components/MobileMenu";
+import HomeHero from "@/components/home/HomeHero";
 import type { Child } from "@/types/child";
-
-type ViewType = "home" | "create" | "library" | "reader" | "profiles" | "settings";
+import type { ViewType } from "@/types/views";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
@@ -71,6 +69,10 @@ const Index = () => {
     setChildren(prev => prev.filter(child => child.id !== childId));
   };
 
+  const handleCreateChildFromStory = () => {
+    setCurrentView("profiles");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-serene">
       <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm shadow-sm z-50">
@@ -83,91 +85,22 @@ const Index = () => {
             />
             <span className="text-xl font-semibold text-secondary">Calmi</span>
           </div>
-          <nav className="hidden md:flex items-center space-x-1">
-            <Button
-              variant="ghost"
-              onClick={() => setCurrentView("home")}
-              className={`flex items-center gap-2 min-h-[48px] ${
-                currentView === "home" ? "text-secondary border-b-2 border-secondary" : "text-muted-foreground"
-              }`}
-            >
-              <Home className="h-5 w-5" />
-              Accueil
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setCurrentView("library")}
-              className={`flex items-center gap-2 min-h-[48px] ${
-                currentView === "library" ? "text-secondary border-b-2 border-secondary" : "text-muted-foreground"
-              }`}
-            >
-              <Library className="h-5 w-5" />
-              Bibliothèque
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setCurrentView("profiles")}
-              className={`flex items-center gap-2 min-h-[48px] ${
-                currentView === "profiles" ? "text-secondary border-b-2 border-secondary" : "text-muted-foreground"
-              }`}
-            >
-              <Users className="h-5 w-5" />
-              Enfants
-            </Button>
-          </nav>
           <MobileMenu currentView={currentView} onViewChange={setCurrentView} />
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto p-6 pt-24">
         {currentView === "home" && (
-          <div className="text-center space-y-8 animate-fade-in relative">
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-20 left-10 opacity-10">
-                <div className="w-20 h-20 rounded-full bg-primary animate-pulse"></div>
-              </div>
-              <div className="absolute top-40 right-10 opacity-10">
-                <div className="w-16 h-16 rounded-full bg-accent animate-pulse delay-300"></div>
-              </div>
-            </div>
-            
-            <h2 className="text-4xl font-bold mb-4 text-secondary">
-              Bienvenue sur Calmi
-            </h2>
-            <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
-              Créez des histoires personnalisées pour le bien-être de vos enfants
-            </p>
-            <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-              <Button
-                onClick={() => setCurrentView("create")}
-                className="bg-accent hover:bg-accent/90 text-accent-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg transition-all hover:shadow-xl"
-              >
-                <BookOpen className="h-5 w-5 mr-2" />
-                Créer une histoire
-              </Button>
-              <Button
-                onClick={() => setCurrentView("profiles")}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg transition-all hover:shadow-xl"
-              >
-                <Users className="h-5 w-5 mr-2" />
-                Gérer les enfants
-              </Button>
-            </div>
-          </div>
+          <HomeHero onViewChange={setCurrentView} />
         )}
 
         {currentView === "create" && (
           <div className="max-w-md mx-auto">
-            <StoryForm onSubmit={handleCreateStory} children={children} />
-            {children.length === 0 && (
-              <Button
-                onClick={() => setCurrentView("profiles")}
-                className="w-full mt-4 bg-primary hover:bg-primary/90"
-              >
-                <Users className="h-5 w-5 mr-2" />
-                Créer un profil enfant
-              </Button>
-            )}
+            <StoryForm 
+              onSubmit={handleCreateStory} 
+              children={children} 
+              onCreateChild={handleCreateChildFromStory}
+            />
           </div>
         )}
 

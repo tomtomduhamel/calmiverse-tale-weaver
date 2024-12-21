@@ -1,0 +1,1 @@
+export type ViewType = "home" | "create" | "library" | "reader" | "profiles" | "settings";
