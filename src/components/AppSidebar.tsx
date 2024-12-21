@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Home, Library, Users, Settings } from "lucide-react";
+import { Home, Library, Users } from "lucide-react";
 
 type ViewType = "home" | "library" | "profiles" | "settings" | "create" | "reader";
 
@@ -23,17 +23,13 @@ const menuItems = [
   { icon: Home, title: "Accueil", view: "home" as ViewType },
   { icon: Library, title: "Bibliothèque", view: "library" as ViewType },
   { icon: Users, title: "Profils enfants", view: "profiles" as ViewType },
-  { icon: Settings, title: "Paramètres", view: "settings" as ViewType },
 ];
 
 export function AppSidebar({ currentView, onViewChange }: AppSidebarProps) {
-  const { state, setOpen, setOpenMobile } = useSidebar();
+  const { setOpen, setOpenMobile } = useSidebar();
 
   const handleMenuClick = (view: ViewType) => {
-    // D'abord changer la vue
     onViewChange(view);
-    
-    // Ensuite fermer la sidebar
     setOpenMobile(false);
     setOpen(false);
   };

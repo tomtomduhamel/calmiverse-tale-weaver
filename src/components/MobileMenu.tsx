@@ -1,7 +1,7 @@
 import React from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Home, Library, Users, Settings } from "lucide-react";
+import { Menu, Home, Library, Users } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
 type ViewType = "home" | "library" | "profiles" | "settings" | "create" | "reader";
@@ -52,14 +52,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
           >
             <Users className="h-5 w-5" />
             Enfants
-          </Button>
-          <Button
-            variant="ghost"
-            className="flex items-center justify-start gap-2 w-full"
-            onClick={() => handleNavigation("settings")}
-          >
-            <Settings className="h-5 w-5" />
-            Paramètres
           </Button>
         </nav>
       </SheetContent>
