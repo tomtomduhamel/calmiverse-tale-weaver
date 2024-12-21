@@ -22,18 +22,22 @@ export default {
         primary: {
           DEFAULT: "#A8DADC",
           foreground: "#1A1F2C",
+          dark: "#457B9D",
         },
         secondary: {
           DEFAULT: "#457B9D",
           foreground: "#FFFFFF",
+          dark: "#2C3E50",
         },
         accent: {
           DEFAULT: "#B7E4C7",
           foreground: "#1A1F2C",
+          dark: "#2C5F3F",
         },
         muted: {
           DEFAULT: "#F1FAEE",
           foreground: "#457B9D",
+          dark: "#1A2238",
         },
         destructive: {
           DEFAULT: "#FF6B6B",
@@ -42,14 +46,19 @@ export default {
         neutral: {
           DEFAULT: "#E5E5E5",
           foreground: "#1A1F2C",
+          dark: "#2C2C2C",
         },
       },
       backgroundImage: {
         'gradient-serene': 'linear-gradient(135deg, #A8DADC 0%, #D6CDEA 100%)',
+        'gradient-night': 'linear-gradient(135deg, #1A2238 0%, #2C2C2C 100%)',
       },
       animation: {
         'slide-down': 'slideDown 0.2s ease-out',
         'slide-up': 'slideUp 0.2s ease-out',
+        'fade-in': 'fadeIn 0.3s ease-out',
+        'scale-up': 'scaleUp 0.2s ease-out',
+        'float': 'float 6s ease-in-out infinite',
       },
       keyframes: {
         slideDown: {
@@ -60,6 +69,22 @@ export default {
           '0%': { transform: 'translateY(0)', opacity: '1' },
           '100%': { transform: 'translateY(-100%)', opacity: '0' },
         },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        scaleUp: {
+          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+      },
+      boxShadow: {
+        'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'soft-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
       },
     },
   },
