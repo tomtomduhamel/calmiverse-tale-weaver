@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Home, Library, Users, Settings } from "lucide-react";
 
@@ -26,6 +27,15 @@ const menuItems = [
 ];
 
 export function AppSidebar({ currentView, onViewChange }: AppSidebarProps) {
+  const { setOpen, setOpenMobile } = useSidebar();
+
+  const handleMenuClick = (view: ViewType) => {
+    onViewChange(view);
+    // Ferme la sidebar sur mobile et desktop après un clic
+    setOpenMobile(false);
+    setOpen(false);
+  };
+
   return (
     <Sidebar className="bg-white/80 dark:bg-muted-dark/80 backdrop-blur-sm rounded-r-xl shadow-soft">
       <SidebarContent>
@@ -38,7 +48,7 @@ export function AppSidebar({ currentView, onViewChange }: AppSidebarProps) {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    onClick={() => onViewChange(item.view)}
+                    onClick={() => handleMenuClick(item.view)}
                     className={`transition-all hover:scale-105 ${
                       currentView === item.view
                         ? "bg-primary/20 dark:bg-primary-dark/20"
