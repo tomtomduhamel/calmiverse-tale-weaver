@@ -2,6 +2,7 @@ import React from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, Home, Library, Users, Settings } from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
 
 type ViewType = "home" | "library" | "profiles" | "settings" | "create" | "reader";
 
@@ -11,8 +12,12 @@ interface MobileMenuProps {
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) => {
+  const { setOpen, setOpenMobile } = useSidebar();
+
   const handleNavigation = (view: ViewType) => {
     onViewChange(view);
+    setOpenMobile(false);
+    setOpen(false);
   };
 
   return (
