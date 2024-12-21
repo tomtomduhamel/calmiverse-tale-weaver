@@ -6,6 +6,7 @@ import ChildrenProfiles from "@/components/ChildrenProfiles";
 import { useToast } from "@/hooks/use-toast";
 import MobileMenu from "@/components/MobileMenu";
 import HomeHero from "@/components/home/HomeHero";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import type { Child } from "@/types/child";
 import type { ViewType } from "@/types/views";
 
@@ -74,73 +75,75 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-serene">
-      <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm shadow-sm z-50">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <img 
-              src="/lovable-uploads/08b9555a-5430-4317-9aa0-2652884e8414.png" 
-              alt="Calmi Logo" 
-              className="h-8 w-auto"
+    <SidebarProvider>
+      <div className="min-h-screen bg-gradient-serene w-full">
+        <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm shadow-sm z-50">
+          <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <img 
+                src="/lovable-uploads/08b9555a-5430-4317-9aa0-2652884e8414.png" 
+                alt="Calmi Logo" 
+                className="h-8 w-auto"
+              />
+              <span className="text-xl font-semibold text-secondary">Calmi</span>
+            </div>
+            <MobileMenu currentView={currentView} onViewChange={setCurrentView} />
+          </div>
+        </header>
+
+        <main className="max-w-7xl mx-auto p-6 pt-24">
+          {currentView === "home" && (
+            <HomeHero onViewChange={setCurrentView} />
+          )}
+
+          {currentView === "create" && (
+            <div className="max-w-md mx-auto">
+              <StoryForm 
+                onSubmit={handleCreateStory} 
+                children={children} 
+                onCreateChild={handleCreateChildFromStory}
+              />
+            </div>
+          )}
+
+          {currentView === "profiles" && (
+            <ChildrenProfiles
+              children={children}
+              onAddChild={handleAddChild}
+              onUpdateChild={handleUpdateChild}
+              onDeleteChild={handleDeleteChild}
             />
-            <span className="text-xl font-semibold text-secondary">Calmi</span>
-          </div>
-          <MobileMenu currentView={currentView} onViewChange={setCurrentView} />
-        </div>
-      </header>
+          )}
 
-      <main className="max-w-7xl mx-auto p-6 pt-24">
-        {currentView === "home" && (
-          <HomeHero onViewChange={setCurrentView} />
-        )}
-
-        {currentView === "create" && (
-          <div className="max-w-md mx-auto">
-            <StoryForm 
-              onSubmit={handleCreateStory} 
-              children={children} 
-              onCreateChild={handleCreateChildFromStory}
+          {currentView === "library" && (
+            <StoryLibrary
+              stories={stories}
+              onSelectStory={(story) => {
+                setCurrentStory(story.preview);
+                setCurrentView("reader");
+              }}
+              onDeleteStory={handleDeleteStory}
             />
-          </div>
-        )}
+          )}
 
-        {currentView === "profiles" && (
-          <ChildrenProfiles
-            children={children}
-            onAddChild={handleAddChild}
-            onUpdateChild={handleUpdateChild}
-            onDeleteChild={handleDeleteChild}
-          />
-        )}
+          {currentView === "reader" && (
+            <StoryReader
+              story={currentStory}
+              onClose={() => setCurrentView("library")}
+            />
+          )}
 
-        {currentView === "library" && (
-          <StoryLibrary
-            stories={stories}
-            onSelectStory={(story) => {
-              setCurrentStory(story.preview);
-              setCurrentView("reader");
-            }}
-            onDeleteStory={handleDeleteStory}
-          />
-        )}
-
-        {currentView === "reader" && (
-          <StoryReader
-            story={currentStory}
-            onClose={() => setCurrentView("library")}
-          />
-        )}
-
-        {currentView === "settings" && (
-          <div className="text-center mt-8">
-            <h2 className="text-2xl font-semibold text-secondary">Paramètres</h2>
-            <p className="text-muted-foreground mt-4">
-              Cette section est en cours de développement.
-            </p>
-          </div>
-        )}
-      </main>
-    </div>
+          {currentView === "settings" && (
+            <div className="text-center mt-8">
+              <h2 className="text-2xl font-semibold text-secondary">Paramètres</h2>
+              <p className="text-muted-foreground mt-4">
+                Cette section est en cours de développement.
+              </p>
+            </div>
+          )}
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 
