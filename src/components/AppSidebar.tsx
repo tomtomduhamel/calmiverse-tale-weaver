@@ -27,13 +27,22 @@ const menuItems = [
 ];
 
 export function AppSidebar({ currentView, onViewChange }: AppSidebarProps) {
-  const { setOpen, setOpenMobile } = useSidebar();
+  const sidebar = useSidebar();
 
   const handleMenuClick = (view: ViewType) => {
     onViewChange(view);
-    // Ferme la sidebar sur mobile et desktop après un clic
-    setOpenMobile(false);
-    setOpen(false);
+    // Force la fermeture de la sidebar sur mobile et desktop
+    if (sidebar) {
+      sidebar.setOpenMobile(false);
+      sidebar.setOpen(false);
+    }
+    // Ajout d'un petit délai pour s'assurer que l'état est bien mis à jour
+    setTimeout(() => {
+      if (sidebar) {
+        sidebar.setOpenMobile(false);
+        sidebar.setOpen(false);
+      }
+    }, 100);
   };
 
   return (
