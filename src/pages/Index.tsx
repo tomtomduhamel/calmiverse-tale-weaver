@@ -7,12 +7,14 @@ import HomeHero from "@/components/home/HomeHero";
 import AppLayout from "@/components/layout/AppLayout";
 import { useChildren } from "@/hooks/useChildren";
 import { useStories } from "@/hooks/useStories";
+import { useStoryThemes } from "@/hooks/useStoryThemes";
 import type { ViewType } from "@/types/views";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useChildren();
   const { stories, currentStory, handleCreateStory, handleDeleteStory, setCurrentStory } = useStories();
+  const { themes } = useStoryThemes();
 
   const handleCreateChildFromStory = () => {
     setCurrentView("profiles");
@@ -20,7 +22,11 @@ const Index = () => {
 
   const handleStorySubmit = async (formData: any) => {
     try {
-      const story = await handleCreateStory(formData, children);
+      const selectedTheme = themes.find(theme => theme.id === formData.themeId);
+      if (!selectedTheme) {
+        throw new Error("Thème non trouvé");
+      }
+      const story = await handleCreateStory(formData, children, selectedTheme);
       setCurrentView("reader");
     } catch (error) {
       console.error("Erreur lors de la création de l'histoire:", error);
@@ -28,7 +34,7 @@ const Index = () => {
   };
 
   return (
-    <AppLayout>
+    <AppLayout currentView={currentView} onViewChange={setCurrentView}>
       {currentView === "home" && (
         <HomeHero onViewChange={setCurrentView} />
       )}
