@@ -53,9 +53,40 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  
   body {
-    @apply bg-background text-foreground transition-colors duration-300;
+    @apply bg-background text-foreground transition-colors duration-300 min-h-screen;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Masquer les scrollbars tout en gardant la fonctionnalité */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-secondary/20 rounded-full;
+  }
+
+  /* Ne montrer la scrollbar que lors du survol */
+  .overflow-auto, .overflow-y-auto, .overflow-x-auto {
+    scrollbar-width: thin;
+    &::-webkit-scrollbar-thumb {
+      @apply bg-secondary/0;
+    }
+    &:hover::-webkit-scrollbar-thumb {
+      @apply bg-secondary/20;
+    }
   }
 }
 

@@ -11,6 +11,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Home, Library, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 type ViewType = "home" | "library" | "profiles" | "settings" | "create" | "reader";
 
@@ -22,20 +23,24 @@ interface AppSidebarProps {
 const menuItems = [
   { icon: Home, title: "Accueil", view: "home" as ViewType },
   { icon: Library, title: "Bibliothèque", view: "library" as ViewType },
-  { icon: Users, title: "Profils enfants", view: "profiles" as ViewType },
+  { icon: Users, title: "L'univers des enfants", view: "profiles" as ViewType },
 ];
 
 export function AppSidebar({ currentView, onViewChange }: AppSidebarProps) {
   const { setOpen, setOpenMobile } = useSidebar();
+  const navigate = useNavigate();
 
   const handleMenuClick = (view: ViewType) => {
     onViewChange(view);
     setOpenMobile(false);
     setOpen(false);
+    if (view === "home") {
+      navigate("/");
+    }
   };
 
   return (
-    <Sidebar className="bg-white/80 dark:bg-muted-dark/80 backdrop-blur-sm rounded-r-xl shadow-soft">
+    <Sidebar className="bg-white/80 dark:bg-muted-dark/80 backdrop-blur-sm rounded-r-xl shadow-soft hidden md:block">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-secondary dark:text-white">
