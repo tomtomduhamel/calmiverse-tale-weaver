@@ -1,13 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Link } from "react-router-dom";
+import type { ViewType } from "@/types/views";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+  const [currentView, setCurrentView] = useState<ViewType>("home");
+
+  const handleViewChange = (view: ViewType) => {
+    setCurrentView(view);
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gradient-serene w-full">
@@ -25,7 +32,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </header>
 
         <div className="flex w-full">
-          <AppSidebar />
+          <AppSidebar 
+            currentView={currentView} 
+            onViewChange={handleViewChange}
+          />
           <main className="flex-1 max-w-7xl mx-auto p-6 pt-24">
             {children}
           </main>
