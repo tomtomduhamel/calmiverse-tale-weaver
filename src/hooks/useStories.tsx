@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Child } from "@/types/child";
 import type { StoryFormData } from "@/components/StoryForm";
+import { generateStoryPrompt } from "@/lib/story-themes";
+import type { StoryTheme } from "@/types/story-theme";
 
 interface Story {
   id: string;
@@ -13,30 +15,44 @@ interface Story {
 
 export const useStories = () => {
   const [currentStory, setCurrentStory] = useState<string>("");
-  const [stories, setStories] = useState<Story[]>([
-    {
-      id: "1",
-      title: "L'aventure magique",
-      preview: "Une histoire enchantée pour les petits rêveurs...",
-      theme: "magic",
-      objective: "sleep",
-    },
-  ]);
+  const [stories, setStories] = useState<Story[]>([]);
   const { toast } = useToast();
 
-  const handleCreateStory = async (formData: StoryFormData, children: Child[]) => {
+  const handleCreateStory = async (formData: StoryFormData, children: Child[], selectedTheme: StoryTheme) => {
     try {
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
-      const childrenNames = selectedChildren.map(child => child.name).join(" et ");
+      const childrenNames = selectedChildren.map(child => child.name);
       
-      const mockStory = `Il était une fois ${childrenNames} qui ${
-        formData.objective === "sleep" ? "se préparaient pour dormir" : 
-        formData.objective === "relax" ? "voulaient se détendre" : 
-        "cherchaient à se concentrer"
-      }...`;
+      const prompt = generateStoryPrompt(selectedTheme, formData.objective, childrenNames);
       
-      setCurrentStory(mockStory);
-      return mockStory;
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 1500,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la génération de l\'histoire');
+      }
+
+      const data = await response.json();
+      const generatedStory = data.choices[0].message.content;
+      
+      setCurrentStory(generatedStory);
+      return generatedStory;
     } catch (error) {
       toast({
         title: "Erreur",

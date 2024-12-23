@@ -4,7 +4,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BookOpen, UserPlus } from "lucide-react";
+import { useStoryThemes } from "@/hooks/useStoryThemes";
 import type { Child } from "@/types/child";
+import type { StoryTheme } from "@/types/story-theme";
 
 interface StoryFormProps {
   onSubmit: (data: StoryFormData) => void;
@@ -15,14 +17,17 @@ interface StoryFormProps {
 export interface StoryFormData {
   childrenIds: string[];
   objective: string;
+  themeId: string;
 }
 
 const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild }) => {
   const [formData, setFormData] = useState<StoryFormData>({
     childrenIds: [],
     objective: "sleep",
+    themeId: "",
   });
 
+  const { themes, isLoading } = useStoryThemes();
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -31,6 +36,14 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
       toast({
         title: "Erreur",
         description: "Veuillez sélectionner au moins un enfant",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!formData.themeId) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un thème",
         variant: "destructive",
       });
       return;
@@ -46,6 +59,10 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
         : [...prev.childrenIds, childId]
     }));
   };
+
+  if (isLoading) {
+    return <div>Chargement des thèmes...</div>;
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
@@ -82,6 +99,25 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
             Créer un profil enfant
           </Button>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="theme" className="text-secondary dark:text-white">
+          Choisissez un thème
+        </Label>
+        <select
+          id="theme"
+          value={formData.themeId}
+          onChange={(e) => setFormData({ ...formData, themeId: e.target.value })}
+          className="w-full p-2 rounded-lg border bg-white dark:bg-muted-dark hover:border-primary dark:hover:border-primary-dark focus:border-primary dark:focus:border-primary-dark focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary-dark/20 transition-colors"
+        >
+          <option value="">Sélectionnez un thème</option>
+          {themes.map((theme) => (
+            <option key={theme.id} value={theme.id}>
+              {theme.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="space-y-2">
