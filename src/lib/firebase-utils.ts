@@ -13,6 +13,30 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+// Test function to verify Firestore connection
+export const testFirestoreConnection = async () => {
+  try {
+    // Try to create a test collection and document
+    const testData = {
+      test: true,
+      timestamp: new Date()
+    };
+    
+    console.log('Testing Firestore connection...');
+    const docRef = await addDoc(collection(db, 'test_collection'), testData);
+    console.log('Test document written with ID:', docRef.id);
+    
+    // Immediately delete the test document
+    await deleteDoc(docRef);
+    console.log('Test document successfully deleted');
+    
+    return true;
+  } catch (error) {
+    console.error('Firestore connection test failed:', error);
+    throw error;
+  }
+};
+
 // Helper function to convert Firestore timestamps to ISO strings
 const serializeData = (data: DocumentData) => {
   const serialized: DocumentData = {};

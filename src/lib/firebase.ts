@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getAnalytics } from 'firebase/analytics';
 
@@ -19,7 +19,7 @@ console.log('Firebase initialized successfully');
 
 // Initialize Firestore
 export const db = getFirestore(app);
-console.log('Firestore initialized');
+console.log('Firestore initialized with project ID:', firebaseConfig.projectId);
 
 // Initialize Auth
 export const auth = getAuth(app);
@@ -28,5 +28,11 @@ console.log('Auth initialized');
 // Initialize Analytics
 export const analytics = getAnalytics(app);
 console.log('Analytics initialized');
+
+// Test Firestore connection
+import { testFirestoreConnection } from './firebase-utils';
+testFirestoreConnection()
+  .then(() => console.log('Firestore connection test passed'))
+  .catch(error => console.error('Firestore connection test failed:', error));
 
 export default app;
