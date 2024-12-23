@@ -10,7 +10,8 @@ import {
   where,
   serverTimestamp,
   DocumentData,
-  QuerySnapshot
+  CollectionReference,
+  Query
 } from 'firebase/firestore';
 import type { Child } from '@/types/child';
 
@@ -56,17 +57,19 @@ export const deleteChild = async (childId: string) => {
 export const getChildren = async (userId?: string): Promise<Child[]> => {
   try {
     const childrenRef = collection(db, CHILDREN_COLLECTION);
-    let q = childrenRef;
+    let queryRef: Query<DocumentData> | CollectionReference<DocumentData>;
     
     if (userId) {
-      q = query(childrenRef, where("userId", "==", userId));
+      queryRef = query(childrenRef, where("userId", "==", userId));
+    } else {
+      queryRef = childrenRef;
     }
     
-    const snapshot = await getDocs(q);
+    const querySnapshot = await getDocs(queryRef);
     
-    return snapshot.docs.map(doc => {
+    return querySnapshot.docs.map(doc => {
       const data = doc.data();
-      // Create a plain JavaScript object with only the data we need
+      // Create a new plain object with explicit type casting and null checks
       const child: Child = {
         id: doc.id,
         name: data.name || '',
@@ -75,9 +78,8 @@ export const getChildren = async (userId?: string): Promise<Child[]> => {
         teddyDescription: data.teddyDescription || '',
         imaginaryWorld: data.imaginaryWorld || '',
         userId: data.userId || null,
-        // Convert Firestore Timestamps to regular JavaScript Date objects
-        createdAt: data.createdAt?.toDate() || null,
-        updatedAt: data.updatedAt?.toDate() || null
+        createdAt: data.createdAt?.toDate?.() || null,
+        updatedAt: data.updatedAt?.toDate?.() || null
       };
       return child;
     });
