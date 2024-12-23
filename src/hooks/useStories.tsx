@@ -20,8 +20,31 @@ export const useStories = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const { toast } = useToast();
 
+  const getOpenAIKey = () => {
+    return localStorage.getItem('openai_api_key');
+  };
+
+  const setOpenAIKey = (key: string) => {
+    localStorage.setItem('openai_api_key', key);
+  };
+
   const handleCreateStory = async (formData: StoryFormData, children: Child[], selectedTheme: StoryTheme) => {
     try {
+      const apiKey = getOpenAIKey();
+      
+      if (!apiKey) {
+        const key = prompt("Veuillez entrer votre clé API OpenAI :");
+        if (!key) {
+          toast({
+            title: "Erreur",
+            description: "Une clé API OpenAI est nécessaire pour générer des histoires",
+            variant: "destructive",
+          });
+          return;
+        }
+        setOpenAIKey(key);
+      }
+
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
       
@@ -31,7 +54,7 @@ export const useStories = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Authorization': `Bearer ${getOpenAIKey()}`,
         },
         body: JSON.stringify({
           model: 'gpt-4',
@@ -47,6 +70,15 @@ export const useStories = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('openai_api_key');
+          toast({
+            title: "Erreur d'authentification",
+            description: "Votre clé API OpenAI n'est pas valide. Veuillez réessayer avec une nouvelle clé.",
+            variant: "destructive",
+          });
+          return;
+        }
         throw new Error('Erreur lors de la génération de l\'histoire');
       }
 
