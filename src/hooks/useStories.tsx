@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import type { Child } from "@/types/child";
 import type { StoryFormData } from "@/components/StoryForm";
 import { generateStoryPrompt } from "@/lib/story-themes";
@@ -27,13 +28,17 @@ export const useStories = () => {
       
       const prompt = generateStoryPrompt(selectedTheme, formData.objective as StoryObjective, childrenNames);
       
-      toast({
-        title: "Information",
-        description: "Pour utiliser cette fonctionnalité, vous devez configurer une Cloud Function Firebase. Contactez votre administrateur.",
-      });
-      return;
+      const functions = getFunctions();
+      const generateStory = httpsCallable(functions, 'generateStory');
+      
+      const result = await generateStory({ prompt });
+      const generatedStory = result.data as string;
+      
+      setCurrentStory(generatedStory);
+      return generatedStory;
 
     } catch (error) {
+      console.error("Error generating story:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la génération de l'histoire",
