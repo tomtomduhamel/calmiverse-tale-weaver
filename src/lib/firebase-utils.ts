@@ -9,7 +9,8 @@ import {
   query, 
   where,
   serverTimestamp,
-  Timestamp
+  CollectionReference,
+  DocumentData
 } from 'firebase/firestore';
 import type { Child } from '@/types/child';
 
@@ -56,11 +57,16 @@ export const deleteChild = async (childId: string) => {
 
 export const getChildren = async (userId?: string) => {
   try {
-    let q = collection(db, CHILDREN_COLLECTION);
+    const childrenCollection = collection(db, CHILDREN_COLLECTION);
+    let querySnapshot;
+    
     if (userId) {
-      q = query(collection(db, CHILDREN_COLLECTION), where("userId", "==", userId));
+      const q = query(childrenCollection, where("userId", "==", userId));
+      querySnapshot = await getDocs(q);
+    } else {
+      querySnapshot = await getDocs(childrenCollection);
     }
-    const querySnapshot = await getDocs(q);
+
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
