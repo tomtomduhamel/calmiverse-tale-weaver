@@ -54,39 +54,54 @@ export const deleteChild = async (childId: string) => {
   }
 };
 
-const convertTimestampToDate = (timestamp: Timestamp | null | undefined): Date | null => {
-  if (!timestamp || !timestamp.toDate) {
-    return null;
+const safeString = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return '';
+  return String(value);
+};
+
+const safeNumber = (value: unknown): number => {
+  if (typeof value === 'number') return value;
+  if (value === null || value === undefined) return 0;
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+};
+
+const safeDate = (timestamp: unknown): Date | null => {
+  if (!timestamp || typeof timestamp !== 'object') return null;
+  if (timestamp instanceof Timestamp) {
+    try {
+      return timestamp.toDate();
+    } catch {
+      return null;
+    }
   }
-  try {
-    return timestamp.toDate();
-  } catch {
-    return null;
-  }
+  return null;
 };
 
 export const getChildren = async (userId?: string): Promise<Child[]> => {
   try {
     const childrenRef = collection(db, CHILDREN_COLLECTION);
-    const baseQuery = userId 
+    const queryRef = userId 
       ? query(childrenRef, where("userId", "==", userId))
       : childrenRef;
 
-    const snapshot = await getDocs(baseQuery);
+    const snapshot = await getDocs(queryRef);
     
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      // Create a serializable plain object
+      
+      // Create a plain serializable object with safe type conversions
       return {
         id: doc.id,
-        name: String(data.name || ''),
-        age: Number(data.age || 0),
-        teddyName: String(data.teddyName || ''),
-        teddyDescription: String(data.teddyDescription || ''),
-        imaginaryWorld: String(data.imaginaryWorld || ''),
-        userId: data.userId ? String(data.userId) : null,
-        createdAt: convertTimestampToDate(data.createdAt),
-        updatedAt: convertTimestampToDate(data.updatedAt)
+        name: safeString(data.name),
+        age: safeNumber(data.age),
+        teddyName: safeString(data.teddyName),
+        teddyDescription: safeString(data.teddyDescription),
+        imaginaryWorld: safeString(data.imaginaryWorld),
+        userId: data.userId ? safeString(data.userId) : null,
+        createdAt: safeDate(data.createdAt),
+        updatedAt: safeDate(data.updatedAt)
       };
     });
   } catch (error) {
