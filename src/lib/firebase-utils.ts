@@ -10,13 +10,13 @@ import {
   serverTimestamp,
   type Timestamp,
   type DocumentData,
-  type CollectionReference
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Child } from '@/types/child';
 
 const CHILDREN_COLLECTION = 'children';
 
+// Helper functions for safe type conversion
 const safeString = (value: unknown): string => {
   if (typeof value === 'string') return value;
   if (value === null || value === undefined) return '';
@@ -33,10 +33,30 @@ const safeNumber = (value: unknown): number => {
 const serializeTimestamp = (timestamp: unknown): Date | null => {
   if (!timestamp) return null;
   if (timestamp instanceof Date) return timestamp;
-  if ((timestamp as Timestamp)?.toDate instanceof Function) {
-    return (timestamp as Timestamp).toDate();
+  if (timestamp && typeof timestamp === 'object' && 'toDate' in timestamp && typeof timestamp.toDate === 'function') {
+    try {
+      return timestamp.toDate();
+    } catch {
+      return null;
+    }
   }
   return null;
+};
+
+// Convert Firestore document to plain object
+const convertToPlainObject = (doc: DocumentData): Child => {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    name: safeString(data.name),
+    age: safeNumber(data.age),
+    teddyName: safeString(data.teddyName),
+    teddyDescription: safeString(data.teddyDescription),
+    imaginaryWorld: safeString(data.imaginaryWorld),
+    userId: data.userId ? safeString(data.userId) : undefined,
+    createdAt: serializeTimestamp(data.createdAt),
+    updatedAt: serializeTimestamp(data.updatedAt)
+  };
 };
 
 export const addChild = async (childData: Omit<Child, 'id'>) => {
@@ -78,32 +98,20 @@ export const deleteChild = async (childId: string) => {
 
 export const getChildren = async (userId?: string): Promise<Child[]> => {
   try {
-    const childrenCollection = collection(db, CHILDREN_COLLECTION);
+    const childrenRef = collection(db, CHILDREN_COLLECTION);
     let querySnapshot;
 
     if (userId) {
-      const q = query(childrenCollection, where("userId", "==", userId));
-      querySnapshot = await getDocs(q);
+      // Create a new query for filtered results
+      const userQuery = query(childrenRef, where("userId", "==", userId));
+      querySnapshot = await getDocs(userQuery);
     } else {
-      querySnapshot = await getDocs(childrenCollection);
+      // Get all documents without filtering
+      querySnapshot = await getDocs(childrenRef);
     }
 
-    return querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      // Create a plain JavaScript object with serializable values
-      const child: Child = {
-        id: doc.id,
-        name: safeString(data.name),
-        age: safeNumber(data.age),
-        teddyName: safeString(data.teddyName),
-        teddyDescription: safeString(data.teddyDescription),
-        imaginaryWorld: safeString(data.imaginaryWorld),
-        userId: data.userId ? safeString(data.userId) : undefined,
-        createdAt: serializeTimestamp(data.createdAt),
-        updatedAt: serializeTimestamp(data.updatedAt)
-      };
-      return child;
-    });
+    // Convert documents to plain JavaScript objects
+    return querySnapshot.docs.map(doc => convertToPlainObject(doc));
   } catch (error) {
     console.error("Error getting children: ", error);
     throw error;
