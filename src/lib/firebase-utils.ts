@@ -16,23 +16,37 @@ import { db } from './firebase';
 // Test function to verify Firestore connection
 export const testFirestoreConnection = async () => {
   try {
+    console.log('🔄 Starting Firestore connection test...');
+    
     // Try to create a test collection and document
     const testData = {
       test: true,
-      timestamp: new Date()
+      timestamp: new Date(),
+      message: 'Test connection'
     };
     
-    console.log('Testing Firestore connection...');
-    const docRef = await addDoc(collection(db, 'test_collection'), testData);
-    console.log('Test document written with ID:', docRef.id);
+    console.log('📝 Attempting to write test document with data:', testData);
+    const testCollection = collection(db, 'test_collection');
+    console.log('📁 Collection reference created');
+    
+    const docRef = await addDoc(testCollection, testData);
+    console.log('✅ Test document written successfully with ID:', docRef.id);
+    
+    // Try to read the document back
+    const docSnap = await doc(db, 'test_collection', docRef.id);
+    console.log('📖 Document reference retrieved:', docSnap.id);
     
     // Immediately delete the test document
     await deleteDoc(docRef);
-    console.log('Test document successfully deleted');
+    console.log('🗑️ Test document successfully deleted');
     
     return true;
   } catch (error) {
-    console.error('Firestore connection test failed:', error);
+    console.error('❌ Firestore connection test failed with details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     throw error;
   }
 };
