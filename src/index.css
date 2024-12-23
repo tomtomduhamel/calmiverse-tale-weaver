@@ -55,7 +55,7 @@
   }
   
   html {
-    @apply overflow-y-auto;
+    overflow-y: auto;
     scrollbar-gutter: stable;
   }
   
@@ -63,37 +63,45 @@
     @apply bg-background text-foreground transition-colors duration-300 min-h-screen overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
 
-  /* Masquer les scrollbars par défaut */
-  ::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-  }
+/* Masquer les scrollbars par défaut */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
 
-  /* N'afficher la scrollbar que lorsque c'est absolument nécessaire */
-  .overflow-auto, .overflow-y-auto, .overflow-x-auto {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    &::-webkit-scrollbar {
-      display: none;
-    }
-  }
+/* N'afficher la scrollbar que lorsque c'est absolument nécessaire */
+.overflow-auto, 
+.overflow-y-auto, 
+.overflow-x-auto {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
 
-  /* Style pour les conteneurs qui nécessitent absolument une scrollbar */
-  .show-scrollbar {
-    scrollbar-width: thin;
-    &::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-      display: block;
-    }
-    &::-webkit-scrollbar-track {
-      @apply bg-transparent;
-    }
-    &::-webkit-scrollbar-thumb {
-      @apply bg-secondary/20 rounded-full;
-    }
-  }
+.overflow-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}
+
+/* Style pour les conteneurs qui nécessitent absolument une scrollbar */
+.show-scrollbar {
+  scrollbar-width: thin;
+}
+
+.show-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+  display: block;
+}
+
+.show-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.show-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-secondary/20 rounded-full;
 }
 
 .prose {
