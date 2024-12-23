@@ -14,10 +14,8 @@ import {
 } from 'firebase/firestore';
 import type { Child } from '@/types/child';
 
-// Collection references
 const CHILDREN_COLLECTION = 'children';
 
-// Children CRUD operations
 export const addChild = async (childData: Omit<Child, 'id'>) => {
   try {
     const docRef = await addDoc(collection(db, CHILDREN_COLLECTION), {
@@ -58,28 +56,30 @@ export const deleteChild = async (childId: string) => {
 export const getChildren = async (userId?: string): Promise<Child[]> => {
   try {
     const childrenRef = collection(db, CHILDREN_COLLECTION);
-    let snapshot: QuerySnapshot<DocumentData>;
-
+    let q = childrenRef;
+    
     if (userId) {
-      const q = query(childrenRef, where("userId", "==", userId));
-      snapshot = await getDocs(q);
-    } else {
-      snapshot = await getDocs(childrenRef);
+      q = query(childrenRef, where("userId", "==", userId));
     }
-
+    
+    const snapshot = await getDocs(q);
+    
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      return {
+      // Create a plain JavaScript object with only the data we need
+      const child: Child = {
         id: doc.id,
         name: data.name || '',
         age: data.age || 0,
-        teddyName: data.teddyName,
-        teddyDescription: data.teddyDescription,
-        imaginaryWorld: data.imaginaryWorld,
-        userId: data.userId,
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate()
-      } as Child;
+        teddyName: data.teddyName || '',
+        teddyDescription: data.teddyDescription || '',
+        imaginaryWorld: data.imaginaryWorld || '',
+        userId: data.userId || null,
+        // Convert Firestore Timestamps to regular JavaScript Date objects
+        createdAt: data.createdAt?.toDate() || null,
+        updatedAt: data.updatedAt?.toDate() || null
+      };
+      return child;
     });
   } catch (error) {
     console.error("Error getting children: ", error);
