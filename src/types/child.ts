@@ -5,7 +5,4 @@ export interface Child {
   teddyName?: string;
   teddyDescription?: string;
   imaginaryWorld?: string;
-  userId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
