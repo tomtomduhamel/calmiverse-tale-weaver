@@ -8,9 +8,9 @@ import {
   query,
   where,
   serverTimestamp,
-  DocumentData,
-  CollectionReference,
-  Timestamp
+  Timestamp,
+  type DocumentData,
+  type CollectionReference
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Child } from '@/types/child';
@@ -81,17 +81,18 @@ const safeDate = (timestamp: unknown): Date | null => {
 
 export const getChildren = async (userId?: string): Promise<Child[]> => {
   try {
-    const childrenRef = collection(db, CHILDREN_COLLECTION);
-    const queryRef = userId 
-      ? query(childrenRef, where("userId", "==", userId))
-      : childrenRef;
-
-    const snapshot = await getDocs(queryRef);
+    const childrenCollection = collection(db, CHILDREN_COLLECTION) as CollectionReference<DocumentData>;
+    let querySnapshot;
     
-    return snapshot.docs.map(doc => {
+    if (userId) {
+      const q = query(childrenCollection, where("userId", "==", userId));
+      querySnapshot = await getDocs(q);
+    } else {
+      querySnapshot = await getDocs(childrenCollection);
+    }
+
+    return querySnapshot.docs.map(doc => {
       const data = doc.data();
-      
-      // Create a plain serializable object with safe type conversions
       return {
         id: doc.id,
         name: safeString(data.name),
