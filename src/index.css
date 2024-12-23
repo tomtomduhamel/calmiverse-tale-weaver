@@ -55,37 +55,43 @@
   }
   
   html {
-    overflow-y: auto;
+    @apply overflow-y-auto;
     scrollbar-gutter: stable;
   }
   
   body {
-    @apply bg-background text-foreground transition-colors duration-300 min-h-screen;
+    @apply bg-background text-foreground transition-colors duration-300 min-h-screen overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Masquer les scrollbars tout en gardant la fonctionnalité */
+  /* Masquer les scrollbars par défaut */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 0;
+    height: 0;
   }
 
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-secondary/20 rounded-full;
-  }
-
-  /* Ne montrer la scrollbar que lors du survol */
+  /* N'afficher la scrollbar que lorsque c'est absolument nécessaire */
   .overflow-auto, .overflow-y-auto, .overflow-x-auto {
-    scrollbar-width: thin;
-    &::-webkit-scrollbar-thumb {
-      @apply bg-secondary/0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+      display: none;
     }
-    &:hover::-webkit-scrollbar-thumb {
-      @apply bg-secondary/20;
+  }
+
+  /* Style pour les conteneurs qui nécessitent absolument une scrollbar */
+  .show-scrollbar {
+    scrollbar-width: thin;
+    &::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+      display: block;
+    }
+    &::-webkit-scrollbar-track {
+      @apply bg-transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      @apply bg-secondary/20 rounded-full;
     }
   }
 }

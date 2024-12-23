@@ -6,7 +6,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 5000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -90,8 +90,6 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -155,6 +153,7 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
+      className: "fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 min-w-[320px] bg-background border shadow-lg",
       onOpenChange: (open) => {
         if (!open) dismiss()
       },

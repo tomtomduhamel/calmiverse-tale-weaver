@@ -21,18 +21,20 @@ const menuItems = [
 const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) => {
   const { setOpen, setOpenMobile } = useSidebar();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = React.useState(false);
 
   const handleNavigation = (view: ViewType) => {
     onViewChange(view);
     setOpenMobile(false);
     setOpen(false);
+    setIsOpen(false);
     if (view === "home") {
       navigate("/");
     }
   };
 
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="h-6 w-6" />

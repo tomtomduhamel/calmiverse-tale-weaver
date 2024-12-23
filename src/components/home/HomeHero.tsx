@@ -38,7 +38,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
           className="bg-primary hover:bg-primary/90 text-primary-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg transition-all hover:shadow-xl"
         >
           <Users className="h-5 w-5 mr-2" />
-          Gérer les enfants
+          L'univers des enfants
         </Button>
       </div>
     </div>
