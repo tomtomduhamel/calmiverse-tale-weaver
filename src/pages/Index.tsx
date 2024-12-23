@@ -32,6 +32,9 @@ const Index = () => {
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name).join(" et ");
       
+      // Ensure API URL is correctly formatted without trailing colon
+      const apiUrl = "https://a3a7afdb-6cda-4ac0-ae38-aab4d04d9624.lovableproject.com";
+      
       // TODO: Implement OpenAI integration
       const mockStory = `Il était une fois ${childrenNames} qui ${
         formData.objective === "sleep" ? "se préparaient pour dormir" : 
