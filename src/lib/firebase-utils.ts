@@ -7,67 +7,68 @@ import {
   doc, 
   getDocs, 
   query, 
-  where 
+  where,
+  serverTimestamp,
+  Timestamp
 } from 'firebase/firestore';
+import type { Child } from '@/types/child';
 
-export const addDocument = async (collectionName: string, data: any) => {
+// Collection references
+const CHILDREN_COLLECTION = 'children';
+
+// Children CRUD operations
+export const addChild = async (childData: Omit<Child, 'id'>) => {
   try {
-    const docRef = await addDoc(collection(db, collectionName), data);
+    const docRef = await addDoc(collection(db, CHILDREN_COLLECTION), {
+      ...childData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
     return docRef.id;
   } catch (error) {
-    console.error("Error adding document: ", error);
+    console.error("Error adding child: ", error);
     throw error;
   }
 };
 
-export const updateDocument = async (collectionName: string, docId: string, data: any) => {
+export const updateChild = async (childId: string, data: Partial<Omit<Child, 'id'>>) => {
   try {
-    const docRef = doc(db, collectionName, docId);
-    await updateDoc(docRef, data);
+    const docRef = doc(db, CHILDREN_COLLECTION, childId);
+    await updateDoc(docRef, {
+      ...data,
+      updatedAt: serverTimestamp()
+    });
   } catch (error) {
-    console.error("Error updating document: ", error);
+    console.error("Error updating child: ", error);
     throw error;
   }
 };
 
-export const deleteDocument = async (collectionName: string, docId: string) => {
+export const deleteChild = async (childId: string) => {
   try {
-    const docRef = doc(db, collectionName, docId);
+    const docRef = doc(db, CHILDREN_COLLECTION, childId);
     await deleteDoc(docRef);
   } catch (error) {
-    console.error("Error deleting document: ", error);
+    console.error("Error deleting child: ", error);
     throw error;
   }
 };
 
-export const getDocuments = async (collectionName: string) => {
+export const getChildren = async (userId?: string) => {
   try {
-    const querySnapshot = await getDocs(collection(db, collectionName));
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-  } catch (error) {
-    console.error("Error getting documents: ", error);
-    throw error;
-  }
-};
-
-export const queryDocuments = async (
-  collectionName: string, 
-  field: string, 
-  operator: any, 
-  value: any
-) => {
-  try {
-    const q = query(collection(db, collectionName), where(field, operator, value));
+    let q = collection(db, CHILDREN_COLLECTION);
+    if (userId) {
+      q = query(collection(db, CHILDREN_COLLECTION), where("userId", "==", userId));
+    }
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data()
-    }));
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate(),
+      updatedAt: doc.data().updatedAt?.toDate()
+    })) as Child[];
   } catch (error) {
-    console.error("Error querying documents: ", error);
+    console.error("Error getting children: ", error);
     throw error;
   }
 };
