@@ -9,8 +9,8 @@ import {
   query, 
   where,
   serverTimestamp,
-  CollectionReference,
-  DocumentData
+  DocumentData,
+  QuerySnapshot
 } from 'firebase/firestore';
 import type { Child } from '@/types/child';
 
@@ -55,24 +55,32 @@ export const deleteChild = async (childId: string) => {
   }
 };
 
-export const getChildren = async (userId?: string) => {
+export const getChildren = async (userId?: string): Promise<Child[]> => {
   try {
-    const childrenCollection = collection(db, CHILDREN_COLLECTION);
-    let querySnapshot;
-    
+    const childrenRef = collection(db, CHILDREN_COLLECTION);
+    let snapshot: QuerySnapshot<DocumentData>;
+
     if (userId) {
-      const q = query(childrenCollection, where("userId", "==", userId));
-      querySnapshot = await getDocs(q);
+      const q = query(childrenRef, where("userId", "==", userId));
+      snapshot = await getDocs(q);
     } else {
-      querySnapshot = await getDocs(childrenCollection);
+      snapshot = await getDocs(childrenRef);
     }
 
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate()
-    })) as Child[];
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name || '',
+        age: data.age || 0,
+        teddyName: data.teddyName,
+        teddyDescription: data.teddyDescription,
+        imaginaryWorld: data.imaginaryWorld,
+        userId: data.userId,
+        createdAt: data.createdAt?.toDate(),
+        updatedAt: data.updatedAt?.toDate()
+      } as Child;
+    });
   } catch (error) {
     console.error("Error getting children: ", error);
     throw error;
