@@ -1,18 +1,18 @@
-import { db } from './firebase';
 import { 
   collection, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
   doc, 
-  getDocs, 
-  query, 
+  getDocs,
+  query,
   where,
   serverTimestamp,
   DocumentData,
   CollectionReference,
-  Query
+  Timestamp
 } from 'firebase/firestore';
+import { db } from './firebase';
 import type { Child } from '@/types/child';
 
 const CHILDREN_COLLECTION = 'children';
@@ -54,34 +54,40 @@ export const deleteChild = async (childId: string) => {
   }
 };
 
+const convertTimestampToDate = (timestamp: Timestamp | null | undefined): Date | null => {
+  if (!timestamp || !timestamp.toDate) {
+    return null;
+  }
+  try {
+    return timestamp.toDate();
+  } catch {
+    return null;
+  }
+};
+
 export const getChildren = async (userId?: string): Promise<Child[]> => {
   try {
     const childrenRef = collection(db, CHILDREN_COLLECTION);
-    let queryRef: Query<DocumentData> | CollectionReference<DocumentData>;
+    const baseQuery = userId 
+      ? query(childrenRef, where("userId", "==", userId))
+      : childrenRef;
+
+    const snapshot = await getDocs(baseQuery);
     
-    if (userId) {
-      queryRef = query(childrenRef, where("userId", "==", userId));
-    } else {
-      queryRef = childrenRef;
-    }
-    
-    const querySnapshot = await getDocs(queryRef);
-    
-    return querySnapshot.docs.map(doc => {
+    return snapshot.docs.map(doc => {
       const data = doc.data();
-      // Create a new plain object with explicit type casting and null checks
-      const child: Child = {
+      // Create a serializable plain object
+      return {
         id: doc.id,
-        name: data.name || '',
-        age: data.age || 0,
-        teddyName: data.teddyName || '',
-        teddyDescription: data.teddyDescription || '',
-        imaginaryWorld: data.imaginaryWorld || '',
-        userId: data.userId || null,
-        createdAt: data.createdAt?.toDate?.() || null,
-        updatedAt: data.updatedAt?.toDate?.() || null
+        name: String(data.name || ''),
+        age: Number(data.age || 0),
+        teddyName: String(data.teddyName || ''),
+        teddyDescription: String(data.teddyDescription || ''),
+        imaginaryWorld: String(data.imaginaryWorld || ''),
+        userId: data.userId ? String(data.userId) : null,
+        createdAt: convertTimestampToDate(data.createdAt),
+        updatedAt: convertTimestampToDate(data.updatedAt)
       };
-      return child;
     });
   } catch (error) {
     console.error("Error getting children: ", error);
