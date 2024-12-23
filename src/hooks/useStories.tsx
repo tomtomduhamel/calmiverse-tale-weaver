@@ -13,6 +13,8 @@ interface Story {
   objective: string;
 }
 
+type StoryObjective = "sleep" | "relax" | "focus";
+
 export const useStories = () => {
   const [currentStory, setCurrentStory] = useState<string>("");
   const [stories, setStories] = useState<Story[]>([]);
@@ -23,7 +25,7 @@ export const useStories = () => {
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
       
-      const prompt = generateStoryPrompt(selectedTheme, formData.objective, childrenNames);
+      const prompt = generateStoryPrompt(selectedTheme, formData.objective as StoryObjective, childrenNames);
       
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
