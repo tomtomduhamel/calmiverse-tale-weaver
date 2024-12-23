@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import StoryForm, { StoryFormData } from "@/components/StoryForm";
 import StoryReader from "@/components/StoryReader";
 import StoryLibrary from "@/components/StoryLibrary";
@@ -11,6 +11,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Link } from "react-router-dom";
 import type { Child } from "@/types/child";
 import type { ViewType } from "@/types/views";
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
@@ -27,15 +29,34 @@ const Index = () => {
   const [children, setChildren] = useState<Child[]>([]);
   const { toast } = useToast();
 
+  // Charger les enfants depuis Firestore au démarrage
+  useEffect(() => {
+    const loadChildren = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'children'));
+        const loadedChildren = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Child[];
+        setChildren(loadedChildren);
+      } catch (error) {
+        console.error("Erreur lors du chargement des enfants:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les profils des enfants",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadChildren();
+  }, [toast]);
+
   const handleCreateStory = async (formData: StoryFormData) => {
     try {
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name).join(" et ");
       
-      // Ensure API URL is correctly formatted without trailing colon
-      const apiUrl = "https://a3a7afdb-6cda-4ac0-ae38-aab4d04d9624.lovableproject.com";
-      
-      // TODO: Implement OpenAI integration
       const mockStory = `Il était une fois ${childrenNames} qui ${
         formData.objective === "sleep" ? "se préparaient pour dormir" : 
         formData.objective === "relax" ? "voulaient se détendre" : 
@@ -57,22 +78,65 @@ const Index = () => {
     setStories((prevStories) => prevStories.filter((story) => story.id !== storyId));
   };
 
-  const handleAddChild = (childData: Omit<Child, "id">) => {
-    const newChild: Child = {
-      ...childData,
-      id: Math.random().toString(36).substr(2, 9),
-    };
-    setChildren(prev => [...prev, newChild]);
+  const handleAddChild = async (childData: Omit<Child, "id">) => {
+    try {
+      const docRef = await addDoc(collection(db, 'children'), childData);
+      const newChild: Child = {
+        ...childData,
+        id: docRef.id,
+      };
+      setChildren(prev => [...prev, newChild]);
+      toast({
+        title: "Succès",
+        description: "Le profil a été ajouté avec succès",
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'ajout de l'enfant:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le profil",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleUpdateChild = (childId: string, updatedData: Omit<Child, "id">) => {
-    setChildren(prev => prev.map(child => 
-      child.id === childId ? { ...updatedData, id: childId } : child
-    ));
+  const handleUpdateChild = async (childId: string, updatedData: Omit<Child, "id">) => {
+    try {
+      const childRef = doc(db, 'children', childId);
+      await updateDoc(childRef, updatedData);
+      setChildren(prev => prev.map(child => 
+        child.id === childId ? { ...updatedData, id: childId } : child
+      ));
+      toast({
+        title: "Succès",
+        description: "Le profil a été mis à jour avec succès",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'enfant:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le profil",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteChild = (childId: string) => {
-    setChildren(prev => prev.filter(child => child.id !== childId));
+  const handleDeleteChild = async (childId: string) => {
+    try {
+      await deleteDoc(doc(db, 'children', childId));
+      setChildren(prev => prev.filter(child => child.id !== childId));
+      toast({
+        title: "Succès",
+        description: "Le profil a été supprimé avec succès",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'enfant:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le profil",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCreateChildFromStory = () => {
