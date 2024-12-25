@@ -9,6 +9,7 @@ import { useChildren } from "@/hooks/useChildren";
 import { useStories } from "@/hooks/useStories";
 import { useStoryThemes } from "@/hooks/useStoryThemes";
 import type { ViewType } from "@/types/views";
+import type { StoryFormData } from "@/components/StoryForm";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
@@ -20,16 +21,18 @@ const Index = () => {
     setCurrentView("profiles");
   };
 
-  const handleStorySubmit = async (formData: any) => {
+  const handleStorySubmit = async (formData: StoryFormData): Promise<string> => {
     try {
-      const selectedTheme = themes.find(theme => theme.id === formData.themeId);
+      const selectedTheme = themes[0]; // Pour l'instant, on utilise le premier thème
       if (!selectedTheme) {
         throw new Error("Thème non trouvé");
       }
       const story = await handleCreateStory(formData, children, selectedTheme);
       setCurrentView("reader");
+      return story; // Retourne l'histoire générée
     } catch (error) {
       console.error("Erreur lors de la création de l'histoire:", error);
+      throw error; // Propage l'erreur pour qu'elle soit gérée par le composant StoryForm
     }
   };
 
