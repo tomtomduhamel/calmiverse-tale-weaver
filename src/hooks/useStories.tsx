@@ -52,25 +52,29 @@ export const useStories = () => {
 
   const handleCreateStory = async (formData: StoryFormData, children: Child[], selectedTheme: StoryTheme): Promise<string> => {
     try {
+      console.log('Début de la création de l\'histoire');
+      
       const selectedChild = children.find(child => child.id === formData.childrenIds[0]);
       if (!selectedChild) {
         throw new Error("Enfant non trouvé");
       }
 
+      console.log('Génération du prompt avec:', { selectedTheme, objective: formData.objective, childName: selectedChild.name });
       const prompt = generateStoryPrompt(selectedTheme, formData.objective as StoryObjective, [selectedChild.name]);
       
-      // Appel de la Cloud Function
+      console.log('Appel de la Cloud Function generateStory');
       const functions = getFunctions();
       const generateStory = httpsCallable<{ prompt: string }, string>(functions, 'generateStory');
       
       const result = await generateStory({ prompt });
-      const generatedStory = result.data;
+      console.log('Réponse de la Cloud Function reçue');
       
+      const generatedStory = result.data;
       if (!generatedStory) {
         throw new Error("L'histoire n'a pas pu être générée");
       }
 
-      // Sauvegarde dans Firestore
+      console.log('Sauvegarde de l\'histoire dans Firestore');
       const storyData = {
         content: generatedStory,
         title: `Histoire pour ${selectedChild.name}`,
@@ -81,7 +85,8 @@ export const useStories = () => {
         createdAt: serverTimestamp()
       };
 
-      const docRef = await addDoc(collection(db, 'stories'), storyData);
+      const storiesCollection = collection(db, 'stories');
+      const docRef = await addDoc(storiesCollection, storyData);
       
       const newStory = {
         id: docRef.id,
@@ -92,6 +97,7 @@ export const useStories = () => {
       setStories(prev => [...prev, newStory]);
       setCurrentStory(generatedStory);
       
+      console.log('Histoire créée avec succès');
       toast({
         title: "Succès",
         description: "L'histoire a été créée et sauvegardée",
