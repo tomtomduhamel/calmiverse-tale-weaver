@@ -9,7 +9,7 @@ import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoriesCollection } from "@/hooks/useStoriesCollection";
 
 interface StoryFormProps {
-  onSubmit: (data: StoryFormData) => void;
+  onSubmit: (data: StoryFormData) => Promise<string>;
   children: Child[];
   onCreateChild: () => void;
 }
@@ -53,7 +53,9 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
       const generatedStory = await onSubmit(formData);
 
       // Sauvegarde de l'histoire dans Firestore
-      await saveStory(generatedStory, formData.childrenIds, formData.objective);
+      if (generatedStory) {
+        await saveStory(generatedStory, formData.childrenIds, formData.objective);
+      }
     } catch (error) {
       console.error("Erreur lors de la génération ou sauvegarde de l'histoire:", error);
       toast({
