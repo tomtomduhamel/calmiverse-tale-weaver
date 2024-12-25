@@ -21,7 +21,7 @@ export const useStories = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const { toast } = useToast();
 
-  const handleCreateStory = async (formData: StoryFormData, children: Child[], selectedTheme: StoryTheme) => {
+  const handleCreateStory = async (formData: StoryFormData, children: Child[], selectedTheme: StoryTheme): Promise<string> => {
     try {
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
@@ -33,6 +33,10 @@ export const useStories = () => {
       
       const result = await generateStory({ prompt });
       const generatedStory = result.data as string;
+      
+      if (!generatedStory) {
+        throw new Error("L'histoire n'a pas pu être générée");
+      }
       
       setCurrentStory(generatedStory);
       return generatedStory;
