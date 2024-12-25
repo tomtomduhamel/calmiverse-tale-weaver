@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { BookOpen, UserPlus } from "lucide-react";
 import type { Child } from "@/types/child";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
+import { initializeObjectives } from "@/utils/initializeObjectives";
 
 interface StoryFormProps {
   onSubmit: (data: StoryFormData) => void;
@@ -26,6 +27,22 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
 
   const { objectives, isLoading } = useStoryObjectives();
   const { toast } = useToast();
+
+  const handleInitializeObjectives = async () => {
+    try {
+      await initializeObjectives();
+      toast({
+        title: "Succès",
+        description: "Les objectifs ont été initialisés avec succès",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'initialisation des objectifs",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +83,16 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
       <h2 className="text-2xl font-semibold text-center mb-6 text-primary dark:text-primary-dark">
         Créer une histoire
       </h2>
+      
+      {/* Bouton temporaire pour initialiser les objectifs */}
+      <Button
+        type="button"
+        onClick={handleInitializeObjectives}
+        variant="outline"
+        className="w-full mb-4"
+      >
+        Initialiser les objectifs
+      </Button>
       
       <div className="space-y-4">
         <Label className="text-secondary dark:text-white">Pour qui est cette histoire ?</Label>
