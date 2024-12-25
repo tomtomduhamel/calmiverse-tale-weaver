@@ -26,7 +26,6 @@ export const useStories = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const { toast } = useToast();
 
-  // Charger les histoires au démarrage
   useEffect(() => {
     const loadStories = async () => {
       try {
@@ -54,21 +53,24 @@ export const useStories = () => {
   const handleCreateStory = async (formData: StoryFormData, children: Child[], selectedTheme: StoryTheme): Promise<string> => {
     try {
       const selectedChild = children.find(child => child.id === formData.childrenIds[0]);
-      if (!selectedChild) throw new Error("Enfant non trouvé");
+      if (!selectedChild) {
+        throw new Error("Enfant non trouvé");
+      }
 
       const prompt = generateStoryPrompt(selectedTheme, formData.objective as StoryObjective, [selectedChild.name]);
       
+      // Appel de la Cloud Function
       const functions = getFunctions();
-      const generateStory = httpsCallable(functions, 'generateStory');
+      const generateStory = httpsCallable<{ prompt: string }, string>(functions, 'generateStory');
       
       const result = await generateStory({ prompt });
-      const generatedStory = result.data as string;
+      const generatedStory = result.data;
       
       if (!generatedStory) {
         throw new Error("L'histoire n'a pas pu être générée");
       }
 
-      // Sauvegarder l'histoire dans Firestore
+      // Sauvegarde dans Firestore
       const storyData = {
         content: generatedStory,
         title: `Histoire pour ${selectedChild.name}`,
@@ -99,11 +101,13 @@ export const useStories = () => {
 
     } catch (error) {
       console.error("Error generating story:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la génération de l'histoire",
-        variant: "destructive",
-      });
+      if (error instanceof Error) {
+        toast({
+          title: "Erreur",
+          description: error.message || "Une erreur est survenue lors de la génération de l'histoire",
+          variant: "destructive",
+        });
+      }
       throw error;
     }
   };
