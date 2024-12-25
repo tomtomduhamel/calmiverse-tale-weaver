@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { getFunctions, httpsCallable } from "firebase/functions";
 import { collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Child } from "@/types/child";
@@ -17,6 +16,7 @@ interface Story {
   objective: string;
   childId: string;
   createdAt: Date;
+  status: 'pending' | 'completed';
 }
 
 type StoryObjective = "sleep" | "relax" | "focus";
@@ -52,36 +52,22 @@ export const useStories = () => {
 
   const handleCreateStory = async (formData: StoryFormData, children: Child[], selectedTheme: StoryTheme): Promise<string> => {
     try {
-      console.log('Début de la création de l\'histoire');
+      console.log('Début de la création de la demande d\'histoire');
       
       const selectedChild = children.find(child => child.id === formData.childrenIds[0]);
       if (!selectedChild) {
         throw new Error("Enfant non trouvé");
       }
 
-      console.log('Génération du prompt avec:', { selectedTheme, objective: formData.objective, childName: selectedChild.name });
-      const prompt = generateStoryPrompt(selectedTheme, formData.objective as StoryObjective, [selectedChild.name]);
-      
-      console.log('Appel de la Cloud Function generateStory');
-      const functions = getFunctions();
-      const generateStory = httpsCallable<{ prompt: string }, string>(functions, 'generateStory');
-      
-      const result = await generateStory({ prompt });
-      console.log('Réponse de la Cloud Function reçue');
-      
-      const generatedStory = result.data;
-      if (!generatedStory) {
-        throw new Error("L'histoire n'a pas pu être générée");
-      }
-
-      console.log('Sauvegarde de l\'histoire dans Firestore');
+      // Création d'une nouvelle demande d'histoire dans Firestore
       const storyData = {
-        content: generatedStory,
         title: `Histoire pour ${selectedChild.name}`,
-        preview: generatedStory.substring(0, 200) + "...",
+        content: "", // Sera rempli par Make.com
+        preview: "Histoire en cours de génération...",
         theme: selectedTheme.name,
         objective: formData.objective,
         childId: selectedChild.id,
+        status: 'pending',
         createdAt: serverTimestamp()
       };
 
@@ -92,25 +78,24 @@ export const useStories = () => {
         id: docRef.id,
         ...storyData,
         createdAt: new Date()
-      };
+      } as Story;
 
       setStories(prev => [...prev, newStory]);
-      setCurrentStory(generatedStory);
       
-      console.log('Histoire créée avec succès');
+      console.log('Demande d\'histoire créée avec succès');
       toast({
         title: "Succès",
-        description: "L'histoire a été créée et sauvegardée",
+        description: "La demande d'histoire a été créée. L'histoire sera générée sous peu.",
       });
 
-      return generatedStory;
+      return "pending";
 
     } catch (error) {
-      console.error("Error generating story:", error);
+      console.error("Error creating story request:", error);
       if (error instanceof Error) {
         toast({
           title: "Erreur",
-          description: error.message || "Une erreur est survenue lors de la génération de l'histoire",
+          description: error.message || "Une erreur est survenue lors de la création de la demande d'histoire",
           variant: "destructive",
         });
       }

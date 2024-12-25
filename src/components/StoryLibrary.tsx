@@ -13,6 +13,7 @@ interface Story {
   theme: string;
   objective: string;
   createdAt: Date;
+  status: 'pending' | 'completed';
 }
 
 interface StoryLibraryProps {
@@ -45,7 +46,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         <Card 
           key={story.id} 
           className="p-4 hover:shadow-lg transition-shadow animate-slide-in relative cursor-pointer"
-          onClick={() => onSelectStory(story)}
+          onClick={() => story.status === 'completed' ? onSelectStory(story) : null}
         >
           <div className="absolute top-2 right-2">
             <Button
@@ -66,15 +67,24 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
             <span className="text-xs bg-secondary/20 px-2 py-1 rounded-full">
               {story.objective}
             </span>
+            <span className={`text-xs px-2 py-1 rounded-full ${
+              story.status === 'pending' 
+                ? 'bg-yellow-200 text-yellow-800' 
+                : 'bg-green-200 text-green-800'
+            }`}>
+              {story.status === 'pending' ? 'En cours' : 'Terminée'}
+            </span>
           </div>
           <p className="text-xs text-gray-500 mt-2">
             Créée le {format(story.createdAt, "d MMMM yyyy", { locale: fr })}
           </p>
-          <Button
-            className="w-full bg-accent hover:bg-accent/90 mt-4"
-          >
-            Lire
-          </Button>
+          {story.status === 'completed' && (
+            <Button
+              className="w-full bg-accent hover:bg-accent/90 mt-4"
+            >
+              Lire
+            </Button>
+          )}
         </Card>
       ))}
     </div>
