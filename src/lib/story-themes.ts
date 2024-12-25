@@ -2,12 +2,29 @@ import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import type { StoryTheme, StoryObjective } from '@/types/story-theme';
 
+const DEFAULT_THEME: Omit<StoryTheme, 'id'> = {
+  name: "Histoire magique",
+  description: "Une histoire magique et apaisante",
+  prompt: `Crée une histoire magique et apaisante pour {children}. 
+    L'histoire doit être adaptée à leur âge et inclure des éléments magiques et réconfortants.
+    Si l'objectif est {objective}, l'histoire doit particulièrement se concentrer sur cet aspect.`
+};
+
 export const getStoryThemes = async (): Promise<StoryTheme[]> => {
   try {
     console.log('Fetching story themes from Firestore...');
     const themesCollection = collection(db, 'story_themes');
     const snapshot = await getDocs(themesCollection);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StoryTheme));
+    const themes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StoryTheme));
+    
+    // Si aucun thème n'existe, créer le thème par défaut
+    if (themes.length === 0) {
+      console.log('No themes found, creating default theme...');
+      const docRef = await addDoc(themesCollection, DEFAULT_THEME);
+      return [{ id: docRef.id, ...DEFAULT_THEME }];
+    }
+    
+    return themes;
   } catch (error) {
     console.error('Error fetching story themes:', error);
     throw error;
