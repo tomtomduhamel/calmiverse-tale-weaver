@@ -19,26 +19,30 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose }) => {
             <Button
               variant="outline"
               onClick={() => setFontSize((prev) => Math.max(12, prev - 2))}
-              className="w-10 h-10"
+              className="w-10 h-10 dark:text-white dark:hover:text-white"
             >
               A-
             </Button>
             <Button
               variant="outline"
               onClick={() => setFontSize((prev) => Math.min(24, prev + 2))}
-              className="w-10 h-10"
+              className="w-10 h-10 dark:text-white dark:hover:text-white"
             >
               A+
             </Button>
             <Button
               variant="outline"
               onClick={() => setIsDarkMode((prev) => !prev)}
-              className="w-10 h-10"
+              className="w-10 h-10 dark:text-white dark:hover:text-white"
             >
               {isDarkMode ? "☀️" : "🌙"}
             </Button>
           </div>
-          <Button variant="ghost" onClick={onClose}>
+          <Button 
+            variant="ghost" 
+            onClick={onClose}
+            className="dark:text-white dark:hover:text-white"
+          >
             Fermer
           </Button>
         </div>
