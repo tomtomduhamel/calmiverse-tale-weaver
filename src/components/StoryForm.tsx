@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { BookOpen, UserPlus } from "lucide-react";
 import type { Child } from "@/types/child";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
+import { useStoriesCollection } from "@/hooks/useStoriesCollection";
 
 interface StoryFormProps {
   onSubmit: (data: StoryFormData) => void;
@@ -25,9 +26,10 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
   });
 
   const { objectives, isLoading } = useStoryObjectives();
+  const { saveStory } = useStoriesCollection();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.childrenIds.length === 0) {
       toast({
@@ -45,7 +47,21 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
       });
       return;
     }
-    onSubmit(formData);
+
+    try {
+      // Appel de la fonction originale pour générer l'histoire
+      const generatedStory = await onSubmit(formData);
+
+      // Sauvegarde de l'histoire dans Firestore
+      await saveStory(generatedStory, formData.childrenIds, formData.objective);
+    } catch (error) {
+      console.error("Erreur lors de la génération ou sauvegarde de l'histoire:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création de l'histoire",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleChildToggle = (childId: string) => {

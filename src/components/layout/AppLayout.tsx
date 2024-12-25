@@ -1,7 +1,7 @@
 import React from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { ViewType } from "@/types/views";
 
 interface AppLayoutProps {
@@ -11,19 +11,33 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children, currentView, onViewChange }) => {
+  const navigate = useNavigate();
+
+  const handleLogoClick = () => {
+    onViewChange("home");
+    navigate("/");
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gradient-serene w-full">
         <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm shadow-sm z-50">
           <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
-            <Link to="/" className="flex items-center gap-2">
+            <div 
+              onClick={handleLogoClick}
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <img 
-                src="/lovable-uploads/08b9555a-5430-4317-9aa0-2652884e8414.png" 
+                src="/lovable-uploads/19ebb6ec-fb66-480b-af41-e09a5e6eaf73.png" 
                 alt="Calmi Logo" 
                 className="h-8 w-auto"
               />
-              <span className="text-xl font-semibold text-secondary">Calmi</span>
-            </Link>
+              <img 
+                src="/lovable-uploads/f43b0052-5023-41e6-9ebb-c5e58ec7cbfb.png" 
+                alt="Calmi Text" 
+                className="h-8 w-auto"
+              />
+            </div>
           </div>
         </header>
 
