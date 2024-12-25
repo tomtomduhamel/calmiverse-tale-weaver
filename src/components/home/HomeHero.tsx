@@ -1,5 +1,5 @@
 import React from "react";
-import { BookOpen, Users } from "lucide-react";
+import { BookOpen, Users, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ViewType } from "@/types/views";
 
@@ -39,6 +39,13 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
         >
           <Users className="h-5 w-5 mr-2" />
           L'univers des enfants
+        </Button>
+        <Button
+          onClick={() => onViewChange("library")}
+          className="bg-secondary hover:bg-secondary/90 text-secondary-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg transition-all hover:shadow-xl"
+        >
+          <Library className="h-5 w-5 mr-2" />
+          Accéder à la bibliothèque
         </Button>
       </div>
     </div>
