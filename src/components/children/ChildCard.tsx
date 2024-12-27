@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type { Child } from "@/types/child";
 
 interface ChildCardProps {
@@ -11,20 +11,24 @@ interface ChildCardProps {
 }
 
 const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Évite de déclencher l'édition si on clique sur le bouton de suppression
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    onEdit(child);
+  };
+
   return (
-    <Card className="p-4 relative transition-all duration-300
-      bg-gradient-to-br from-card-start to-card-end
-      hover:from-card-hover-start hover:to-card-hover-end
-      shadow-soft hover:shadow-soft-lg">
-      <div className="absolute top-2 right-2 flex gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-secondary hover:text-secondary-dark bg-white/80 hover:bg-white/90"
-          onClick={() => onEdit(child)}
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
+    <Card 
+      className="p-4 relative transition-all duration-300 cursor-pointer
+        bg-gradient-to-br from-card-start to-card-end
+        hover:from-card-hover-start hover:to-card-hover-end
+        shadow-soft hover:shadow-soft-lg
+        active:scale-98"
+      onClick={handleCardClick}
+    >
+      <div className="absolute top-2 right-2">
         <Button
           variant="ghost"
           size="icon"
