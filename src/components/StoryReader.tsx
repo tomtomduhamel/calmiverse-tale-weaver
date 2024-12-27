@@ -29,10 +29,11 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
   }
 
   const getObjectiveText = (objective: Story['objective']) => {
+    if (!objective) return "";
     if (typeof objective === 'string') {
       return objective;
     }
-    return objective.name;
+    return objective.name || "";
   };
 
   return (
