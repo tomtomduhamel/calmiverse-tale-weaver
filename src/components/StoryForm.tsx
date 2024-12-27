@@ -27,7 +27,6 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
   });
 
   const { objectives, isLoading } = useStoryObjectives();
-  const { saveStory } = useStoriesCollection();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,14 +51,13 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
     try {
       // Appel de la fonction originale pour générer l'histoire
       const generatedStory = await onSubmit(formData);
-
-      // Sauvegarde de l'histoire dans Firestore
+      
+      // On ne sauvegarde plus l'histoire ici car elle est déjà sauvegardée dans useStories
       if (generatedStory) {
-        const savedStory = await saveStory(generatedStory, formData.childrenIds, formData.objective);
-        onStoryCreated(savedStory);
+        onStoryCreated(generatedStory);
       }
     } catch (error) {
-      console.error("Erreur lors de la génération ou sauvegarde de l'histoire:", error);
+      console.error("Erreur lors de la génération de l'histoire:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de l'histoire",
