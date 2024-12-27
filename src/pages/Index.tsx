@@ -24,7 +24,6 @@ const Index = () => {
   const handleStorySubmit = async (formData: StoryFormData): Promise<string> => {
     try {
       const story = await handleCreateStory(formData, children);
-      setCurrentView("reader");
       return story;
     } catch (error) {
       console.error("Erreur lors de la création de l'histoire:", error);
@@ -35,6 +34,11 @@ const Index = () => {
       });
       throw error;
     }
+  };
+
+  const handleStoryCreated = (story: Story) => {
+    setCurrentStory(story);
+    setCurrentView("reader");
   };
 
   const handleCloseReader = () => {
@@ -54,6 +58,7 @@ const Index = () => {
             onSubmit={handleStorySubmit}
             children={children} 
             onCreateChild={handleCreateChildFromStory}
+            onStoryCreated={handleStoryCreated}
           />
         </div>
       )}
@@ -71,13 +76,7 @@ const Index = () => {
         <StoryLibrary
           stories={stories}
           onSelectStory={(story: Story) => {
-            const completeStory: Story = {
-              ...story,
-              childrenIds: story.childrenIds || [],
-              story_text: story.story_text || "",
-              story_summary: story.story_summary || "",
-            };
-            setCurrentStory(completeStory);
+            setCurrentStory(story);
             setCurrentView("reader");
           }}
           onDeleteStory={handleDeleteStory}
@@ -85,7 +84,7 @@ const Index = () => {
         />
       )}
 
-      {currentView === "reader" && currentStory && (
+      {currentView === "reader" && (
         <StoryReader
           story={currentStory}
           onClose={handleCloseReader}

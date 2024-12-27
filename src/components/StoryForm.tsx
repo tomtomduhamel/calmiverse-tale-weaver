@@ -12,6 +12,7 @@ interface StoryFormProps {
   onSubmit: (data: StoryFormData) => Promise<string>;
   children: Child[];
   onCreateChild: () => void;
+  onStoryCreated: (story: any) => void;
 }
 
 export interface StoryFormData {
@@ -19,7 +20,7 @@ export interface StoryFormData {
   objective: string;
 }
 
-const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild }) => {
+const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild, onStoryCreated }) => {
   const [formData, setFormData] = useState<StoryFormData>({
     childrenIds: [],
     objective: "",
@@ -54,7 +55,8 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
 
       // Sauvegarde de l'histoire dans Firestore
       if (generatedStory) {
-        await saveStory(generatedStory, formData.childrenIds, formData.objective);
+        const savedStory = await saveStory(generatedStory, formData.childrenIds, formData.objective);
+        onStoryCreated(savedStory);
       }
     } catch (error) {
       console.error("Erreur lors de la génération ou sauvegarde de l'histoire:", error);
