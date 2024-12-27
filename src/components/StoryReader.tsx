@@ -31,12 +31,10 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
   const getObjectiveText = (objective: Story['objective']) => {
     if (!objective) return "Objectif non défini";
     
-    // Si l'objectif est un objet avec une propriété name
-    if (typeof objective === 'object' && objective.name) {
-      return objective.name;
+    if (typeof objective === 'object' && objective.value) {
+      return objective.value;
     }
     
-    // Si l'objectif est une chaîne de caractères
     if (typeof objective === 'string') {
       return objective;
     }

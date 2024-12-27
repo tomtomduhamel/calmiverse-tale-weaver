@@ -144,7 +144,7 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
               }`}
             >
               {getObjectiveIcon(objective.value)}
-              <span className="flex-1">{objective.name}</span>
+              <span className="flex-1">{objective.value}</span>
             </Button>
           ))}
         </div>

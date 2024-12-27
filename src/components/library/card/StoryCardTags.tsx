@@ -13,7 +13,7 @@ const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags, objective, status }
     if (typeof objective === 'string') {
       return objective;
     }
-    return objective.name;
+    return objective.value;
   };
 
   return (
