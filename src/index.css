@@ -62,7 +62,7 @@
   body {
     @apply bg-background text-foreground transition-colors duration-300 min-h-screen overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
-    background: linear-gradient(to bottom, #1A2238 0%, #457B9D 50%, #D6EAF8 100%);
+    background: linear-gradient(180deg, #1A2238, #457B9D, #D6EAF8);
   }
 }
 
@@ -137,4 +137,3 @@
 .shadow-soft-lg {
   @apply shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)];
 }
-
