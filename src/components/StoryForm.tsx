@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BookOpen, UserPlus, Target } from "lucide-react";
+import { BookOpen, UserPlus, Moon, Brain, Heart, Star } from "lucide-react";
 import type { Child } from "@/types/child";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoriesCollection } from "@/hooks/useStoriesCollection";
@@ -76,6 +76,19 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
     return <div>Chargement des objectifs...</div>;
   }
 
+  const getObjectiveIcon = (value: string) => {
+    switch (value) {
+      case "sleep":
+        return <Moon className="w-5 h-5 shrink-0" />;
+      case "focus":
+        return <Brain className="w-5 h-5 shrink-0" />;
+      case "relax":
+        return <Heart className="w-5 h-5 shrink-0" />;
+      default:
+        return <Star className="w-5 h-5 shrink-0" />;
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
       <h2 className="text-2xl font-semibold text-center mb-6 text-primary dark:text-primary-dark">
@@ -124,14 +137,14 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
               type="button"
               variant={formData.objective === objective.value ? "default" : "outline"}
               onClick={() => setFormData({ ...formData, objective: objective.value })}
-              className={`flex items-center justify-start gap-2 p-4 h-auto text-left ${
+              className={`flex items-center justify-start gap-3 p-4 h-auto text-left min-h-[64px] ${
                 formData.objective === objective.value 
                 ? "bg-primary text-primary-foreground hover:bg-primary/90" 
                 : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
               }`}
             >
-              <Target className="w-5 h-5 shrink-0" />
-              <span>{objective.name}</span>
+              {getObjectiveIcon(objective.value)}
+              <span className="flex-1">{objective.name}</span>
             </Button>
           ))}
         </div>
