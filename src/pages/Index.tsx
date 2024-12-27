@@ -73,7 +73,6 @@ const Index = () => {
           onSelectStory={(story: Story) => {
             const completeStory: Story = {
               ...story,
-              content: story.content || "",
               childrenIds: story.childrenIds || [],
               story_text: story.story_text || "",
               story_summary: story.story_summary || "",

@@ -71,7 +71,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose }) => {
             style={{ fontSize: `${fontSize}px` }}
             className="prose max-w-none animate-fade-in"
           >
-            {story.story_text || story.content}
+            {story.story_text}
           </div>
         </Card>
       </div>
