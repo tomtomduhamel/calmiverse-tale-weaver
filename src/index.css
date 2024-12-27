@@ -62,6 +62,7 @@
   body {
     @apply bg-background text-foreground transition-colors duration-300 min-h-screen overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background: linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #1A2238 100%);
   }
 }
 

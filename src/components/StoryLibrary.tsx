@@ -39,13 +39,21 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
     }
   };
 
+  const handleCardClick = (story: Story) => {
+    if (story.status === 'completed') {
+      onSelectStory(story);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
       {stories.map((story) => (
         <Card 
           key={story.id} 
-          className="p-4 hover:shadow-lg transition-shadow animate-slide-in relative cursor-pointer"
-          onClick={() => story.status === 'completed' ? onSelectStory(story) : null}
+          className={`p-4 hover:shadow-lg transition-shadow animate-slide-in relative cursor-pointer ${
+            story.status === 'completed' ? 'hover:scale-105' : ''
+          }`}
+          onClick={() => handleCardClick(story)}
         >
           <div className="absolute top-2 right-2">
             <Button
