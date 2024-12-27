@@ -1,7 +1,6 @@
 export interface Story {
   id: string;
   title: string;
-  content: string;
   preview: string;
   objective: string;
   childrenIds: string[];

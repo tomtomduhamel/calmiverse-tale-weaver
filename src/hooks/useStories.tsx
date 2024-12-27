@@ -46,10 +46,9 @@ export const useStories = () => {
 
       const storyData = {
         title: `Histoire pour ${selectedChild.name}`,
-        content: "", // Sera rempli par Make.com
         preview: "Histoire en cours de génération...",
         objective: formData.objective,
-        childrenIds: formData.childrenIds, // Utilisation de childrenIds au lieu de childId
+        childrenIds: formData.childrenIds,
         status: 'pending' as const,
         story_text: "",
         story_summary: "Résumé en cours de génération...",

@@ -139,11 +139,9 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
             </h3>
           )}
 
-          {story.story_summary && (
-            <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-              {story.story_summary}
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+            {story.preview}
+          </p>
 
           <div className="flex gap-2 mb-4">
             <span className="text-xs bg-secondary/20 text-secondary-dark px-2 py-1 rounded-full">

@@ -10,13 +10,18 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   const navigate = useNavigate();
 
+  const handleHomeClick = () => {
+    navigate("/");
+    window.location.reload(); // Force reload to reset all states
+  };
+
   return (
     <main className="min-h-screen bg-gradient-night w-full">
       <header className="fixed top-0 left-0 right-0 bg-[#D6EAF8]/80 backdrop-blur-sm shadow-sm z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex justify-center items-center">
           <div 
             className="flex items-center gap-2 cursor-pointer" 
-            onClick={() => navigate("/")}
+            onClick={handleHomeClick}
           >
             <img 
               src="/lovable-uploads/19ebb6ec-fb66-480b-af41-e09a5e6eaf73.png" 
