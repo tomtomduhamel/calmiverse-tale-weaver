@@ -96,7 +96,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
 
           <div className="mb-6 bg-secondary/10 p-4 rounded-lg">
             <h3 className="text-lg font-semibold mb-2">Objectif de l'histoire</h3>
-            <p className="text-muted-foreground">{story.objective}</p>
+            <p className="text-muted-foreground">{story.objective?.name || story.objective}</p>
           </div>
 
           <div
