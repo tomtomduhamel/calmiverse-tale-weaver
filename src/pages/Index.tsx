@@ -81,10 +81,11 @@ const Index = () => {
             setCurrentView("reader");
           }}
           onDeleteStory={handleDeleteStory}
+          onViewChange={setCurrentView}
         />
       )}
 
-      {currentView === "reader" && (
+      {currentView === "reader" && currentStory && (
         <StoryReader
           story={currentStory}
           onClose={handleCloseReader}
