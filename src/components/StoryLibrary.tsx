@@ -55,7 +55,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
             bg-gradient-to-br from-card-start to-card-end
             hover:from-card-hover-start hover:to-card-hover-end
             shadow-soft hover:shadow-soft-lg
-            ${story.status === 'completed' ? 'hover:scale-105' : ''}
+            ${story.status === 'completed' ? 'hover:scale-105 active:scale-98' : ''}
           `}
           onClick={() => handleCardClick(story)}
         >
