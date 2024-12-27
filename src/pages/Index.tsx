@@ -6,6 +6,7 @@ import ChildrenProfiles from "@/components/ChildrenProfiles";
 import HomeHero from "@/components/home/HomeHero";
 import type { ViewType } from "@/types/views";
 import type { StoryFormData } from "@/components/StoryForm";
+import type { Story } from "@/types/story";
 import { useToast } from "@/hooks/use-toast";
 import { useChildren } from "@/hooks/useChildren";
 import { useStories } from "@/hooks/useStories";
@@ -64,8 +65,16 @@ const Index = () => {
       {currentView === "library" && (
         <StoryLibrary
           stories={stories}
-          onSelectStory={(story) => {
-            setCurrentStory(story);
+          onSelectStory={(story: Story) => {
+            // Ensure all required properties are present
+            const completeStory: Story = {
+              ...story,
+              content: story.content || "",
+              childrenIds: story.childrenIds || [],
+              story_text: story.story_text || "",
+              story_summary: story.story_summary || "",
+            };
+            setCurrentStory(completeStory);
             setCurrentView("reader");
           }}
           onDeleteStory={handleDeleteStory}
