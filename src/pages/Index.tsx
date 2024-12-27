@@ -55,7 +55,6 @@ const Index = () => {
       toast({
         title: "Histoire en cours de génération",
         description: "Cette histoire n'est pas encore disponible à la lecture",
-        variant: "warning",
       });
     }
   };
