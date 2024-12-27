@@ -37,6 +37,11 @@ const Index = () => {
     }
   };
 
+  const handleCloseReader = () => {
+    setCurrentView("library");
+    setCurrentStory(null);
+  };
+
   return (
     <>
       {currentView === "home" && (
@@ -66,7 +71,6 @@ const Index = () => {
         <StoryLibrary
           stories={stories}
           onSelectStory={(story: Story) => {
-            // Ensure all required properties are present
             const completeStory: Story = {
               ...story,
               content: story.content || "",
@@ -84,7 +88,7 @@ const Index = () => {
       {currentView === "reader" && (
         <StoryReader
           story={currentStory}
-          onClose={() => setCurrentView("library")}
+          onClose={handleCloseReader}
         />
       )}
     </>
