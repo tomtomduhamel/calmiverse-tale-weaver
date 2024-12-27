@@ -1,17 +1,25 @@
 import React from "react";
 import { Tag } from "lucide-react";
+import type { Story } from "@/types/story";
 
 interface StoryCardTagsProps {
   tags: string[];
-  objective: string;
+  objective: Story['objective'];
   status: 'pending' | 'completed';
 }
 
 const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags, objective, status }) => {
+  const getObjectiveText = (objective: Story['objective']) => {
+    if (typeof objective === 'string') {
+      return objective;
+    }
+    return objective.name;
+  };
+
   return (
     <div className="flex flex-wrap gap-2 mb-4">
       <span className="text-xs bg-secondary/20 text-secondary-dark px-2 py-1 rounded-full">
-        {objective}
+        {getObjectiveText(objective)}
       </span>
       <span className={`text-xs px-2 py-1 rounded-full ${
         status === 'pending' 
