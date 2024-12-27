@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
 import LibraryHeader from "./library/LibraryHeader";
-import StoryFilters from "./library/StoryFilters";
+import LibraryFilters from "./library/filters/LibraryFilters";
 import StoryGrid from "./library/StoryGrid";
 import Pagination from "./library/Pagination";
 
@@ -58,7 +58,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         onCreateStory={() => onViewChange?.("create")}
       />
 
-      <StoryFilters
+      <LibraryFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         statusFilter={statusFilter}
