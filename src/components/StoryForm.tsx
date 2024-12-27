@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BookOpen, UserPlus } from "lucide-react";
+import { BookOpen, UserPlus, Target } from "lucide-react";
 import type { Child } from "@/types/child";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoriesCollection } from "@/hooks/useStoriesCollection";
@@ -49,10 +49,7 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
     }
 
     try {
-      // Appel de la fonction originale pour générer l'histoire
       const generatedStory = await onSubmit(formData);
-      
-      // On ne sauvegarde plus l'histoire ici car elle est déjà sauvegardée dans useStories
       if (generatedStory) {
         onStoryCreated(generatedStory);
       }
@@ -116,23 +113,28 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="objective" className="text-secondary dark:text-white">
+      <div className="space-y-4">
+        <Label className="text-secondary dark:text-white">
           Je souhaite créer un moment de lecture qui va...
         </Label>
-        <select
-          id="objective"
-          value={formData.objective}
-          onChange={(e) => setFormData({ ...formData, objective: e.target.value })}
-          className="w-full p-2 rounded-lg border bg-white dark:bg-muted-dark hover:border-primary dark:hover:border-primary-dark focus:border-primary dark:focus:border-primary-dark focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary-dark/20 transition-colors"
-        >
-          <option value="">Sélectionnez un objectif</option>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {objectives.map((objective) => (
-            <option key={objective.id} value={objective.value}>
-              {objective.name}
-            </option>
+            <Button
+              key={objective.id}
+              type="button"
+              variant={formData.objective === objective.value ? "default" : "outline"}
+              onClick={() => setFormData({ ...formData, objective: objective.value })}
+              className={`flex items-center justify-start gap-2 p-4 h-auto text-left ${
+                formData.objective === objective.value 
+                ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
+              }`}
+            >
+              <Target className="w-5 h-5 shrink-0" />
+              <span>{objective.name}</span>
+            </Button>
           ))}
-        </select>
+        </div>
       </div>
 
       <Button 
