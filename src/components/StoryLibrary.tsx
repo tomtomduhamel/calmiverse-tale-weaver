@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
-import SearchBar from "./library/SearchBar";
-import StatusFilter from "./library/StatusFilter";
-import StoryCard from "./library/StoryCard";
-import Pagination from "./library/Pagination";
 import LibraryHeader from "./library/LibraryHeader";
+import StoryFilters from "./library/StoryFilters";
+import StoryGrid from "./library/StoryGrid";
+import Pagination from "./library/Pagination";
 
 interface StoryLibraryProps {
   stories: Story[];
@@ -66,29 +64,18 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         onCreateStory={() => onViewChange?.("create")}
       />
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <SearchBar 
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-        />
-        <StatusFilter
-          value={statusFilter}
-          onChange={setStatusFilter}
-        />
-      </div>
+      <StoryFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+      />
 
-      <ScrollArea className="h-[calc(100vh-300px)]">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {currentStories.map((story) => (
-            <StoryCard
-              key={story.id}
-              story={story}
-              onDelete={(e) => handleDelete(e, story.id)}
-              onClick={() => handleCardClick(story)}
-            />
-          ))}
-        </div>
-      </ScrollArea>
+      <StoryGrid
+        stories={currentStories}
+        onDelete={handleDelete}
+        onCardClick={handleCardClick}
+      />
 
       <Pagination
         currentPage={currentPage}
