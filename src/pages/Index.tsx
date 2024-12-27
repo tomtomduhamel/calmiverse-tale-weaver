@@ -7,7 +7,6 @@ import HomeHero from "@/components/home/HomeHero";
 import AppLayout from "@/components/layout/AppLayout";
 import { useChildren } from "@/hooks/useChildren";
 import { useStories } from "@/hooks/useStories";
-import { useStoryThemes } from "@/hooks/useStoryThemes";
 import type { ViewType } from "@/types/views";
 import type { StoryFormData } from "@/components/StoryForm";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +15,6 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useChildren();
   const { stories, currentStory, handleCreateStory, handleDeleteStory, setCurrentStory } = useStories();
-  const { themes, isLoading } = useStoryThemes();
   const { toast } = useToast();
 
   const handleCreateChildFromStory = () => {
@@ -25,16 +23,7 @@ const Index = () => {
 
   const handleStorySubmit = async (formData: StoryFormData): Promise<string> => {
     try {
-      if (isLoading) {
-        throw new Error("Chargement des thèmes en cours...");
-      }
-
-      if (!themes || themes.length === 0) {
-        throw new Error("Aucun thème disponible");
-      }
-
-      const selectedTheme = themes[0];
-      const story = await handleCreateStory(formData, children, selectedTheme);
+      const story = await handleCreateStory(formData, children);
       setCurrentView("reader");
       return story;
     } catch (error) {
