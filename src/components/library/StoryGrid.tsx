@@ -18,7 +18,10 @@ const StoryGrid: React.FC<StoryGridProps> = ({ stories, onDelete, onCardClick })
             key={story.id}
             story={story}
             onDelete={(e) => onDelete(e, story.id)}
-            onClick={() => onCardClick(story)}
+            onClick={() => {
+              console.log("Card clicked, story:", story);
+              onCardClick(story);
+            }}
           />
         ))}
       </div>
