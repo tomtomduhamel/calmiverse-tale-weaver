@@ -28,6 +28,13 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
     );
   }
 
+  const getObjectiveText = (objective: Story['objective']) => {
+    if (typeof objective === 'string') {
+      return objective;
+    }
+    return objective.name;
+  };
+
   return (
     <div className={`min-h-screen p-4 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
       <div className="max-w-3xl mx-auto">
@@ -96,7 +103,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
 
           <div className="mb-6 bg-secondary/10 p-4 rounded-lg">
             <h3 className="text-lg font-semibold mb-2">Objectif de l'histoire</h3>
-            <p className="text-muted-foreground">{story.objective?.name || story.objective}</p>
+            <p className="text-muted-foreground">{getObjectiveText(story.objective)}</p>
           </div>
 
           <div

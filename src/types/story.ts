@@ -2,7 +2,7 @@ export interface Story {
   id: string;
   title: string;
   preview: string;
-  objective: string;
+  objective: string | { name: string; value: string };
   childrenIds: string[];
   createdAt: Date;
   status: 'pending' | 'completed';
