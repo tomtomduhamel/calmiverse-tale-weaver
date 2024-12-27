@@ -47,8 +47,17 @@ const Index = () => {
   };
 
   const handleSelectStory = (story: Story) => {
-    setCurrentStory(story);
-    setCurrentView("reader");
+    console.log("Sélection de l'histoire:", story);
+    if (story.status === 'completed') {
+      setCurrentStory(story);
+      setCurrentView("reader");
+    } else {
+      toast({
+        title: "Histoire en cours de génération",
+        description: "Cette histoire n'est pas encore disponible à la lecture",
+        variant: "warning",
+      });
+    }
   };
 
   return (

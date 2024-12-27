@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -72,23 +72,33 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
     }
   };
 
+  const handleCardClick = () => {
+    if (story.status === 'pending') {
+      toast({
+        title: "Histoire en cours de génération",
+        description: "Cette histoire n'est pas encore disponible à la lecture",
+        variant: "warning",
+      });
+      return;
+    }
+    onClick();
+  };
+
   return (
     <Card 
       className={`
-        p-4 transition-all duration-300 relative cursor-pointer
+        p-4 transition-all duration-300 relative
         bg-gradient-to-br from-card-start to-card-end
         hover:from-card-hover-start hover:to-card-hover-end
         shadow-soft hover:shadow-soft-lg animate-fade-in
-        ${story.status === 'completed' ? 'hover:scale-105 active:scale-98' : ''}
+        ${story.status === 'completed' ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
       `}
-      onClick={story.status === 'completed' ? onClick : undefined}
-      role="button"
-      tabIndex={0}
+      onClick={handleCardClick}
+      role={story.status === 'completed' ? "button" : undefined}
+      tabIndex={story.status === 'completed' ? 0 : undefined}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          if (story.status === 'completed') {
-            onClick();
-          }
+        if (story.status === 'completed' && (e.key === 'Enter' || e.key === ' ')) {
+          handleCardClick();
         }
       }}
     >
@@ -122,16 +132,24 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         Créée le {format(story.createdAt, "d MMMM yyyy", { locale: fr })}
       </p>
       
-      {story.status === 'completed' && (
+      {story.status === 'completed' ? (
         <Button
           className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-4 flex items-center gap-2"
           onClick={(e) => {
             e.stopPropagation();
-            onClick();
+            handleCardClick();
           }}
         >
           <BookOpen className="w-4 h-4" />
           Lire l'histoire complète
+        </Button>
+      ) : (
+        <Button
+          className="w-full bg-secondary/50 cursor-not-allowed mt-4 flex items-center gap-2"
+          disabled
+        >
+          <Clock className="w-4 h-4" />
+          Génération en cours...
         </Button>
       )}
     </Card>
