@@ -46,6 +46,11 @@ const Index = () => {
     setCurrentStory(null);
   };
 
+  const handleSelectStory = (story: Story) => {
+    setCurrentStory(story);
+    setCurrentView("reader");
+  };
+
   return (
     <>
       {currentView === "home" && (
@@ -75,10 +80,7 @@ const Index = () => {
       {currentView === "library" && (
         <StoryLibrary
           stories={stories}
-          onSelectStory={(story: Story) => {
-            setCurrentStory(story);
-            setCurrentView("reader");
-          }}
+          onSelectStory={handleSelectStory}
           onDeleteStory={handleDeleteStory}
           onViewChange={setCurrentView}
         />
