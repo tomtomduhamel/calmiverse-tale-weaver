@@ -4,15 +4,12 @@ import { collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc, 
 import { db } from '@/lib/firebase';
 import type { Child } from "@/types/child";
 import type { StoryFormData } from "@/components/StoryForm";
-import { generateStoryPrompt } from "@/lib/story-themes";
-import type { StoryTheme } from "@/types/story-theme";
 
 interface Story {
   id: string;
   title: string;
   content: string;
   preview: string;
-  theme: string;
   objective: string;
   childId: string;
   createdAt: Date;
@@ -50,7 +47,7 @@ export const useStories = () => {
     loadStories();
   }, [toast]);
 
-  const handleCreateStory = async (formData: StoryFormData, children: Child[], selectedTheme: StoryTheme): Promise<string> => {
+  const handleCreateStory = async (formData: StoryFormData, children: Child[]): Promise<string> => {
     try {
       console.log('Début de la création de la demande d\'histoire');
       
@@ -64,7 +61,6 @@ export const useStories = () => {
         title: `Histoire pour ${selectedChild.name}`,
         content: "", // Sera rempli par Make.com
         preview: "Histoire en cours de génération...",
-        theme: selectedTheme.name,
         objective: formData.objective,
         childId: selectedChild.id,
         status: 'pending',

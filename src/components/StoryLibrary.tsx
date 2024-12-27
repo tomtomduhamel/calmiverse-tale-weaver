@@ -10,7 +10,6 @@ interface Story {
   id: string;
   title: string;
   preview: string;
-  theme: string;
   objective: string;
   createdAt: Date;
   status: 'pending' | 'completed';
@@ -61,9 +60,6 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
           <h3 className="text-lg font-semibold mb-2">{story.title}</h3>
           <p className="text-sm text-gray-600 mb-4">{story.preview}</p>
           <div className="flex gap-2 mb-4">
-            <span className="text-xs bg-primary/20 px-2 py-1 rounded-full">
-              {story.theme}
-            </span>
             <span className="text-xs bg-secondary/20 px-2 py-1 rounded-full">
               {story.objective}
             </span>
