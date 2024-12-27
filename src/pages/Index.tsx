@@ -65,7 +65,7 @@ const Index = () => {
         <StoryLibrary
           stories={stories}
           onSelectStory={(story) => {
-            setCurrentStory(story.preview);
+            setCurrentStory(story);
             setCurrentView("reader");
           }}
           onDeleteStory={handleDeleteStory}
