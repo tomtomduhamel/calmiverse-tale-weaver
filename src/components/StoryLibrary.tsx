@@ -47,8 +47,8 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
 
   const filteredStories = stories
     .filter(story => {
-      const matchesSearch = story.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          story.preview.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = (story.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+                          (story.preview?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
       const matchesStatus = statusFilter === 'all' || story.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
