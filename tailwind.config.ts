@@ -48,10 +48,18 @@ export default {
           foreground: "#1A1F2C",
           dark: "#2C2C2C",
         },
+        card: {
+          start: "#D6EAF8",
+          end: "#B7CFEA",
+          hover: {
+            start: "#C9E4DE",
+            end: "#F1FAEE",
+          },
+        },
       },
       backgroundImage: {
-        'gradient-serene': 'linear-gradient(135deg, #A8DADC 0%, #D6CDEA 100%)',
-        'gradient-night': 'linear-gradient(135deg, #1A2238 0%, #2C2C2C 100%)',
+        'gradient-serene': 'linear-gradient(135deg, var(--card-bg-start), var(--card-bg-end))',
+        'gradient-night': 'linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #1A2238 100%)',
       },
       animation: {
         'slide-down': 'slideDown 0.2s ease-out',

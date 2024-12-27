@@ -50,25 +50,29 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
       {stories.map((story) => (
         <Card 
           key={story.id} 
-          className={`p-4 hover:shadow-lg transition-shadow animate-slide-in relative cursor-pointer ${
-            story.status === 'completed' ? 'hover:scale-105' : ''
-          }`}
+          className={`
+            p-4 transition-all duration-300 relative cursor-pointer
+            bg-gradient-to-br from-card-start to-card-end
+            hover:from-card-hover-start hover:to-card-hover-end
+            shadow-soft hover:shadow-soft-lg
+            ${story.status === 'completed' ? 'hover:scale-105' : ''}
+          `}
           onClick={() => handleCardClick(story)}
         >
           <div className="absolute top-2 right-2">
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-destructive"
+              className="text-secondary hover:text-destructive bg-white/80 hover:bg-white/90"
               onClick={(e) => handleDelete(e, story.id)}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-          <h3 className="text-lg font-semibold mb-2">{story.title}</h3>
-          <p className="text-sm text-gray-600 mb-4">{story.preview}</p>
+          <h3 className="text-lg font-semibold mb-2 text-secondary-dark">{story.title}</h3>
+          <p className="text-sm text-muted-foreground mb-4">{story.preview}</p>
           <div className="flex gap-2 mb-4">
-            <span className="text-xs bg-secondary/20 px-2 py-1 rounded-full">
+            <span className="text-xs bg-secondary/20 text-secondary-dark px-2 py-1 rounded-full">
               {story.objective}
             </span>
             <span className={`text-xs px-2 py-1 rounded-full ${
@@ -79,12 +83,12 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
               {story.status === 'pending' ? 'En cours' : 'Terminée'}
             </span>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             Créée le {format(story.createdAt, "d MMMM yyyy", { locale: fr })}
           </p>
           {story.status === 'completed' && (
             <Button
-              className="w-full bg-accent hover:bg-accent/90 mt-4"
+              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-4"
             >
               Lire
             </Button>
