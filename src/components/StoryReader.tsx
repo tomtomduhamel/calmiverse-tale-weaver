@@ -4,13 +4,24 @@ import { Card } from "@/components/ui/card";
 import type { Story } from "@/types/story";
 
 interface StoryReaderProps {
-  story: Story;
+  story: Story | null;
   onClose: () => void;
 }
 
 const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose }) => {
   const [fontSize, setFontSize] = useState(16);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  if (!story) {
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center">
+        <Card className="p-6 text-center">
+          <p className="mb-4">Aucune histoire à afficher</p>
+          <Button onClick={onClose}>Retour</Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen p-4 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
