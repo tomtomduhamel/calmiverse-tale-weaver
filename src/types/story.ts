@@ -8,4 +8,6 @@ export interface Story {
   status: 'pending' | 'completed';
   story_text: string;
   story_summary: string;
+  isFavorite?: boolean;
+  tags?: string[];
 }
