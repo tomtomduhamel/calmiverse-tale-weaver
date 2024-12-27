@@ -4,20 +4,10 @@ import { collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc, 
 import { db } from '@/lib/firebase';
 import type { Child } from "@/types/child";
 import type { StoryFormData } from "@/components/StoryForm";
-
-interface Story {
-  id: string;
-  title: string;
-  content: string;
-  preview: string;
-  objective: string;
-  childId: string;
-  createdAt: Date;
-  status: 'pending' | 'completed';
-}
+import type { Story } from "@/types/story";
 
 export const useStories = () => {
-  const [currentStory, setCurrentStory] = useState<string>("");
+  const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
   const { toast } = useToast();
 
@@ -54,7 +44,6 @@ export const useStories = () => {
         throw new Error("Enfant non trouvé");
       }
 
-      // Création d'une nouvelle demande d'histoire dans Firestore
       const storyData = {
         title: `Histoire pour ${selectedChild.name}`,
         content: "", // Sera rempli par Make.com
@@ -62,6 +51,8 @@ export const useStories = () => {
         objective: formData.objective,
         childId: selectedChild.id,
         status: 'pending',
+        story_text: "",
+        story_summary: "Résumé en cours de génération...",
         createdAt: serverTimestamp()
       };
 

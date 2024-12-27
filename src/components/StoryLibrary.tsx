@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Edit2, Check } from "lucide-react";
+import { Trash2, Edit2, Check, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -16,6 +16,8 @@ interface Story {
   objective: string;
   createdAt: Date;
   status: 'pending' | 'completed';
+  story_text?: string;
+  story_summary?: string;
 }
 
 interface StoryLibraryProps {
@@ -137,7 +139,12 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
             </h3>
           )}
 
-          <p className="text-sm text-muted-foreground mb-4">{story.preview}</p>
+          {story.story_summary && (
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+              {story.story_summary}
+            </p>
+          )}
+
           <div className="flex gap-2 mb-4">
             <span className="text-xs bg-secondary/20 text-secondary-dark px-2 py-1 rounded-full">
               {story.objective}
@@ -150,14 +157,17 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
               {story.status === 'pending' ? 'En cours' : 'Terminée'}
             </span>
           </div>
+          
           <p className="text-xs text-muted-foreground mt-2">
             Créée le {format(story.createdAt, "d MMMM yyyy", { locale: fr })}
           </p>
+          
           {story.status === 'completed' && (
             <Button
-              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-4"
+              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-4 flex items-center gap-2"
             >
-              Lire
+              <BookOpen className="w-4 h-4" />
+              Lire l'histoire complète
             </Button>
           )}
         </Card>

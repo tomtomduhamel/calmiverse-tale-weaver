@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { Story } from "@/types/story";
 
 interface StoryReaderProps {
-  story: string;
+  story: Story;
   onClose: () => void;
 }
 
@@ -48,11 +49,18 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose }) => {
         </div>
 
         <Card className={`p-6 ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
+          <h2 className="text-2xl font-bold mb-4">{story.title}</h2>
+          {story.story_summary && (
+            <div className="mb-6 bg-secondary/10 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">Résumé</h3>
+              <p className="text-muted-foreground">{story.story_summary}</p>
+            </div>
+          )}
           <div
             style={{ fontSize: `${fontSize}px` }}
             className="prose max-w-none animate-fade-in"
           >
-            {story}
+            {story.story_text || story.content}
           </div>
         </Card>
       </div>
