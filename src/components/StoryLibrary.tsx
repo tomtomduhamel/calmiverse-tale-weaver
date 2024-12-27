@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Trash2, Edit2, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface Story {
   id: string;
@@ -27,6 +30,8 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   onDeleteStory 
 }) => {
   const { toast } = useToast();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   const handleDelete = (e: React.MouseEvent, storyId: string) => {
     e.stopPropagation();
@@ -45,6 +50,35 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
     }
   };
 
+  const startEditing = (e: React.MouseEvent, story: Story) => {
+    e.stopPropagation();
+    setEditingId(story.id);
+    setEditingTitle(story.title);
+  };
+
+  const saveTitle = async (e: React.MouseEvent, storyId: string) => {
+    e.stopPropagation();
+    try {
+      const storyRef = doc(db, "stories", storyId);
+      await updateDoc(storyRef, {
+        title: editingTitle
+      });
+
+      toast({
+        title: "Titre mis à jour",
+        description: "Le titre de l'histoire a été modifié avec succès",
+      });
+      
+      setEditingId(null);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le titre",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
       {stories.map((story) => (
@@ -59,7 +93,26 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
           `}
           onClick={() => handleCardClick(story)}
         >
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-2 right-2 flex gap-2">
+            {editingId === story.id ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-primary hover:text-primary/90 bg-white/80 hover:bg-white/90"
+                onClick={(e) => saveTitle(e, story.id)}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-secondary hover:text-secondary/90 bg-white/80 hover:bg-white/90"
+                onClick={(e) => startEditing(e, story)}
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -69,7 +122,21 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-          <h3 className="text-lg font-semibold mb-2 text-secondary-dark">{story.title}</h3>
+
+          {editingId === story.id ? (
+            <Input
+              value={editingTitle}
+              onChange={(e) => setEditingTitle(e.target.value)}
+              className="mb-2 font-semibold"
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+            />
+          ) : (
+            <h3 className="text-lg font-semibold mb-2 text-secondary-dark">
+              {story.title}
+            </h3>
+          )}
+
           <p className="text-sm text-muted-foreground mb-4">{story.preview}</p>
           <div className="flex gap-2 mb-4">
             <span className="text-xs bg-secondary/20 text-secondary-dark px-2 py-1 rounded-full">

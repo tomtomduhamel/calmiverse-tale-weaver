@@ -16,8 +16,6 @@ interface Story {
   status: 'pending' | 'completed';
 }
 
-type StoryObjective = "sleep" | "relax" | "focus";
-
 export const useStories = () => {
   const [currentStory, setCurrentStory] = useState<string>("");
   const [stories, setStories] = useState<Story[]>([]);
