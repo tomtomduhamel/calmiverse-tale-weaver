@@ -37,12 +37,6 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
     }
   };
 
-  const handleCardClick = (story: Story) => {
-    if (story.status === 'completed') {
-      onSelectStory(story);
-    }
-  };
-
   const filteredStories = stories
     .filter(story => {
       const matchesSearch = (story.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
@@ -74,7 +68,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
       <StoryGrid
         stories={currentStories}
         onDelete={handleDelete}
-        onCardClick={handleCardClick}
+        onCardClick={onSelectStory}
       />
 
       <Pagination

@@ -70,6 +70,12 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
     }
   };
 
+  const handleClick = () => {
+    if (story.status === 'completed') {
+      onClick();
+    }
+  };
+
   return (
     <Card 
       className={`
@@ -79,7 +85,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         shadow-soft hover:shadow-soft-lg animate-fade-in
         ${story.status === 'completed' ? 'hover:scale-105 active:scale-98' : ''}
       `}
-      onClick={onClick}
+      onClick={handleClick}
     >
       <div className="absolute top-2 right-2 flex gap-2">
         <Button
@@ -165,6 +171,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
       {story.status === 'completed' && (
         <Button
           className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-4 flex items-center gap-2"
+          onClick={handleClick}
         >
           <BookOpen className="w-4 h-4" />
           Lire l'histoire complète
