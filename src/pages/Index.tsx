@@ -4,12 +4,11 @@ import StoryReader from "@/components/StoryReader";
 import StoryLibrary from "@/components/StoryLibrary";
 import ChildrenProfiles from "@/components/ChildrenProfiles";
 import HomeHero from "@/components/home/HomeHero";
-import AppLayout from "@/components/layout/AppLayout";
-import { useChildren } from "@/hooks/useChildren";
-import { useStories } from "@/hooks/useStories";
 import type { ViewType } from "@/types/views";
 import type { StoryFormData } from "@/components/StoryForm";
 import { useToast } from "@/hooks/use-toast";
+import { useChildren } from "@/hooks/useChildren";
+import { useStories } from "@/hooks/useStories";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
@@ -38,7 +37,7 @@ const Index = () => {
   };
 
   return (
-    <AppLayout currentView={currentView} onViewChange={setCurrentView}>
+    <>
       {currentView === "home" && (
         <HomeHero onViewChange={setCurrentView} />
       )}
@@ -79,7 +78,7 @@ const Index = () => {
           onClose={() => setCurrentView("library")}
         />
       )}
-    </AppLayout>
+    </>
   );
 };
 
