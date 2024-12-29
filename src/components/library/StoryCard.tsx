@@ -22,6 +22,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
   const { toast } = useToast();
   const [editingTitle, setEditingTitle] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(story.isFavorite || false);
 
   const startEditing = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -56,11 +57,13 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
     e.stopPropagation();
     try {
       const storyRef = doc(db, "stories", story.id);
+      const newFavoriteStatus = !isFavorite;
       await updateDoc(storyRef, {
-        isFavorite: !story.isFavorite
+        isFavorite: newFavoriteStatus
       });
+      setIsFavorite(newFavoriteStatus);
       toast({
-        title: story.isFavorite ? "Retiré des favoris" : "Ajouté aux favoris",
+        title: newFavoriteStatus ? "Ajouté aux favoris" : "Retiré des favoris",
         description: "Mise à jour effectuée avec succès",
       });
     } catch (error) {
@@ -101,21 +104,24 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         }
       }}
     >
-      <StoryCardActions
-        isEditing={isEditing}
-        isFavorite={story.isFavorite || false}
-        onToggleFavorite={toggleFavorite}
-        onSaveTitle={saveTitle}
-        onStartEditing={startEditing}
-        onDelete={onDelete}
-      />
-
-      <StoryCardTitle
-        isEditing={isEditing}
-        title={story.title}
-        editingTitle={editingTitle}
-        onEditingTitleChange={setEditingTitle}
-      />
+      <div className="min-h-[4rem] relative">
+        <StoryCardTitle
+          isEditing={isEditing}
+          title={story.title}
+          editingTitle={editingTitle}
+          onEditingTitleChange={setEditingTitle}
+        />
+        <div className="absolute top-0 right-0">
+          <StoryCardActions
+            isEditing={isEditing}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
+            onSaveTitle={saveTitle}
+            onStartEditing={startEditing}
+            onDelete={onDelete}
+          />
+        </div>
+      </div>
 
       <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
         {story.status === 'pending' ? "Histoire en cours de génération..." : story.story_summary}

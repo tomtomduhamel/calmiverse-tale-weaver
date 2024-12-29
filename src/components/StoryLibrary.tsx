@@ -38,6 +38,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   };
 
   const filteredStories = stories
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()) // Tri par date de création décroissante
     .filter(story => {
       const matchesSearch = (story.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
                           (story.preview?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
