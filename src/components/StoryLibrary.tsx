@@ -38,12 +38,19 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   };
 
   const filteredStories = stories
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()) // Tri par date de création décroissante
     .filter(story => {
       const matchesSearch = (story.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
                           (story.preview?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
       const matchesStatus = statusFilter === 'all' || story.status === statusFilter;
       return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      // Si les deux histoires ont le même statut de favori, trier par date
+      if (!!a.isFavorite === !!b.isFavorite) {
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      }
+      // Sinon, mettre les favoris en premier
+      return a.isFavorite ? -1 : 1;
     });
 
   const indexOfLastStory = currentPage * storiesPerPage;
