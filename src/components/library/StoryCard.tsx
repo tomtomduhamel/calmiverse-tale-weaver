@@ -20,38 +20,7 @@ interface StoryCardProps {
 
 const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
   const { toast } = useToast();
-  const [editingTitle, setEditingTitle] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
   const [isFavorite, setIsFavorite] = useState(story.isFavorite || false);
-
-  const startEditing = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditing(true);
-    setEditingTitle(story.title);
-  };
-
-  const saveTitle = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      const storyRef = doc(db, "stories", story.id);
-      await updateDoc(storyRef, {
-        title: editingTitle
-      });
-
-      toast({
-        title: "Titre mis à jour",
-        description: "Le titre de l'histoire a été modifié avec succès",
-      });
-      
-      setIsEditing(false);
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le titre",
-        variant: "destructive",
-      });
-    }
-  };
 
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -75,6 +44,27 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
     }
   };
 
+  const markAsRead = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const storyRef = doc(db, "stories", story.id);
+      const newStatus = story.status === 'read' ? 'completed' : 'read';
+      await updateDoc(storyRef, {
+        status: newStatus
+      });
+      toast({
+        title: newStatus === 'read' ? "Histoire marquée comme lue" : "Histoire marquée comme non lue",
+        description: "Mise à jour effectuée avec succès",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut de lecture",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCardClick = () => {
     if (story.status === 'pending') {
       toast({
@@ -93,13 +83,13 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         bg-gradient-to-br from-card-start to-card-end
         hover:from-card-hover-start hover:to-card-hover-end
         shadow-soft hover:shadow-soft-lg animate-fade-in
-        ${story.status === 'completed' ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
+        ${story.status === 'completed' || story.status === 'read' ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
       `}
       onClick={handleCardClick}
-      role={story.status === 'completed' ? "button" : undefined}
-      tabIndex={story.status === 'completed' ? 0 : undefined}
+      role={story.status === 'completed' || story.status === 'read' ? "button" : undefined}
+      tabIndex={story.status === 'completed' || story.status === 'read' ? 0 : undefined}
       onKeyDown={(e) => {
-        if (story.status === 'completed' && (e.key === 'Enter' || e.key === ' ')) {
+        if ((story.status === 'completed' || story.status === 'read') && (e.key === 'Enter' || e.key === ' ')) {
           handleCardClick();
         }
       }}
@@ -107,20 +97,14 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
       <div className="flex flex-col space-y-4">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-grow">
-            <StoryCardTitle
-              isEditing={isEditing}
-              title={story.title}
-              editingTitle={editingTitle}
-              onEditingTitleChange={setEditingTitle}
-            />
+            <h3 className="text-lg font-semibold">{story.title}</h3>
           </div>
           <div className="flex-shrink-0">
             <StoryCardActions
-              isEditing={isEditing}
               isFavorite={isFavorite}
+              isRead={story.status === 'read'}
               onToggleFavorite={toggleFavorite}
-              onSaveTitle={saveTitle}
-              onStartEditing={startEditing}
+              onMarkAsRead={markAsRead}
               onDelete={onDelete}
             />
           </div>
@@ -140,7 +124,15 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
           Créée le {format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
         </p>
         
-        {story.status === 'completed' ? (
+        {story.status === 'pending' ? (
+          <Button
+            className="w-full bg-secondary/50 cursor-not-allowed flex items-center gap-2 animate-pulse"
+            disabled
+          >
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Génération en cours...
+          </Button>
+        ) : (
           <Button
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground flex items-center gap-2"
             onClick={(e) => {
@@ -150,14 +142,6 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
           >
             <BookOpen className="w-4 h-4" />
             Lire l'histoire complète
-          </Button>
-        ) : (
-          <Button
-            className="w-full bg-secondary/50 cursor-not-allowed flex items-center gap-2 animate-pulse"
-            disabled
-          >
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Génération en cours...
           </Button>
         )}
       </div>
