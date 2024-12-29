@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 export interface StoryObjective {
   id: string;
   value: string;
+  label: string;
 }
 
 export const useStoryObjectives = () => {
@@ -14,19 +15,23 @@ export const useStoryObjectives = () => {
     const staticObjectives: StoryObjective[] = [
       {
         id: "sleep",
-        value: "Aider à s'endormir",
+        value: "sleep",
+        label: "Aider à s'endormir"
       },
       {
         id: "focus",
-        value: "Se concentrer",
+        value: "focus",
+        label: "Se concentrer"
       },
       {
         id: "relax",
-        value: "Se détendre",
+        value: "relax",
+        label: "Se détendre"
       },
       {
         id: "fun",
-        value: "S'amuser",
+        value: "fun",
+        label: "S'amuser"
       }
     ];
 
