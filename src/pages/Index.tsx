@@ -47,8 +47,7 @@ const Index = () => {
   };
 
   const handleSelectStory = (story: Story) => {
-    console.log("Sélection de l'histoire:", story);
-    if (story.status === 'completed') {
+    if (story.status === 'completed' || story.status === 'read') {
       setCurrentStory(story);
       setCurrentView("reader");
     } else {
@@ -82,6 +81,7 @@ const Index = () => {
           onAddChild={handleAddChild}
           onUpdateChild={handleUpdateChild}
           onDeleteChild={handleDeleteChild}
+          onCreateStory={() => setCurrentView("create")}
         />
       )}
 
@@ -94,7 +94,7 @@ const Index = () => {
         />
       )}
 
-      {currentView === "reader" && (
+      {currentView === "reader" && currentStory && (
         <StoryReader
           story={currentStory}
           onClose={handleCloseReader}

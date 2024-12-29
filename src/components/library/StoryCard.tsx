@@ -24,7 +24,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
 
   const formatTitle = (text: string) => {
     // Enlever les guillemets au début et à la fin
-    let formattedText = text.replace(/^"|"$/g, '').trim();
+    let formattedText = text.replace(/^["']|["']$/g, '').trim();
 
     // Gérer les titres avec ###
     if (formattedText.startsWith('###')) {

@@ -10,6 +10,7 @@ interface ChildrenProfilesProps {
   onAddChild: (child: Omit<Child, "id">) => void;
   onUpdateChild: (childId: string, updatedChild: Omit<Child, "id">) => void;
   onDeleteChild: (childId: string) => void;
+  onCreateStory?: () => void;
 }
 
 const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
@@ -17,6 +18,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
   onAddChild,
   onUpdateChild,
   onDeleteChild,
+  onCreateStory,
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [newChildName, setNewChildName] = useState("");
@@ -84,7 +86,11 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
 
   return (
     <div className="space-y-6">
-      <ProfileHeader onShowForm={() => setShowForm(true)} showForm={showForm} />
+      <ProfileHeader 
+        onShowForm={() => setShowForm(true)} 
+        showForm={showForm}
+        onCreateStory={onCreateStory}
+      />
       <ProfileGrid children={children} onEdit={handleEdit} onDelete={onDeleteChild} />
       <ProfileFormWrapper
         showForm={showForm}
