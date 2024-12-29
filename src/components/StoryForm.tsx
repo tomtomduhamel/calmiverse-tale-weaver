@@ -8,6 +8,7 @@ import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import LoadingStory from "./LoadingStory";
 import CreateChildDialog from "./story/CreateChildDialog";
 import ChildrenSelection from "./story/ChildrenSelection";
+import { useChildFormLogic } from "./story/useChildFormLogic";
 
 interface StoryFormProps {
   onSubmit: (data: StoryFormData) => Promise<string>;
@@ -32,15 +33,25 @@ const StoryForm: React.FC<StoryFormProps> = ({
     objective: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [showChildForm, setShowChildForm] = useState(false);
-  const [childName, setChildName] = useState("");
-  const [childAge, setChildAge] = useState(1);
-  const [teddyName, setTeddyName] = useState("");
-  const [teddyDescription, setTeddyDescription] = useState("");
-  const [imaginaryWorld, setImaginaryWorld] = useState("");
-
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
   const { toast } = useToast();
+
+  const {
+    showChildForm,
+    setShowChildForm,
+    childName,
+    childAge,
+    teddyName,
+    teddyDescription,
+    imaginaryWorld,
+    handleChildFormSubmit,
+    resetChildForm,
+    setChildName,
+    setChildAge,
+    setTeddyName,
+    setTeddyDescription,
+    setImaginaryWorld,
+  } = useChildFormLogic(onCreateChild);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,28 +97,6 @@ const StoryForm: React.FC<StoryFormProps> = ({
         ? prev.childrenIds.filter((id) => id !== childId)
         : [...prev.childrenIds, childId],
     }));
-  };
-
-  const handleChildFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newChildData = {
-      name: childName,
-      age: childAge,
-      teddyName,
-      teddyDescription,
-      imaginaryWorld,
-    };
-    onCreateChild(newChildData);
-    setShowChildForm(false);
-    resetChildForm();
-  };
-
-  const resetChildForm = () => {
-    setChildName("");
-    setChildAge(1);
-    setTeddyName("");
-    setTeddyDescription("");
-    setImaginaryWorld("");
   };
 
   const getObjectiveIcon = (value: string) => {
