@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Heart, Info } from "lucide-react";
 import type { Story } from "@/types/story";
 import ReactMarkdown from 'react-markdown';
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -42,6 +44,8 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
 
     return "Objectif non défini";
   };
+
+  const formattedDate = story.createdAt ? format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr }) : "";
 
   return (
     <div className={`min-h-screen p-4 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
@@ -86,6 +90,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
               {childName && (
                 <p className="text-muted-foreground mt-1">Histoire personnalisée pour {childName}</p>
               )}
+              <p className="text-xs text-muted-foreground mt-1">{formattedDate}</p>
             </div>
             <div className="flex gap-2">
               <Button
