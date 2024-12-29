@@ -10,22 +10,22 @@ export const useStoryObjectives = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Données statiques des objectifs
+    // Static objectives data
     const staticObjectives: StoryObjective[] = [
       {
-        id: "1",
+        id: "sleep",
         value: "Aider à s'endormir",
       },
       {
-        id: "2",
+        id: "focus",
         value: "Se concentrer",
       },
       {
-        id: "3",
+        id: "relax",
         value: "Se détendre",
       },
       {
-        id: "4",
+        id: "fun",
         value: "S'amuser",
       }
     ];
