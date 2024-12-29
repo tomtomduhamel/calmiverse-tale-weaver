@@ -118,7 +118,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
       />
 
       <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-        {story.status === 'pending' ? "Histoire en cours de génération..." : story.preview}
+        {story.status === 'pending' ? "Histoire en cours de génération..." : story.story_summary}
       </p>
 
       <StoryCardTags
@@ -128,7 +128,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
       />
       
       <p className="text-xs text-muted-foreground mt-2">
-        Créée le {format(story.createdAt, "d MMMM yyyy", { locale: fr })}
+        Créée le {format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
       </p>
       
       {story.status === 'completed' ? (
