@@ -5,7 +5,7 @@ export interface Story {
   objective: string | { name: string; value: string };
   childrenIds: string[];
   createdAt: Date;
-  status: 'pending' | 'completed';
+  status: 'pending' | 'completed' | 'read';
   story_text: string;
   story_summary: string;
   isFavorite?: boolean;

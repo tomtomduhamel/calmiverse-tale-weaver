@@ -5,7 +5,7 @@ import type { Story } from "@/types/story";
 interface StoryCardTagsProps {
   tags: string[];
   objective: Story['objective'];
-  status: 'pending' | 'completed';
+  status: 'pending' | 'completed' | 'read';
 }
 
 const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags, objective, status }) => {
@@ -16,17 +16,39 @@ const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags, objective, status }
     return objective.value;
   };
 
+  const getStatusColor = (status: Story['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-200 text-yellow-800';
+      case 'completed':
+        return 'bg-green-200 text-green-800';
+      case 'read':
+        return 'bg-blue-200 text-blue-800';
+      default:
+        return 'bg-gray-200 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: Story['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'En cours';
+      case 'completed':
+        return 'Prêt pour la lecture';
+      case 'read':
+        return 'Lu';
+      default:
+        return status;
+    }
+  };
+
   return (
     <div className="flex flex-wrap gap-2 mb-4">
       <span className="text-xs bg-secondary/20 text-secondary-dark px-2 py-1 rounded-full">
         {getObjectiveText(objective)}
       </span>
-      <span className={`text-xs px-2 py-1 rounded-full ${
-        status === 'pending' 
-          ? 'bg-yellow-200 text-yellow-800' 
-          : 'bg-green-200 text-green-800'
-      }`}>
-        {status === 'pending' ? 'En cours' : 'Prêt pour la lecture'}
+      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(status)}`}>
+        {getStatusText(status)}
       </span>
       {tags?.map((tag, index) => (
         <span key={index} className="text-xs bg-accent/20 text-accent-dark px-2 py-1 rounded-full flex items-center gap-1">
