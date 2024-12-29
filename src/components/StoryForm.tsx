@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
-import { BookOpen, UserPlus, Moon, Brain, Heart, Star } from "lucide-react";
+import { BookOpen, Moon, Brain, Heart, Star } from "lucide-react";
 import type { Child } from "@/types/child";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import LoadingStory from "./LoadingStory";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import ChildForm from "./children/ChildForm";
+import CreateChildDialog from "./story/CreateChildDialog";
+import ChildrenSelection from "./story/ChildrenSelection";
 
 interface StoryFormProps {
   onSubmit: (data: StoryFormData) => Promise<string>;
@@ -22,7 +21,12 @@ export interface StoryFormData {
   objective: string;
 }
 
-const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild, onStoryCreated }) => {
+const StoryForm: React.FC<StoryFormProps> = ({
+  onSubmit,
+  children,
+  onCreateChild,
+  onStoryCreated,
+}) => {
   const [formData, setFormData] = useState<StoryFormData>({
     childrenIds: [],
     objective: "",
@@ -76,11 +80,11 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
   };
 
   const handleChildToggle = (childId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       childrenIds: prev.childrenIds.includes(childId)
-        ? prev.childrenIds.filter(id => id !== childId)
-        : [...prev.childrenIds, childId]
+        ? prev.childrenIds.filter((id) => id !== childId)
+        : [...prev.childrenIds, childId],
     }));
   };
 
@@ -99,14 +103,6 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
     setImaginaryWorld("");
   };
 
-  if (objectivesLoading) {
-    return <div>Chargement des objectifs...</div>;
-  }
-
-  if (isLoading) {
-    return <LoadingStory />;
-  }
-
   const getObjectiveIcon = (value: string) => {
     switch (value) {
       case "sleep":
@@ -120,57 +116,33 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
     }
   };
 
+  if (objectivesLoading) {
+    return <div>Chargement des objectifs...</div>;
+  }
+
+  if (isLoading) {
+    return <LoadingStory />;
+  }
+
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl"
+      >
         <h2 className="text-2xl font-semibold text-center mb-6 text-primary dark:text-primary-dark">
           Créer une histoire
         </h2>
-        
-        <div className="space-y-4">
-          <Label className="text-secondary dark:text-white">Pour qui est cette histoire ?</Label>
-          {children.length > 0 ? (
-            <>
-              {children.map((child) => (
-                <div key={child.id} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-muted/50 dark:hover:bg-muted-dark/50 transition-colors">
-                  <Checkbox
-                    id={`child-${child.id}`}
-                    checked={formData.childrenIds.includes(child.id)}
-                    onCheckedChange={() => handleChildToggle(child.id)}
-                  />
-                  <Label
-                    htmlFor={`child-${child.id}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    {child.name} ({child.age} ans)
-                  </Label>
-                </div>
-              ))}
-              <Button
-                type="button"
-                onClick={() => setShowChildForm(true)}
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2 py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors"
-              >
-                <UserPlus className="w-5 h-5" />
-                Ajouter un autre enfant
-              </Button>
-            </>
-          ) : (
-            <Button
-              type="button"
-              onClick={() => setShowChildForm(true)}
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2 py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors"
-            >
-              <UserPlus className="w-5 h-5" />
-              Créer un profil enfant
-            </Button>
-          )}
-        </div>
+
+        <ChildrenSelection
+          children={children}
+          selectedChildrenIds={formData.childrenIds}
+          onChildToggle={handleChildToggle}
+          onCreateChildClick={() => setShowChildForm(true)}
+        />
 
         <div className="space-y-4">
-          <Label className="text-secondary dark:text-white">
+          <Label className="text-secondary dark:text-white text-lg font-medium">
             Je souhaite créer un moment de lecture qui va...
           </Label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -181,20 +153,20 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
                 variant={formData.objective === objective.value ? "default" : "outline"}
                 onClick={() => setFormData({ ...formData, objective: objective.value })}
                 className={`flex items-center justify-start gap-3 p-4 h-auto text-left min-h-[64px] ${
-                  formData.objective === objective.value 
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                  : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
+                  formData.objective === objective.value
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
                 }`}
               >
                 {getObjectiveIcon(objective.value)}
-                <span className="flex-1">{objective.value}</span>
+                <span className="flex-1">{objective.label}</span>
               </Button>
             ))}
           </div>
         </div>
 
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           className="w-full bg-primary hover:bg-primary/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-primary-foreground flex items-center justify-center gap-2 py-6 rounded-xl shadow-soft hover:shadow-soft-lg transition-all hover:scale-[1.02]"
         >
           <BookOpen className="w-5 h-5" />
@@ -202,28 +174,22 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
         </Button>
       </form>
 
-      <Dialog open={showChildForm} onOpenChange={setShowChildForm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Créer un profil enfant</DialogTitle>
-          </DialogHeader>
-          <ChildForm
-            childName={childName}
-            childAge={childAge}
-            teddyName={teddyName}
-            teddyDescription={teddyDescription}
-            imaginaryWorld={imaginaryWorld}
-            isEditing={false}
-            onSubmit={handleChildFormSubmit}
-            onReset={() => setShowChildForm(false)}
-            onChildNameChange={setChildName}
-            onChildAgeChange={setChildAge}
-            onTeddyNameChange={setTeddyName}
-            onTeddyDescriptionChange={setTeddyDescription}
-            onImaginaryWorldChange={setImaginaryWorld}
-          />
-        </DialogContent>
-      </Dialog>
+      <CreateChildDialog
+        open={showChildForm}
+        onOpenChange={setShowChildForm}
+        childName={childName}
+        childAge={childAge}
+        teddyName={teddyName}
+        teddyDescription={teddyDescription}
+        imaginaryWorld={imaginaryWorld}
+        onSubmit={handleChildFormSubmit}
+        onReset={() => setShowChildForm(false)}
+        onChildNameChange={setChildName}
+        onChildAgeChange={setChildAge}
+        onTeddyNameChange={setTeddyName}
+        onTeddyDescriptionChange={setTeddyDescription}
+        onImaginaryWorldChange={setImaginaryWorld}
+      />
     </>
   );
 };
