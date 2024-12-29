@@ -7,6 +7,8 @@ import { BookOpen, UserPlus, Moon, Brain, Heart, Star } from "lucide-react";
 import type { Child } from "@/types/child";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import LoadingStory from "./LoadingStory";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ChildForm from "./children/ChildForm";
 
 interface StoryFormProps {
   onSubmit: (data: StoryFormData) => Promise<string>;
@@ -26,6 +28,12 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
     objective: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showChildForm, setShowChildForm] = useState(false);
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState(1);
+  const [teddyName, setTeddyName] = useState("");
+  const [teddyDescription, setTeddyDescription] = useState("");
+  const [imaginaryWorld, setImaginaryWorld] = useState("");
 
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
   const { toast } = useToast();
@@ -76,6 +84,21 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
     }));
   };
 
+  const handleChildFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onCreateChild();
+    setShowChildForm(false);
+    resetChildForm();
+  };
+
+  const resetChildForm = () => {
+    setChildName("");
+    setChildAge(1);
+    setTeddyName("");
+    setTeddyDescription("");
+    setImaginaryWorld("");
+  };
+
   if (objectivesLoading) {
     return <div>Chargement des objectifs...</div>;
   }
@@ -98,74 +121,110 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
-      <h2 className="text-2xl font-semibold text-center mb-6 text-primary dark:text-primary-dark">
-        Créer une histoire
-      </h2>
-      
-      <div className="space-y-4">
-        <Label className="text-secondary dark:text-white">Pour qui est cette histoire ?</Label>
-        {children.length > 0 ? (
-          children.map((child) => (
-            <div key={child.id} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-muted/50 dark:hover:bg-muted-dark/50 transition-colors">
-              <Checkbox
-                id={`child-${child.id}`}
-                checked={formData.childrenIds.includes(child.id)}
-                onCheckedChange={() => handleChildToggle(child.id)}
-              />
-              <Label
-                htmlFor={`child-${child.id}`}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
+        <h2 className="text-2xl font-semibold text-center mb-6 text-primary dark:text-primary-dark">
+          Créer une histoire
+        </h2>
+        
+        <div className="space-y-4">
+          <Label className="text-secondary dark:text-white">Pour qui est cette histoire ?</Label>
+          {children.length > 0 ? (
+            <>
+              {children.map((child) => (
+                <div key={child.id} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-muted/50 dark:hover:bg-muted-dark/50 transition-colors">
+                  <Checkbox
+                    id={`child-${child.id}`}
+                    checked={formData.childrenIds.includes(child.id)}
+                    onCheckedChange={() => handleChildToggle(child.id)}
+                  />
+                  <Label
+                    htmlFor={`child-${child.id}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    {child.name} ({child.age} ans)
+                  </Label>
+                </div>
+              ))}
+              <Button
+                type="button"
+                onClick={() => setShowChildForm(true)}
+                variant="outline"
+                className="w-full flex items-center justify-center gap-2 py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors"
               >
-                {child.name} ({child.age} ans)
-              </Label>
-            </div>
-          ))
-        ) : (
-          <Button
-            type="button"
-            onClick={onCreateChild}
-            variant="outline"
-            className="w-full flex items-center justify-center gap-2 py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors"
-          >
-            <UserPlus className="w-5 h-5" />
-            Créer un profil enfant
-          </Button>
-        )}
-      </div>
-
-      <div className="space-y-4">
-        <Label className="text-secondary dark:text-white">
-          Je souhaite créer un moment de lecture qui va...
-        </Label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {objectives.map((objective) => (
+                <UserPlus className="w-5 h-5" />
+                Ajouter un autre enfant
+              </Button>
+            </>
+          ) : (
             <Button
-              key={objective.id}
               type="button"
-              variant={formData.objective === objective.value ? "default" : "outline"}
-              onClick={() => setFormData({ ...formData, objective: objective.value })}
-              className={`flex items-center justify-start gap-3 p-4 h-auto text-left min-h-[64px] ${
-                formData.objective === objective.value 
-                ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
-              }`}
+              onClick={() => setShowChildForm(true)}
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2 py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors"
             >
-              {getObjectiveIcon(objective.value)}
-              <span className="flex-1">{objective.value}</span>
+              <UserPlus className="w-5 h-5" />
+              Créer un profil enfant
             </Button>
-          ))}
+          )}
         </div>
-      </div>
 
-      <Button 
-        type="submit" 
-        className="w-full bg-primary hover:bg-primary/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-primary-foreground flex items-center justify-center gap-2 py-6 rounded-xl shadow-soft hover:shadow-soft-lg transition-all hover:scale-[1.02]"
-      >
-        <BookOpen className="w-5 h-5" />
-        Générer l'histoire
-      </Button>
-    </form>
+        <div className="space-y-4">
+          <Label className="text-secondary dark:text-white">
+            Je souhaite créer un moment de lecture qui va...
+          </Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {objectives.map((objective) => (
+              <Button
+                key={objective.id}
+                type="button"
+                variant={formData.objective === objective.value ? "default" : "outline"}
+                onClick={() => setFormData({ ...formData, objective: objective.value })}
+                className={`flex items-center justify-start gap-3 p-4 h-auto text-left min-h-[64px] ${
+                  formData.objective === objective.value 
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                  : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
+                }`}
+              >
+                {getObjectiveIcon(objective.value)}
+                <span className="flex-1">{objective.value}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <Button 
+          type="submit" 
+          className="w-full bg-primary hover:bg-primary/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-primary-foreground flex items-center justify-center gap-2 py-6 rounded-xl shadow-soft hover:shadow-soft-lg transition-all hover:scale-[1.02]"
+        >
+          <BookOpen className="w-5 h-5" />
+          Générer l'histoire
+        </Button>
+      </form>
+
+      <Dialog open={showChildForm} onOpenChange={setShowChildForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Créer un profil enfant</DialogTitle>
+          </DialogHeader>
+          <ChildForm
+            childName={childName}
+            childAge={childAge}
+            teddyName={teddyName}
+            teddyDescription={teddyDescription}
+            imaginaryWorld={imaginaryWorld}
+            isEditing={false}
+            onSubmit={handleChildFormSubmit}
+            onReset={() => setShowChildForm(false)}
+            onChildNameChange={setChildName}
+            onChildAgeChange={setChildAge}
+            onTeddyNameChange={setTeddyName}
+            onTeddyDescriptionChange={setTeddyDescription}
+            onImaginaryWorldChange={setImaginaryWorld}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
