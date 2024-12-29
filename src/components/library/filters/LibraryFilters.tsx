@@ -5,8 +5,8 @@ import StatusFilter from "../StatusFilter";
 interface LibraryFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  statusFilter: 'all' | 'pending' | 'completed';
-  onStatusChange: (value: 'all' | 'pending' | 'completed') => void;
+  statusFilter: 'all' | 'pending' | 'completed' | 'read';
+  onStatusChange: (value: 'all' | 'pending' | 'completed' | 'read') => void;
 }
 
 const LibraryFilters: React.FC<LibraryFiltersProps> = ({
