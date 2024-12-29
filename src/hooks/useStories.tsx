@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Child } from "@/types/child";
 import type { StoryFormData } from "@/components/StoryForm";
@@ -12,27 +12,24 @@ export const useStories = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadStories = async () => {
-      try {
-        const storiesCollection = collection(db, 'stories');
-        const snapshot = await getDocs(storiesCollection);
-        const loadedStories = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate()
-        })) as Story[];
-        setStories(loadedStories);
-      } catch (error) {
-        console.error("Erreur lors du chargement des histoires:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les histoires",
-          variant: "destructive",
-        });
-      }
-    };
+    const storiesCollection = collection(db, 'stories');
+    const unsubscribe = onSnapshot(storiesCollection, (snapshot) => {
+      const loadedStories = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate()
+      })) as Story[];
+      setStories(loadedStories);
+    }, (error) => {
+      console.error("Erreur lors de l'écoute des histoires:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les histoires en temps réel",
+        variant: "destructive",
+      });
+    });
 
-    loadStories();
+    return () => unsubscribe();
   }, [toast]);
 
   const handleCreateStory = async (formData: StoryFormData, children: Child[]): Promise<string> => {
@@ -58,21 +55,13 @@ export const useStories = () => {
       const storiesCollection = collection(db, 'stories');
       const docRef = await addDoc(storiesCollection, storyData);
       
-      const newStory = {
-        id: docRef.id,
-        ...storyData,
-        createdAt: new Date()
-      } as Story;
-
-      setStories(prev => [...prev, newStory]);
-      
       console.log('Demande d\'histoire créée avec succès');
       toast({
         title: "Succès",
         description: "La demande d'histoire a été créée. L'histoire sera générée sous peu.",
       });
 
-      return "pending";
+      return docRef.id;
 
     } catch (error) {
       console.error("Error creating story request:", error);

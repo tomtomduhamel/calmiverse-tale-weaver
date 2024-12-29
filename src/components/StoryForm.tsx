@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { BookOpen, UserPlus, Moon, Brain, Heart, Star } from "lucide-react";
 import type { Child } from "@/types/child";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
-import { useStoriesCollection } from "@/hooks/useStoriesCollection";
+import LoadingStory from "./LoadingStory";
 
 interface StoryFormProps {
   onSubmit: (data: StoryFormData) => Promise<string>;
@@ -25,8 +25,9 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
     childrenIds: [],
     objective: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { objectives, isLoading } = useStoryObjectives();
+  const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,6 +50,7 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
     }
 
     try {
+      setIsLoading(true);
       const generatedStory = await onSubmit(formData);
       if (generatedStory) {
         onStoryCreated(generatedStory);
@@ -60,6 +62,8 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
         description: "Une erreur est survenue lors de la création de l'histoire",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -72,8 +76,12 @@ const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, children, onCreateChild
     }));
   };
 
-  if (isLoading) {
+  if (objectivesLoading) {
     return <div>Chargement des objectifs...</div>;
+  }
+
+  if (isLoading) {
+    return <LoadingStory />;
   }
 
   const getObjectiveIcon = (value: string) => {

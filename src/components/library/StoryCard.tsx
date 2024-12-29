@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Clock } from "lucide-react";
+import { BookOpen, Clock, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -76,7 +76,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
     if (story.status === 'pending') {
       toast({
         title: "Histoire en cours de génération",
-        description: "Cette histoire n'est pas encore disponible à la lecture",
+        description: "Cette histoire n'est pas encore disponible à la lecture. Nous vous notifierons dès qu'elle sera prête !",
       });
       return;
     }
@@ -144,10 +144,10 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         </Button>
       ) : (
         <Button
-          className="w-full bg-secondary/50 cursor-not-allowed mt-4 flex items-center gap-2"
+          className="w-full bg-secondary/50 cursor-not-allowed mt-4 flex items-center gap-2 animate-pulse"
           disabled
         >
-          <Clock className="w-4 h-4" />
+          <Loader2 className="w-4 h-4 animate-spin" />
           Génération en cours...
         </Button>
       )}
