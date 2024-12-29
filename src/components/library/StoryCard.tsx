@@ -118,7 +118,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
       />
 
       <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-        {story.preview}
+        {story.status === 'pending' ? "Histoire en cours de génération..." : story.preview}
       </p>
 
       <StoryCardTags
