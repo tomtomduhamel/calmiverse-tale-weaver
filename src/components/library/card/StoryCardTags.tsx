@@ -26,7 +26,7 @@ const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags, objective, status }
           ? 'bg-yellow-200 text-yellow-800' 
           : 'bg-green-200 text-green-800'
       }`}>
-        {status === 'pending' ? 'En cours' : 'Terminée'}
+        {status === 'pending' ? 'En cours' : 'Prêt pour la lecture'}
       </span>
       {tags?.map((tag, index) => (
         <span key={index} className="text-xs bg-accent/20 text-accent-dark px-2 py-1 rounded-full flex items-center gap-1">
