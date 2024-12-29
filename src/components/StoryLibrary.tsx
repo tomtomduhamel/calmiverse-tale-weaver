@@ -45,12 +45,24 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      // Si les deux histoires ont le même statut de favori, trier par date
-      if (!!a.isFavorite === !!b.isFavorite) {
-        return b.createdAt.getTime() - a.createdAt.getTime();
+      // Fonction pour obtenir le niveau de priorité d'une histoire
+      const getPriority = (story: Story) => {
+        if (story.isFavorite) {
+          return story.status === 'read' ? 2 : 1; // Favoris non lus (1) > Favoris lus (2)
+        }
+        return story.status === 'read' ? 4 : 3; // Non favoris non lus (3) > Non favoris lus (4)
+      };
+
+      const priorityA = getPriority(a);
+      const priorityB = getPriority(b);
+
+      // D'abord trier par priorité
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
       }
-      // Sinon, mettre les favoris en premier
-      return a.isFavorite ? -1 : 1;
+
+      // Si même priorité, trier par date de création (plus récent en premier)
+      return b.createdAt.getTime() - a.createdAt.getTime();
     });
 
   const indexOfLastStory = currentPage * storiesPerPage;

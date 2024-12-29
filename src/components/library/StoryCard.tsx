@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Clock, Loader2 } from "lucide-react";
+import { BookOpen, Clock, Loader2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -21,6 +21,24 @@ interface StoryCardProps {
 const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(story.isFavorite || false);
+
+  const formatTitle = (text: string) => {
+    // Enlever les guillemets au début et à la fin
+    let formattedText = text.replace(/^"|"$/g, '').trim();
+
+    // Gérer les titres avec ###
+    if (formattedText.startsWith('###')) {
+      return formattedText.replace(/^###\s*/, '');
+    }
+    
+    // Gérer le texte en gras avec **
+    if (formattedText.startsWith('**') && formattedText.endsWith('**')) {
+      return formattedText.replace(/^\*\*|\*\*$/g, '');
+    }
+
+    // Texte normal
+    return formattedText;
+  };
 
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -97,7 +115,11 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
       <div className="flex flex-col space-y-4">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-grow">
-            <h3 className="text-lg font-semibold">{story.title}</h3>
+            <h3 className="text-lg font-semibold">{formatTitle(story.title)}</h3>
+            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+              <Users className="w-4 h-4" />
+              <span>Pour : {story.childrenNames?.join(', ') || 'Non spécifié'}</span>
+            </div>
           </div>
           <div className="flex-shrink-0">
             <StoryCardActions

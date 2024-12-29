@@ -4,6 +4,7 @@ export interface Story {
   preview: string;
   objective: string | { name: string; value: string };
   childrenIds: string[];
+  childrenNames?: string[];
   createdAt: Date;
   status: 'pending' | 'completed' | 'read';
   story_text: string;
