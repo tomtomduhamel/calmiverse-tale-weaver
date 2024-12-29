@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Heart, Info } from "lucide-react";
 import type { Story } from "@/types/story";
+import ReactMarkdown from 'react-markdown';
 
 interface StoryReaderProps {
   story: Story | null;
@@ -115,9 +116,9 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
 
           <div
             style={{ fontSize: `${fontSize}px` }}
-            className="prose max-w-none animate-fade-in"
+            className="prose prose-sm md:prose-base lg:prose-lg max-w-none dark:prose-invert animate-fade-in"
           >
-            {story.story_text}
+            <ReactMarkdown>{story.story_text}</ReactMarkdown>
           </div>
         </Card>
 
