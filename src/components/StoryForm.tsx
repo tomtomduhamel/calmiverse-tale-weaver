@@ -12,7 +12,7 @@ import ChildrenSelection from "./story/ChildrenSelection";
 interface StoryFormProps {
   onSubmit: (data: StoryFormData) => Promise<string>;
   children: Child[];
-  onCreateChild: () => void;
+  onCreateChild: (child: Omit<Child, "id">) => void;
   onStoryCreated: (story: any) => void;
 }
 
@@ -90,7 +90,14 @@ const StoryForm: React.FC<StoryFormProps> = ({
 
   const handleChildFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onCreateChild();
+    const newChildData = {
+      name: childName,
+      age: childAge,
+      teddyName,
+      teddyDescription,
+      imaginaryWorld,
+    };
+    onCreateChild(newChildData);
     setShowChildForm(false);
     resetChildForm();
   };
