@@ -21,7 +21,7 @@ const StoryCardTitle: React.FC<StoryCardTitleProps> = ({
     // Gérer les titres avec ###
     if (formattedText.startsWith('###')) {
       return (
-        <h3 className="text-xl font-bold mb-3 text-secondary-dark">
+        <h3 className="text-xl font-bold text-secondary-dark">
           {formattedText.replace(/^###\s*/, '')}
         </h3>
       );
@@ -30,7 +30,7 @@ const StoryCardTitle: React.FC<StoryCardTitleProps> = ({
     // Gérer le texte en gras avec **
     if (formattedText.startsWith('**') && formattedText.endsWith('**')) {
       return (
-        <h3 className="text-lg font-semibold mb-2 text-secondary-dark">
+        <h3 className="text-lg font-semibold text-secondary-dark">
           {formattedText.replace(/^\*\*|\*\*$/g, '')}
         </h3>
       );
@@ -38,7 +38,7 @@ const StoryCardTitle: React.FC<StoryCardTitleProps> = ({
 
     // Texte normal
     return (
-      <h3 className="text-base font-medium mb-2 text-secondary-dark">
+      <h3 className="text-base font-medium text-secondary-dark">
         {formattedText}
       </h3>
     );
@@ -48,7 +48,7 @@ const StoryCardTitle: React.FC<StoryCardTitleProps> = ({
     <Input
       value={editingTitle}
       onChange={(e) => onEditingTitleChange(e.target.value)}
-      className="mb-2 font-semibold"
+      className="font-semibold"
       onClick={(e) => e.stopPropagation()}
       autoFocus
     />

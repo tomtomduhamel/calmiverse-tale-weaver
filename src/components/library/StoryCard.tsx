@@ -104,59 +104,63 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         }
       }}
     >
-      <div className="min-h-[4rem] relative">
-        <StoryCardTitle
-          isEditing={isEditing}
-          title={story.title}
-          editingTitle={editingTitle}
-          onEditingTitleChange={setEditingTitle}
-        />
-        <div className="absolute top-0 right-0">
-          <StoryCardActions
-            isEditing={isEditing}
-            isFavorite={isFavorite}
-            onToggleFavorite={toggleFavorite}
-            onSaveTitle={saveTitle}
-            onStartEditing={startEditing}
-            onDelete={onDelete}
-          />
+      <div className="flex flex-col space-y-4">
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex-grow">
+            <StoryCardTitle
+              isEditing={isEditing}
+              title={story.title}
+              editingTitle={editingTitle}
+              onEditingTitleChange={setEditingTitle}
+            />
+          </div>
+          <div className="flex-shrink-0">
+            <StoryCardActions
+              isEditing={isEditing}
+              isFavorite={isFavorite}
+              onToggleFavorite={toggleFavorite}
+              onSaveTitle={saveTitle}
+              onStartEditing={startEditing}
+              onDelete={onDelete}
+            />
+          </div>
         </div>
+
+        <p className="text-sm text-muted-foreground line-clamp-3">
+          {story.status === 'pending' ? "Histoire en cours de génération..." : story.story_summary}
+        </p>
+
+        <StoryCardTags
+          tags={story.tags || []}
+          objective={story.objective}
+          status={story.status}
+        />
+        
+        <p className="text-xs text-muted-foreground">
+          Créée le {format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+        </p>
+        
+        {story.status === 'completed' ? (
+          <Button
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground flex items-center gap-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCardClick();
+            }}
+          >
+            <BookOpen className="w-4 h-4" />
+            Lire l'histoire complète
+          </Button>
+        ) : (
+          <Button
+            className="w-full bg-secondary/50 cursor-not-allowed flex items-center gap-2 animate-pulse"
+            disabled
+          >
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Génération en cours...
+          </Button>
+        )}
       </div>
-
-      <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-        {story.status === 'pending' ? "Histoire en cours de génération..." : story.story_summary}
-      </p>
-
-      <StoryCardTags
-        tags={story.tags || []}
-        objective={story.objective}
-        status={story.status}
-      />
-      
-      <p className="text-xs text-muted-foreground mt-2">
-        Créée le {format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
-      </p>
-      
-      {story.status === 'completed' ? (
-        <Button
-          className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-4 flex items-center gap-2"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleCardClick();
-          }}
-        >
-          <BookOpen className="w-4 h-4" />
-          Lire l'histoire complète
-        </Button>
-      ) : (
-        <Button
-          className="w-full bg-secondary/50 cursor-not-allowed mt-4 flex items-center gap-2 animate-pulse"
-          disabled
-        >
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Génération en cours...
-        </Button>
-      )}
     </Card>
   );
 };
