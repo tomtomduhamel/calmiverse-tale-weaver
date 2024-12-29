@@ -14,6 +14,36 @@ const StoryCardTitle: React.FC<StoryCardTitleProps> = ({
   editingTitle,
   onEditingTitleChange,
 }) => {
+  const formatTitle = (text: string) => {
+    // Enlever les guillemets au début et à la fin
+    let formattedText = text.replace(/^"|"$/g, '').trim();
+
+    // Gérer les titres avec ###
+    if (formattedText.startsWith('###')) {
+      return (
+        <h3 className="text-xl font-bold mb-3 text-secondary-dark">
+          {formattedText.replace(/^###\s*/, '')}
+        </h3>
+      );
+    }
+    
+    // Gérer le texte en gras avec **
+    if (formattedText.startsWith('**') && formattedText.endsWith('**')) {
+      return (
+        <h3 className="text-lg font-semibold mb-2 text-secondary-dark">
+          {formattedText.replace(/^\*\*|\*\*$/g, '')}
+        </h3>
+      );
+    }
+
+    // Texte normal
+    return (
+      <h3 className="text-base font-medium mb-2 text-secondary-dark">
+        {formattedText}
+      </h3>
+    );
+  };
+
   return isEditing ? (
     <Input
       value={editingTitle}
@@ -23,9 +53,7 @@ const StoryCardTitle: React.FC<StoryCardTitleProps> = ({
       autoFocus
     />
   ) : (
-    <h3 className="text-lg font-semibold mb-2 text-secondary-dark">
-      {title}
-    </h3>
+    formatTitle(title)
   );
 };
 
