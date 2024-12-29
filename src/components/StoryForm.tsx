@@ -8,7 +8,8 @@ import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import LoadingStory from "./LoadingStory";
 import CreateChildDialog from "./story/CreateChildDialog";
 import ChildrenSelection from "./story/ChildrenSelection";
-import { useChildFormLogic } from "./story/useChildFormLogic";
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface StoryFormProps {
   onSubmit: (data: StoryFormData) => Promise<string>;
@@ -35,23 +36,55 @@ const StoryForm: React.FC<StoryFormProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
   const { toast } = useToast();
+  const [showChildForm, setShowChildForm] = useState(false);
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState(1);
 
-  const {
-    showChildForm,
-    setShowChildForm,
-    childName,
-    childAge,
-    teddyName,
-    teddyDescription,
-    imaginaryWorld,
-    handleChildFormSubmit,
-    resetChildForm,
-    setChildName,
-    setChildAge,
-    setTeddyName,
-    setTeddyDescription,
-    setImaginaryWorld,
-  } = useChildFormLogic(onCreateChild);
+  const handleChildFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!childName.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Le prénom de l'enfant est requis",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const childData = {
+        name: childName,
+        age: childAge,
+        createdAt: new Date(),
+      };
+
+      const docRef = await addDoc(collection(db, 'children'), childData);
+      
+      toast({
+        title: "Succès",
+        description: "L'enfant a été ajouté avec succès",
+      });
+
+      // Sélectionner automatiquement le nouvel enfant
+      setFormData(prev => ({
+        ...prev,
+        childrenIds: [...prev.childrenIds, docRef.id]
+      }));
+
+      // Réinitialiser le formulaire et fermer la modale
+      setChildName("");
+      setChildAge(1);
+      setShowChildForm(false);
+    } catch (error) {
+      console.error("Erreur lors de la création de l'enfant:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création de l'enfant",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,16 +208,14 @@ const StoryForm: React.FC<StoryFormProps> = ({
         onOpenChange={setShowChildForm}
         childName={childName}
         childAge={childAge}
-        teddyName={teddyName}
-        teddyDescription={teddyDescription}
-        imaginaryWorld={imaginaryWorld}
         onSubmit={handleChildFormSubmit}
-        onReset={() => setShowChildForm(false)}
+        onReset={() => {
+          setChildName("");
+          setChildAge(1);
+          setShowChildForm(false);
+        }}
         onChildNameChange={setChildName}
         onChildAgeChange={setChildAge}
-        onTeddyNameChange={setTeddyName}
-        onTeddyDescriptionChange={setTeddyDescription}
-        onImaginaryWorldChange={setImaginaryWorld}
       />
     </>
   );
