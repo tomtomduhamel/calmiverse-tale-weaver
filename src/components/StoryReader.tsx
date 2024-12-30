@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { TextToSpeech } from "./story/TextToSpeech";
 import { ShareStory } from "./story/ShareStory";
+import { SendToEreader } from "./story/SendToEreader";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -77,6 +78,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
             </Button>
             <TextToSpeech text={story.story_text} />
             <ShareStory storyId={story.id} title={story.title} />
+            <SendToEreader storyText={story.story_text} title={story.title} />
           </div>
           <Button 
             variant="ghost" 
