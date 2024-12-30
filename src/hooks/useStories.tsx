@@ -30,6 +30,7 @@ export const useStories = (children: any[] = []) => {
 
           return {
             id: doc.id,
+            id_stories: data.id_stories || `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             title: data.title || '',
             preview: data.preview || '',
             objective: data.objective || '',
@@ -69,7 +70,11 @@ export const useStories = (children: any[] = []) => {
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
       
+      // Génération d'un id_stories unique
+      const uniqueId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       const storyData = {
+        id_stories: uniqueId,
         title: `Histoire pour ${childrenNames.join(' et ')}`,
         preview: "Histoire en cours de génération...",
         objective: formData.objective,
