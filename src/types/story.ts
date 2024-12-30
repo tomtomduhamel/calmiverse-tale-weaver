@@ -1,5 +1,6 @@
 export interface Story {
   id: string;
+  id_stories?: string; // Ajout du champ optionnel id_stories
   title: string;
   preview: string;
   objective: string | { name: string; value: string };

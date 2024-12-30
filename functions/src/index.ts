@@ -40,12 +40,16 @@ export const generateStory = functions.https.onCall(async (data, context) => {
       );
     }
 
+    // Génération d'un id_stories unique
+    const uniqueId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Formatage des données pour Firestore
     const storyData = {
+      id_stories: uniqueId, // Ajout de l'id_stories unique
       story_text: story,
       story_summary: "Résumé en cours de génération...",
       status: 'pending',
-      createdAt: new Date(), // Utilisation d'un objet Date pour Firestore
+      createdAt: new Date(),
       title: "Nouvelle histoire",
       preview: story.substring(0, 200) + "..."
     };
