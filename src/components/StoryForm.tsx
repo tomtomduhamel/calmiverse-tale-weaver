@@ -61,21 +61,19 @@ const StoryForm: React.FC<StoryFormProps> = ({
 
       const docRef = await addDoc(collection(db, 'children'), childData);
       
-      toast({
-        title: "Succès",
-        description: "L'enfant a été ajouté avec succès",
-      });
-
-      // Sélectionner automatiquement le nouvel enfant
       setFormData(prev => ({
         ...prev,
         childrenIds: [...prev.childrenIds, docRef.id]
       }));
 
-      // Réinitialiser le formulaire et fermer la modale
       setChildName("");
       setChildAge(1);
       setShowChildForm(false);
+
+      toast({
+        title: "Succès",
+        description: "L'enfant a été ajouté avec succès",
+      });
     } catch (error) {
       console.error("Erreur lors de la création de l'enfant:", error);
       toast({
@@ -88,6 +86,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (formData.childrenIds.length === 0) {
       toast({
         title: "Erreur",
@@ -96,6 +95,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
       });
       return;
     }
+    
     if (!formData.objective) {
       toast({
         title: "Erreur",
@@ -123,28 +123,6 @@ const StoryForm: React.FC<StoryFormProps> = ({
     }
   };
 
-  const handleChildToggle = (childId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      childrenIds: prev.childrenIds.includes(childId)
-        ? prev.childrenIds.filter((id) => id !== childId)
-        : [...prev.childrenIds, childId],
-    }));
-  };
-
-  const getObjectiveIcon = (value: string) => {
-    switch (value) {
-      case "sleep":
-        return <Moon className="w-5 h-5 shrink-0" />;
-      case "focus":
-        return <Brain className="w-5 h-5 shrink-0" />;
-      case "relax":
-        return <Heart className="w-5 h-5 shrink-0" />;
-      default:
-        return <Star className="w-5 h-5 shrink-0" />;
-    }
-  };
-
   if (objectivesLoading) {
     return <div>Chargement des objectifs...</div>;
   }
@@ -155,10 +133,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
 
   return (
     <>
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl"
-      >
+      <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
         <h2 className="text-2xl font-semibold text-center mb-6 text-primary dark:text-primary-dark">
           Créer une histoire
         </h2>
@@ -166,7 +141,14 @@ const StoryForm: React.FC<StoryFormProps> = ({
         <ChildrenSelection
           children={children}
           selectedChildrenIds={formData.childrenIds}
-          onChildToggle={handleChildToggle}
+          onChildToggle={(childId) => {
+            setFormData((prev) => ({
+              ...prev,
+              childrenIds: prev.childrenIds.includes(childId)
+                ? prev.childrenIds.filter((id) => id !== childId)
+                : [...prev.childrenIds, childId],
+            }));
+          }}
           onCreateChildClick={() => setShowChildForm(true)}
         />
 
@@ -187,7 +169,12 @@ const StoryForm: React.FC<StoryFormProps> = ({
                     : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
                 }`}
               >
-                {getObjectiveIcon(objective.value)}
+                {objective.value === "sleep" && <Moon className="w-5 h-5 shrink-0" />}
+                {objective.value === "focus" && <Brain className="w-5 h-5 shrink-0" />}
+                {objective.value === "relax" && <Heart className="w-5 h-5 shrink-0" />}
+                {!["sleep", "focus", "relax"].includes(objective.value) && (
+                  <Star className="w-5 h-5 shrink-0" />
+                )}
                 <span className="flex-1">{objective.label}</span>
               </Button>
             ))}

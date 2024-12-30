@@ -8,92 +8,57 @@
     <meta name="author" content="Lovable" />
     <meta property="og:image" content="/og-image.png" />
   </head>
-
   <body>
     <div id="root"></div>
     <script>
-      // Configuration initiale
+      // Configuration de base
       window.gptengineer = {
         config: {
-          cloneableObjects: false,
           debug: true,
-          postMessageOptions: {
-            transfer: [],
-            structuredClone: false,
-            fallbackToJSON: true,
-            timeout: 60000
-          }
+          retryDelay: 1000,
+          maxRetries: 3
         }
       };
 
-      // Système de retry pour les opérations critiques
-      const retryOperation = async (operation, maxRetries = 3, delay = 1000) => {
-        for (let i = 0; i < maxRetries; i++) {
-          try {
-            return await operation();
-          } catch (error) {
-            if (i === maxRetries - 1) throw error;
-            await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
-          }
-        }
-      };
-
-      // Gestion centralisée des erreurs avec niveaux et retry
+      // Gestionnaire d'erreurs simplifié
       const errorHandler = {
-        ignoredPatterns: [
-          'cors',
-          'feature',
-          'ambient-light-sensor',
-          'battery',
-          'connection',
-          'preload',
-          'as',
-          'link preloaded',
-          'postMessage',
-          'DataCloneError',
-          'Receiving end does not exist'
-        ],
-
-        shouldIgnore(error) {
-          if (!error?.message) return false;
-          return this.ignoredPatterns.some(pattern => 
-            error.message.toLowerCase().includes(pattern.toLowerCase())
-          );
-        },
-
-        log(source, error, level = 'warn') {
-          const logFn = console[level] || console.log;
-          const timestamp = new Date().toISOString();
-          logFn(`[${timestamp}][${source}] Error:`, error);
-          
-          if (level === 'error' && error?.stack) {
-            console.error('Stack trace:', error.stack);
-          }
-        },
-
-        async handle(error, source) {
-          if (this.shouldIgnore(error)) {
-            this.log(source, error, 'info');
+        handle(error, source) {
+          // Ignorer les erreurs non critiques
+          if (this.isNonCritical(error)) {
+            console.info(`[${source}] Non-critical error:`, error);
             return false;
           }
-          this.log(source, error, 'error');
+          
+          // Logger les erreurs critiques
+          console.error(`[${source}] Critical error:`, error);
           return true;
+        },
+
+        isNonCritical(error) {
+          const nonCriticalPatterns = [
+            'cors',
+            'feature',
+            'ambient-light-sensor',
+            'battery',
+            'connection',
+            'preload',
+            'as',
+            'link preloaded'
+          ];
+
+          return nonCriticalPatterns.some(pattern => 
+            error?.message?.toLowerCase().includes(pattern)
+          );
         }
       };
 
       // Gestionnaire d'erreurs global
-      window.addEventListener('error', async function(event) {
+      window.addEventListener('error', function(event) {
         if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
-          const resource = event.target.src || event.target.href;
-          
-          if (resource && resource.includes('lovable.dev')) {
-            errorHandler.log('Resource Load', `Non-critical resource load failed: ${resource}`, 'info');
-            event.preventDefault();
-            return false;
-          }
+          return false;
         }
-
-        const shouldPropagate = await errorHandler.handle(event.error, 'Global Error');
+        
+        const shouldPropagate = errorHandler.handle(event.error, 'Global Error');
         if (!shouldPropagate) {
           event.preventDefault();
           return false;
@@ -101,28 +66,17 @@
       }, true);
 
       // Gestionnaire de promesses rejetées
-      window.addEventListener('unhandledrejection', async function(event) {
-        const shouldPropagate = await errorHandler.handle(event.reason, 'Unhandled Promise');
+      window.addEventListener('unhandledrejection', function(event) {
+        const shouldPropagate = errorHandler.handle(event.reason, 'Unhandled Promise');
         if (!shouldPropagate) {
           event.preventDefault();
           return false;
         }
       });
 
-      // Initialisation de l'application avec retry
+      // Initialisation de l'application
       window.addEventListener('load', function() {
-        retryOperation(
-          () => new Promise((resolve) => {
-            setTimeout(() => {
-              console.log('Application initialized successfully');
-              resolve();
-            }, 2000);
-          }),
-          3,
-          1000
-        ).catch(error => {
-          errorHandler.log('Initialization', error, 'error');
-        });
+        console.log('Application initialized');
       });
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
