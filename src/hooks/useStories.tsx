@@ -18,31 +18,34 @@ export const useStories = (children: any[] = []) => {
         console.log('📥 Réception de la mise à jour Firestore avec', snapshot.docs.length, 'histoires');
         const loadedStories = snapshot.docs.map(doc => {
           const data = doc.data();
-          // Vérification et conversion du timestamp
+          
+          // Conversion sécurisée du timestamp
           let createdAtDate;
-          if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-            createdAtDate = data.createdAt.toDate();
-          } else if (data.createdAt instanceof Date) {
-            createdAtDate = data.createdAt;
-          } else {
+          try {
+            createdAtDate = data.createdAt?.toDate?.() || new Date();
+          } catch (e) {
+            console.warn('Erreur lors de la conversion du timestamp:', e);
             createdAtDate = new Date();
           }
 
-          return {
+          // Création d'un objet simple et clonable
+          const story: Story = {
             id: doc.id,
             id_stories: data.id_stories || `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             title: data.title || '',
             preview: data.preview || '',
             objective: data.objective || '',
-            childrenIds: data.childrenIds || [],
-            childrenNames: data.childrenNames || [],
+            childrenIds: Array.isArray(data.childrenIds) ? [...data.childrenIds] : [],
+            childrenNames: Array.isArray(data.childrenNames) ? [...data.childrenNames] : [],
             status: data.status || 'pending',
             story_text: data.story_text || '',
             story_summary: data.story_summary || '',
             createdAt: createdAtDate,
-            isFavorite: data.isFavorite || false,
-            tags: data.tags || []
-          } as Story;
+            isFavorite: Boolean(data.isFavorite),
+            tags: Array.isArray(data.tags) ? [...data.tags] : []
+          };
+
+          return story;
         });
 
         console.log('Histoires chargées:', loadedStories);
@@ -73,13 +76,14 @@ export const useStories = (children: any[] = []) => {
       // Génération d'un id_stories unique
       const uniqueId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
+      // Création d'un objet simple et clonable
       const storyData = {
         id_stories: uniqueId,
         title: `Histoire pour ${childrenNames.join(' et ')}`,
         preview: "Histoire en cours de génération...",
         objective: formData.objective,
-        childrenIds: formData.childrenIds,
-        childrenNames,
+        childrenIds: [...formData.childrenIds],
+        childrenNames: [...childrenNames],
         status: 'pending',
         story_text: "Génération en cours...",
         story_summary: "Résumé en cours de génération...",
