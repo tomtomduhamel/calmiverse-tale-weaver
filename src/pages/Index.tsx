@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import StoryForm from "@/components/StoryForm";
 import StoryReader from "@/components/StoryReader";
 import StoryLibrary from "@/components/StoryLibrary";
 import ChildrenProfiles from "@/components/ChildrenProfiles";
 import HomeHero from "@/components/home/HomeHero";
+import { InteractiveGuide } from "@/components/guide/InteractiveGuide";
 import type { ViewType } from "@/types/views";
 import type { StoryFormData } from "@/components/StoryForm";
 import type { Story } from "@/types/story";
@@ -13,9 +14,18 @@ import { useStories } from "@/hooks/useStories";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
+  const [showGuide, setShowGuide] = useState(false);
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useChildren();
   const { stories, currentStory, handleCreateStory, handleDeleteStory, setCurrentStory } = useStories();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const hasSeenGuide = localStorage.getItem("hasSeenGuide");
+    if (!hasSeenGuide) {
+      setShowGuide(true);
+      localStorage.setItem("hasSeenGuide", "true");
+    }
+  }, []);
 
   const handleCreateChildFromStory = () => {
     setCurrentView("profiles");
@@ -60,12 +70,14 @@ const Index = () => {
 
   return (
     <>
+      {showGuide && <InteractiveGuide />}
+      
       {currentView === "home" && (
         <HomeHero onViewChange={setCurrentView} />
       )}
 
       {currentView === "create" && (
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md mx-auto animate-fade-in">
           <StoryForm 
             onSubmit={handleStorySubmit}
             children={children} 
@@ -76,29 +88,35 @@ const Index = () => {
       )}
 
       {currentView === "profiles" && (
-        <ChildrenProfiles
-          children={children}
-          onAddChild={handleAddChild}
-          onUpdateChild={handleUpdateChild}
-          onDeleteChild={handleDeleteChild}
-          onCreateStory={() => setCurrentView("create")}
-        />
+        <div className="animate-fade-in">
+          <ChildrenProfiles
+            children={children}
+            onAddChild={handleAddChild}
+            onUpdateChild={handleUpdateChild}
+            onDeleteChild={handleDeleteChild}
+            onCreateStory={() => setCurrentView("create")}
+          />
+        </div>
       )}
 
       {currentView === "library" && (
-        <StoryLibrary
-          stories={stories}
-          onSelectStory={handleSelectStory}
-          onDeleteStory={handleDeleteStory}
-          onViewChange={setCurrentView}
-        />
+        <div className="animate-fade-in">
+          <StoryLibrary
+            stories={stories}
+            onSelectStory={handleSelectStory}
+            onDeleteStory={handleDeleteStory}
+            onViewChange={setCurrentView}
+          />
+        </div>
       )}
 
       {currentView === "reader" && currentStory && (
-        <StoryReader
-          story={currentStory}
-          onClose={handleCloseReader}
-        />
+        <div className="animate-fade-in">
+          <StoryReader
+            story={currentStory}
+            onClose={handleCloseReader}
+          />
+        </div>
       )}
     </>
   );

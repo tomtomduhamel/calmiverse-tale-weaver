@@ -7,6 +7,8 @@ import type { Story } from "@/types/story";
 import ReactMarkdown from 'react-markdown';
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { TextToSpeech } from "./story/TextToSpeech";
+import { ShareStory } from "./story/ShareStory";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -23,7 +25,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
   if (!story) {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center">
-        <Card className="p-6 text-center">
+        <Card className="p-6 text-center animate-fade-in">
           <p className="mb-4">Aucune histoire à afficher</p>
           <Button onClick={onClose}>Retour</Button>
         </Card>
@@ -48,42 +50,44 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
   const formattedDate = story.createdAt ? format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr }) : "";
 
   return (
-    <div className={`min-h-screen p-4 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
+    <div className={`min-h-screen p-4 transition-colors duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="space-x-2">
             <Button
               variant="outline"
               onClick={() => setFontSize((prev) => Math.max(12, prev - 2))}
-              className="w-10 h-10 dark:text-white dark:hover:text-white"
+              className="w-10 h-10 transition-transform hover:scale-105"
             >
               A-
             </Button>
             <Button
               variant="outline"
               onClick={() => setFontSize((prev) => Math.min(24, prev + 2))}
-              className="w-10 h-10 dark:text-white dark:hover:text-white"
+              className="w-10 h-10 transition-transform hover:scale-105"
             >
               A+
             </Button>
             <Button
               variant="outline"
               onClick={() => setIsDarkMode((prev) => !prev)}
-              className="w-10 h-10 dark:text-white dark:hover:text-white"
+              className="w-10 h-10 transition-transform hover:scale-105"
             >
               {isDarkMode ? "☀️" : "🌙"}
             </Button>
+            <TextToSpeech text={story.story_text} />
+            <ShareStory storyId={story.id} title={story.title} />
           </div>
           <Button 
             variant="ghost" 
             onClick={onClose}
-            className="dark:text-white dark:hover:text-white"
+            className="transition-transform hover:scale-105"
           >
             Fermer
           </Button>
         </div>
 
-        <Card className={`p-6 ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
+        <Card className={`p-6 transition-all duration-300 ${isDarkMode ? "bg-gray-800" : "bg-white"} animate-fade-in`}>
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-2xl font-bold">{story.title}</h2>
@@ -97,7 +101,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
                 variant="outline"
                 size="icon"
                 onClick={() => setShowSummary(true)}
-                className="relative group"
+                className="relative group transition-transform hover:scale-105"
               >
                 <Info className="h-5 w-5" />
               </Button>
@@ -106,7 +110,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
                   variant="outline"
                   size="icon"
                   onClick={() => onToggleFavorite(story.id)}
-                  className={story.isFavorite ? "text-red-500" : ""}
+                  className={`transition-transform hover:scale-105 ${story.isFavorite ? "text-red-500" : ""}`}
                 >
                   <Heart className="h-5 w-5" fill={story.isFavorite ? "currentColor" : "none"} />
                 </Button>
@@ -128,7 +132,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
         </Card>
 
         <Dialog open={showSummary} onOpenChange={setShowSummary}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] animate-fade-in">
             <DialogHeader>
               <DialogTitle>Résumé de l'histoire</DialogTitle>
             </DialogHeader>
@@ -144,7 +148,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
                     {story.tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="px-2 py-1 text-xs rounded-full bg-secondary/20 text-secondary-foreground"
+                        className="px-2 py-1 text-xs rounded-full bg-secondary/20 text-secondary-foreground transition-all hover:scale-105"
                       >
                         {tag}
                       </span>
