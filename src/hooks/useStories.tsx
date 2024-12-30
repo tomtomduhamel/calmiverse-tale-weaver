@@ -20,9 +20,18 @@ export const useStories = (children: any[] = []) => {
           const data = doc.data();
           return {
             id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.toDate() || new Date()
-          };
+            title: data.title || '',
+            preview: data.preview || '',
+            objective: data.objective || '',
+            childrenIds: data.childrenIds || [],
+            childrenNames: data.childrenNames || [],
+            status: data.status || 'pending',
+            story_text: data.story_text || '',
+            story_summary: data.story_summary || '',
+            createdAt: data.createdAt?.toDate() || new Date(),
+            isFavorite: data.isFavorite || false,
+            tags: data.tags || []
+          } as Story;
         });
 
         console.log('Histoires chargées:', loadedStories);
