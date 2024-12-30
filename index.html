@@ -14,9 +14,9 @@
       // Configuration de base avec gestion des erreurs améliorée
       window.gptengineer = {
         config: {
-          debug: false, // Désactivation du mode debug pour la production
-          retryDelay: 2000, // Augmentation du délai entre les tentatives
-          maxRetries: 5, // Augmentation du nombre de tentatives
+          debug: false,
+          retryDelay: 2000,
+          maxRetries: 5,
           errorHandling: {
             ignorePatterns: [
               'cors',
@@ -34,55 +34,101 @@
         }
       };
 
-      // Gestionnaire d'erreurs optimisé
+      // Fonction de sérialisation sécurisée des erreurs
+      function serializeError(error) {
+        if (!error) return null;
+        
+        const serialized = {
+          message: error.message || 'Unknown error',
+          name: error.name || 'Error',
+          stack: error.stack,
+        };
+
+        // Nettoyer les propriétés circulaires ou non-sérialisables
+        return JSON.parse(JSON.stringify(serialized, (key, value) => {
+          if (value instanceof Error) {
+            return serializeError(value);
+          }
+          if (value instanceof Request || value instanceof Response) {
+            return `[${value.constructor.name}]`;
+          }
+          return value;
+        }));
+      }
+
+      // Gestionnaire d'erreurs optimisé avec sérialisation
       const errorHandler = {
         handle(error, source) {
-          // Ignorer les erreurs non critiques définies dans la config
-          if (this.isNonCritical(error)) {
+          try {
+            // Ignorer les erreurs non critiques définies dans la config
+            if (this.isNonCritical(error)) {
+              return false;
+            }
+            
+            // Sérialiser l'erreur avant le logging
+            const serializedError = serializeError(error);
+            console.error(`[${source}] Critical error:`, serializedError);
+            return true;
+          } catch (e) {
+            // En cas d'erreur pendant la gestion, retourner une version simplifiée
+            console.error('Error handling failed:', e.message);
             return false;
           }
-          
-          // Logger uniquement les erreurs critiques
-          console.error(`[${source}] Critical error:`, error);
-          return true;
         },
 
         isNonCritical(error) {
-          const { ignorePatterns } = window.gptengineer.config.errorHandling;
-          const errorMessage = error?.message?.toLowerCase() || '';
-          
-          return ignorePatterns.some(pattern => errorMessage.includes(pattern));
+          try {
+            const { ignorePatterns } = window.gptengineer.config.errorHandling;
+            const errorMessage = (error?.message || '').toLowerCase();
+            return ignorePatterns.some(pattern => errorMessage.includes(pattern));
+          } catch {
+            return true; // En cas de doute, traiter comme non critique
+          }
         }
       };
 
-      // Gestionnaire d'erreurs global avec debounce intégré
+      // Gestionnaire d'erreurs global avec debounce renforcé
       let errorTimeout;
       window.addEventListener('error', function(event) {
         if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
           return false;
         }
         
-        clearTimeout(errorTimeout);
+        if (errorTimeout) {
+          clearTimeout(errorTimeout);
+        }
+
         errorTimeout = setTimeout(() => {
-          const shouldPropagate = errorHandler.handle(event.error, 'Global Error');
-          if (!shouldPropagate) {
+          try {
+            const shouldPropagate = errorHandler.handle(event.error, 'Global Error');
+            if (!shouldPropagate) {
+              event.preventDefault();
+            }
+          } catch {
             event.preventDefault();
           }
-        }, 100);
+        }, 200);
         
         return false;
       }, true);
 
-      // Gestionnaire de promesses rejetées avec debounce
+      // Gestionnaire de promesses rejetées avec debounce renforcé
       let rejectionTimeout;
       window.addEventListener('unhandledrejection', function(event) {
-        clearTimeout(rejectionTimeout);
+        if (rejectionTimeout) {
+          clearTimeout(rejectionTimeout);
+        }
+
         rejectionTimeout = setTimeout(() => {
-          const shouldPropagate = errorHandler.handle(event.reason, 'Unhandled Promise');
-          if (!shouldPropagate) {
+          try {
+            const shouldPropagate = errorHandler.handle(event.reason, 'Unhandled Promise');
+            if (!shouldPropagate) {
+              event.preventDefault();
+            }
+          } catch {
             event.preventDefault();
           }
-        }, 100);
+        }, 200);
         
         return false;
       });
