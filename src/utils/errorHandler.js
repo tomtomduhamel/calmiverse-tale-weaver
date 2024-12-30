@@ -15,7 +15,8 @@ window.gptengineer = {
         'as',
         'link preloaded',
         'postMessage',
-        'ResizeObserver loop'
+        'ResizeObserver loop',
+        'Failed to execute \'postMessage\' on \'Window\''
       ]
     }
   }
@@ -32,35 +33,84 @@ function isObjectClonable(obj) {
 }
 
 // Fonction de sérialisation sécurisée
-function safeSerialize(obj) {
+function safeSerialize(obj, depth = 0, maxDepth = 5) {
+  if (depth > maxDepth) {
+    return { _type: "MaxDepthReached", value: "[Max depth of " + maxDepth + " reached]" };
+  }
+
   if (!obj) return null;
   
   try {
-    if (isObjectClonable(obj)) {
-      return structuredClone(obj);
+    // Handle special types
+    if (obj instanceof Error) {
+      return {
+        _type: "Error",
+        name: obj.name,
+        message: obj.message,
+        stack: obj.stack
+      };
     }
 
+    if (obj instanceof Set) {
+      return {
+        _type: "Set",
+        value: { values: Array.from(obj).map(v => safeSerialize(v, depth + 1, maxDepth)) }
+      };
+    }
+
+    if (obj instanceof Map) {
+      return {
+        _type: "Map",
+        value: { entries: Array.from(obj.entries()).map(([k, v]) => [
+          safeSerialize(k, depth + 1, maxDepth),
+          safeSerialize(v, depth + 1, maxDepth)
+        ])}
+      };
+    }
+
+    if (typeof obj === 'function') {
+      return {
+        _type: "function",
+        name: obj.name || "anonymous"
+      };
+    }
+
+    if (typeof obj === 'undefined') {
+      return {
+        _type: "undefined",
+        value: "undefined"
+      };
+    }
+
+    if (typeof obj !== 'object') {
+      return obj;
+    }
+
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      return obj.map(item => safeSerialize(item, depth + 1, maxDepth));
+    }
+
+    // Handle regular objects
     const clean = {};
-    
+    const seen = new WeakSet();
+
     for (let key in obj) {
       if (obj.hasOwnProperty(key)) {
         const value = obj[key];
         
-        if (value instanceof Error) {
-          clean[key] = {
-            name: value.name,
-            message: value.message,
-            stack: value.stack
-          };
-        } else if (value instanceof Request || value instanceof Response) {
-          clean[key] = `[${value.constructor.name}]`;
-        } else if (typeof value === 'function') {
-          clean[key] = `[Function: ${value.name || 'anonymous'}]`;
-        } else if (typeof value === 'object' && value !== null) {
-          clean[key] = safeSerialize(value);
-        } else {
-          clean[key] = value;
+        // Handle circular references
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) {
+            clean[key] = {
+              message: "[Circular Reference to " + (value.constructor ? value.constructor.name : 'root') + "]"
+            };
+            continue;
+          }
+          seen.add(value);
         }
+
+        clean[key] = safeSerialize(value, depth + 1, maxDepth);
       }
     }
     
@@ -79,16 +129,26 @@ function safeSerialize(obj) {
 const errorHandler = {
   lastError: null,
   lastErrorTime: 0,
+  errorCache: new Set(),
   
   handle(error, source) {
     try {
       const now = Date.now();
-      if (this.lastError === error.message && (now - this.lastErrorTime) < 1000) {
+      const errorKey = `${error.message}:${source}`;
+
+      // Vérifier si l'erreur est déjà dans le cache (5 secondes)
+      if (this.errorCache.has(errorKey) && (now - this.lastErrorTime) < 5000) {
         return false;
       }
-      
+
       this.lastError = error.message;
       this.lastErrorTime = now;
+      this.errorCache.add(errorKey);
+
+      // Nettoyer le cache après 5 secondes
+      setTimeout(() => {
+        this.errorCache.delete(errorKey);
+      }, 5000);
 
       if (this.isNonCritical(error)) {
         return false;
@@ -108,7 +168,9 @@ const errorHandler = {
     try {
       const { ignorePatterns } = window.gptengineer.config.errorHandling;
       const errorMessage = (error?.message || '').toLowerCase();
-      return ignorePatterns.some(pattern => errorMessage.includes(pattern.toLowerCase()));
+      return ignorePatterns.some(pattern => 
+        errorMessage.includes(pattern.toLowerCase())
+      );
     } catch {
       return true;
     }
