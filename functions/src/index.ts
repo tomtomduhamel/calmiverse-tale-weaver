@@ -40,8 +40,18 @@ export const generateStory = functions.https.onCall(async (data, context) => {
       );
     }
 
-    console.log('Story generated successfully');
-    return story;
+    // Formatage des données pour Firestore
+    const storyData = {
+      story_text: story,
+      story_summary: "Résumé en cours de génération...",
+      status: 'pending',
+      createdAt: new Date().toISOString(), // Format ISO pour la compatibilité
+      title: "Nouvelle histoire",
+      preview: story.substring(0, 200) + "..."
+    };
+
+    console.log('Story data formatted for Firestore:', JSON.stringify(storyData));
+    return storyData;
 
   } catch (error) {
     console.error('Error generating story:', error);
