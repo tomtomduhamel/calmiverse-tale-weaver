@@ -92,7 +92,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
         <Card className={`p-6 transition-all duration-300 ${isDarkMode ? "bg-gray-800" : "bg-white"} animate-fade-in`}>
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-2xl font-bold">{story.title}</h2>
+              <ReactMarkdown className="text-2xl font-bold">{story.title}</ReactMarkdown>
               {childName && (
                 <p className="text-muted-foreground mt-1">Histoire personnalisée pour {childName}</p>
               )}
@@ -122,14 +122,31 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
 
           <div className="mb-6 bg-secondary/10 p-4 rounded-lg">
             <h3 className="text-lg font-semibold mb-2">Objectif de l'histoire</h3>
-            <p className="text-muted-foreground">{getObjectiveText(story.objective)}</p>
+            <ReactMarkdown className="text-muted-foreground">{getObjectiveText(story.objective)}</ReactMarkdown>
           </div>
 
           <div
             style={{ fontSize: `${fontSize}px` }}
             className="prose prose-sm md:prose-base lg:prose-lg max-w-none dark:prose-invert animate-fade-in"
           >
-            <ReactMarkdown>{story.story_text}</ReactMarkdown>
+            <ReactMarkdown
+              components={{
+                h1: ({ node, ...props }) => <h1 className="text-3xl font-bold mb-4" {...props} />,
+                h2: ({ node, ...props }) => <h2 className="text-2xl font-bold mb-3" {...props} />,
+                h3: ({ node, ...props }) => <h3 className="text-xl font-bold mb-2" {...props} />,
+                p: ({ node, ...props }) => <p className="mb-4 leading-relaxed" {...props} />,
+                ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-4" {...props} />,
+                ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-4" {...props} />,
+                li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                blockquote: ({ node, ...props }) => (
+                  <blockquote className="border-l-4 border-secondary pl-4 italic my-4" {...props} />
+                ),
+                em: ({ node, ...props }) => <em className="italic" {...props} />,
+                strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
+              }}
+            >
+              {story.story_text}
+            </ReactMarkdown>
           </div>
         </Card>
 
@@ -141,7 +158,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-medium mb-2">Points clés de l'histoire</h4>
-                <p className="text-sm text-muted-foreground">{story.story_summary}</p>
+                <ReactMarkdown className="text-sm text-muted-foreground">{story.story_summary}</ReactMarkdown>
               </div>
               {story.tags && story.tags.length > 0 && (
                 <div>
