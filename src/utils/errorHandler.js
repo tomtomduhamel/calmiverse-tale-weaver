@@ -1,10 +1,16 @@
 export function initializeErrorHandlers() {
   // Gestionnaire d'erreurs global
   window.addEventListener('error', function(event) {
-    // Ignorer les erreurs de chargement de ressources et les erreurs de postMessage
+    // Ignore postMessage clone errors as they are not critical
+    if (event.message?.includes('postMessage') || 
+        event.message?.includes('clone')) {
+      console.warn('Non-critical postMessage error:', event.message);
+      return false;
+    }
+    
+    // Ignorer les erreurs de chargement de ressources
     if (event.target?.tagName === 'LINK' || 
-        event.target?.tagName === 'SCRIPT' ||
-        event.message?.includes('postMessage')) {
+        event.target?.tagName === 'SCRIPT') {
       return false;
     }
     
@@ -21,8 +27,10 @@ export function initializeErrorHandlers() {
 
   // Gestionnaire de promesses non gérées
   window.addEventListener('unhandledrejection', function(event) {
-    // Ignorer les erreurs de postMessage
-    if (event.reason?.message?.includes('postMessage')) {
+    // Ignore postMessage related errors
+    if (event.reason?.message?.includes('postMessage') ||
+        event.reason?.message?.includes('clone')) {
+      console.warn('Non-critical postMessage promise error:', event.reason.message);
       return;
     }
 
@@ -37,24 +45,30 @@ export function initializeErrorHandlers() {
     event.preventDefault();
   });
 
-  // Remplacer la fonction postMessage par une version plus robuste
+  // Enhanced postMessage handling
   const originalPostMessage = window.postMessage;
   window.postMessage = function(message, targetOrigin, transfer) {
     try {
-      // Si le message est une chaîne ou un nombre, l'envoyer directement
-      if (typeof message === 'string' || typeof message === 'number') {
+      // For primitive types, send directly
+      if (typeof message === 'string' || 
+          typeof message === 'number' || 
+          typeof message === 'boolean') {
         return originalPostMessage.call(this, message, targetOrigin, transfer);
       }
 
-      // Pour les objets, tenter de les sérialiser
+      // For objects, try to create a safe clone
       const safeMessage = JSON.parse(JSON.stringify(message));
       return originalPostMessage.call(this, safeMessage, targetOrigin, transfer);
     } catch (error) {
-      // En cas d'échec, envoyer un message d'erreur sérialisable
-      console.warn('Non-serializable message converted to error notification');
+      // If cloning fails, send a safe error message instead
+      console.warn('PostMessage serialization failed:', error.message);
       return originalPostMessage.call(
         this,
-        { type: 'error', message: 'Message could not be serialized' },
+        { 
+          type: 'error', 
+          message: 'Message could not be serialized',
+          originalType: typeof message
+        },
         targetOrigin
       );
     }
