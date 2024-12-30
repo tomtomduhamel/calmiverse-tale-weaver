@@ -1,26 +1,51 @@
 export function initializeErrorHandlers() {
-  // Simple error logging without complex serialization
+  // Gestionnaire d'erreurs global
   window.addEventListener('error', function(event) {
-    // Ignore resource loading errors
+    // Ignorer les erreurs de chargement de ressources
     if (event.target?.tagName === 'LINK' || event.target?.tagName === 'SCRIPT') {
       return false;
     }
     
-    console.error('Application Error:', {
+    // Créer un objet d'erreur sérialisable
+    const errorInfo = {
       message: event.error?.message || event.message,
-      type: 'Global Error'
-    });
+      type: 'Global Error',
+      timestamp: new Date().toISOString()
+    };
     
+    console.error('Application Error:', errorInfo);
     return false;
   }, true);
 
+  // Gestionnaire de promesses non gérées
   window.addEventListener('unhandledrejection', function(event) {
-    console.error('Unhandled Promise:', {
-      message: event.reason?.message || event.reason,
-      type: 'Promise Error'
-    });
+    // Créer un objet d'erreur sérialisable
+    const errorInfo = {
+      message: typeof event.reason === 'string' ? event.reason : 
+               event.reason?.message || 'Unknown error',
+      type: 'Promise Error',
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error('Unhandled Promise:', errorInfo);
     event.preventDefault();
   });
 
-  console.log('Basic error handling initialized');
+  // Désactiver temporairement le script problématique
+  const originalPostMessage = window.postMessage;
+  window.postMessage = function(message, targetOrigin, transfer) {
+    try {
+      // Vérifier si le message est sérialisable
+      JSON.parse(JSON.stringify(message));
+      return originalPostMessage.call(this, message, targetOrigin, transfer);
+    } catch (error) {
+      console.warn('Prevented non-serializable postMessage:', {
+        message: 'Message could not be cloned - skipping',
+        type: 'PostMessage Warning'
+      });
+      return;
+    }
+  };
+
+  console.log('Enhanced error handling initialized');
 }
