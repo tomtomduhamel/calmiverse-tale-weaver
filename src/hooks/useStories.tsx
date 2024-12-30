@@ -49,16 +49,16 @@ export const useStories = () => {
     try {
       console.log('Début de la création de la demande d\'histoire');
       
-      const selectedChild = children.find(child => child.id === formData.childrenIds[0]);
-      if (!selectedChild) {
-        throw new Error("Enfant non trouvé");
-      }
+      // Récupérer les noms des enfants sélectionnés
+      const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
+      const childrenNames = selectedChildren.map(child => child.name);
 
       const storyData = {
-        title: `Histoire pour ${selectedChild.name}`,
+        title: `Histoire pour ${childrenNames.join(' et ')}`,
         preview: "Histoire en cours de génération...",
         objective: formData.objective,
         childrenIds: formData.childrenIds,
+        childrenNames: childrenNames, // Ajout des noms des enfants
         status: 'pending' as const,
         story_text: "",
         story_summary: "Résumé en cours de génération...",
