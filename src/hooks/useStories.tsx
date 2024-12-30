@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from '@/types/story';
 
-export const useStories = (children: any[]) => {
+export const useStories = (children: any[] = []) => {
   const [stories, setStories] = useState<Story[]>([]);
+  const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const { toast } = useToast();
 
   // Fonction de validation des données d'histoire
@@ -13,7 +14,7 @@ export const useStories = (children: any[]) => {
     const requiredFields = ['title', 'status'];
     return requiredFields.every(field => {
       if (!data[field]) {
-        console.error(`Missing required field: ${field}`, JSON.stringify(data));
+        console.error(`Missing required field: ${field}`);
         return false;
       }
       return true;
@@ -26,7 +27,7 @@ export const useStories = (children: any[]) => {
     
     // Convertir les timestamps en ISO strings
     if (serialized.createdAt && typeof serialized.createdAt.toDate === 'function') {
-      serialized.createdAt = serialized.createdAt.toDate().toISOString();
+      serialized.createdAt = serialized.createdAt.toDate();
     }
     
     return serialized;
@@ -35,46 +36,38 @@ export const useStories = (children: any[]) => {
   useEffect(() => {
     console.log('🔄 Initializing stories listener...');
     const storiesQuery = query(collection(db, 'stories'));
-    let unsubscribe: () => void;
 
-    const initializeListener = async () => {
+    const unsubscribe = onSnapshot(storiesQuery, (snapshot) => {
       try {
-        unsubscribe = onSnapshot(storiesQuery, (snapshot) => {
-          console.log('📥 Received Firestore update with', snapshot.docs.length, 'stories');
-          const loadedStories = snapshot.docs.map(doc => {
-            const data = serializeStoryData(doc.data());
-            return {
-              id: doc.id,
-              ...data,
-              createdAt: new Date(data.createdAt || new Date().toISOString())
-            };
-          }).filter(validateStoryData) as Story[];
+        console.log('📥 Received Firestore update with', snapshot.docs.length, 'stories');
+        const loadedStories = snapshot.docs.map(doc => {
+          const data = serializeStoryData(doc.data());
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: new Date(data.createdAt || new Date())
+          };
+        }).filter(validateStoryData) as Story[];
 
-          setStories(loadedStories);
-          console.log('✅ Stories updated in state:', loadedStories.length);
-        }, (error) => {
-          console.error('❌ Error in stories listener:', error);
-          toast({
-            title: "Erreur",
-            description: "Impossible de charger les histoires",
-            variant: "destructive",
-          });
-        });
+        setStories(loadedStories);
+        console.log('✅ Stories updated in state:', loadedStories.length);
       } catch (error) {
-        console.error('❌ Error initializing stories listener:', error);
+        console.error('❌ Error processing stories:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les histoires",
+          variant: "destructive",
+        });
       }
-    };
+    });
 
-    initializeListener();
     return () => {
-      if (unsubscribe) {
-        console.log('🔄 Cleaning up stories listener...');
-        unsubscribe();
-      }
+      console.log('🔄 Cleaning up stories listener...');
+      unsubscribe();
     };
   }, [toast]);
 
-  const createStory = async (formData: { childrenIds: string[], objective: string }) => {
+  const handleCreateStory = async (formData: { childrenIds: string[], objective: string }, children: any[]) => {
     try {
       console.log('🚀 Starting story creation process...', { formData });
       
@@ -90,16 +83,11 @@ export const useStories = (children: any[]) => {
         status: 'pending',
         story_text: "Génération en cours...",
         story_summary: "Résumé en cours de génération...",
-        createdAt: serverTimestamp()
+        createdAt: new Date()
       };
 
-      if (!validateStoryData(storyData)) {
-        throw new Error("Données d'histoire invalides");
-      }
-
       console.log('📝 Preparing to save story with data:', JSON.stringify(storyData));
-      const storiesCollection = collection(db, 'stories');
-      const docRef = await addDoc(storiesCollection, storyData);
+      const docRef = await addDoc(collection(db, 'stories'), storyData);
       console.log('✅ Story created successfully with ID:', docRef.id);
 
       toast({
@@ -119,8 +107,28 @@ export const useStories = (children: any[]) => {
     }
   };
 
+  const handleDeleteStory = async (storyId: string) => {
+    try {
+      await deleteDoc(doc(db, 'stories', storyId));
+      toast({
+        title: "Succès",
+        description: "L'histoire a été supprimée",
+      });
+    } catch (error) {
+      console.error('Error deleting story:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'histoire",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     stories,
-    createStory,
+    currentStory,
+    setCurrentStory,
+    handleCreateStory,
+    handleDeleteStory,
   };
 };
