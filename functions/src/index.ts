@@ -45,7 +45,7 @@ export const generateStory = functions.https.onCall(async (data, context) => {
       story_text: story,
       story_summary: "Résumé en cours de génération...",
       status: 'pending',
-      createdAt: new Date().toISOString(), // Format ISO pour la compatibilité
+      createdAt: new Date(), // Utilisation d'un objet Date pour Firestore
       title: "Nouvelle histoire",
       preview: story.substring(0, 200) + "..."
     };

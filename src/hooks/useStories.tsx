@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from '@/types/story';
@@ -9,28 +9,6 @@ export const useStories = (children: any[] = []) => {
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const { toast } = useToast();
 
-  // Fonction de sérialisation améliorée
-  const serializeStoryData = (data: any) => {
-    const serialized = { ...data };
-    
-    // Conversion des timestamps en chaînes ISO
-    if (serialized.createdAt && typeof serialized.createdAt.toDate === 'function') {
-      serialized.createdAt = serialized.createdAt.toDate().toISOString();
-    }
-
-    // Nettoyage des champs undefined ou functions
-    Object.keys(serialized).forEach(key => {
-      if (typeof serialized[key] === 'undefined') {
-        delete serialized[key];
-      }
-      if (typeof serialized[key] === 'function') {
-        delete serialized[key];
-      }
-    });
-    
-    return serialized;
-  };
-
   useEffect(() => {
     console.log('🔄 Initialisation du listener des histoires...');
     const storiesQuery = query(collection(db, 'stories'));
@@ -39,15 +17,15 @@ export const useStories = (children: any[] = []) => {
       try {
         console.log('📥 Réception de la mise à jour Firestore avec', snapshot.docs.length, 'histoires');
         const loadedStories = snapshot.docs.map(doc => {
-          const data = serializeStoryData(doc.data());
+          const data = doc.data();
           return {
             id: doc.id,
             ...data,
-            createdAt: new Date(data.createdAt || Date.now())
+            createdAt: data.createdAt?.toDate() || new Date()
           };
         });
 
-        console.log('Histoires chargées et sérialisées:', JSON.stringify(loadedStories));
+        console.log('Histoires chargées:', loadedStories);
         setStories(loadedStories);
       } catch (error) {
         console.error('❌ Erreur lors du traitement des histoires:', error);
@@ -67,7 +45,7 @@ export const useStories = (children: any[] = []) => {
 
   const createStory = async (formData: { childrenIds: string[], objective: string }) => {
     try {
-      console.log('🚀 Début du processus de création d\'histoire...', JSON.stringify(formData));
+      console.log('🚀 Début du processus de création d\'histoire...', formData);
       
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
@@ -81,10 +59,10 @@ export const useStories = (children: any[] = []) => {
         status: 'pending',
         story_text: "Génération en cours...",
         story_summary: "Résumé en cours de génération...",
-        createdAt: new Date().toISOString()
+        createdAt: serverTimestamp()
       };
 
-      console.log('📝 Préparation à la sauvegarde de l\'histoire avec les données:', JSON.stringify(storyData));
+      console.log('📝 Préparation à la sauvegarde de l\'histoire avec les données:', storyData);
       const docRef = await addDoc(collection(db, 'stories'), storyData);
       console.log('✅ Histoire créée avec succès avec l\'ID:', docRef.id);
 
