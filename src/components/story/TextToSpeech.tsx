@@ -29,6 +29,12 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({ text }) => {
     }
 
     try {
+      // Stop any currently playing audio
+      if (audio) {
+        audio.pause();
+        URL.revokeObjectURL(audio.src);
+      }
+
       const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL', {
         method: 'POST',
         headers: {
@@ -46,37 +52,46 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({ text }) => {
         })
       });
 
-      if (!response.ok) throw new Error('Erreur lors de la génération audio');
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      if (audio) {
-        audio.pause();
-        URL.revokeObjectURL(audio.src);
+      if (!response.ok) {
+        throw new Error('Erreur lors de la génération audio');
       }
 
+      // Create a copy of the response to avoid locking issues
+      const responseClone = response.clone();
+      
+      // Convert the response to blob
+      const audioBlob = await responseClone.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
       const newAudio = new Audio(audioUrl);
       setAudio(newAudio);
       
-      newAudio.play();
+      // Play the audio
+      await newAudio.play();
       setIsPlaying(true);
       
       newAudio.onended = () => {
         setIsPlaying(false);
+        URL.revokeObjectURL(audioUrl);
       };
+
     } catch (error) {
+      console.error('Error in text-to-speech:', error);
       toast({
         title: "Erreur",
         description: "Impossible de générer l'audio pour le moment.",
         variant: "destructive",
       });
+      setIsPlaying(false);
     }
   };
 
   const handleStop = () => {
     if (audio) {
       audio.pause();
+      if (audio.src) {
+        URL.revokeObjectURL(audio.src);
+      }
       setIsPlaying(false);
     }
   };
