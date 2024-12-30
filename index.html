@@ -11,12 +11,12 @@
   <body>
     <div id="root"></div>
     <script>
-      // Configuration de base avec gestion des erreurs améliorée
+      // Configuration de base
       window.gptengineer = {
         config: {
-          debug: false,
-          retryDelay: 2000,
-          maxRetries: 5,
+          debug: true, // Activé pour le débogage
+          retryDelay: 1000,
+          maxRetries: 3,
           errorHandling: {
             ignorePatterns: [
               'cors',
@@ -34,44 +34,90 @@
         }
       };
 
-      // Fonction de sérialisation sécurisée des erreurs
-      function serializeError(error) {
-        if (!error) return null;
-        
-        const serialized = {
-          message: error.message || 'Unknown error',
-          name: error.name || 'Error',
-          stack: error.stack,
-        };
-
-        // Nettoyer les propriétés circulaires ou non-sérialisables
-        return JSON.parse(JSON.stringify(serialized, (key, value) => {
-          if (value instanceof Error) {
-            return serializeError(value);
-          }
-          if (value instanceof Request || value instanceof Response) {
-            return `[${value.constructor.name}]`;
-          }
-          return value;
-        }));
+      // Fonction utilitaire pour vérifier si un objet est clonable
+      function isObjectClonable(obj) {
+        try {
+          structuredClone(obj);
+          return true;
+        } catch (e) {
+          return false;
+        }
       }
 
-      // Gestionnaire d'erreurs optimisé avec sérialisation
+      // Fonction de sérialisation sécurisée
+      function safeSerialize(obj) {
+        if (!obj) return null;
+        
+        try {
+          // Tenter d'abord un clonage direct
+          if (isObjectClonable(obj)) {
+            return structuredClone(obj);
+          }
+
+          // Si non clonable, créer une version sérialisable
+          const clean = {};
+          
+          for (let key in obj) {
+            if (obj.hasOwnProperty(key)) {
+              const value = obj[key];
+              
+              if (value instanceof Error) {
+                clean[key] = {
+                  name: value.name,
+                  message: value.message,
+                  stack: value.stack
+                };
+              } else if (value instanceof Request || value instanceof Response) {
+                clean[key] = `[${value.constructor.name}]`;
+              } else if (typeof value === 'function') {
+                clean[key] = `[Function: ${value.name || 'anonymous'}]`;
+              } else if (typeof value === 'object' && value !== null) {
+                clean[key] = safeSerialize(value);
+              } else {
+                clean[key] = value;
+              }
+            }
+          }
+          
+          return clean;
+        } catch (e) {
+          console.warn('Serialization failed:', e);
+          return {
+            error: 'Object serialization failed',
+            type: typeof obj,
+            preview: String(obj).slice(0, 100)
+          };
+        }
+      }
+
+      // Gestionnaire d'erreurs amélioré
       const errorHandler = {
+        lastError: null,
+        lastErrorTime: 0,
+        
         handle(error, source) {
           try {
-            // Ignorer les erreurs non critiques définies dans la config
-            if (this.isNonCritical(error)) {
+            // Éviter les doublons rapprochés
+            const now = Date.now();
+            if (this.lastError === error.message && (now - this.lastErrorTime) < 1000) {
               return false;
             }
             
-            // Sérialiser l'erreur avant le logging
-            const serializedError = serializeError(error);
-            console.error(`[${source}] Critical error:`, serializedError);
+            this.lastError = error.message;
+            this.lastErrorTime = now;
+
+            // Ignorer les erreurs non critiques
+            if (this.isNonCritical(error)) {
+              return false;
+            }
+
+            // Sérialiser l'erreur de manière sécurisée
+            const serializedError = safeSerialize(error);
+            console.error(`[${source}] Error:`, serializedError);
+            
             return true;
           } catch (e) {
-            // En cas d'erreur pendant la gestion, retourner une version simplifiée
-            console.error('Error handling failed:', e.message);
+            console.warn('Error handler failed:', e);
             return false;
           }
         },
@@ -80,17 +126,17 @@
           try {
             const { ignorePatterns } = window.gptengineer.config.errorHandling;
             const errorMessage = (error?.message || '').toLowerCase();
-            return ignorePatterns.some(pattern => errorMessage.includes(pattern));
+            return ignorePatterns.some(pattern => errorMessage.includes(pattern.toLowerCase()));
           } catch {
-            return true; // En cas de doute, traiter comme non critique
+            return true;
           }
         }
       };
 
-      // Gestionnaire d'erreurs global avec debounce renforcé
+      // Gestionnaire global avec debounce
       let errorTimeout;
       window.addEventListener('error', function(event) {
-        if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
+        if (event.target?.tagName === 'LINK' || event.target?.tagName === 'SCRIPT') {
           return false;
         }
         
@@ -99,43 +145,21 @@
         }
 
         errorTimeout = setTimeout(() => {
-          try {
-            const shouldPropagate = errorHandler.handle(event.error, 'Global Error');
-            if (!shouldPropagate) {
-              event.preventDefault();
-            }
-          } catch {
-            event.preventDefault();
-          }
-        }, 200);
+          errorHandler.handle(event.error || event, 'Global Error');
+        }, 250);
         
         return false;
       }, true);
 
-      // Gestionnaire de promesses rejetées avec debounce renforcé
-      let rejectionTimeout;
+      // Gestionnaire de promesses rejetées
       window.addEventListener('unhandledrejection', function(event) {
-        if (rejectionTimeout) {
-          clearTimeout(rejectionTimeout);
-        }
-
-        rejectionTimeout = setTimeout(() => {
-          try {
-            const shouldPropagate = errorHandler.handle(event.reason, 'Unhandled Promise');
-            if (!shouldPropagate) {
-              event.preventDefault();
-            }
-          } catch {
-            event.preventDefault();
-          }
-        }, 200);
-        
-        return false;
+        errorHandler.handle(event.reason, 'Unhandled Promise');
+        event.preventDefault();
       });
 
-      // Initialisation sécurisée de l'application
+      // Initialisation sécurisée
       window.addEventListener('load', function() {
-        console.log('Application initialized safely');
+        console.log('Application initialized with enhanced error handling');
       });
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
