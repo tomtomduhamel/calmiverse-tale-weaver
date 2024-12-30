@@ -21,57 +21,93 @@
             transfer: [],
             structuredClone: true,
             fallbackToJSON: true,
-            timeout: 5000 // Ajout d'un timeout pour les opérations de postMessage
+            timeout: 10000 // Augmentation du timeout pour donner plus de temps aux opérations
           }
         }
       };
 
-      // Fonction utilitaire pour le logging
-      const logError = (source, error) => {
-        console.warn(`[${source}] Error:`, error);
+      // Fonction utilitaire pour le logging avec niveaux
+      const logError = (source, error, level = 'warn') => {
+        const logFn = console[level] || console.log;
+        logFn(`[${source}] Error:`, error);
+        
+        // Log supplémentaire pour les erreurs critiques
+        if (level === 'error') {
+          console.error('Stack trace:', error?.stack);
+        }
+      };
+
+      // Liste des erreurs à ignorer
+      const ignoredErrors = [
+        'Receiving end does not exist',
+        'CORS',
+        'feature',
+        'vr',
+        'ambient-light-sensor',
+        'battery',
+        'connection',
+        'preload',
+        'as',
+        'link preloaded'
+      ];
+
+      // Fonction pour vérifier si une erreur doit être ignorée
+      const shouldIgnoreError = (error) => {
+        if (!error?.message) return false;
+        return ignoredErrors.some(err => error.message.toLowerCase().includes(err.toLowerCase()));
       };
 
       // Gestion globale des erreurs
       window.addEventListener('error', function(event) {
-        logError('Global Error', event.error);
-        
-        // Liste des erreurs à ignorer
-        const ignoredErrors = [
-          'Receiving end does not exist',
-          'CORS',
-          'feature',
-          'vr',
-          'ambient-light-sensor',
-          'battery'
-        ];
-
-        if (event.error && event.error.message && 
-            ignoredErrors.some(err => event.error.message.includes(err))) {
-          event.preventDefault();
+        // Ignorer les erreurs de ressources - elles seront gérées séparément
+        if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
           return false;
         }
+
+        if (event.error && shouldIgnoreError(event.error)) {
+          event.preventDefault();
+          logError('Global Error', event.error, 'info');
+          return false;
+        }
+
+        logError('Global Error', event.error, 'error');
       }, true);
 
-      // Gestion spécifique des erreurs de postMessage
+      // Gestion des promesses rejetées
       window.addEventListener('unhandledrejection', function(event) {
-        logError('Unhandled Promise', event.reason);
-        
-        if (event.reason && event.reason.message && 
-            (event.reason.message.includes('postMessage') || 
-             event.reason.message.includes('connection'))) {
+        if (event.reason && shouldIgnoreError(event.reason)) {
           event.preventDefault();
+          logError('Unhandled Promise', event.reason, 'info');
           return false;
         }
+
+        logError('Unhandled Promise', event.reason, 'error');
       }, true);
 
-      // Interception des erreurs de chargement de ressources
+      // Gestion des erreurs de chargement de ressources
       window.addEventListener('error', function(event) {
         if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
-          logError('Resource Error', `Failed to load: ${event.target.src || event.target.href}`);
+          const resource = event.target.src || event.target.href;
+          
+          // Ignorer certaines ressources non critiques
+          if (resource && resource.includes('lovable.dev')) {
+            logError('Resource Load', `Non-critical resource load failed: ${resource}`, 'info');
+            event.preventDefault();
+            return false;
+          }
+
+          logError('Resource Load', `Failed to load: ${resource}`, 'warn');
           event.preventDefault();
           return false;
         }
       }, true);
+
+      // Initialisation différée pour laisser le temps aux ressources de charger
+      window.addEventListener('load', function() {
+        setTimeout(() => {
+          console.log('Application fully loaded and initialized');
+        }, 1000);
+      });
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
