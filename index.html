@@ -12,11 +12,15 @@
   <body>
     <div id="root"></div>
     <script>
-      // Initialize window object for GPT Engineer
+      // Initialize window object with explicit configuration
       window.gptengineer = {
         config: {
           cloneableObjects: true,
-          debug: true
+          debug: true,
+          postMessageOptions: {
+            transfer: [], // Empty array for transferable objects
+            structuredClone: true // Use structured clone algorithm when available
+          }
         }
       };
     </script>
