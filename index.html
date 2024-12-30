@@ -12,16 +12,15 @@
   <body>
     <div id="root"></div>
     <script>
-      // Configuration pour GPT Engineer avec gestion des erreurs améliorée
       window.gptengineer = {
         config: {
-          cloneableObjects: true,
+          cloneableObjects: false, // Désactivation du clonage d'objets
           debug: true,
           postMessageOptions: {
             transfer: [],
-            structuredClone: true,
+            structuredClone: false, // Désactivation du structured clone
             fallbackToJSON: true,
-            timeout: 10000 // Augmentation du timeout pour donner plus de temps aux opérations
+            timeout: 30000 // Augmentation significative du timeout
           }
         }
       };
@@ -31,7 +30,6 @@
         const logFn = console[level] || console.log;
         logFn(`[${source}] Error:`, error);
         
-        // Log supplémentaire pour les erreurs critiques
         if (level === 'error') {
           console.error('Stack trace:', error?.stack);
         }
@@ -48,10 +46,11 @@
         'connection',
         'preload',
         'as',
-        'link preloaded'
+        'link preloaded',
+        'postMessage',
+        'DataCloneError'
       ];
 
-      // Fonction pour vérifier si une erreur doit être ignorée
       const shouldIgnoreError = (error) => {
         if (!error?.message) return false;
         return ignoredErrors.some(err => error.message.toLowerCase().includes(err.toLowerCase()));
@@ -59,7 +58,6 @@
 
       // Gestion globale des erreurs
       window.addEventListener('error', function(event) {
-        // Ignorer les erreurs de ressources - elles seront gérées séparément
         if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
           return false;
         }
@@ -89,7 +87,6 @@
         if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
           const resource = event.target.src || event.target.href;
           
-          // Ignorer certaines ressources non critiques
           if (resource && resource.includes('lovable.dev')) {
             logError('Resource Load', `Non-critical resource load failed: ${resource}`, 'info');
             event.preventDefault();
@@ -102,11 +99,10 @@
         }
       }, true);
 
-      // Initialisation différée pour laisser le temps aux ressources de charger
       window.addEventListener('load', function() {
         setTimeout(() => {
           console.log('Application fully loaded and initialized');
-        }, 1000);
+        }, 2000);
       });
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
