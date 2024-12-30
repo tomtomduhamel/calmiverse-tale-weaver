@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from '@/types/story';
@@ -9,50 +9,48 @@ export const useStories = (children: any[] = []) => {
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const { toast } = useToast();
 
-  // Fonction de validation des données d'histoire
-  const validateStoryData = (data: any): boolean => {
-    const requiredFields = ['title', 'status'];
-    return requiredFields.every(field => {
-      if (!data[field]) {
-        console.error(`Missing required field: ${field}`);
-        return false;
-      }
-      return true;
-    });
-  };
-
-  // Fonction pour sérialiser les données avant envoi
+  // Fonction de sérialisation améliorée
   const serializeStoryData = (data: any) => {
     const serialized = { ...data };
     
-    // Convertir les timestamps en ISO strings
+    // Conversion des timestamps en chaînes ISO
     if (serialized.createdAt && typeof serialized.createdAt.toDate === 'function') {
-      serialized.createdAt = serialized.createdAt.toDate();
+      serialized.createdAt = serialized.createdAt.toDate().toISOString();
     }
+
+    // Nettoyage des champs undefined ou functions
+    Object.keys(serialized).forEach(key => {
+      if (typeof serialized[key] === 'undefined') {
+        delete serialized[key];
+      }
+      if (typeof serialized[key] === 'function') {
+        delete serialized[key];
+      }
+    });
     
     return serialized;
   };
 
   useEffect(() => {
-    console.log('🔄 Initializing stories listener...');
+    console.log('🔄 Initialisation du listener des histoires...');
     const storiesQuery = query(collection(db, 'stories'));
 
     const unsubscribe = onSnapshot(storiesQuery, (snapshot) => {
       try {
-        console.log('📥 Received Firestore update with', snapshot.docs.length, 'stories');
+        console.log('📥 Réception de la mise à jour Firestore avec', snapshot.docs.length, 'histoires');
         const loadedStories = snapshot.docs.map(doc => {
           const data = serializeStoryData(doc.data());
           return {
             id: doc.id,
             ...data,
-            createdAt: new Date(data.createdAt || new Date())
+            createdAt: new Date(data.createdAt || Date.now())
           };
-        }).filter(validateStoryData) as Story[];
+        });
 
+        console.log('Histoires chargées et sérialisées:', JSON.stringify(loadedStories));
         setStories(loadedStories);
-        console.log('✅ Stories updated in state:', loadedStories.length);
       } catch (error) {
-        console.error('❌ Error processing stories:', error);
+        console.error('❌ Erreur lors du traitement des histoires:', error);
         toast({
           title: "Erreur",
           description: "Impossible de charger les histoires",
@@ -62,14 +60,14 @@ export const useStories = (children: any[] = []) => {
     });
 
     return () => {
-      console.log('🔄 Cleaning up stories listener...');
+      console.log('🔄 Nettoyage du listener des histoires...');
       unsubscribe();
     };
   }, [toast]);
 
-  const handleCreateStory = async (formData: { childrenIds: string[], objective: string }, children: any[]) => {
+  const createStory = async (formData: { childrenIds: string[], objective: string }) => {
     try {
-      console.log('🚀 Starting story creation process...', { formData });
+      console.log('🚀 Début du processus de création d\'histoire...', JSON.stringify(formData));
       
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
@@ -83,12 +81,12 @@ export const useStories = (children: any[] = []) => {
         status: 'pending',
         story_text: "Génération en cours...",
         story_summary: "Résumé en cours de génération...",
-        createdAt: new Date()
+        createdAt: new Date().toISOString()
       };
 
-      console.log('📝 Preparing to save story with data:', JSON.stringify(storyData));
+      console.log('📝 Préparation à la sauvegarde de l\'histoire avec les données:', JSON.stringify(storyData));
       const docRef = await addDoc(collection(db, 'stories'), storyData);
-      console.log('✅ Story created successfully with ID:', docRef.id);
+      console.log('✅ Histoire créée avec succès avec l\'ID:', docRef.id);
 
       toast({
         title: "Succès",
@@ -97,7 +95,7 @@ export const useStories = (children: any[] = []) => {
 
       return docRef.id;
     } catch (error) {
-      console.error('❌ Error creating story:', error);
+      console.error('❌ Erreur lors de la création de l\'histoire:', error);
       toast({
         title: "Erreur",
         description: "Impossible de créer l'histoire",
@@ -107,7 +105,7 @@ export const useStories = (children: any[] = []) => {
     }
   };
 
-  const handleDeleteStory = async (storyId: string) => {
+  const deleteStory = async (storyId: string) => {
     try {
       await deleteDoc(doc(db, 'stories', storyId));
       toast({
@@ -115,7 +113,7 @@ export const useStories = (children: any[] = []) => {
         description: "L'histoire a été supprimée",
       });
     } catch (error) {
-      console.error('Error deleting story:', error);
+      console.error('Erreur lors de la suppression de l\'histoire:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer l'histoire",
@@ -128,7 +126,7 @@ export const useStories = (children: any[] = []) => {
     stories,
     currentStory,
     setCurrentStory,
-    handleCreateStory,
-    handleDeleteStory,
+    createStory,
+    deleteStory,
   };
 };

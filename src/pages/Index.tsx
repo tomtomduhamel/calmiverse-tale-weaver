@@ -16,7 +16,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [showGuide, setShowGuide] = useState(false);
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useChildren();
-  const { stories, currentStory, handleCreateStory, handleDeleteStory, setCurrentStory } = useStories();
+  const { stories, currentStory, setCurrentStory, createStory, deleteStory } = useStories(children);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,7 +33,7 @@ const Index = () => {
 
   const handleStorySubmit = async (formData: StoryFormData): Promise<string> => {
     try {
-      const story = await handleCreateStory(formData, children);
+      const story = await createStory(formData);
       return story;
     } catch (error) {
       console.error("Erreur lors de la création de l'histoire:", error);
@@ -104,7 +104,7 @@ const Index = () => {
           <StoryLibrary
             stories={stories}
             onSelectStory={handleSelectStory}
-            onDeleteStory={handleDeleteStory}
+            onDeleteStory={deleteStory}
             onViewChange={setCurrentView}
           />
         </div>
