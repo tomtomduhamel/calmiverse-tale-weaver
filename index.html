@@ -12,97 +12,117 @@
   <body>
     <div id="root"></div>
     <script>
+      // Configuration initiale
       window.gptengineer = {
         config: {
-          cloneableObjects: false, // Désactivation du clonage d'objets
+          cloneableObjects: false,
           debug: true,
           postMessageOptions: {
             transfer: [],
-            structuredClone: false, // Désactivation du structured clone
+            structuredClone: false,
             fallbackToJSON: true,
-            timeout: 30000 // Augmentation significative du timeout
+            timeout: 60000
           }
         }
       };
 
-      // Fonction utilitaire pour le logging avec niveaux
-      const logError = (source, error, level = 'warn') => {
-        const logFn = console[level] || console.log;
-        logFn(`[${source}] Error:`, error);
-        
-        if (level === 'error') {
-          console.error('Stack trace:', error?.stack);
+      // Système de retry pour les opérations critiques
+      const retryOperation = async (operation, maxRetries = 3, delay = 1000) => {
+        for (let i = 0; i < maxRetries; i++) {
+          try {
+            return await operation();
+          } catch (error) {
+            if (i === maxRetries - 1) throw error;
+            await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+          }
         }
       };
 
-      // Liste des erreurs à ignorer
-      const ignoredErrors = [
-        'Receiving end does not exist',
-        'CORS',
-        'feature',
-        'vr',
-        'ambient-light-sensor',
-        'battery',
-        'connection',
-        'preload',
-        'as',
-        'link preloaded',
-        'postMessage',
-        'DataCloneError'
-      ];
+      // Gestion centralisée des erreurs avec niveaux et retry
+      const errorHandler = {
+        ignoredPatterns: [
+          'cors',
+          'feature',
+          'ambient-light-sensor',
+          'battery',
+          'connection',
+          'preload',
+          'as',
+          'link preloaded',
+          'postMessage',
+          'DataCloneError',
+          'Receiving end does not exist'
+        ],
 
-      const shouldIgnoreError = (error) => {
-        if (!error?.message) return false;
-        return ignoredErrors.some(err => error.message.toLowerCase().includes(err.toLowerCase()));
+        shouldIgnore(error) {
+          if (!error?.message) return false;
+          return this.ignoredPatterns.some(pattern => 
+            error.message.toLowerCase().includes(pattern.toLowerCase())
+          );
+        },
+
+        log(source, error, level = 'warn') {
+          const logFn = console[level] || console.log;
+          const timestamp = new Date().toISOString();
+          logFn(`[${timestamp}][${source}] Error:`, error);
+          
+          if (level === 'error' && error?.stack) {
+            console.error('Stack trace:', error.stack);
+          }
+        },
+
+        async handle(error, source) {
+          if (this.shouldIgnore(error)) {
+            this.log(source, error, 'info');
+            return false;
+          }
+          this.log(source, error, 'error');
+          return true;
+        }
       };
 
-      // Gestion globale des erreurs
-      window.addEventListener('error', function(event) {
-        if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
-          return false;
-        }
-
-        if (event.error && shouldIgnoreError(event.error)) {
-          event.preventDefault();
-          logError('Global Error', event.error, 'info');
-          return false;
-        }
-
-        logError('Global Error', event.error, 'error');
-      }, true);
-
-      // Gestion des promesses rejetées
-      window.addEventListener('unhandledrejection', function(event) {
-        if (event.reason && shouldIgnoreError(event.reason)) {
-          event.preventDefault();
-          logError('Unhandled Promise', event.reason, 'info');
-          return false;
-        }
-
-        logError('Unhandled Promise', event.reason, 'error');
-      }, true);
-
-      // Gestion des erreurs de chargement de ressources
-      window.addEventListener('error', function(event) {
+      // Gestionnaire d'erreurs global
+      window.addEventListener('error', async function(event) {
         if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
           const resource = event.target.src || event.target.href;
           
           if (resource && resource.includes('lovable.dev')) {
-            logError('Resource Load', `Non-critical resource load failed: ${resource}`, 'info');
+            errorHandler.log('Resource Load', `Non-critical resource load failed: ${resource}`, 'info');
             event.preventDefault();
             return false;
           }
+        }
 
-          logError('Resource Load', `Failed to load: ${resource}`, 'warn');
+        const shouldPropagate = await errorHandler.handle(event.error, 'Global Error');
+        if (!shouldPropagate) {
           event.preventDefault();
           return false;
         }
       }, true);
 
+      // Gestionnaire de promesses rejetées
+      window.addEventListener('unhandledrejection', async function(event) {
+        const shouldPropagate = await errorHandler.handle(event.reason, 'Unhandled Promise');
+        if (!shouldPropagate) {
+          event.preventDefault();
+          return false;
+        }
+      });
+
+      // Initialisation de l'application avec retry
       window.addEventListener('load', function() {
-        setTimeout(() => {
-          console.log('Application fully loaded and initialized');
-        }, 2000);
+        retryOperation(
+          () => new Promise((resolve) => {
+            setTimeout(() => {
+              console.log('Application initialized successfully');
+              resolve();
+            }, 2000);
+          }),
+          3,
+          1000
+        ).catch(error => {
+          errorHandler.log('Initialization', error, 'error');
+        });
       });
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
