@@ -1,26 +1,35 @@
-import { useState, useEffect, useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { collection, query, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Child } from "@/types/child";
-import type { Story } from "@/types/story";
-import type { StoryFormData } from "@/components/story/StoryFormTypes";
+import { useToast } from "@/hooks/use-toast";
+import type { Story } from '@/types/story';
 
-export const useStories = () => {
-  const [currentStory, setCurrentStory] = useState<Story | null>(null);
+export const useStories = (children: any[]) => {
   const [stories, setStories] = useState<Story[]>([]);
   const { toast } = useToast();
 
   // Fonction de validation des données d'histoire
   const validateStoryData = (data: any): boolean => {
-    const requiredFields = ['title', 'status', 'story_text', 'story_summary'];
+    const requiredFields = ['title', 'status'];
     return requiredFields.every(field => {
       if (!data[field]) {
-        console.error(`Missing required field: ${field}`, data);
+        console.error(`Missing required field: ${field}`, JSON.stringify(data));
         return false;
       }
       return true;
     });
+  };
+
+  // Fonction pour sérialiser les données avant envoi
+  const serializeStoryData = (data: any) => {
+    const serialized = { ...data };
+    
+    // Convertir les timestamps en ISO strings
+    if (serialized.createdAt && typeof serialized.createdAt.toDate === 'function') {
+      serialized.createdAt = serialized.createdAt.toDate().toISOString();
+    }
+    
+    return serialized;
   };
 
   useEffect(() => {
@@ -28,40 +37,35 @@ export const useStories = () => {
     const storiesQuery = query(collection(db, 'stories'));
     let unsubscribe: () => void;
 
-    const setupSubscription = async () => {
+    const initializeListener = async () => {
       try {
         unsubscribe = onSnapshot(storiesQuery, (snapshot) => {
           console.log('📥 Received Firestore update with', snapshot.docs.length, 'stories');
           const loadedStories = snapshot.docs.map(doc => {
-            const data = doc.data();
-            // Conversion des dates en format ISO
-            const createdAt = data.createdAt?.toDate 
-              ? data.createdAt.toDate().toISOString()
-              : new Date().toISOString();
-
+            const data = serializeStoryData(doc.data());
             return {
               id: doc.id,
               ...data,
-              createdAt: new Date(createdAt)
+              createdAt: new Date(data.createdAt || new Date().toISOString())
             };
           }).filter(validateStoryData) as Story[];
 
           setStories(loadedStories);
           console.log('✅ Stories updated in state:', loadedStories.length);
         }, (error) => {
-          console.error("❌ Error listening to stories:", error);
+          console.error('❌ Error in stories listener:', error);
           toast({
             title: "Erreur",
-            description: "Impossible de charger les histoires en temps réel",
+            description: "Impossible de charger les histoires",
             variant: "destructive",
           });
         });
       } catch (error) {
-        console.error("❌ Error setting up stories listener:", error);
+        console.error('❌ Error initializing stories listener:', error);
       }
     };
 
-    setupSubscription();
+    initializeListener();
     return () => {
       if (unsubscribe) {
         console.log('🔄 Cleaning up stories listener...');
@@ -70,7 +74,7 @@ export const useStories = () => {
     };
   }, [toast]);
 
-  const handleCreateStory = useCallback(async (formData: StoryFormData, children: Child[]): Promise<string> => {
+  const createStory = async (formData: { childrenIds: string[], objective: string }) => {
     try {
       console.log('🚀 Starting story creation process...', { formData });
       
@@ -82,9 +86,9 @@ export const useStories = () => {
         preview: "Histoire en cours de génération...",
         objective: formData.objective,
         childrenIds: formData.childrenIds,
-        childrenNames: childrenNames,
-        status: 'pending' as const,
-        story_text: "",
+        childrenNames,
+        status: 'pending',
+        story_text: "Génération en cours...",
         story_summary: "Résumé en cours de génération...",
         createdAt: serverTimestamp()
       };
@@ -97,50 +101,26 @@ export const useStories = () => {
       const storiesCollection = collection(db, 'stories');
       const docRef = await addDoc(storiesCollection, storyData);
       console.log('✅ Story created successfully with ID:', docRef.id);
-      
+
       toast({
         title: "Succès",
-        description: "La demande d'histoire a été créée. L'histoire sera générée sous peu.",
+        description: "L'histoire est en cours de génération",
       });
 
       return docRef.id;
     } catch (error) {
-      console.error("❌ Error creating story:", error);
-      if (error instanceof Error) {
-        toast({
-          title: "Erreur",
-          description: error.message || "Une erreur est survenue lors de la création de la demande d'histoire",
-          variant: "destructive",
-        });
-      }
-      throw error;
-    }
-  }, [toast]);
-
-  const handleDeleteStory = useCallback(async (storyId: string) => {
-    try {
-      console.log('🗑️ Attempting to delete story:', storyId);
-      await deleteDoc(doc(db, 'stories', storyId));
-      console.log('✅ Story deleted successfully');
-      toast({
-        title: "Succès",
-        description: "L'histoire a été supprimée",
-      });
-    } catch (error) {
-      console.error("❌ Error deleting story:", error);
+      console.error('❌ Error creating story:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer l'histoire",
+        description: "Impossible de créer l'histoire",
         variant: "destructive",
       });
+      throw error;
     }
-  }, [toast]);
+  };
 
   return {
     stories,
-    currentStory,
-    handleCreateStory,
-    handleDeleteStory,
-    setCurrentStory,
+    createStory,
   };
 };
