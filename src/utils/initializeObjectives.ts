@@ -3,20 +3,31 @@ import { addDocument } from "@/lib/firebase-utils";
 export const initializeObjectives = async () => {
   const objectives = [
     {
-      name: "accompagner dans le sommeil",
-      value: "sleep"
+      name: "Aider à s'endormir",
+      value: "sleep",
+      label: "Aider à s'endormir"
     },
     {
-      name: "se relaxer",
-      value: "relax"
+      name: "Se concentrer",
+      value: "focus",
+      label: "Se concentrer"
     },
     {
-      name: "créer un moment de concentration",
-      value: "focus"
+      name: "Se détendre",
+      value: "relax",
+      label: "Se détendre"
+    },
+    {
+      name: "S'amuser",
+      value: "fun",
+      label: "S'amuser"
     }
   ];
 
+  // Supprime tous les anciens objectifs et ajoute les nouveaux
   for (const objective of objectives) {
     await addDocument("story_objectives", objective);
   }
+
+  console.log("Objectifs initialisés avec succès:", objectives);
 };
