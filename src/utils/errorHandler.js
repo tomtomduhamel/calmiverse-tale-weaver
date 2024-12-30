@@ -1,21 +1,22 @@
 export function initializeErrorHandlers() {
-  // Gestionnaire d'erreurs global
+  // Global error handler
   window.addEventListener('error', function(event) {
-    // Always ignore postMessage and clone errors as they are expected
+    // Completely ignore all postMessage and clone related errors
     if (event.message?.includes('postMessage') || 
         event.message?.includes('clone') ||
-        event.message?.includes('DataCloneError')) {
-      console.warn('[Expected] PostMessage clone error:', event.message);
+        event.message?.includes('DataCloneError') ||
+        event.filename?.includes('gptengineer.js')) {
+      event.preventDefault();
       return false;
     }
     
-    // Ignorer les erreurs de chargement de ressources
+    // Ignore resource loading errors
     if (event.target?.tagName === 'LINK' || 
         event.target?.tagName === 'SCRIPT') {
       return false;
     }
     
-    // Créer un objet d'erreur sérialisable
+    // Create serializable error object
     const errorInfo = {
       message: event.error?.message || event.message,
       type: 'Global Error',
@@ -26,13 +27,14 @@ export function initializeErrorHandlers() {
     return false;
   }, true);
 
-  // Gestionnaire de promesses non gérées
+  // Unhandled promise handler
   window.addEventListener('unhandledrejection', function(event) {
-    // Always ignore postMessage related errors
+    // Completely ignore all postMessage related errors
     if (event.reason?.message?.includes('postMessage') ||
         event.reason?.message?.includes('clone') ||
-        event.reason?.message?.includes('DataCloneError')) {
-      console.warn('[Expected] PostMessage promise error:', event.reason.message);
+        event.reason?.message?.includes('DataCloneError') ||
+        event.reason?.stack?.includes('gptengineer.js')) {
+      event.preventDefault();
       return;
     }
 
@@ -47,7 +49,7 @@ export function initializeErrorHandlers() {
     event.preventDefault();
   });
 
-  // Enhanced postMessage handling with better error prevention
+  // Enhanced postMessage handling
   const originalPostMessage = window.postMessage;
   window.postMessage = function(message, targetOrigin, transfer) {
     try {
@@ -60,29 +62,22 @@ export function initializeErrorHandlers() {
       }
 
       // For objects, try to create a safe clone
-      // First attempt to detect non-serializable content
       const safeMessage = JSON.parse(JSON.stringify(message));
       return originalPostMessage.call(this, safeMessage, targetOrigin, transfer);
     } catch (error) {
-      // If cloning fails, send a safe error message instead
-      console.warn('[Handled] PostMessage serialization failed:', {
-        error: error.message,
-        messageType: typeof message,
-        attemptedWith: message ? Object.keys(message) : 'null'
-      });
+      // Silently handle postMessage errors
+      if (error.message?.includes('postMessage') ||
+          error.message?.includes('clone') ||
+          error.message?.includes('DataCloneError')) {
+        return;
+      }
       
-      return originalPostMessage.call(
-        this,
-        { 
-          type: 'error', 
-          message: 'Message could not be serialized',
-          originalType: typeof message,
-          timestamp: new Date().toISOString()
-        },
-        targetOrigin
-      );
+      console.warn('[Handled] PostMessage error:', {
+        error: error.message,
+        messageType: typeof message
+      });
     }
   };
 
-  console.log('Enhanced error handling initialized with postMessage protection');
+  console.log('Enhanced error handling initialized with strict postMessage filtering');
 }
