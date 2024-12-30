@@ -1,8 +1,10 @@
 export function initializeErrorHandlers() {
   // Gestionnaire d'erreurs global
   window.addEventListener('error', function(event) {
-    // Ignorer les erreurs de chargement de ressources
-    if (event.target?.tagName === 'LINK' || event.target?.tagName === 'SCRIPT') {
+    // Ignorer les erreurs de chargement de ressources et les erreurs de postMessage
+    if (event.target?.tagName === 'LINK' || 
+        event.target?.tagName === 'SCRIPT' ||
+        event.message?.includes('postMessage')) {
       return false;
     }
     
@@ -19,7 +21,11 @@ export function initializeErrorHandlers() {
 
   // Gestionnaire de promesses non gérées
   window.addEventListener('unhandledrejection', function(event) {
-    // Créer un objet d'erreur sérialisable
+    // Ignorer les erreurs de postMessage
+    if (event.reason?.message?.includes('postMessage')) {
+      return;
+    }
+
     const errorInfo = {
       message: typeof event.reason === 'string' ? event.reason : 
                event.reason?.message || 'Unknown error',
@@ -31,21 +37,28 @@ export function initializeErrorHandlers() {
     event.preventDefault();
   });
 
-  // Désactiver temporairement le script problématique
+  // Remplacer la fonction postMessage par une version plus robuste
   const originalPostMessage = window.postMessage;
   window.postMessage = function(message, targetOrigin, transfer) {
     try {
-      // Vérifier si le message est sérialisable
-      JSON.parse(JSON.stringify(message));
-      return originalPostMessage.call(this, message, targetOrigin, transfer);
+      // Si le message est une chaîne ou un nombre, l'envoyer directement
+      if (typeof message === 'string' || typeof message === 'number') {
+        return originalPostMessage.call(this, message, targetOrigin, transfer);
+      }
+
+      // Pour les objets, tenter de les sérialiser
+      const safeMessage = JSON.parse(JSON.stringify(message));
+      return originalPostMessage.call(this, safeMessage, targetOrigin, transfer);
     } catch (error) {
-      console.warn('Prevented non-serializable postMessage:', {
-        message: 'Message could not be cloned - skipping',
-        type: 'PostMessage Warning'
-      });
-      return;
+      // En cas d'échec, envoyer un message d'erreur sérialisable
+      console.warn('Non-serializable message converted to error notification');
+      return originalPostMessage.call(
+        this,
+        { type: 'error', message: 'Message could not be serialized' },
+        targetOrigin
+      );
     }
   };
 
-  console.log('Enhanced error handling initialized');
+  console.log('Enhanced error handling initialized with postMessage protection');
 }
