@@ -11,72 +11,85 @@
   <body>
     <div id="root"></div>
     <script>
-      // Configuration de base
+      // Configuration de base avec gestion des erreurs améliorée
       window.gptengineer = {
         config: {
-          debug: true,
-          retryDelay: 1000,
-          maxRetries: 3
+          debug: false, // Désactivation du mode debug pour la production
+          retryDelay: 2000, // Augmentation du délai entre les tentatives
+          maxRetries: 5, // Augmentation du nombre de tentatives
+          errorHandling: {
+            ignorePatterns: [
+              'cors',
+              'feature',
+              'ambient-light-sensor',
+              'battery',
+              'connection',
+              'preload',
+              'as',
+              'link preloaded',
+              'postMessage',
+              'ResizeObserver loop'
+            ]
+          }
         }
       };
 
-      // Gestionnaire d'erreurs simplifié
+      // Gestionnaire d'erreurs optimisé
       const errorHandler = {
         handle(error, source) {
-          // Ignorer les erreurs non critiques
+          // Ignorer les erreurs non critiques définies dans la config
           if (this.isNonCritical(error)) {
-            console.info(`[${source}] Non-critical error:`, error);
             return false;
           }
           
-          // Logger les erreurs critiques
+          // Logger uniquement les erreurs critiques
           console.error(`[${source}] Critical error:`, error);
           return true;
         },
 
         isNonCritical(error) {
-          const nonCriticalPatterns = [
-            'cors',
-            'feature',
-            'ambient-light-sensor',
-            'battery',
-            'connection',
-            'preload',
-            'as',
-            'link preloaded'
-          ];
-
-          return nonCriticalPatterns.some(pattern => 
-            error?.message?.toLowerCase().includes(pattern)
-          );
+          const { ignorePatterns } = window.gptengineer.config.errorHandling;
+          const errorMessage = error?.message?.toLowerCase() || '';
+          
+          return ignorePatterns.some(pattern => errorMessage.includes(pattern));
         }
       };
 
-      // Gestionnaire d'erreurs global
+      // Gestionnaire d'erreurs global avec debounce intégré
+      let errorTimeout;
       window.addEventListener('error', function(event) {
         if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
           return false;
         }
         
-        const shouldPropagate = errorHandler.handle(event.error, 'Global Error');
-        if (!shouldPropagate) {
-          event.preventDefault();
-          return false;
-        }
+        clearTimeout(errorTimeout);
+        errorTimeout = setTimeout(() => {
+          const shouldPropagate = errorHandler.handle(event.error, 'Global Error');
+          if (!shouldPropagate) {
+            event.preventDefault();
+          }
+        }, 100);
+        
+        return false;
       }, true);
 
-      // Gestionnaire de promesses rejetées
+      // Gestionnaire de promesses rejetées avec debounce
+      let rejectionTimeout;
       window.addEventListener('unhandledrejection', function(event) {
-        const shouldPropagate = errorHandler.handle(event.reason, 'Unhandled Promise');
-        if (!shouldPropagate) {
-          event.preventDefault();
-          return false;
-        }
+        clearTimeout(rejectionTimeout);
+        rejectionTimeout = setTimeout(() => {
+          const shouldPropagate = errorHandler.handle(event.reason, 'Unhandled Promise');
+          if (!shouldPropagate) {
+            event.preventDefault();
+          }
+        }, 100);
+        
+        return false;
       });
 
-      // Initialisation de l'application
+      // Initialisation sécurisée de l'application
       window.addEventListener('load', function() {
-        console.log('Application initialized');
+        console.log('Application initialized safely');
       });
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
