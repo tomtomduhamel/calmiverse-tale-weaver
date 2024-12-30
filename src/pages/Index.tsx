@@ -11,6 +11,7 @@ import type { Story } from "@/types/story";
 import { useToast } from "@/hooks/use-toast";
 import { useChildren } from "@/hooks/useChildren";
 import { useStories } from "@/hooks/useStories";
+import { initializeObjectives } from "@/utils/initializeObjectives";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
@@ -25,7 +26,24 @@ const Index = () => {
       setShowGuide(true);
       localStorage.setItem("hasSeenGuide", "true");
     }
-  }, []);
+
+    // Initialise les objectifs au chargement de la page
+    initializeObjectives()
+      .then(() => {
+        toast({
+          title: "Succès",
+          description: "Les objectifs ont été initialisés avec succès",
+        });
+      })
+      .catch((error) => {
+        console.error("Erreur lors de l'initialisation des objectifs:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible d'initialiser les objectifs",
+          variant: "destructive",
+        });
+      });
+  }, [toast]);
 
   const handleCreateChildFromStory = () => {
     setCurrentView("profiles");
