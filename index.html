@@ -12,21 +12,24 @@
   <body>
     <div id="root"></div>
     <script>
-      // Configuration explicite pour GPT Engineer
+      // Configuration explicite pour GPT Engineer avec logs de debug
       window.gptengineer = {
         config: {
-          cloneableObjects: true,
+          cloneableObjects: false, // Désactivation temporaire du clonage
           debug: true,
           postMessageOptions: {
             transfer: [],
-            structuredClone: true
+            structuredClone: false // Désactivation du structured clone
           }
         }
       };
+
+      // Ajout de logs pour le debugging
+      window.addEventListener('error', function(event) {
+        console.error('Erreur capturée:', event.error);
+      });
     </script>
-    <!-- Charger le script GPT Engineer en premier -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <!-- Charger le script principal ensuite -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
