@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -12,27 +12,40 @@ export const useStories = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const storiesCollection = collection(db, 'stories');
-    const unsubscribe = onSnapshot(storiesCollection, (snapshot) => {
-      const loadedStories = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()
-      })) as Story[];
-      setStories(loadedStories);
-    }, (error) => {
-      console.error("Erreur lors de l'écoute des histoires:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les histoires en temps réel",
-        variant: "destructive",
-      });
-    });
+    const storiesQuery = query(collection(db, 'stories'));
+    let unsubscribe: () => void;
 
-    return () => unsubscribe();
+    const setupSubscription = async () => {
+      try {
+        unsubscribe = onSnapshot(storiesQuery, (snapshot) => {
+          const loadedStories = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate()
+          })) as Story[];
+          setStories(loadedStories);
+        }, (error) => {
+          console.error("Erreur lors de l'écoute des histoires:", error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de charger les histoires en temps réel",
+            variant: "destructive",
+          });
+        });
+      } catch (error) {
+        console.error("Erreur lors de la configuration de l'écoute:", error);
+      }
+    };
+
+    setupSubscription();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [toast]);
 
-  const handleCreateStory = async (formData: StoryFormData, children: Child[]): Promise<string> => {
+  const handleCreateStory = useCallback(async (formData: StoryFormData, children: Child[]): Promise<string> => {
     try {
       console.log('Début de la création de la demande d\'histoire');
       
@@ -62,7 +75,6 @@ export const useStories = () => {
       });
 
       return docRef.id;
-
     } catch (error) {
       console.error("Error creating story request:", error);
       if (error instanceof Error) {
@@ -74,12 +86,11 @@ export const useStories = () => {
       }
       throw error;
     }
-  };
+  }, [toast]);
 
-  const handleDeleteStory = async (storyId: string) => {
+  const handleDeleteStory = useCallback(async (storyId: string) => {
     try {
       await deleteDoc(doc(db, 'stories', storyId));
-      setStories((prevStories) => prevStories.filter((story) => story.id !== storyId));
       toast({
         title: "Succès",
         description: "L'histoire a été supprimée",
@@ -92,7 +103,7 @@ export const useStories = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
   return {
     stories,

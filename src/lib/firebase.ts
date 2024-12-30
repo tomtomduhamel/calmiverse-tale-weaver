@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
@@ -17,7 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 console.log('Firebase initialized with project ID:', firebaseConfig.projectId);
 
-// Initialize Firestore
+// Initialize Firestore with persistence disabled
 export const db = getFirestore(app);
 console.log('Firestore initialized');
 
@@ -28,5 +28,11 @@ console.log('Auth initialized');
 // Initialize Analytics only in production
 export const analytics = process.env.NODE_ENV === 'production' ? getAnalytics(app) : null;
 console.log('Analytics initialization attempted');
+
+// Use emulators in development
+if (process.env.NODE_ENV === 'development') {
+  connectFirestoreEmulator(db, 'localhost', 8080);
+  connectAuthEmulator(auth, 'http://localhost:9099');
+}
 
 export default app;
