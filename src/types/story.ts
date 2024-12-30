@@ -12,3 +12,9 @@ export interface Story {
   isFavorite?: boolean;
   tags?: string[];
 }
+
+export interface Objective {
+  id: string;
+  label: string;
+  value: string;
+}

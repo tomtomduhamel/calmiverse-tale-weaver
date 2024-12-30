@@ -1,3 +1,5 @@
+import type { Child } from "@/types/child";
+
 export interface StoryFormData {
   childrenIds: string[];
   objective: string;

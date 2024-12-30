@@ -3,8 +3,8 @@ import { useToast } from "@/hooks/use-toast";
 import { collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Child } from "@/types/child";
-import type { StoryFormData } from "@/components/StoryForm";
 import type { Story } from "@/types/story";
+import type { StoryFormData } from "@/components/story/StoryFormTypes";
 
 export const useStories = () => {
   const [currentStory, setCurrentStory] = useState<Story | null>(null);

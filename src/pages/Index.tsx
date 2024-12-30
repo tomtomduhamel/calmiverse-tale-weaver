@@ -6,7 +6,7 @@ import ChildrenProfiles from "@/components/ChildrenProfiles";
 import HomeHero from "@/components/home/HomeHero";
 import { InteractiveGuide } from "@/components/guide/InteractiveGuide";
 import type { ViewType } from "@/types/views";
-import type { StoryFormData } from "@/components/StoryForm";
+import type { StoryFormData } from "@/components/story/StoryFormTypes";
 import type { Story } from "@/types/story";
 import { useToast } from "@/hooks/use-toast";
 import { useChildren } from "@/hooks/useChildren";
