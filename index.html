@@ -15,38 +15,63 @@
       // Configuration pour GPT Engineer avec gestion des erreurs améliorée
       window.gptengineer = {
         config: {
-          cloneableObjects: true, // Réactivation avec gestion d'erreur
+          cloneableObjects: true,
           debug: true,
           postMessageOptions: {
             transfer: [],
-            structuredClone: true, // Réactivation avec gestion d'erreur
-            fallbackToJSON: true // Ajout d'un fallback en JSON si le clonage échoue
+            structuredClone: true,
+            fallbackToJSON: true,
+            timeout: 5000 // Ajout d'un timeout pour les opérations de postMessage
           }
         }
       };
 
+      // Fonction utilitaire pour le logging
+      const logError = (source, error) => {
+        console.warn(`[${source}] Error:`, error);
+      };
+
       // Gestion globale des erreurs
       window.addEventListener('error', function(event) {
-        console.error('Erreur capturée:', event.error);
-        // Empêcher la propagation des erreurs non critiques
-        if (event.error && event.error.message && (
-          event.error.message.includes('Receiving end does not exist') ||
-          event.error.message.includes('CORS') ||
-          event.error.message.includes('feature')
-        )) {
+        logError('Global Error', event.error);
+        
+        // Liste des erreurs à ignorer
+        const ignoredErrors = [
+          'Receiving end does not exist',
+          'CORS',
+          'feature',
+          'vr',
+          'ambient-light-sensor',
+          'battery'
+        ];
+
+        if (event.error && event.error.message && 
+            ignoredErrors.some(err => event.error.message.includes(err))) {
           event.preventDefault();
+          return false;
         }
-      });
+      }, true);
 
       // Gestion spécifique des erreurs de postMessage
       window.addEventListener('unhandledrejection', function(event) {
-        console.warn('Promise rejetée:', event.reason);
-        // Empêcher l'arrêt de l'application pour les erreurs de postMessage
+        logError('Unhandled Promise', event.reason);
+        
         if (event.reason && event.reason.message && 
-            event.reason.message.includes('postMessage')) {
+            (event.reason.message.includes('postMessage') || 
+             event.reason.message.includes('connection'))) {
           event.preventDefault();
+          return false;
         }
-      });
+      }, true);
+
+      // Interception des erreurs de chargement de ressources
+      window.addEventListener('error', function(event) {
+        if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
+          logError('Resource Error', `Failed to load: ${event.target.src || event.target.href}`);
+          event.preventDefault();
+          return false;
+        }
+      }, true);
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
