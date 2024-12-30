@@ -18,6 +18,16 @@ export const useStories = (children: any[] = []) => {
         console.log('📥 Réception de la mise à jour Firestore avec', snapshot.docs.length, 'histoires');
         const loadedStories = snapshot.docs.map(doc => {
           const data = doc.data();
+          // Vérification et conversion du timestamp
+          let createdAtDate;
+          if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            createdAtDate = data.createdAt.toDate();
+          } else if (data.createdAt instanceof Date) {
+            createdAtDate = data.createdAt;
+          } else {
+            createdAtDate = new Date();
+          }
+
           return {
             id: doc.id,
             title: data.title || '',
@@ -28,7 +38,7 @@ export const useStories = (children: any[] = []) => {
             status: data.status || 'pending',
             story_text: data.story_text || '',
             story_summary: data.story_summary || '',
-            createdAt: data.createdAt?.toDate() || new Date(),
+            createdAt: createdAtDate,
             isFavorite: data.isFavorite || false,
             tags: data.tags || []
           } as Story;
