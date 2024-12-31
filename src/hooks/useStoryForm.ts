@@ -1,63 +1,41 @@
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import type { StoryFormData } from "@/components/story/StoryFormTypes";
-import type { Child } from "@/types/child";
+import { toast } from "@/hooks/use-toast";
 
-export const useStoryForm = (
-  onStoryCreated: (story: any) => void,
-  onSubmit: (data: StoryFormData) => Promise<string>
-) => {
-  const [formData, setFormData] = useState<StoryFormData>({
-    childrenIds: [],
-    objective: "",
-  });
+export const useStoryForm = (onStoryCreated, onSubmit) => {
+  const [formData, setFormData] = useState({ childrenIds: [], objective: "" });
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
-  const handleChildToggle = (childId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      childrenIds: prev.childrenIds.includes(childId)
-        ? prev.childrenIds.filter((id) => id !== childId)
-        : [...prev.childrenIds, childId],
-    }));
+  const handleChildToggle = (childId) => {
+    setFormData((prev) => {
+      const isSelected = prev.childrenIds.includes(childId);
+      return {
+        ...prev,
+        childrenIds: isSelected
+          ? prev.childrenIds.filter((id) => id !== childId)
+          : [...prev.childrenIds, childId],
+      };
+    });
   };
 
-  const setObjective = (objective: string) => {
-    setFormData({ ...formData, objective });
+  const setObjective = (objective) => {
+    setFormData((prev) => ({ ...prev, objective }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (formData.childrenIds.length === 0) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner au moins un enfant",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!formData.objective) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner un objectif",
-        variant: "destructive",
-      });
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      setIsLoading(true);
-      const generatedStory = await onSubmit(formData);
-      if (generatedStory) {
-        onStoryCreated(generatedStory);
+      const storyId = await onSubmit(formData);
+      if (storyId) {
+        toast({
+          title: "Succès",
+          description: "L'histoire est en cours de génération",
+          className: "success-toast",
+        });
+        onStoryCreated(storyId);
       }
     } catch (error) {
-      console.error("Erreur lors de la génération de l'histoire:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de l'histoire",

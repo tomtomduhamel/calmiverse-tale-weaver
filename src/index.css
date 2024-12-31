@@ -146,3 +146,53 @@
 .shadow-soft-lg {
   @apply shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)];
 }
+
+/* Toast animations et styles */
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.success-toast {
+  animation: slideIn 0.3s ease forwards;
+}
+
+.success-toast[data-state="closed"] {
+  animation: slideOut 0.3s ease forwards;
+}
+
+/* Overlay pour le fond flouté */
+.toast-overlay {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Styles spécifiques pour le toast de succès */
+.success-toast {
+  @apply bg-gradient-to-br from-white to-purple-50 dark:from-gray-900 dark:to-gray-800;
+  @apply border border-purple-100 dark:border-purple-900;
+  @apply shadow-lg rounded-xl;
+  @apply transform transition-all duration-300;
+}
+
+.success-toast:hover {
+  @apply shadow-xl;
+  transform: translateY(-2px);
+}
