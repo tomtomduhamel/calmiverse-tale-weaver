@@ -18,14 +18,13 @@ const AppContent = () => {
   const navigate = useNavigate();
 
   const handleHomeClick = () => {
-    // Utilisation de replace pour éviter l'accumulation dans l'historique
     navigate("/", { replace: true });
   };
 
   return (
     <main className="relative min-h-screen w-full bg-gradient-night dark:bg-gray-900 transition-colors duration-300">
-      {/* Header avec z-index élevé pour être au-dessus du contenu */}
-      <header className="fixed top-0 left-0 right-0 bg-[#D6EAF8]/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm z-[9999]">
+      {/* Header avec position relative et z-index normal pour ne pas bloquer les interactions */}
+      <header className="relative bg-[#D6EAF8] dark:bg-gray-900 shadow-sm">
         <nav className="max-w-7xl mx-auto px-4 h-16">
           <div className="h-full flex justify-center items-center">
             <button
@@ -48,8 +47,8 @@ const AppContent = () => {
         </nav>
       </header>
 
-      {/* Contenu principal avec padding-top pour éviter le chevauchement avec le header */}
-      <div className="relative max-w-7xl mx-auto p-6 pt-24">
+      {/* Contenu principal */}
+      <div className="relative max-w-7xl mx-auto p-6">
         <Routes>
           <Route path="/" element={<Index />} />
         </Routes>
