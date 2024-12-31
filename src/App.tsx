@@ -18,34 +18,38 @@ const AppContent = () => {
   const navigate = useNavigate();
 
   const handleHomeClick = () => {
+    // Utilisation de replace pour éviter l'accumulation dans l'historique
     navigate("/", { replace: true });
   };
 
   return (
-    <main className="min-h-screen bg-gradient-night w-full dark:bg-gray-900 transition-colors duration-300">
-      <header className="fixed top-0 left-0 right-0 bg-[#D6EAF8]/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm z-[100]">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex justify-center items-center">
-          <div 
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={handleHomeClick}
-            role="button"
-            tabIndex={0}
-            aria-label="Retour à l'accueil"
-          >
-            <img 
-              src="/lovable-uploads/19ebb6ec-fb66-480b-af41-e09a5e6eaf73.png" 
-              alt="Calmi Logo" 
-              className="h-8 w-auto"
-            />
-            <img 
-              src="/lovable-uploads/f43b0052-5023-41e6-9ebb-c5e58ec7cbfb.png" 
-              alt="Calmi Text" 
-              className="h-8 w-auto"
-            />
+    <main className="relative min-h-screen w-full bg-gradient-night dark:bg-gray-900 transition-colors duration-300">
+      {/* Header avec z-index élevé pour être au-dessus du contenu */}
+      <header className="fixed top-0 left-0 right-0 bg-[#D6EAF8]/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm z-[9999]">
+        <nav className="max-w-7xl mx-auto px-4 h-16">
+          <div className="h-full flex justify-center items-center">
+            <button
+              onClick={handleHomeClick}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary rounded-lg p-2"
+              aria-label="Retour à l'accueil"
+            >
+              <img 
+                src="/lovable-uploads/19ebb6ec-fb66-480b-af41-e09a5e6eaf73.png" 
+                alt="Calmi Logo" 
+                className="h-8 w-auto"
+              />
+              <img 
+                src="/lovable-uploads/f43b0052-5023-41e6-9ebb-c5e58ec7cbfb.png" 
+                alt="Calmi Text" 
+                className="h-8 w-auto"
+              />
+            </button>
           </div>
-        </div>
+        </nav>
       </header>
-      <div className="max-w-7xl mx-auto p-6 pt-24">
+
+      {/* Contenu principal avec padding-top pour éviter le chevauchement avec le header */}
+      <div className="relative max-w-7xl mx-auto p-6 pt-24">
         <Routes>
           <Route path="/" element={<Index />} />
         </Routes>
