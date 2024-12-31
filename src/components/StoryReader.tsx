@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Heart, Info } from "lucide-react";
+import { Heart, Info, Clock } from "lucide-react";
 import type { Story } from "@/types/story";
 import ReactMarkdown from 'react-markdown';
 import { format } from "date-fns";
@@ -10,6 +10,7 @@ import { fr } from "date-fns/locale";
 import { TextToSpeech } from "./story/TextToSpeech";
 import { ShareStory } from "./story/ShareStory";
 import { SendToEreader } from "./story/SendToEreader";
+import { calculateReadingTime } from "@/utils/readingTime";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -33,6 +34,8 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
       </div>
     );
   }
+
+  const readingTime = calculateReadingTime(story.story_text);
 
   const getObjectiveText = (objective: Story['objective']) => {
     if (!objective) return "Objectif non défini";
@@ -96,6 +99,10 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
               {childName && (
                 <p className="text-muted-foreground mt-1">Histoire personnalisée pour {childName}</p>
               )}
+              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>{readingTime}</span>
+              </div>
               <p className="text-xs text-muted-foreground mt-1">{formattedDate}</p>
             </div>
             <div className="flex gap-2">

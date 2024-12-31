@@ -11,6 +11,7 @@ import type { Story } from "@/types/story";
 import StoryCardActions from "./card/StoryCardActions";
 import StoryCardTags from "./card/StoryCardTags";
 import StoryCardTitle from "./card/StoryCardTitle";
+import { calculateReadingTime } from "@/utils/readingTime";
 
 interface StoryCardProps {
   story: Story;
@@ -21,6 +22,7 @@ interface StoryCardProps {
 const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(story.isFavorite || false);
+  const readingTime = calculateReadingTime(story.story_text);
 
   const formatTitle = (text: string) => {
     // Enlever les guillemets au début et à la fin
@@ -119,6 +121,10 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
             <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
               <Users className="w-4 h-4" />
               <span>Pour : {story.childrenNames?.join(', ') || 'Non spécifié'}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              <span>{readingTime}</span>
             </div>
           </div>
           <div className="flex-shrink-0">
