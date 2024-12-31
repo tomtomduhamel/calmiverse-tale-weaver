@@ -5,15 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import Index from "./pages/Index";
 
-// Remove any trailing slashes and ensure proper URL format
-const BASE_URL = window.location.origin.replace(/\/$/, '');
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: false,
       refetchOnWindowFocus: false,
-      baseURL: BASE_URL, // Add baseURL to all queries
     },
   },
 });
