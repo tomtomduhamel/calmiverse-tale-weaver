@@ -26,7 +26,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
 
   if (!story) {
     return (
-      <div className="min-h-screen p-4 flex items-center justify-center">
+      <div className="min-h-screen p-4 flex items-center justify-center bg-background">
         <Card className="p-6 text-center animate-fade-in">
           <p className="mb-4">Aucune histoire à afficher</p>
           <Button onClick={onClose}>Retour</Button>
@@ -54,7 +54,10 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
   const formattedDate = story.createdAt ? format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr }) : "";
 
   return (
-    <div className={`min-h-screen p-4 transition-colors duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
+    <div 
+      className={`fixed inset-0 min-h-screen p-4 transition-colors duration-300 overflow-y-auto
+        ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
+    >
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="space-x-2">
