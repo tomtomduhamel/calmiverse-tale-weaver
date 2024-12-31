@@ -27,23 +27,11 @@ const Index = () => {
       localStorage.setItem("hasSeenGuide", "true");
     }
 
-    // Initialise les objectifs au chargement de la page
-    initializeObjectives()
-      .then(() => {
-        toast({
-          title: "Succès",
-          description: "Les objectifs ont été initialisés avec succès",
-        });
-      })
-      .catch((error) => {
-        console.error("Erreur lors de l'initialisation des objectifs:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible d'initialiser les objectifs",
-          variant: "destructive",
-        });
-      });
-  }, [toast]);
+    // Initialise silencieusement les objectifs au chargement de la page
+    initializeObjectives().catch((error) => {
+      console.error("Erreur lors de l'initialisation des objectifs:", error);
+    });
+  }, []);
 
   const handleCreateChildFromStory = () => {
     setCurrentView("profiles");
