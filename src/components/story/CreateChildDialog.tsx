@@ -26,45 +26,61 @@ const CreateChildDialog = ({
 }: CreateChildDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-gradient-to-br from-card-start to-card-end dark:from-muted-dark dark:to-muted">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-primary dark:text-primary-dark mb-4">
+          <DialogTitle className="text-2xl font-semibold text-primary dark:text-primary">
             Ajouter un enfant
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="childName">Prénom</Label>
-            <Input
-              id="childName"
-              value={childName}
-              onChange={(e) => onChildNameChange(e.target.value)}
-              placeholder="Entrez le prénom"
-              required
-            />
+        
+        <form onSubmit={onSubmit} className="space-y-6 mt-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="childName" className="text-sm font-medium text-secondary dark:text-secondary-foreground">
+                Prénom
+              </Label>
+              <Input
+                id="childName"
+                value={childName}
+                onChange={(e) => onChildNameChange(e.target.value)}
+                placeholder="Entrez le prénom"
+                className="w-full bg-white/50 dark:bg-muted-dark/50 border-secondary/20 focus:border-primary"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="childAge" className="text-sm font-medium text-secondary dark:text-secondary-foreground">
+                Âge
+              </Label>
+              <select
+                id="childAge"
+                value={childAge}
+                onChange={(e) => onChildAgeChange(Number(e.target.value))}
+                className="w-full p-2 rounded-md bg-white/50 dark:bg-muted-dark/50 border border-secondary/20 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((age) => (
+                  <option key={age} value={age}>
+                    {age} ans
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="childAge">Âge</Label>
-            <select
-              id="childAge"
-              value={childAge}
-              onChange={(e) => onChildAgeChange(Number(e.target.value))}
-              className="w-full p-2 border rounded-md"
+          <div className="flex gap-3">
+            <Button
+              type="submit"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-soft hover:shadow-soft-lg transition-all"
             >
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((age) => (
-                <option key={age} value={age}>
-                  {age} ans
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" className="flex-1">
               Ajouter
             </Button>
-            <Button type="button" variant="outline" onClick={onReset} className="flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onReset}
+              className="flex-1 border-secondary/20 hover:bg-secondary/10 transition-all"
+            >
               Annuler
             </Button>
           </div>
