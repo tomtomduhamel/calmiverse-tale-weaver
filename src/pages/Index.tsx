@@ -27,10 +27,8 @@ const Index = () => {
       localStorage.setItem("hasSeenGuide", "true");
     }
 
-    // Initialise silencieusement les objectifs au chargement de la page
-    initializeObjectives().catch(() => {
-      console.error("Erreur silencieuse lors de l'initialisation des objectifs");
-    });
+    // Initialize objectives silently
+    initializeObjectives();
   }, []);
 
   const handleCreateChildFromStory = () => {
