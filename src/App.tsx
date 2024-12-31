@@ -18,16 +18,19 @@ const AppContent = () => {
   const navigate = useNavigate();
 
   const handleHomeClick = () => {
-    navigate("/");
+    navigate("/", { replace: true });
   };
 
   return (
-    <main className="min-h-screen bg-gradient-night w-full">
-      <header className="fixed top-0 left-0 right-0 bg-[#D6EAF8]/80 backdrop-blur-sm shadow-sm z-50">
+    <main className="min-h-screen bg-gradient-night w-full dark:bg-gray-900 transition-colors duration-300">
+      <header className="fixed top-0 left-0 right-0 bg-[#D6EAF8]/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm z-[100]">
         <div className="max-w-7xl mx-auto px-4 h-16 flex justify-center items-center">
           <div 
-            className="flex items-center gap-2 cursor-pointer" 
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={handleHomeClick}
+            role="button"
+            tabIndex={0}
+            aria-label="Retour à l'accueil"
           >
             <img 
               src="/lovable-uploads/19ebb6ec-fb66-480b-af41-e09a5e6eaf73.png" 
