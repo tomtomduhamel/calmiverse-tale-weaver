@@ -28,8 +28,8 @@ const Index = () => {
     }
 
     // Initialise silencieusement les objectifs au chargement de la page
-    initializeObjectives().catch((error) => {
-      console.error("Erreur lors de l'initialisation des objectifs:", error);
+    initializeObjectives().catch(() => {
+      console.error("Erreur silencieuse lors de l'initialisation des objectifs");
     });
   }, []);
 

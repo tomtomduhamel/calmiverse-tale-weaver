@@ -1,49 +1,50 @@
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { addDocument } from "@/lib/firebase-utils";
+
+const objectives = [
+  {
+    name: "Aider à s'endormir",
+    value: "sleep",
+    label: "Aider à s'endormir"
+  },
+  {
+    name: "Se concentrer",
+    value: "focus",
+    label: "Se concentrer"
+  },
+  {
+    name: "Se détendre",
+    value: "relax",
+    label: "Se détendre"
+  },
+  {
+    name: "S'amuser",
+    value: "fun",
+    label: "S'amuser"
+  }
+];
 
 export const initializeObjectives = async () => {
   try {
-    // Supprime d'abord tous les documents existants
-    const querySnapshot = await getDocs(collection(db, 'story_objectives'));
-    const deletePromises = querySnapshot.docs.map(doc => 
-      deleteDoc(doc.ref)
-    );
+    // Récupération de la référence à la collection
+    const objectivesCollection = collection(db, 'story_objectives');
+    
+    // Suppression des anciens objectifs
+    const querySnapshot = await getDocs(objectivesCollection);
+    const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
     await Promise.all(deletePromises);
     
-    console.log("Anciens objectifs supprimés avec succès");
-
-    const objectives = [
-      {
-        name: "Aider à s'endormir",
-        value: "sleep",
-        label: "Aider à s'endormir"
-      },
-      {
-        name: "Se concentrer",
-        value: "focus",
-        label: "Se concentrer"
-      },
-      {
-        name: "Se détendre",
-        value: "relax",
-        label: "Se détendre"
-      },
-      {
-        name: "S'amuser",
-        value: "fun",
-        label: "S'amuser"
-      }
-    ];
-
-    // Ajoute les nouveaux objectifs
-    for (const objective of objectives) {
-      await addDocument("story_objectives", objective);
-    }
-
-    console.log("Nouveaux objectifs initialisés avec succès:", objectives);
+    // Ajout des nouveaux objectifs
+    const addPromises = objectives.map(objective => 
+      addDoc(objectivesCollection, objective)
+    );
+    await Promise.all(addPromises);
+    
+    return true;
   } catch (error) {
-    console.error("Erreur lors de l'initialisation des objectifs:", error);
-    throw error;
+    // Création d'une erreur simple et clonable
+    const simpleError = new Error('Erreur lors de l\'initialisation des objectifs');
+    simpleError.name = 'InitializationError';
+    throw simpleError;
   }
 };
