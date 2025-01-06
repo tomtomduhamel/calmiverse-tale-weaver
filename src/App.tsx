@@ -17,20 +17,23 @@ const queryClient = new QueryClient({
 const AppContent = () => {
   const navigate = useNavigate();
 
-  const handleHomeClick = () => {
+  const handleHomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Navigation vers l'accueil");
     navigate("/", { replace: true });
   };
 
   return (
     <main className="relative min-h-screen w-full bg-gradient-night dark:bg-gray-900 transition-colors duration-300">
-      {/* Header avec position relative et z-index normal pour ne pas bloquer les interactions */}
       <header className="relative bg-[#D6EAF8] dark:bg-gray-900 shadow-sm">
         <nav className="max-w-7xl mx-auto px-4 h-16">
           <div className="h-full flex justify-center items-center">
             <button
               onClick={handleHomeClick}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary rounded-lg p-2"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary rounded-lg p-2 cursor-pointer"
               aria-label="Retour à l'accueil"
+              type="button"
             >
               <img 
                 src="/lovable-uploads/19ebb6ec-fb66-480b-af41-e09a5e6eaf73.png" 
@@ -47,7 +50,6 @@ const AppContent = () => {
         </nav>
       </header>
 
-      {/* Contenu principal */}
       <div className="relative max-w-7xl mx-auto p-6">
         <Routes>
           <Route path="/" element={<Index />} />
