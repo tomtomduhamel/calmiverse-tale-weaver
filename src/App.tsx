@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 
 const queryClient = new QueryClient({
@@ -16,12 +16,20 @@ const queryClient = new QueryClient({
 
 const AppContent = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleHomeClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     console.log("Navigation vers l'accueil");
-    navigate("/", { replace: true });
+    
+    // Si nous sommes déjà sur la page d'accueil, recharger la page
+    if (location.pathname === "/") {
+      window.location.reload();
+    } else {
+      // Sinon, naviguer vers l'accueil
+      navigate("/");
+    }
   };
 
   return (
@@ -31,7 +39,7 @@ const AppContent = () => {
           <div className="h-full flex justify-center items-center">
             <button
               onClick={handleHomeClick}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary rounded-lg p-2 cursor-pointer"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary rounded-lg p-2 cursor-pointer active:scale-98"
               aria-label="Retour à l'accueil"
               type="button"
             >
