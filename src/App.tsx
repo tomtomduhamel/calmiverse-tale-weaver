@@ -23,8 +23,9 @@ const AppContent = () => {
     e.stopPropagation();
     console.log("Navigation vers l'accueil");
     
-    // Utiliser uniquement la navigation React Router pour une transition fluide
-    navigate("/");
+    if (location.pathname !== "/") {
+      navigate("/");
+    }
   };
 
   return (
