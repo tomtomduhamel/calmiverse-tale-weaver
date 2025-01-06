@@ -23,13 +23,8 @@ const AppContent = () => {
     e.stopPropagation();
     console.log("Navigation vers l'accueil");
     
-    // Si nous sommes déjà sur la page d'accueil, recharger la page
-    if (location.pathname === "/") {
-      window.location.reload();
-    } else {
-      // Sinon, naviguer vers l'accueil
-      navigate("/");
-    }
+    // Utiliser uniquement la navigation React Router pour une transition fluide
+    navigate("/");
   };
 
   return (
