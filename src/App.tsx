@@ -23,9 +23,11 @@ const AppContent = () => {
     e.stopPropagation();
     console.log("Navigation vers l'accueil");
     
-    if (location.pathname !== "/") {
-      navigate("/");
+    if (location.pathname === "/") {
+      return;
     }
+    
+    navigate("/", { replace: true });
   };
 
   return (
@@ -35,7 +37,7 @@ const AppContent = () => {
           <div className="h-full flex justify-center items-center">
             <button
               onClick={handleHomeClick}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary rounded-lg p-2 cursor-pointer active:scale-98"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary rounded-lg p-2 cursor-pointer active:scale-95"
               aria-label="Retour à l'accueil"
               type="button"
             >
