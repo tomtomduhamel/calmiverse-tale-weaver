@@ -3,7 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Shield } from "lucide-react";
 import Index from "./pages/Index";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,11 +34,15 @@ const AppContent = () => {
     navigate("/");
   };
 
+  const handlePrivacyClick = () => {
+    navigate("/privacy");
+  };
+
   return (
     <main className="relative min-h-screen w-full bg-gradient-night dark:bg-gray-900 transition-colors duration-300">
       <header className="relative bg-[#D6EAF8] dark:bg-gray-900 shadow-sm">
         <nav className="max-w-7xl mx-auto px-4 h-16">
-          <div className="h-full flex justify-center items-center">
+          <div className="h-full flex justify-between items-center">
             <button
               onClick={handleHomeClick}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary rounded-lg p-2 cursor-pointer active:scale-95"
@@ -53,6 +60,16 @@ const AppContent = () => {
                 className="h-8 w-auto"
               />
             </button>
+
+            <Button
+              variant="ghost"
+              onClick={handlePrivacyClick}
+              className="flex items-center gap-2"
+              aria-label="Règles de confidentialité"
+            >
+              <Shield className="h-5 w-5" />
+              <span className="hidden md:inline">Confidentialité</span>
+            </Button>
           </div>
         </nav>
       </header>
@@ -60,6 +77,7 @@ const AppContent = () => {
       <div className="relative max-w-7xl mx-auto p-6">
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
         </Routes>
       </div>
     </main>
