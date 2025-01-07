@@ -24,10 +24,11 @@ const AppContent = () => {
     console.log("Navigation vers l'accueil");
     
     if (location.pathname === "/") {
+      window.location.reload();
       return;
     }
     
-    navigate("/", { replace: true });
+    navigate("/");
   };
 
   return (

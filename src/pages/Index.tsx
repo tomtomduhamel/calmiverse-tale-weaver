@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useChildren } from "@/hooks/useChildren";
 import { useStories } from "@/hooks/useStories";
 import { initializeObjectives } from "@/utils/initializeObjectives";
+import { useLocation } from "react-router-dom";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
@@ -19,6 +20,7 @@ const Index = () => {
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useChildren();
   const { stories, currentStory, setCurrentStory, createStory, deleteStory } = useStories(children);
   const { toast } = useToast();
+  const location = useLocation();
 
   useEffect(() => {
     const hasSeenGuide = localStorage.getItem("hasSeenGuide");
@@ -30,6 +32,13 @@ const Index = () => {
     // Initialize objectives silently
     initializeObjectives();
   }, []);
+
+  // Reset view to home when navigating to root
+  useEffect(() => {
+    if (location.pathname === "/") {
+      setCurrentView("home");
+    }
+  }, [location]);
 
   const handleCreateChildFromStory = () => {
     setCurrentView("profiles");
