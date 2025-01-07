@@ -1,4 +1,8 @@
-export const calculateReadingTime = (text: string): string => {
+export const calculateReadingTime = (text: string | undefined): string => {
+  if (!text) {
+    return "0 min de lecture";
+  }
+
   const wordsPerMinute = 250;
   const wordCount = text.trim().split(/\s+/).length;
   const minutes = Math.round(wordCount / wordsPerMinute);
