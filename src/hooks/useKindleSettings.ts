@@ -29,7 +29,13 @@ export const useKindleSettings = () => {
         const parsed = JSON.parse(storedSettings);
         const validated = kindleSettingsSchema.safeParse(parsed);
         if (validated.success) {
-          setSettings(validated.data);
+          // Ensure all required properties are present
+          const validatedSettings: KindleSettings = {
+            firstName: validated.data.firstName,
+            lastName: validated.data.lastName,
+            kindleEmail: validated.data.kindleEmail,
+          };
+          setSettings(validatedSettings);
         }
       } catch (error) {
         console.error('Erreur lors du chargement des paramètres:', error);
@@ -40,8 +46,14 @@ export const useKindleSettings = () => {
   const updateSettings = async (newSettings: KindleSettings) => {
     try {
       const validated = await kindleSettingsSchema.parseAsync(newSettings);
-      setSettings(validated);
-      localStorage.setItem('kindleSettings', JSON.stringify(validated));
+      // Ensure all required properties are present
+      const validatedSettings: KindleSettings = {
+        firstName: validated.firstName,
+        lastName: validated.lastName,
+        kindleEmail: validated.kindleEmail,
+      };
+      setSettings(validatedSettings);
+      localStorage.setItem('kindleSettings', JSON.stringify(validatedSettings));
       return { success: true };
     } catch (error) {
       if (error instanceof z.ZodError) {
