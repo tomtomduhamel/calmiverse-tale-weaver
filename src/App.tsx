@@ -4,9 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield } from "lucide-react";
+import { Shield, Settings } from "lucide-react";
 import Index from "./pages/Index";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import SettingsPage from "./pages/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +39,10 @@ const AppContent = () => {
     navigate("/privacy");
   };
 
+  const handleSettingsClick = () => {
+    navigate("/settings");
+  };
+
   return (
     <main className="relative min-h-screen w-full bg-gradient-night dark:bg-gray-900 transition-colors duration-300">
       <header className="relative bg-[#D6EAF8] dark:bg-gray-900 shadow-sm">
@@ -61,15 +66,27 @@ const AppContent = () => {
               />
             </button>
 
-            <Button
-              variant="ghost"
-              onClick={handlePrivacyClick}
-              className="flex items-center gap-2"
-              aria-label="Règles de confidentialité"
-            >
-              <Shield className="h-5 w-5" />
-              <span className="hidden md:inline">Confidentialité</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                onClick={handleSettingsClick}
+                className="flex items-center gap-2"
+                aria-label="Paramètres"
+              >
+                <Settings className="h-5 w-5" />
+                <span className="hidden md:inline">Paramètres</span>
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={handlePrivacyClick}
+                className="flex items-center gap-2"
+                aria-label="Règles de confidentialité"
+              >
+                <Shield className="h-5 w-5" />
+                <span className="hidden md:inline">Confidentialité</span>
+              </Button>
+            </div>
           </div>
         </nav>
       </header>
@@ -78,6 +95,7 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </div>
     </main>

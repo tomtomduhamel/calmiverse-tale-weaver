@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useKindleSettings } from "@/hooks/useKindleSettings";
+import { useNavigate } from "react-router-dom";
 
 interface SendToEreaderProps {
   storyText: string;
@@ -26,12 +28,25 @@ export const SendToEreader: React.FC<SendToEreaderProps> = ({ storyText, title }
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState("");
   const { toast } = useToast();
+  const { settings, isConfigured } = useKindleSettings();
+  const navigate = useNavigate();
 
   const handleSendToDevice = async () => {
+    if (selectedDevice === "kindle" && !isConfigured) {
+      toast({
+        title: "Configuration requise",
+        description: "Veuillez configurer votre email Kindle dans les paramètres.",
+        variant: "destructive",
+      });
+      setIsOpen(false);
+      navigate("/settings");
+      return;
+    }
+
     try {
-      // Pour l'instant, simulons l'envoi
       console.log("Envoi de l'histoire vers la liseuse:", {
         device: selectedDevice,
+        kindleEmail: settings.kindleEmail,
         title,
         contentLength: storyText.length
       });
@@ -41,7 +56,6 @@ export const SendToEreader: React.FC<SendToEreaderProps> = ({ storyText, title }
         description: "L'histoire est en cours d'envoi vers votre liseuse...",
       });
       
-      // Simulons un délai d'envoi
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       toast({
