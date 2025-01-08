@@ -29,7 +29,7 @@ export const useKindleSettings = () => {
         const parsed = JSON.parse(storedSettings);
         const validated = kindleSettingsSchema.safeParse(parsed);
         if (validated.success) {
-          setSettings(validated.data as KindleSettings);
+          setSettings(validated.data);
         }
       } catch (error) {
         console.error('Erreur lors du chargement des paramètres:', error);
