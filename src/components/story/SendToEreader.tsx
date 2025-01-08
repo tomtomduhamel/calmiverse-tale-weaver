@@ -20,6 +20,7 @@ import { useKindleSettings } from "@/hooks/useKindleSettings";
 import { useNavigate } from "react-router-dom";
 import { generateEpub, uploadEpubToStorage } from '@/services/epubService';
 import { Progress } from "@/components/ui/progress";
+import type { Story } from "@/types/story";
 
 interface SendToEreaderProps {
   storyText: string;

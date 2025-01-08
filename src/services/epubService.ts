@@ -3,20 +3,10 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { calculateReadingTime } from '@/utils/readingTime';
 import type { Story } from '@/types/story';
-const EPub = require('epub-gen');
-
-interface EpubOptions {
-  title: string;
-  author: string;
-  content: Array<{
-    title: string;
-    data: string;
-  }>;
-  appendChapterTitles: boolean;
-}
+import EPub from 'epub-gen';
 
 export const generateEpub = async (story: Story): Promise<Blob> => {
-  const options: EpubOptions = {
+  const options = {
     title: story.title,
     author: "Calmi Stories",
     content: [
@@ -26,22 +16,20 @@ export const generateEpub = async (story: Story): Promise<Blob> => {
           <h2>Métadonnées</h2>
           <p>Durée de lecture: ${calculateReadingTime(story.story_text)}</p>
           <p>Date de création: ${new Date(story.createdAt).toLocaleString()}</p>
-          <p>Objectif: ${typeof story.objective === 'string' ? story.objective : story.objective.name}</p>
+          <p>Objectif: ${typeof story.objective === 'string' ? story.objective : story.objective.value}</p>
         `
       },
       {
         title: "Histoire",
         data: story.story_text.replace(/\n/g, '<br/>')
       }
-    ],
-    appendChapterTitles: true
+    ]
   };
 
   return new Promise((resolve, reject) => {
     const tempFilePath = `temp_${Date.now()}.epub`;
     new EPub(options, tempFilePath).promise
       .then(() => {
-        // Convertir le fichier en Blob
         const blob = new Blob([tempFilePath], { type: 'application/epub+zip' });
         resolve(blob);
       })
@@ -56,7 +44,6 @@ export const uploadEpubToStorage = async (storyId: string, epubBlob: Blob): Prom
   await uploadBytes(epubRef, epubBlob);
   const downloadURL = await getDownloadURL(epubRef);
   
-  // Mettre à jour le document Firestore avec l'URL du fichier
   const storyRef = doc(db, 'stories', storyId);
   await updateDoc(storyRef, {
     epubFile: downloadURL

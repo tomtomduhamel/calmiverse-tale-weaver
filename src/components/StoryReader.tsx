@@ -84,7 +84,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
             </Button>
             <TextToSpeech text={story.story_text} />
             <ShareStory storyId={story.id} title={story.title} />
-            <SendToEreader storyText={story.story_text} title={story.title} />
+            <SendToEreader storyText={story.story_text} title={story.title} story={story} />
           </div>
           <Button 
             variant="ghost" 
