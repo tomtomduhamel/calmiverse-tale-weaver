@@ -1,6 +1,6 @@
 export interface Story {
   id: string;
-  id_stories?: string; // Ajout du champ optionnel id_stories
+  id_stories?: string;
   title: string;
   preview: string;
   objective: string | { name: string; value: string };
@@ -12,6 +12,7 @@ export interface Story {
   story_summary: string;
   isFavorite?: boolean;
   tags?: string[];
+  epubFile?: string;
 }
 
 export interface Objective {

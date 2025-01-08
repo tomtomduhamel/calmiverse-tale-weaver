@@ -18,15 +18,20 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useKindleSettings } from "@/hooks/useKindleSettings";
 import { useNavigate } from "react-router-dom";
+import { generateEpub, uploadEpubToStorage } from '@/services/epubService';
+import { Progress } from "@/components/ui/progress";
 
 interface SendToEreaderProps {
   storyText: string;
   title: string;
+  story: Story;
 }
 
-export const SendToEreader: React.FC<SendToEreaderProps> = ({ storyText, title }) => {
+export const SendToEreader: React.FC<SendToEreaderProps> = ({ storyText, title, story }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   const { settings, isConfigured } = useKindleSettings();
   const navigate = useNavigate();
@@ -44,33 +49,40 @@ export const SendToEreader: React.FC<SendToEreaderProps> = ({ storyText, title }
     }
 
     try {
-      console.log("Envoi de l'histoire vers la liseuse:", {
+      setIsGenerating(true);
+      setProgress(10);
+
+      // Générer l'EPUB
+      const epubBlob = await generateEpub(story);
+      setProgress(50);
+
+      // Uploader vers Firebase Storage
+      const downloadURL = await uploadEpubToStorage(story.id, epubBlob);
+      setProgress(90);
+
+      console.log("EPUB généré et uploadé:", {
         device: selectedDevice,
         kindleEmail: settings.kindleEmail,
         title,
-        contentLength: storyText.length
+        downloadURL
       });
       
       toast({
-        title: "Envoi en cours",
-        description: "L'histoire est en cours d'envoi vers votre liseuse...",
+        title: "Génération réussie",
+        description: "Le fichier EPUB a été généré et sauvegardé avec succès.",
       });
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: "Envoi réussi",
-        description: "L'histoire a été envoyée avec succès vers votre liseuse.",
-      });
-      
+      setProgress(100);
+      setIsGenerating(false);
       setIsOpen(false);
     } catch (error) {
-      console.error("Erreur lors de l'envoi:", error);
+      console.error("Erreur lors de la génération de l'EPUB:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'envoi vers la liseuse.",
+        description: "Une erreur est survenue lors de la génération du fichier EPUB.",
         variant: "destructive",
       });
+      setIsGenerating(false);
     }
   };
 
@@ -90,11 +102,18 @@ export const SendToEreader: React.FC<SendToEreaderProps> = ({ storyText, title }
           <DialogTitle>Envoyer vers une liseuse</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          {isGenerating && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Génération en cours...</p>
+              <Progress value={progress} className="w-full" />
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-medium">Sélectionnez votre liseuse</label>
             <Select
               value={selectedDevice}
               onValueChange={setSelectedDevice}
+              disabled={isGenerating}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Choisir une liseuse" />
@@ -108,11 +127,17 @@ export const SendToEreader: React.FC<SendToEreaderProps> = ({ storyText, title }
           </div>
           <Button 
             onClick={handleSendToDevice}
-            disabled={!selectedDevice}
+            disabled={!selectedDevice || isGenerating}
             className="w-full"
           >
-            <SendHorizontal className="mr-2 h-4 w-4" />
-            Envoyer
+            {isGenerating ? (
+              "Génération en cours..."
+            ) : (
+              <>
+                <SendHorizontal className="mr-2 h-4 w-4" />
+                Envoyer
+              </>
+            )}
           </Button>
         </div>
       </DialogContent>
