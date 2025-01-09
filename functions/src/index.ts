@@ -1,8 +1,55 @@
 import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
 import OpenAI from 'openai';
+import cors from 'cors';
+
+admin.initializeApp();
+const storage = admin.storage();
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+});
+
+const corsHandler = cors({ origin: true });
+
+export const uploadEpub = functions.https.onRequest((request, response) => {
+  corsHandler(request, response, async () => {
+    try {
+      if (request.method !== 'POST') {
+        return response.status(405).json({ error: 'Method not allowed' });
+      }
+
+      const { content, filename } = request.body;
+      if (!content || !filename) {
+        return response.status(400).json({ error: 'Content and filename are required' });
+      }
+
+      // Créer un buffer à partir du contenu base64
+      const buffer = Buffer.from(content, 'base64');
+
+      // Créer une référence au fichier dans Firebase Storage
+      const bucket = storage.bucket();
+      const file = bucket.file(`epubs/${filename}`);
+
+      // Upload le fichier
+      await file.save(buffer, {
+        metadata: {
+          contentType: 'application/epub+zip'
+        }
+      });
+
+      // Générer une URL de téléchargement
+      const [url] = await file.getSignedUrl({
+        action: 'read',
+        expires: Date.now() + 7 * 24 * 60 * 60 * 1000 // URL valide 7 jours
+      });
+
+      response.json({ url });
+    } catch (error) {
+      console.error('Error uploading epub:', error);
+      response.status(500).json({ error: 'Failed to upload file' });
+    }
+  });
 });
 
 export const generateStory = functions.https.onCall(async (data, context) => {
