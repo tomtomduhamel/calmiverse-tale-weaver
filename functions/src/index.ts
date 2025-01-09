@@ -24,8 +24,8 @@ export const uploadEpub = functions.https.onRequest((request, response) => {
         return response.status(400).json({ error: 'Content and filename are required' });
       }
 
-      // Créer un buffer à partir du contenu base64
-      const buffer = Buffer.from(content, 'base64');
+      // Créer un buffer à partir du contenu HTML brut
+      const buffer = Buffer.from(content);
 
       // Créer une référence au fichier dans Firebase Storage
       const bucket = storage.bucket();

@@ -5,7 +5,7 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
   try {
     console.log("Début de la génération de l'EPUB pour l'histoire:", story.title);
     
-    // Créer le contenu HTML
+    // Créer le contenu HTML brut
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -19,14 +19,12 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
       </html>
     `;
 
-    // Convertir le contenu en base64
-    const content = Buffer.from(htmlContent).toString('base64');
     const filename = `${story.id}_${Date.now()}.epub`;
 
     // Appeler la Cloud Function pour l'upload
     const functions = getFunctions();
     const uploadEpubFn = httpsCallable(functions, 'uploadEpub');
-    const result = await uploadEpubFn({ content, filename });
+    const result = await uploadEpubFn({ content: htmlContent, filename });
 
     // @ts-ignore - nous savons que result.data contient url
     const { url } = result.data;
