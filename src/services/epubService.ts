@@ -1,4 +1,5 @@
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import type { Story } from '@/types/story';
 
 export const generateAndUploadEpub = async (story: Story): Promise<string> => {
   try {
