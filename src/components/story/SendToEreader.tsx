@@ -1,25 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { SendHorizontal } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SendHorizontal, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useKindleSettings } from "@/hooks/useKindleSettings";
-import { useNavigate } from "react-router-dom";
-import { generateEpub, uploadEpubToStorage } from '@/services/epubService';
-import { Progress } from "@/components/ui/progress";
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import type { Story } from "@/types/story";
 
 interface SendToEreaderProps {
@@ -29,119 +14,94 @@ interface SendToEreaderProps {
 }
 
 export const SendToEreader: React.FC<SendToEreaderProps> = ({ storyText, title, story }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { settings, isConfigured } = useKindleSettings();
-  const navigate = useNavigate();
 
-  const handleSendToDevice = async () => {
-    if (selectedDevice === "kindle" && !isConfigured) {
-      toast({
-        title: "Configuration requise",
-        description: "Veuillez configurer votre email Kindle dans les paramètres.",
-        variant: "destructive",
-      });
-      setIsOpen(false);
-      navigate("/settings");
-      return;
-    }
+  const generateEpub = async () => {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title}</title>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 2em; }
+            h1 { color: #333; text-align: center; }
+            .metadata { color: #666; font-size: 0.9em; margin: 1em 0; }
+            .story { margin-top: 2em; }
+          </style>
+        </head>
+        <body>
+          <h1>${title}</h1>
+          <div class="metadata">
+            <p>Date de création: ${story.createdAt.toLocaleDateString()}</p>
+            <p>Objectif: ${story.objective}</p>
+          </div>
+          <div class="story">
+            ${storyText.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('')}
+          </div>
+        </body>
+      </html>
+    `;
 
+    return new Blob([htmlContent], { type: 'text/html' });
+  };
+
+  const handleGenerateAndUpload = async () => {
     try {
-      setIsGenerating(true);
-      setProgress(10);
+      setIsLoading(true);
+      console.log("Début de la génération de l'EPUB...");
 
       // Générer l'EPUB
-      const epubBlob = await generateEpub(story);
-      setProgress(50);
+      const epubBlob = await generateEpub();
+      console.log("EPUB généré avec succès");
 
-      // Uploader vers Firebase Storage
-      const downloadURL = await uploadEpubToStorage(story.id, epubBlob);
-      setProgress(90);
+      // Upload vers Firebase Storage
+      const storage = getStorage();
+      const epubRef = ref(storage, `stories/${story.id}.html`);
+      await uploadBytes(epubRef, epubBlob);
+      console.log("EPUB uploadé vers Storage");
 
-      console.log("EPUB généré et uploadé:", {
-        device: selectedDevice,
-        kindleEmail: settings.kindleEmail,
-        title,
-        downloadURL
+      // Obtenir l'URL de téléchargement
+      const downloadURL = await getDownloadURL(epubRef);
+      console.log("URL de téléchargement obtenue:", downloadURL);
+
+      // Mettre à jour Firestore
+      const storyRef = doc(db, 'stories', story.id);
+      await updateDoc(storyRef, {
+        epubFile: downloadURL
       });
-      
+      console.log("Document Firestore mis à jour");
+
       toast({
-        title: "Génération réussie",
-        description: "Le fichier EPUB a été généré et sauvegardé avec succès.",
+        title: "Succès",
+        description: "Le fichier EPUB a été généré et sauvegardé",
       });
-      
-      setProgress(100);
-      setIsGenerating(false);
-      setIsOpen(false);
     } catch (error) {
-      console.error("Erreur lors de la génération de l'EPUB:", error);
+      console.error("Erreur lors de la génération/upload:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la génération du fichier EPUB.",
+        description: "Une erreur est survenue lors de la génération du fichier",
         variant: "destructive",
       });
-      setIsGenerating(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="transition-transform hover:scale-105"
-        >
-          <SendHorizontal className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Envoyer vers une liseuse</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {isGenerating && (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Génération en cours...</p>
-              <Progress value={progress} className="w-full" />
-            </div>
-          )}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Sélectionnez votre liseuse</label>
-            <Select
-              value={selectedDevice}
-              onValueChange={setSelectedDevice}
-              disabled={isGenerating}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Choisir une liseuse" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="kindle">Amazon Kindle</SelectItem>
-                <SelectItem value="kobo">Kobo</SelectItem>
-                <SelectItem value="pocketbook">PocketBook</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button 
-            onClick={handleSendToDevice}
-            disabled={!selectedDevice || isGenerating}
-            className="w-full"
-          >
-            {isGenerating ? (
-              "Génération en cours..."
-            ) : (
-              <>
-                <SendHorizontal className="mr-2 h-4 w-4" />
-                Envoyer
-              </>
-            )}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={handleGenerateAndUpload}
+      disabled={isLoading}
+      className="transition-transform hover:scale-105"
+    >
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <SendHorizontal className="h-4 w-4" />
+      )}
+    </Button>
   );
 };
