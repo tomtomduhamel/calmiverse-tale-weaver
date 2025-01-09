@@ -10,18 +10,26 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const corsHandler = cors({ origin: true });
+// Configuration explicite de CORS
+const corsHandler = cors({
+  origin: true, // Permet toutes les origines en développement
+  methods: ['POST'], // N'autorise que POST
+  allowedHeaders: ['Content-Type'], // Autorise l'en-tête Content-Type
+  maxAge: 3600 // Met en cache les résultats du pre-flight pendant 1 heure
+});
 
 export const uploadEpub = functions.https.onRequest((request, response) => {
-  corsHandler(request, response, async () => {
+  // Envelopper toute la logique dans le middleware CORS
+  return corsHandler(request, response, async () => {
     try {
+      // Vérifier la méthode HTTP
       if (request.method !== 'POST') {
-        return response.status(405).json({ error: 'Method not allowed' });
+        throw new functions.https.HttpsError('invalid-argument', 'Method not allowed');
       }
 
       const { content, filename } = request.body;
       if (!content || !filename) {
-        return response.status(400).json({ error: 'Content and filename are required' });
+        throw new functions.https.HttpsError('invalid-argument', 'Content and filename are required');
       }
 
       // Créer un buffer à partir du contenu HTML brut
@@ -47,7 +55,11 @@ export const uploadEpub = functions.https.onRequest((request, response) => {
       response.json({ url });
     } catch (error) {
       console.error('Error uploading epub:', error);
-      response.status(500).json({ error: 'Failed to upload file' });
+      if (error instanceof functions.https.HttpsError) {
+        response.status(400).json({ error: error.message });
+      } else {
+        response.status(500).json({ error: 'Failed to upload file' });
+      }
     }
   });
 });
