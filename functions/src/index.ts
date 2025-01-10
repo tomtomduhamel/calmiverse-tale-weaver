@@ -12,53 +12,76 @@ const openai = new OpenAI({
 
 // Configuration explicite de CORS
 const corsHandler = cors({
-  origin: true, // Permet toutes les origines en développement
-  methods: ['POST'], // N'autorise que POST
-  allowedHeaders: ['Content-Type'], // Autorise l'en-tête Content-Type
-  maxAge: 3600 // Met en cache les résultats du pre-flight pendant 1 heure
+  origin: true,
+  methods: ['POST'],
+  allowedHeaders: ['Content-Type'],
+  maxAge: 3600
 });
 
 export const uploadEpub = functions.https.onRequest((request, response) => {
   // Envelopper toute la logique dans le middleware CORS
   return corsHandler(request, response, async () => {
     try {
+      console.log('Début de la fonction uploadEpub');
+      
       // Vérifier la méthode HTTP
       if (request.method !== 'POST') {
+        console.error('Méthode non autorisée:', request.method);
         throw new functions.https.HttpsError('invalid-argument', 'Method not allowed');
       }
 
+      // Vérifier le contenu de la requête
+      console.log('Vérification du contenu de la requête');
       const { content, filename } = request.body;
       if (!content || !filename) {
+        console.error('Contenu manquant:', { hasContent: !!content, hasFilename: !!filename });
         throw new functions.https.HttpsError('invalid-argument', 'Content and filename are required');
       }
 
+      console.log('Création du buffer à partir du contenu HTML');
       // Créer un buffer à partir du contenu HTML brut
       const buffer = Buffer.from(content);
 
       // Créer une référence au fichier dans Firebase Storage
+      console.log('Création de la référence Storage pour:', filename);
       const bucket = storage.bucket();
       const file = bucket.file(`epubs/${filename}`);
 
       // Upload le fichier
+      console.log('Début de l\'upload du fichier');
       await file.save(buffer, {
         metadata: {
           contentType: 'application/epub+zip'
         }
       });
+      console.log('Fichier uploadé avec succès');
 
       // Générer une URL de téléchargement
+      console.log('Génération de l\'URL signée');
       const [url] = await file.getSignedUrl({
         action: 'read',
         expires: Date.now() + 7 * 24 * 60 * 60 * 1000 // URL valide 7 jours
       });
+      console.log('URL générée avec succès:', url);
 
       response.json({ url });
     } catch (error) {
-      console.error('Error uploading epub:', error);
+      console.error('Erreur détaillée dans uploadEpub:', error);
+      if (error instanceof Error) {
+        console.error('Stack trace:', error.stack);
+      }
+      
       if (error instanceof functions.https.HttpsError) {
-        response.status(400).json({ error: error.message });
+        response.status(400).json({ 
+          error: error.message,
+          code: error.code,
+          details: error.details 
+        });
       } else {
-        response.status(500).json({ error: 'Failed to upload file' });
+        response.status(500).json({ 
+          error: 'Failed to upload file',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
     }
   });
