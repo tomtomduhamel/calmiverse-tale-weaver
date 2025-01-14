@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Heart, Info, Clock } from "lucide-react";
+import { Heart, Info, Clock, BookOpen } from "lucide-react";
 import type { Story } from "@/types/story";
 import ReactMarkdown from 'react-markdown';
 import { format } from "date-fns";
@@ -23,6 +23,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
   const [fontSize, setFontSize] = useState(16);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [showReadingGuide, setShowReadingGuide] = useState(false);
 
   if (!story) {
     return (
@@ -85,6 +86,14 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
             <TextToSpeech text={story.story_text} />
             <ShareStory storyId={story.id} title={story.title} />
             <SendToEreader story={story} />
+            <Button
+              variant="outline"
+              onClick={() => setShowReadingGuide(true)}
+              className="transition-transform hover:scale-105"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              Guide de lecture
+            </Button>
           </div>
           <Button 
             variant="ghost" 
@@ -185,6 +194,36 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
                   </div>
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showReadingGuide} onOpenChange={setShowReadingGuide}>
+          <DialogContent className="sm:max-w-[500px] animate-fade-in">
+            <DialogHeader>
+              <DialogTitle>Guide de lecture</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium mb-2">Conseils pour une lecture optimale</h4>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li>• Installez-vous dans un endroit calme et confortable</li>
+                  <li>• Ajustez la taille du texte selon vos besoins avec les boutons A- et A+</li>
+                  <li>• Utilisez le mode sombre si la luminosité vous dérange</li>
+                  <li>• Faites des pauses régulières pendant la lecture</li>
+                  <li>• N'hésitez pas à utiliser la fonction audio pour une lecture à voix haute</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-2">Fonctionnalités disponibles</h4>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li>• Lecture audio de l'histoire</li>
+                  <li>• Partage de l'histoire</li>
+                  <li>• Envoi vers une liseuse</li>
+                  <li>• Ajustement de la taille du texte</li>
+                  <li>• Mode sombre/clair</li>
+                </ul>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
