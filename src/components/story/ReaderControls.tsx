@@ -26,25 +26,35 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   story,
   setShowReadingGuide,
 }) => {
+  const handleDecreaseFontSize = () => {
+    const newSize = Math.max(12, fontSize - 2);
+    setFontSize(newSize);
+  };
+
+  const handleIncreaseFontSize = () => {
+    const newSize = Math.min(24, fontSize + 2);
+    setFontSize(newSize);
+  };
+
   return (
     <div className="space-x-2">
       <Button
         variant="outline"
-        onClick={() => setFontSize((prev) => Math.max(12, prev - 2))}
+        onClick={handleDecreaseFontSize}
         className="w-10 h-10 transition-transform hover:scale-105"
       >
         A-
       </Button>
       <Button
         variant="outline"
-        onClick={() => setFontSize((prev) => Math.min(24, prev + 2))}
+        onClick={handleIncreaseFontSize}
         className="w-10 h-10 transition-transform hover:scale-105"
       >
         A+
       </Button>
       <Button
         variant="outline"
-        onClick={() => setIsDarkMode((prev) => !prev)}
+        onClick={() => setIsDarkMode(!isDarkMode)}
         className="w-10 h-10 transition-transform hover:scale-105"
       >
         {isDarkMode ? "☀️" : "🌙"}
