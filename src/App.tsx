@@ -4,10 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, Settings } from "lucide-react";
+import { Shield, Settings, LogOut } from "lucide-react";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import SettingsPage from "./pages/Settings";
+import LoginForm from "./components/auth/LoginForm";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +23,7 @@ const queryClient = new QueryClient({
 const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const handleHomeClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -42,6 +45,14 @@ const AppContent = () => {
   const handleSettingsClick = () => {
     navigate("/settings");
   };
+
+  if (!user) {
+    return (
+      <main className="min-h-screen w-full bg-gradient-night dark:bg-gray-900 flex items-center justify-center p-4">
+        <LoginForm />
+      </main>
+    );
+  }
 
   return (
     <main className="relative min-h-screen w-full bg-gradient-night dark:bg-gray-900 transition-colors duration-300">
@@ -86,6 +97,16 @@ const AppContent = () => {
                 <Shield className="h-5 w-5" />
                 <span className="hidden md:inline">Confidentialité</span>
               </Button>
+
+              <Button
+                variant="ghost"
+                onClick={logout}
+                className="flex items-center gap-2"
+                aria-label="Déconnexion"
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="hidden md:inline">Déconnexion</span>
+              </Button>
             </div>
           </div>
         </nav>
@@ -105,11 +126,13 @@ const AppContent = () => {
 const App = () => (
   <BrowserRouter>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppContent />
-        <Toaster />
-        <Sonner />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <AppContent />
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </BrowserRouter>
 );
