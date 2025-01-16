@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useAuth } from '@/contexts/AuthContext';
-import { Chrome } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -70,7 +69,7 @@ const LoginForm = () => {
         className="w-full"
         onClick={signInWithGoogle}
       >
-        <Chrome className="mr-2 h-4 w-4" />
+        <Mail className="mr-2 h-4 w-4" />
         Continuer avec Google
       </Button>
 
