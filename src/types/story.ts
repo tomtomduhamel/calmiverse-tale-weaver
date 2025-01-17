@@ -13,6 +13,8 @@ export interface Story {
   isFavorite?: boolean;
   tags?: string[];
   epubFile?: string;
+  authorId?: string;
+  sharedWith?: string[];
 }
 
 export interface Objective {

@@ -1,42 +1,35 @@
-import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { collection, query, onSnapshot, where, orderBy } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
-import { useToast } from "@/hooks/use-toast";
 import type { Story } from '@/types/story';
 import { formatStoryFromFirestore } from './storyFormatters';
 
 export const useStoriesQuery = () => {
   const [stories, setStories] = useState<Story[]>([]);
-  const { toast } = useToast();
 
   useEffect(() => {
     if (!auth.currentUser) return;
 
     console.log('🔄 Initialisation du listener des histoires...');
-    const userStoriesRef = collection(db, `users/${auth.currentUser.uid}/stories`);
-    const storiesQuery = query(userStoriesRef);
+
+    // Créer une requête pour les histoires de l'utilisateur et les histoires partagées avec lui
+    const storiesQuery = query(
+      collection(db, 'stories'),
+      where('authorId', '==', auth.currentUser.uid),
+      orderBy('createdAt', 'desc')
+    );
 
     const unsubscribe = onSnapshot(storiesQuery, (snapshot) => {
-      try {
-        console.log('📥 Réception de la mise à jour Firestore avec', snapshot.docs.length, 'histoires');
-        const loadedStories = snapshot.docs.map(doc => formatStoryFromFirestore(doc));
-        console.log('Histoires chargées:', loadedStories);
-        setStories(loadedStories);
-      } catch (error) {
-        console.error('❌ Erreur lors du traitement des histoires:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les histoires",
-          variant: "destructive",
-        });
-      }
+      const loadedStories = snapshot.docs.map(formatStoryFromFirestore);
+      console.log('📥 Réception de la mise à jour Firestore avec', loadedStories.length, 'histoires');
+      console.log('Histoires chargées:', loadedStories);
+      setStories(loadedStories);
+    }, (error) => {
+      console.error('Erreur lors du chargement des histoires:', error);
     });
 
-    return () => {
-      console.log('🔄 Nettoyage du listener des histoires...');
-      unsubscribe();
-    };
-  }, [toast, auth.currentUser]);
+    return () => unsubscribe();
+  }, []);
 
   return stories;
 };

@@ -5,7 +5,6 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
   const data = doc.data();
   if (!data) throw new Error('Document data is undefined');
 
-  // Conversion sécurisée du timestamp
   let createdAtDate;
   try {
     createdAtDate = data.createdAt?.toDate?.() || new Date();
@@ -14,7 +13,6 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     createdAtDate = new Date();
   }
 
-  // Création d'un objet simple et clonable
   const story: Story = {
     id: doc.id,
     id_stories: data.id_stories || `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -28,7 +26,9 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     story_summary: data.story_summary || '',
     createdAt: createdAtDate,
     isFavorite: Boolean(data.isFavorite),
-    tags: Array.isArray(data.tags) ? [...data.tags] : []
+    tags: Array.isArray(data.tags) ? [...data.tags] : [],
+    authorId: data.authorId || '',
+    sharedWith: Array.isArray(data.sharedWith) ? [...data.sharedWith] : []
   };
 
   return story;
@@ -47,6 +47,7 @@ export const createStoryData = (formData: { childrenIds: string[], objective: st
     status: 'pending',
     story_text: "Génération en cours...",
     story_summary: "Résumé en cours de génération...",
-    createdAt: Timestamp.now()
+    createdAt: Timestamp.now(),
+    sharedWith: []
   };
 };

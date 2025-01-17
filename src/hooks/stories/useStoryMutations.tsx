@@ -17,11 +17,15 @@ export const useStoryMutations = () => {
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
       
-      const storyData = createStoryData(formData, childrenNames);
+      const storyData = {
+        ...createStoryData(formData, childrenNames),
+        authorId: auth.currentUser.uid,
+        sharedWith: []
+      };
 
       console.log('📝 Préparation à la sauvegarde de l\'histoire avec les données:', storyData);
-      const userStoriesRef = collection(db, `users/${auth.currentUser.uid}/stories`);
-      const docRef = await addDoc(userStoriesRef, storyData);
+      const storiesRef = collection(db, 'stories');
+      const docRef = await addDoc(storiesRef, storyData);
       console.log('✅ Histoire créée avec succès avec l\'ID:', docRef.id);
 
       toast({
@@ -47,7 +51,7 @@ export const useStoryMutations = () => {
     }
 
     try {
-      const storyRef = doc(db, `users/${auth.currentUser.uid}/stories`, storyId);
+      const storyRef = doc(db, 'stories', storyId);
       await deleteDoc(storyRef);
       toast({
         title: "Succès",
