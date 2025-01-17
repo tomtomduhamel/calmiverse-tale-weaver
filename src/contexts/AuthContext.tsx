@@ -26,7 +26,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const getAuthErrorMessage = (error: AuthError) => {
   switch (error.code) {
     case 'auth/unauthorized-domain':
-      return "Ce domaine n'est pas autorisé pour l'authentification. Veuillez contacter l'administrateur.";
+      return "Ce domaine n'est pas autorisé pour l'authentification. Veuillez réessayer plus tard.";
     case 'auth/invalid-login-credentials':
       return "Email ou mot de passe incorrect";
     case 'auth/user-not-found':
