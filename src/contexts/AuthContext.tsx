@@ -6,7 +6,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User
+  User,
+  AuthError
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +22,25 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+const getAuthErrorMessage = (error: AuthError) => {
+  switch (error.code) {
+    case 'auth/invalid-login-credentials':
+      return "Email ou mot de passe incorrect";
+    case 'auth/user-not-found':
+      return "Aucun compte ne correspond à cet email";
+    case 'auth/wrong-password':
+      return "Mot de passe incorrect";
+    case 'auth/email-already-in-use':
+      return "Un compte existe déjà avec cet email";
+    case 'auth/weak-password':
+      return "Le mot de passe doit contenir au moins 6 caractères";
+    case 'auth/network-request-failed':
+      return "Problème de connexion réseau. Veuillez réessayer.";
+    default:
+      return "Une erreur est survenue. Veuillez réessayer.";
+  }
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -44,11 +64,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Connexion réussie",
         description: "Bienvenue sur Calmi !",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur de connexion Google:', error);
       toast({
         title: "Erreur de connexion",
-        description: "La connexion avec Google a échoué",
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -61,11 +81,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Connexion réussie",
         description: "Bienvenue sur Calmi !",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur de connexion email:', error);
       toast({
         title: "Erreur de connexion",
-        description: "Email ou mot de passe incorrect",
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -78,11 +98,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Inscription réussie",
         description: "Bienvenue sur Calmi !",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur d\'inscription:', error);
       toast({
         title: "Erreur d'inscription",
-        description: "L'inscription a échoué",
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -95,11 +115,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Déconnexion réussie",
         description: "À bientôt !",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur de déconnexion:', error);
       toast({
         title: "Erreur",
-        description: "La déconnexion a échoué",
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
     }
