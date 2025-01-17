@@ -1,5 +1,5 @@
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { createStoryData } from './storyFormatters';
 
@@ -7,6 +7,10 @@ export const useStoryMutations = () => {
   const { toast } = useToast();
 
   const createStory = async (formData: { childrenIds: string[], objective: string }, children: any[] = []) => {
+    if (!auth.currentUser) {
+      throw new Error("Utilisateur non connecté");
+    }
+
     try {
       console.log('🚀 Début du processus de création d\'histoire...', formData);
       
@@ -16,7 +20,8 @@ export const useStoryMutations = () => {
       const storyData = createStoryData(formData, childrenNames);
 
       console.log('📝 Préparation à la sauvegarde de l\'histoire avec les données:', storyData);
-      const docRef = await addDoc(collection(db, 'stories'), storyData);
+      const userStoriesRef = collection(db, `users/${auth.currentUser.uid}/stories`);
+      const docRef = await addDoc(userStoriesRef, storyData);
       console.log('✅ Histoire créée avec succès avec l\'ID:', docRef.id);
 
       toast({
@@ -37,8 +42,13 @@ export const useStoryMutations = () => {
   };
 
   const deleteStory = async (storyId: string) => {
+    if (!auth.currentUser) {
+      throw new Error("Utilisateur non connecté");
+    }
+
     try {
-      await deleteDoc(doc(db, 'stories', storyId));
+      const storyRef = doc(db, `users/${auth.currentUser.uid}/stories`, storyId);
+      await deleteDoc(storyRef);
       toast({
         title: "Succès",
         description: "L'histoire a été supprimée",

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, query, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from '@/types/story';
 import { formatStoryFromFirestore } from './storyFormatters';
@@ -10,8 +10,11 @@ export const useStoriesQuery = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!auth.currentUser) return;
+
     console.log('🔄 Initialisation du listener des histoires...');
-    const storiesQuery = query(collection(db, 'stories'));
+    const userStoriesRef = collection(db, `users/${auth.currentUser.uid}/stories`);
+    const storiesQuery = query(userStoriesRef);
 
     const unsubscribe = onSnapshot(storiesQuery, (snapshot) => {
       try {
@@ -33,7 +36,7 @@ export const useStoriesQuery = () => {
       console.log('🔄 Nettoyage du listener des histoires...');
       unsubscribe();
     };
-  }, [toast]);
+  }, [toast, auth.currentUser]);
 
   return stories;
 };
