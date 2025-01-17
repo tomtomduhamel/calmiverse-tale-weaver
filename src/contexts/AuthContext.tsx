@@ -25,6 +25,8 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 const getAuthErrorMessage = (error: AuthError) => {
   switch (error.code) {
+    case 'auth/unauthorized-domain':
+      return "Ce domaine n'est pas autorisé pour l'authentification. Veuillez contacter l'administrateur.";
     case 'auth/invalid-login-credentials':
       return "Email ou mot de passe incorrect";
     case 'auth/user-not-found':
@@ -37,6 +39,12 @@ const getAuthErrorMessage = (error: AuthError) => {
       return "Le mot de passe doit contenir au moins 6 caractères";
     case 'auth/network-request-failed':
       return "Problème de connexion réseau. Veuillez réessayer.";
+    case 'auth/popup-closed-by-user':
+      return "La fenêtre de connexion a été fermée. Veuillez réessayer.";
+    case 'auth/cancelled-popup-request':
+      return "Une seule fenêtre de connexion peut être ouverte à la fois.";
+    case 'auth/popup-blocked':
+      return "La fenêtre de connexion a été bloquée par votre navigateur.";
     default:
       return "Une erreur est survenue. Veuillez réessayer.";
   }
