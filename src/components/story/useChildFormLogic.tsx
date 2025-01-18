@@ -33,9 +33,13 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => v
       return;
     }
 
+    // Calculer la date de naissance approximative basée sur l'âge
+    const today = new Date();
+    const birthDate = new Date(today.setFullYear(today.getFullYear() - childAge));
+
     const newChildData = {
       name: childName,
-      age: childAge,
+      birthDate,
       teddyName,
       teddyDescription,
       imaginaryWorld,

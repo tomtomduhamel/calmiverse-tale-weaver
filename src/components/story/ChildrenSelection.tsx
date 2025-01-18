@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { UserPlus } from "lucide-react";
 import type { Child } from "@/types/child";
+import { calculateAge } from "@/utils/age";
 
 interface ChildrenSelectionProps {
   children: Child[];
@@ -39,7 +40,7 @@ const ChildrenSelection = ({
                   htmlFor={`child-${child.id}`}
                   className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
-                  {child.name} ({child.age} ans)
+                  {child.name} ({calculateAge(child.birthDate)} ans)
                 </Label>
               </div>
             ))}
