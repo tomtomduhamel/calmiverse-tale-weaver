@@ -25,28 +25,25 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 const getAuthErrorMessage = (error: AuthError) => {
   switch (error.code) {
-    case 'auth/unauthorized-domain':
-      return "Ce domaine n'est pas autorisé pour l'authentification. Veuillez réessayer plus tard.";
     case 'auth/invalid-login-credentials':
-      return "Email ou mot de passe incorrect";
+      return "Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.";
     case 'auth/user-not-found':
-      return "Aucun compte ne correspond à cet email";
+      return "Aucun compte ne correspond à cet email. Veuillez vous inscrire.";
     case 'auth/wrong-password':
-      return "Mot de passe incorrect";
+      return "Mot de passe incorrect. Veuillez réessayer.";
     case 'auth/email-already-in-use':
-      return "Un compte existe déjà avec cet email";
+      return "Un compte existe déjà avec cet email. Veuillez vous connecter.";
     case 'auth/weak-password':
-      return "Le mot de passe doit contenir au moins 6 caractères";
+      return "Le mot de passe doit contenir au moins 6 caractères.";
     case 'auth/network-request-failed':
-      return "Problème de connexion réseau. Veuillez réessayer.";
+      return "Problème de connexion réseau. Veuillez vérifier votre connexion et réessayer.";
+    case 'auth/too-many-requests':
+      return "Trop de tentatives de connexion. Veuillez réessayer plus tard.";
     case 'auth/popup-closed-by-user':
       return "La fenêtre de connexion a été fermée. Veuillez réessayer.";
-    case 'auth/cancelled-popup-request':
-      return "Une seule fenêtre de connexion peut être ouverte à la fois.";
-    case 'auth/popup-blocked':
-      return "La fenêtre de connexion a été bloquée par votre navigateur.";
     default:
-      return "Une erreur est survenue. Veuillez réessayer.";
+      console.error('Firebase Auth Error:', error);
+      return "Une erreur est survenue lors de la connexion. Veuillez réessayer.";
   }
 };
 
@@ -96,6 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: getAuthErrorMessage(error),
         variant: "destructive",
       });
+      throw error; // Propager l'erreur pour la gestion dans le formulaire
     }
   };
 
@@ -113,6 +111,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: getAuthErrorMessage(error),
         variant: "destructive",
       });
+      throw error; // Propager l'erreur pour la gestion dans le formulaire
     }
   };
 
