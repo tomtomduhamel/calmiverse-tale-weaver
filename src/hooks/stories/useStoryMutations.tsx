@@ -24,8 +24,7 @@ export const useStoryMutations = () => {
       };
 
       console.log('📝 Préparation à la sauvegarde de l\'histoire avec les données:', storyData);
-      const storiesRef = collection(db, 'stories');
-      const docRef = await addDoc(storiesRef, storyData);
+      const docRef = await addDoc(collection(db, 'stories'), storyData);
       console.log('✅ Histoire créée avec succès avec l\'ID:', docRef.id);
 
       toast({
@@ -64,6 +63,7 @@ export const useStoryMutations = () => {
         description: "Impossible de supprimer l'histoire",
         variant: "destructive",
       });
+      throw error;
     }
   };
 

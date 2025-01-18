@@ -7,7 +7,9 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
 
   let createdAtDate;
   try {
-    createdAtDate = data.createdAt?.toDate?.() || new Date();
+    createdAtDate = data.createdAt instanceof Timestamp 
+      ? data.createdAt.toDate() 
+      : new Date();
   } catch (e) {
     console.warn('Erreur lors de la conversion du timestamp:', e);
     createdAtDate = new Date();
@@ -15,7 +17,7 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
 
   const story: Story = {
     id: doc.id,
-    id_stories: data.id_stories || `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    authorId: data.authorId || '',
     title: data.title || '',
     preview: data.preview || '',
     objective: data.objective || '',
@@ -27,7 +29,6 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     createdAt: createdAtDate,
     isFavorite: Boolean(data.isFavorite),
     tags: Array.isArray(data.tags) ? [...data.tags] : [],
-    authorId: data.authorId || '',
     sharedWith: Array.isArray(data.sharedWith) ? [...data.sharedWith] : []
   };
 
@@ -35,10 +36,7 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
 };
 
 export const createStoryData = (formData: { childrenIds: string[], objective: string }, childrenNames: string[]) => {
-  const uniqueId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
   return {
-    id_stories: uniqueId,
     title: `Histoire pour ${childrenNames.join(' et ')}`,
     preview: "Histoire en cours de génération...",
     objective: formData.objective,
@@ -48,6 +46,8 @@ export const createStoryData = (formData: { childrenIds: string[], objective: st
     story_text: "Génération en cours...",
     story_summary: "Résumé en cours de génération...",
     createdAt: Timestamp.now(),
+    isFavorite: false,
+    tags: [],
     sharedWith: []
   };
 };
