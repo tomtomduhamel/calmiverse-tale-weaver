@@ -5,7 +5,7 @@ import ChildForm from "./ChildForm";
 interface ProfileFormWrapperProps {
   showForm: boolean;
   childName: string;
-  childAge: number;
+  birthDate: Date;
   teddyName: string;
   teddyDescription: string;
   imaginaryWorld: string;
@@ -13,7 +13,7 @@ interface ProfileFormWrapperProps {
   onSubmit: (e: React.FormEvent) => void;
   onReset: () => void;
   onChildNameChange: (value: string) => void;
-  onChildAgeChange: (value: number) => void;
+  onBirthDateChange: (value: Date) => void;
   onTeddyNameChange: (value: string) => void;
   onTeddyDescriptionChange: (value: string) => void;
   onImaginaryWorldChange: (value: string) => void;
@@ -22,7 +22,7 @@ interface ProfileFormWrapperProps {
 const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
   showForm,
   childName,
-  childAge,
+  birthDate,
   teddyName,
   teddyDescription,
   imaginaryWorld,
@@ -30,7 +30,7 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
   onSubmit,
   onReset,
   onChildNameChange,
-  onChildAgeChange,
+  onBirthDateChange,
   onTeddyNameChange,
   onTeddyDescriptionChange,
   onImaginaryWorldChange,
@@ -41,7 +41,7 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
     <Card className="p-6 bg-white/80 backdrop-blur-sm mt-6">
       <ChildForm
         childName={childName}
-        childAge={childAge}
+        birthDate={birthDate}
         teddyName={teddyName}
         teddyDescription={teddyDescription}
         imaginaryWorld={imaginaryWorld}
@@ -49,7 +49,7 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
         onSubmit={onSubmit}
         onReset={onReset}
         onChildNameChange={onChildNameChange}
-        onChildAgeChange={onChildAgeChange}
+        onBirthDateChange={onBirthDateChange}
         onTeddyNameChange={onTeddyNameChange}
         onTeddyDescriptionChange={onTeddyDescriptionChange}
         onImaginaryWorldChange={onImaginaryWorldChange}

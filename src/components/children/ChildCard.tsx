@@ -3,6 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 import type { Child } from "@/types/child";
+import { calculateAge, formatAge } from "@/utils/age";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface ChildCardProps {
   child: Child;
@@ -12,12 +21,13 @@ interface ChildCardProps {
 
 const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
   const handleCardClick = (e: React.MouseEvent) => {
-    // Évite de déclencher l'édition si on clique sur le bouton de suppression
     if ((e.target as HTMLElement).closest('button')) {
       return;
     }
     onEdit(child);
   };
+
+  const age = calculateAge(child.birthDate);
 
   return (
     <Card 
@@ -40,7 +50,18 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
       </div>
       <div className="pt-8">
         <h3 className="text-lg font-semibold text-secondary-dark">{child.name}</h3>
-        <p className="text-sm text-muted-foreground">{child.age} ans</p>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <p className="text-sm text-muted-foreground">
+                {formatAge(age)}
+              </p>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Né(e) le {format(child.birthDate, 'dd MMMM yyyy', { locale: fr })}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         {child.teddyName && (
           <div className="mt-2">
             <p className="text-sm font-medium text-secondary-dark">

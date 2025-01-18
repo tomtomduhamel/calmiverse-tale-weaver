@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
-import type { Child } from "@/types/child";
+import { isValidBirthDate } from "@/utils/age";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface ChildFormProps {
   childName: string;
-  childAge: number;
+  birthDate: Date;
   teddyName: string;
   teddyDescription: string;
   imaginaryWorld: string;
@@ -16,7 +18,7 @@ interface ChildFormProps {
   onSubmit: (e: React.FormEvent) => void;
   onReset: () => void;
   onChildNameChange: (value: string) => void;
-  onChildAgeChange: (value: number) => void;
+  onBirthDateChange: (value: Date) => void;
   onTeddyNameChange: (value: string) => void;
   onTeddyDescriptionChange: (value: string) => void;
   onImaginaryWorldChange: (value: string) => void;
@@ -24,7 +26,7 @@ interface ChildFormProps {
 
 const ChildForm: React.FC<ChildFormProps> = ({
   childName,
-  childAge,
+  birthDate,
   teddyName,
   teddyDescription,
   imaginaryWorld,
@@ -32,7 +34,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
   onSubmit,
   onReset,
   onChildNameChange,
-  onChildAgeChange,
+  onBirthDateChange,
   onTeddyNameChange,
   onTeddyDescriptionChange,
   onImaginaryWorldChange,
@@ -50,19 +52,20 @@ const ChildForm: React.FC<ChildFormProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="childAge">Âge</Label>
-        <select
-          id="childAge"
-          value={childAge}
-          onChange={(e) => onChildAgeChange(Number(e.target.value))}
-          className="w-full p-2 border rounded-md"
-        >
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((age) => (
-            <option key={age} value={age}>
-              {age} ans
-            </option>
-          ))}
-        </select>
+        <Label htmlFor="birthDate">Date de naissance</Label>
+        <Input
+          id="birthDate"
+          type="date"
+          value={format(birthDate, 'yyyy-MM-dd')}
+          onChange={(e) => {
+            const newDate = new Date(e.target.value);
+            if (isValidBirthDate(newDate)) {
+              onBirthDateChange(newDate);
+            }
+          }}
+          max={format(new Date(), 'yyyy-MM-dd')}
+          min={format(new Date(new Date().setFullYear(new Date().getFullYear() - 12)), 'yyyy-MM-dd')}
+        />
       </div>
 
       <div className="space-y-2">

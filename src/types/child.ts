@@ -2,7 +2,7 @@ export interface Child {
   id: string;
   authorId: string;
   name: string;
-  age: number;
+  birthDate: Date;
   teddyName?: string;
   teddyDescription?: string;
   imaginaryWorld?: string;

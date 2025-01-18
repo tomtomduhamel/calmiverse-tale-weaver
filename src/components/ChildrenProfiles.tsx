@@ -23,7 +23,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [newChildName, setNewChildName] = useState("");
-  const [newChildAge, setNewChildAge] = useState<number>(5);
+  const [newBirthDate, setNewBirthDate] = useState<Date>(new Date());
   const [newTeddyName, setNewTeddyName] = useState("");
   const [newTeddyDescription, setNewTeddyDescription] = useState("");
   const [newImaginaryWorld, setNewImaginaryWorld] = useState("");
@@ -32,7 +32,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
 
   const resetForm = () => {
     setNewChildName("");
-    setNewChildAge(5);
+    setNewBirthDate(new Date());
     setNewTeddyName("");
     setNewTeddyDescription("");
     setNewImaginaryWorld("");
@@ -62,7 +62,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
 
     const childData = {
       name: newChildName,
-      age: newChildAge,
+      birthDate: newBirthDate,
       teddyName: newTeddyName,
       teddyDescription: newTeddyDescription,
       imaginaryWorld: newImaginaryWorld,
@@ -88,7 +88,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
   const handleEdit = (child: Child) => {
     setEditingChild(child.id);
     setNewChildName(child.name);
-    setNewChildAge(child.age);
+    setNewBirthDate(child.birthDate);
     setNewTeddyName(child.teddyName || "");
     setNewTeddyDescription(child.teddyDescription || "");
     setNewImaginaryWorld(child.imaginaryWorld || "");
@@ -106,7 +106,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
       <ProfileFormWrapper
         showForm={showForm}
         childName={newChildName}
-        childAge={newChildAge}
+        birthDate={newBirthDate}
         teddyName={newTeddyName}
         teddyDescription={newTeddyDescription}
         imaginaryWorld={newImaginaryWorld}
@@ -114,7 +114,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
         onSubmit={handleSubmit}
         onReset={resetForm}
         onChildNameChange={setNewChildName}
-        onChildAgeChange={setNewChildAge}
+        onBirthDateChange={setNewBirthDate}
         onTeddyNameChange={setNewTeddyName}
         onTeddyDescriptionChange={setNewTeddyDescription}
         onImaginaryWorldChange={setNewImaginaryWorld}
