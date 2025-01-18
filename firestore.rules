@@ -11,6 +11,11 @@ service cloud.firestore {
         resource.data.authorId == request.auth.uid
       );
     }
+    match /children/{childId} {
+      allow read: if request.auth != null && resource.data.authorId == request.auth.uid;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+    }
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }

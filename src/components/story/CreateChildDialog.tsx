@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateChildDialogProps {
   open: boolean;
@@ -24,6 +25,25 @@ const CreateChildDialog = ({
   onChildNameChange,
   onChildAgeChange,
 }: CreateChildDialogProps) => {
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await onSubmit(e);
+      toast({
+        title: "Succès",
+        description: "L'enfant a été ajouté avec succès",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'ajout de l'enfant",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] bg-gradient-to-br from-card-start to-card-end dark:from-muted-dark dark:to-muted">
@@ -33,7 +53,7 @@ const CreateChildDialog = ({
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={onSubmit} className="space-y-6 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="childName" className="text-sm font-medium text-secondary dark:text-secondary-foreground">
