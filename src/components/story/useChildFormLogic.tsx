@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { auth } from "@/lib/firebase";
 import type { Child } from "@/types/child";
 
 export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => void) => {
@@ -23,12 +24,22 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => v
       return;
     }
 
+    if (!auth.currentUser) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour effectuer cette action",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const newChildData = {
       name: childName,
       age: childAge,
       teddyName,
       teddyDescription,
       imaginaryWorld,
+      authorId: auth.currentUser.uid,
     };
 
     try {

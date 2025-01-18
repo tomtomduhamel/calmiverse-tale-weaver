@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Child } from "@/types/child";
+import { auth } from "@/lib/firebase";
 import ProfileHeader from "./children/ProfileHeader";
 import ProfileGrid from "./children/ProfileGrid";
 import ProfileFormWrapper from "./children/ProfileFormWrapper";
@@ -50,12 +51,22 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
       return;
     }
 
+    if (!auth.currentUser) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour effectuer cette action",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const childData = {
       name: newChildName,
       age: newChildAge,
       teddyName: newTeddyName,
       teddyDescription: newTeddyDescription,
       imaginaryWorld: newImaginaryWorld,
+      authorId: auth.currentUser.uid,
     };
 
     if (editingChild) {
