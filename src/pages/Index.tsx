@@ -18,7 +18,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [showGuide, setShowGuide] = useState(false);
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useChildren();
-  const { stories, currentStory, setCurrentStory, createStory, deleteStory } = useStories(children);
+  const { stories: { stories, isLoading, error }, currentStory, setCurrentStory, createStory, deleteStory } = useStories(children);
   const { toast } = useToast();
   const location = useLocation();
 
@@ -80,6 +80,14 @@ const Index = () => {
       });
     }
   };
+
+  if (isLoading) {
+    return <div>Chargement...</div>;
+  }
+
+  if (error) {
+    return <div>Erreur: {error.message}</div>;
+  }
 
   return (
     <>
