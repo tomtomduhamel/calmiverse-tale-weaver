@@ -4,7 +4,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import SharedStory from '../SharedStory';
 import { doc, getDoc, collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import '@testing-library/jest-dom';
 
 // Mock Firebase
 vi.mock('@/lib/firebase', () => ({
@@ -39,17 +38,17 @@ describe('SharedStory', () => {
     window.history.pushState({}, '', '/?id=test-story-id&token=valid-token');
   });
 
-  it('renders loading state initially', () => {
+  it('affiche le chargement initialement', () => {
     render(
       <BrowserRouter>
         <SharedStory />
       </BrowserRouter>
     );
     
-    expect(screen.getByText(/Chargement/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Chargement/i)).toBeTruthy();
   });
 
-  it('displays story when valid token is provided', async () => {
+  it('affiche l\'histoire quand le token est valide', async () => {
     // Mock successful story fetch
     (getDoc as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       exists: () => true,
@@ -63,12 +62,12 @@ describe('SharedStory', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Test Story')).toBeInTheDocument();
-      expect(screen.getByText('This is a test story')).toBeInTheDocument();
+      expect(screen.queryByText('Test Story')).toBeTruthy();
+      expect(screen.queryByText('This is a test story')).toBeTruthy();
     });
   });
 
-  it('shows error message for invalid token', async () => {
+  it('affiche un message d\'erreur pour un token invalide', async () => {
     // Mock story with expired token
     const expiredStory = {
       ...mockStory,
@@ -93,11 +92,11 @@ describe('SharedStory', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Ce lien de partage a expiré ou n'est plus valide/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Ce lien de partage a expiré ou n'est plus valide/i)).toBeTruthy();
     });
   });
 
-  it('shows error for non-existent story', async () => {
+  it('affiche une erreur pour une histoire inexistante', async () => {
     (getDoc as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       exists: () => false,
     });
@@ -109,7 +108,7 @@ describe('SharedStory', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Cette histoire n'existe pas/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Cette histoire n'existe pas/i)).toBeTruthy();
     });
   });
 });
