@@ -47,23 +47,8 @@ const CreateChildDialog = ({
   const handleReset = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Annuler cliqué");
-    
-    try {
-      onReset();
-      onOpenChange(false);
-      toast({
-        title: "Succès",
-        description: "Le formulaire a été réinitialisé",
-      });
-    } catch (error) {
-      console.error("Erreur lors de la réinitialisation:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la réinitialisation",
-        variant: "destructive",
-      });
-    }
+    onReset();
+    onOpenChange(false);
   };
 
   return (
