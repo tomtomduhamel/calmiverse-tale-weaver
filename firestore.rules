@@ -2,15 +2,30 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /stories/{storyId} {
+      // Fonction pour vérifier si l'histoire est partagée publiquement
+      function isPubliclyShared() {
+        return resource.data.sharing.publicAccess.enabled == true 
+          && resource.data.sharing.publicAccess.expiresAt > request.time;
+      }
+
+      // Fonction pour vérifier si l'email est dans la liste des destinataires
+      function isSharedWithEmail(email) {
+        return email in resource.data.sharing.sharedEmails[].email;
+      }
+
       allow read: if request.auth != null && (
         resource.data.authorId == request.auth.uid ||
-        request.auth.uid in resource.data.sharedWith
+        request.auth.uid in resource.data.sharedWith ||
+        isPubliclyShared() ||
+        isSharedWithEmail(request.auth.token.email)
       );
+      
       allow write: if request.auth != null && (
         !exists(/databases/$(database)/documents/stories/$(storyId)) ||
         resource.data.authorId == request.auth.uid
       );
     }
+
     match /children/{childId} {
       allow read: if request.auth != null && resource.data.authorId == request.auth.uid;
       allow create: if request.auth != null;

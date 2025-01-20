@@ -15,6 +15,22 @@ export interface Story {
   epubFile?: string;
   authorId?: string;
   sharedWith?: string[];
+  sharing?: {
+    publicAccess: {
+      enabled: boolean;
+      token: string;
+      expiresAt: Date;
+    };
+    sharedEmails: {
+      email: string;
+      sharedAt: Date;
+      accessCount: number;
+    }[];
+    kindleDeliveries: {
+      sentAt: Date;
+      status: 'pending' | 'sent' | 'failed';
+    }[];
+  };
 }
 
 export interface Objective {

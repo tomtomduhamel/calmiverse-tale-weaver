@@ -1,9 +1,9 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { TextToSpeech } from "./TextToSpeech";
-import { ShareStory } from "./ShareStory";
+import { ShareStoryDialog } from "./ShareStoryDialog";
 import { SendToEreader } from "./SendToEreader";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Share2 } from "lucide-react";
 
 interface ReaderControlsProps {
   fontSize: number;
@@ -26,6 +26,8 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   story,
   setShowReadingGuide,
 }) => {
+  const [showShareDialog, setShowShareDialog] = React.useState(false);
+  
   const handleDecreaseFontSize = () => {
     const newSize = Math.max(12, fontSize - 2);
     setFontSize(newSize);
@@ -60,7 +62,14 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
         {isDarkMode ? "☀️" : "🌙"}
       </Button>
       <TextToSpeech text={story.story_text} />
-      <ShareStory storyId={storyId} title={title} />
+      <Button
+        variant="outline"
+        onClick={() => setShowShareDialog(true)}
+        className="transition-transform hover:scale-105"
+      >
+        <Share2 className="h-4 w-4 mr-2" />
+        Partager
+      </Button>
       <SendToEreader story={story} />
       <Button
         variant="outline"
@@ -70,6 +79,12 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
         <BookOpen className="h-4 w-4 mr-2" />
         Guide de lecture
       </Button>
+
+      <ShareStoryDialog
+        storyId={storyId}
+        isOpen={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+      />
     </div>
   );
 };
