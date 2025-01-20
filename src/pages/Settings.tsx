@@ -9,6 +9,7 @@ import { KindleSection } from '@/components/settings/KindleSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
 import { SecuritySection } from '@/components/settings/SecuritySection';
 import { AccountManagementSection } from '@/components/settings/AccountManagementSection';
+import { UserSettings } from '@/types/user-settings'; // Ajout de l'import manquant
 
 const Settings = () => {
   const { user } = useAuth();
