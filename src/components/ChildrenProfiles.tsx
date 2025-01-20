@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Child } from "@/types/child";
-import { auth } from "@/lib/firebase";
+import { auth, storage } from "@/lib/firebase";
+import { ref, deleteObject } from "firebase/storage";
 import ProfileHeader from "./children/ProfileHeader";
 import ProfileGrid from "./children/ProfileGrid";
 import ProfileFormWrapper from "./children/ProfileFormWrapper";
@@ -40,6 +41,50 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
     setShowForm(false);
   };
 
+  const handlePhotoUploaded = async (childId: string, photo: { url: string; path: string; uploadedAt: Date }) => {
+    const child = children.find((c) => c.id === childId);
+    if (!child) return;
+
+    const updatedPhotos = [...(child.teddyPhotos || []), photo];
+    await onUpdateChild(childId, {
+      ...child,
+      teddyPhotos: updatedPhotos,
+    });
+  };
+
+  const handlePhotoDeleted = async (childId: string, photoPath: string) => {
+    try {
+      const child = children.find((c) => c.id === childId);
+      if (!child) return;
+
+      // Supprimer le fichier de Firebase Storage
+      const storageRef = ref(storage, photoPath);
+      await deleteObject(storageRef);
+
+      // Mettre à jour Firestore
+      const updatedPhotos = child.teddyPhotos?.filter(
+        (photo) => photo.path !== photoPath
+      ) || [];
+      
+      await onUpdateChild(childId, {
+        ...child,
+        teddyPhotos: updatedPhotos,
+      });
+
+      toast({
+        title: "Succès",
+        description: "La photo a été supprimée",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la suppression de la photo:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression de la photo",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChildName.trim()) {
@@ -67,10 +112,17 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
       teddyDescription: newTeddyDescription,
       imaginaryWorld: newImaginaryWorld,
       authorId: auth.currentUser.uid,
+      teddyPhotos: [],
     };
 
     if (editingChild) {
-      onUpdateChild(editingChild, childData);
+      const currentChild = children.find((c) => c.id === editingChild);
+      if (currentChild) {
+        onUpdateChild(editingChild, {
+          ...childData,
+          teddyPhotos: currentChild.teddyPhotos || [],
+        });
+      }
       toast({
         title: "Succès",
         description: "Le profil a été mis à jour avec succès",
@@ -111,6 +163,8 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
         teddyDescription={newTeddyDescription}
         imaginaryWorld={newImaginaryWorld}
         editingChild={editingChild}
+        childId={editingChild || undefined}
+        teddyPhotos={editingChild ? children.find(c => c.id === editingChild)?.teddyPhotos : []}
         onSubmit={handleSubmit}
         onReset={resetForm}
         onChildNameChange={setNewChildName}
@@ -118,6 +172,8 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
         onTeddyNameChange={setNewTeddyName}
         onTeddyDescriptionChange={setNewTeddyDescription}
         onImaginaryWorldChange={setNewImaginaryWorld}
+        onPhotoUploaded={(photo) => editingChild && handlePhotoUploaded(editingChild, photo)}
+        onPhotoDeleted={(path) => editingChild && handlePhotoDeleted(editingChild, path)}
       />
     </div>
   );

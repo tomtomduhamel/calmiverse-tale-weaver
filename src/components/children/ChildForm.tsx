@@ -6,6 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { isValidBirthDate } from "@/utils/age";
 import { DatePickerWithInput } from "@/components/ui/date-picker/DatePickerWithInput";
+import TeddyPhotoUpload from "./TeddyPhotoUpload";
+import TeddyPhotoGallery from "./TeddyPhotoGallery";
+import type { Child } from "@/types/child";
 
 interface ChildFormProps {
   childName: string;
@@ -14,6 +17,8 @@ interface ChildFormProps {
   teddyDescription: string;
   imaginaryWorld: string;
   isEditing: boolean;
+  childId?: string;
+  teddyPhotos: Child["teddyPhotos"];
   onSubmit: (e: React.FormEvent) => void;
   onReset: () => void;
   onChildNameChange: (value: string) => void;
@@ -21,6 +26,8 @@ interface ChildFormProps {
   onTeddyNameChange: (value: string) => void;
   onTeddyDescriptionChange: (value: string) => void;
   onImaginaryWorldChange: (value: string) => void;
+  onPhotoUploaded: (photo: { url: string; path: string; uploadedAt: Date }) => void;
+  onPhotoDeleted: (path: string) => void;
 }
 
 const ChildForm: React.FC<ChildFormProps> = ({
@@ -30,6 +37,8 @@ const ChildForm: React.FC<ChildFormProps> = ({
   teddyDescription,
   imaginaryWorld,
   isEditing,
+  childId,
+  teddyPhotos = [],
   onSubmit,
   onReset,
   onChildNameChange,
@@ -37,6 +46,8 @@ const ChildForm: React.FC<ChildFormProps> = ({
   onTeddyNameChange,
   onTeddyDescriptionChange,
   onImaginaryWorldChange,
+  onPhotoUploaded,
+  onPhotoDeleted,
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -77,6 +88,21 @@ const ChildForm: React.FC<ChildFormProps> = ({
           placeholder="Décrivez le doudou"
         />
       </div>
+
+      {isEditing && childId && (
+        <div className="space-y-4">
+          <Label>Photos du doudou</Label>
+          <TeddyPhotoGallery
+            photos={teddyPhotos || []}
+            onDeletePhoto={onPhotoDeleted}
+          />
+          <TeddyPhotoUpload
+            childId={childId}
+            existingPhotos={teddyPhotos || []}
+            onPhotoUploaded={onPhotoUploaded}
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="imaginaryWorld">Son monde imaginaire</Label>
