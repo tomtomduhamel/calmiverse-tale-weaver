@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,28 @@ const CreateChildDialog = ({
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'ajout de l'enfant",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReset = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Annuler cliqué");
+    
+    try {
+      onReset();
+      onOpenChange(false);
+      toast({
+        title: "Succès",
+        description: "Le formulaire a été réinitialisé",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la réinitialisation:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la réinitialisation",
         variant: "destructive",
       });
     }
@@ -95,14 +117,16 @@ const CreateChildDialog = ({
             >
               Ajouter
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onReset}
-              className="flex-1 border-secondary/20 hover:bg-secondary/10 transition-all"
-            >
-              Annuler
-            </Button>
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReset}
+                className="flex-1 border-secondary/20 hover:bg-secondary/10 transition-all"
+              >
+                Annuler
+              </Button>
+            </DialogClose>
           </div>
         </form>
       </DialogContent>
