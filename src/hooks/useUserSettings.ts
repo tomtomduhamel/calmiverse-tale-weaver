@@ -23,12 +23,21 @@ export const useUserSettings = () => {
 
   useEffect(() => {
     const loadUserSettings = async () => {
-      if (!auth.currentUser) return;
+      if (!auth.currentUser) {
+        console.log('Aucun utilisateur connecté');
+        setIsLoading(false);
+        return;
+      }
       
       try {
+        console.log('Chargement des paramètres pour:', auth.currentUser.uid);
         const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+        
         if (userDoc.exists()) {
+          console.log('Document utilisateur trouvé:', userDoc.data());
           setUserSettings(userDoc.data() as UserSettings);
+        } else {
+          console.log('Aucun document utilisateur trouvé, utilisation des valeurs par défaut');
         }
       } catch (error) {
         console.error('Erreur lors du chargement des paramètres:', error);
@@ -46,18 +55,28 @@ export const useUserSettings = () => {
   }, [toast]);
 
   const updateUserSettings = async (newSettings: Partial<UserSettings>) => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      console.error('Tentative de mise à jour sans utilisateur connecté');
+      return;
+    }
     
     try {
       setIsLoading(true);
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), newSettings);
+      console.log('Mise à jour des paramètres pour:', auth.currentUser.uid);
+      console.log('Nouvelles valeurs:', newSettings);
+      
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userRef, newSettings);
+      
       setUserSettings(prev => ({ ...prev, ...newSettings }));
+      console.log('Paramètres mis à jour avec succès');
+      
       toast({
         title: "Succès",
         description: "Vos paramètres ont été mis à jour",
       });
     } catch (error) {
-      console.error('Erreur lors de la mise à jour des paramètres:', error);
+      console.error('Erreur détaillée lors de la mise à jour:', error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour vos paramètres",
