@@ -4,19 +4,35 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useAuth } from '@/contexts/AuthContext';
 import { Mail } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLogin) {
-      await signInWithEmail(email, password);
-    } else {
-      await signUpWithEmail(email, password);
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        await signInWithEmail(email, password);
+      } else {
+        await signUpWithEmail(email, password);
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: isLogin ? "Échec de la connexion" : "Échec de l'inscription",
+        description: "Vérifiez vos identifiants et réessayez.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -39,6 +55,8 @@ const LoginForm = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={isLoading}
+            className="w-full"
           />
         </div>
         <div>
@@ -48,10 +66,16 @@ const LoginForm = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isLoading}
+            className="w-full"
           />
         </div>
-        <Button type="submit" className="w-full">
-          {isLogin ? 'Se connecter' : 'S\'inscrire'}
+        <Button 
+          type="submit" 
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Chargement...' : (isLogin ? 'Se connecter' : "S'inscrire")}
         </Button>
       </form>
 
@@ -69,6 +93,7 @@ const LoginForm = () => {
         variant="outline"
         className="w-full"
         onClick={signInWithGoogle}
+        disabled={isLoading}
       >
         <Mail className="mr-2 h-4 w-4" />
         Continuer avec Google
@@ -79,6 +104,7 @@ const LoginForm = () => {
           variant="link"
           onClick={() => setIsLogin(!isLogin)}
           className="text-sm"
+          disabled={isLoading}
         >
           {isLogin ? 'Créer un compte' : 'Déjà un compte ? Se connecter'}
         </Button>
