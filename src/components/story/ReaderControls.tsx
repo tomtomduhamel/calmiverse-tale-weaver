@@ -2,7 +2,6 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { TextToSpeech } from "./TextToSpeech";
 import { ShareStoryDialog } from "./ShareStoryDialog";
-import { SendToEreader } from "./SendToEreader";
 import { BookOpen, Share2 } from "lucide-react";
 
 interface ReaderControlsProps {
@@ -70,7 +69,6 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
         <Share2 className="h-4 w-4 mr-2" />
         Partager
       </Button>
-      <SendToEreader story={story} />
       <Button
         variant="outline"
         onClick={() => setShowReadingGuide(true)}
