@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Story } from "@/types/story";
 import StoryReader from "@/components/StoryReader";
@@ -15,6 +15,23 @@ const SharedStory = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const logAccess = async (storyId: string) => {
+    try {
+      const accessLog = {
+        timestamp: Timestamp.now(),
+        userAgent: navigator.userAgent,
+        ipAddress: "GDPR compliant - not stored", // Pour la conformité RGPD
+        referrer: document.referrer || "direct",
+      };
+
+      await addDoc(collection(db, `stories/${storyId}/accessLogs`), accessLog);
+      console.log("Accès enregistré avec succès");
+    } catch (error) {
+      console.error("Erreur lors de l'enregistrement de l'accès:", error);
+      // On ne montre pas d'erreur à l'utilisateur car ce n'est pas critique
+    }
+  };
 
   useEffect(() => {
     const fetchSharedStory = async () => {
@@ -62,6 +79,9 @@ const SharedStory = () => {
         }
 
         setStory({ ...storyData, id: storyDoc.id });
+        
+        // Log de l'accès une fois que l'histoire est validée
+        await logAccess(storyId);
       } catch (error) {
         console.error("Erreur lors du chargement de l'histoire:", error);
         toast({

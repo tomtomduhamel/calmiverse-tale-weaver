@@ -24,6 +24,12 @@ service cloud.firestore {
         !exists(/databases/$(database)/documents/stories/$(storyId)) ||
         resource.data.authorId == request.auth.uid
       );
+
+      // Nouvelle règle pour permettre la mise à jour du compteur d'accès
+      match /accessLogs/{logId} {
+        allow read: if request.auth != null && get(/databases/$(database)/documents/stories/$(storyId)).data.authorId == request.auth.uid;
+        allow create: if true;
+      }
     }
 
     match /children/{childId} {
