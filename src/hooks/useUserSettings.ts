@@ -95,37 +95,10 @@ export const useUserSettings = () => {
     }
   };
 
-  const exportUserData = async () => {
-    if (!auth.currentUser) return;
-    
-    try {
-      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-      const userData = userDoc.data();
-      const dataStr = JSON.stringify(userData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'mes-donnees.json';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Erreur lors de l\'export des données:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'exporter vos données",
-        variant: "destructive",
-      });
-    }
-  };
-
   return {
     userSettings,
     isLoading,
     updateUserSettings,
     updateUserPassword,
-    exportUserData,
   };
 };

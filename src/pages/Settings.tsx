@@ -43,11 +43,10 @@ import {
   KeyRound,
   Bell,
   Trash2,
-  Download,
   Settings as SettingsIcon,
   Mail,
-  Globe,
   Clock,
+  Calendar,
 } from 'lucide-react';
 import { UserSettings, SecuritySettings } from '@/types/user-settings';
 
@@ -78,7 +77,6 @@ const Settings = () => {
     isLoading,
     updateUserSettings,
     updateUserPassword,
-    exportUserData,
   } = useUserSettings();
 
   const securityForm = useForm<SecuritySettings>({
@@ -129,6 +127,60 @@ const Settings = () => {
         Paramètres utilisateur
       </h1>
 
+      {/* Profil */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Profil
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...userForm}>
+            <form onSubmit={userForm.handleSubmit(onUserSubmit)} className="space-y-4">
+              <FormField
+                control={userForm.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prénom</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={userForm.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Fuseau horaire</label>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                  </span>
+                </div>
+              </div>
+              <Button type="submit">
+                Enregistrer les modifications
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
       {/* Informations du compte */}
       <Card>
         <CardHeader>
@@ -147,18 +199,88 @@ const Settings = () => {
           </div>
           <div className="grid gap-2">
             <label className="text-sm font-medium">Date d'inscription</label>
-            <Input 
-              value={user.metadata.creationTime ? format(new Date(user.metadata.creationTime), 'PPP', { locale: fr }) : 'N/A'} 
-              readOnly 
-              className="bg-muted" 
-            />
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Input 
+                value={user.metadata.creationTime ? format(new Date(user.metadata.creationTime), 'PPP', { locale: fr }) : 'N/A'} 
+                readOnly 
+                className="bg-muted" 
+              />
+            </div>
           </div>
           <div className="grid gap-2">
             <label className="text-sm font-medium">Dernière connexion</label>
-            <Input 
-              value={user.metadata.lastSignInTime ? format(new Date(user.metadata.lastSignInTime), 'PPP à p', { locale: fr }) : 'N/A'} 
-              readOnly 
-              className="bg-muted" 
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Input 
+                value={user.metadata.lastSignInTime ? format(new Date(user.metadata.lastSignInTime), 'PPP à p', { locale: fr }) : 'N/A'} 
+                readOnly 
+                className="bg-muted" 
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Paramètres Kindle */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Paramètres Kindle
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">Email Kindle</label>
+            <Input value={kindleSettings.kindleEmail} readOnly className="bg-muted" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <label className="text-sm font-medium">Notifications par email</label>
+              <p className="text-sm text-muted-foreground">
+                Recevoir des notifications par email
+              </p>
+            </div>
+            <Switch
+              checked={userSettings.notifications.email}
+              onCheckedChange={(checked) => handleNotificationChange('email', checked)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <label className="text-sm font-medium">Notifications dans l'application</label>
+              <p className="text-sm text-muted-foreground">
+                Recevoir des notifications dans l'application
+              </p>
+            </div>
+            <Switch
+              checked={userSettings.notifications.inApp}
+              onCheckedChange={(checked) => handleNotificationChange('inApp', checked)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <label className="text-sm font-medium">Notifications des histoires</label>
+              <p className="text-sm text-muted-foreground">
+                Être notifié des nouvelles histoires
+              </p>
+            </div>
+            <Switch
+              checked={userSettings.notifications.stories}
+              onCheckedChange={(checked) => handleNotificationChange('stories', checked)}
             />
           </div>
         </CardContent>
@@ -227,124 +349,6 @@ const Settings = () => {
         </Card>
       )}
 
-      {/* Profil */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Profil
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...userForm}>
-            <form onSubmit={userForm.handleSubmit(onUserSubmit)} className="space-y-4">
-              <FormField
-                control={userForm.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prénom</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={userForm.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nom</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">Fuseau horaire</label>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    {Intl.DateTimeFormat().resolvedOptions().timeZone}
-                  </span>
-                </div>
-              </div>
-              <Button type="submit">
-                Enregistrer les modifications
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notifications
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">Notifications par email</label>
-              <p className="text-sm text-muted-foreground">
-                Recevoir des notifications par email
-              </p>
-            </div>
-            <Switch
-              checked={userSettings.notifications.email}
-              onCheckedChange={(checked) => handleNotificationChange('email', checked)}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">Notifications dans l'application</label>
-              <p className="text-sm text-muted-foreground">
-                Recevoir des notifications dans l'application
-              </p>
-            </div>
-            <Switch
-              checked={userSettings.notifications.inApp}
-              onCheckedChange={(checked) => handleNotificationChange('inApp', checked)}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">Notifications des histoires</label>
-              <p className="text-sm text-muted-foreground">
-                Être notifié des nouvelles histoires
-              </p>
-            </div>
-            <Switch
-              checked={userSettings.notifications.stories}
-              onCheckedChange={(checked) => handleNotificationChange('stories', checked)}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Paramètres Kindle */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            Paramètres Kindle
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">Email Kindle</label>
-            <Input value={kindleSettings.kindleEmail} readOnly className="bg-muted" />
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Gestion du compte */}
       <Card>
         <CardHeader>
@@ -353,40 +357,29 @@ const Settings = () => {
             Gestion du compte
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-            <Button
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={exportUserData}
-            >
-              <Download className="h-4 w-4" />
-              Exporter mes données
-            </Button>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="flex items-center gap-2">
-                  <Trash2 className="h-4 w-4" />
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="flex items-center gap-2">
+                <Trash2 className="h-4 w-4" />
+                Supprimer mon compte
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Cette action est irréversible. Toutes vos données seront définitivement supprimées.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction className="bg-destructive text-destructive-foreground">
                   Supprimer mon compte
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Cette action est irréversible. Toutes vos données seront définitivement supprimées.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction className="bg-destructive text-destructive-foreground">
-                    Supprimer mon compte
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
     </div>
