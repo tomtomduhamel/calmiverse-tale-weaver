@@ -45,7 +45,8 @@ describe('SharedStory', () => {
       </BrowserRouter>
     );
     
-    expect(screen.queryByText(/Chargement/i)).toBeTruthy();
+    const loadingElement = screen.queryByText(/Chargement/i);
+    expect(loadingElement).toBeTruthy();
   });
 
   it('affiche l\'histoire quand le token est valide', async () => {
@@ -92,7 +93,8 @@ describe('SharedStory', () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByText(/Ce lien de partage a expiré ou n'est plus valide/i)).toBeTruthy();
+      const errorMessage = screen.queryByText(/Ce lien de partage a expiré ou n'est plus valide/i);
+      expect(errorMessage).toBeTruthy();
     });
   });
 
@@ -108,7 +110,8 @@ describe('SharedStory', () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByText(/Cette histoire n'existe pas/i)).toBeTruthy();
+      const errorMessage = screen.queryByText(/Cette histoire n'existe pas/i);
+      expect(errorMessage).toBeTruthy();
     });
   });
 });
