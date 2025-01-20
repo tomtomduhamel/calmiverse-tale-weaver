@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Send, Loader2, Kindle } from "lucide-react";
+import { Mail, Send, Loader2, Book } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { doc, updateDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -173,7 +173,7 @@ export const ShareStoryDialog = ({ storyId, isOpen, onClose }: ShareStoryDialogP
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <Kindle className="mr-2 h-4 w-4" />
+                <Book className="mr-2 h-4 w-4" />
                 Envoyer sur Kindle
               </>
             )}
