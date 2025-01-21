@@ -1,17 +1,17 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import StoryForm from '../StoryForm';
 
-const mockObjectives = [
-  { id: '1', label: 'Objectif 1', value: 'objective1' },
-  { id: '2', label: 'Objectif 2', value: 'objective2' },
-];
-
 // Mock des hooks
 vi.mock('@/hooks/useStoryObjectives', () => ({
   useStoryObjectives: () => ({
-    objectives: mockObjectives,
+    objectives: [
+      { id: '1', label: 'Aider à s\'endormir', value: 'sleep' },
+      { id: '2', label: 'Se concentrer', value: 'focus' },
+      { id: '3', label: 'Se détendre', value: 'relax' },
+      { id: '4', label: 'S\'amuser', value: 'fun' }
+    ],
     isLoading: false,
   }),
 }));
@@ -47,8 +47,7 @@ describe('StoryForm', () => {
       </BrowserRouter>
     );
 
-    const title = screen.getByText('Créer une histoire');
-    expect(title).not.toBeNull();
+    expect(screen.getByText('Créer une histoire')).toBeInTheDocument();
   });
 
   it('affiche le bouton pour ajouter un enfant quand il n\'y a pas d\'enfants', () => {
@@ -58,8 +57,7 @@ describe('StoryForm', () => {
       </BrowserRouter>
     );
 
-    const addChildButton = screen.getByText('Créer un profil enfant');
-    expect(addChildButton).not.toBeNull();
+    expect(screen.getByText('Créer un profil enfant')).toBeInTheDocument();
   });
 
   it('affiche la liste des objectifs', () => {
@@ -69,8 +67,7 @@ describe('StoryForm', () => {
       </BrowserRouter>
     );
 
-    const objectivesLabel = screen.getByText('Je souhaite créer un moment de lecture qui va...');
-    expect(objectivesLabel).not.toBeNull();
+    expect(screen.getByText('Je souhaite créer un moment de lecture qui va...')).toBeInTheDocument();
   });
 
   it('affiche le bouton de génération d\'histoire', () => {
@@ -80,7 +77,19 @@ describe('StoryForm', () => {
       </BrowserRouter>
     );
 
-    const generateButton = screen.getByText('Générer l\'histoire');
-    expect(generateButton).not.toBeNull();
+    expect(screen.getByText('Générer l\'histoire')).toBeInTheDocument();
+  });
+
+  it('permet la sélection d\'un objectif', () => {
+    render(
+      <BrowserRouter>
+        <StoryForm {...defaultProps} />
+      </BrowserRouter>
+    );
+
+    const sleepObjective = screen.getByText('Aider à s\'endormir');
+    fireEvent.click(sleepObjective);
+    
+    expect(sleepObjective).toBeInTheDocument();
   });
 });
