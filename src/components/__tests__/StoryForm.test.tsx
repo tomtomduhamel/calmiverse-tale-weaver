@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import StoryForm from '../StoryForm';
@@ -48,7 +48,7 @@ describe('StoryForm', () => {
     );
 
     const title = screen.getByText('Créer une histoire');
-    expect(title).toBeDefined();
+    expect(title).not.toBeNull();
   });
 
   it('affiche le bouton pour ajouter un enfant quand il n\'y a pas d\'enfants', () => {
@@ -59,7 +59,7 @@ describe('StoryForm', () => {
     );
 
     const addChildButton = screen.getByText('Créer un profil enfant');
-    expect(addChildButton).toBeDefined();
+    expect(addChildButton).not.toBeNull();
   });
 
   it('affiche la liste des objectifs', () => {
@@ -70,7 +70,7 @@ describe('StoryForm', () => {
     );
 
     const objectivesLabel = screen.getByText('Je souhaite créer un moment de lecture qui va...');
-    expect(objectivesLabel).toBeDefined();
+    expect(objectivesLabel).not.toBeNull();
   });
 
   it('affiche le bouton de génération d\'histoire', () => {
@@ -81,6 +81,6 @@ describe('StoryForm', () => {
     );
 
     const generateButton = screen.getByText('Générer l\'histoire');
-    expect(generateButton).toBeDefined();
+    expect(generateButton).not.toBeNull();
   });
 });
