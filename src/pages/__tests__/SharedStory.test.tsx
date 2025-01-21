@@ -46,11 +46,10 @@ describe('SharedStory', () => {
     );
     
     const loadingElement = screen.queryByText(/Chargement/i);
-    expect(loadingElement).toBeTruthy();
+    expect(loadingElement).not.toBeNull();
   });
 
   it('affiche l\'histoire quand le token est valide', async () => {
-    // Mock successful story fetch
     (getDoc as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       exists: () => true,
       data: () => mockStory,
@@ -63,13 +62,14 @@ describe('SharedStory', () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByText('Test Story')).toBeTruthy();
-      expect(screen.queryByText('This is a test story')).toBeTruthy();
+      const titleElement = screen.queryByText('Test Story');
+      const storyElement = screen.queryByText('This is a test story');
+      expect(titleElement).not.toBeNull();
+      expect(storyElement).not.toBeNull();
     });
   });
 
   it('affiche un message d\'erreur pour un token invalide', async () => {
-    // Mock story with expired token
     const expiredStory = {
       ...mockStory,
       sharing: {
@@ -94,7 +94,7 @@ describe('SharedStory', () => {
 
     await waitFor(() => {
       const errorMessage = screen.queryByText(/Ce lien de partage a expiré ou n'est plus valide/i);
-      expect(errorMessage).toBeTruthy();
+      expect(errorMessage).not.toBeNull();
     });
   });
 
@@ -111,7 +111,7 @@ describe('SharedStory', () => {
 
     await waitFor(() => {
       const errorMessage = screen.queryByText(/Cette histoire n'existe pas/i);
-      expect(errorMessage).toBeTruthy();
+      expect(errorMessage).not.toBeNull();
     });
   });
 });
