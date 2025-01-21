@@ -1,12 +1,25 @@
-import '@testing-library/jest-dom/vitest';
-import { expect, afterEach } from 'vitest';
+import '@testing-library/jest-dom';
+import { expect, afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import matchers from '@testing-library/jest-dom/matchers';
+import * as matchers from '@testing-library/jest-dom/matchers';
 
-// Extension des matchers de Jest avec ceux de @testing-library/jest-dom
 expect.extend(matchers);
 
 // Nettoyage automatique après chaque test
 afterEach(() => {
   cleanup();
 });
+
+// Configuration globale de l'environnement de test
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Suppression des warnings de console pendant les tests
+global.console = {
+  ...console,
+  warn: vi.fn(),
+  error: vi.fn(),
+};

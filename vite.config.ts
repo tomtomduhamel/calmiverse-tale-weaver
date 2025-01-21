@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -25,8 +24,18 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ['./src/setupTests.ts'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     coverage: {
+      provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/']
+      exclude: [
+        'node_modules/',
+        'src/setupTests.ts',
+        '**/*.d.ts',
+        '**/*.test.{ts,tsx}',
+        '**/__tests__/**'
+      ]
+    },
+    deps: {
+      inline: [/@testing-library\/jest-dom/]
     }
   }
 }));
