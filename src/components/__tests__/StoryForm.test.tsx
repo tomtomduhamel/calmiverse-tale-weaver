@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import StoryForm from '../StoryForm';
+import '@testing-library/jest-dom';
 
 // Mock des hooks
 vi.mock('@/hooks/useStoryObjectives', () => ({
