@@ -13,6 +13,7 @@ import { useChildren } from "@/hooks/useChildren";
 import { useStories } from "@/hooks/useStories";
 import { initializeObjectives } from "@/utils/initializeObjectives";
 import { useLocation } from "react-router-dom";
+import StoryChat from '@/components/story/chat/StoryChat';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
@@ -98,13 +99,8 @@ const Index = () => {
       )}
 
       {currentView === "create" && (
-        <div className="max-w-md mx-auto animate-fade-in">
-          <StoryForm 
-            onSubmit={handleStorySubmit}
-            children={children} 
-            onCreateChild={handleCreateChildFromStory}
-            onStoryCreated={handleStoryCreated}
-          />
+        <div className="w-full max-w-4xl mx-auto animate-fade-in">
+          <StoryChat />
         </div>
       )}
 
