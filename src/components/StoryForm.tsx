@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { BookOpen } from "lucide-react";
+import { BookOpen, MessageCircle } from "lucide-react";
 import type { StoryFormProps } from "./story/StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoryForm } from "@/hooks/useStoryForm";
@@ -10,6 +10,7 @@ import CreateChildDialog from "./story/CreateChildDialog";
 import ChildrenSelection from "./story/ChildrenSelection";
 import StoryObjectives from "./story/StoryObjectives";
 import { useChildFormLogic } from "./story/useChildFormLogic";
+import StoryChat from "./story/chat/StoryChat";
 
 const StoryForm: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -17,6 +18,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
   onCreateChild,
   onStoryCreated,
 }) => {
+  const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
   const { formData, isLoading, handleChildToggle, setObjective, handleSubmit } = useStoryForm(onStoryCreated, onSubmit);
   const {
@@ -38,12 +40,41 @@ const StoryForm: React.FC<StoryFormProps> = ({
     return <LoadingStory />;
   }
 
+  if (creationMode === "chat") {
+    return (
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="mb-6 flex justify-between items-center">
+          <Button
+            variant="outline"
+            onClick={() => setCreationMode("classic")}
+            className="flex items-center gap-2"
+          >
+            <BookOpen className="h-5 w-5" />
+            Mode classique
+          </Button>
+        </div>
+        <StoryChat />
+      </div>
+    );
+  }
+
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
-        <h2 className="text-2xl font-semibold text-center mb-6 text-primary dark:text-primary-dark">
-          Créer une histoire
-        </h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-semibold text-primary dark:text-primary-dark">
+            Créer une histoire
+          </h2>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCreationMode("chat")}
+            className="flex items-center gap-2"
+          >
+            <MessageCircle className="h-5 w-5" />
+            Mode conversation
+          </Button>
+        </div>
 
         <ChildrenSelection
           children={children}
