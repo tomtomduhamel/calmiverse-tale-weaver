@@ -18,3 +18,11 @@ declare namespace Vi {
 declare module '@testing-library/jest-dom' {
   export * from '@testing-library/jest-dom/matchers'
 }
+
+declare module '@testing-library/jest-dom/matchers' {
+  export interface Matchers<R = void, T = {}> {
+    toBeInTheDocument(): R;
+    toHaveTextContent(text: string | RegExp): R;
+    // Ajoutez d'autres matchers si nécessaire
+  }
+}
