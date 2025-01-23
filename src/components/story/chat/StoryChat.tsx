@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, RefreshCcw, HelpCircle, BookOpen } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
+import ChatHeader from './ChatHeader';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
 
 interface StoryChatProps {
@@ -62,30 +63,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
 
   return (
     <div className="flex flex-col h-[80vh] max-w-3xl mx-auto bg-white/80 backdrop-blur-sm rounded-xl shadow-soft-lg border border-primary/20">
-      <div className="p-4 border-b border-primary/20">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-secondary">Création d'histoire</h2>
-            <p className="text-sm text-muted-foreground">Définissons ensemble votre histoire</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={onSwitchMode}
-              className="flex items-center gap-2"
-            >
-              <BookOpen className="h-5 w-5" />
-              Mode classique
-            </Button>
-            <Button variant="ghost" size="icon" aria-label="Réinitialiser">
-              <RefreshCcw className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" aria-label="Aide">
-              <HelpCircle className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ChatHeader onSwitchMode={onSwitchMode} />
 
       <ScrollArea className="flex-1 p-4 space-y-4">
         {messages.map((message) => (
