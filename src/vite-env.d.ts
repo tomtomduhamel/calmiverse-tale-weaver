@@ -26,6 +26,5 @@ declare module '@testing-library/jest-dom/matchers' {
     toBeVisible(): R;
     toHaveClass(className: string): R;
     toHaveAttribute(attr: string, value?: string): R;
-    // Add other matchers you're using in your tests
   }
 }
