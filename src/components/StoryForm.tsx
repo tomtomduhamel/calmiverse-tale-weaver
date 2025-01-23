@@ -42,21 +42,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {creationMode === "chat" ? (
-        <div className="animate-fade-in">
-          <div className="mb-6 flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={() => setCreationMode("classic")}
-              className="flex items-center gap-2"
-            >
-              <BookOpen className="h-5 w-5" />
-              Mode classique
-            </Button>
-          </div>
-          <StoryChat />
-        </div>
-      ) : (
+      {creationMode === "classic" ? (
         <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold text-primary dark:text-primary-dark">
@@ -99,6 +85,20 @@ const StoryForm: React.FC<StoryFormProps> = ({
             Générer l'histoire
           </Button>
         </form>
+      ) : (
+        <div className="animate-fade-in">
+          <div className="mb-6 flex justify-between items-center">
+            <Button
+              variant="outline"
+              onClick={() => setCreationMode("classic")}
+              className="flex items-center gap-2"
+            >
+              <BookOpen className="h-5 w-5" />
+              Mode classique
+            </Button>
+          </div>
+          <StoryChat />
+        </div>
       )}
 
       <CreateChildDialog
