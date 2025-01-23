@@ -13,11 +13,11 @@ import { useChildren } from "@/hooks/useChildren";
 import { useStories } from "@/hooks/useStories";
 import { initializeObjectives } from "@/utils/initializeObjectives";
 import { useLocation } from "react-router-dom";
-import StoryChat from '@/components/story/chat/StoryChat';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [showGuide, setShowGuide] = useState(false);
+  const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useChildren();
   const { stories: { stories, isLoading, error }, currentStory, setCurrentStory, createStory, deleteStory } = useStories(children);
   const { toast } = useToast();
@@ -30,11 +30,9 @@ const Index = () => {
       localStorage.setItem("hasSeenGuide", "true");
     }
 
-    // Initialize objectives silently
     initializeObjectives();
   }, []);
 
-  // Reset view to home when navigating to root
   useEffect(() => {
     if (location.pathname === "/") {
       setCurrentView("home");
@@ -43,6 +41,10 @@ const Index = () => {
 
   const handleCreateChildFromStory = () => {
     setCurrentView("profiles");
+  };
+
+  const handleModeSwitch = () => {
+    setCreationMode(mode => mode === "classic" ? "chat" : "classic");
   };
 
   const handleStorySubmit = async (formData: StoryFormData): Promise<string> => {
@@ -100,7 +102,12 @@ const Index = () => {
 
       {currentView === "create" && (
         <div className="w-full max-w-4xl mx-auto animate-fade-in">
-          <StoryChat />
+          <StoryForm
+            onSubmit={handleStorySubmit}
+            children={children}
+            onCreateChild={handleCreateChildFromStory}
+            onStoryCreated={handleStoryCreated}
+          />
         </div>
       )}
 
