@@ -71,7 +71,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => onSwitchMode()}
+              onClick={onSwitchMode}
               className="flex items-center gap-2"
             >
               <BookOpen className="h-5 w-5" />
