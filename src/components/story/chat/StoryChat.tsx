@@ -8,7 +8,7 @@ import TypingIndicator from './TypingIndicator';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
 
 interface StoryChatProps {
-  onSwitchMode?: () => void;
+  onSwitchMode: () => void;
 }
 
 const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
@@ -71,7 +71,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={onSwitchMode}
+              onClick={() => onSwitchMode()}
               className="flex items-center gap-2"
             >
               <BookOpen className="h-5 w-5" />

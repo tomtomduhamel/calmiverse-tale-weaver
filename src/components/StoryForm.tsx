@@ -32,6 +32,10 @@ const StoryForm: React.FC<StoryFormProps> = ({
     setChildAge,
   } = useChildFormLogic(onCreateChild);
 
+  const handleModeSwitch = () => {
+    setCreationMode(mode => mode === "classic" ? "chat" : "classic");
+  };
+
   if (objectivesLoading) {
     return <div>Chargement des objectifs...</div>;
   }
@@ -51,7 +55,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setCreationMode("chat")}
+              onClick={handleModeSwitch}
               className="flex items-center gap-2"
             >
               <MessageCircle className="h-5 w-5" />
@@ -87,7 +91,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
         </form>
       ) : (
         <div className="animate-fade-in">
-          <StoryChat onSwitchMode={() => setCreationMode("classic")} />
+          <StoryChat onSwitchMode={handleModeSwitch} />
         </div>
       )}
 
