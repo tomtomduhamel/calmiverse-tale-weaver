@@ -62,7 +62,7 @@ export function initializeErrorHandlers() {
       }
 
       // For objects, try to create a safe clone
-      const safeMessage = JSON.parse(JSON.stringify(message));
+      const safeMessage = structuredClone(message);
       return originalPostMessage.call(this, safeMessage, targetOrigin, transfer);
     } catch (error) {
       // Silently handle postMessage errors
