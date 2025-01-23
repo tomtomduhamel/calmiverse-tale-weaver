@@ -5,19 +5,19 @@ import * as matchers from '@testing-library/jest-dom/matchers';
 
 expect.extend(matchers);
 
-// Nettoyage automatique après chaque test
+// Cleanup after each test
 afterEach(() => {
   cleanup();
 });
 
-// Configuration globale de l'environnement de test
+// Global test environment configuration
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
 
-// Suppression des warnings de console pendant les tests
+// Suppress console warnings during tests
 global.console = {
   ...console,
   warn: vi.fn(),

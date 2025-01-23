@@ -23,6 +23,9 @@ declare module '@testing-library/jest-dom/matchers' {
   export interface Matchers<R = void, T = {}> {
     toBeInTheDocument(): R;
     toHaveTextContent(text: string | RegExp): R;
-    // Ajoutez d'autres matchers si nécessaire
+    toBeVisible(): R;
+    toHaveClass(className: string): R;
+    toHaveAttribute(attr: string, value?: string): R;
+    // Add other matchers you're using in your tests
   }
 }
