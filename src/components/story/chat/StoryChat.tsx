@@ -18,7 +18,6 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    // Message de bienvenue initial
     const welcomeMessage: ChatMessageType = {
       id: '1',
       type: 'ai',
