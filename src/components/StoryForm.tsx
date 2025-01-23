@@ -87,17 +87,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
         </form>
       ) : (
         <div className="animate-fade-in">
-          <div className="mb-6 flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={() => setCreationMode("classic")}
-              className="flex items-center gap-2"
-            >
-              <BookOpen className="h-5 w-5" />
-              Mode classique
-            </Button>
-          </div>
-          <StoryChat />
+          <StoryChat onSwitchMode={() => setCreationMode("classic")} />
         </div>
       )}
 
