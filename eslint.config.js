@@ -15,6 +15,10 @@ export default tseslint.config(
         ...globals.browser,
         jest: true,
       },
+      parserOptions: {
+        project: "./tsconfig.json",
+        tsconfigRootDir: ".",
+      },
     },
     plugins: {
       "react-hooks": reactHooks,
