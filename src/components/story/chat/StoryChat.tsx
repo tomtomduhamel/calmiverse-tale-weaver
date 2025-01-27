@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
 import ChatHeader from './ChatHeader';
+import { useStoryChat } from '@/hooks/useStoryChat';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
 
 interface StoryChatProps {
@@ -17,12 +18,13 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { processUserMessage } = useStoryChat();
   
   useEffect(() => {
     const welcomeMessage: ChatMessageType = {
       id: '1',
       type: 'ai',
-      content: "Bonjour ! Je vais vous aider à créer une histoire personnalisée. Pour commencer, quel type d'histoire souhaitez-vous créer ?",
+      content: "Bonjour ! Je suis Calmi, et je vais t'aider à créer une belle histoire pour enfants. Pour commencer, dis-moi pour qui tu souhaites créer cette histoire ? Tu peux mentionner un ou plusieurs enfants.",
       timestamp: new Date(),
     };
     setMessages([welcomeMessage]);
@@ -49,23 +51,19 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
     setInputValue('');
     setIsTyping(true);
 
+    // Simuler un délai de réponse naturel
     setTimeout(() => {
-      const aiResponse: ChatMessageType = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: "Je comprends votre choix. Maintenant, parlons du personnage principal. Quel nom souhaitez-vous lui donner ?",
-        timestamp: new Date(),
-      };
+      const aiResponse = processUserMessage(userMessage.content);
       setMessages(prev => [...prev, aiResponse]);
       setIsTyping(false);
-    }, 1500);
+    }, 1000);
   };
 
   return (
     <div className="flex flex-col h-[80vh] max-w-3xl mx-auto bg-white/80 backdrop-blur-sm rounded-xl shadow-soft-lg border border-primary/20">
       <ChatHeader onSwitchMode={onSwitchMode} />
 
-      <ScrollArea className="flex-1 p-4 space-y-4">
+      <ScrollArea className="flex-1 p-4 space-y-4" ref={scrollAreaRef}>
         {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
         ))}
@@ -77,7 +75,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Décrivez votre histoire idéale..."
+            placeholder="Écris ta réponse ici..."
             className="flex-1 bg-transparent border-primary/20 focus:border-primary"
           />
           <Button type="submit" className="bg-primary hover:bg-primary/90">
