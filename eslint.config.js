@@ -12,8 +12,7 @@ export default tseslint.config(
     languageOptions: {
       ecmaVersion: 2020,
       globals: {
-        ...globals.browser,
-        jest: true,
+        ...globals.browser
       },
       parserOptions: {
         project: "./tsconfig.json",
