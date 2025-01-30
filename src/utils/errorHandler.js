@@ -1,18 +1,22 @@
 export function initializeErrorHandlers() {
   // Global error handler
   window.addEventListener('error', function(event) {
+    // Ignore network-related errors for Firebase services
+    if (event.target?.tagName === 'LINK' || 
+        event.target?.tagName === 'SCRIPT' ||
+        event.message?.includes('net::ERR_TIMED_OUT') ||
+        event.message?.includes('net::ERR_NAME_NOT_RESOLVED')) {
+      console.warn('Network error ignored:', event.message);
+      event.preventDefault();
+      return false;
+    }
+    
     // Completely ignore all postMessage and clone related errors
     if (event.message?.includes('postMessage') || 
         event.message?.includes('clone') ||
         event.message?.includes('DataCloneError') ||
         event.filename?.includes('gptengineer.js')) {
       event.preventDefault();
-      return false;
-    }
-    
-    // Ignore resource loading errors
-    if (event.target?.tagName === 'LINK' || 
-        event.target?.tagName === 'SCRIPT') {
       return false;
     }
     
@@ -29,6 +33,14 @@ export function initializeErrorHandlers() {
 
   // Unhandled promise handler
   window.addEventListener('unhandledrejection', function(event) {
+    // Ignore network-related errors
+    if (event.reason?.message?.includes('net::ERR_TIMED_OUT') ||
+        event.reason?.message?.includes('net::ERR_NAME_NOT_RESOLVED')) {
+      console.warn('Network promise error ignored:', event.reason.message);
+      event.preventDefault();
+      return;
+    }
+
     // Completely ignore all postMessage related errors
     if (event.reason?.message?.includes('postMessage') ||
         event.reason?.message?.includes('clone') ||
@@ -53,7 +65,6 @@ export function initializeErrorHandlers() {
   const originalPostMessage = window.postMessage;
   window.postMessage = function(message, targetOrigin, transfer) {
     try {
-      // For primitive types and null, send directly
       if (message === null || 
           typeof message === 'string' || 
           typeof message === 'number' || 
@@ -61,11 +72,9 @@ export function initializeErrorHandlers() {
         return originalPostMessage.call(this, message, targetOrigin, transfer);
       }
 
-      // For objects, try to create a safe clone
       const safeMessage = structuredClone(message);
       return originalPostMessage.call(this, safeMessage, targetOrigin, transfer);
     } catch (error) {
-      // Silently handle postMessage errors
       if (error.message?.includes('postMessage') ||
           error.message?.includes('clone') ||
           error.message?.includes('DataCloneError')) {
@@ -79,5 +88,5 @@ export function initializeErrorHandlers() {
     }
   };
 
-  console.log('Enhanced error handling initialized with strict postMessage filtering');
+  console.log('Enhanced error handling initialized with network error filtering');
 }
