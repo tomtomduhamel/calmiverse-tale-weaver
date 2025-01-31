@@ -10,27 +10,24 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Configuration explicite de CORS
+// Configuration unique de CORS
 const corsHandler = cors({
-  origin: '*', // Permet toutes les origines
-  methods: ['POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: true, // Permet toutes les origines de manière plus sécurisée
+  methods: ['POST', 'OPTIONS', 'GET'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
   maxAge: 3600
 });
 
 export const uploadEpub = functions.https.onRequest((request, response) => {
-  // Envelopper toute la logique dans le middleware CORS
   return corsHandler(request, response, async () => {
     try {
       console.log('Début de la fonction uploadEpub');
       
-      // Vérifier la méthode HTTP
       if (request.method !== 'POST') {
         console.error('Méthode non autorisée:', request.method);
         throw new functions.https.HttpsError('invalid-argument', 'Method not allowed');
       }
 
-      // Vérifier le contenu de la requête
       console.log('Vérification du contenu de la requête');
       const { content, filename } = request.body;
       if (!content || !filename) {
@@ -41,12 +38,10 @@ export const uploadEpub = functions.https.onRequest((request, response) => {
       console.log('Création du buffer à partir du contenu HTML');
       const buffer = Buffer.from(content);
 
-      // Créer une référence au fichier dans Firebase Storage
       console.log('Création de la référence Storage pour:', filename);
       const bucket = storage.bucket();
       const file = bucket.file(`epubs/${filename}`);
 
-      // Upload le fichier
       console.log('Début de l\'upload du fichier');
       await file.save(buffer, {
         metadata: {
@@ -55,11 +50,10 @@ export const uploadEpub = functions.https.onRequest((request, response) => {
       });
       console.log('Fichier uploadé avec succès');
 
-      // Générer une URL de téléchargement
       console.log('Génération de l\'URL signée');
       const [url] = await file.getSignedUrl({
         action: 'read',
-        expires: Date.now() + 7 * 24 * 60 * 60 * 1000 // URL valide 7 jours
+        expires: Date.now() + 7 * 24 * 60 * 60 * 1000
       });
       console.log('URL générée avec succès:', url);
 
@@ -87,9 +81,7 @@ export const uploadEpub = functions.https.onRequest((request, response) => {
 });
 
 export const generateStory = functions.https.onRequest((request, response) => {
-  // Envelopper toute la logique dans le middleware CORS
   return corsHandler(request, response, async () => {
-    // Handle preflight request
     if (request.method === 'OPTIONS') {
       response.status(204).send('');
       return;
@@ -129,10 +121,8 @@ export const generateStory = functions.https.onRequest((request, response) => {
         );
       }
 
-      // Génération d'un id_stories unique
       const uniqueId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      // Formatage des données pour Firestore
       const storyData = {
         id_stories: uniqueId,
         story_text: story,
@@ -145,22 +135,10 @@ export const generateStory = functions.https.onRequest((request, response) => {
 
       console.log('Story data formatted:', JSON.stringify(storyData));
       
-      // Ajout des en-têtes CORS explicites
-      response.set('Access-Control-Allow-Origin', '*');
-      response.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      response.set('Access-Control-Max-Age', '3600');
-      
       response.json({ data: storyData });
 
     } catch (error) {
       console.error('Error generating story:', error);
-      
-      // Ajout des en-têtes CORS même en cas d'erreur
-      response.set('Access-Control-Allow-Origin', '*');
-      response.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      response.set('Access-Control-Max-Age', '3600');
       
       if (error instanceof functions.https.HttpsError) {
         response.status(400).json({ 
