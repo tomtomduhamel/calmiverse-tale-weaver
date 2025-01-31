@@ -39,7 +39,6 @@ export const uploadEpub = functions.https.onRequest((request, response) => {
       }
 
       console.log('Création du buffer à partir du contenu HTML');
-      // Créer un buffer à partir du contenu HTML brut
       const buffer = Buffer.from(content);
 
       // Créer une référence au fichier dans Firebase Storage
@@ -127,7 +126,7 @@ export const generateStory = functions.https.onCall(async (data, context) => {
 
     // Formatage des données pour Firestore
     const storyData = {
-      id_stories: uniqueId, // Ajout de l'id_stories unique
+      id_stories: uniqueId,
       story_text: story,
       story_summary: "Résumé en cours de génération...",
       status: 'pending',
