@@ -3,6 +3,8 @@ import { MessageCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
 import ChatHeader from './ChatHeader';
@@ -11,24 +13,34 @@ import type { ChatMessage as ChatMessageType } from '@/types/chat';
 
 interface StoryChatProps {
   onSwitchMode: () => void;
+  selectedChild?: {
+    name: string;
+    age?: number;
+    teddyName?: string;
+  };
 }
 
-const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
+const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) => {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { processUserMessage } = useStoryChat();
-  
+  const { toast } = useToast();
+  const functions = getFunctions();
+  const generateStory = httpsCallable(functions, 'generateStory');
+
   useEffect(() => {
     const welcomeMessage: ChatMessageType = {
       id: '1',
       type: 'ai',
-      content: "Bonjour ! Je suis Calmi, et je vais t'aider à créer une belle histoire pour enfants. Pour commencer, dis-moi pour qui tu souhaites créer cette histoire ? Tu peux mentionner un ou plusieurs enfants.",
+      content: selectedChild 
+        ? `Bonjour ! Je suis Calmi, et je vais t'aider à créer une belle histoire pour ${selectedChild.name}. Dis-moi quel genre d'histoire tu aimerais créer ?`
+        : "Bonjour ! Je suis Calmi, et je vais t'aider à créer une belle histoire pour enfants. Pour commencer, dis-moi pour qui tu souhaites créer cette histoire ?",
       timestamp: new Date(),
     };
     setMessages([welcomeMessage]);
-  }, []);
+  }, [selectedChild]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -38,7 +50,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isGenerating) return;
 
     const userMessage: ChatMessageType = {
       id: Date.now().toString(),
@@ -49,14 +61,46 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
 
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    setIsTyping(true);
+    setIsGenerating(true);
 
-    // Simuler un délai de réponse naturel
-    setTimeout(() => {
-      const aiResponse = processUserMessage(userMessage.content);
-      setMessages(prev => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 1000);
+    try {
+      // Construire le prompt en incluant le contexte de l'enfant
+      const prompt = selectedChild 
+        ? `Crée une histoire pour ${selectedChild.name}${selectedChild.teddyName ? ` qui a un doudou nommé ${selectedChild.teddyName}` : ''}. Contexte de la conversation : ${userMessage.content}`
+        : userMessage.content;
+
+      const result = await generateStory({ prompt });
+      
+      // @ts-ignore - Ignorer l'erreur de typage pour data
+      const story = result.data;
+
+      if (story) {
+        const aiResponse: ChatMessageType = {
+          id: `ai-${Date.now()}`,
+          type: 'ai',
+          content: story.story_text,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, aiResponse]);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la génération de l\'histoire:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la génération de l'histoire. Veuillez réessayer.",
+        variant: "destructive",
+      });
+
+      const errorMessage: ChatMessageType = {
+        id: `error-${Date.now()}`,
+        type: 'ai',
+        content: "Désolé, je n'ai pas pu générer l'histoire. Pourrions-nous réessayer ?",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -67,7 +111,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
         {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
         ))}
-        {isTyping && <TypingIndicator />}
+        {isGenerating && <TypingIndicator />}
       </ScrollArea>
 
       <form onSubmit={handleSendMessage} className="p-4 border-t border-primary/20">
@@ -77,8 +121,13 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode }) => {
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Écris ta réponse ici..."
             className="flex-1 bg-transparent border-primary/20 focus:border-primary"
+            disabled={isGenerating}
           />
-          <Button type="submit" className="bg-primary hover:bg-primary/90">
+          <Button 
+            type="submit" 
+            className="bg-primary hover:bg-primary/90"
+            disabled={isGenerating || !inputValue.trim()}
+          >
             <MessageCircle className="h-5 w-5" />
           </Button>
         </div>
