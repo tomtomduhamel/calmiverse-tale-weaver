@@ -12,9 +12,10 @@ const openai = new OpenAI({
 
 // Configuration explicite de CORS
 const corsHandler = cors({
-  origin: true,
-  methods: ['POST'],
-  allowedHeaders: ['Content-Type'],
+  origin: true, // Permet toutes les origines en développement
+  methods: ['POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
   maxAge: 3600
 });
 
@@ -87,6 +88,7 @@ export const uploadEpub = functions.https.onRequest((request, response) => {
 });
 
 export const generateStory = functions.https.onRequest((request, response) => {
+  // Envelopper toute la logique dans le middleware CORS
   return corsHandler(request, response, async () => {
     try {
       if (!request.body.data?.prompt) {
@@ -137,6 +139,13 @@ export const generateStory = functions.https.onRequest((request, response) => {
       };
 
       console.log('Story data formatted:', JSON.stringify(storyData));
+      
+      // Ajout des en-têtes CORS explicites
+      response.set('Access-Control-Allow-Origin', '*');
+      response.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      response.set('Access-Control-Max-Age', '3600');
+      
       response.json({ data: storyData });
 
     } catch (error) {
