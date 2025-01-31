@@ -12,10 +12,9 @@ const openai = new OpenAI({
 
 // Configuration explicite de CORS
 const corsHandler = cors({
-  origin: true, // Permet toutes les origines en développement
+  origin: '*', // Permet toutes les origines
   methods: ['POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
   maxAge: 3600
 });
 
@@ -90,6 +89,12 @@ export const uploadEpub = functions.https.onRequest((request, response) => {
 export const generateStory = functions.https.onRequest((request, response) => {
   // Envelopper toute la logique dans le middleware CORS
   return corsHandler(request, response, async () => {
+    // Handle preflight request
+    if (request.method === 'OPTIONS') {
+      response.status(204).send('');
+      return;
+    }
+
     try {
       if (!request.body.data?.prompt) {
         throw new functions.https.HttpsError(
