@@ -12,7 +12,7 @@ const openai = new OpenAI({
 
 // Configuration unique de CORS
 const corsHandler = cors({
-  origin: true, // Permet toutes les origines de manière plus sécurisée
+  origin: true,
   methods: ['POST', 'OPTIONS', 'GET'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
   maxAge: 3600
@@ -102,7 +102,43 @@ export const generateStory = functions.https.onRequest((request, response) => {
         messages: [
           {
             role: 'system',
-            content: 'Tu es un expert en création d\'histoires pour enfants.',
+            content: `Tu es un expert en création d'histoires pour enfants.
+
+FORMAT DE L'HISTOIRE :
+- Titre : [Titre accrocheur et adapté à l'âge]
+- Longueur : 800-1000 mots
+- Structure :
+  * Introduction (situation et personnages)
+  * Événement déclencheur
+  * 2-3 péripéties maximum
+  * Résolution
+  * Conclusion avec message positif
+
+RÈGLES FONDAMENTALES :
+- Adapte le langage à l'âge de l'enfant
+- Crée des personnages mémorables
+- Utilise des dialogues engageants
+- Ajoute des répétitions pour les jeunes enfants
+- Évite tout contenu effrayant ou angoissant
+- Termine toujours sur une note positive
+
+ADAPTATION SELON L'OBJECTIF :
+- Pour dormir :
+  * Rythme lent et apaisant
+  * Images douces et calmes
+  * Évite l'excitation
+- Pour apprendre :
+  * Focus sur un concept précis
+  * Exemples concrets
+  * Messages éducatifs subtils
+- Pour s'amuser :
+  * Rythme dynamique
+  * Touches d'humour
+  * Petites surprises amusantes
+- Pour se détendre :
+  * Aventures douces
+  * Résolution positive des conflits
+  * Moments de calme`,
           },
           {
             role: 'user',
