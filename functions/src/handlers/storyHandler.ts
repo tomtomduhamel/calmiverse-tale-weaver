@@ -10,7 +10,11 @@ if (!admin.apps.length) {
 
 export const generateStory = functions.https.onRequest((request, response) => {
   return corsHandler(request, response, async () => {
+    // Gérer les requêtes OPTIONS pour le preflight CORS
     if (request.method === 'OPTIONS') {
+      response.set('Access-Control-Allow-Origin', '*');
+      response.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
       response.status(204).send('');
       return;
     }
@@ -29,7 +33,6 @@ export const generateStory = functions.https.onRequest((request, response) => {
 
       const storyData = await generateStoryWithAI(objective, childrenNames);
       
-      // Mise à jour du document dans Firestore avec plus de logs
       console.log('Tentative de mise à jour Firestore pour l\'histoire:', storyData.id_stories);
       const storyRef = admin.firestore().doc(`stories/${storyData.id_stories}`);
       
