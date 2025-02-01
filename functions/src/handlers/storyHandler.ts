@@ -3,6 +3,11 @@ import * as admin from 'firebase-admin';
 import { corsHandler } from '../middleware/cors';
 import { generateStoryWithAI } from '../services/openaiService';
 
+// Initialisation de Firebase Admin si ce n'est pas déjà fait
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
 export const generateStory = functions.https.onRequest((request, response) => {
   return corsHandler(request, response, async () => {
     if (request.method === 'OPTIONS') {
@@ -24,15 +29,19 @@ export const generateStory = functions.https.onRequest((request, response) => {
 
       const storyData = await generateStoryWithAI(objective, childrenNames);
       
-      // Mise à jour du document dans Firestore
+      // Mise à jour du document dans Firestore avec plus de logs
+      console.log('Tentative de mise à jour Firestore pour l\'histoire:', storyData.id_stories);
       const storyRef = admin.firestore().doc(`stories/${storyData.id_stories}`);
-      await storyRef.update({
+      
+      const updateData = {
         story_text: storyData.story_text,
         story_summary: storyData.story_summary,
         status: 'completed',
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-
+      };
+      
+      console.log('Données de mise à jour:', updateData);
+      await storyRef.update(updateData);
       console.log('Histoire mise à jour dans Firestore avec succès:', storyData.id_stories);
       
       response.json({ data: storyData });
