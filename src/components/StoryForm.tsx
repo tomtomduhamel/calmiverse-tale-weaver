@@ -31,6 +31,11 @@ const StoryForm: React.FC<StoryFormProps> = ({
     setChildAge,
   } = useChildFormLogic(onCreateChild);
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    console.log("Données du formulaire soumises:", formData);
+    handleSubmit(e);
+  };
+
   const handleModeSwitch = () => {
     setCreationMode(mode => mode === "classic" ? "chat" : "classic");
   };
@@ -46,7 +51,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
   return (
     <div className="w-full max-w-4xl mx-auto">
       {creationMode === "classic" ? (
-        <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
+        <form onSubmit={handleFormSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
           <StoryFormHeader onModeSwitch={handleModeSwitch} />
 
           <ChildrenSelection

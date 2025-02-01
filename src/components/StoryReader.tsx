@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,6 +22,10 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [showReadingGuide, setShowReadingGuide] = useState(false);
+
+  useEffect(() => {
+    console.log("Histoire reçue dans le Reader:", story);
+  }, [story]);
 
   if (!story) {
     return (

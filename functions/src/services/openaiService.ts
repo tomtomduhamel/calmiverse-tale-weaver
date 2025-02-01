@@ -5,6 +5,8 @@ const openai = new OpenAI({
 });
 
 export const generateStoryWithAI = async (objective: string, childrenNames: string[]) => {
+  console.log("Début de la génération avec OpenAI - Objectif:", objective, "Enfants:", childrenNames);
+  
   const completion = await openai.chat.completions.create({
     model: 'gpt-4',
     messages: [
@@ -75,6 +77,8 @@ CONTRAINTES SPÉCIFIQUES :
     max_tokens: 4000,
   });
 
+  console.log("Réponse d'OpenAI reçue:", completion.choices[0].message);
+
   const story = completion.choices[0].message.content;
   if (!story) {
     throw new Error('Aucune histoire n\'a été générée');
@@ -82,7 +86,7 @@ CONTRAINTES SPÉCIFIQUES :
 
   const uniqueId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-  return {
+  const storyData = {
     id_stories: uniqueId,
     story_text: story,
     story_summary: "Résumé en cours de génération...",
@@ -91,4 +95,7 @@ CONTRAINTES SPÉCIFIQUES :
     title: "Nouvelle histoire",
     preview: story.substring(0, 200) + "..."
   };
+
+  console.log("Données de l'histoire formatées:", storyData);
+  return storyData;
 };

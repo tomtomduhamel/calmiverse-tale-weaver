@@ -17,6 +17,7 @@ export const generateStory = functions.https.onRequest((request, response) => {
         );
       }
 
+      console.log('Données reçues dans la fonction:', request.body.data);
       console.log('Generating story with prompt:', request.body.data.prompt);
       const { objective, childrenNames } = request.body.data;
 
