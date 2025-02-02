@@ -36,6 +36,10 @@ interface GenerateStoryParams {
   childrenNames?: string[];
 }
 
+interface CloudFunctionResponse {
+  data: StoryResponse;
+}
+
 const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) => {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -44,7 +48,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
   const { processUserMessage } = useStoryChat();
   const { toast } = useToast();
   const functions = getFunctions();
-  const generateStory = httpsCallable<GenerateStoryParams, { data: StoryResponse }>(
+  const generateStory = httpsCallable<GenerateStoryParams, CloudFunctionResponse>(
     functions, 
     'generateStory'
   );
@@ -96,7 +100,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
         const aiResponse: ChatMessageType = {
           id: `ai-${Date.now()}`,
           type: 'ai',
-          content: result.data.data.story_text, // Correction ici : accès à result.data.data.story_text
+          content: result.data.story_text,
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, aiResponse]);
