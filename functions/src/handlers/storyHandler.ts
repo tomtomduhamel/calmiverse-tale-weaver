@@ -9,6 +9,7 @@ if (!admin.apps.length) {
 
 export const generateStory = functions.https.onRequest((request, response) => {
   return corsHandler(request, response, async () => {
+    // Gérer explicitement la requête OPTIONS
     if (request.method === 'OPTIONS') {
       response.set('Access-Control-Allow-Origin', '*');
       response.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
