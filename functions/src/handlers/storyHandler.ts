@@ -12,6 +12,12 @@ export const generateStory = functions.https.onRequest((request, response) => {
     console.log('Origine de la requête:', request.headers.origin);
     console.log('Méthode de la requête:', request.method);
     
+    // Ajout des headers CORS manuellement
+    response.set('Access-Control-Allow-Origin', '*');
+    response.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.set('Access-Control-Max-Age', '3600');
+    
     if (request.method === 'OPTIONS') {
       response.status(204).send('');
       return;
