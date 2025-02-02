@@ -24,6 +24,16 @@ interface StoryResponse {
   story_text: string;
   story_summary: string;
   id_stories: string;
+  status: 'pending' | 'completed' | 'read';
+  createdAt: Date;
+  title: string;
+  preview: string;
+}
+
+interface GenerateStoryParams {
+  prompt: string;
+  objective?: string;
+  childrenNames?: string[];
 }
 
 const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) => {
@@ -34,7 +44,10 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
   const { processUserMessage } = useStoryChat();
   const { toast } = useToast();
   const functions = getFunctions();
-  const generateStory = httpsCallable<{ prompt: string }, { data: StoryResponse }>(functions, 'generateStory');
+  const generateStory = httpsCallable<GenerateStoryParams, { data: StoryResponse }>(
+    functions, 
+    'generateStory'
+  );
 
   useEffect(() => {
     const welcomeMessage: ChatMessageType = {
@@ -74,7 +87,10 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
         ? `Crée une histoire pour ${selectedChild.name}${selectedChild.teddyName ? ` qui a un doudou nommé ${selectedChild.teddyName}` : ''}. Contexte de la conversation : ${userMessage.content}`
         : userMessage.content;
 
-      const result = await generateStory({ prompt });
+      const result = await generateStory({ 
+        prompt,
+        childrenNames: selectedChild ? [selectedChild.name] : undefined
+      });
       
       if (result.data) {
         const aiResponse: ChatMessageType = {
