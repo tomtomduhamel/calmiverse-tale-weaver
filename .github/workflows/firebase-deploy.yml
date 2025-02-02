@@ -16,7 +16,9 @@ jobs:
           node-version: '18'
           
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install date-fns@^2.28.0
+          npm install
         
       - name: Install Firebase Tools
         run: npm install -g firebase-tools
