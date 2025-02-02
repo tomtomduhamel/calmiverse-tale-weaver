@@ -6,7 +6,8 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://id-preview--a3a7afdb-6cda-4ac0-ae38-aab4d04d9624.lovable.app',
-  'https://a3a7afdb-6cda-4ac0-ae38-aab4d04d9624.lovableproject.com'
+  'https://a3a7afdb-6cda-4ac0-ae38-aab4d04d9624.lovableproject.com',
+  'https://calmiverse-tale-weaver.web.app'
 ];
 
 export const corsHandler = cors({
