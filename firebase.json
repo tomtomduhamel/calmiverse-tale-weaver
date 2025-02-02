@@ -6,6 +6,7 @@
     ]
   },
   "hosting": {
+    "site": "calmi-99482",
     "public": "dist",
     "ignore": [
       "firebase.json",
