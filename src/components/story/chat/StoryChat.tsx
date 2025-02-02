@@ -20,6 +20,12 @@ interface StoryChatProps {
   };
 }
 
+interface StoryResponse {
+  story_text: string;
+  story_summary: string;
+  id_stories: string;
+}
+
 const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) => {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -28,7 +34,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
   const { processUserMessage } = useStoryChat();
   const { toast } = useToast();
   const functions = getFunctions();
-  const generateStory = httpsCallable(functions, 'generateStory');
+  const generateStory = httpsCallable<{ prompt: string }, { data: StoryResponse }>(functions, 'generateStory');
 
   useEffect(() => {
     const welcomeMessage: ChatMessageType = {
@@ -64,21 +70,17 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
     setIsGenerating(true);
 
     try {
-      // Construire le prompt en incluant le contexte de l'enfant
       const prompt = selectedChild 
         ? `Crée une histoire pour ${selectedChild.name}${selectedChild.teddyName ? ` qui a un doudou nommé ${selectedChild.teddyName}` : ''}. Contexte de la conversation : ${userMessage.content}`
         : userMessage.content;
 
       const result = await generateStory({ prompt });
       
-      // @ts-ignore - Ignorer l'erreur de typage pour data
-      const story = result.data;
-
-      if (story) {
+      if (result.data) {
         const aiResponse: ChatMessageType = {
           id: `ai-${Date.now()}`,
           type: 'ai',
-          content: story.story_text,
+          content: result.data.story_text,
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, aiResponse]);
