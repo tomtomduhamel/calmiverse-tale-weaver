@@ -3,18 +3,17 @@ import * as admin from 'firebase-admin';
 import { corsHandler } from '../middleware/cors';
 import { generateStoryWithAI } from '../services/openaiService';
 
-// Initialisation de Firebase Admin si ce n'est pas déjà fait
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 export const generateStory = functions.https.onRequest((request, response) => {
   return corsHandler(request, response, async () => {
-    // Gérer les requêtes OPTIONS pour le preflight CORS
     if (request.method === 'OPTIONS') {
       response.set('Access-Control-Allow-Origin', '*');
-      response.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      response.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      response.set('Access-Control-Max-Age', '86400');
       response.status(204).send('');
       return;
     }
@@ -28,8 +27,8 @@ export const generateStory = functions.https.onRequest((request, response) => {
       }
 
       console.log('Données reçues dans la fonction:', request.body.data);
-      console.log('Generating story with prompt:', request.body.data.prompt);
       const { objective, childrenNames } = request.body.data;
+      console.log('Generating story with prompt:', request.body.data.prompt);
 
       const storyData = await generateStoryWithAI(objective, childrenNames);
       

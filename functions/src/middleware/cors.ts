@@ -1,15 +1,16 @@
 import cors from 'cors';
 
 export const corsHandler = cors({
-  origin: true, // Permet toutes les origines en développement
+  origin: true,
   credentials: true,
-  methods: ['POST', 'OPTIONS', 'GET'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',
     'Authorization',
     'X-Requested-With',
     'Accept',
-    'Origin'
+    'Origin',
+    'Access-Control-Allow-Headers'
   ],
-  maxAge: 3600
+  maxAge: 86400 // 24 heures
 });
