@@ -5,12 +5,12 @@ const allowedOrigins = [
   'https://calmi-99482.firebaseapp.com',
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://id-preview--a3a7afdb-6cda-4ac0-ae38-aab4d04d9624.lovable.app'
+  'https://id-preview--a3a7afdb-6cda-4ac0-ae38-aab4d04d9624.lovable.app',
+  'https://a3a7afdb-6cda-4ac0-ae38-aab4d04d9624.lovableproject.com'
 ];
 
 export const corsHandler = cors({
   origin: (origin, callback) => {
-    // Permettre les requêtes sans origine (comme les appels API directs)
     if (!origin) {
       callback(null, true);
       return;
@@ -20,7 +20,7 @@ export const corsHandler = cors({
       callback(null, true);
     } else {
       console.warn(`Origine non autorisée: ${origin}`);
-      callback(null, true); // Temporairement autoriser toutes les origines
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
