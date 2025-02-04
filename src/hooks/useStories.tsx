@@ -46,7 +46,7 @@ export const useStories = (children: any[] = []) => {
       console.error('Erreur lors de la création de l\'histoire:', error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création de l'histoire",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
         variant: "destructive",
       });
       throw error;
