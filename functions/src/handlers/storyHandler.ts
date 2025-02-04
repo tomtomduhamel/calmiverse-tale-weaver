@@ -7,7 +7,7 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-export const generateStory = functions.https.onRequest(async (request, response) => {
+export const generateStory = functions.https.onRequest((request, response) => {
   // Ajout des headers CORS avant toute chose
   response.set('Access-Control-Allow-Origin', '*');
   response.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
