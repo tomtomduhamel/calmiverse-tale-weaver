@@ -2,9 +2,11 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 
-interface StoryGenerationData {
-  objective: string;
-  childrenNames: string[];
+interface StoryGenerationRequest {
+  data: {
+    objective: string;
+    childrenNames: string[];
+  };
 }
 
 if (!admin.apps.length) {
@@ -12,7 +14,7 @@ if (!admin.apps.length) {
 }
 
 export const generateStory = functions.https.onCall(
-  async (data: StoryGenerationData, context) => {
+  async (data: StoryGenerationRequest['data'], context) => {
     try {
       console.log('Données reçues:', data);
       
