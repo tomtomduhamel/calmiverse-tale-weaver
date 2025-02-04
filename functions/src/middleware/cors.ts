@@ -1,7 +1,7 @@
 import cors from 'cors';
 
 export const corsHandler = cors({
-  origin: '*', // Permet toutes les origines
+  origin: '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
