@@ -11,7 +11,6 @@ export const useStories = (children: any[] = []) => {
   const { createStory, deleteStory } = useStoryMutations();
   const { toast } = useToast();
   const functions = getFunctions();
-  const generateStoryFunction = httpsCallable(functions, 'generateStory');
 
   const handleStoryCreation = async (formData: { childrenIds: string[], objective: string }) => {
     try {
@@ -21,22 +20,19 @@ export const useStories = (children: any[] = []) => {
       if (storyId) {
         console.log('Histoire créée dans Firestore avec ID:', storyId);
         
-        // Appeler la fonction Cloud pour générer le contenu
+        // Utiliser httpsCallable pour la fonction Cloud
+        const generateStoryFunction = httpsCallable(functions, 'generateStory');
         const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
         const childrenNames = selectedChildren.map(child => child.name);
         
         console.log('Appel de la fonction Cloud avec les données:', {
-          prompt: formData.objective,
           objective: formData.objective,
           childrenNames: childrenNames
         });
 
         const result = await generateStoryFunction({
-          data: {
-            prompt: formData.objective,
-            objective: formData.objective,
-            childrenNames: childrenNames
-          }
+          objective: formData.objective,
+          childrenNames: childrenNames
         });
 
         console.log('Résultat de la fonction Cloud:', result);

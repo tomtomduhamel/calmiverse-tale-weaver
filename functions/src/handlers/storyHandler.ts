@@ -1,6 +1,5 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { corsHandler } from '../middleware/cors';
 import { generateStoryWithAI } from '../services/openaiService';
 
 if (!admin.apps.length) {
@@ -11,10 +10,10 @@ export const generateStory = functions.https.onCall(async (data, context) => {
   try {
     console.log('Données reçues:', data);
     
-    if (!data?.prompt) {
+    if (!data?.objective) {
       throw new functions.https.HttpsError(
         'invalid-argument',
-        'Le prompt est requis'
+        'L\'objectif est requis'
       );
     }
 
@@ -34,7 +33,7 @@ export const generateStory = functions.https.onCall(async (data, context) => {
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
     
-    return { data: storyData };
+    return storyData;
 
   } catch (error) {
     console.error('Erreur:', error);
