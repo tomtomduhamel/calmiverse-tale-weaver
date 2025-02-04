@@ -2,6 +2,13 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { corsHandler } from '../middleware/cors';
 
+// Ajouter la vérification d'initialisation ici
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault()
+  });
+}
+
 const storage = admin.storage();
 
 export const uploadEpub = functions.https.onRequest((request, response) => {
