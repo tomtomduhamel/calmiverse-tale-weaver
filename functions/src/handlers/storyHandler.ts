@@ -3,10 +3,8 @@ import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 
 interface StoryGenerationRequest {
-  data: {
-    objective: string;
-    childrenNames: string[];
-  };
+  objective: string;
+  childrenNames: string[];
 }
 
 if (!admin.apps.length) {
@@ -14,7 +12,7 @@ if (!admin.apps.length) {
 }
 
 export const generateStory = functions.https.onCall(
-  async (data: StoryGenerationRequest['data'], context) => {
+  async (data: StoryGenerationRequest, context) => {
     try {
       console.log('Données reçues:', data);
       
