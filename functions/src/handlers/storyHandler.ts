@@ -15,8 +15,6 @@ if (!admin.apps.length) {
 export const generateStory = functions.https.onCall(
   async (data: StoryGenerationRequest, context) => {
     try {
-      console.log('Données reçues:', data);
-      
       if (!data?.objective) {
         throw new functions.https.HttpsError(
           'invalid-argument',
@@ -31,14 +29,13 @@ export const generateStory = functions.https.onCall(
       const storyData = await generateStoryWithAI(objective, childrenNames);
       console.log('Histoire générée:', storyData);
       
-      const storyRef = admin.firestore().doc(`stories/${storyData.id_stories}`);
+      const storyRef = admin.firestore().collection('stories').doc(storyData.id_stories);
       
-      await storyRef.update({
-        story_text: storyData.story_text,
-        story_summary: storyData.story_summary,
+      await storyRef.set({
+        ...storyData,
         status: 'completed',
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+      }, { merge: true });
       
       return storyData;
 
