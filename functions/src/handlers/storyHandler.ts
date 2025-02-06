@@ -1,3 +1,4 @@
+
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
@@ -12,7 +13,7 @@ if (!admin.apps.length) {
 }
 
 export const generateStory = functions.https.onCall(
-  async (data: StoryGenerationRequest, context) => {
+  async (data: functions.https.CallableRequest<StoryGenerationRequest>['data'], context) => {
     try {
       console.log('Données reçues:', data);
       
