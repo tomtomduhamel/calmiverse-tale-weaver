@@ -13,7 +13,7 @@ if (!admin.apps.length) {
 }
 
 export const generateStory = functions.https.onCall(
-  async (data: functions.https.CallableRequest<StoryGenerationRequest>['data'], context) => {
+  async (data: StoryGenerationRequest, context) => {
     try {
       console.log('Données reçues:', data);
       
