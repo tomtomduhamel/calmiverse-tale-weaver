@@ -1,3 +1,4 @@
+
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import type { Story } from '@/types/story';
 
@@ -5,28 +6,38 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
   try {
     console.log("Début de la génération de l'EPUB pour l'histoire:", story.title);
     
-    // Créer le contenu HTML brut
+    // Create clean HTML content
+    const sanitizedTitle = story.title.replace(/[<>&]/g, '');
+    const sanitizedText = story.story_text
+      .replace(/[<>&]/g, '')
+      .split('\n')
+      .map(p => p.trim())
+      .filter(p => p.length > 0)
+      .map(p => `<p>${p}</p>`)
+      .join('');
+    
     const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>${story.title}</title>
+          <title>${sanitizedTitle}</title>
+          <meta charset="utf-8">
         </head>
         <body>
-          <h1>${story.title}</h1>
-          ${story.story_text.split('\n').map(p => `<p>${p}</p>`).join('')}
+          <h1>${sanitizedTitle}</h1>
+          ${sanitizedText}
         </body>
       </html>
     `;
 
     const filename = `${story.id}_${Date.now()}.epub`;
 
-    // Appeler la Cloud Function pour l'upload
+    // Call Cloud Function for upload
     const functions = getFunctions();
     const uploadEpubFn = httpsCallable(functions, 'uploadEpub');
     const result = await uploadEpubFn({ content: htmlContent, filename });
 
-    // @ts-ignore - nous savons que result.data contient url
+    // @ts-ignore - we know result.data contains url
     const { url } = result.data;
     
     console.log("EPUB généré et uploadé avec succès:", url);

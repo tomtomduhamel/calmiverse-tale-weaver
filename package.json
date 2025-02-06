@@ -51,7 +51,7 @@
     "cors": "^2.8.5",
     "date-fns": "^3.3.1",
     "embla-carousel-react": "^8.3.0",
-    "epub-gen": "^0.1.0",
+    "epubjs": "^0.3.93",
     "firebase": "^11.1.0",
     "firebase-admin": "^13.0.2",
     "firebase-functions": "^6.3.0",
