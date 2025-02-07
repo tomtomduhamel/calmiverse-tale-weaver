@@ -3,7 +3,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 
-// Define the request data interface
+// Définition de l'interface pour les données de la requête
 export interface StoryGenerationRequest {
   objective: string;
   childrenNames: string[];
@@ -13,8 +13,9 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-export const generateStory = functions.https.onCall(
-  async (data: StoryGenerationRequest, context: functions.https.CallableContext) => {
+// Mise à jour de la signature de la fonction avec le bon typage
+export const generateStory = functions.https.onCall<StoryGenerationRequest>(
+  async (data, context) => {
     try {
       // Validation des données entrantes
       if (!data?.objective) {
