@@ -13,7 +13,7 @@ if (!admin.apps.length) {
 }
 
 export const generateStory = functions.https.onCall(
-  async (data: StoryGenerationRequest, context) => {
+  async (data: StoryGenerationRequest, context: functions.https.CallableContext) => {
     try {
       if (!data?.objective) {
         throw new functions.https.HttpsError(
