@@ -15,4 +15,3 @@ try {
 export {
   generateStory
 };
-
