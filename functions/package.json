@@ -1,3 +1,4 @@
+
 {
   "name": "functions",
   "scripts": {
@@ -6,16 +7,19 @@
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "use-node-18": "nvm use 18"
   },
   "engines": {
-    "node": "18"
+    "node": ">=18.0.0 <19.0.0",
+    "npm": ">=9.0.0"
   },
   "main": "lib/index.js",
   "dependencies": {
     "@google-cloud/storage": "^7.15.0",
     "firebase-admin": "^13.0.2",
-    "firebase-functions": "^6.3.1"
+    "firebase-functions": "^6.3.1",
+    "openai": "^4.28.0"
   },
   "devDependencies": {
     "typescript": "^4.9.5"
