@@ -13,9 +13,9 @@ if (!admin.apps.length) {
 }
 
 export const generateStory = functions.https.onCall(
-  async (request: { data: StoryGenerationRequest }) => {
+  async (data: StoryGenerationRequest) => {
     try {
-      const { objective, childrenNames } = request.data;
+      const { objective, childrenNames } = data;
 
       // Validation des données entrantes
       if (!objective) {
