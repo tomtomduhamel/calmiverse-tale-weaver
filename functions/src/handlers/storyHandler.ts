@@ -14,8 +14,8 @@ if (!admin.apps.length) {
 }
 
 // Mise à jour de la signature de la fonction avec le bon typage
-export const generateStory = functions.https.onCall<StoryGenerationRequest>(
-  async (data, context) => {
+export const generateStory = functions.https.onCall(
+  async (data: StoryGenerationRequest, context: functions.https.CallableContext) => {
     try {
       // Validation des données entrantes
       if (!data?.objective) {
