@@ -1,6 +1,5 @@
 
 import OpenAI from 'openai';
-import * as functions from 'firebase-functions';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
