@@ -8,10 +8,10 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "use-node-18": "nvm use 18"
+    "use-node-20": "nvm use 20"
   },
   "engines": {
-    "node": "18",
+    "node": "20",
     "npm": ">=9.0.0"
   },
   "main": "lib/index.js",
