@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import type { Story } from '@/types/story';
 import { useStoriesQuery } from './stories/useStoriesQuery';
@@ -14,13 +15,11 @@ export const useStories = (children: any[] = []) => {
 
   const handleStoryCreation = async (formData: { childrenIds: string[], objective: string }) => {
     try {
-      // Créer d'abord l'histoire dans Firestore
       const storyId = await createStory(formData, children);
       
       if (storyId) {
         console.log('Histoire créée dans Firestore avec ID:', storyId);
         
-        // Utiliser httpsCallable pour la fonction Cloud
         const generateStoryFunction = httpsCallable(functions, 'generateStory');
         const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
         const childrenNames = selectedChildren.map(child => child.name);
@@ -42,7 +41,7 @@ export const useStories = (children: any[] = []) => {
       console.error('Erreur lors de la création de l\'histoire:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la génération de l'histoire",
         variant: "destructive",
       });
       throw error;

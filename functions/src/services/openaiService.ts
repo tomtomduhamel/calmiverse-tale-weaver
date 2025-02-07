@@ -1,8 +1,9 @@
+
 import OpenAI from 'openai';
 import * as functions from 'firebase-functions';
 
 const openai = new OpenAI({
-  apiKey: functions.config().openai.api_key,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export const generateStoryWithAI = async (objective: string, childrenNames: string[]) => {

@@ -12,12 +12,17 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-export const generateStory = functions.https.onCall(
-  async (request: functions.https.CallableRequest<StoryGenerationRequest>) => {
-    try {
-      const { objective, childrenNames } = request.data;
+const runtimeOpts = {
+  timeoutSeconds: 120,
+  memory: '1GB'
+};
 
-      // Validation des données entrantes
+export const generateStory = functions
+  .runWith(runtimeOpts)
+  .https.onCall(async (data: StoryGenerationRequest, context) => {
+    try {
+      const { objective, childrenNames } = data;
+
       if (!objective) {
         throw new functions.https.HttpsError(
           'invalid-argument',
@@ -56,5 +61,4 @@ export const generateStory = functions.https.onCall(
         error instanceof Error ? error.message : 'Unknown error'
       );
     }
-  }
-);
+  });
