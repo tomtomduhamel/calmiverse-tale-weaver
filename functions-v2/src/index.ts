@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /**
  * Import function triggers from their respective submodules:
  *
@@ -17,3 +18,23 @@ import * as logger from "firebase-functions/logger";
 //   logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
+=======
+
+import * as admin from 'firebase-admin';
+import { generateStory } from './handlers/storyHandler';
+
+try {
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault()
+    });
+  }
+} catch (error) {
+  console.error('Error initializing Firebase Admin:', error);
+}
+
+export {
+  generateStory
+};
+
+>>>>>>> 753fde53a2162a45e6de2b55ca5fc0a4fa2421d2
