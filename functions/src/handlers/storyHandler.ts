@@ -3,7 +3,6 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 
-// Définition de l'interface pour les données de la requête
 export interface StoryGenerationRequest {
   objective: string;
   childrenNames: string[];
@@ -13,26 +12,26 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-// Mise à jour de la signature de la fonction avec le bon typage
 export const generateStory = functions.https.onCall(
-  async (data: StoryGenerationRequest, context: functions.https.CallableContext) => {
+  async (request: { data: StoryGenerationRequest }) => {
     try {
+      const { objective, childrenNames } = request.data;
+
       // Validation des données entrantes
-      if (!data?.objective) {
+      if (!objective) {
         throw new functions.https.HttpsError(
           'invalid-argument',
           'L\'objectif est requis'
         );
       }
 
-      if (!Array.isArray(data.childrenNames)) {
+      if (!Array.isArray(childrenNames)) {
         throw new functions.https.HttpsError(
           'invalid-argument',
           'Les noms des enfants doivent être fournis dans un tableau'
         );
       }
 
-      const { objective, childrenNames } = data;
       console.log('Objectif:', objective);
       console.log('Noms des enfants:', childrenNames);
 
