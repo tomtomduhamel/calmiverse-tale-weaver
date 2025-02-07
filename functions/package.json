@@ -6,7 +6,7 @@
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions --set-env-vars CONTAINER_TIMEOUT=120",
+    "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "use-node-20": "nvm use 20"
   },
