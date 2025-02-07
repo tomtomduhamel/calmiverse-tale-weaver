@@ -15,7 +15,7 @@ if (!admin.apps.length) {
 export const generateStory = onCall(
   {
     timeoutSeconds: 120,
-    memory: '1GB',
+    memory: '1GiB',
   },
   async (request) => {
     try {
@@ -52,4 +52,3 @@ export const generateStory = onCall(
     }
   }
 );
-
