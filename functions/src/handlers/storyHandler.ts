@@ -1,5 +1,5 @@
 
-import * as functions from 'firebase-functions';
+import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 
@@ -12,29 +12,22 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-const runtimeOpts = {
-  timeoutSeconds: 120,
-  memory: '1GB'
-};
-
-export const generateStory = functions
-  .runWith(runtimeOpts)
-  .https.onCall(async (data: StoryGenerationRequest, context) => {
+export const generateStory = onCall(
+  {
+    timeoutSeconds: 120,
+    memory: '1GB',
+  },
+  async (request) => {
     try {
+      const data = request.data as StoryGenerationRequest;
       const { objective, childrenNames } = data;
 
       if (!objective) {
-        throw new functions.https.HttpsError(
-          'invalid-argument',
-          'L\'objectif est requis'
-        );
+        throw new Error('L\'objectif est requis');
       }
 
       if (!Array.isArray(childrenNames)) {
-        throw new functions.https.HttpsError(
-          'invalid-argument',
-          'Les noms des enfants doivent être fournis dans un tableau'
-        );
+        throw new Error('Les noms des enfants doivent être fournis dans un tableau');
       }
 
       console.log('Objectif:', objective);
@@ -55,10 +48,7 @@ export const generateStory = functions
 
     } catch (error) {
       console.error('Erreur:', error);
-      throw new functions.https.HttpsError(
-        'internal',
-        'Failed to generate story',
-        error instanceof Error ? error.message : 'Unknown error'
-      );
+      throw new Error(error instanceof Error ? error.message : 'Unknown error');
     }
-  });
+  }
+);
