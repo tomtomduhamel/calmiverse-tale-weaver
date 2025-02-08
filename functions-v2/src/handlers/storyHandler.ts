@@ -4,6 +4,11 @@ import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 import { defineSecret } from 'firebase-functions/params';
 
+// Initialize Firebase Admin if not already initialized
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
 export interface StoryGenerationRequest {
   objective: string;
   childrenNames: string[];
@@ -13,7 +18,7 @@ const openaiApiKey = defineSecret('OPENAI_API_KEY');
 
 export const generateStory = onCall(
   {
-    timeoutSeconds: 120,
+    timeoutSeconds: 540, // Increased timeout to 9 minutes
     memory: '1GiB',
     region: 'us-central1',
     secrets: [openaiApiKey],

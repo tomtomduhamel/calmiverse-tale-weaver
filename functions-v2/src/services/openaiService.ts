@@ -16,7 +16,7 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
 
     console.log("Création de la requête OpenAI");
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
