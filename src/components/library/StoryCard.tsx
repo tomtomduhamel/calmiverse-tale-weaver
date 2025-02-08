@@ -28,7 +28,8 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
     id: story.id,
     status: story.status,
     hasContent: Boolean(story.story_text?.trim()),
-    contentLength: story.story_text?.length
+    contentLength: story.story_text?.length,
+    preview: story.preview?.substring(0, 50)
   });
 
   const formatTitle = (text: string) => {
@@ -56,6 +57,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         description: "Mise à jour effectuée avec succès",
       });
     } catch (error) {
+      console.error('Erreur mise à jour favori:', error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour les favoris",
@@ -77,6 +79,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         description: "Mise à jour effectuée avec succès",
       });
     } catch (error) {
+      console.error('Erreur mise à jour statut:', error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le statut de lecture",
@@ -85,8 +88,10 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
     }
   };
 
+  const isStoryReady = story.status === 'completed' && story.story_text?.trim();
+
   const handleCardClick = () => {
-    if (story.status !== 'completed' || !story.story_text?.trim()) {
+    if (!isStoryReady) {
       console.log('Histoire non disponible:', {
         id: story.id,
         status: story.status,
@@ -99,19 +104,12 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
       return;
     }
     
-    console.log('Lecture de l\'histoire:', {
+    console.log('Lecture histoire:', {
       id: story.id,
       status: story.status,
       title: story.title
     });
     onClick();
-  };
-
-  const renderSummary = () => {
-    if (story.status === 'pending' || !story.story_text?.trim()) {
-      return "Histoire en cours de génération...";
-    }
-    return story.story_summary || story.preview || "Aucun résumé disponible";
   };
 
   return (
@@ -121,13 +119,13 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         bg-gradient-to-br from-card-start to-card-end
         hover:from-card-hover-start hover:to-card-hover-end
         shadow-soft hover:shadow-soft-lg animate-fade-in
-        ${story.status === 'completed' && story.story_text?.trim() ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
+        ${isStoryReady ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
       `}
       onClick={handleCardClick}
-      role={story.status === 'completed' && story.story_text?.trim() ? "button" : undefined}
-      tabIndex={story.status === 'completed' && story.story_text?.trim() ? 0 : undefined}
+      role={isStoryReady ? "button" : undefined}
+      tabIndex={isStoryReady ? 0 : undefined}
       onKeyDown={(e) => {
-        if (story.status === 'completed' && story.story_text?.trim() && (e.key === 'Enter' || e.key === ' ')) {
+        if (isStoryReady && (e.key === 'Enter' || e.key === ' ')) {
           handleCardClick();
         }
       }}
@@ -157,7 +155,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         </div>
 
         <p className="text-sm text-muted-foreground line-clamp-3">
-          {renderSummary()}
+          {story.status === 'pending' ? "Histoire en cours de génération..." : story.preview}
         </p>
 
         <StoryCardTags
@@ -170,7 +168,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
           Créée le {format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
         </p>
         
-        {(story.status !== 'completed' || !story.story_text?.trim()) ? (
+        {!isStoryReady ? (
           <Button
             className="w-full bg-secondary/50 cursor-not-allowed flex items-center gap-2 animate-pulse"
             disabled

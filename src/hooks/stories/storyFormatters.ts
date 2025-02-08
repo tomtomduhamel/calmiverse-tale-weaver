@@ -6,37 +6,31 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
   const data = doc.data();
   if (!data) throw new Error('Document data is undefined');
 
-  // Validation et conversion du timestamp
+  // Conversion du timestamp avec logging détaillé
   let createdAtDate;
   try {
     createdAtDate = data.createdAt instanceof Timestamp 
       ? data.createdAt.toDate() 
       : new Date();
+
+    console.log('Timestamp conversion:', {
+      original: data.createdAt,
+      converted: createdAtDate,
+      isTimestamp: data.createdAt instanceof Timestamp
+    });
   } catch (e) {
-    console.warn('Erreur lors de la conversion du timestamp:', e);
+    console.error('Erreur timestamp:', e);
     createdAtDate = new Date();
   }
 
-  // Validation et logging du statut
-  const providedStatus = data.status;
-  const validStatus = ['completed', 'pending', 'read'].includes(providedStatus) 
-    ? providedStatus 
-    : 'pending';
-
-  console.log('Formatage de l\'histoire:', {
-    id: doc.id,
-    status: {
-      original: providedStatus,
-      validated: validStatus
-    },
-    content: {
-      hasStoryText: Boolean(data.story_text?.trim()),
-      hasPreview: Boolean(data.preview?.trim()),
-      textLength: data.story_text?.length || 0
-    },
-    metadata: {
+  // Log détaillé des données brutes
+  console.log('Données brutes de Firestore:', {
+    docId: doc.id,
+    rawData: {
+      status: data.status,
+      storyText: data.story_text?.substring(0, 50) + '...',
       createdAt: createdAtDate,
-      authorId: data.authorId
+      title: data.title
     }
   });
 
@@ -49,7 +43,7 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     objective: data.objective || '',
     childrenIds: Array.isArray(data.childrenIds) ? [...data.childrenIds] : [],
     childrenNames: Array.isArray(data.childrenNames) ? [...data.childrenNames] : [],
-    status: validStatus,
+    status: data.status || 'pending',
     story_text: data.story_text || '',
     story_summary: data.story_summary || '',
     createdAt: createdAtDate,
@@ -58,11 +52,20 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     sharedWith: Array.isArray(data.sharedWith) ? [...data.sharedWith] : []
   };
 
+  // Log de l'objet formaté
+  console.log('Histoire formatée:', {
+    id: story.id,
+    status: story.status,
+    hasContent: Boolean(story.story_text?.trim()),
+    contentLength: story.story_text?.length,
+    createdAt: story.createdAt
+  });
+
   return story;
 };
 
 export const createStoryData = (formData: { childrenIds: string[], objective: string }, childrenNames: string[]) => {
-  return {
+  const storyData = {
     title: `Histoire pour ${childrenNames.join(' et ')}`,
     preview: "Histoire en cours de génération...",
     objective: formData.objective,
@@ -76,4 +79,7 @@ export const createStoryData = (formData: { childrenIds: string[], objective: st
     tags: [],
     sharedWith: []
   };
+
+  console.log('Création nouvelle histoire:', storyData);
+  return storyData;
 };

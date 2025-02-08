@@ -9,17 +9,16 @@ export const useStoriesQuery = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!auth.currentUser) {
+      console.log('Pas d\'utilisateur connecté');
       setIsLoading(false);
       return;
     }
 
-    console.log('🔄 Initialisation du listener des histoires...', {
-      userId: auth.currentUser.uid,
-      retryCount
+    console.log('Initialisation de la requête Firestore:', {
+      userId: auth.currentUser.uid
     });
 
     setIsLoading(true);
@@ -34,11 +33,15 @@ export const useStoriesQuery = () => {
       storiesQuery, 
       (snapshot) => {
         try {
+          console.log('Réception mise à jour Firestore:', {
+            numberOfDocs: snapshot.docs.length
+          });
+
           const loadedStories = snapshot.docs.map(doc => {
             try {
               return formatStoryFromFirestore(doc);
             } catch (err) {
-              console.error('Erreur lors du formatage d\'une histoire:', {
+              console.error('Erreur formatage histoire:', {
                 docId: doc.id,
                 error: err
               });
@@ -46,7 +49,7 @@ export const useStoriesQuery = () => {
             }
           }).filter((story): story is Story => story !== null);
 
-          console.log('📥 Mise à jour des histoires:', {
+          console.log('Stories chargées:', {
             total: loadedStories.length,
             statuses: loadedStories.reduce((acc, story) => ({
               ...acc,
@@ -56,37 +59,25 @@ export const useStoriesQuery = () => {
 
           setStories(loadedStories);
           setError(null);
-          setRetryCount(0);
         } catch (err) {
-          console.error('Erreur lors du traitement des histoires:', err);
+          console.error('Erreur traitement données:', err);
           setError(err instanceof Error ? err : new Error('Erreur inconnue'));
-          
-          if (retryCount < 3) {
-            setRetryCount(prev => prev + 1);
-          }
         } finally {
           setIsLoading(false);
         }
       },
       (err) => {
-        console.error('Erreur lors de l\'écoute des histoires:', {
-          error: err,
-          retryCount
-        });
+        console.error('Erreur listener Firestore:', err);
         setError(err);
         setIsLoading(false);
-
-        if (retryCount < 3) {
-          setRetryCount(prev => prev + 1);
-        }
       }
     );
 
     return () => {
-      console.log('🔄 Nettoyage du listener des histoires');
+      console.log('Nettoyage listener Firestore');
       unsubscribe();
     };
-  }, [retryCount]);
+  }, []);
 
   return { stories, isLoading, error };
 };
