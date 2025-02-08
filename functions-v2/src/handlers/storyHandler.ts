@@ -2,17 +2,21 @@
 import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
+import { defineSecret } from 'firebase-functions/params';
 
 export interface StoryGenerationRequest {
   objective: string;
   childrenNames: string[];
 }
 
+const openaiApiKey = defineSecret('OPENAI_API_KEY');
+
 export const generateStory = onCall(
   {
     timeoutSeconds: 120,
     memory: '1GiB',
     region: 'us-central1',
+    secrets: [openaiApiKey],
   },
   async (request) => {
     try {
