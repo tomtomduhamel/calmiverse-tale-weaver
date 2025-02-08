@@ -9,6 +9,7 @@ if (!admin.apps.length) {
 }
 
 export interface StoryGenerationRequest {
+  storyId: string;
   objective: string;
   childrenNames: string[];
   authorId?: string;
@@ -29,8 +30,13 @@ export const generateStory = onCall({
       }
 
       const data = request.data as StoryGenerationRequest;
-      const { objective, childrenNames } = data;
+      const { storyId, objective, childrenNames } = data;
       const authorId = request.auth.uid;
+
+      if (!storyId) {
+        console.error('Missing storyId in request');
+        throw new Error('L\'ID de l\'histoire est requis');
+      }
 
       if (!objective) {
         console.error('Missing objective in request');
@@ -49,38 +55,24 @@ export const generateStory = onCall({
       }
 
       console.log('Request validation passed:', {
+        storyId,
         authorId,
         objective,
         childrenNames
       });
 
-      const storyInitialData = {
-        authorId,
-        objective,
-        childrenNames,
-        status: 'pending',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        title: `Histoire pour ${childrenNames.join(' et ')}`,
-        preview: "Histoire en cours de génération...",
-        story_text: "Génération en cours...",
-        story_summary: "Résumé en cours de génération...",
-        _version: 1,
-        _lastSync: admin.firestore.FieldValue.serverTimestamp(),
-        _pendingWrites: true
-      };
+      // Vérifier que le document existe
+      const storyRef = admin.firestore().collection('stories').doc(storyId);
+      const storyDoc = await storyRef.get();
 
-      const storyRef = admin.firestore().collection('stories').doc();
-      console.log('Creating initial story document:', {
-        id: storyRef.id,
-        authorId: storyInitialData.authorId
-      });
-      
-      await storyRef.set(storyInitialData);
+      if (!storyDoc.exists) {
+        throw new Error('Document d\'histoire non trouvé');
+      }
 
       console.log('Starting story generation with OpenAI');
       const generatedStory = await generateStoryWithAI(objective, childrenNames, apiKey);
 
-      // Utiliser une transaction pour la mise à jour finale
+      // Utiliser une transaction pour la mise à jour
       await admin.firestore().runTransaction(async (transaction) => {
         const storyDoc = await transaction.get(storyRef);
         if (!storyDoc.exists) {
@@ -101,7 +93,7 @@ export const generateStory = onCall({
         transaction.update(storyRef, updateData);
 
         console.log('Story transaction completed successfully:', {
-          id: storyRef.id,
+          id: storyId,
           newStatus: 'completed',
           newVersion: updateData._version
         });
@@ -112,7 +104,7 @@ export const generateStory = onCall({
 
       if (!finalData || finalData.status !== 'completed') {
         console.error('Story update verification failed:', {
-          id: storyRef.id,
+          id: storyId,
           status: finalData?.status,
           authorId: finalData?.authorId
         });
@@ -120,7 +112,7 @@ export const generateStory = onCall({
       }
 
       console.log('Story document updated successfully:', {
-        id: storyRef.id,
+        id: storyId,
         status: finalData.status,
         authorId: finalData.authorId,
         version: finalData._version
@@ -128,7 +120,7 @@ export const generateStory = onCall({
 
       return {
         ...finalData,
-        id: storyRef.id
+        id: storyId
       };
 
     } catch (error) {

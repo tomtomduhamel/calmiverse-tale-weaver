@@ -19,8 +19,9 @@ export const useStoriesQuery = () => {
       return;
     }
 
-    console.log('Initialisation de la requête Firestore:', {
-      userId: auth.currentUser.uid
+    console.log('🔄 Initialisation de la requête Firestore:', {
+      userId: auth.currentUser.uid,
+      timestamp: new Date().toISOString()
     });
 
     setIsLoading(true);
@@ -36,18 +37,26 @@ export const useStoriesQuery = () => {
       { includeMetadataChanges: true },
       (snapshot) => {
         try {
-          console.log('Réception mise à jour Firestore:', {
+          console.log('📥 Réception mise à jour Firestore:', {
             numberOfDocs: snapshot.docs.length,
             fromCache: snapshot.metadata.fromCache,
-            hasPendingWrites: snapshot.metadata.hasPendingWrites
+            hasPendingWrites: snapshot.metadata.hasPendingWrites,
+            timestamp: new Date().toISOString()
           });
 
           if (!snapshot.metadata.hasPendingWrites) {
             const loadedStories = snapshot.docs.map(doc => {
               try {
-                return formatStoryFromFirestore(doc);
+                const story = formatStoryFromFirestore(doc);
+                console.log('📄 Histoire chargée:', {
+                  id: story.id,
+                  status: story.status,
+                  version: story._version,
+                  hasContent: Boolean(story.story_text?.trim())
+                });
+                return story;
               } catch (err) {
-                console.error('Erreur formatage histoire:', {
+                console.error('❌ Erreur formatage histoire:', {
                   docId: doc.id,
                   error: err
                 });
@@ -55,19 +64,20 @@ export const useStoriesQuery = () => {
               }
             }).filter((story): story is Story => story !== null);
 
-            console.log('Stories chargées:', {
+            console.log('📊 Résumé du chargement:', {
               total: loadedStories.length,
               statuses: loadedStories.reduce((acc, story) => ({
                 ...acc,
                 [story.status]: (acc[story.status] || 0) + 1
-              }), {} as Record<string, number>)
+              }), {} as Record<string, number>),
+              timestamp: new Date().toISOString()
             });
 
             setStories(loadedStories);
             setError(null);
           }
         } catch (err) {
-          console.error('Erreur traitement données:', err);
+          console.error('❌ Erreur traitement données:', err);
           setError(err instanceof Error ? err : new Error('Erreur inconnue'));
           toast({
             title: "Erreur de synchronisation",
@@ -79,7 +89,7 @@ export const useStoriesQuery = () => {
         }
       },
       (err) => {
-        console.error('Erreur listener Firestore:', err);
+        console.error('❌ Erreur listener Firestore:', err);
         setError(err);
         setIsLoading(false);
         toast({
@@ -91,11 +101,10 @@ export const useStoriesQuery = () => {
     );
 
     return () => {
-      console.log('Nettoyage listener Firestore');
+      console.log('🧹 Nettoyage listener Firestore');
       unsubscribe();
     };
   }, [toast]);
 
   return { stories, isLoading, error };
 };
-

@@ -1,8 +1,9 @@
 
 import { collection, addDoc, deleteDoc, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { db, auth, functions } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { createStoryData } from './storyFormatters';
+import { httpsCallable } from 'firebase/functions';
 
 export const useStoryMutations = () => {
   const { toast } = useToast();
@@ -35,16 +36,27 @@ export const useStoryMutations = () => {
         version: storyData._version
       });
       
-      // Création atomique avec transaction
+      // Création du document initial
       const docRef = await addDoc(collection(db, 'stories'), storyData);
-      
-      console.log('✅ Histoire créée avec succès:', {
-        id: docRef.id,
-        authorId: storyData.authorId,
-        version: storyData._version
+      console.log('✅ Document initial créé avec ID:', docRef.id);
+
+      // Appel de la fonction Cloud avec l'ID du document
+      const generateStoryFunction = httpsCallable(functions, 'generateStory');
+      console.log('🤖 Appel de la fonction Cloud pour la génération...', {
+        storyId: docRef.id,
+        objective: formData.objective,
+        childrenNames
       });
 
-      // Mise à jour immédiate du statut dans l'UI
+      // Passer l'ID du document à la fonction Cloud
+      const result = await generateStoryFunction({
+        storyId: docRef.id,
+        objective: formData.objective,
+        childrenNames: childrenNames
+      });
+
+      console.log('✅ Fonction Cloud exécutée avec succès:', result);
+      
       toast({
         title: "Succès",
         description: "L'histoire est en cours de génération",
@@ -126,3 +138,4 @@ export const useStoryMutations = () => {
     deleteStory,
   };
 };
+
