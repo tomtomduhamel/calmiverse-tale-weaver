@@ -17,31 +17,34 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     createdAtDate = new Date();
   }
 
+  // Validation du statut avec logs détaillés
+  const providedStatus = data.status;
+  console.log('Status from Firestore:', {
+    providedStatus,
+    docId: doc.id,
+    hasStoryText: Boolean(data.story_text?.trim())
+  });
+
   // Validation du statut
-  const validStatus = ['completed', 'pending', 'read'].includes(data.status) 
-    ? data.status 
+  const validStatus = ['completed', 'pending', 'read'].includes(providedStatus) 
+    ? providedStatus 
     : 'pending';
 
-  // Validation du contenu en fonction du statut
+  // Validation du contenu
   const storyText = data.story_text || '';
   const preview = data.preview || '';
-  
-  // Si le status est "completed" mais qu'il n'y a pas de texte, on force le status à "pending"
-  const finalStatus = validStatus === 'completed' && !storyText.trim() 
-    ? 'pending' 
-    : validStatus;
 
   const story: Story = {
     id: doc.id,
     id_stories: data.id_stories || doc.id,
     authorId: data.authorId || '',
     title: data.title || '',
-    preview: finalStatus === 'completed' ? preview : "Histoire en cours de génération...",
+    preview: validStatus === 'completed' ? preview : "Histoire en cours de génération...",
     objective: data.objective || '',
     childrenIds: Array.isArray(data.childrenIds) ? [...data.childrenIds] : [],
     childrenNames: Array.isArray(data.childrenNames) ? [...data.childrenNames] : [],
-    status: finalStatus,
-    story_text: finalStatus === 'completed' ? storyText : "Génération en cours...",
+    status: validStatus,
+    story_text: validStatus === 'completed' ? storyText : "Génération en cours...",
     story_summary: data.story_summary || '',
     createdAt: createdAtDate,
     isFavorite: Boolean(data.isFavorite),
@@ -49,15 +52,12 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     sharedWith: Array.isArray(data.sharedWith) ? [...data.sharedWith] : []
   };
 
-  // Log détaillé pour le debugging
   console.log('Story formatted from Firestore:', {
     id: story.id,
-    id_stories: story.id_stories,
     status: story.status,
-    finalStatus,
     hasStoryText: Boolean(storyText.trim()),
-    validStatus,
-    title: story.title
+    originalStatus: providedStatus,
+    finalStatus: validStatus
   });
 
   return story;

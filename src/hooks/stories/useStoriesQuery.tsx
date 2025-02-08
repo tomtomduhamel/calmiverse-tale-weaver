@@ -31,42 +31,20 @@ export const useStoriesQuery = () => {
           const loadedStories = snapshot.docs.map(doc => {
             try {
               const formattedStory = formatStoryFromFirestore(doc);
-              console.log('Histoire formatée:', {
+              console.log('Histoire formatée avec succès:', {
                 id: formattedStory.id,
-                id_stories: formattedStory.id_stories,
                 status: formattedStory.status,
-                hasStoryText: Boolean(formattedStory.story_text?.trim()),
+                hasContent: Boolean(formattedStory.story_text?.trim()),
+                title: formattedStory.title
               });
               return formattedStory;
             } catch (err) {
               console.error('Erreur lors du formatage d\'une histoire:', err, 'Document:', doc.id);
               return null;
             }
-          }).filter((story): story is Story => {
-            if (!story) return false;
+          }).filter((story): story is Story => story !== null);
 
-            // Validation approfondie du statut et du contenu
-            const isValidStatus = story.status === 'completed' || 
-                                story.status === 'pending' || 
-                                story.status === 'read';
-
-            const hasValidContent = story.status === 'completed' ? 
-                                  Boolean(story.story_text?.trim()) : 
-                                  true;
-
-            if (!isValidStatus || !hasValidContent) {
-              console.warn('Histoire invalide détectée:', {
-                id: story.id,
-                status: story.status,
-                hasContent: Boolean(story.story_text?.trim())
-              });
-              return false;
-            }
-
-            return true;
-          });
-
-          console.log('📥 Histoires validées et filtrées:', loadedStories.length);
+          console.log('📥 Nombre total d\'histoires chargées:', loadedStories.length);
           setStories(loadedStories);
           setError(null);
         } catch (err) {

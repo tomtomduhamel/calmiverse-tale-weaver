@@ -11,7 +11,6 @@ import { db } from "@/lib/firebase";
 import type { Story } from "@/types/story";
 import StoryCardActions from "./card/StoryCardActions";
 import StoryCardTags from "./card/StoryCardTags";
-import StoryCardTitle from "./card/StoryCardTitle";
 import { calculateReadingTime } from "@/utils/readingTime";
 
 interface StoryCardProps {
@@ -26,20 +25,13 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
   const readingTime = calculateReadingTime(story.story_text);
 
   const formatTitle = (text: string) => {
-    // Enlever les guillemets au début et à la fin
     let formattedText = text.replace(/^["']|["']$/g, '').trim();
-
-    // Gérer les titres avec ###
     if (formattedText.startsWith('###')) {
       return formattedText.replace(/^###\s*/, '');
     }
-    
-    // Gérer le texte en gras avec **
     if (formattedText.startsWith('**') && formattedText.endsWith('**')) {
       return formattedText.replace(/^\*\*|\*\*$/g, '');
     }
-
-    // Texte normal
     return formattedText;
   };
 
@@ -87,9 +79,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
   };
 
   const handleCardClick = () => {
-    const isStoryReady = story.status === 'completed' && story.story_text.trim() !== '';
-    
-    if (!isStoryReady) {
+    if (story.status !== 'completed') {
       console.log('Story not ready:', {
         id: story.id,
         status: story.status,
@@ -110,9 +100,6 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
     onClick();
   };
 
-  // Détermine si l'histoire est véritablement prête
-  const isStoryReady = story.status === 'completed' && story.story_text.trim() !== '';
-
   return (
     <Card 
       className={`
@@ -120,13 +107,13 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         bg-gradient-to-br from-card-start to-card-end
         hover:from-card-hover-start hover:to-card-hover-end
         shadow-soft hover:shadow-soft-lg animate-fade-in
-        ${isStoryReady ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
+        ${story.status === 'completed' ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
       `}
       onClick={handleCardClick}
-      role={isStoryReady ? "button" : undefined}
-      tabIndex={isStoryReady ? 0 : undefined}
+      role={story.status === 'completed' ? "button" : undefined}
+      tabIndex={story.status === 'completed' ? 0 : undefined}
       onKeyDown={(e) => {
-        if (isStoryReady && (e.key === 'Enter' || e.key === ' ')) {
+        if (story.status === 'completed' && (e.key === 'Enter' || e.key === ' ')) {
           handleCardClick();
         }
       }}
@@ -156,7 +143,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         </div>
 
         <p className="text-sm text-muted-foreground line-clamp-3">
-          {!isStoryReady ? "Histoire en cours de génération..." : story.story_summary}
+          {story.status !== 'completed' ? "Histoire en cours de génération..." : story.story_summary}
         </p>
 
         <StoryCardTags
@@ -169,7 +156,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
           Créée le {format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
         </p>
         
-        {!isStoryReady ? (
+        {story.status !== 'completed' ? (
           <Button
             className="w-full bg-secondary/50 cursor-not-allowed flex items-center gap-2 animate-pulse"
             disabled
