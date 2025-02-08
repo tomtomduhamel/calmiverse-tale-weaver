@@ -16,35 +16,32 @@ export interface StoryGenerationRequest {
 
 const openaiApiKey = defineSecret('OPENAI_API_KEY');
 
-export const generateStory = onCall(
-  {
-    timeoutSeconds: 540, // 9 minutes
-    memory: '1GiB',
-    region: 'us-central1',
+export const generateStory = onCall({
     secrets: [openaiApiKey],
-    minInstances: 0,
-    maxInstances: 2, // Reduced from 10 to minimize cold starts
-  },
-  async (request) => {
+    timeoutSeconds: 540,
+    memory: '1GiB',
+    maxInstances: 1,
+  }, async (request) => {
+    console.log('Starting story generation process');
+    
     try {
-      console.log('Starting story generation process with enhanced configuration');
       const data = request.data as StoryGenerationRequest;
       const { objective, childrenNames } = data;
 
       if (!objective) {
-        console.log('Missing objective in request');
+        console.error('Missing objective in request');
         throw new Error('L\'objectif est requis');
       }
 
       if (!Array.isArray(childrenNames) || childrenNames.length === 0) {
-        console.log('Invalid or empty childrenNames array');
+        console.error('Invalid or empty childrenNames array');
         throw new Error('Les noms des enfants doivent être fournis dans un tableau non vide');
       }
 
       // Get the API key from the environment
       const apiKey = openaiApiKey.value();
       if (!apiKey) {
-        console.log('OpenAI API key is not configured');
+        console.error('OpenAI API key is not configured');
         throw new Error('La clé API OpenAI n\'est pas configurée');
       }
 
