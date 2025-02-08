@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -86,18 +87,31 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
   };
 
   const handleCardClick = () => {
-    // Vérifie si l'histoire est en cours de génération en utilisant le statut
-    if (story.status === 'pending') {
-      console.log('Story is pending:', story);
+    const isStoryReady = story.status === 'completed' && story.story_text.trim() !== '';
+    
+    if (!isStoryReady) {
+      console.log('Story not ready:', {
+        id: story.id,
+        status: story.status,
+        hasContent: Boolean(story.story_text?.trim())
+      });
       toast({
         title: "Histoire en cours de génération",
         description: "Cette histoire n'est pas encore disponible à la lecture. Nous vous notifierons dès qu'elle sera prête !",
       });
       return;
     }
-    console.log('Story is ready to be read:', story);
+    
+    console.log('Story is ready to be read:', {
+      id: story.id,
+      status: story.status,
+      title: story.title
+    });
     onClick();
   };
+
+  // Détermine si l'histoire est véritablement prête
+  const isStoryReady = story.status === 'completed' && story.story_text.trim() !== '';
 
   return (
     <Card 
@@ -106,13 +120,13 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         bg-gradient-to-br from-card-start to-card-end
         hover:from-card-hover-start hover:to-card-hover-end
         shadow-soft hover:shadow-soft-lg animate-fade-in
-        ${story.status === 'completed' || story.status === 'read' ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
+        ${isStoryReady ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
       `}
       onClick={handleCardClick}
-      role={story.status === 'completed' || story.status === 'read' ? "button" : undefined}
-      tabIndex={story.status === 'completed' || story.status === 'read' ? 0 : undefined}
+      role={isStoryReady ? "button" : undefined}
+      tabIndex={isStoryReady ? 0 : undefined}
       onKeyDown={(e) => {
-        if ((story.status === 'completed' || story.status === 'read') && (e.key === 'Enter' || e.key === ' ')) {
+        if (isStoryReady && (e.key === 'Enter' || e.key === ' ')) {
           handleCardClick();
         }
       }}
@@ -142,7 +156,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         </div>
 
         <p className="text-sm text-muted-foreground line-clamp-3">
-          {story.status === 'pending' ? "Histoire en cours de génération..." : story.story_summary}
+          {!isStoryReady ? "Histoire en cours de génération..." : story.story_summary}
         </p>
 
         <StoryCardTags
@@ -155,7 +169,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
           Créée le {format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
         </p>
         
-        {story.status === 'pending' ? (
+        {!isStoryReady ? (
           <Button
             className="w-full bg-secondary/50 cursor-not-allowed flex items-center gap-2 animate-pulse"
             disabled

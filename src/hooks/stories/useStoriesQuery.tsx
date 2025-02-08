@@ -28,27 +28,49 @@ export const useStoriesQuery = () => {
     const unsubscribe = onSnapshot(storiesQuery, 
       (snapshot) => {
         try {
-          const loadedStories = snapshot.docs.map(formatStoryFromFirestore);
-          console.log('📥 Réception de la mise à jour Firestore avec', loadedStories.length, 'histoires');
-          console.log('Histoires chargées:', loadedStories);
-
-          // Filtre les histoires non valides ou incomplètes
-          const validStories = loadedStories.filter(story => {
-            const isValid = story && story.id && (
-              story.status === 'completed' || 
-              story.status === 'pending' || 
-              story.status === 'read'
-            );
-            if (!isValid) {
-              console.warn('Histoire invalide détectée:', story);
+          const loadedStories = snapshot.docs.map(doc => {
+            try {
+              const formattedStory = formatStoryFromFirestore(doc);
+              console.log('Histoire formatée:', {
+                id: formattedStory.id,
+                id_stories: formattedStory.id_stories,
+                status: formattedStory.status,
+                hasStoryText: Boolean(formattedStory.story_text?.trim()),
+              });
+              return formattedStory;
+            } catch (err) {
+              console.error('Erreur lors du formatage d\'une histoire:', err, 'Document:', doc.id);
+              return null;
             }
-            return isValid;
+          }).filter((story): story is Story => {
+            if (!story) return false;
+
+            // Validation approfondie du statut et du contenu
+            const isValidStatus = story.status === 'completed' || 
+                                story.status === 'pending' || 
+                                story.status === 'read';
+
+            const hasValidContent = story.status === 'completed' ? 
+                                  Boolean(story.story_text?.trim()) : 
+                                  true;
+
+            if (!isValidStatus || !hasValidContent) {
+              console.warn('Histoire invalide détectée:', {
+                id: story.id,
+                status: story.status,
+                hasContent: Boolean(story.story_text?.trim())
+              });
+              return false;
+            }
+
+            return true;
           });
 
-          setStories(validStories);
+          console.log('📥 Histoires validées et filtrées:', loadedStories.length);
+          setStories(loadedStories);
           setError(null);
         } catch (err) {
-          console.error('Erreur lors du formatage des histoires:', err);
+          console.error('Erreur lors du traitement des histoires:', err);
           setError(err instanceof Error ? err : new Error('Erreur inconnue'));
         } finally {
           setIsLoading(false);
