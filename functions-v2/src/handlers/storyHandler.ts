@@ -16,6 +16,7 @@ export const generateStory = onCall(
   {
     timeoutSeconds: 120,
     memory: '1GiB',
+    region: 'us-central1',
   },
   async (request) => {
     try {

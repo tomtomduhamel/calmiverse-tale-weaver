@@ -1,11 +1,16 @@
 
 {
-  "functions": {
-    "source": "functions",
-    "predeploy": [
-      "npm --prefix \"$RESOURCE_DIR\" run build"
-    ]
-  },
+  "functions": [
+    {
+      "source": "functions-v2",
+      "codebase": "v2",
+      "runtime": "nodejs22",
+      "region": "us-central1",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ],
   "hosting": {
     "site": "calmi-99482",
     "public": "dist",

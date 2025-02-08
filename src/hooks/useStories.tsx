@@ -5,13 +5,13 @@ import { useStoriesQuery } from './stories/useStoriesQuery';
 import { useStoryMutations } from './stories/useStoryMutations';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useToast } from './use-toast';
+import { functions } from '@/lib/firebase';
 
 export const useStories = (children: any[] = []) => {
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const stories = useStoriesQuery();
   const { createStory, deleteStory } = useStoryMutations();
   const { toast } = useToast();
-  const functions = getFunctions();
 
   const handleStoryCreation = async (formData: { childrenIds: string[], objective: string }) => {
     try {
