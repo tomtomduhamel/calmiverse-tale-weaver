@@ -4,16 +4,16 @@ import { defineSecret } from 'firebase-functions/params';
 
 const openaiApiKey = defineSecret('OPENAI_API_KEY');
 
-const openai = new OpenAI({
-  apiKey: openaiApiKey.value(),
-});
-
 export const generateStoryWithAI = async (objective: string, childrenNames: string[]) => {
   console.log("Début de la génération avec OpenAI");
   console.log("Paramètres reçus:", { objective, childrenNames });
-  console.log("Clé API OpenAI présente:", !!openaiApiKey.value());
   
   try {
+    // Initialisation du client OpenAI au runtime
+    const openai = new OpenAI({
+      apiKey: openaiApiKey.value()
+    });
+
     console.log("Création de la requête OpenAI");
     const completion = await openai.chat.completions.create({
       model: 'gpt-4',
@@ -86,8 +86,7 @@ CONTRAINTES SPÉCIFIQUES :
     });
 
     console.log("Réponse d'OpenAI reçue");
-    console.log("Contenu de la réponse:", completion.choices[0].message);
-
+    
     const story = completion.choices[0].message.content;
     if (!story) {
       console.error("Erreur: Aucune histoire générée par OpenAI");
