@@ -1,3 +1,4 @@
+
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -12,20 +13,29 @@ export const useStoryMutations = () => {
     }
 
     try {
-      console.log('🚀 Début du processus de création d\'histoire...', formData);
+      console.log('🚀 Début du processus de création d\'histoire...', {
+        formData,
+        currentUser: auth.currentUser.uid
+      });
       
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
       
       const storyData = {
         ...createStoryData(formData, childrenNames),
-        authorId: auth.currentUser.uid,
-        sharedWith: []
+        authorId: auth.currentUser.uid
       };
 
-      console.log('📝 Préparation à la sauvegarde de l\'histoire avec les données:', storyData);
+      console.log('📝 Préparation à la sauvegarde de l\'histoire:', {
+        authorId: storyData.authorId,
+        status: storyData.status
+      });
+      
       const docRef = await addDoc(collection(db, 'stories'), storyData);
-      console.log('✅ Histoire créée avec succès avec l\'ID:', docRef.id);
+      console.log('✅ Histoire créée avec succès:', {
+        id: docRef.id,
+        authorId: storyData.authorId
+      });
 
       toast({
         title: "Succès",

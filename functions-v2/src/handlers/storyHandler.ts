@@ -4,7 +4,6 @@ import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 import { defineSecret } from 'firebase-functions/params';
 
-// Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -12,6 +11,7 @@ if (!admin.apps.length) {
 export interface StoryGenerationRequest {
   objective: string;
   childrenNames: string[];
+  authorId?: string;
 }
 
 const openaiApiKey = defineSecret('OPENAI_API_KEY');
@@ -24,8 +24,13 @@ export const generateStory = onCall({
     console.log('Starting story generation process');
     
     try {
+      if (!request.auth) {
+        throw new Error('Utilisateur non authentifié');
+      }
+
       const data = request.data as StoryGenerationRequest;
       const { objective, childrenNames } = data;
+      const authorId = request.auth.uid;
 
       if (!objective) {
         console.error('Missing objective in request');
@@ -37,19 +42,20 @@ export const generateStory = onCall({
         throw new Error('Les noms des enfants doivent être fournis dans un tableau non vide');
       }
 
-      // Get the API key from the environment
       const apiKey = openaiApiKey.value();
       if (!apiKey) {
         console.error('OpenAI API key is not configured');
         throw new Error('La clé API OpenAI n\'est pas configurée');
       }
 
-      console.log('Request validation passed, proceeding with story generation');
-      console.log('Objectif:', objective);
-      console.log('Noms des enfants:', childrenNames);
+      console.log('Request validation passed:', {
+        authorId,
+        objective,
+        childrenNames
+      });
 
-      // Première étape : créer le document avec le statut initial
       const storyInitialData = {
+        authorId,
         objective,
         childrenNames,
         status: 'pending',
@@ -61,17 +67,16 @@ export const generateStory = onCall({
       };
 
       const storyRef = admin.firestore().collection('stories').doc();
-      console.log('Creating initial story document:', storyRef.id);
+      console.log('Creating initial story document:', {
+        id: storyRef.id,
+        authorId: storyInitialData.authorId
+      });
       
       await storyRef.set(storyInitialData);
-      console.log('Initial story document created successfully');
 
-      // Deuxième étape : génération de l'histoire
       console.log('Starting story generation with OpenAI');
       const generatedStory = await generateStoryWithAI(objective, childrenNames, apiKey);
-      console.log('Story generated successfully');
 
-      // Troisième étape : mise à jour du document avec l'histoire générée
       const updateData = {
         story_text: generatedStory.story_text,
         preview: generatedStory.preview,
@@ -79,17 +84,22 @@ export const generateStory = onCall({
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
 
-      console.log('Updating story document with generated content');
+      console.log('Updating story with generated content:', {
+        id: storyRef.id,
+        status: updateData.status,
+        authorId
+      });
+
       await storyRef.update(updateData);
 
-      // Vérification de la mise à jour
       const updatedDoc = await storyRef.get();
       const finalData = updatedDoc.data();
 
       if (!finalData || finalData.status !== 'completed') {
-        console.error('Story status update failed:', {
+        console.error('Story update verification failed:', {
           id: storyRef.id,
-          currentStatus: finalData?.status
+          status: finalData?.status,
+          authorId: finalData?.authorId
         });
         throw new Error('La mise à jour du statut de l\'histoire a échoué');
       }
@@ -97,7 +107,7 @@ export const generateStory = onCall({
       console.log('Story document updated successfully:', {
         id: storyRef.id,
         status: finalData.status,
-        contentLength: finalData.story_text?.length
+        authorId: finalData.authorId
       });
 
       return {
