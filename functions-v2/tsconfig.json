@@ -1,3 +1,4 @@
+
 {
   "compilerOptions": {
     "module": "commonjs",
@@ -9,7 +10,8 @@
     "target": "es2017",
     "typeRoots": [
       "node_modules/@types",
-      "src"
+      "src/handlers",
+      "src/services"
     ],
     "skipLibCheck": true,
     "esModuleInterop": true,
