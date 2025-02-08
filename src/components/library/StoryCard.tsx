@@ -86,13 +86,16 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
   };
 
   const handleCardClick = () => {
+    // Vérifie si l'histoire est en cours de génération en utilisant le statut
     if (story.status === 'pending') {
+      console.log('Story is pending:', story);
       toast({
         title: "Histoire en cours de génération",
         description: "Cette histoire n'est pas encore disponible à la lecture. Nous vous notifierons dès qu'elle sera prête !",
       });
       return;
     }
+    console.log('Story is ready to be read:', story);
     onClick();
   };
 

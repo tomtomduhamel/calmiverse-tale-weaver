@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { collection, query, onSnapshot, where, orderBy } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
@@ -18,7 +19,6 @@ export const useStoriesQuery = () => {
     console.log('🔄 Initialisation du listener des histoires...');
     setIsLoading(true);
 
-    // Créer une requête pour les histoires de l'utilisateur
     const storiesQuery = query(
       collection(db, 'stories'),
       where('authorId', '==', auth.currentUser.uid),
@@ -31,7 +31,21 @@ export const useStoriesQuery = () => {
           const loadedStories = snapshot.docs.map(formatStoryFromFirestore);
           console.log('📥 Réception de la mise à jour Firestore avec', loadedStories.length, 'histoires');
           console.log('Histoires chargées:', loadedStories);
-          setStories(loadedStories);
+
+          // Filtre les histoires non valides ou incomplètes
+          const validStories = loadedStories.filter(story => {
+            const isValid = story && story.id && (
+              story.status === 'completed' || 
+              story.status === 'pending' || 
+              story.status === 'read'
+            );
+            if (!isValid) {
+              console.warn('Histoire invalide détectée:', story);
+            }
+            return isValid;
+          });
+
+          setStories(validStories);
           setError(null);
         } catch (err) {
           console.error('Erreur lors du formatage des histoires:', err);

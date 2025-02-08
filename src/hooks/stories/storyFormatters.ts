@@ -1,3 +1,4 @@
+
 import { DocumentSnapshot, Timestamp } from 'firebase/firestore';
 import type { Story } from '@/types/story';
 
@@ -17,6 +18,7 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
 
   const story: Story = {
     id: doc.id,
+    id_stories: data.id_stories || null,
     authorId: data.authorId || '',
     title: data.title || '',
     preview: data.preview || '',
@@ -31,6 +33,14 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     tags: Array.isArray(data.tags) ? [...data.tags] : [],
     sharedWith: Array.isArray(data.sharedWith) ? [...data.sharedWith] : []
   };
+
+  // Log pour le debugging
+  console.log('Story formatted from Firestore:', {
+    id: story.id,
+    id_stories: story.id_stories,
+    status: story.status,
+    title: story.title
+  });
 
   return story;
 };
