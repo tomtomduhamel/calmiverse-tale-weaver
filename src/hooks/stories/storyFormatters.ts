@@ -4,7 +4,10 @@ import type { Story } from '@/types/story';
 
 export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
   const data = doc.data();
-  if (!data) throw new Error('Document data is undefined');
+  if (!data) {
+    console.error('Document data is undefined:', doc.id);
+    throw new Error('Document data is undefined');
+  }
 
   // Conversion du timestamp avec logging détaillé
   let createdAtDate;
@@ -14,12 +17,13 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
       : new Date();
 
     console.log('Timestamp conversion:', {
+      docId: doc.id,
       original: data.createdAt,
       converted: createdAtDate,
       isTimestamp: data.createdAt instanceof Timestamp
     });
   } catch (e) {
-    console.error('Erreur timestamp:', e);
+    console.error('Erreur timestamp pour document:', doc.id, e);
     createdAtDate = new Date();
   }
 

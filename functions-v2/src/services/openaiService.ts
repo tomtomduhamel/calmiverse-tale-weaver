@@ -18,7 +18,7 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
 
     console.log("Creating OpenAI request");
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4-0125-preview',
       messages: [
         {
           role: 'system',
@@ -79,9 +79,8 @@ CONTRAINTES SPÉCIFIQUES :
       id_stories: uniqueId,
       story_text: story,
       story_summary: "Résumé en cours de génération...",
-      status: 'pending',
       createdAt: new Date(),
-      title: "Nouvelle histoire",
+      title: `Histoire pour ${childrenNames.join(' et ')}`,
       preview: story.substring(0, 200) + "..."
     };
 

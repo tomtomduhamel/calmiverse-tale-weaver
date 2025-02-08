@@ -48,19 +48,62 @@ export const generateStory = onCall({
       console.log('Objectif:', objective);
       console.log('Noms des enfants:', childrenNames);
 
-      const storyData = await generateStoryWithAI(objective, childrenNames, apiKey);
-      console.log('Story generated successfully:', storyData.id_stories);
+      // Première étape : créer le document avec le statut initial
+      const storyInitialData = {
+        objective,
+        childrenNames,
+        status: 'pending',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        title: `Histoire pour ${childrenNames.join(' et ')}`,
+        preview: "Histoire en cours de génération...",
+        story_text: "Génération en cours...",
+        story_summary: "Résumé en cours de génération..."
+      };
+
+      const storyRef = admin.firestore().collection('stories').doc();
+      console.log('Creating initial story document:', storyRef.id);
       
-      const storyRef = admin.firestore().collection('stories').doc(storyData.id_stories);
-      
-      await storyRef.set({
-        ...storyData,
+      await storyRef.set(storyInitialData);
+      console.log('Initial story document created successfully');
+
+      // Deuxième étape : génération de l'histoire
+      console.log('Starting story generation with OpenAI');
+      const generatedStory = await generateStoryWithAI(objective, childrenNames, apiKey);
+      console.log('Story generated successfully');
+
+      // Troisième étape : mise à jour du document avec l'histoire générée
+      const updateData = {
+        story_text: generatedStory.story_text,
+        preview: generatedStory.preview,
         status: 'completed',
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      
-      console.log('Story saved to Firestore:', storyData.id_stories);
-      return storyData;
+      };
+
+      console.log('Updating story document with generated content');
+      await storyRef.update(updateData);
+
+      // Vérification de la mise à jour
+      const updatedDoc = await storyRef.get();
+      const finalData = updatedDoc.data();
+
+      if (!finalData || finalData.status !== 'completed') {
+        console.error('Story status update failed:', {
+          id: storyRef.id,
+          currentStatus: finalData?.status
+        });
+        throw new Error('La mise à jour du statut de l\'histoire a échoué');
+      }
+
+      console.log('Story document updated successfully:', {
+        id: storyRef.id,
+        status: finalData.status,
+        contentLength: finalData.story_text?.length
+      });
+
+      return {
+        ...finalData,
+        id: storyRef.id
+      };
 
     } catch (error) {
       console.error('Error in generateStory:', error);
