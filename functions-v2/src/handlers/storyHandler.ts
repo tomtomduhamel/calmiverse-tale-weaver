@@ -24,9 +24,6 @@ export const generateStory = onCall(
     secrets: [openaiApiKey],
     minInstances: 0,
     maxInstances: 10,
-    concurrency: 80,
-    cpu: 1,
-    maxRetries: 3,
   },
   async (request) => {
     try {
@@ -35,19 +32,19 @@ export const generateStory = onCall(
       const { objective, childrenNames } = data;
 
       if (!objective) {
-        console.error('Missing objective in request');
+        console.log('Missing objective in request');
         throw new Error('L\'objectif est requis');
       }
 
       if (!Array.isArray(childrenNames) || childrenNames.length === 0) {
-        console.error('Invalid or empty childrenNames array');
+        console.log('Invalid or empty childrenNames array');
         throw new Error('Les noms des enfants doivent être fournis dans un tableau non vide');
       }
 
       // Get the API key from the environment
       const apiKey = openaiApiKey.value();
       if (!apiKey) {
-        console.error('OpenAI API key is not configured');
+        console.log('OpenAI API key is not configured');
         throw new Error('La clé API OpenAI n\'est pas configurée');
       }
 
@@ -75,4 +72,3 @@ export const generateStory = onCall(
     }
   }
 );
-
