@@ -8,10 +8,6 @@ export interface StoryGenerationRequest {
   childrenNames: string[];
 }
 
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
 export const generateStory = onCall(
   {
     timeoutSeconds: 120,
