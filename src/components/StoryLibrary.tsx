@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
@@ -5,6 +6,7 @@ import LibraryHeader from "./library/LibraryHeader";
 import LibraryFilters from "./library/filters/LibraryFilters";
 import StoryGrid from "./library/StoryGrid";
 import Pagination from "./library/Pagination";
+import StoryCleaner from "./library/StoryCleaner";
 
 interface StoryLibraryProps {
   stories: Story[];
@@ -45,23 +47,20 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      // Fonction pour obtenir le niveau de priorité d'une histoire
       const getPriority = (story: Story) => {
         if (story.isFavorite) {
-          return story.status === 'read' ? 2 : 1; // Favoris non lus (1) > Favoris lus (2)
+          return story.status === 'read' ? 2 : 1;
         }
-        return story.status === 'read' ? 4 : 3; // Non favoris non lus (3) > Non favoris lus (4)
+        return story.status === 'read' ? 4 : 3;
       };
 
       const priorityA = getPriority(a);
       const priorityB = getPriority(b);
 
-      // D'abord trier par priorité
       if (priorityA !== priorityB) {
         return priorityA - priorityB;
       }
 
-      // Si même priorité, trier par date de création (plus récent en premier)
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
 
@@ -78,12 +77,15 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         onCreateStory={() => onViewChange?.("create")}
       />
 
-      <LibraryFilters
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-      />
+      <div className="flex justify-between items-center">
+        <LibraryFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+        />
+        <StoryCleaner stories={stories} />
+      </div>
 
       <StoryGrid
         stories={currentStories}
