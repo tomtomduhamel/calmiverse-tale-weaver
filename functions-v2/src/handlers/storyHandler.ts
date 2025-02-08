@@ -39,11 +39,18 @@ export const generateStory = onCall(
         throw new Error('Les noms des enfants doivent être fournis dans un tableau non vide');
       }
 
+      // Get the API key from the environment
+      const apiKey = openaiApiKey.value();
+      if (!apiKey) {
+        console.error('OpenAI API key is not configured');
+        throw new Error('La clé API OpenAI n\'est pas configurée');
+      }
+
       console.log('Request validation passed');
       console.log('Objectif:', objective);
       console.log('Noms des enfants:', childrenNames);
 
-      const storyData = await generateStoryWithAI(objective, childrenNames);
+      const storyData = await generateStoryWithAI(objective, childrenNames, apiKey);
       console.log('Story generated successfully:', storyData.id_stories);
       
       const storyRef = admin.firestore().collection('stories').doc(storyData.id_stories);

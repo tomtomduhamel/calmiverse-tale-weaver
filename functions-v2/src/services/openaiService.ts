@@ -1,17 +1,14 @@
 
 import OpenAI from 'openai';
-import { defineSecret } from 'firebase-functions/params';
 
-const openaiApiKey = defineSecret('OPENAI_API_KEY');
-
-export const generateStoryWithAI = async (objective: string, childrenNames: string[]) => {
+export const generateStoryWithAI = async (objective: string, childrenNames: string[], apiKey: string) => {
   console.log("Début de la génération avec OpenAI");
   console.log("Paramètres reçus:", { objective, childrenNames });
   
   try {
-    // Initialisation du client OpenAI
+    // Initialize OpenAI client with the provided API key
     const openai = new OpenAI({
-      apiKey: openaiApiKey.value()
+      apiKey: apiKey
     });
 
     console.log("Création de la requête OpenAI");
