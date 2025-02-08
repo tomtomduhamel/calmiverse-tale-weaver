@@ -20,7 +20,6 @@ export const generateStory = onCall({
     secrets: [openaiApiKey],
     timeoutSeconds: 540,
     memory: '1GiB',
-    maxInstances: 1,
   }, async (request) => {
     console.log('Starting story generation process');
     
