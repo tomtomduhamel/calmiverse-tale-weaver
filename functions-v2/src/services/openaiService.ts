@@ -9,14 +9,14 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
   console.log("Paramètres reçus:", { objective, childrenNames });
   
   try {
-    // Initialisation du client OpenAI au runtime
+    // Initialisation du client OpenAI
     const openai = new OpenAI({
       apiKey: openaiApiKey.value()
     });
 
     console.log("Création de la requête OpenAI");
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4',
       messages: [
         {
           role: 'system',
@@ -76,7 +76,7 @@ CONTRAINTES SPÉCIFIQUES :
         },
         {
           role: 'user',
-          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames} avec l'objectif suivant : ${objective}. 
+          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
           L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
           Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.`,
         },

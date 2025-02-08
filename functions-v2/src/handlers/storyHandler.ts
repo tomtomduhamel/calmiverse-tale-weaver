@@ -18,29 +18,33 @@ const openaiApiKey = defineSecret('OPENAI_API_KEY');
 
 export const generateStory = onCall(
   {
-    timeoutSeconds: 540, // Increased timeout to 9 minutes
+    timeoutSeconds: 540, // 9 minutes
     memory: '1GiB',
     region: 'us-central1',
     secrets: [openaiApiKey],
   },
   async (request) => {
     try {
+      console.log('Starting story generation process');
       const data = request.data as StoryGenerationRequest;
       const { objective, childrenNames } = data;
 
       if (!objective) {
+        console.error('Missing objective in request');
         throw new Error('L\'objectif est requis');
       }
 
-      if (!Array.isArray(childrenNames)) {
-        throw new Error('Les noms des enfants doivent être fournis dans un tableau');
+      if (!Array.isArray(childrenNames) || childrenNames.length === 0) {
+        console.error('Invalid or empty childrenNames array');
+        throw new Error('Les noms des enfants doivent être fournis dans un tableau non vide');
       }
 
+      console.log('Request validation passed');
       console.log('Objectif:', objective);
       console.log('Noms des enfants:', childrenNames);
 
       const storyData = await generateStoryWithAI(objective, childrenNames);
-      console.log('Histoire générée:', storyData);
+      console.log('Story generated successfully:', storyData.id_stories);
       
       const storyRef = admin.firestore().collection('stories').doc(storyData.id_stories);
       
@@ -50,11 +54,12 @@ export const generateStory = onCall(
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
       
+      console.log('Story saved to Firestore:', storyData.id_stories);
       return storyData;
 
     } catch (error) {
-      console.error('Erreur:', error);
-      throw new Error(error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error in generateStory:', error);
+      throw new Error(error instanceof Error ? error.message : 'Une erreur inattendue est survenue');
     }
   }
 );
