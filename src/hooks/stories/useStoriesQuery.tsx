@@ -1,21 +1,10 @@
 
 import { useEffect, useState } from 'react';
-import { collection, query, onSnapshot, where, orderBy, initializeFirestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
+import { collection, query, onSnapshot, where, orderBy } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import type { Story } from '@/types/story';
 import { formatStoryFromFirestore } from './storyFormatters';
 import { useToast } from "@/hooks/use-toast";
-
-// Initialize Firestore with improved settings
-const enhancedDb = initializeFirestore(db.app, {
-  experimentalForceLongPolling: true,
-  cacheSizeBytes: CACHE_SIZE_UNLIMITED
-});
-
-// Enable offline persistence
-enableIndexedDbPersistence(enhancedDb).catch((err) => {
-  console.error("Erreur lors de l'activation de la persistence:", err);
-});
 
 export const useStoriesQuery = () => {
   const [stories, setStories] = useState<Story[]>([]);
@@ -37,7 +26,7 @@ export const useStoriesQuery = () => {
     setIsLoading(true);
 
     const storiesQuery = query(
-      collection(enhancedDb, 'stories'),
+      collection(db, 'stories'),
       where('authorId', '==', auth.currentUser.uid),
       orderBy('createdAt', 'desc')
     );
@@ -109,3 +98,4 @@ export const useStoriesQuery = () => {
 
   return { stories, isLoading, error };
 };
+

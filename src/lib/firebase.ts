@@ -1,6 +1,6 @@
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
@@ -16,7 +16,18 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+
+// Initialize Firestore with enhanced settings
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+  cacheSizeBytes: CACHE_SIZE_UNLIMITED
+});
+
+// Enable offline persistence
+enableIndexedDbPersistence(db).catch((err) => {
+  console.error("Erreur lors de l'activation de la persistence:", err);
+});
+
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app, 'us-central1');
@@ -27,3 +38,4 @@ export const functions = getFunctions(app, 'us-central1');
 // }
 
 export default app;
+
