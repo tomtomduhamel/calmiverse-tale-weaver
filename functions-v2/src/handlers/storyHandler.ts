@@ -22,10 +22,15 @@ export const generateStory = onCall(
     memory: '1GiB',
     region: 'us-central1',
     secrets: [openaiApiKey],
+    minInstances: 0,
+    maxInstances: 10,
+    concurrency: 80,
+    cpu: 1,
+    maxRetries: 3,
   },
   async (request) => {
     try {
-      console.log('Starting story generation process');
+      console.log('Starting story generation process with enhanced configuration');
       const data = request.data as StoryGenerationRequest;
       const { objective, childrenNames } = data;
 
@@ -46,7 +51,7 @@ export const generateStory = onCall(
         throw new Error('La clé API OpenAI n\'est pas configurée');
       }
 
-      console.log('Request validation passed');
+      console.log('Request validation passed, proceeding with story generation');
       console.log('Objectif:', objective);
       console.log('Noms des enfants:', childrenNames);
 
@@ -70,3 +75,4 @@ export const generateStory = onCall(
     }
   }
 );
+

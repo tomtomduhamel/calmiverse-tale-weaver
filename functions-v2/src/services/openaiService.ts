@@ -2,16 +2,16 @@
 import OpenAI from 'openai';
 
 export const generateStoryWithAI = async (objective: string, childrenNames: string[], apiKey: string) => {
-  console.log("Début de la génération avec OpenAI");
+  console.log("Début de la génération avec OpenAI - Configuration améliorée");
   console.log("Paramètres reçus:", { objective, childrenNames });
   
   try {
-    // Initialize OpenAI client with the provided API key
+    console.log("Initialisation du client OpenAI");
     const openai = new OpenAI({
       apiKey: apiKey
     });
 
-    console.log("Création de la requête OpenAI");
+    console.log("Création de la requête OpenAI avec paramètres optimisés");
     const completion = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
@@ -82,7 +82,7 @@ CONTRAINTES SPÉCIFIQUES :
       max_tokens: 4000,
     });
 
-    console.log("Réponse d'OpenAI reçue");
+    console.log("Réponse d'OpenAI reçue avec succès");
     
     const story = completion.choices[0].message.content;
     if (!story) {
@@ -111,3 +111,4 @@ CONTRAINTES SPÉCIFIQUES :
     throw error;
   }
 };
+
