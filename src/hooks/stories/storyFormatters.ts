@@ -17,48 +17,46 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     createdAtDate = new Date();
   }
 
-  // Validation du statut avec logs détaillés
+  // Validation et logging du statut
   const providedStatus = data.status;
-  console.log('Status from Firestore:', {
-    providedStatus,
-    docId: doc.id,
-    hasStoryText: Boolean(data.story_text?.trim())
-  });
-
-  // Validation du statut
   const validStatus = ['completed', 'pending', 'read'].includes(providedStatus) 
     ? providedStatus 
     : 'pending';
 
-  // Validation du contenu
-  const storyText = data.story_text || '';
-  const preview = data.preview || '';
+  console.log('Formatage de l\'histoire:', {
+    id: doc.id,
+    status: {
+      original: providedStatus,
+      validated: validStatus
+    },
+    content: {
+      hasStoryText: Boolean(data.story_text?.trim()),
+      hasPreview: Boolean(data.preview?.trim()),
+      textLength: data.story_text?.length || 0
+    },
+    metadata: {
+      createdAt: createdAtDate,
+      authorId: data.authorId
+    }
+  });
 
   const story: Story = {
     id: doc.id,
     id_stories: data.id_stories || doc.id,
     authorId: data.authorId || '',
     title: data.title || '',
-    preview: validStatus === 'completed' ? preview : "Histoire en cours de génération...",
+    preview: data.preview || '',
     objective: data.objective || '',
     childrenIds: Array.isArray(data.childrenIds) ? [...data.childrenIds] : [],
     childrenNames: Array.isArray(data.childrenNames) ? [...data.childrenNames] : [],
     status: validStatus,
-    story_text: validStatus === 'completed' ? storyText : "Génération en cours...",
+    story_text: data.story_text || '',
     story_summary: data.story_summary || '',
     createdAt: createdAtDate,
     isFavorite: Boolean(data.isFavorite),
     tags: Array.isArray(data.tags) ? [...data.tags] : [],
     sharedWith: Array.isArray(data.sharedWith) ? [...data.sharedWith] : []
   };
-
-  console.log('Story formatted from Firestore:', {
-    id: story.id,
-    status: story.status,
-    hasStoryText: Boolean(storyText.trim()),
-    originalStatus: providedStatus,
-    finalStatus: validStatus
-  });
 
   return story;
 };

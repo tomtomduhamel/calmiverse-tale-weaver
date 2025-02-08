@@ -24,6 +24,13 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
   const [isFavorite, setIsFavorite] = useState(story.isFavorite || false);
   const readingTime = calculateReadingTime(story.story_text);
 
+  console.log('Rendu StoryCard:', {
+    id: story.id,
+    status: story.status,
+    hasContent: Boolean(story.story_text?.trim()),
+    contentLength: story.story_text?.length
+  });
+
   const formatTitle = (text: string) => {
     let formattedText = text.replace(/^["']|["']$/g, '').trim();
     if (formattedText.startsWith('###')) {
@@ -79,8 +86,8 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
   };
 
   const handleCardClick = () => {
-    if (story.status !== 'completed') {
-      console.log('Story not ready:', {
+    if (story.status !== 'completed' || !story.story_text?.trim()) {
+      console.log('Histoire non disponible:', {
         id: story.id,
         status: story.status,
         hasContent: Boolean(story.story_text?.trim())
@@ -92,12 +99,19 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
       return;
     }
     
-    console.log('Story is ready to be read:', {
+    console.log('Lecture de l\'histoire:', {
       id: story.id,
       status: story.status,
       title: story.title
     });
     onClick();
+  };
+
+  const renderSummary = () => {
+    if (story.status === 'pending' || !story.story_text?.trim()) {
+      return "Histoire en cours de génération...";
+    }
+    return story.story_summary || story.preview || "Aucun résumé disponible";
   };
 
   return (
@@ -107,13 +121,13 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         bg-gradient-to-br from-card-start to-card-end
         hover:from-card-hover-start hover:to-card-hover-end
         shadow-soft hover:shadow-soft-lg animate-fade-in
-        ${story.status === 'completed' ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
+        ${story.status === 'completed' && story.story_text?.trim() ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
       `}
       onClick={handleCardClick}
-      role={story.status === 'completed' ? "button" : undefined}
-      tabIndex={story.status === 'completed' ? 0 : undefined}
+      role={story.status === 'completed' && story.story_text?.trim() ? "button" : undefined}
+      tabIndex={story.status === 'completed' && story.story_text?.trim() ? 0 : undefined}
       onKeyDown={(e) => {
-        if (story.status === 'completed' && (e.key === 'Enter' || e.key === ' ')) {
+        if (story.status === 'completed' && story.story_text?.trim() && (e.key === 'Enter' || e.key === ' ')) {
           handleCardClick();
         }
       }}
@@ -143,7 +157,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
         </div>
 
         <p className="text-sm text-muted-foreground line-clamp-3">
-          {story.status !== 'completed' ? "Histoire en cours de génération..." : story.story_summary}
+          {renderSummary()}
         </p>
 
         <StoryCardTags
@@ -156,7 +170,7 @@ const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
           Créée le {format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
         </p>
         
-        {story.status !== 'completed' ? (
+        {(story.status !== 'completed' || !story.story_text?.trim()) ? (
           <Button
             className="w-full bg-secondary/50 cursor-not-allowed flex items-center gap-2 animate-pulse"
             disabled

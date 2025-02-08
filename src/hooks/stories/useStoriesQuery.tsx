@@ -9,6 +9,7 @@ export const useStoriesQuery = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!auth.currentUser) {
@@ -16,7 +17,11 @@ export const useStoriesQuery = () => {
       return;
     }
 
-    console.log('🔄 Initialisation du listener des histoires...');
+    console.log('🔄 Initialisation du listener des histoires...', {
+      userId: auth.currentUser.uid,
+      retryCount
+    });
+
     setIsLoading(true);
 
     const storiesQuery = query(
@@ -25,44 +30,63 @@ export const useStoriesQuery = () => {
       orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(storiesQuery, 
+    const unsubscribe = onSnapshot(
+      storiesQuery, 
       (snapshot) => {
         try {
           const loadedStories = snapshot.docs.map(doc => {
             try {
-              const formattedStory = formatStoryFromFirestore(doc);
-              console.log('Histoire formatée avec succès:', {
-                id: formattedStory.id,
-                status: formattedStory.status,
-                hasContent: Boolean(formattedStory.story_text?.trim()),
-                title: formattedStory.title
-              });
-              return formattedStory;
+              return formatStoryFromFirestore(doc);
             } catch (err) {
-              console.error('Erreur lors du formatage d\'une histoire:', err, 'Document:', doc.id);
+              console.error('Erreur lors du formatage d\'une histoire:', {
+                docId: doc.id,
+                error: err
+              });
               return null;
             }
           }).filter((story): story is Story => story !== null);
 
-          console.log('📥 Nombre total d\'histoires chargées:', loadedStories.length);
+          console.log('📥 Mise à jour des histoires:', {
+            total: loadedStories.length,
+            statuses: loadedStories.reduce((acc, story) => ({
+              ...acc,
+              [story.status]: (acc[story.status] || 0) + 1
+            }), {} as Record<string, number>)
+          });
+
           setStories(loadedStories);
           setError(null);
+          setRetryCount(0);
         } catch (err) {
           console.error('Erreur lors du traitement des histoires:', err);
           setError(err instanceof Error ? err : new Error('Erreur inconnue'));
+          
+          if (retryCount < 3) {
+            setRetryCount(prev => prev + 1);
+          }
         } finally {
           setIsLoading(false);
         }
       },
       (err) => {
-        console.error('Erreur lors du chargement des histoires:', err);
+        console.error('Erreur lors de l\'écoute des histoires:', {
+          error: err,
+          retryCount
+        });
         setError(err);
         setIsLoading(false);
+
+        if (retryCount < 3) {
+          setRetryCount(prev => prev + 1);
+        }
       }
     );
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      console.log('🔄 Nettoyage du listener des histoires');
+      unsubscribe();
+    };
+  }, [retryCount]);
 
   return { stories, isLoading, error };
 };
