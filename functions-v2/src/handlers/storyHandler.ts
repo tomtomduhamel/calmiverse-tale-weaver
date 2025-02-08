@@ -63,7 +63,10 @@ export const generateStory = onCall({
         title: `Histoire pour ${childrenNames.join(' et ')}`,
         preview: "Histoire en cours de génération...",
         story_text: "Génération en cours...",
-        story_summary: "Résumé en cours de génération..."
+        story_summary: "Résumé en cours de génération...",
+        _version: 1,
+        _lastSync: admin.firestore.FieldValue.serverTimestamp(),
+        _pendingWrites: true
       };
 
       const storyRef = admin.firestore().collection('stories').doc();
@@ -77,20 +80,32 @@ export const generateStory = onCall({
       console.log('Starting story generation with OpenAI');
       const generatedStory = await generateStoryWithAI(objective, childrenNames, apiKey);
 
-      const updateData = {
-        story_text: generatedStory.story_text,
-        preview: generatedStory.preview,
-        status: 'completed',
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      };
+      // Utiliser une transaction pour la mise à jour finale
+      await admin.firestore().runTransaction(async (transaction) => {
+        const storyDoc = await transaction.get(storyRef);
+        if (!storyDoc.exists) {
+          throw new Error('Story document not found during update');
+        }
 
-      console.log('Updating story with generated content:', {
-        id: storyRef.id,
-        status: updateData.status,
-        authorId
+        const currentData = storyDoc.data();
+        const updateData = {
+          story_text: generatedStory.story_text,
+          preview: generatedStory.preview,
+          status: 'completed',
+          _version: (currentData?._version || 1) + 1,
+          _lastSync: admin.firestore.FieldValue.serverTimestamp(),
+          _pendingWrites: false,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        transaction.update(storyRef, updateData);
+
+        console.log('Story transaction completed successfully:', {
+          id: storyRef.id,
+          newStatus: 'completed',
+          newVersion: updateData._version
+        });
       });
-
-      await storyRef.update(updateData);
 
       const updatedDoc = await storyRef.get();
       const finalData = updatedDoc.data();
@@ -107,7 +122,8 @@ export const generateStory = onCall({
       console.log('Story document updated successfully:', {
         id: storyRef.id,
         status: finalData.status,
-        authorId: finalData.authorId
+        authorId: finalData.authorId,
+        version: finalData._version
       });
 
       return {

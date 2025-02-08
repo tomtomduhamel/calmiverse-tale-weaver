@@ -1,3 +1,4 @@
+
 export interface Story {
   id: string;
   id_stories?: string;
@@ -15,6 +16,9 @@ export interface Story {
   epubFile?: string;
   authorId?: string;
   sharedWith?: string[];
+  _version?: number;
+  _lastSync?: any;
+  _pendingWrites?: boolean;
   sharing?: {
     publicAccess: {
       enabled: boolean;

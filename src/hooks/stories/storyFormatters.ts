@@ -15,6 +15,9 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     authorId: data.authorId,
     currentUser: auth.currentUser?.uid,
     status: data.status,
+    version: data._version,
+    lastSync: data._lastSync,
+    pendingWrites: data._pendingWrites,
     hasContent: Boolean(data.story_text?.trim())
   });
 
@@ -28,6 +31,10 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     createdAtDate = new Date();
   }
 
+  // Validation du statut basée sur le contenu
+  const hasValidContent = Boolean(data.story_text?.trim());
+  const status = hasValidContent && data.status === 'pending' ? 'completed' : data.status;
+
   const story: Story = {
     id: doc.id,
     id_stories: data.id_stories || doc.id,
@@ -37,19 +44,23 @@ export const formatStoryFromFirestore = (doc: DocumentSnapshot): Story => {
     objective: data.objective || '',
     childrenIds: Array.isArray(data.childrenIds) ? [...data.childrenIds] : [],
     childrenNames: Array.isArray(data.childrenNames) ? [...data.childrenNames] : [],
-    status: data.status || 'pending',
+    status: status || 'pending',
     story_text: data.story_text || '',
     story_summary: data.story_summary || '',
     createdAt: createdAtDate,
     isFavorite: Boolean(data.isFavorite),
     tags: Array.isArray(data.tags) ? [...data.tags] : [],
-    sharedWith: Array.isArray(data.sharedWith) ? [...data.sharedWith] : []
+    sharedWith: Array.isArray(data.sharedWith) ? [...data.sharedWith] : [],
+    _version: data._version || 1,
+    _lastSync: data._lastSync,
+    _pendingWrites: Boolean(data._pendingWrites)
   };
 
   console.log('Histoire formatée:', {
     id: story.id,
     authorId: story.authorId,
     status: story.status,
+    version: story._version,
     hasContent: Boolean(story.story_text?.trim())
   });
 
@@ -74,12 +85,16 @@ export const createStoryData = (formData: { childrenIds: string[], objective: st
     createdAt: Timestamp.now(),
     isFavorite: false,
     tags: [],
-    sharedWith: []
+    sharedWith: [],
+    _version: 1,
+    _lastSync: Timestamp.now(),
+    _pendingWrites: true
   };
 
   console.log('Création nouvelle histoire avec authorId:', {
     authorId: storyData.authorId,
-    status: storyData.status
+    status: storyData.status,
+    version: storyData._version
   });
 
   return storyData;
