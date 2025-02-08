@@ -6,6 +6,10 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
   console.log("Paramètres reçus:", { objective, childrenNames });
   
   try {
+    if (!apiKey) {
+      throw new Error("La clé API OpenAI est requise");
+    }
+
     console.log("Initialisation du client OpenAI");
     const openai = new OpenAI({
       apiKey: apiKey
@@ -111,4 +115,3 @@ CONTRAINTES SPÉCIFIQUES :
     throw error;
   }
 };
-

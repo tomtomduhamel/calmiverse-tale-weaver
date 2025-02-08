@@ -23,7 +23,7 @@ export const generateStory = onCall(
     region: 'us-central1',
     secrets: [openaiApiKey],
     minInstances: 0,
-    maxInstances: 10,
+    maxInstances: 2, // Reduced from 10 to minimize cold starts
   },
   async (request) => {
     try {
