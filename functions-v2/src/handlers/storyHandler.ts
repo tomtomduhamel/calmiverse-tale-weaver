@@ -3,16 +3,10 @@ import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 import { defineSecret } from 'firebase-functions/params';
+import { StoryGenerationRequest, isFirebaseError } from '../types/story';
 
 if (!admin.apps.length) {
   admin.initializeApp();
-}
-
-export interface StoryGenerationRequest {
-  storyId: string;
-  objective: string;
-  childrenNames: string[];
-  authorId?: string;
 }
 
 const openaiApiKey = defineSecret('OPENAI_API_KEY');
@@ -125,7 +119,10 @@ export const generateStory = onCall({
 
     } catch (error) {
       console.error('Error in generateStory:', error);
-      throw new Error(error instanceof Error ? error.message : 'Une erreur inattendue est survenue');
+      if (isFirebaseError(error)) {
+        throw new Error(error.message);
+      }
+      throw new Error('Une erreur inattendue est survenue');
     }
   }
 );
