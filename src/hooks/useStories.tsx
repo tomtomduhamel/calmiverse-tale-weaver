@@ -25,13 +25,15 @@ export const useStories = (children: any[] = []) => {
         const childrenNames = selectedChildren.map(child => child.name);
         
         console.log('Appel de la fonction Cloud avec les données:', {
+          storyId,
           objective: formData.objective,
-          childrenNames: childrenNames
+          childrenNames
         });
 
         const result = await generateStoryFunction({
+          storyId,
           objective: formData.objective,
-          childrenNames: childrenNames
+          childrenNames
         });
 
         console.log('Résultat de la fonction Cloud:', result);
@@ -56,3 +58,4 @@ export const useStories = (children: any[] = []) => {
     deleteStory,
   };
 };
+

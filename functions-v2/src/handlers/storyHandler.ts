@@ -16,16 +16,26 @@ export const generateStory = onCall({
     timeoutSeconds: 540,
     memory: '1GiB',
   }, async (request) => {
-    console.log('Starting story generation process');
+    console.log('Starting story generation process. Request data:', request.data);
     
     try {
       if (!request.auth) {
+        console.error('Authentication error: User not authenticated');
         throw new Error('Utilisateur non authentifié');
       }
 
       const data = request.data as StoryGenerationRequest;
+      console.log('Parsed request data:', data);
+
       const { storyId, objective, childrenNames } = data;
       const authorId = request.auth.uid;
+
+      console.log('Validating request parameters:', {
+        storyId,
+        authorId,
+        objective,
+        childrenNames
+      });
 
       if (!storyId) {
         console.error('Missing storyId in request');
@@ -38,7 +48,7 @@ export const generateStory = onCall({
       }
 
       if (!Array.isArray(childrenNames) || childrenNames.length === 0) {
-        console.error('Invalid or empty childrenNames array');
+        console.error('Invalid or empty childrenNames array:', childrenNames);
         throw new Error('Les noms des enfants doivent être fournis dans un tableau non vide');
       }
 
@@ -60,6 +70,7 @@ export const generateStory = onCall({
       const storyDoc = await storyRef.get();
 
       if (!storyDoc.exists) {
+        console.error('Story document not found:', storyId);
         throw new Error('Document d\'histoire non trouvé');
       }
 
@@ -126,3 +137,4 @@ export const generateStory = onCall({
     }
   }
 );
+
