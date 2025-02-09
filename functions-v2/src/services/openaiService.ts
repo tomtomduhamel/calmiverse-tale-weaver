@@ -1,7 +1,12 @@
 
 import OpenAI from 'openai';
+import { type Story } from '../types/story';
 
-export const generateStoryWithAI = async (objective: string, childrenNames: string[], apiKey: string) => {
+export const generateStoryWithAI = async (
+  objective: string, 
+  childrenNames: string[], 
+  apiKey: string
+): Promise<Story> => {
   console.log("Starting OpenAI story generation");
   console.log("Parameters received:", { objective, childrenNames });
   
@@ -42,44 +47,11 @@ RÈGLES FONDAMENTALES :
 - Développe les relations entre les personnages
 
 STRUCTURE CACHÉE (ne pas la rendre visible) :
-1. Introduction et mise en contexte (2000-2500 mots) :
-   - Cadre sécurisant et familier détaillé
-   - Personnages principaux introduits naturellement
-   - Description sensorielle riche de l'environnement
-   - Transition douce vers l'aventure
-
-2. Développement de l'ambiance (2500-3000 mots) :
-   - Descriptions sensorielles immersives
-   - Éléments naturels ou fantastiques détaillés
-   - Ton calme et rassurant
-   - Métaphores apaisantes et imagées
-
-3. Progression de l'histoire (2500-3000 mots) :
-   - Langage indirect et suggestions positives
-   - Introduction de compagnons bienveillants
-   - Symboles rassurants
-   - Progression naturelle avec suspense léger
-
-4. Cœur de l'histoire (2500-3000 mots) :
-   - Aventure captivante mais apaisante
-   - Descriptions immersives détaillées
-   - Rencontres positives mémorables
-   - Rythme équilibré avec moments calmes
-
-5. Conclusion (2000-2500 mots) :
-   - Renforcement du sentiment de sécurité
-   - Résolution satisfaisante
-   - Messages positifs subtilement intégrés
-   - Transition douce vers la fin
-
-CONTRAINTES SPÉCIFIQUES :
-- Vocabulaire riche mais accessible
-- Pas de termes liés à l'hypnose
-- Grammaire et orthographe impeccables
-- Éviter l'excès de superlatifs
-- Noms de personnages appropriés et mémorables
-- Univers cohérent et captivant
-- Descriptions sensorielles enrichies`,
+1. Introduction et mise en contexte (2000-2500 mots)
+2. Développement de l'ambiance (2500-3000 mots)
+3. Progression de l'histoire (2500-3000 mots)
+4. Cœur de l'histoire (2500-3000 mots)
+5. Conclusion (2000-2500 mots)`,
         },
         {
           role: 'user',
@@ -103,7 +75,6 @@ CONTRAINTES SPÉCIFIQUES :
       throw new Error('Aucune histoire n\'a été générée');
     }
 
-    // Vérification de la longueur
     const wordCount = story.split(/\s+/).length;
     console.log(`Story generated with ${wordCount} words`);
     
@@ -116,13 +87,16 @@ CONTRAINTES SPÉCIFIQUES :
 
     console.log("Formatting story data");
     const storyData = {
-      id_stories: uniqueId,
-      story_text: story,
-      story_summary: "Résumé en cours de génération...",
-      createdAt: new Date(),
+      id: uniqueId,
+      content: story,
+      summary: "Résumé en cours de génération...",
+      createdAt: new Date().toISOString(),
       title: `Histoire pour ${childrenNames.join(' et ')}`,
       preview: story.substring(0, 200) + "...",
       wordCount: wordCount,
+      status: 'unread' as const,
+      objective: objective,
+      childrenNames: childrenNames
     };
 
     console.log("Story data formatted successfully");

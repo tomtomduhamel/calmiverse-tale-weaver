@@ -1,15 +1,18 @@
 
 import * as admin from 'firebase-admin';
-import { generateStory } from './handlers/storyHandler';
+import * as functions from 'firebase-functions';
+import { generateStoryWithAI } from './services/openaiService';
 
-try {
-  if (!admin.apps.length) {
-    admin.initializeApp();
+// Initialize Firebase Admin
+admin.initializeApp();
+
+// Export the Cloud Function
+export const generateStory = functions.https.onCall(async (data, context) => {
+  try {
+    const { objective, childrenNames, apiKey } = data;
+    return await generateStoryWithAI(objective, childrenNames, apiKey);
+  } catch (error) {
+    console.error('Error in generateStory function:', error);
+    throw new functions.https.HttpsError('internal', error.message);
   }
-} catch (error) {
-  console.error('Error initializing Firebase Admin:', error);
-}
-
-export {
-  generateStory
-};
+});
