@@ -15,12 +15,12 @@ export function validatePublicAccess(input: unknown): RequiredPublicAccess {
     return defaultAccess;
   }
 
-  const typedInput = input as Partial<RequiredPublicAccess>;
+  const typedInput = input as Record<string, unknown>;
   
   return {
     enabled: typeof typedInput.enabled === 'boolean' ? typedInput.enabled : defaultAccess.enabled,
-    token: typedInput.token || defaultAccess.token,
-    expiresAt: typedInput.expiresAt || defaultAccess.expiresAt
+    token: typeof typedInput.token === 'string' ? typedInput.token : defaultAccess.token,
+    expiresAt: typeof typedInput.expiresAt === 'string' ? typedInput.expiresAt : defaultAccess.expiresAt
   };
 }
 
@@ -35,11 +35,11 @@ export function validateSharedEmail(input: unknown): RequiredSharedEmail {
     return defaultEmail;
   }
 
-  const typedInput = input as Partial<RequiredSharedEmail>;
+  const typedInput = input as Record<string, unknown>;
 
   return {
-    email: typedInput.email || defaultEmail.email,
-    sharedAt: typedInput.sharedAt || defaultEmail.sharedAt,
+    email: typeof typedInput.email === 'string' ? typedInput.email : defaultEmail.email,
+    sharedAt: typeof typedInput.sharedAt === 'string' ? typedInput.sharedAt : defaultEmail.sharedAt,
     accessCount: typeof typedInput.accessCount === 'number' ? typedInput.accessCount : defaultEmail.accessCount
   };
 }
@@ -54,11 +54,11 @@ export function validateKindleDelivery(input: unknown): RequiredKindleDelivery {
     return defaultDelivery;
   }
 
-  const typedInput = input as Partial<RequiredKindleDelivery>;
+  const typedInput = input as Record<string, unknown>;
 
   return {
-    sentAt: typedInput.sentAt || defaultDelivery.sentAt,
-    status: typedInput.status || defaultDelivery.status
+    sentAt: typeof typedInput.sentAt === 'string' ? typedInput.sentAt : defaultDelivery.sentAt,
+    status: typedInput.status === 'sent' || typedInput.status === 'failed' ? typedInput.status : defaultDelivery.status
   };
 }
 
@@ -70,7 +70,7 @@ export function createValidSharing(input: unknown): SharingConfig {
   };
 
   if (!input || typeof input !== 'object') {
-    return SharingSchema.parse(defaultConfig);
+    return defaultConfig;
   }
 
   const inputObj = input as Record<string, unknown>;
@@ -78,12 +78,12 @@ export function createValidSharing(input: unknown): SharingConfig {
   const validConfig: RequiredSharingConfig = {
     publicAccess: validatePublicAccess(inputObj.publicAccess),
     sharedEmails: Array.isArray(inputObj.sharedEmails) 
-      ? inputObj.sharedEmails.map(validateSharedEmail)
+      ? inputObj.sharedEmails.map(email => validateSharedEmail(email))
       : defaultConfig.sharedEmails,
     kindleDeliveries: Array.isArray(inputObj.kindleDeliveries)
-      ? inputObj.kindleDeliveries.map(validateKindleDelivery)
+      ? inputObj.kindleDeliveries.map(delivery => validateKindleDelivery(delivery))
       : defaultConfig.kindleDeliveries
   };
 
-  return SharingSchema.parse(validConfig);
+  return validConfig;
 }

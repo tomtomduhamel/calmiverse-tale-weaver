@@ -27,10 +27,10 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     sharing: createValidSharing(null)
   };
 
-  const completeStory = {
+  const completeStory: FrontendStory = {
     ...defaultStory,
     ...story,
-    sharing: createValidSharing(story.sharing ?? null)
+    sharing: createValidSharing(story.sharing)
   };
 
   return FrontendStorySchema.parse(completeStory);
