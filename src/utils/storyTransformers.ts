@@ -6,33 +6,37 @@ import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
 const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  // 1. Créer un objet de configuration non optionnel
-  const resolvedPublicAccess = {
+  // Créer d'abord un objet fortement typé avec des valeurs par défaut
+  const basePublicAccess = {
     enabled: false,
     token: generateToken(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+  } as const;
+
+  // Créer l'objet final en écrasant les valeurs si elles existent
+  const finalPublicAccess = input?.publicAccess 
+    ? {
+        enabled: typeof input.publicAccess.enabled === 'boolean' ? input.publicAccess.enabled : basePublicAccess.enabled,
+        token: typeof input.publicAccess.token === 'string' ? input.publicAccess.token : basePublicAccess.token,
+        expiresAt: typeof input.publicAccess.expiresAt === 'string' ? input.publicAccess.expiresAt : basePublicAccess.expiresAt
+      }
+    : basePublicAccess;
+
+  // Construire l'objet final avec le type correct
+  const validSharing: SharingConfig = {
+    publicAccess: finalPublicAccess,
+    sharedEmails: input?.sharedEmails?.map(email => ({
+      email: email.email || '',
+      sharedAt: email.sharedAt || new Date().toISOString(),
+      accessCount: typeof email.accessCount === 'number' ? email.accessCount : 0
+    })) || [],
+    kindleDeliveries: input?.kindleDeliveries?.map(delivery => ({
+      sentAt: delivery.sentAt || new Date().toISOString(),
+      status: (delivery.status as 'pending' | 'sent' | 'failed') || 'pending'
+    })) || []
   };
 
-  if (input?.publicAccess) {
-    if ('enabled' in input.publicAccess) resolvedPublicAccess.enabled = input.publicAccess.enabled;
-    if ('token' in input.publicAccess) resolvedPublicAccess.token = input.publicAccess.token;
-    if ('expiresAt' in input.publicAccess) resolvedPublicAccess.expiresAt = input.publicAccess.expiresAt;
-  }
-
-  const sharing = {
-    publicAccess: resolvedPublicAccess,
-    sharedEmails: input?.sharedEmails?.map(email => ({
-      email: email.email ?? '',
-      sharedAt: email.sharedAt ?? new Date().toISOString(),
-      accessCount: email.accessCount ?? 0
-    })) ?? [],
-    kindleDeliveries: input?.kindleDeliveries?.map(delivery => ({
-      sentAt: delivery.sentAt ?? new Date().toISOString(),
-      status: delivery.status ?? 'pending'
-    })) ?? []
-  } satisfies SharingConfig;
-
-  return SharingSchema.parse(sharing);
+  return SharingSchema.parse(validSharing);
 };
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
