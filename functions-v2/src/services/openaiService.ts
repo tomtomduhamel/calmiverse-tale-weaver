@@ -1,36 +1,67 @@
 
 import OpenAI from 'openai';
-import { type Story } from '../types/story';
+import { type CloudFunctionStory } from '../../src/types/shared/story';
+
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000;
+
+interface GenerationMetrics {
+  startTime: number;
+  endTime?: number;
+  retryCount: number;
+  wordCount: number;
+  modelUsed: string;
+  tokensUsed?: number;
+}
+
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const generateStoryWithAI = async (
   objective: string, 
   childrenNames: string[], 
   apiKey: string
-): Promise<Story> => {
+): Promise<CloudFunctionStory> => {
+  const metrics: GenerationMetrics = {
+    startTime: Date.now(),
+    retryCount: 0,
+    wordCount: 0,
+    modelUsed: 'gpt-4o'
+  };
+
   console.log("Starting OpenAI story generation with parameters:", {
     objective,
     childrenNames,
-    hasApiKey: !!apiKey
+    hasApiKey: !!apiKey,
+    timestamp: new Date().toISOString()
   });
   
   try {
     if (!apiKey) {
-      console.error("OpenAI API key is required but not provided");
+      console.error("OpenAI API key validation failed at:", new Date().toISOString());
       throw new Error("La clé API OpenAI est requise");
     }
 
-    console.log("Initializing OpenAI client");
-    const openai = new OpenAI({
-      apiKey: apiKey
-    });
+    if (!/^sk-[a-zA-Z0-9]{32,}$/.test(apiKey)) {
+      console.error("Invalid OpenAI API key format");
+      throw new Error("Format de la clé API OpenAI invalide");
+    }
 
-    console.log("Creating OpenAI request with adjusted parameters");
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `Tu es un expert en création d'histoires pour enfants.
+    console.log("Initializing OpenAI client at:", new Date().toISOString());
+    const openai = new OpenAI({ apiKey });
+
+    let lastError: Error | null = null;
+    let generatedText: string | null = null;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        console.log(`Attempt ${attempt + 1}/${MAX_RETRIES} starting at:`, new Date().toISOString());
+        
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `Tu es un expert en création d'histoires pour enfants.
 
 FORMAT DE L'HISTOIRE :
 - Longueur : IMPÉRATIF de faire entre 10000-15000 mots (environ 6-8 minutes de lecture)
@@ -48,32 +79,57 @@ RÈGLES FONDAMENTALES :
 - Termine toujours sur une note positive
 - Enrichis l'histoire avec des détails sensoriels
 - Développe les relations entre les personnages`,
-        },
-        {
-          role: 'user',
-          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
-          L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
-          Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.
-          IMPORTANT : L'histoire doit faire entre 10000 et 15000 mots.`,
-        },
-      ],
-      temperature: 0.8,
-      max_tokens: 16000,
-      frequency_penalty: 0.2,
-      presence_penalty: 0.1,
-    });
+            },
+            {
+              role: 'user',
+              content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
+              L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
+              Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.
+              IMPORTANT : L'histoire doit faire entre 10000 et 15000 mots.`,
+            },
+          ],
+          temperature: 0.8,
+          max_tokens: 16000,
+          frequency_penalty: 0.2,
+          presence_penalty: 0.1,
+        });
 
-    console.log("OpenAI response received successfully");
-    const generatedText = completion.choices[0].message.content;
+        generatedText = completion.choices[0].message.content;
+        metrics.tokensUsed = completion.usage?.total_tokens;
+        metrics.retryCount = attempt;
+        break;
+      } catch (error) {
+        lastError = error as Error;
+        console.error(`Attempt ${attempt + 1} failed:`, error);
+        
+        if (error instanceof OpenAI.APIError) {
+          if (error.status === 401) throw error; // Don't retry auth errors
+          if (error.status === 429) {
+            const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+            console.log(`Rate limited. Waiting ${delay}ms before retry`);
+            await wait(delay);
+          }
+        }
+        
+        if (attempt === MAX_RETRIES - 1) throw lastError;
+      }
+    }
     
     if (!generatedText) {
-      console.error("Error: No story content generated by OpenAI");
-      throw new Error('Aucune histoire n\'a été générée');
+      console.error("Error: No story content generated after all retries");
+      throw new Error('Aucune histoire n\'a été générée après plusieurs tentatives');
     }
 
     const wordCount = generatedText.split(/\s+/).length;
-    console.log(`Story generated with ${wordCount} words`);
+    metrics.wordCount = wordCount;
+    metrics.endTime = Date.now();
     
+    console.log("Generation metrics:", {
+      ...metrics,
+      duration: `${(metrics.endTime - metrics.startTime) / 1000}s`,
+      timestamp: new Date().toISOString()
+    });
+
     if (wordCount < 10000) {
       console.warn("Warning: Story is shorter than expected minimum length");
     }
@@ -81,32 +137,42 @@ RÈGLES FONDAMENTALES :
     console.log("Generating story data");
     const uniqueId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    console.log("Formatting story data");
-    const storyData: Story = {
+    const storyData: CloudFunctionStory = {
       id: uniqueId,
-      story_text: generatedText,
-      summary: "Résumé en cours de génération...",
-      createdAt: new Date().toISOString(),
       title: `Histoire pour ${childrenNames.join(' et ')}`,
       preview: generatedText.substring(0, 200) + "...",
-      wordCount: wordCount,
+      objective,
+      childrenIds: [],
+      childrenNames,
+      story_text: generatedText,
+      story_summary: "Résumé en cours de génération...",
+      createdAt: new Date().toISOString(),
       status: 'pending',
-      objective: objective,
-      childrenNames: childrenNames,
+      authorId: '',
+      wordCount,
       _version: 1,
       _lastSync: new Date().toISOString(),
-      _pendingWrites: true
+      _pendingWrites: true,
+      retryCount: metrics.retryCount,
+      processingTime: metrics.endTime - metrics.startTime
     };
 
-    console.log("Story data formatted successfully:", {
+    console.log("Story generation completed successfully:", {
       id: storyData.id,
       wordCount: storyData.wordCount,
-      status: storyData.status
+      status: storyData.status,
+      processingTime: `${storyData.processingTime}ms`,
+      retryCount: storyData.retryCount
     });
     
     return storyData;
   } catch (error) {
-    console.error("Error during story generation with OpenAI:", error);
+    metrics.endTime = Date.now();
+    console.error("Error during story generation:", {
+      error,
+      metrics,
+      timestamp: new Date().toISOString()
+    });
     
     if (error instanceof OpenAI.APIError) {
       console.error("OpenAI API Error details:", {
@@ -115,7 +181,6 @@ RÈGLES FONDAMENTALES :
         code: error.code
       });
       
-      // Messages d'erreur plus spécifiques selon le type d'erreur
       if (error.status === 401) {
         throw new Error("La clé API OpenAI est invalide");
       } else if (error.status === 429) {
@@ -130,3 +195,4 @@ RÈGLES FONDAMENTALES :
     throw error;
   }
 };
+
