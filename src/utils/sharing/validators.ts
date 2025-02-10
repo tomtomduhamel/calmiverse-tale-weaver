@@ -17,7 +17,6 @@ export function validatePublicAccess(input: unknown): RequiredPublicAccess {
 
   const typedInput = input as Record<string, unknown>;
   
-  // Always return a complete object with all required fields
   return {
     enabled: typeof typedInput.enabled === 'boolean' ? typedInput.enabled : defaultAccess.enabled,
     token: typeof typedInput.token === 'string' ? typedInput.token : defaultAccess.token,
@@ -38,7 +37,6 @@ export function validateSharedEmail(input: unknown): RequiredSharedEmail {
 
   const typedInput = input as Record<string, unknown>;
 
-  // Always return a complete object with all required fields
   return {
     email: typeof typedInput.email === 'string' ? typedInput.email : defaultEmail.email,
     sharedAt: typeof typedInput.sharedAt === 'string' ? typedInput.sharedAt : defaultEmail.sharedAt,
@@ -58,14 +56,13 @@ export function validateKindleDelivery(input: unknown): RequiredKindleDelivery {
 
   const typedInput = input as Record<string, unknown>;
 
-  // Always return a complete object with all required fields
   return {
     sentAt: typeof typedInput.sentAt === 'string' ? typedInput.sentAt : defaultDelivery.sentAt,
     status: typedInput.status === 'sent' || typedInput.status === 'failed' ? typedInput.status : defaultDelivery.status
   };
 }
 
-export function createValidSharing(input: unknown): SharingConfig {
+export function createValidSharing(input: unknown): RequiredSharingConfig {
   const defaultConfig: RequiredSharingConfig = {
     publicAccess: validatePublicAccess(null),
     sharedEmails: [],
@@ -88,6 +85,5 @@ export function createValidSharing(input: unknown): SharingConfig {
       : defaultConfig.kindleDeliveries
   };
 
-  // Use SharingSchema to validate and ensure type safety
-  return SharingSchema.parse(config);
+  return SharingSchema.parse(config) as RequiredSharingConfig;
 }
