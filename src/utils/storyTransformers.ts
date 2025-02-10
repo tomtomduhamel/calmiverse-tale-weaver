@@ -22,7 +22,16 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       timestamp: new Date().toISOString()
     });
 
-    const sharing = cloudStory.sharing || createDefaultSharing();
+    const defaultSharing = createDefaultSharing();
+    const sharing: SharingConfig = cloudStory.sharing ? {
+      publicAccess: {
+        enabled: cloudStory.sharing.publicAccess?.enabled ?? defaultSharing.publicAccess.enabled,
+        token: cloudStory.sharing.publicAccess?.token ?? defaultSharing.publicAccess.token,
+        expiresAt: cloudStory.sharing.publicAccess?.expiresAt ?? defaultSharing.publicAccess.expiresAt,
+      },
+      sharedEmails: cloudStory.sharing.sharedEmails ?? defaultSharing.sharedEmails,
+      kindleDeliveries: cloudStory.sharing.kindleDeliveries ?? defaultSharing.kindleDeliveries,
+    } : defaultSharing;
 
     const story: FrontendStory = {
       id: cloudStory.id,
@@ -86,26 +95,29 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       timestamp: new Date().toISOString()
     });
 
+    const defaultSharing = createDefaultSharing();
+    const sharing: SharingConfig = story.sharing ? {
+      publicAccess: {
+        enabled: story.sharing.publicAccess.enabled,
+        token: story.sharing.publicAccess.token,
+        expiresAt: new Date(story.sharing.publicAccess.expiresAt).toISOString(),
+      },
+      sharedEmails: story.sharing.sharedEmails.map(email => ({
+        email: email.email,
+        sharedAt: new Date(email.sharedAt).toISOString(),
+        accessCount: email.accessCount,
+      })),
+      kindleDeliveries: story.sharing.kindleDeliveries.map(delivery => ({
+        sentAt: new Date(delivery.sentAt).toISOString(),
+        status: delivery.status,
+      })),
+    } : defaultSharing;
+
     const parsedStory: FrontendStory = {
       ...story,
       createdAt: new Date(story.createdAt).toISOString(),
       _lastSync: new Date(story._lastSync).toISOString(),
-      sharing: story.sharing ? {
-        publicAccess: {
-          enabled: story.sharing.publicAccess.enabled,
-          token: story.sharing.publicAccess.token,
-          expiresAt: new Date(story.sharing.publicAccess.expiresAt).toISOString(),
-        },
-        sharedEmails: story.sharing.sharedEmails.map(email => ({
-          email: email.email,
-          sharedAt: new Date(email.sharedAt).toISOString(),
-          accessCount: email.accessCount,
-        })),
-        kindleDeliveries: story.sharing.kindleDeliveries.map(delivery => ({
-          sentAt: new Date(delivery.sentAt).toISOString(),
-          status: delivery.status,
-        })),
-      } : createDefaultSharing(),
+      sharing: sharing,
     };
 
     console.log('Parsed dates story before validation:', {
