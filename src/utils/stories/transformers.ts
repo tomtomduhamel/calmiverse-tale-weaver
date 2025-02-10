@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 import type { FrontendStory, CloudFunctionStory } from '@/types/shared/story';
 import { FrontendStorySchema } from '../storyValidation';
@@ -27,13 +26,13 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     sharing: createValidSharing(null)
   };
 
-  const baseStory = {
+  const completeStory = {
     ...defaultStory,
     ...story,
     sharing: createValidSharing(story.sharing)
   };
 
-  return FrontendStorySchema.parse(baseStory);
+  return FrontendStorySchema.parse(completeStory);
 };
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
