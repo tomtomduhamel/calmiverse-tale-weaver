@@ -60,14 +60,14 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     sharing: createValidSharing(undefined)
   };
 
-  // Normalize the sharing object before merging
-  const normalizedStory = {
+  // Create a new object with normalized sharing
+  const storyWithSharing = {
     ...defaultStory,
     ...story,
-    sharing: story.sharing ? createValidSharing(story.sharing) : defaultStory.sharing
+    sharing: createValidSharing(story.sharing)
   };
 
-  return FrontendStorySchema.parse(normalizedStory);
+  return FrontendStorySchema.parse(storyWithSharing);
 };
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
@@ -118,7 +118,7 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       ...story,
       createdAt: new Date(story.createdAt).toISOString(),
       _lastSync: new Date(story._lastSync).toISOString(),
-      sharing: story.sharing ? {
+      sharing: {
         ...story.sharing,
         publicAccess: {
           ...story.sharing.publicAccess,
@@ -132,7 +132,7 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
           ...delivery,
           sentAt: new Date(delivery.sentAt).toISOString()
         }))
-      } : undefined
+      }
     });
 
     console.log('Date parsing completed:', {
