@@ -12,9 +12,9 @@ const DEFAULT_SHARING = {
     token: generateToken(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   },
-  sharedEmails: [],
-  kindleDeliveries: [],
-} as const;
+  sharedEmails: [] as { email: string; sharedAt: string; accessCount: number }[],
+  kindleDeliveries: [] as { sentAt: string; status: 'pending' | 'sent' | 'failed' }[],
+};
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
   try {
@@ -24,23 +24,55 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       timestamp: new Date().toISOString()
     });
 
-    // If no sharing data, return story without sharing
+    // Si pas de sharing, retourner l'histoire sans sharing
     if (!cloudStory.sharing) {
-      const story = { ...cloudStory };
+      const story = {
+        ...cloudStory,
+        id: cloudStory.id, // Force these required fields
+        title: cloudStory.title || '',
+        preview: cloudStory.preview || '',
+        objective: cloudStory.objective || '',
+        childrenIds: cloudStory.childrenIds || [],
+        childrenNames: cloudStory.childrenNames || [],
+        story_text: cloudStory.story_text || '',
+        story_summary: cloudStory.story_summary || '',
+        createdAt: cloudStory.createdAt || new Date().toISOString(),
+        status: cloudStory.status || 'pending',
+        authorId: cloudStory.authorId || '',
+        wordCount: cloudStory.wordCount || 0,
+        _version: cloudStory._version || 1,
+        _lastSync: cloudStory._lastSync || new Date().toISOString(),
+        _pendingWrites: cloudStory._pendingWrites || false
+      };
       return FrontendStorySchema.parse(story);
     }
 
-    // If sharing exists, ensure complete structure
+    // Si sharing existe, assurer une structure complète
     const story: FrontendStory = {
       ...cloudStory,
+      id: cloudStory.id, // Force these required fields
+      title: cloudStory.title || '',
+      preview: cloudStory.preview || '',
+      objective: cloudStory.objective || '',
+      childrenIds: cloudStory.childrenIds || [],
+      childrenNames: cloudStory.childrenNames || [],
+      story_text: cloudStory.story_text || '',
+      story_summary: cloudStory.story_summary || '',
+      createdAt: cloudStory.createdAt || new Date().toISOString(),
+      status: cloudStory.status || 'pending',
+      authorId: cloudStory.authorId || '',
+      wordCount: cloudStory.wordCount || 0,
+      _version: cloudStory._version || 1,
+      _lastSync: cloudStory._lastSync || new Date().toISOString(),
+      _pendingWrites: cloudStory._pendingWrites || false,
       sharing: {
         publicAccess: {
           enabled: cloudStory.sharing.publicAccess?.enabled ?? DEFAULT_SHARING.publicAccess.enabled,
           token: cloudStory.sharing.publicAccess?.token ?? DEFAULT_SHARING.publicAccess.token,
           expiresAt: cloudStory.sharing.publicAccess?.expiresAt ?? DEFAULT_SHARING.publicAccess.expiresAt,
         },
-        sharedEmails: cloudStory.sharing.sharedEmails ?? DEFAULT_SHARING.sharedEmails,
-        kindleDeliveries: cloudStory.sharing.kindleDeliveries ?? DEFAULT_SHARING.kindleDeliveries,
+        sharedEmails: cloudStory.sharing.sharedEmails ?? [...DEFAULT_SHARING.sharedEmails],
+        kindleDeliveries: cloudStory.sharing.kindleDeliveries ?? [...DEFAULT_SHARING.kindleDeliveries],
       },
     };
 
@@ -78,14 +110,27 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       timestamp: new Date().toISOString()
     });
 
-    // Parse dates for base story fields
+    // Parse les dates pour les champs de base de l'histoire
     const parsedStory: FrontendStory = {
       ...story,
+      id: story.id, // Force these required fields
+      title: story.title,
+      preview: story.preview,
+      objective: story.objective,
+      childrenIds: story.childrenIds,
+      childrenNames: story.childrenNames,
+      story_text: story.story_text,
+      story_summary: story.story_summary,
       createdAt: new Date(story.createdAt).toISOString(),
+      status: story.status,
+      authorId: story.authorId,
+      wordCount: story.wordCount,
+      _version: story._version,
       _lastSync: new Date(story._lastSync).toISOString(),
+      _pendingWrites: story._pendingWrites
     };
 
-    // If sharing exists, parse its dates
+    // Si sharing existe, parse ses dates
     if (story.sharing) {
       parsedStory.sharing = {
         publicAccess: {
