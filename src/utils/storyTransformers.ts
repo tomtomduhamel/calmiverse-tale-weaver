@@ -45,7 +45,7 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
 
     if (error instanceof z.ZodError) {
       console.error('Validation errors:', error.errors);
-      StoryMetrics.logError(cloudStory.id, error);
+      StoryMetrics.addProcessingStep(cloudStory.id, 'validation', 'error');
     }
 
     StoryMetrics.endOperation(cloudStory.id, 'error');
@@ -68,7 +68,8 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       sharing: story.sharing ? {
         ...story.sharing,
         publicAccess: {
-          ...story.sharing.publicAccess,
+          enabled: story.sharing.publicAccess.enabled,
+          token: story.sharing.publicAccess.token,
           expiresAt: new Date(story.sharing.publicAccess.expiresAt).toISOString(),
         },
         sharedEmails: story.sharing.sharedEmails.map(email => ({
@@ -102,11 +103,10 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
 
     if (error instanceof z.ZodError) {
       console.error('Validation errors:', error.errors);
-      StoryMetrics.logError(story.id, error);
+      StoryMetrics.addProcessingStep(story.id, 'validation', 'error');
     }
 
     StoryMetrics.endOperation(story.id, 'error');
     throw error;
   }
 };
-
