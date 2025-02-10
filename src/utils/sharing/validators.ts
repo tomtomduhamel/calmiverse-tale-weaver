@@ -75,3 +75,4 @@ export function createValidSharing(input: unknown): SharingConfig {
 
   return SharingSchema.parse(validConfig);
 }
+

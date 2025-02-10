@@ -21,3 +21,4 @@ export type RequiredSharingConfig = Required<{
   sharedEmails: RequiredSharedEmail[];
   kindleDeliveries: RequiredKindleDelivery[];
 }>;
+
