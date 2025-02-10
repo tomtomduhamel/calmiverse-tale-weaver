@@ -75,7 +75,7 @@ export function createValidSharing(input: unknown): SharingConfig {
 
   const inputObj = input as Record<string, unknown>;
   
-  const validConfig: RequiredSharingConfig = {
+  const config: RequiredSharingConfig = {
     publicAccess: validatePublicAccess(inputObj.publicAccess),
     sharedEmails: Array.isArray(inputObj.sharedEmails) 
       ? inputObj.sharedEmails.map(email => validateSharedEmail(email))
@@ -85,5 +85,5 @@ export function createValidSharing(input: unknown): SharingConfig {
       : defaultConfig.kindleDeliveries
   };
 
-  return validConfig;
+  return SharingSchema.parse(config);
 }
