@@ -5,90 +5,100 @@ import { FrontendStorySchema, SharingSchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
-type PublicAccessConfig = {
+// Types stricts pour la validation
+type RequiredPublicAccess = Required<{
   enabled: boolean;
   token: string;
   expiresAt: string;
-};
+}>;
 
-type SharedEmailConfig = {
+type RequiredSharedEmail = Required<{
   email: string;
   sharedAt: string;
   accessCount: number;
-};
+}>;
 
-type KindleDeliveryConfig = {
+type RequiredKindleDelivery = Required<{
   sentAt: string;
   status: 'pending' | 'sent' | 'failed';
-};
+}>;
 
-function validatePublicAccess(input: unknown): PublicAccessConfig {
+type RequiredSharingConfig = Required<{
+  publicAccess: RequiredPublicAccess;
+  sharedEmails: RequiredSharedEmail[];
+  kindleDeliveries: RequiredKindleDelivery[];
+}>;
+
+function validatePublicAccess(input: unknown): RequiredPublicAccess {
+  const defaultAccess: RequiredPublicAccess = {
+    enabled: false,
+    token: generateToken(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+  };
+
   if (!input || typeof input !== 'object') {
-    return {
-      enabled: false,
-      token: generateToken(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-    };
+    return defaultAccess;
   }
 
+  const typedInput = input as Partial<RequiredPublicAccess>;
+  
   return {
-    enabled: 'enabled' in input ? Boolean(input.enabled) : false,
-    token: 'token' in input && typeof input.token === 'string' 
-      ? input.token 
-      : generateToken(),
-    expiresAt: 'expiresAt' in input && typeof input.expiresAt === 'string'
-      ? input.expiresAt
-      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    enabled: typedInput.enabled ?? defaultAccess.enabled,
+    token: typedInput.token ?? defaultAccess.token,
+    expiresAt: typedInput.expiresAt ?? defaultAccess.expiresAt
   };
 }
 
-function validateSharedEmail(input: unknown): SharedEmailConfig {
+function validateSharedEmail(input: unknown): RequiredSharedEmail {
+  const defaultEmail: RequiredSharedEmail = {
+    email: '',
+    sharedAt: new Date().toISOString(),
+    accessCount: 0
+  };
+
   if (!input || typeof input !== 'object') {
-    return {
-      email: '',
-      sharedAt: new Date().toISOString(),
-      accessCount: 0
-    };
+    return defaultEmail;
   }
 
+  const typedInput = input as Partial<RequiredSharedEmail>;
+
   return {
-    email: 'email' in input ? String(input.email) : '',
-    sharedAt: 'sharedAt' in input ? String(input.sharedAt) : new Date().toISOString(),
-    accessCount: 'accessCount' in input ? Number(input.accessCount) : 0
+    email: typedInput.email ?? defaultEmail.email,
+    sharedAt: typedInput.sharedAt ?? defaultEmail.sharedAt,
+    accessCount: typedInput.accessCount ?? defaultEmail.accessCount
   };
 }
 
-function validateKindleDelivery(input: unknown): KindleDeliveryConfig {
+function validateKindleDelivery(input: unknown): RequiredKindleDelivery {
+  const defaultDelivery: RequiredKindleDelivery = {
+    sentAt: new Date().toISOString(),
+    status: 'pending' as const
+  };
+
   if (!input || typeof input !== 'object') {
-    return {
-      sentAt: new Date().toISOString(),
-      status: 'pending'
-    };
+    return defaultDelivery;
   }
 
+  const typedInput = input as Partial<RequiredKindleDelivery>;
+
   return {
-    sentAt: 'sentAt' in input ? String(input.sentAt) : new Date().toISOString(),
-    status: 'status' in input && 
-      (input.status === 'pending' || input.status === 'sent' || input.status === 'failed')
-      ? (input.status as 'pending' | 'sent' | 'failed')
-      : 'pending'
+    sentAt: typedInput.sentAt ?? defaultDelivery.sentAt,
+    status: (typedInput.status as RequiredKindleDelivery['status']) ?? defaultDelivery.status
   };
 }
 
 function createValidSharing(input: unknown): SharingConfig {
-  const validInput = input && typeof input === 'object' ? input : {};
-  
-  const validConfig: SharingConfig = {
-    publicAccess: validatePublicAccess('publicAccess' in validInput ? validInput.publicAccess : null),
-    sharedEmails: 'sharedEmails' in validInput && Array.isArray(validInput.sharedEmails)
-      ? validInput.sharedEmails.map(validateSharedEmail)
+  const validConfig: RequiredSharingConfig = {
+    publicAccess: validatePublicAccess(input && typeof input === 'object' ? (input as any).publicAccess : null),
+    sharedEmails: input && typeof input === 'object' && Array.isArray((input as any).sharedEmails)
+      ? (input as any).sharedEmails.map(validateSharedEmail)
       : [],
-    kindleDeliveries: 'kindleDeliveries' in validInput && Array.isArray(validInput.kindleDeliveries)
-      ? validInput.kindleDeliveries.map(validateKindleDelivery)
+    kindleDeliveries: input && typeof input === 'object' && Array.isArray((input as any).kindleDeliveries)
+      ? (input as any).kindleDeliveries.map(validateKindleDelivery)
       : []
   };
 
-  return SharingSchema.parse(validConfig);
+  return SharingSchema.parse(validConfig) as SharingConfig;
 }
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
