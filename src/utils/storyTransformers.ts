@@ -5,32 +5,14 @@ import { FrontendStorySchema, SharingSchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
-type NonOptionalPublicAccess = {
-  enabled: boolean;
-  token: string;
-  expiresAt: string;
-};
-
-function createNonOptionalPublicAccess(
-  base: NonOptionalPublicAccess,
-  input?: Partial<NonOptionalPublicAccess>
-): NonOptionalPublicAccess {
-  return {
-    enabled: input?.enabled !== undefined ? input.enabled : base.enabled,
-    token: input?.token !== undefined ? input.token : base.token,
-    expiresAt: input?.expiresAt !== undefined ? input.expiresAt : base.expiresAt,
-  };
-}
-
 const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  const basePublicAccess: NonOptionalPublicAccess = {
-    enabled: false,
-    token: generateToken(),
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-  };
-
+  // Création d'un objet avec toutes les propriétés requises
   const sharing: SharingConfig = {
-    publicAccess: createNonOptionalPublicAccess(basePublicAccess, input?.publicAccess),
+    publicAccess: {
+      enabled: input?.publicAccess?.enabled !== undefined ? input.publicAccess.enabled : false,
+      token: input?.publicAccess?.token || generateToken(),
+      expiresAt: input?.publicAccess?.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    },
     sharedEmails: input?.sharedEmails?.map(email => ({
       email: email?.email || '',
       sharedAt: email?.sharedAt || new Date().toISOString(),
@@ -42,6 +24,7 @@ const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
     })) || []
   };
 
+  // Validation avec Zod pour garantir que tout est correct
   return SharingSchema.parse(sharing);
 };
 
