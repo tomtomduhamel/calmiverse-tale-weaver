@@ -24,7 +24,7 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     _pendingWrites: false,
     isFavorite: false,
     tags: [],
-    sharing: createValidSharing({})
+    sharing: createValidSharing(null)
   };
 
   const completeStory = {
@@ -124,4 +124,3 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
     throw error;
   }
 };
-

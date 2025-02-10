@@ -58,21 +58,22 @@ export function validateKindleDelivery(input: unknown): RequiredKindleDelivery {
 
   return {
     sentAt: typedInput.sentAt ?? defaultDelivery.sentAt,
-    status: (typedInput.status as RequiredKindleDelivery['status']) ?? defaultDelivery.status
+    status: typedInput.status ?? defaultDelivery.status
   };
 }
 
 export function createValidSharing(input: unknown): SharingConfig {
+  const inputObj = input && typeof input === 'object' ? input : {};
+  
   const validConfig: RequiredSharingConfig = {
-    publicAccess: validatePublicAccess(input && typeof input === 'object' ? (input as any).publicAccess : null),
-    sharedEmails: input && typeof input === 'object' && Array.isArray((input as any).sharedEmails)
-      ? (input as any).sharedEmails.map(validateSharedEmail)
+    publicAccess: validatePublicAccess((inputObj as any).publicAccess),
+    sharedEmails: Array.isArray((inputObj as any).sharedEmails) 
+      ? (inputObj as any).sharedEmails.map(validateSharedEmail)
       : [],
-    kindleDeliveries: input && typeof input === 'object' && Array.isArray((input as any).kindleDeliveries)
-      ? (input as any).kindleDeliveries.map(validateKindleDelivery)
+    kindleDeliveries: Array.isArray((inputObj as any).kindleDeliveries)
+      ? (inputObj as any).kindleDeliveries.map(validateKindleDelivery)
       : []
   };
 
   return SharingSchema.parse(validConfig);
 }
-
