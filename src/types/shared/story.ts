@@ -41,6 +41,7 @@ export interface FrontendStory extends BaseStory {
 }
 
 export interface CloudFunctionStory extends BaseStory {
+  sharing?: SharingConfig;
   retryCount?: number;
   processingTime?: number;
 }

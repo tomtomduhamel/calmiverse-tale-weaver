@@ -22,8 +22,7 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       timestamp: new Date().toISOString()
     });
 
-    // Ne créez le sharing que s'il n'existe pas déjà
-    const story = {
+    const story: FrontendStory = {
       ...cloudStory,
       sharing: cloudStory.sharing || createDefaultSharing(),
     };
@@ -34,7 +33,6 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       timestamp: new Date().toISOString()
     });
 
-    // Validation du type avec Zod
     const validatedStory = FrontendStorySchema.parse(story);
 
     console.log('Story transformation completed:', {
@@ -70,7 +68,7 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       timestamp: new Date().toISOString()
     });
 
-    const parsedStory = {
+    const parsedStory: FrontendStory = {
       ...story,
       createdAt: new Date(story.createdAt).toISOString(),
       _lastSync: new Date(story._lastSync).toISOString(),
@@ -97,7 +95,6 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       timestamp: new Date().toISOString()
     });
 
-    // Validation du type avec Zod
     const validatedStory = FrontendStorySchema.parse(parsedStory);
 
     console.log('Date parsing completed:', {
