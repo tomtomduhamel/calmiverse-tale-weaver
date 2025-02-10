@@ -4,6 +4,7 @@ import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 import { defineSecret } from 'firebase-functions/params';
 import { type CloudFunctionStory } from '../../src/types/shared/story';
+import { StoryMetrics } from '../utils/monitoring';
 
 interface StoryGenerationRequest {
   storyId: string;
@@ -29,11 +30,7 @@ export const generateStory = onCall({
     timeoutSeconds: 540,
     memory: '1GiB',
   }, async (request) => {
-    const startTime = Date.now();
-    console.log('Starting story generation process:', {
-      hasAuth: !!request.auth,
-      timestamp: new Date().toISOString()
-    });
+    StoryMetrics.startOperation(request.data?.storyId);
     
     try {
       if (!request.auth) {
@@ -42,7 +39,7 @@ export const generateStory = onCall({
           message: 'Utilisateur non authentifié',
           timestamp: new Date().toISOString()
         };
-        console.error('Authentication error:', error);
+        StoryMetrics.logError(request.data?.storyId, new Error(error.message));
         throw new Error(error.message);
       }
 
@@ -64,7 +61,7 @@ export const generateStory = onCall({
           timestamp: new Date().toISOString(),
           details: { storyId, objective, childrenCount: childrenNames?.length }
         };
-        console.error('Validation error:', error);
+        StoryMetrics.logError(storyId, new Error(error.message));
         throw new Error(error.message);
       }
 
@@ -75,7 +72,7 @@ export const generateStory = onCall({
           message: 'La clé API OpenAI n\'est pas configurée',
           timestamp: new Date().toISOString()
         };
-        console.error('Configuration error:', error);
+        StoryMetrics.logError(storyId, new Error(error.message));
         throw new Error(error.message);
       }
 
@@ -89,7 +86,7 @@ export const generateStory = onCall({
           timestamp: new Date().toISOString(),
           details: { storyId }
         };
-        console.error('Document error:', error);
+        StoryMetrics.logError(storyId, new Error(error.message));
         throw new Error(error.message);
       }
 
@@ -114,7 +111,7 @@ export const generateStory = onCall({
           _pendingWrites: false,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           wordCount: generatedStory.wordCount,
-          processingTime: Date.now() - startTime,
+          processingTime: Date.now() - StoryMetrics.getMetrics(storyId)?.startTime,
           retryCount: generatedStory.retryCount || 0
         };
 
@@ -140,33 +137,26 @@ export const generateStory = onCall({
           timestamp: new Date().toISOString(),
           details: { status: finalData?.status }
         };
-        console.error('Update verification failed:', error);
+        StoryMetrics.logError(storyId, new Error(error.message));
         throw new Error(error.message);
       }
 
-      const totalTime = Date.now() - startTime;
-      console.log('Story generation completed successfully:', {
-        id: storyId,
-        status: finalData.status,
-        processingTime: `${totalTime}ms`,
-        wordCount: finalData.wordCount,
-        timestamp: new Date().toISOString()
-      });
-
+      StoryMetrics.endOperation(storyId, 'success');
+      
       return {
         ...finalData,
         id: storyId,
-        processingTime: totalTime
+        processingTime: StoryMetrics.getMetrics(storyId)?.duration
       };
 
     } catch (error) {
-      const totalTime = Date.now() - startTime;
+      StoryMetrics.endOperation(request.data?.storyId, 'error');
       const errorDetails: StoryGenerationError = {
         code: error instanceof Error ? error.name : 'UNKNOWN_ERROR',
         message: error instanceof Error ? error.message : 'Une erreur inattendue est survenue',
         timestamp: new Date().toISOString(),
         details: {
-          processingTime: totalTime,
+          processingTime: StoryMetrics.getMetrics(request.data?.storyId)?.duration,
           stack: error instanceof Error ? error.stack : undefined
         }
       };
@@ -175,4 +165,3 @@ export const generateStory = onCall({
       throw new Error(errorDetails.message);
     }
 });
-
