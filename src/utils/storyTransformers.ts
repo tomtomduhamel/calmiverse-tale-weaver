@@ -1,8 +1,10 @@
 
+import { z } from 'zod';
 import type { FrontendStory, CloudFunctionStory } from '@/types/shared/story';
+import { FrontendStorySchema } from './storyValidation';
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
-  return {
+  const story = {
     ...cloudStory,
     sharing: {
       publicAccess: {
@@ -14,10 +16,21 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       kindleDeliveries: [],
     },
   };
+
+  try {
+    // Validation du type avec Zod
+    const validatedStory = FrontendStorySchema.parse(story);
+    return validatedStory;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error('Story validation failed:', error.errors);
+    }
+    throw error;
+  }
 };
 
 export const parseStoryDates = (story: FrontendStory): FrontendStory => {
-  return {
+  const parsedStory = {
     ...story,
     createdAt: new Date(story.createdAt).toISOString(),
     _lastSync: new Date(story._lastSync).toISOString(),
@@ -37,4 +50,16 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       })),
     } : undefined,
   };
+
+  try {
+    // Validation du type avec Zod
+    const validatedStory = FrontendStorySchema.parse(parsedStory);
+    return validatedStory;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error('Story date parsing validation failed:', error.errors);
+    }
+    throw error;
+  }
 };
+

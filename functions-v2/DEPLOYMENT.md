@@ -1,55 +1,122 @@
 
-# Deployment Checklist
+# Guide Complet de Déploiement
 
-## Pre-Deployment Checks
-- [ ] All tests are passing (`npm test`)
-- [ ] OpenAI API key is properly set in secrets
-- [ ] No TypeScript compilation errors (`npm run build`)
-- [ ] Retry logic is properly configured
-- [ ] Monitoring is set up and functional
+## Configuration Pré-Déploiement
 
-## Deployment Steps
-1. Run tests: `npm test`
-2. Build project: `npm run build`
-3. Deploy to Firebase: `firebase deploy --only functions`
-4. Verify deployment in Firebase Console
+### Tests et Validation
+- [ ] Tests unitaires passent (`npm test`)
+- [ ] Tests d'intégration OpenAI passent
+- [ ] Tests de charge complétés
+- [ ] Vérification des types TypeScript (`npm run build`)
+- [ ] Validation des clés API et secrets
 
-## Post-Deployment Verification
-- [ ] Test story generation with test account
-- [ ] Verify metrics are being logged
-- [ ] Check error handling with invalid inputs
-- [ ] Monitor function execution times
-- [ ] Verify retry mechanism
+### Configuration du Monitoring
+- [ ] Seuils d'alerte configurés
+- [ ] Dashboard de monitoring en place
+- [ ] Métriques de performance activées
+- [ ] Système de notification configuré
 
-## Monitoring Setup
-- Monitor these metrics in Firebase Console:
-  - Function execution time
-  - Error rates
-  - Retry counts
-  - Memory usage
+### Sécurité
+- [ ] Clés API sécurisées
+- [ ] Authentification validée
+- [ ] Droits d'accès vérifiés
+- [ ] Règles Firestore à jour
 
-## Error Codes
-- `UNAUTHENTICATED`: User is not authenticated
-- `INVALID_ARGUMENTS`: Missing or invalid parameters
-- `CONFIGURATION_ERROR`: Missing API key or configuration
-- `NOT_FOUND`: Story document not found
-- `UPDATE_FAILED`: Failed to update story status
-- `OPENAI_ERROR`: OpenAI API errors (with specific subcodes)
+## Procédure de Déploiement
 
-## Alerts
-Set up alerts for:
-- Function execution time > 30s
-- Error rate > 5%
-- Memory usage > 80%
-- Failed retries > 3
+1. **Préparation**
+   ```bash
+   npm install
+   npm run build
+   npm test
+   ```
 
-## Rollback Procedure
-1. Identify the last working version
-2. Run `firebase functions:rollback`
-3. Verify system functionality
-4. Investigate deployment issues
+2. **Vérification des Métriques**
+   - Examiner les métriques actuelles
+   - Vérifier les seuils d'alerte
+   - Confirmer la configuration du monitoring
 
-## Support
-For issues, contact the development team through:
-- Slack: #story-generation-support
-- Email: support@team.com
+3. **Déploiement**
+   ```bash
+   firebase deploy --only functions
+   ```
+
+4. **Validation Post-Déploiement**
+   - [ ] Test de génération d'histoire
+   - [ ] Vérification des logs
+   - [ ] Contrôle des métriques
+   - [ ] Test des alertes
+
+## Monitoring et Alertes
+
+### Métriques Clés
+- Temps d'exécution
+- Taux d'erreur
+- Utilisation mémoire
+- Nombre de retries
+- Compteur de mots
+- Utilisation des tokens
+
+### Seuils d'Alerte
+- Temps d'exécution > 30s
+- Taux d'erreur > 5%
+- Utilisation mémoire > 80%
+- Retries > 3
+
+### Dashboard de Monitoring
+- Métriques en temps réel
+- Graphiques de performance
+- Logs d'erreur
+- Statistiques d'utilisation
+
+## Procédures de Debug
+
+### Erreurs Communes
+1. **UNAUTHENTICATED**
+   - Vérifier les tokens d'authentification
+   - Contrôler les règles de sécurité
+
+2. **OPENAI_ERROR**
+   - Vérifier la clé API
+   - Examiner les quotas
+   - Contrôler le format des prompts
+
+3. **TIMEOUT**
+   - Vérifier la charge du système
+   - Examiner les logs de performance
+   - Ajuster les timeouts
+
+### Logs et Diagnostics
+- Utiliser `firebase functions:log`
+- Examiner les métriques de StoryMetrics
+- Vérifier les erreurs dans Firebase Console
+
+## Procédure de Rollback
+
+1. **Identification du Problème**
+   - Analyser les logs d'erreur
+   - Examiner les métriques
+   - Identifier la version stable
+
+2. **Exécution du Rollback**
+   ```bash
+   firebase functions:rollback
+   ```
+
+3. **Validation Post-Rollback**
+   - Vérifier la fonctionnalité
+   - Contrôler les métriques
+   - Valider les logs
+
+## Support et Maintenance
+
+### Contacts
+- Support Technique: tech-support@team.com
+- Équipe DevOps: devops@team.com
+- Urgences: emergency@team.com
+
+### Documentation
+- Wiki Technique: /wiki/tech
+- Guide API: /docs/api
+- Procédures: /docs/procedures
+
