@@ -28,15 +28,15 @@ function normalizeKindleDelivery(input: Partial<SharingConfig['kindleDeliveries'
   };
 }
 
-const createValidSharing = (input: Partial<SharingConfig> | undefined): Required<SharingConfig> => {
-  const normalizedSharing: Required<SharingConfig> = {
+function createValidSharing(input: Partial<SharingConfig> | undefined): SharingConfig {
+  const normalizedSharing = {
     publicAccess: normalizePublicAccess(input?.publicAccess),
     sharedEmails: (input?.sharedEmails ?? []).map(normalizeSharedEmail),
     kindleDeliveries: (input?.kindleDeliveries ?? []).map(normalizeKindleDelivery)
   };
 
   return SharingSchema.parse(normalizedSharing);
-};
+}
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
   const defaultStory: FrontendStory = {
@@ -60,12 +60,10 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     sharing: createValidSharing(undefined)
   };
 
-  const normalizedSharing = createValidSharing(story.sharing);
-  
-  const completeStory: FrontendStory = {
+  const completeStory = {
     ...defaultStory,
     ...story,
-    sharing: normalizedSharing
+    sharing: createValidSharing(story.sharing)
   };
 
   return FrontendStorySchema.parse(completeStory);
