@@ -23,40 +23,68 @@ type KindleDeliveryConfig = {
 };
 
 function validatePublicAccess(input: unknown): PublicAccessConfig {
-  const inputObj = input as Record<string, unknown>;
+  if (!input || typeof input !== 'object') {
+    return {
+      enabled: false,
+      token: generateToken(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    };
+  }
+
   return {
-    enabled: Boolean(inputObj?.enabled ?? false),
-    token: String(inputObj?.token ?? generateToken()),
-    expiresAt: String(inputObj?.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
+    enabled: 'enabled' in input ? Boolean(input.enabled) : false,
+    token: 'token' in input && typeof input.token === 'string' 
+      ? input.token 
+      : generateToken(),
+    expiresAt: 'expiresAt' in input && typeof input.expiresAt === 'string'
+      ? input.expiresAt
+      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   };
 }
 
 function validateSharedEmail(input: unknown): SharedEmailConfig {
-  const inputObj = input as Record<string, unknown>;
+  if (!input || typeof input !== 'object') {
+    return {
+      email: '',
+      sharedAt: new Date().toISOString(),
+      accessCount: 0
+    };
+  }
+
   return {
-    email: String(inputObj?.email ?? ''),
-    sharedAt: String(inputObj?.sharedAt ?? new Date().toISOString()),
-    accessCount: Number(inputObj?.accessCount ?? 0)
+    email: 'email' in input ? String(input.email) : '',
+    sharedAt: 'sharedAt' in input ? String(input.sharedAt) : new Date().toISOString(),
+    accessCount: 'accessCount' in input ? Number(input.accessCount) : 0
   };
 }
 
 function validateKindleDelivery(input: unknown): KindleDeliveryConfig {
-  const inputObj = input as Record<string, unknown>;
+  if (!input || typeof input !== 'object') {
+    return {
+      sentAt: new Date().toISOString(),
+      status: 'pending'
+    };
+  }
+
   return {
-    sentAt: String(inputObj?.sentAt ?? new Date().toISOString()),
-    status: (inputObj?.status as 'pending' | 'sent' | 'failed') ?? 'pending'
+    sentAt: 'sentAt' in input ? String(input.sentAt) : new Date().toISOString(),
+    status: 'status' in input && 
+      (input.status === 'pending' || input.status === 'sent' || input.status === 'failed')
+      ? (input.status as 'pending' | 'sent' | 'failed')
+      : 'pending'
   };
 }
 
 function createValidSharing(input: unknown): SharingConfig {
-  const inputObj = input as Record<string, unknown>;
-  const validConfig = {
-    publicAccess: validatePublicAccess(inputObj?.publicAccess),
-    sharedEmails: Array.isArray(inputObj?.sharedEmails) 
-      ? inputObj.sharedEmails.map(validateSharedEmail)
+  const validInput = input && typeof input === 'object' ? input : {};
+  
+  const validConfig: SharingConfig = {
+    publicAccess: validatePublicAccess('publicAccess' in validInput ? validInput.publicAccess : null),
+    sharedEmails: 'sharedEmails' in validInput && Array.isArray(validInput.sharedEmails)
+      ? validInput.sharedEmails.map(validateSharedEmail)
       : [],
-    kindleDeliveries: Array.isArray(inputObj?.kindleDeliveries)
-      ? inputObj.kindleDeliveries.map(validateKindleDelivery)
+    kindleDeliveries: 'kindleDeliveries' in validInput && Array.isArray(validInput.kindleDeliveries)
+      ? validInput.kindleDeliveries.map(validateKindleDelivery)
       : []
   };
 
@@ -182,4 +210,3 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
     throw error;
   }
 };
-
