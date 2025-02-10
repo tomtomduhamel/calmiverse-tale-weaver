@@ -8,19 +8,19 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
-    "typeRoots": [
-      "node_modules/@types",
-      "src/handlers",
-      "src/services"
-    ],
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true
+    "declaration": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["node_modules/*"]
+    }
   },
   "compileOnSave": true,
   "include": [
     "src"
   ]
 }
+
