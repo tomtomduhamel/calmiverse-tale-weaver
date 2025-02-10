@@ -30,10 +30,10 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
   const completeStory = {
     ...defaultStory,
     ...story,
-    sharing: createValidSharing(story.sharing)
+    sharing: createValidSharing(story.sharing || null)
   };
 
-  return FrontendStorySchema.parse(completeStory);
+  return FrontendStorySchema.parse(completeStory) as FrontendStory;
 };
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
@@ -44,7 +44,10 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       timestamp: new Date().toISOString()
     });
 
-    const validatedStory = ensureCompleteStory(cloudStory);
+    const validatedStory = ensureCompleteStory({
+      ...cloudStory,
+      sharing: createValidSharing(cloudStory.sharing)
+    });
 
     console.log('Story transformation completed:', {
       id: cloudStory.id,
