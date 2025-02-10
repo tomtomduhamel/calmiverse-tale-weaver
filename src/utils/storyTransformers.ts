@@ -34,9 +34,9 @@ const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
   // Create a complete sharing object with all required fields
   const completeSharing: StrictSharing = {
     publicAccess: {
-      enabled: input?.publicAccess?.enabled ?? defaultPublicAccess.enabled,
-      token: input?.publicAccess?.token ?? defaultPublicAccess.token,
-      expiresAt: input?.publicAccess?.expiresAt ?? defaultPublicAccess.expiresAt
+      enabled: input?.publicAccess?.enabled !== undefined ? input.publicAccess.enabled : defaultPublicAccess.enabled,
+      token: input?.publicAccess?.token || defaultPublicAccess.token,
+      expiresAt: input?.publicAccess?.expiresAt || defaultPublicAccess.expiresAt
     },
     sharedEmails: input?.sharedEmails?.map(email => ({
       email: email.email,
@@ -73,7 +73,7 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
   };
 
   // Create a complete story with all required fields
-  const completeStory = {
+  const completeStory: FrontendStory = {
     ...defaultStory,
     ...story,
     sharing: story.sharing ? createValidSharing(story.sharing) : undefined
