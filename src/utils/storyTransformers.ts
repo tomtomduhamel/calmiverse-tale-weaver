@@ -5,36 +5,37 @@ import { FrontendStorySchema, SharingSchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
+function normalizePublicAccess(input?: Partial<SharingConfig['publicAccess']>): SharingConfig['publicAccess'] {
+  return {
+    enabled: input?.enabled !== undefined ? Boolean(input.enabled) : false,
+    token: String(input?.token || generateToken()),
+    expiresAt: String(input?.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
+  };
+}
+
+function normalizeSharedEmail(input?: Partial<SharingConfig['sharedEmails'][0]>): SharingConfig['sharedEmails'][0] {
+  return {
+    email: String(input?.email || ''),
+    sharedAt: String(input?.sharedAt || new Date().toISOString()),
+    accessCount: Number(input?.accessCount || 0)
+  };
+}
+
+function normalizeKindleDelivery(input?: Partial<SharingConfig['kindleDeliveries'][0]>): SharingConfig['kindleDeliveries'][0] {
+  return {
+    sentAt: String(input?.sentAt || new Date().toISOString()),
+    status: (input?.status || 'pending') as 'pending' | 'sent' | 'failed'
+  };
+}
+
 const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  // Define default values separately to avoid readonly issues
-  const defaultPublicAccess = {
-    enabled: false,
-    token: generateToken(),
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+  const validSharing: SharingConfig = {
+    publicAccess: normalizePublicAccess(input?.publicAccess),
+    sharedEmails: (input?.sharedEmails || []).map(normalizeSharedEmail),
+    kindleDeliveries: (input?.kindleDeliveries || []).map(normalizeKindleDelivery)
   };
 
-  const emptySharedEmails: SharingConfig['sharedEmails'] = [];
-  const emptyKindleDeliveries: SharingConfig['kindleDeliveries'] = [];
-
-  // Construct the sharing object with explicit types
-  const sharing: SharingConfig = {
-    publicAccess: {
-      enabled: input?.publicAccess?.enabled ?? defaultPublicAccess.enabled,
-      token: input?.publicAccess?.token ?? defaultPublicAccess.token,
-      expiresAt: input?.publicAccess?.expiresAt ?? defaultPublicAccess.expiresAt
-    },
-    sharedEmails: input?.sharedEmails?.map(email => ({
-      email: email.email || '',
-      sharedAt: email.sharedAt || new Date().toISOString(),
-      accessCount: email.accessCount || 0
-    })) ?? emptySharedEmails,
-    kindleDeliveries: input?.kindleDeliveries?.map(delivery => ({
-      sentAt: delivery.sentAt || new Date().toISOString(),
-      status: delivery.status || 'pending'
-    })) ?? emptyKindleDeliveries
-  };
-
-  return SharingSchema.parse(sharing);
+  return SharingSchema.parse(validSharing);
 };
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
@@ -56,7 +57,6 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     _pendingWrites: false
   };
 
-  // Construct with explicit typing to ensure all required properties
   const completeStory: FrontendStory = {
     ...defaultStory,
     ...story,
