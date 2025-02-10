@@ -34,18 +34,18 @@ const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
   // Create a complete sharing object with all required fields
   const completeSharing: StrictSharing = {
     publicAccess: {
-      enabled: input?.publicAccess?.enabled !== undefined ? input.publicAccess.enabled : defaultPublicAccess.enabled,
-      token: input?.publicAccess?.token || defaultPublicAccess.token,
-      expiresAt: input?.publicAccess?.expiresAt || defaultPublicAccess.expiresAt
+      enabled: input?.publicAccess?.enabled ?? defaultPublicAccess.enabled,
+      token: input?.publicAccess?.token ?? defaultPublicAccess.token,
+      expiresAt: input?.publicAccess?.expiresAt ?? defaultPublicAccess.expiresAt
     },
     sharedEmails: input?.sharedEmails?.map(email => ({
-      email: email.email,
-      sharedAt: email.sharedAt,
-      accessCount: email.accessCount
+      email: email.email || '',
+      sharedAt: email.sharedAt || new Date().toISOString(),
+      accessCount: email.accessCount || 0
     })) ?? [],
     kindleDeliveries: input?.kindleDeliveries?.map(delivery => ({
-      sentAt: delivery.sentAt,
-      status: delivery.status
+      sentAt: delivery.sentAt || new Date().toISOString(),
+      status: delivery.status || 'pending'
     })) ?? []
   };
 
@@ -73,11 +73,11 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
   };
 
   // Create a complete story with all required fields
-  const completeStory: FrontendStory = {
+  const completeStory = {
     ...defaultStory,
     ...story,
     sharing: story.sharing ? createValidSharing(story.sharing) : undefined
-  };
+  } as const;
 
   // Validate and return the complete story
   return FrontendStorySchema.parse(completeStory);
