@@ -19,27 +19,28 @@ export interface BaseStory {
   _pendingWrites: boolean;
 }
 
-export interface FrontendStory extends BaseStory {
-  sharing?: {
-    publicAccess: {
-      enabled: boolean;
-      token: string;
-      expiresAt: string;
-    };
-    sharedEmails: {
-      email: string;
-      sharedAt: string;
-      accessCount: number;
-    }[];
-    kindleDeliveries: {
-      sentAt: string;
-      status: 'pending' | 'sent' | 'failed';
-    }[];
+export interface SharingConfig {
+  publicAccess: {
+    enabled: boolean;
+    token: string;
+    expiresAt: string;
   };
+  sharedEmails: {
+    email: string;
+    sharedAt: string;
+    accessCount: number;
+  }[];
+  kindleDeliveries: {
+    sentAt: string;
+    status: 'pending' | 'sent' | 'failed';
+  }[];
+}
+
+export interface FrontendStory extends BaseStory {
+  sharing?: SharingConfig;
 }
 
 export interface CloudFunctionStory extends BaseStory {
   retryCount?: number;
   processingTime?: number;
 }
-

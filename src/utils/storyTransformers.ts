@@ -1,8 +1,18 @@
 
 import { z } from 'zod';
-import type { FrontendStory, CloudFunctionStory } from '@/types/shared/story';
+import type { FrontendStory, CloudFunctionStory, SharingConfig } from '@/types/shared/story';
 import { FrontendStorySchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
+
+const createDefaultSharing = (): SharingConfig => ({
+  publicAccess: {
+    enabled: false,
+    token: 'default_token_12345678901234567890123456789012',
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  sharedEmails: [],
+  kindleDeliveries: [],
+});
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
   try {
@@ -12,18 +22,17 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       timestamp: new Date().toISOString()
     });
 
+    // Ne créez le sharing que s'il n'existe pas déjà
     const story = {
       ...cloudStory,
-      sharing: {
-        publicAccess: {
-          enabled: false,
-          token: '',
-          expiresAt: new Date().toISOString(),
-        },
-        sharedEmails: [],
-        kindleDeliveries: [],
-      },
+      sharing: cloudStory.sharing || createDefaultSharing(),
     };
+
+    console.log('Transformed story before validation:', {
+      id: story.id,
+      hasSharing: Boolean(story.sharing),
+      timestamp: new Date().toISOString()
+    });
 
     // Validation du type avec Zod
     const validatedStory = FrontendStorySchema.parse(story);
@@ -68,8 +77,7 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       sharing: story.sharing ? {
         ...story.sharing,
         publicAccess: {
-          enabled: story.sharing.publicAccess.enabled,
-          token: story.sharing.publicAccess.token,
+          ...story.sharing.publicAccess,
           expiresAt: new Date(story.sharing.publicAccess.expiresAt).toISOString(),
         },
         sharedEmails: story.sharing.sharedEmails.map(email => ({
@@ -82,6 +90,12 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
         })),
       } : undefined,
     };
+
+    console.log('Parsed dates story before validation:', {
+      id: story.id,
+      hasSharing: Boolean(parsedStory.sharing),
+      timestamp: new Date().toISOString()
+    });
 
     // Validation du type avec Zod
     const validatedStory = FrontendStorySchema.parse(parsedStory);

@@ -22,24 +22,24 @@ export const PublicAccessSchema = z.object({
   enabled: z.boolean(),
   token: TokenSchema,
   expiresAt: DateSchema,
-}).strict();
+});
 
 export const SharedEmailSchema = z.object({
   email: EmailSchema,
   sharedAt: DateSchema,
   accessCount: z.number().int().min(0).max(1000)
-}).strict();
+});
 
 export const KindleDeliverySchema = z.object({
   sentAt: DateSchema,
   status: z.enum(['pending', 'sent', 'failed'])
-}).strict();
+});
 
 export const SharingSchema = z.object({
   publicAccess: PublicAccessSchema,
   sharedEmails: z.array(SharedEmailSchema).max(50),
   kindleDeliveries: z.array(KindleDeliverySchema).max(10)
-}).strict();
+});
 
 export const FrontendStorySchema = z.object({
   id: z.string().uuid(),
@@ -60,7 +60,7 @@ export const FrontendStorySchema = z.object({
   _lastSync: DateSchema,
   _pendingWrites: z.boolean(),
   sharing: SharingSchema.optional()
-}).strict().refine((data) => {
+}).refine((data) => {
   return data.childrenIds.length === data.childrenNames.length;
 }, {
   message: "Le nombre d'IDs d'enfants doit correspondre au nombre de noms d'enfants"
