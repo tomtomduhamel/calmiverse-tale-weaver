@@ -5,7 +5,7 @@ import { FrontendStorySchema, SharingSchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
-function normalizePublicAccess(input: Partial<SharingConfig['publicAccess']> | undefined): Required<SharingConfig['publicAccess']> {
+function normalizePublicAccess(input: Partial<SharingConfig['publicAccess']> | undefined): SharingConfig['publicAccess'] {
   return {
     enabled: input?.enabled ?? false,
     token: input?.token ?? generateToken(),
@@ -13,7 +13,7 @@ function normalizePublicAccess(input: Partial<SharingConfig['publicAccess']> | u
   };
 }
 
-function normalizeSharedEmail(input: Partial<SharingConfig['sharedEmails'][0]>): Required<SharingConfig['sharedEmails'][0]> {
+function normalizeSharedEmail(input: Partial<SharingConfig['sharedEmails'][0]>): SharingConfig['sharedEmails'][0] {
   return {
     email: input.email ?? '',
     sharedAt: input.sharedAt ?? new Date().toISOString(),
@@ -21,7 +21,7 @@ function normalizeSharedEmail(input: Partial<SharingConfig['sharedEmails'][0]>):
   };
 }
 
-function normalizeKindleDelivery(input: Partial<SharingConfig['kindleDeliveries'][0]>): Required<SharingConfig['kindleDeliveries'][0]> {
+function normalizeKindleDelivery(input: Partial<SharingConfig['kindleDeliveries'][0]>): SharingConfig['kindleDeliveries'][0] {
   return {
     sentAt: input.sentAt ?? new Date().toISOString(),
     status: input.status ?? 'pending'
@@ -29,13 +29,13 @@ function normalizeKindleDelivery(input: Partial<SharingConfig['kindleDeliveries'
 }
 
 function createValidSharing(input: Partial<SharingConfig> | undefined): SharingConfig {
-  const normalizedSharing = {
+  const sharing: SharingConfig = {
     publicAccess: normalizePublicAccess(input?.publicAccess),
     sharedEmails: (input?.sharedEmails ?? []).map(normalizeSharedEmail),
     kindleDeliveries: (input?.kindleDeliveries ?? []).map(normalizeKindleDelivery)
   };
 
-  return SharingSchema.parse(normalizedSharing);
+  return SharingSchema.parse(sharing);
 }
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
