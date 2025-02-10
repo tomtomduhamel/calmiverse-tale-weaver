@@ -5,7 +5,6 @@ import { FrontendStorySchema, SharingSchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
-// Types stricts pour la transformation
 type StrictPublicAccess = {
   enabled: boolean;
   token: string;
@@ -26,56 +25,47 @@ type StrictSharing = {
 };
 
 const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  // Créer d'abord l'objet complet avec les valeurs par défaut
-  const sharing: StrictSharing = {
-    publicAccess: {
-      enabled: false,
-      token: generateToken(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    sharedEmails: [],
-    kindleDeliveries: []
+  const defaultPublicAccess: StrictPublicAccess = {
+    enabled: false,
+    token: generateToken(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   };
 
-  // Appliquer les valeurs d'entrée si elles existent
-  if (input?.publicAccess) {
-    sharing.publicAccess = {
-      ...sharing.publicAccess,
-      enabled: input.publicAccess.enabled ?? sharing.publicAccess.enabled,
-      token: input.publicAccess.token ?? sharing.publicAccess.token,
-      expiresAt: input.publicAccess.expiresAt ?? sharing.publicAccess.expiresAt
-    };
-  }
+  const sharing: StrictSharing = {
+    publicAccess: input?.publicAccess ? {
+      enabled: input.publicAccess.enabled ?? defaultPublicAccess.enabled,
+      token: input.publicAccess.token ?? defaultPublicAccess.token,
+      expiresAt: input.publicAccess.expiresAt ?? defaultPublicAccess.expiresAt
+    } : defaultPublicAccess,
+    sharedEmails: input?.sharedEmails ?? [],
+    kindleDeliveries: input?.kindleDeliveries ?? []
+  };
 
-  if (input?.sharedEmails) {
-    sharing.sharedEmails = input.sharedEmails;
-  }
-
-  if (input?.kindleDeliveries) {
-    sharing.kindleDeliveries = input.kindleDeliveries;
-  }
-
-  // Valider avec Zod avant de retourner
   return SharingSchema.parse(sharing);
 };
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
+  const defaultStory: FrontendStory = {
+    id: '',
+    title: '',
+    preview: '',
+    objective: '',
+    childrenIds: [],
+    childrenNames: [],
+    story_text: '',
+    story_summary: '',
+    createdAt: new Date().toISOString(),
+    status: 'pending',
+    authorId: '',
+    wordCount: 0,
+    _version: 1,
+    _lastSync: new Date().toISOString(),
+    _pendingWrites: false
+  };
+
   const completeStory = {
-    id: story.id ?? '',
-    title: story.title ?? '',
-    preview: story.preview ?? '',
-    objective: story.objective ?? '',
-    childrenIds: story.childrenIds ?? [],
-    childrenNames: story.childrenNames ?? [],
-    story_text: story.story_text ?? '',
-    story_summary: story.story_summary ?? '',
-    createdAt: story.createdAt ?? new Date().toISOString(),
-    status: story.status ?? 'pending',
-    authorId: story.authorId ?? '',
-    wordCount: story.wordCount ?? 0,
-    _version: story._version ?? 1,
-    _lastSync: story._lastSync ?? new Date().toISOString(),
-    _pendingWrites: story._pendingWrites ?? false,
+    ...defaultStory,
+    ...story,
     sharing: story.sharing ? createValidSharing(story.sharing) : undefined
   };
 
