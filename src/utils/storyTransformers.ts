@@ -6,41 +6,41 @@ import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
 const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  // 1. Créer d'abord l'objet defaultPublicAccess avec des valeurs par défaut non-optionnelles
-  const defaultPublicAccess = {
+  // 1. Définir un type strict pour publicAccess
+  type PublicAccessType = {
+    enabled: boolean;
+    token: string;
+    expiresAt: string;
+  };
+
+  // 2. Créer les valeurs par défaut
+  const defaultPublicAccess: PublicAccessType = {
     enabled: false,
     token: generateToken(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-  } as const;
+  };
 
-  // 2. Créer un objet publicAccess complet en fusionnant avec les valeurs d'entrée
-  const publicAccess = {
-    enabled: (input && input.publicAccess && 'enabled' in input.publicAccess) 
-      ? input.publicAccess.enabled 
-      : defaultPublicAccess.enabled,
-    token: (input && input.publicAccess && 'token' in input.publicAccess) 
-      ? input.publicAccess.token 
-      : defaultPublicAccess.token,
-    expiresAt: (input && input.publicAccess && 'expiresAt' in input.publicAccess) 
-      ? input.publicAccess.expiresAt 
-      : defaultPublicAccess.expiresAt
-  } as const;
+  // 3. Créer publicAccess avec le bon type
+  const publicAccess: PublicAccessType = {
+    enabled: input?.publicAccess?.enabled ?? defaultPublicAccess.enabled,
+    token: input?.publicAccess?.token ?? defaultPublicAccess.token,
+    expiresAt: input?.publicAccess?.expiresAt ?? defaultPublicAccess.expiresAt
+  };
 
-  // 3. Construire l'objet sharing complet avec des valeurs non-optionnelles
+  // 4. Construire l'objet sharing
   const sharing: SharingConfig = {
     publicAccess,
-    sharedEmails: (input?.sharedEmails || []).map(email => ({
-      email: email.email || '',
-      sharedAt: email.sharedAt || new Date().toISOString(),
-      accessCount: email.accessCount || 0
+    sharedEmails: (input?.sharedEmails ?? []).map(email => ({
+      email: email.email ?? '',
+      sharedAt: email.sharedAt ?? new Date().toISOString(),
+      accessCount: email.accessCount ?? 0
     })),
-    kindleDeliveries: (input?.kindleDeliveries || []).map(delivery => ({
-      sentAt: delivery.sentAt || new Date().toISOString(),
-      status: delivery.status || 'pending'
+    kindleDeliveries: (input?.kindleDeliveries ?? []).map(delivery => ({
+      sentAt: delivery.sentAt ?? new Date().toISOString(),
+      status: delivery.status ?? 'pending'
     }))
   };
 
-  // 4. Valider l'objet final avec Zod
   return SharingSchema.parse(sharing);
 };
 
@@ -63,14 +63,12 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     _pendingWrites: false
   };
 
-  // Créer une histoire complète avec tous les champs requis
   const completeStory: FrontendStory = {
     ...defaultStory,
     ...story,
     sharing: story.sharing ? createValidSharing(story.sharing) : undefined
   };
 
-  // Valider et retourner l'histoire complète
   return FrontendStorySchema.parse(completeStory);
 };
 
