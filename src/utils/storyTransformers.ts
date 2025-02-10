@@ -5,34 +5,16 @@ import { FrontendStorySchema, SharingSchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
-type StrictPublicAccess = {
-  enabled: boolean;
-  token: string;
-  expiresAt: string;
-};
-
-type StrictSharing = {
-  publicAccess: StrictPublicAccess;
-  sharedEmails: Array<{
-    email: string;
-    sharedAt: string;
-    accessCount: number;
-  }>;
-  kindleDeliveries: Array<{
-    sentAt: string;
-    status: 'pending' | 'sent' | 'failed';
-  }>;
-};
-
 const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  const defaultPublicAccess: StrictPublicAccess = {
+  // On crée d'abord un objet valide complet avec des valeurs par défaut
+  const defaultPublicAccess = {
     enabled: false,
     token: generateToken(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   };
 
-  // Create a complete sharing object with all required fields
-  const completeSharing: StrictSharing = {
+  // On type explicitement l'objet complet pour forcer les champs non-optionnels
+  const sharing: SharingConfig = {
     publicAccess: {
       enabled: input?.publicAccess?.enabled ?? defaultPublicAccess.enabled,
       token: input?.publicAccess?.token ?? defaultPublicAccess.token,
@@ -49,8 +31,8 @@ const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
     })) ?? []
   };
 
-  // Validate and return the complete sharing object
-  return SharingSchema.parse(completeSharing);
+  // Validation et retour de l'objet complet
+  return SharingSchema.parse(sharing);
 };
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
@@ -73,11 +55,11 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
   };
 
   // Create a complete story with all required fields
-  const completeStory = {
+  const completeStory: FrontendStory = {
     ...defaultStory,
     ...story,
     sharing: story.sharing ? createValidSharing(story.sharing) : undefined
-  } as const;
+  };
 
   // Validate and return the complete story
   return FrontendStorySchema.parse(completeStory);
