@@ -1,5 +1,5 @@
 
-# Guide Complet de Déploiement
+# Guide Complet de Déploiement et Maintenance
 
 ## Configuration Pré-Déploiement
 
@@ -17,10 +17,11 @@
 - [ ] Système de notification configuré
 
 ### Sécurité
-- [ ] Clés API sécurisées
+- [ ] Clés API sécurisées dans Secrets Manager
 - [ ] Authentification validée
 - [ ] Droits d'accès vérifiés
 - [ ] Règles Firestore à jour
+- [ ] Validation des entrées implémentée
 
 ## Procédure de Déploiement
 
@@ -46,22 +47,46 @@
    - [ ] Vérification des logs
    - [ ] Contrôle des métriques
    - [ ] Test des alertes
+   - [ ] Validation des performances
 
 ## Monitoring et Alertes
 
 ### Métriques Clés
-- Temps d'exécution
-- Taux d'erreur
-- Utilisation mémoire
-- Nombre de retries
-- Compteur de mots
-- Utilisation des tokens
+1. **Performance**
+   - Temps d'exécution moyen
+   - Temps de réponse 95e percentile
+   - Utilisation mémoire
+   - CPU usage
+
+2. **Opérationnel**
+   - Taux d'erreur
+   - Nombre de retries
+   - Requêtes concurrentes
+   - Taux de succès
+
+3. **Métier**
+   - Nombre d'histoires générées
+   - Longueur moyenne des histoires
+   - Temps de génération moyen
+   - Satisfaction utilisateur
 
 ### Seuils d'Alerte
-- Temps d'exécution > 30s
-- Taux d'erreur > 5%
-- Utilisation mémoire > 80%
-- Retries > 3
+1. **Critique (P1)**
+   - Temps d'exécution > 30s
+   - Taux d'erreur > 5%
+   - Utilisation mémoire > 80%
+   - Échecs consécutifs > 3
+
+2. **Important (P2)**
+   - Temps d'exécution > 20s
+   - Taux d'erreur > 2%
+   - Utilisation mémoire > 70%
+   - Retries > 2
+
+3. **Surveillance (P3)**
+   - Temps d'exécution > 15s
+   - Taux d'erreur > 1%
+   - Utilisation mémoire > 60%
 
 ### Dashboard de Monitoring
 - Métriques en temps réel
@@ -69,27 +94,78 @@
 - Logs d'erreur
 - Statistiques d'utilisation
 
-## Procédures de Debug
+## Guide de Debug
 
 ### Erreurs Communes
+
 1. **UNAUTHENTICATED**
-   - Vérifier les tokens d'authentification
-   - Contrôler les règles de sécurité
+   ```
+   Symptôme : Erreur 401
+   Cause : Token invalide ou expiré
+   Solution :
+   1. Vérifier le token dans les logs
+   2. Valider l'authentification
+   3. Renouveler le token si nécessaire
+   ```
 
 2. **OPENAI_ERROR**
-   - Vérifier la clé API
-   - Examiner les quotas
-   - Contrôler le format des prompts
+   ```
+   Symptôme : Échec de génération
+   Causes possibles :
+   - Clé API invalide
+   - Quota dépassé
+   - Format de prompt incorrect
+   Solution :
+   1. Vérifier les logs OpenAI
+   2. Valider la clé API
+   3. Contrôler les quotas
+   ```
 
 3. **TIMEOUT**
-   - Vérifier la charge du système
-   - Examiner les logs de performance
-   - Ajuster les timeouts
+   ```
+   Symptôme : Requête > 30s
+   Causes possibles :
+   - Surcharge système
+   - Problème réseau
+   - OpenAI lent
+   Solution :
+   1. Vérifier les métriques système
+   2. Analyser les logs de performance
+   3. Ajuster les timeouts
+   ```
 
-### Logs et Diagnostics
-- Utiliser `firebase functions:log`
-- Examiner les métriques de StoryMetrics
-- Vérifier les erreurs dans Firebase Console
+4. **MEMORY_ERROR**
+   ```
+   Symptôme : OOM ou performance dégradée
+   Solution :
+   1. Vérifier l'utilisation mémoire
+   2. Nettoyer les ressources
+   3. Ajuster les limites
+   ```
+
+### Procédure de Debug
+
+1. **Collecte d'Information**
+   ```
+   - ID de requête
+   - Logs d'erreur
+   - Métriques système
+   - État des services
+   ```
+
+2. **Analyse**
+   ```
+   - Examiner les logs
+   - Vérifier les métriques
+   - Identifier les patterns
+   ```
+
+3. **Résolution**
+   ```
+   - Appliquer la solution
+   - Valider la correction
+   - Documenter l'incident
+   ```
 
 ## Procédure de Rollback
 
@@ -108,11 +184,28 @@
    - Contrôler les métriques
    - Valider les logs
 
-## Support et Maintenance
+## Maintenance Continue
 
-### Contacts
-- Support Technique: tech-support@team.com
-- Équipe DevOps: devops@team.com
+### Tâches Quotidiennes
+- Vérification des logs
+- Analyse des métriques
+- Validation des backups
+
+### Tâches Hebdomadaires
+- Analyse des performances
+- Revue des incidents
+- Mise à jour documentation
+
+### Tâches Mensuelles
+- Revue des seuils d'alerte
+- Optimisation des ressources
+- Test de disaster recovery
+
+## Support et Contacts
+
+### Équipe Technique
+- Support N1: tech-support@team.com
+- Support N2: devops@team.com
 - Urgences: emergency@team.com
 
 ### Documentation
@@ -120,3 +213,26 @@
 - Guide API: /docs/api
 - Procédures: /docs/procedures
 
+## Annexes
+
+### Commandes Utiles
+```bash
+# Logs
+firebase functions:log
+
+# Métriques
+firebase functions:metrics
+
+# Tests
+npm run test:integration
+npm run test:load
+
+# Déploiement
+firebase deploy --only functions:[functionName]
+```
+
+### Ressources
+- Documentation Firebase
+- Documentation OpenAI
+- Guides internes
+- Playbooks incidents
