@@ -63,13 +63,12 @@ export function validateKindleDelivery(input: unknown): RequiredKindleDelivery {
 }
 
 export function createValidSharing(input: unknown): SharingConfig {
-  const defaultConfig: RequiredSharingConfig = {
-    publicAccess: validatePublicAccess(null),
-    sharedEmails: [],
-    kindleDeliveries: []
-  };
-
   if (!input || typeof input !== 'object') {
+    const defaultConfig: RequiredSharingConfig = {
+      publicAccess: validatePublicAccess(null),
+      sharedEmails: [],
+      kindleDeliveries: []
+    };
     return defaultConfig;
   }
 
@@ -79,10 +78,10 @@ export function createValidSharing(input: unknown): SharingConfig {
     publicAccess: validatePublicAccess(inputObj.publicAccess),
     sharedEmails: Array.isArray(inputObj.sharedEmails) 
       ? inputObj.sharedEmails.map(email => validateSharedEmail(email))
-      : defaultConfig.sharedEmails,
+      : [],
     kindleDeliveries: Array.isArray(inputObj.kindleDeliveries)
       ? inputObj.kindleDeliveries.map(delivery => validateKindleDelivery(delivery))
-      : defaultConfig.kindleDeliveries
+      : []
   };
 
   const validatedConfig = SharingSchema.parse(config);

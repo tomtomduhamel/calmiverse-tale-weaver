@@ -27,19 +27,13 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     sharing: createValidSharing(null)
   };
 
-  // Create a complete story with validated sharing config
   const baseStory = {
     ...defaultStory,
-    ...story
-  };
-
-  // Always ensure sharing is properly validated with required fields
-  const validatedStory: FrontendStory = {
-    ...baseStory,
+    ...story,
     sharing: createValidSharing(story.sharing)
   };
 
-  return FrontendStorySchema.parse(validatedStory);
+  return FrontendStorySchema.parse(baseStory);
 };
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
