@@ -1,39 +1,48 @@
+
 import { z } from 'zod';
 import type { FrontendStory, CloudFunctionStory, SharingConfig } from '@/types/shared/story';
 import { FrontendStorySchema, SharingSchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
+type NonOptionalPublicAccess = {
+  enabled: boolean;
+  token: string;
+  expiresAt: string;
+};
+
+function createNonOptionalPublicAccess(
+  base: NonOptionalPublicAccess,
+  input?: Partial<NonOptionalPublicAccess>
+): NonOptionalPublicAccess {
+  return {
+    enabled: input?.enabled !== undefined ? input.enabled : base.enabled,
+    token: input?.token !== undefined ? input.token : base.token,
+    expiresAt: input?.expiresAt !== undefined ? input.expiresAt : base.expiresAt,
+  };
+}
+
 const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  // Create base object with non-optional properties
-  const basePublicAccess = {
+  const basePublicAccess: NonOptionalPublicAccess = {
     enabled: false,
     token: generateToken(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-  } as const;
-
-  // Create the final publicAccess object with required properties
-  const finalPublicAccess = {
-    enabled: input?.publicAccess?.enabled ?? basePublicAccess.enabled,
-    token: input?.publicAccess?.token ?? basePublicAccess.token,
-    expiresAt: input?.publicAccess?.expiresAt ?? basePublicAccess.expiresAt
   };
 
-  // Create the complete sharing config with required arrays
-  const validSharing: SharingConfig = {
-    publicAccess: finalPublicAccess,
-    sharedEmails: (input?.sharedEmails ?? []).map(email => ({
-      email: email.email ?? '',
-      sharedAt: email.sharedAt ?? new Date().toISOString(),
-      accessCount: email.accessCount ?? 0
-    })),
-    kindleDeliveries: (input?.kindleDeliveries ?? []).map(delivery => ({
-      sentAt: delivery.sentAt ?? new Date().toISOString(),
-      status: delivery.status ?? 'pending'
-    }))
+  const sharing: SharingConfig = {
+    publicAccess: createNonOptionalPublicAccess(basePublicAccess, input?.publicAccess),
+    sharedEmails: input?.sharedEmails?.map(email => ({
+      email: email?.email || '',
+      sharedAt: email?.sharedAt || new Date().toISOString(),
+      accessCount: email?.accessCount || 0
+    })) || [],
+    kindleDeliveries: input?.kindleDeliveries?.map(delivery => ({
+      sentAt: delivery?.sentAt || new Date().toISOString(),
+      status: delivery?.status || 'pending'
+    })) || []
   };
 
-  return SharingSchema.parse(validSharing);
+  return SharingSchema.parse(sharing);
 };
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
