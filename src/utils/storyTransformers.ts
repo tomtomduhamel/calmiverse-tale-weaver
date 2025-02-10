@@ -5,18 +5,57 @@ import { FrontendStorySchema, SharingSchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
-const transformAndValidateSharing = (sharing?: Partial<SharingConfig>): SharingConfig => {
-  const rawSharing = {
+// Types stricts pour la transformation
+type StrictPublicAccess = {
+  enabled: boolean;
+  token: string;
+  expiresAt: string;
+};
+
+type StrictSharing = {
+  publicAccess: StrictPublicAccess;
+  sharedEmails: Array<{
+    email: string;
+    sharedAt: string;
+    accessCount: number;
+  }>;
+  kindleDeliveries: Array<{
+    sentAt: string;
+    status: 'pending' | 'sent' | 'failed';
+  }>;
+};
+
+const createValidSharing = (input?: Partial<SharingConfig>): StrictSharing => {
+  // Créer d'abord l'objet complet avec les valeurs par défaut
+  const sharing: StrictSharing = {
     publicAccess: {
-      enabled: sharing?.publicAccess?.enabled ?? false,
-      token: sharing?.publicAccess?.token ?? generateToken(),
-      expiresAt: sharing?.publicAccess?.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      enabled: false,
+      token: generateToken(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     },
-    sharedEmails: sharing?.sharedEmails ?? [],
-    kindleDeliveries: sharing?.kindleDeliveries ?? []
+    sharedEmails: [],
+    kindleDeliveries: []
   };
 
-  return SharingSchema.parse(rawSharing);
+  // Appliquer les valeurs d'entrée si elles existent
+  if (input?.publicAccess) {
+    sharing.publicAccess = {
+      ...sharing.publicAccess,
+      enabled: input.publicAccess.enabled ?? sharing.publicAccess.enabled,
+      token: input.publicAccess.token ?? sharing.publicAccess.token,
+      expiresAt: input.publicAccess.expiresAt ?? sharing.publicAccess.expiresAt
+    };
+  }
+
+  if (input?.sharedEmails) {
+    sharing.sharedEmails = input.sharedEmails;
+  }
+
+  if (input?.kindleDeliveries) {
+    sharing.kindleDeliveries = input.kindleDeliveries;
+  }
+
+  return sharing;
 };
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
@@ -36,7 +75,7 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     _version: story._version ?? 1,
     _lastSync: story._lastSync ?? new Date().toISOString(),
     _pendingWrites: story._pendingWrites ?? false,
-    sharing: story.sharing ? transformAndValidateSharing(story.sharing) : undefined
+    sharing: story.sharing ? createValidSharing(story.sharing) : undefined
   };
 
   return FrontendStorySchema.parse(completeStory);
@@ -130,3 +169,4 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
     throw error;
   }
 };
+
