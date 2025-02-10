@@ -6,40 +6,31 @@ import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
 const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  // 1. Définir un type strict pour publicAccess
-  type PublicAccessType = {
-    enabled: boolean;
-    token: string;
-    expiresAt: string;
-  };
-
-  // 2. Créer les valeurs par défaut
-  const defaultPublicAccess: PublicAccessType = {
+  // 1. Créer un objet de configuration non optionnel
+  const resolvedPublicAccess = {
     enabled: false,
     token: generateToken(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   };
 
-  // 3. Créer publicAccess avec le bon type
-  const publicAccess: PublicAccessType = {
-    enabled: input?.publicAccess?.enabled ?? defaultPublicAccess.enabled,
-    token: input?.publicAccess?.token ?? defaultPublicAccess.token,
-    expiresAt: input?.publicAccess?.expiresAt ?? defaultPublicAccess.expiresAt
-  };
+  if (input?.publicAccess) {
+    if ('enabled' in input.publicAccess) resolvedPublicAccess.enabled = input.publicAccess.enabled;
+    if ('token' in input.publicAccess) resolvedPublicAccess.token = input.publicAccess.token;
+    if ('expiresAt' in input.publicAccess) resolvedPublicAccess.expiresAt = input.publicAccess.expiresAt;
+  }
 
-  // 4. Construire l'objet sharing
-  const sharing: SharingConfig = {
-    publicAccess,
-    sharedEmails: (input?.sharedEmails ?? []).map(email => ({
+  const sharing = {
+    publicAccess: resolvedPublicAccess,
+    sharedEmails: input?.sharedEmails?.map(email => ({
       email: email.email ?? '',
       sharedAt: email.sharedAt ?? new Date().toISOString(),
       accessCount: email.accessCount ?? 0
-    })),
-    kindleDeliveries: (input?.kindleDeliveries ?? []).map(delivery => ({
+    })) ?? [],
+    kindleDeliveries: input?.kindleDeliveries?.map(delivery => ({
       sentAt: delivery.sentAt ?? new Date().toISOString(),
       status: delivery.status ?? 'pending'
-    }))
-  };
+    })) ?? []
+  } satisfies SharingConfig;
 
   return SharingSchema.parse(sharing);
 };
