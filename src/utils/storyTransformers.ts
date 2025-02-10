@@ -31,11 +31,11 @@ function normalizeKindleDelivery(input: Partial<SharingConfig['kindleDeliveries'
 const createValidSharing = (input: Partial<SharingConfig> | undefined): Required<SharingConfig> => {
   const normalizedSharing: Required<SharingConfig> = {
     publicAccess: normalizePublicAccess(input?.publicAccess),
-    sharedEmails: input?.sharedEmails?.map(normalizeSharedEmail) ?? [],
-    kindleDeliveries: input?.kindleDeliveries?.map(normalizeKindleDelivery) ?? []
+    sharedEmails: (input?.sharedEmails ?? []).map(normalizeSharedEmail),
+    kindleDeliveries: (input?.kindleDeliveries ?? []).map(normalizeKindleDelivery)
   };
 
-  return SharingSchema.parse(normalizedSharing) as Required<SharingConfig>;
+  return SharingSchema.parse(normalizedSharing);
 };
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
@@ -60,14 +60,15 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     sharing: createValidSharing(undefined)
   };
 
-  // Create a new object with normalized sharing
-  const storyWithSharing = {
+  const normalizedSharing = createValidSharing(story.sharing);
+  
+  const completeStory: FrontendStory = {
     ...defaultStory,
     ...story,
-    sharing: createValidSharing(story.sharing)
+    sharing: normalizedSharing
   };
 
-  return FrontendStorySchema.parse(storyWithSharing);
+  return FrontendStorySchema.parse(completeStory);
 };
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
@@ -113,7 +114,6 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       timestamp: new Date().toISOString()
     });
 
-    // Parse all dates in one go to avoid intermediate states
     const parsedStory = ensureCompleteStory({
       ...story,
       createdAt: new Date(story.createdAt).toISOString(),
