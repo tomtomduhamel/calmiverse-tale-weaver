@@ -33,3 +33,5 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJECT_PATH: ./
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+

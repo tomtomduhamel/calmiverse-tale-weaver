@@ -37,13 +37,6 @@ export const generateStory = onCall({
       const { storyId, objective, childrenNames } = data;
       const authorId = request.auth.uid;
 
-      console.log('Request parameters validation:', {
-        storyId,
-        authorId,
-        objective,
-        childrenNames
-      });
-
       if (!storyId) {
         console.error('Missing storyId in request');
         throw new Error('L\'ID de l\'histoire est requis');
@@ -64,13 +57,6 @@ export const generateStory = onCall({
         console.error('OpenAI API key is not configured');
         throw new Error('La clé API OpenAI n\'est pas configurée');
       }
-
-      console.log('Starting story generation with parameters:', {
-        storyId,
-        authorId,
-        objective,
-        childrenCount: childrenNames.length
-      });
 
       // Vérifier que le document existe
       const storyRef = admin.firestore().collection('stories').doc(storyId);
@@ -143,7 +129,6 @@ export const generateStory = onCall({
     } catch (error) {
       console.error('Error in generateStory:', error);
       
-      // Amélioration de la gestion des erreurs
       let errorMessage = 'Une erreur inattendue est survenue';
       
       if (error instanceof Error) {
@@ -164,5 +149,4 @@ export const generateStory = onCall({
       
       throw new Error(errorMessage);
     }
-  }
-);
+});

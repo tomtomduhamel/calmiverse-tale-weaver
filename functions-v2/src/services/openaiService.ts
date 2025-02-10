@@ -26,7 +26,7 @@ export const generateStoryWithAI = async (
 
     console.log("Creating OpenAI request with adjusted parameters");
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-0125-preview',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -47,14 +47,7 @@ RÈGLES FONDAMENTALES :
 - Évite tout contenu effrayant ou angoissant
 - Termine toujours sur une note positive
 - Enrichis l'histoire avec des détails sensoriels
-- Développe les relations entre les personnages
-
-STRUCTURE CACHÉE (ne pas la rendre visible) :
-1. Introduction et mise en contexte (2000-2500 mots)
-2. Développement de l'ambiance (2500-3000 mots)
-3. Progression de l'histoire (2500-3000 mots)
-4. Cœur de l'histoire (2500-3000 mots)
-5. Conclusion (2000-2500 mots)`,
+- Développe les relations entre les personnages`,
         },
         {
           role: 'user',
@@ -65,7 +58,7 @@ STRUCTURE CACHÉE (ne pas la rendre visible) :
         },
       ],
       temperature: 0.8,
-      max_tokens: 32000,
+      max_tokens: 16000,
       frequency_penalty: 0.2,
       presence_penalty: 0.1,
     });
@@ -115,17 +108,25 @@ STRUCTURE CACHÉE (ne pas la rendre visible) :
   } catch (error) {
     console.error("Error during story generation with OpenAI:", error);
     
-    // Amélioration de la gestion des erreurs OpenAI
     if (error instanceof OpenAI.APIError) {
       console.error("OpenAI API Error details:", {
         status: error.status,
         type: error.type,
         code: error.code
       });
+      
+      // Messages d'erreur plus spécifiques selon le type d'erreur
+      if (error.status === 401) {
+        throw new Error("La clé API OpenAI est invalide");
+      } else if (error.status === 429) {
+        throw new Error("Limite de requêtes OpenAI atteinte. Veuillez réessayer dans quelques minutes");
+      } else if (error.status === 500) {
+        throw new Error("Erreur du service OpenAI. Veuillez réessayer");
+      }
+      
       throw new Error(`Erreur OpenAI: ${error.message}`);
     }
     
     throw error;
   }
 };
-
