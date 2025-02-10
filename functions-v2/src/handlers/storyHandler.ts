@@ -16,7 +16,10 @@ export const generateStory = onCall({
     timeoutSeconds: 540,
     memory: '1GiB',
   }, async (request) => {
-    console.log('Starting story generation process. Request data:', request.data);
+    console.log('Starting story generation process with request:', {
+      hasAuth: !!request.auth,
+      dataPresent: !!request.data
+    });
     
     try {
       if (!request.auth) {
@@ -25,12 +28,16 @@ export const generateStory = onCall({
       }
 
       const data = request.data as StoryGenerationRequest;
-      console.log('Parsed request data:', data);
+      console.log('Parsed request data:', {
+        storyId: data.storyId,
+        objective: data.objective,
+        childrenCount: data.childrenNames?.length
+      });
 
       const { storyId, objective, childrenNames } = data;
       const authorId = request.auth.uid;
 
-      console.log('Validating request parameters:', {
+      console.log('Request parameters validation:', {
         storyId,
         authorId,
         objective,
@@ -58,11 +65,11 @@ export const generateStory = onCall({
         throw new Error('La clé API OpenAI n\'est pas configurée');
       }
 
-      console.log('Request validation passed:', {
+      console.log('Starting story generation with parameters:', {
         storyId,
         authorId,
         objective,
-        childrenNames
+        childrenCount: childrenNames.length
       });
 
       // Vérifier que le document existe
@@ -74,9 +81,11 @@ export const generateStory = onCall({
         throw new Error('Document d\'histoire non trouvé');
       }
 
-      console.log('Starting story generation with OpenAI');
+      console.log('Starting OpenAI story generation');
       const generatedStory = await generateStoryWithAI(objective, childrenNames, apiKey);
 
+      console.log('Story generated successfully, updating Firestore');
+      
       // Utiliser une transaction pour la mise à jour
       await admin.firestore().runTransaction(async (transaction) => {
         const storyDoc = await transaction.get(storyRef);
@@ -92,15 +101,17 @@ export const generateStory = onCall({
           _version: (currentData?._version || 1) + 1,
           _lastSync: admin.firestore.FieldValue.serverTimestamp(),
           _pendingWrites: false,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          wordCount: generatedStory.wordCount
         };
 
         transaction.update(storyRef, updateData);
 
-        console.log('Story transaction completed successfully:', {
+        console.log('Story transaction completed:', {
           id: storyId,
           newStatus: 'completed',
-          newVersion: updateData._version
+          newVersion: updateData._version,
+          wordCount: updateData.wordCount
         });
       });
 
@@ -120,7 +131,8 @@ export const generateStory = onCall({
         id: storyId,
         status: finalData.status,
         authorId: finalData.authorId,
-        version: finalData._version
+        version: finalData._version,
+        wordCount: finalData.wordCount
       });
 
       return {
@@ -130,11 +142,27 @@ export const generateStory = onCall({
 
     } catch (error) {
       console.error('Error in generateStory:', error);
-      if (isFirebaseError(error)) {
-        throw new Error(error.message);
+      
+      // Amélioration de la gestion des erreurs
+      let errorMessage = 'Une erreur inattendue est survenue';
+      
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+        errorMessage = error.message;
       }
-      throw new Error('Une erreur inattendue est survenue');
+      
+      if (isFirebaseError(error)) {
+        console.error('Firebase error details:', {
+          code: error.code,
+          message: error.message
+        });
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 );
-

@@ -7,8 +7,11 @@ export const generateStoryWithAI = async (
   childrenNames: string[], 
   apiKey: string
 ): Promise<Story> => {
-  console.log("Starting OpenAI story generation");
-  console.log("Parameters received:", { objective, childrenNames });
+  console.log("Starting OpenAI story generation with parameters:", {
+    objective,
+    childrenNames,
+    hasApiKey: !!apiKey
+  });
   
   try {
     if (!apiKey) {
@@ -21,7 +24,7 @@ export const generateStoryWithAI = async (
       apiKey: apiKey
     });
 
-    console.log("Creating OpenAI request");
+    console.log("Creating OpenAI request with adjusted parameters");
     const completion = await openai.chat.completions.create({
       model: 'gpt-4-0125-preview',
       messages: [
@@ -62,7 +65,7 @@ STRUCTURE CACHÉE (ne pas la rendre visible) :
         },
       ],
       temperature: 0.8,
-      max_tokens: 8000,
+      max_tokens: 32000,
       frequency_penalty: 0.2,
       presence_penalty: 0.1,
     });
@@ -82,7 +85,7 @@ STRUCTURE CACHÉE (ne pas la rendre visible) :
       console.warn("Warning: Story is shorter than expected minimum length");
     }
 
-    console.log("Generating unique ID for story");
+    console.log("Generating story data");
     const uniqueId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     console.log("Formatting story data");
@@ -102,10 +105,27 @@ STRUCTURE CACHÉE (ne pas la rendre visible) :
       _pendingWrites: true
     };
 
-    console.log("Story data formatted successfully");
+    console.log("Story data formatted successfully:", {
+      id: storyData.id,
+      wordCount: storyData.wordCount,
+      status: storyData.status
+    });
+    
     return storyData;
   } catch (error) {
     console.error("Error during story generation with OpenAI:", error);
+    
+    // Amélioration de la gestion des erreurs OpenAI
+    if (error instanceof OpenAI.APIError) {
+      console.error("OpenAI API Error details:", {
+        status: error.status,
+        type: error.type,
+        code: error.code
+      });
+      throw new Error(`Erreur OpenAI: ${error.message}`);
+    }
+    
     throw error;
   }
 };
+
