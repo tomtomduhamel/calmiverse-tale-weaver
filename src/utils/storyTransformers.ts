@@ -5,41 +5,41 @@ import { FrontendStorySchema, SharingSchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
-function normalizePublicAccess(input?: Partial<SharingConfig['publicAccess']>): SharingConfig['publicAccess'] {
+function normalizePublicAccess(input: Partial<SharingConfig['publicAccess']> | undefined): Required<SharingConfig['publicAccess']> {
   return {
-    enabled: input?.enabled !== undefined ? Boolean(input.enabled) : false,
-    token: String(input?.token || generateToken()),
-    expiresAt: String(input?.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
+    enabled: input?.enabled ?? false,
+    token: input?.token ?? generateToken(),
+    expiresAt: input?.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   };
 }
 
-function normalizeSharedEmail(input?: Partial<SharingConfig['sharedEmails'][0]>): SharingConfig['sharedEmails'][0] {
+function normalizeSharedEmail(input: Partial<SharingConfig['sharedEmails'][0]>): Required<SharingConfig['sharedEmails'][0]> {
   return {
-    email: String(input?.email || ''),
-    sharedAt: String(input?.sharedAt || new Date().toISOString()),
-    accessCount: Number(input?.accessCount || 0)
+    email: input.email ?? '',
+    sharedAt: input.sharedAt ?? new Date().toISOString(),
+    accessCount: input.accessCount ?? 0
   };
 }
 
-function normalizeKindleDelivery(input?: Partial<SharingConfig['kindleDeliveries'][0]>): SharingConfig['kindleDeliveries'][0] {
+function normalizeKindleDelivery(input: Partial<SharingConfig['kindleDeliveries'][0]>): Required<SharingConfig['kindleDeliveries'][0]> {
   return {
-    sentAt: String(input?.sentAt || new Date().toISOString()),
-    status: (input?.status || 'pending') as 'pending' | 'sent' | 'failed'
+    sentAt: input.sentAt ?? new Date().toISOString(),
+    status: input.status ?? 'pending'
   };
 }
 
-const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  const validSharing: SharingConfig = {
+const createValidSharing = (input: Partial<SharingConfig> | undefined): Required<SharingConfig> => {
+  const normalizedSharing: Required<SharingConfig> = {
     publicAccess: normalizePublicAccess(input?.publicAccess),
-    sharedEmails: (input?.sharedEmails || []).map(normalizeSharedEmail),
-    kindleDeliveries: (input?.kindleDeliveries || []).map(normalizeKindleDelivery)
+    sharedEmails: input?.sharedEmails?.map(normalizeSharedEmail) ?? [],
+    kindleDeliveries: input?.kindleDeliveries?.map(normalizeKindleDelivery) ?? []
   };
 
-  return SharingSchema.parse(validSharing);
+  return SharingSchema.parse(normalizedSharing) as Required<SharingConfig>;
 };
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
-  const defaultStory: FrontendStory = {
+  const defaultStory: Required<FrontendStory> = {
     id: '',
     title: '',
     preview: '',
@@ -54,13 +54,16 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     wordCount: 0,
     _version: 1,
     _lastSync: new Date().toISOString(),
-    _pendingWrites: false
+    _pendingWrites: false,
+    isFavorite: false,
+    tags: [],
+    sharing: createValidSharing(undefined)
   };
 
-  const completeStory: FrontendStory = {
+  const completeStory: Required<FrontendStory> = {
     ...defaultStory,
     ...story,
-    sharing: story.sharing ? createValidSharing(story.sharing) : undefined
+    sharing: story.sharing ? createValidSharing(story.sharing) : defaultStory.sharing
   };
 
   return FrontendStorySchema.parse(completeStory);
