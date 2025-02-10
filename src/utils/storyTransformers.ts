@@ -1,8 +1,8 @@
 
 import { z } from 'zod';
 import type { FrontendStory, CloudFunctionStory } from '@/types/shared/story';
-import { FrontendStorySchema } from './storyValidation';
-import { StoryMetrics } from './monitoring';
+import { FrontendStorySchema } from '@/utils';
+import { StoryMetrics } from '@/utils';
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
   try {
@@ -109,4 +109,4 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
     throw error;
   }
 };
-</lov-write
+
