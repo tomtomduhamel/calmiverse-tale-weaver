@@ -15,26 +15,29 @@ const DEFAULT_SHARING_CONFIG: SharingConfig = {
   kindleDeliveries: [],
 } as const;
 
-type StorySharingTransform = Omit<FrontendStory, 'sharing'> & {
-  sharing?: {
-    publicAccess: {
-      enabled: boolean;
-      token: string;
-      expiresAt: string;
-    };
-    sharedEmails: {
-      email: string;
-      sharedAt: string;
-      accessCount: number;
-    }[];
-    kindleDeliveries: {
-      sentAt: string;
-      status: 'pending' | 'sent' | 'failed';
-    }[];
+// Type strict pour la configuration du partage après transformation
+type CompleteSharingConfig = {
+  publicAccess: {
+    enabled: boolean;
+    token: string;
+    expiresAt: string;
   };
+  sharedEmails: {
+    email: string;
+    sharedAt: string;
+    accessCount: number;
+  }[];
+  kindleDeliveries: {
+    sentAt: string;
+    status: 'pending' | 'sent' | 'failed';
+  }[];
 };
 
-const validateAndCompleteSharingConfig = (sharing: Partial<SharingConfig> | undefined): SharingConfig => {
+type StorySharingTransform = Omit<FrontendStory, 'sharing'> & {
+  sharing?: CompleteSharingConfig;
+};
+
+const validateAndCompleteSharingConfig = (sharing: Partial<SharingConfig> | undefined): CompleteSharingConfig => {
   if (!sharing) return DEFAULT_SHARING_CONFIG;
 
   return {
