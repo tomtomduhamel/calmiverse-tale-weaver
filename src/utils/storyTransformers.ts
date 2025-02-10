@@ -1,64 +1,20 @@
 
 import { z } from 'zod';
-import type { FrontendStory, CloudFunctionStory, SharingConfig } from '@/types/shared/story';
+import type { FrontendStory, CloudFunctionStory } from '@/types/shared/story';
 import { FrontendStorySchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
-const DEFAULT_SHARING_CONFIG: SharingConfig = {
+// Simple, complete types for sharing configuration
+const DEFAULT_SHARING = {
   publicAccess: {
     enabled: false,
-    token: 'default_token_12345678901234567890123456789012',
+    token: generateToken(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   },
   sharedEmails: [],
   kindleDeliveries: [],
 } as const;
-
-// Type strict pour la configuration du partage après transformation
-type CompleteSharingConfig = {
-  publicAccess: {
-    enabled: boolean;
-    token: string;
-    expiresAt: string;
-  };
-  sharedEmails: {
-    email: string;
-    sharedAt: string;
-    accessCount: number;
-  }[];
-  kindleDeliveries: {
-    sentAt: string;
-    status: 'pending' | 'sent' | 'failed';
-  }[];
-};
-
-type StorySharingTransform = Omit<FrontendStory, 'sharing'> & {
-  sharing?: CompleteSharingConfig;
-};
-
-const validateAndCompleteSharingConfig = (sharing: Partial<SharingConfig> | undefined): CompleteSharingConfig => {
-  if (!sharing) return DEFAULT_SHARING_CONFIG;
-
-  return {
-    publicAccess: {
-      enabled: sharing.publicAccess?.enabled ?? DEFAULT_SHARING_CONFIG.publicAccess.enabled,
-      token: sharing.publicAccess?.token ?? generateToken(),
-      expiresAt: sharing.publicAccess?.expiresAt ?? DEFAULT_SHARING_CONFIG.publicAccess.expiresAt,
-    },
-    sharedEmails: sharing.sharedEmails ?? DEFAULT_SHARING_CONFIG.sharedEmails,
-    kindleDeliveries: sharing.kindleDeliveries ?? DEFAULT_SHARING_CONFIG.kindleDeliveries,
-  };
-};
-
-const transformToStorySharingTransform = (story: CloudFunctionStory): StorySharingTransform => {
-  return {
-    ...story,
-    sharing: story.sharing 
-      ? validateAndCompleteSharingConfig(story.sharing)
-      : undefined
-  };
-};
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
   try {
@@ -68,22 +24,25 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       timestamp: new Date().toISOString()
     });
 
-    // Première étape : validation et complétion des données
-    const transformedStory = transformToStorySharingTransform(cloudStory);
+    // If no sharing data, return story without sharing
+    if (!cloudStory.sharing) {
+      const story = { ...cloudStory };
+      return FrontendStorySchema.parse(story);
+    }
 
-    // Deuxième étape : application des valeurs par défaut si nécessaire
+    // If sharing exists, ensure complete structure
     const story: FrontendStory = {
-      ...transformedStory,
-      sharing: transformedStory.sharing ?? DEFAULT_SHARING_CONFIG,
+      ...cloudStory,
+      sharing: {
+        publicAccess: {
+          enabled: cloudStory.sharing.publicAccess?.enabled ?? DEFAULT_SHARING.publicAccess.enabled,
+          token: cloudStory.sharing.publicAccess?.token ?? DEFAULT_SHARING.publicAccess.token,
+          expiresAt: cloudStory.sharing.publicAccess?.expiresAt ?? DEFAULT_SHARING.publicAccess.expiresAt,
+        },
+        sharedEmails: cloudStory.sharing.sharedEmails ?? DEFAULT_SHARING.sharedEmails,
+        kindleDeliveries: cloudStory.sharing.kindleDeliveries ?? DEFAULT_SHARING.kindleDeliveries,
+      },
     };
-
-    console.log('Transformed story before validation:', {
-      id: story.id,
-      hasSharing: Boolean(story.sharing),
-      timestamp: new Date().toISOString()
-    });
-
-    const validatedStory = FrontendStorySchema.parse(story);
 
     console.log('Story transformation completed:', {
       id: cloudStory.id,
@@ -91,6 +50,7 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       timestamp: new Date().toISOString()
     });
 
+    const validatedStory = FrontendStorySchema.parse(story);
     StoryMetrics.endOperation(cloudStory.id, 'success');
     return validatedStory;
   } catch (error) {
@@ -118,13 +78,16 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       timestamp: new Date().toISOString()
     });
 
-    const transformedStory = transformToStorySharingTransform(story);
-    
+    // Parse dates for base story fields
     const parsedStory: FrontendStory = {
-      ...transformedStory,
+      ...story,
       createdAt: new Date(story.createdAt).toISOString(),
       _lastSync: new Date(story._lastSync).toISOString(),
-      sharing: story.sharing ? {
+    };
+
+    // If sharing exists, parse its dates
+    if (story.sharing) {
+      parsedStory.sharing = {
         publicAccess: {
           enabled: story.sharing.publicAccess.enabled,
           token: story.sharing.publicAccess.token,
@@ -139,8 +102,8 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
           sentAt: new Date(delivery.sentAt).toISOString(),
           status: delivery.status,
         })),
-      } : DEFAULT_SHARING_CONFIG,
-    };
+      };
+    }
 
     console.log('Parsed dates story before validation:', {
       id: story.id,
@@ -174,4 +137,3 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
     throw error;
   }
 };
-
