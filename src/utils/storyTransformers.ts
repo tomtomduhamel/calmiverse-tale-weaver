@@ -25,7 +25,7 @@ type StrictSharing = {
   }>;
 };
 
-const createValidSharing = (input?: Partial<SharingConfig>): StrictSharing => {
+const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
   // Créer d'abord l'objet complet avec les valeurs par défaut
   const sharing: StrictSharing = {
     publicAccess: {
@@ -55,7 +55,8 @@ const createValidSharing = (input?: Partial<SharingConfig>): StrictSharing => {
     sharing.kindleDeliveries = input.kindleDeliveries;
   }
 
-  return sharing;
+  // Valider avec Zod avant de retourner
+  return SharingSchema.parse(sharing);
 };
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
@@ -169,4 +170,3 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
     throw error;
   }
 };
-
