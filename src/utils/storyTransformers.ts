@@ -22,9 +22,27 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       timestamp: new Date().toISOString()
     });
 
+    const sharing = cloudStory.sharing || createDefaultSharing();
+
     const story: FrontendStory = {
-      ...cloudStory,
-      sharing: cloudStory.sharing || createDefaultSharing(),
+      id: cloudStory.id,
+      title: cloudStory.title,
+      preview: cloudStory.preview,
+      objective: cloudStory.objective,
+      childrenIds: cloudStory.childrenIds,
+      childrenNames: cloudStory.childrenNames,
+      story_text: cloudStory.story_text,
+      story_summary: cloudStory.story_summary,
+      createdAt: cloudStory.createdAt,
+      status: cloudStory.status,
+      authorId: cloudStory.authorId,
+      wordCount: cloudStory.wordCount,
+      isFavorite: cloudStory.isFavorite,
+      tags: cloudStory.tags,
+      _version: cloudStory._version,
+      _lastSync: cloudStory._lastSync,
+      _pendingWrites: cloudStory._pendingWrites,
+      sharing: sharing,
     };
 
     console.log('Transformed story before validation:', {
@@ -73,20 +91,21 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
       createdAt: new Date(story.createdAt).toISOString(),
       _lastSync: new Date(story._lastSync).toISOString(),
       sharing: story.sharing ? {
-        ...story.sharing,
         publicAccess: {
-          ...story.sharing.publicAccess,
+          enabled: story.sharing.publicAccess.enabled,
+          token: story.sharing.publicAccess.token,
           expiresAt: new Date(story.sharing.publicAccess.expiresAt).toISOString(),
         },
         sharedEmails: story.sharing.sharedEmails.map(email => ({
-          ...email,
+          email: email.email,
           sharedAt: new Date(email.sharedAt).toISOString(),
+          accessCount: email.accessCount,
         })),
         kindleDeliveries: story.sharing.kindleDeliveries.map(delivery => ({
-          ...delivery,
           sentAt: new Date(delivery.sentAt).toISOString(),
+          status: delivery.status,
         })),
-      } : undefined,
+      } : createDefaultSharing(),
     };
 
     console.log('Parsed dates story before validation:', {
