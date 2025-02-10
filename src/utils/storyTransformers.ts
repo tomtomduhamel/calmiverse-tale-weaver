@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 import type { FrontendStory, CloudFunctionStory, SharingConfig } from '@/types/shared/story';
 import { FrontendStorySchema, SharingSchema } from '@/utils';
@@ -6,34 +5,32 @@ import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
 const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  // Créer d'abord un objet fortement typé avec des valeurs par défaut
+  // Create base object with non-optional properties
   const basePublicAccess = {
     enabled: false,
     token: generateToken(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   } as const;
 
-  // Créer l'objet final en écrasant les valeurs si elles existent
-  const finalPublicAccess = input?.publicAccess 
-    ? {
-        enabled: typeof input.publicAccess.enabled === 'boolean' ? input.publicAccess.enabled : basePublicAccess.enabled,
-        token: typeof input.publicAccess.token === 'string' ? input.publicAccess.token : basePublicAccess.token,
-        expiresAt: typeof input.publicAccess.expiresAt === 'string' ? input.publicAccess.expiresAt : basePublicAccess.expiresAt
-      }
-    : basePublicAccess;
+  // Create the final publicAccess object with required properties
+  const finalPublicAccess = {
+    enabled: input?.publicAccess?.enabled ?? basePublicAccess.enabled,
+    token: input?.publicAccess?.token ?? basePublicAccess.token,
+    expiresAt: input?.publicAccess?.expiresAt ?? basePublicAccess.expiresAt
+  };
 
-  // Construire l'objet final avec le type correct
+  // Create the complete sharing config with required arrays
   const validSharing: SharingConfig = {
     publicAccess: finalPublicAccess,
-    sharedEmails: input?.sharedEmails?.map(email => ({
-      email: email.email || '',
-      sharedAt: email.sharedAt || new Date().toISOString(),
-      accessCount: typeof email.accessCount === 'number' ? email.accessCount : 0
-    })) || [],
-    kindleDeliveries: input?.kindleDeliveries?.map(delivery => ({
-      sentAt: delivery.sentAt || new Date().toISOString(),
-      status: (delivery.status as 'pending' | 'sent' | 'failed') || 'pending'
-    })) || []
+    sharedEmails: (input?.sharedEmails ?? []).map(email => ({
+      email: email.email ?? '',
+      sharedAt: email.sharedAt ?? new Date().toISOString(),
+      accessCount: email.accessCount ?? 0
+    })),
+    kindleDeliveries: (input?.kindleDeliveries ?? []).map(delivery => ({
+      sentAt: delivery.sentAt ?? new Date().toISOString(),
+      status: delivery.status ?? 'pending'
+    }))
   };
 
   return SharingSchema.parse(validSharing);
