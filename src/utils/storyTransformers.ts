@@ -6,25 +6,35 @@ import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
 const createValidSharing = (input?: Partial<SharingConfig>): SharingConfig => {
-  // Création d'un objet avec toutes les propriétés requises
+  // Création d'un objet de base avec des valeurs par défaut non-optionnelles
+  const defaultSharing = {
+    publicAccess: {
+      enabled: false,
+      token: generateToken(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    sharedEmails: [],
+    kindleDeliveries: []
+  } as const;
+
+  // Construction de l'objet final en fusionnant avec les entrées
   const sharing: SharingConfig = {
     publicAccess: {
-      enabled: input?.publicAccess?.enabled !== undefined ? input.publicAccess.enabled : false,
-      token: input?.publicAccess?.token || generateToken(),
-      expiresAt: input?.publicAccess?.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      enabled: input?.publicAccess?.enabled ?? defaultSharing.publicAccess.enabled,
+      token: input?.publicAccess?.token ?? defaultSharing.publicAccess.token,
+      expiresAt: input?.publicAccess?.expiresAt ?? defaultSharing.publicAccess.expiresAt
     },
     sharedEmails: input?.sharedEmails?.map(email => ({
-      email: email?.email || '',
-      sharedAt: email?.sharedAt || new Date().toISOString(),
-      accessCount: email?.accessCount || 0
-    })) || [],
+      email: email.email || '',
+      sharedAt: email.sharedAt || new Date().toISOString(),
+      accessCount: email.accessCount || 0
+    })) || defaultSharing.sharedEmails,
     kindleDeliveries: input?.kindleDeliveries?.map(delivery => ({
-      sentAt: delivery?.sentAt || new Date().toISOString(),
-      status: delivery?.status || 'pending'
-    })) || []
+      sentAt: delivery.sentAt || new Date().toISOString(),
+      status: delivery.status || 'pending'
+    })) || defaultSharing.kindleDeliveries
   };
 
-  // Validation avec Zod pour garantir que tout est correct
   return SharingSchema.parse(sharing);
 };
 
@@ -47,7 +57,7 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     _pendingWrites: false
   };
 
-  const completeStory: FrontendStory = {
+  const completeStory = {
     ...defaultStory,
     ...story,
     sharing: story.sharing ? createValidSharing(story.sharing) : undefined
