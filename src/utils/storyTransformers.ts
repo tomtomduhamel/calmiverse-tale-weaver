@@ -5,37 +5,62 @@ import { FrontendStorySchema, SharingSchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
-function normalizePublicAccess(input: Partial<SharingConfig['publicAccess']> | undefined): SharingConfig['publicAccess'] {
+type PublicAccessConfig = {
+  enabled: boolean;
+  token: string;
+  expiresAt: string;
+};
+
+type SharedEmailConfig = {
+  email: string;
+  sharedAt: string;
+  accessCount: number;
+};
+
+type KindleDeliveryConfig = {
+  sentAt: string;
+  status: 'pending' | 'sent' | 'failed';
+};
+
+function validatePublicAccess(input: unknown): PublicAccessConfig {
+  const inputObj = input as Record<string, unknown>;
   return {
-    enabled: input?.enabled ?? false,
-    token: input?.token ?? generateToken(),
-    expiresAt: input?.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    enabled: Boolean(inputObj?.enabled ?? false),
+    token: String(inputObj?.token ?? generateToken()),
+    expiresAt: String(inputObj?.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
   };
 }
 
-function normalizeSharedEmail(input: Partial<SharingConfig['sharedEmails'][0]>): SharingConfig['sharedEmails'][0] {
+function validateSharedEmail(input: unknown): SharedEmailConfig {
+  const inputObj = input as Record<string, unknown>;
   return {
-    email: input.email ?? '',
-    sharedAt: input.sharedAt ?? new Date().toISOString(),
-    accessCount: input.accessCount ?? 0
+    email: String(inputObj?.email ?? ''),
+    sharedAt: String(inputObj?.sharedAt ?? new Date().toISOString()),
+    accessCount: Number(inputObj?.accessCount ?? 0)
   };
 }
 
-function normalizeKindleDelivery(input: Partial<SharingConfig['kindleDeliveries'][0]>): SharingConfig['kindleDeliveries'][0] {
+function validateKindleDelivery(input: unknown): KindleDeliveryConfig {
+  const inputObj = input as Record<string, unknown>;
   return {
-    sentAt: input.sentAt ?? new Date().toISOString(),
-    status: input.status ?? 'pending'
+    sentAt: String(inputObj?.sentAt ?? new Date().toISOString()),
+    status: (inputObj?.status as 'pending' | 'sent' | 'failed') ?? 'pending'
   };
 }
 
-function createValidSharing(input: Partial<SharingConfig> | undefined): SharingConfig {
-  const sharing: SharingConfig = {
-    publicAccess: normalizePublicAccess(input?.publicAccess),
-    sharedEmails: (input?.sharedEmails ?? []).map(normalizeSharedEmail),
-    kindleDeliveries: (input?.kindleDeliveries ?? []).map(normalizeKindleDelivery)
+function createValidSharing(input: unknown): SharingConfig {
+  const inputObj = input as Record<string, unknown>;
+  const validConfig = {
+    publicAccess: validatePublicAccess(inputObj?.publicAccess),
+    sharedEmails: Array.isArray(inputObj?.sharedEmails) 
+      ? inputObj.sharedEmails.map(validateSharedEmail)
+      : [],
+    kindleDeliveries: Array.isArray(inputObj?.kindleDeliveries)
+      ? inputObj.kindleDeliveries.map(validateKindleDelivery)
+      : []
   };
 
-  return SharingSchema.parse(sharing);
+  return SharingSchema.parse(validConfig);
 }
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
@@ -57,7 +82,7 @@ const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
     _pendingWrites: false,
     isFavorite: false,
     tags: [],
-    sharing: createValidSharing(undefined)
+    sharing: createValidSharing({})
   };
 
   const completeStory = {
@@ -157,3 +182,4 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
     throw error;
   }
 };
+
