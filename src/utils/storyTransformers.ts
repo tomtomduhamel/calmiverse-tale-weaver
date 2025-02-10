@@ -98,7 +98,7 @@ function createValidSharing(input: unknown): SharingConfig {
       : []
   };
 
-  return SharingSchema.parse(validConfig) as SharingConfig;
+  return SharingSchema.parse(validConfig);
 }
 
 const ensureCompleteStory = (story: Partial<FrontendStory>): FrontendStory => {
