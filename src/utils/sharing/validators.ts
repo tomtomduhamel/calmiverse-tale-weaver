@@ -85,5 +85,6 @@ export function createValidSharing(input: unknown): SharingConfig {
       : defaultConfig.kindleDeliveries
   };
 
-  return SharingSchema.parse(config);
+  const validatedConfig = SharingSchema.parse(config);
+  return validatedConfig;
 }
