@@ -1,19 +1,22 @@
 
 import { z } from 'zod';
-import type { FrontendStory, CloudFunctionStory } from '@/types/shared/story';
+import type { FrontendStory, CloudFunctionStory, SharingConfig } from '@/types/shared/story';
 import { FrontendStorySchema } from '@/utils';
 import { StoryMetrics } from '@/utils';
 import { generateToken } from '@/utils/tokenUtils';
 
-// Simple, complete types for sharing configuration
-const DEFAULT_SHARING = {
-  publicAccess: {
-    enabled: false,
-    token: generateToken(),
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  sharedEmails: [] as { email: string; sharedAt: string; accessCount: number }[],
-  kindleDeliveries: [] as { sentAt: string; status: 'pending' | 'sent' | 'failed' }[],
+const createPublicAccess = (
+  source?: Partial<SharingConfig['publicAccess']>
+): SharingConfig['publicAccess'] => ({
+  enabled: source?.enabled ?? false,
+  token: source?.token ?? generateToken(),
+  expiresAt: source?.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+});
+
+const DEFAULT_SHARING: SharingConfig = {
+  publicAccess: createPublicAccess(),
+  sharedEmails: [],
+  kindleDeliveries: []
 };
 
 export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory => {
@@ -26,9 +29,8 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
 
     // Si pas de sharing, retourner l'histoire sans sharing
     if (!cloudStory.sharing) {
-      const story = {
-        ...cloudStory,
-        id: cloudStory.id, // Force these required fields
+      const story: FrontendStory = {
+        id: cloudStory.id,
         title: cloudStory.title || '',
         preview: cloudStory.preview || '',
         objective: cloudStory.objective || '',
@@ -49,8 +51,7 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
 
     // Si sharing existe, assurer une structure complète
     const story: FrontendStory = {
-      ...cloudStory,
-      id: cloudStory.id, // Force these required fields
+      id: cloudStory.id,
       title: cloudStory.title || '',
       preview: cloudStory.preview || '',
       objective: cloudStory.objective || '',
@@ -66,14 +67,10 @@ export const toFrontendStory = (cloudStory: CloudFunctionStory): FrontendStory =
       _lastSync: cloudStory._lastSync || new Date().toISOString(),
       _pendingWrites: cloudStory._pendingWrites || false,
       sharing: {
-        publicAccess: {
-          enabled: cloudStory.sharing.publicAccess?.enabled ?? DEFAULT_SHARING.publicAccess.enabled,
-          token: cloudStory.sharing.publicAccess?.token ?? DEFAULT_SHARING.publicAccess.token,
-          expiresAt: cloudStory.sharing.publicAccess?.expiresAt ?? DEFAULT_SHARING.publicAccess.expiresAt,
-        },
-        sharedEmails: cloudStory.sharing.sharedEmails ?? [...DEFAULT_SHARING.sharedEmails],
-        kindleDeliveries: cloudStory.sharing.kindleDeliveries ?? [...DEFAULT_SHARING.kindleDeliveries],
-      },
+        publicAccess: createPublicAccess(cloudStory.sharing.publicAccess),
+        sharedEmails: [...(cloudStory.sharing.sharedEmails || [])],
+        kindleDeliveries: [...(cloudStory.sharing.kindleDeliveries || [])]
+      }
     };
 
     console.log('Story transformation completed:', {
@@ -112,8 +109,7 @@ export const parseStoryDates = (story: FrontendStory): FrontendStory => {
 
     // Parse les dates pour les champs de base de l'histoire
     const parsedStory: FrontendStory = {
-      ...story,
-      id: story.id, // Force these required fields
+      id: story.id,
       title: story.title,
       preview: story.preview,
       objective: story.objective,
