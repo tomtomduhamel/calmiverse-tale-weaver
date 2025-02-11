@@ -4,6 +4,7 @@ import { type CloudFunctionStory } from '../../src/types/shared/story';
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;
+const MAX_TOKENS = 4000;
 
 interface GenerationMetrics {
   startTime: number;
@@ -25,7 +26,7 @@ export const generateStoryWithAI = async (
     startTime: Date.now(),
     retryCount: 0,
     wordCount: 0,
-    modelUsed: 'gpt-4o'
+    modelUsed: 'gpt-4o-mini'
   };
 
   console.log("Starting OpenAI story generation with parameters:", {
@@ -57,7 +58,7 @@ export const generateStoryWithAI = async (
         console.log(`Attempt ${attempt + 1}/${MAX_RETRIES} starting at:`, new Date().toISOString());
         
         const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
@@ -89,10 +90,14 @@ RÈGLES FONDAMENTALES :
             },
           ],
           temperature: 0.8,
-          max_tokens: 16000,
+          max_tokens: MAX_TOKENS,
           frequency_penalty: 0.2,
           presence_penalty: 0.1,
         });
+
+        if (!completion.choices[0]?.message?.content) {
+          throw new Error("Réponse OpenAI invalide ou vide");
+        }
 
         generatedText = completion.choices[0].message.content;
         metrics.tokensUsed = completion.usage?.total_tokens;
@@ -100,7 +105,11 @@ RÈGLES FONDAMENTALES :
         break;
       } catch (error) {
         lastError = error as Error;
-        console.error(`Attempt ${attempt + 1} failed:`, error);
+        console.error(`Attempt ${attempt + 1} failed:`, {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          type: error instanceof OpenAI.APIError ? error.type : 'Unknown type',
+          status: error instanceof OpenAI.APIError ? error.status : 'Unknown status'
+        });
         
         if (error instanceof OpenAI.APIError) {
           if (error.status === 401) throw error; // Don't retry auth errors
@@ -169,7 +178,11 @@ RÈGLES FONDAMENTALES :
   } catch (error) {
     metrics.endTime = Date.now();
     console.error("Error during story generation:", {
-      error,
+      error: error instanceof Error ? {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      } : 'Unknown error',
       metrics,
       timestamp: new Date().toISOString()
     });
@@ -178,7 +191,8 @@ RÈGLES FONDAMENTALES :
       console.error("OpenAI API Error details:", {
         status: error.status,
         type: error.type,
-        code: error.code
+        code: error.code,
+        param: error.param
       });
       
       if (error.status === 401) {
@@ -195,4 +209,3 @@ RÈGLES FONDAMENTALES :
     throw error;
   }
 };
-
