@@ -4,7 +4,7 @@ import { type CloudFunctionStory } from '../../src/types/shared/story';
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;
-const MAX_TOKENS = 4000;
+const MAX_TOKENS = 8192; // Ajusté pour gpt-4
 
 interface GenerationMetrics {
   startTime: number;
@@ -26,7 +26,7 @@ export const generateStoryWithAI = async (
     startTime: Date.now(),
     retryCount: 0,
     wordCount: 0,
-    modelUsed: 'gpt-4o-mini'
+    modelUsed: 'gpt-4'
   };
 
   console.log("Starting OpenAI story generation with parameters:", {
@@ -58,7 +58,7 @@ export const generateStoryWithAI = async (
         console.log(`Attempt ${attempt + 1}/${MAX_RETRIES} starting at:`, new Date().toISOString());
         
         const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4',
           messages: [
             {
               role: 'system',
@@ -79,27 +79,41 @@ RÈGLES FONDAMENTALES :
 - Évite tout contenu effrayant ou angoissant
 - Termine toujours sur une note positive
 - Enrichis l'histoire avec des détails sensoriels
-- Développe les relations entre les personnages`,
+- Développe les relations entre les personnages
+
+IMPORTANT :
+- NE PAS inclure de découpage en chapitres
+- NE PAS inclure de titre au début
+- Commencer directement avec l'histoire
+- Assure-toi que l'histoire fasse exactement entre 10000 et 15000 mots`,
             },
             {
               role: 'user',
               content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
-              L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
+              L'histoire doit être écrite dans un langage adapté aux enfants, avec des descriptions immersives et des dialogues naturels.
               Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.
-              IMPORTANT : L'histoire doit faire entre 10000 et 15000 mots.`,
+              IMPORTANT : L'histoire doit faire entre 10000 et 15000 mots. Ne pas inclure de titre ni de découpage en chapitres.`,
             },
           ],
-          temperature: 0.8,
+          temperature: 0.7, // Réduit pour plus de cohérence
           max_tokens: MAX_TOKENS,
-          frequency_penalty: 0.2,
-          presence_penalty: 0.1,
+          frequency_penalty: 0.3, // Augmenté pour plus de variété
+          presence_penalty: 0.2,
+          top_p: 0.95, // Ajouté pour mieux contrôler la créativité
         });
 
         if (!completion.choices[0]?.message?.content) {
           throw new Error("Réponse OpenAI invalide ou vide");
         }
 
-        generatedText = completion.choices[0].message.content;
+        generatedText = completion.choices[0].message.content.trim();
+        
+        // Vérification supplémentaire de la qualité du contenu
+        if (generatedText.toLowerCase().includes('chapitre') || 
+            generatedText.split('\n')[0].toLowerCase().includes('titre')) {
+          throw new Error("Le format de l'histoire ne respecte pas les consignes");
+        }
+
         metrics.tokensUsed = completion.usage?.total_tokens;
         metrics.retryCount = attempt;
         break;
@@ -108,19 +122,27 @@ RÈGLES FONDAMENTALES :
         console.error(`Attempt ${attempt + 1} failed:`, {
           error: error instanceof Error ? error.message : 'Unknown error',
           type: error instanceof OpenAI.APIError ? error.type : 'Unknown type',
-          status: error instanceof OpenAI.APIError ? error.status : 'Unknown status'
+          status: error instanceof OpenAI.APIError ? error.status : 'Unknown status',
+          timestamp: new Date().toISOString()
         });
         
         if (error instanceof OpenAI.APIError) {
           if (error.status === 401) throw error; // Don't retry auth errors
           if (error.status === 429) {
             const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
-            console.log(`Rate limited. Waiting ${delay}ms before retry`);
+            console.log(`Rate limited. Waiting ${delay}ms before retry at:`, new Date().toISOString());
             await wait(delay);
           }
         }
         
-        if (attempt === MAX_RETRIES - 1) throw lastError;
+        if (attempt === MAX_RETRIES - 1) {
+          console.error("All retry attempts failed:", {
+            lastError: lastError?.message,
+            retryCount: attempt + 1,
+            timestamp: new Date().toISOString()
+          });
+          throw lastError;
+        }
       }
     }
     
@@ -139,8 +161,13 @@ RÈGLES FONDAMENTALES :
       timestamp: new Date().toISOString()
     });
 
-    if (wordCount < 10000) {
-      console.warn("Warning: Story is shorter than expected minimum length");
+    if (wordCount < 10000 || wordCount > 15000) {
+      console.warn("Warning: Story length outside target range:", {
+        wordCount,
+        targetMin: 10000,
+        targetMax: 15000,
+        timestamp: new Date().toISOString()
+      });
     }
 
     console.log("Generating story data");
@@ -171,7 +198,8 @@ RÈGLES FONDAMENTALES :
       wordCount: storyData.wordCount,
       status: storyData.status,
       processingTime: `${storyData.processingTime}ms`,
-      retryCount: storyData.retryCount
+      retryCount: storyData.retryCount,
+      timestamp: new Date().toISOString()
     });
     
     return storyData;
@@ -192,7 +220,8 @@ RÈGLES FONDAMENTALES :
         status: error.status,
         type: error.type,
         code: error.code,
-        param: error.param
+        param: error.param,
+        timestamp: new Date().toISOString()
       });
       
       if (error.status === 401) {
