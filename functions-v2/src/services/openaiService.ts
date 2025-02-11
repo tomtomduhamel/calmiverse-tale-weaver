@@ -4,7 +4,7 @@ import { type CloudFunctionStory } from '../../src/types/shared/story';
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;
-const MAX_TOKENS = 8192; // Ajusté pour gpt-4
+const MAX_TOKENS = 4096; // Réduit de 8192 à 4096 pour plus de stabilité
 
 interface GenerationMetrics {
   startTime: number;
@@ -26,13 +26,15 @@ export const generateStoryWithAI = async (
     startTime: Date.now(),
     retryCount: 0,
     wordCount: 0,
-    modelUsed: 'gpt-4'
+    modelUsed: 'gpt-4-turbo-preview'
   };
 
-  console.log("Starting OpenAI story generation with parameters:", {
+  console.log("Starting story generation with parameters:", {
     objective,
     childrenNames,
     hasApiKey: !!apiKey,
+    model: metrics.modelUsed,
+    maxTokens: MAX_TOKENS,
     timestamp: new Date().toISOString()
   });
   
@@ -42,7 +44,8 @@ export const generateStoryWithAI = async (
       throw new Error("La clé API OpenAI est requise");
     }
 
-    if (!/^sk-[a-zA-Z0-9]{32,}$/.test(apiKey)) {
+    // Validation de clé API assouplie pour supporter les nouveaux formats
+    if (!apiKey.startsWith('sk-')) {
       console.error("Invalid OpenAI API key format");
       throw new Error("Format de la clé API OpenAI invalide");
     }
@@ -58,48 +61,47 @@ export const generateStoryWithAI = async (
         console.log(`Attempt ${attempt + 1}/${MAX_RETRIES} starting at:`, new Date().toISOString());
         
         const completion = await openai.chat.completions.create({
-          model: 'gpt-4',
+          model: 'gpt-4-turbo-preview',
           messages: [
             {
               role: 'system',
               content: `Tu es un expert en création d'histoires pour enfants.
 
 FORMAT DE L'HISTOIRE :
-- Longueur : IMPÉRATIF de faire entre 10000-15000 mots (environ 6-8 minutes de lecture)
-- Structure narrative fluide et continue, sans découpage visible
+- Longueur : Entre 2000-3000 mots pour commencer (environ 2-3 minutes de lecture)
+- Structure narrative fluide et continue
 - Pas de titre explicite
 - Descriptions détaillées et immersives
-- Dialogues riches et naturels entre les personnages
+- Dialogues naturels entre les personnages
 
 RÈGLES FONDAMENTALES :
 - Adapte le langage à l'âge de l'enfant
-- Crée des personnages mémorables avec des personnalités distinctes
-- Utilise des dialogues engageants et naturels
+- Crée des personnages mémorables
+- Utilise des dialogues engageants
 - Ajoute des répétitions stratégiques pour les jeunes enfants
-- Évite tout contenu effrayant ou angoissant
-- Termine toujours sur une note positive
-- Enrichis l'histoire avec des détails sensoriels
+- Évite tout contenu effrayant
+- Termine sur une note positive
+- Enrichis avec des détails sensoriels
 - Développe les relations entre les personnages
 
 IMPORTANT :
 - NE PAS inclure de découpage en chapitres
 - NE PAS inclure de titre au début
-- Commencer directement avec l'histoire
-- Assure-toi que l'histoire fasse exactement entre 10000 et 15000 mots`,
+- Commencer directement avec l'histoire`,
             },
             {
               role: 'user',
               content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
-              L'histoire doit être écrite dans un langage adapté aux enfants, avec des descriptions immersives et des dialogues naturels.
-              Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.
-              IMPORTANT : L'histoire doit faire entre 10000 et 15000 mots. Ne pas inclure de titre ni de découpage en chapitres.`,
+              L'histoire doit être écrite dans un langage adapté aux enfants.
+              Assure-toi que l'histoire soit captivante dès le début.
+              IMPORTANT : L'histoire doit faire entre 2000 et 3000 mots pour cette première version.`,
             },
           ],
-          temperature: 0.7, // Réduit pour plus de cohérence
+          temperature: 0.7,
           max_tokens: MAX_TOKENS,
-          frequency_penalty: 0.3, // Augmenté pour plus de variété
+          frequency_penalty: 0.3,
           presence_penalty: 0.2,
-          top_p: 0.95, // Ajouté pour mieux contrôler la créativité
+          top_p: 0.95,
         });
 
         if (!completion.choices[0]?.message?.content) {
@@ -108,7 +110,6 @@ IMPORTANT :
 
         generatedText = completion.choices[0].message.content.trim();
         
-        // Vérification supplémentaire de la qualité du contenu
         if (generatedText.toLowerCase().includes('chapitre') || 
             generatedText.split('\n')[0].toLowerCase().includes('titre')) {
           throw new Error("Le format de l'histoire ne respecte pas les consignes");
@@ -116,6 +117,14 @@ IMPORTANT :
 
         metrics.tokensUsed = completion.usage?.total_tokens;
         metrics.retryCount = attempt;
+        
+        console.log("Story generation successful:", {
+          tokensUsed: metrics.tokensUsed,
+          wordCount: generatedText.split(/\s+/).length,
+          attempt: attempt + 1,
+          timestamp: new Date().toISOString()
+        });
+        
         break;
       } catch (error) {
         lastError = error as Error;
@@ -127,7 +136,7 @@ IMPORTANT :
         });
         
         if (error instanceof OpenAI.APIError) {
-          if (error.status === 401) throw error; // Don't retry auth errors
+          if (error.status === 401) throw error;
           if (error.status === 429) {
             const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
             console.log(`Rate limited. Waiting ${delay}ms before retry at:`, new Date().toISOString());
@@ -158,19 +167,19 @@ IMPORTANT :
     console.log("Generation metrics:", {
       ...metrics,
       duration: `${(metrics.endTime - metrics.startTime) / 1000}s`,
+      wordCount,
       timestamp: new Date().toISOString()
     });
 
-    if (wordCount < 10000 || wordCount > 15000) {
+    if (wordCount < 2000 || wordCount > 3000) {
       console.warn("Warning: Story length outside target range:", {
         wordCount,
-        targetMin: 10000,
-        targetMax: 15000,
+        targetMin: 2000,
+        targetMax: 3000,
         timestamp: new Date().toISOString()
       });
     }
 
-    console.log("Generating story data");
     const uniqueId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const storyData: CloudFunctionStory = {
