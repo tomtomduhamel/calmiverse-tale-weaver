@@ -15,10 +15,12 @@ export const generateStory = onCall({
   secrets: [openaiApiKey],
   timeoutSeconds: 540,
   memory: '1GiB',
+  maxInstances: 10,
 }, async (request) => {
   console.log('Starting story generation process with request:', {
     hasAuth: !!request.auth,
-    dataPresent: !!request.data
+    dataPresent: !!request.data,
+    timestamp: new Date().toISOString()
   });
   
   try {
@@ -31,46 +33,17 @@ export const generateStory = onCall({
     console.log('Parsed request data:', {
       storyId: data.storyId,
       objective: data.objective,
-      childrenCount: data.childrenNames?.length
+      childrenCount: data.childrenNames?.length,
+      timestamp: new Date().toISOString()
     });
 
     const { storyId, objective, childrenNames } = data;
     const authorId = request.auth.uid;
 
-    console.log('Request parameters validation:', {
-      storyId,
-      authorId,
-      objective,
-      childrenNames
-    });
-
-    if (!storyId) {
-      console.error('Missing storyId in request');
-      throw new Error('L\'ID de l\'histoire est requis');
+    if (!storyId || !objective || !Array.isArray(childrenNames) || childrenNames.length === 0) {
+      console.error('Invalid parameters:', { storyId, objective, childrenNames });
+      throw new Error('Paramètres invalides');
     }
-
-    if (!objective) {
-      console.error('Missing objective in request');
-      throw new Error('L\'objectif est requis');
-    }
-
-    if (!Array.isArray(childrenNames) || childrenNames.length === 0) {
-      console.error('Invalid or empty childrenNames array:', childrenNames);
-      throw new Error('Les noms des enfants doivent être fournis dans un tableau non vide');
-    }
-
-    const apiKey = openaiApiKey.value();
-    if (!apiKey) {
-      console.error('OpenAI API key is not configured');
-      throw new Error('La clé API OpenAI n\'est pas configurée');
-    }
-
-    console.log('Starting story generation with parameters:', {
-      storyId,
-      authorId,
-      objective,
-      childrenCount: childrenNames.length
-    });
 
     // Vérifier que le document existe
     const storyRef = admin.firestore().collection('stories').doc(storyId);
@@ -79,6 +52,12 @@ export const generateStory = onCall({
     if (!storyDoc.exists) {
       console.error('Story document not found:', storyId);
       throw new Error('Document d\'histoire non trouvé');
+    }
+
+    const apiKey = openaiApiKey.value();
+    if (!apiKey) {
+      console.error('OpenAI API key not configured');
+      throw new Error('Clé API OpenAI non configurée');
     }
 
     console.log('Starting OpenAI story generation');
@@ -102,7 +81,8 @@ export const generateStory = onCall({
         _lastSync: admin.firestore.FieldValue.serverTimestamp(),
         _pendingWrites: false,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        wordCount: generatedStory.wordCount
+        wordCount: generatedStory.wordCount,
+        processingTime: generatedStory.processingTime
       };
 
       transaction.update(storyRef, updateData);
@@ -111,7 +91,8 @@ export const generateStory = onCall({
         id: storyId,
         newStatus: 'completed',
         newVersion: updateData._version,
-        wordCount: updateData.wordCount
+        wordCount: updateData.wordCount,
+        timestamp: new Date().toISOString()
       });
     });
 
@@ -132,7 +113,8 @@ export const generateStory = onCall({
       status: finalData.status,
       authorId: finalData.authorId,
       version: finalData._version,
-      wordCount: finalData.wordCount
+      wordCount: finalData.wordCount,
+      timestamp: new Date().toISOString()
     });
 
     return {
@@ -141,27 +123,23 @@ export const generateStory = onCall({
     };
 
   } catch (error) {
-    console.error('Error in generateStory:', error);
-    
-    let errorMessage = 'Une erreur inattendue est survenue';
-    
-    if (error instanceof Error) {
-      console.error('Error details:', {
+    console.error('Error in generateStory:', {
+      error: error instanceof Error ? {
         name: error.name,
         message: error.message,
         stack: error.stack
-      });
-      errorMessage = error.message;
-    }
-    
+      } : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+
     if (isFirebaseError(error)) {
       console.error('Firebase error details:', {
         code: error.code,
-        message: error.message
+        message: error.message,
+        timestamp: new Date().toISOString()
       });
     }
-    
-    throw new Error(errorMessage);
+
+    throw error;
   }
 });
-

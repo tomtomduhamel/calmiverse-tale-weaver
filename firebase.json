@@ -6,6 +6,10 @@
       "codebase": "v2",
       "runtime": "nodejs20",
       "region": "us-central1",
+      "minInstances": 0,
+      "maxInstances": 10,
+      "memory": "1GB",
+      "timeoutSeconds": 540,
       "predeploy": [
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
