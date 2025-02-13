@@ -32,10 +32,11 @@ export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app, 'us-central1');
 
-// Uncomment this line when testing locally with Firebase emulator
-// if (process.env.NODE_ENV === 'development') {
-//   connectFunctionsEmulator(functions, 'localhost', 5001);
-// }
+// Connect to Firebase emulator in development mode
+if (process.env.NODE_ENV === 'development') {
+  console.log('Connecting to Firebase Functions emulator on port 5002');
+  connectFunctionsEmulator(functions, 'localhost', 5002);
+}
 
 export default app;
 
