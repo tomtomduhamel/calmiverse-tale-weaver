@@ -34,8 +34,8 @@ export const functions = getFunctions(app, 'us-central1');
 
 // Connect to Firebase emulator in development mode
 if (process.env.NODE_ENV === 'development') {
-  console.log('Connecting to Firebase Functions emulator on port 5002');
-  connectFunctionsEmulator(functions, 'localhost', 5002);
+  console.log('Connecting to Firebase Functions emulator on port 5001');
+  connectFunctionsEmulator(functions, 'localhost', 5001);
 }
 
 export default app;
