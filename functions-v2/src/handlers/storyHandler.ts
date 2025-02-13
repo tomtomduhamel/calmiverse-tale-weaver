@@ -52,6 +52,8 @@ export const generateStory = onCall({
       });
 
       const { storyId, objective, childrenNames } = data;
+      // On garde authorId mais on le marque comme non utilisé pour le moment
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const authorId = request.auth.uid;
 
       if (!storyId || !objective || !Array.isArray(childrenNames) || childrenNames.length === 0) {
@@ -102,6 +104,9 @@ export const generateStory = onCall({
         }
 
         const currentData = storyDoc.data();
+        const metrics = StoryMetrics.getMetrics(storyId);
+        const startTime = metrics?.startTime ?? Date.now(); // Utilisation de l'opérateur de coalescence nulle
+
         const updateData = {
           story_text: generatedStory.story_text,
           preview: generatedStory.preview,
@@ -111,7 +116,7 @@ export const generateStory = onCall({
           _pendingWrites: false,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           wordCount: generatedStory.wordCount,
-          processingTime: Date.now() - StoryMetrics.getMetrics(storyId)?.startTime,
+          processingTime: Date.now() - startTime,
           retryCount: generatedStory.retryCount || 0
         };
 

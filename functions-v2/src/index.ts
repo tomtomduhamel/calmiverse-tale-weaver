@@ -38,6 +38,8 @@ export const generateStory = onCall({
     });
 
     const { storyId, objective, childrenNames } = data;
+    // On garde authorId mais on le marque comme non utilisé pour le moment
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const authorId = request.auth.uid;
 
     if (!storyId || !objective || !Array.isArray(childrenNames) || childrenNames.length === 0) {
