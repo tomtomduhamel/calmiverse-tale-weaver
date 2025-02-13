@@ -16,6 +16,7 @@ export class StoryMetrics {
   private static metrics: Map<string, PerformanceMetrics> = new Map();
 
   static startOperation(storyId: string): void {
+    if (!storyId) return;
     this.metrics.set(storyId, {
       startTime: Date.now(),
       status: 'success',
@@ -24,6 +25,7 @@ export class StoryMetrics {
   }
 
   static endOperation(storyId: string, status: 'success' | 'error' = 'success'): void {
+    if (!storyId) return;
     const metric = this.metrics.get(storyId);
     if (metric) {
       metric.endTime = Date.now();
@@ -41,6 +43,7 @@ export class StoryMetrics {
   }
 
   static incrementRetry(storyId: string): void {
+    if (!storyId) return;
     const metric = this.metrics.get(storyId);
     if (metric) {
       metric.retryCount++;
@@ -48,6 +51,7 @@ export class StoryMetrics {
   }
 
   static logError(storyId: string, error: Error): void {
+    if (!storyId) return;
     const metric = this.metrics.get(storyId);
     if (metric) {
       metric.status = 'error';
@@ -60,10 +64,21 @@ export class StoryMetrics {
   }
 
   static getMetrics(storyId: string): PerformanceMetrics | undefined {
+    if (!storyId) return undefined;
     return this.metrics.get(storyId);
   }
 
   static clearMetrics(storyId: string): void {
+    if (!storyId) return;
     this.metrics.delete(storyId);
+  }
+
+  static addProcessingStep(storyId: string, step: string, status: 'success' | 'error'): void {
+    if (!storyId) return;
+    console.log(`Processing Step - ${step}:`, {
+      storyId,
+      status,
+      timestamp: new Date().toISOString()
+    });
   }
 }

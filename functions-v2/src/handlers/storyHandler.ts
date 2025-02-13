@@ -3,7 +3,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 import { defineSecret } from 'firebase-functions/params';
-import { type CloudFunctionStory } from '../../src/types/shared/story';
+import { type CloudFunctionStory } from '../types/shared/story';
 import { StoryMetrics } from '../utils/monitoring';
 
 interface StoryGenerationRequest {

@@ -1,6 +1,5 @@
-
 import OpenAI from 'openai';
-import { type CloudFunctionStory } from '../../src/types/shared/story';
+import { type CloudFunctionStory } from '../types/shared/story';
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;
