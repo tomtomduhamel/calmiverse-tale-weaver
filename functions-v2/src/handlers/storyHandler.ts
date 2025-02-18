@@ -3,24 +3,16 @@ import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
 import { defineSecret } from 'firebase-functions/params';
-import { type CloudFunctionStory } from '../types/shared/story';
-import { StoryMetrics } from '../utils/monitoring';
-
-interface StoryGenerationRequest {
-  storyId: string;
-  objective: string;
-  childrenNames: string[];
-}
-
-interface StoryGenerationError {
-  code: string;
-  message: string;
-  timestamp: string;
-  details?: any;
-}
 
 if (!admin.apps.length) {
   admin.initializeApp();
+}
+
+export interface StoryGenerationRequest {
+  storyId: string;
+  objective: string;
+  childrenNames: string[];
+  authorId?: string;
 }
 
 const openaiApiKey = defineSecret('OPENAI_API_KEY');
@@ -30,73 +22,57 @@ export const generateStory = onCall({
     timeoutSeconds: 540,
     memory: '1GiB',
   }, async (request) => {
-    StoryMetrics.startOperation(request.data?.storyId);
+    console.log('Starting story generation process');
     
     try {
       if (!request.auth) {
-        const error: StoryGenerationError = {
-          code: 'UNAUTHENTICATED',
-          message: 'Utilisateur non authentifié',
-          timestamp: new Date().toISOString()
-        };
-        StoryMetrics.logError(request.data?.storyId, new Error(error.message));
-        throw new Error(error.message);
+        throw new Error('Utilisateur non authentifié');
       }
 
       const data = request.data as StoryGenerationRequest;
-      console.log('Request data:', {
-        storyId: data.storyId,
-        objective: data.objective,
-        childrenCount: data.childrenNames?.length,
-        timestamp: new Date().toISOString()
-      });
-
       const { storyId, objective, childrenNames } = data;
-      // On garde authorId mais on le marque comme non utilisé pour le moment
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const authorId = request.auth.uid;
 
-      if (!storyId || !objective || !Array.isArray(childrenNames) || childrenNames.length === 0) {
-        const error: StoryGenerationError = {
-          code: 'INVALID_ARGUMENTS',
-          message: 'Paramètres invalides',
-          timestamp: new Date().toISOString(),
-          details: { storyId, objective, childrenCount: childrenNames?.length }
-        };
-        StoryMetrics.logError(storyId, new Error(error.message));
-        throw new Error(error.message);
+      if (!storyId) {
+        console.error('Missing storyId in request');
+        throw new Error('L\'ID de l\'histoire est requis');
+      }
+
+      if (!objective) {
+        console.error('Missing objective in request');
+        throw new Error('L\'objectif est requis');
+      }
+
+      if (!Array.isArray(childrenNames) || childrenNames.length === 0) {
+        console.error('Invalid or empty childrenNames array');
+        throw new Error('Les noms des enfants doivent être fournis dans un tableau non vide');
       }
 
       const apiKey = openaiApiKey.value();
       if (!apiKey) {
-        const error: StoryGenerationError = {
-          code: 'CONFIGURATION_ERROR',
-          message: 'La clé API OpenAI n\'est pas configurée',
-          timestamp: new Date().toISOString()
-        };
-        StoryMetrics.logError(storyId, new Error(error.message));
-        throw new Error(error.message);
+        console.error('OpenAI API key is not configured');
+        throw new Error('La clé API OpenAI n\'est pas configurée');
       }
 
+      console.log('Request validation passed:', {
+        storyId,
+        authorId,
+        objective,
+        childrenNames
+      });
+
+      // Vérifier que le document existe
       const storyRef = admin.firestore().collection('stories').doc(storyId);
       const storyDoc = await storyRef.get();
 
       if (!storyDoc.exists) {
-        const error: StoryGenerationError = {
-          code: 'NOT_FOUND',
-          message: 'Document d\'histoire non trouvé',
-          timestamp: new Date().toISOString(),
-          details: { storyId }
-        };
-        StoryMetrics.logError(storyId, new Error(error.message));
-        throw new Error(error.message);
+        throw new Error('Document d\'histoire non trouvé');
       }
 
-      console.log('Starting OpenAI story generation');
+      console.log('Starting story generation with OpenAI');
       const generatedStory = await generateStoryWithAI(objective, childrenNames, apiKey);
 
-      console.log('Story generated, updating Firestore');
-      
+      // Utiliser une transaction pour la mise à jour
       await admin.firestore().runTransaction(async (transaction) => {
         const storyDoc = await transaction.get(storyRef);
         if (!storyDoc.exists) {
@@ -104,9 +80,6 @@ export const generateStory = onCall({
         }
 
         const currentData = storyDoc.data();
-        const metrics = StoryMetrics.getMetrics(storyId);
-        const startTime = metrics?.startTime ?? Date.now(); // Utilisation de l'opérateur de coalescence nulle
-
         const updateData = {
           story_text: generatedStory.story_text,
           preview: generatedStory.preview,
@@ -114,59 +87,45 @@ export const generateStory = onCall({
           _version: (currentData?._version || 1) + 1,
           _lastSync: admin.firestore.FieldValue.serverTimestamp(),
           _pendingWrites: false,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          wordCount: generatedStory.wordCount,
-          processingTime: Date.now() - startTime,
-          retryCount: generatedStory.retryCount || 0
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
 
         transaction.update(storyRef, updateData);
 
-        console.log('Story transaction completed:', {
+        console.log('Story transaction completed successfully:', {
           id: storyId,
-          status: 'completed',
-          version: updateData._version,
-          processingTime: `${updateData.processingTime}ms`,
-          retryCount: updateData.retryCount,
-          timestamp: new Date().toISOString()
+          newStatus: 'completed',
+          newVersion: updateData._version
         });
       });
 
       const updatedDoc = await storyRef.get();
-      const finalData = updatedDoc.data() as CloudFunctionStory;
+      const finalData = updatedDoc.data();
 
       if (!finalData || finalData.status !== 'completed') {
-        const error: StoryGenerationError = {
-          code: 'UPDATE_FAILED',
-          message: 'La mise à jour du statut de l\'histoire a échoué',
-          timestamp: new Date().toISOString(),
-          details: { status: finalData?.status }
-        };
-        StoryMetrics.logError(storyId, new Error(error.message));
-        throw new Error(error.message);
+        console.error('Story update verification failed:', {
+          id: storyId,
+          status: finalData?.status,
+          authorId: finalData?.authorId
+        });
+        throw new Error('La mise à jour du statut de l\'histoire a échoué');
       }
 
-      StoryMetrics.endOperation(storyId, 'success');
-      
+      console.log('Story document updated successfully:', {
+        id: storyId,
+        status: finalData.status,
+        authorId: finalData.authorId,
+        version: finalData._version
+      });
+
       return {
         ...finalData,
-        id: storyId,
-        processingTime: StoryMetrics.getMetrics(storyId)?.duration
+        id: storyId
       };
 
     } catch (error) {
-      StoryMetrics.endOperation(request.data?.storyId, 'error');
-      const errorDetails: StoryGenerationError = {
-        code: error instanceof Error ? error.name : 'UNKNOWN_ERROR',
-        message: error instanceof Error ? error.message : 'Une erreur inattendue est survenue',
-        timestamp: new Date().toISOString(),
-        details: {
-          processingTime: StoryMetrics.getMetrics(request.data?.storyId)?.duration,
-          stack: error instanceof Error ? error.stack : undefined
-        }
-      };
-      
-      console.error('Error in generateStory:', errorDetails);
-      throw new Error(errorDetails.message);
+      console.error('Error in generateStory:', error);
+      throw new Error(error instanceof Error ? error.message : 'Une erreur inattendue est survenue');
     }
-});
+  }
+);

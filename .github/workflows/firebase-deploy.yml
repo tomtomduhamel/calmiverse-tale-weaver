@@ -1,4 +1,3 @@
-
 name: Deploy to Firebase
 on:
   push:
@@ -6,30 +5,7 @@ on:
       - main
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      
-      - name: Install Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '20'
-          
-      - name: Install Dependencies
-        run: |
-          cd functions-v2
-          npm install
-          cd ..
-          npm install
-        
-      - name: Run Tests
-        run: npm test
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
   deploy:
-    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -37,11 +13,11 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20'
+          node-version: '18'
           
       - name: Install Dependencies
         run: |
-          cd functions-v2
+          cd functions
           npm install
           cd ..
           npm install
@@ -49,21 +25,10 @@ jobs:
       - name: Build
         run: npm run build
         
-      - name: Validate OpenAI API Key
-        run: |
-          if [[ ! $OPENAI_API_KEY =~ ^sk-[a-zA-Z0-9]{32,}$ ]]; then
-            echo "Invalid OpenAI API key format"
-            exit 1
-          fi
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only functions
+          args: deploy --only hosting,functions
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJECT_PATH: ./
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
