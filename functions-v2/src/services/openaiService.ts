@@ -1,17 +1,20 @@
 
 import OpenAI from 'openai';
+import { getSecret } from './secretManager';
 
-export const generateStoryWithAI = async (objective: string, childrenNames: string[], apiKey: string) => {
+export const generateStoryWithAI = async (objective: string, childrenNames: string[]) => {
   console.log("Starting OpenAI story generation");
   console.log("Parameters received:", { objective, childrenNames });
   
   try {
+    const apiKey = await getSecret('OPENAI_API_KEY');
+    
     if (!apiKey) {
-      console.error("OpenAI API key is required but not provided");
-      throw new Error("La clé API OpenAI est requise");
+      console.error("OpenAI API key not found in Secret Manager");
+      throw new Error("OpenAI API key not configured");
     }
 
-    console.log("Initializing OpenAI client");
+    console.log("Initializing OpenAI client with API key from Secret Manager");
     const openai = new OpenAI({
       apiKey: apiKey
     });
@@ -91,3 +94,4 @@ CONTRAINTES SPÉCIFIQUES :
     throw error;
   }
 };
+
