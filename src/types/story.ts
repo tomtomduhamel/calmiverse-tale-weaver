@@ -8,7 +8,7 @@ export interface Story {
   childrenIds: string[];
   childrenNames?: string[];
   createdAt: Date;
-  status: 'pending' | 'completed' | 'read';
+  status: 'pending' | 'completed' | 'read' | 'error';
   story_text: string;
   story_summary: string;
   isFavorite?: boolean;
@@ -35,6 +35,7 @@ export interface Story {
       status: 'pending' | 'sent' | 'failed';
     }[];
   };
+  error?: string;
 }
 
 export interface Objective {

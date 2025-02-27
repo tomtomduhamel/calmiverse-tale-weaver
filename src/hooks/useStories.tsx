@@ -102,7 +102,7 @@ export const useStories = (children: any[] = []) => {
       setIsRetrying(true);
       
       // Find the story in the collection
-      const failedStory = stories.data?.find(story => story.id === storyId);
+      const failedStory = stories.stories?.find(story => story.id === storyId);
       
       if (!failedStory) {
         throw new Error("Histoire introuvable");

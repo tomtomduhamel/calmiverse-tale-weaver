@@ -6,7 +6,7 @@ import type { Story } from "@/types/story";
 interface StoryCardTagsProps {
   tags: string[];
   objective: Story['objective'];
-  status: 'pending' | 'completed' | 'read' | 'error';
+  status: Story['status'];
   error?: string;
 }
 
