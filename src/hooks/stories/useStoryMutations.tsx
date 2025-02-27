@@ -1,3 +1,4 @@
+
 import { collection, addDoc, deleteDoc, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db, auth, functions } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -7,8 +8,8 @@ import { httpsCallable } from 'firebase/functions';
 export const useStoryMutations = () => {
   const { toast } = useToast();
   
-  const MAX_RETRY_ATTEMPTS = 2;
-  const RETRY_DELAY = 1000;
+  const MAX_RETRY_ATTEMPTS = 3;
+  const RETRY_DELAY = 2000; // Increased delay between retries
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -18,17 +19,64 @@ export const useStoryMutations = () => {
       const cloudFunction = httpsCallable(functions, functionName);
       const result = await cloudFunction(data);
       console.log(`Cloud function '${functionName}' executed successfully`, result);
+      
+      // Dispatch success notification
+      const successEvent = new CustomEvent('app-notification', {
+        detail: {
+          type: 'success',
+          title: 'Génération réussie',
+          message: 'Votre histoire a été générée avec succès'
+        }
+      });
+      document.dispatchEvent(successEvent);
+      
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error calling cloud function '${functionName}':`, error);
       
+      // Extract detailed error message if available
+      let errorMessage = "Une erreur est survenue lors de l'appel à la fonction cloud";
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.details) {
+        errorMessage = typeof error.details === 'string' 
+          ? error.details 
+          : JSON.stringify(error.details);
+      }
+      
+      // Special handling for specific error types
+      if (errorMessage.includes('Secret Manager') || errorMessage.includes('API key')) {
+        errorMessage = "Problème de configuration du serveur. Veuillez contacter l'administrateur.";
+      }
+      
       if (attempt < MAX_RETRY_ATTEMPTS) {
-        console.log(`Retrying cloud function '${functionName}' in ${RETRY_DELAY}ms...`);
+        console.log(`Retrying cloud function '${functionName}' in ${RETRY_DELAY}ms... (${attempt + 1}/${MAX_RETRY_ATTEMPTS})`);
+        
+        // Show retry notification
+        toast({
+          title: "Nouvelle tentative",
+          description: `Tentative ${attempt + 1}/${MAX_RETRY_ATTEMPTS} de génération...`,
+        });
+        
         await sleep(RETRY_DELAY);
         return callCloudFunctionWithRetry(functionName, data, attempt + 1);
       }
       
-      throw error;
+      // If we've exhausted retries, throw a user-friendly error
+      const finalErrorMessage = `Impossible de générer l'histoire après plusieurs tentatives. ${errorMessage}`;
+      console.error("Final error after retries:", finalErrorMessage);
+      
+      // Dispatch final error notification
+      const errorEvent = new CustomEvent('app-notification', {
+        detail: {
+          type: 'error',
+          title: 'Échec de la génération',
+          message: finalErrorMessage
+        }
+      });
+      document.dispatchEvent(errorEvent);
+      
+      throw new Error(finalErrorMessage);
     }
   };
 
@@ -72,6 +120,12 @@ export const useStoryMutations = () => {
       
       console.log('Triggering story generation cloud function');
       
+      // Show initial toast before calling the function
+      toast({
+        title: "Génération en cours",
+        description: "Nous commençons à générer votre histoire, merci de patienter...",
+      });
+      
       callCloudFunctionWithRetry('generateStory', {
         storyId: storyId,
         objective: formData.objective,
@@ -79,9 +133,15 @@ export const useStoryMutations = () => {
       })
         .then(() => {
           console.log('Story generation completed for story ID:', storyId);
+          toast({
+            title: "Histoire générée",
+            description: "Votre histoire est maintenant disponible dans votre bibliothèque.",
+          });
         })
         .catch(error => {
           console.error('Failed to generate story:', error);
+          
+          // Update story document with error status
           runTransaction(db, async (transaction) => {
             const storyRef = doc(db, 'stories', storyId);
             transaction.update(storyRef, {
@@ -91,6 +151,13 @@ export const useStoryMutations = () => {
             });
           }).catch(err => {
             console.error('Failed to update story status to error:', err);
+          });
+          
+          // Show error toast
+          toast({
+            title: "Erreur de génération",
+            description: error instanceof Error ? error.message : "La génération de l'histoire a échoué",
+            variant: "destructive",
           });
         });
       
@@ -108,7 +175,7 @@ export const useStoryMutations = () => {
     }
   };
 
-  const updateStoryStatus = async (storyId: string, status: 'pending' | 'completed' | 'read' | 'error') => {
+  const updateStoryStatus = async (storyId: string, status: 'pending' | 'completed' | 'read' | 'error', errorDetails?: string) => {
     if (!auth.currentUser) {
       throw new Error("Utilisateur non connecté");
     }
@@ -126,13 +193,20 @@ export const useStoryMutations = () => {
 
         const currentData = storyDoc.data();
         
-        transaction.update(storyRef, {
+        const updateData: any = {
           status,
           _version: (currentData._version || 1) + 1,
           _lastSync: serverTimestamp(),
           _pendingWrites: false,
           updatedAt: serverTimestamp()
-        });
+        };
+        
+        // Add error details if provided
+        if (status === 'error' && errorDetails) {
+          updateData.error = errorDetails;
+        }
+        
+        transaction.update(storyRef, updateData);
       });
 
       console.log('✅ Story status updated successfully:', {

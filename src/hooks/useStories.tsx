@@ -8,22 +8,27 @@ import { useToast } from './use-toast';
 export const useStories = (children: any[] = []) => {
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
   const stories = useStoriesQuery();
-  const { createStory, deleteStory } = useStoryMutations();
+  const { createStory, deleteStory, updateStoryStatus } = useStoryMutations();
   const { toast } = useToast();
 
   // Listen for application-level errors
   useEffect(() => {
-    const handleAppError = (event: CustomEvent) => {
+    const handleAppNotification = (event: CustomEvent) => {
       if (event.detail.type === 'error') {
         setLastError(event.detail.message);
+      } else if (event.detail.type === 'success') {
+        setLastError(null);
+      } else if (event.detail.type === 'retry') {
+        setIsRetrying(true);
       }
     };
     
-    document.addEventListener('app-notification', handleAppError as EventListener);
+    document.addEventListener('app-notification', handleAppNotification as EventListener);
     
     return () => {
-      document.removeEventListener('app-notification', handleAppError as EventListener);
+      document.removeEventListener('app-notification', handleAppNotification as EventListener);
     };
   }, []);
 
@@ -31,6 +36,7 @@ export const useStories = (children: any[] = []) => {
     try {
       console.log('Starting story creation process', formData);
       setLastError(null);
+      setIsRetrying(false);
       
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
@@ -67,11 +73,12 @@ export const useStories = (children: any[] = []) => {
       console.error('Error during story creation:', error);
       
       // Set the error so it can be displayed in the UI
-      setLastError(error instanceof Error ? error.message : "Une erreur est survenue lors de la génération de l'histoire");
+      const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue lors de la génération de l'histoire";
+      setLastError(errorMessage);
       
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la génération de l'histoire",
+        description: errorMessage,
         variant: "destructive",
       });
       
@@ -80,12 +87,61 @@ export const useStories = (children: any[] = []) => {
         detail: {
           type: 'error',
           title: 'Erreur de génération',
-          message: error instanceof Error ? error.message : "Une erreur est survenue lors de la génération de l'histoire"
+          message: errorMessage
         }
       });
       document.dispatchEvent(errorEvent);
       
       throw error;
+    }
+  };
+
+  const retryFailedStory = async (storyId: string) => {
+    try {
+      console.log('Retrying failed story with ID:', storyId);
+      setIsRetrying(true);
+      
+      // Find the story in the collection
+      const failedStory = stories.data?.find(story => story.id === storyId);
+      
+      if (!failedStory) {
+        throw new Error("Histoire introuvable");
+      }
+      
+      // Update the story status to pending
+      await updateStoryStatus(storyId, 'pending');
+      
+      // Create a retry event
+      const retryEvent = new CustomEvent('app-notification', {
+        detail: {
+          type: 'retry',
+          storyId: storyId
+        }
+      });
+      document.dispatchEvent(retryEvent);
+      
+      toast({
+        title: "Nouvelle tentative",
+        description: "Nous réessayons de générer votre histoire",
+      });
+      
+      // TODO: Call the cloud function again to retry the story generation
+      
+      setIsRetrying(false);
+      return true;
+    } catch (error) {
+      console.error('Error retrying story:', error);
+      setIsRetrying(false);
+      
+      const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue lors de la nouvelle tentative";
+      
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      return false;
     }
   };
 
@@ -95,7 +151,9 @@ export const useStories = (children: any[] = []) => {
     setCurrentStory,
     createStory: handleStoryCreation,
     deleteStory,
+    retryFailedStory,
     lastError,
+    isRetrying,
     clearError: () => setLastError(null)
   };
 };

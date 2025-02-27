@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import type { StoryFormProps } from "./story/StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoryForm } from "@/hooks/useStoryForm";
@@ -13,6 +13,8 @@ import GenerateStoryButton from "./story/form/GenerateStoryButton";
 import { useChildFormLogic } from "./story/useChildFormLogic";
 import { Progress } from "./ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const StoryForm: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -22,7 +24,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
 }) => {
   const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
-  const { formData, isLoading, handleChildToggle, setObjective, handleSubmit } = useStoryForm(onStoryCreated, onSubmit);
+  const { formData, isLoading, error, handleChildToggle, setObjective, handleSubmit } = useStoryForm(onStoryCreated, onSubmit);
   const { toast } = useToast();
   const {
     showChildForm,
@@ -37,6 +39,26 @@ const StoryForm: React.FC<StoryFormProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Listen for errors from the story generation process
+  React.useEffect(() => {
+    const handleAppNotification = (event: CustomEvent) => {
+      if (event.detail.type === 'error') {
+        setFormError(event.detail.message || "Une erreur est survenue");
+        setIsSubmitting(false);
+        setProgress(0);
+      } else if (event.detail.type === 'success') {
+        setFormError(null);
+      }
+    };
+    
+    document.addEventListener('app-notification', handleAppNotification as EventListener);
+    
+    return () => {
+      document.removeEventListener('app-notification', handleAppNotification as EventListener);
+    };
+  }, []);
 
   // Simulate progress for better UX
   React.useEffect(() => {
@@ -56,12 +78,14 @@ const StoryForm: React.FC<StoryFormProps> = ({
     }
   }, [isSubmitting, progress]);
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Formulaire soumis avec les données:", formData);
+    setFormError(null);
     
     // Validate form data
     if (formData.childrenIds.length === 0) {
+      setFormError("Veuillez sélectionner au moins un enfant");
       toast({
         title: "Validation",
         description: "Veuillez sélectionner au moins un enfant",
@@ -71,6 +95,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
     }
     
     if (!formData.objective) {
+      setFormError("Veuillez sélectionner un objectif pour l'histoire");
       toast({
         title: "Validation",
         description: "Veuillez sélectionner un objectif pour l'histoire",
@@ -88,6 +113,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
       
     } catch (error) {
       console.error("Erreur lors de la soumission:", error);
+      setFormError(error instanceof Error ? error.message : "Une erreur est survenue lors de la création de l'histoire");
       toast({
         title: "Erreur",
         description: error instanceof Error 
@@ -98,7 +124,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [formData, handleSubmit, toast]);
 
   const handleModeSwitch = () => {
     setCreationMode(mode => mode === "classic" ? "chat" : "classic");
@@ -119,6 +145,14 @@ const StoryForm: React.FC<StoryFormProps> = ({
       {creationMode === "classic" ? (
         <form onSubmit={handleFormSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
           <StoryFormHeader onModeSwitch={handleModeSwitch} />
+
+          {formError && (
+            <Alert variant="destructive" className="bg-red-50 text-red-800 border-red-200">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erreur</AlertTitle>
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          )}
 
           <ChildrenSelection
             children={children}

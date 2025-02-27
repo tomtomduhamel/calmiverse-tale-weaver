@@ -1,9 +1,12 @@
+
 import { useState } from "react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export const useStoryForm = (onStoryCreated, onSubmit) => {
   const [formData, setFormData] = useState({ childrenIds: [], objective: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleChildToggle = (childId) => {
     setFormData((prev) => {
@@ -23,9 +26,19 @@ export const useStoryForm = (onStoryCreated, onSubmit) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
 
     try {
+      // Basic validation
+      if (formData.childrenIds.length === 0) {
+        throw new Error("Veuillez sélectionner au moins un enfant");
+      }
+      
+      if (!formData.objective) {
+        throw new Error("Veuillez sélectionner un objectif pour l'histoire");
+      }
+      
       const storyId = await onSubmit(formData);
       if (storyId) {
         toast({
@@ -36,11 +49,18 @@ export const useStoryForm = (onStoryCreated, onSubmit) => {
         onStoryCreated(storyId);
       }
     } catch (error) {
+      console.error("Erreur lors de la création:", error);
+      setError(error instanceof Error ? error.message : "Une erreur est survenue");
+      
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création de l'histoire",
+        description: error instanceof Error 
+          ? error.message 
+          : "Une erreur est survenue lors de la création de l'histoire",
         variant: "destructive",
       });
+      
+      throw error; // Rethrow to allow the parent component to handle it
     } finally {
       setIsLoading(false);
     }
@@ -49,8 +69,10 @@ export const useStoryForm = (onStoryCreated, onSubmit) => {
   return {
     formData,
     isLoading,
+    error,
     handleChildToggle,
     setObjective,
     handleSubmit,
+    resetError: () => setError(null),
   };
 };
