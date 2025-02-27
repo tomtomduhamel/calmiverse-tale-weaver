@@ -1,15 +1,23 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
 
-const GenerateStoryButton: React.FC = () => {
+import React from "react";
+import { BookMarked } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+interface GenerateStoryButtonProps {
+  disabled?: boolean;
+}
+
+const GenerateStoryButton: React.FC<GenerateStoryButtonProps> = ({ disabled }) => {
   return (
     <Button
       type="submit"
-      className="w-full bg-primary hover:bg-primary/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-primary-foreground flex items-center justify-center gap-2 py-6 rounded-xl shadow-soft hover:shadow-soft-lg transition-all hover:scale-[1.02]"
+      className="w-full bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-md flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity"
+      disabled={disabled}
     >
-      <BookOpen className="w-5 h-5" />
-      Générer l'histoire
+      <BookMarked className="h-5 w-5" />
+      <span className="font-medium">
+        {disabled ? "Génération en cours..." : "Générer mon histoire"}
+      </span>
     </Button>
   );
 };

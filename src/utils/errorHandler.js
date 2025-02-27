@@ -1,3 +1,4 @@
+
 export function initializeErrorHandlers() {
   // Global error handler
   window.addEventListener('error', function(event) {
@@ -20,7 +21,33 @@ export function initializeErrorHandlers() {
       return false;
     }
     
-    // Create serializable error object
+    // Handle Firebase errors more gracefully
+    const isFirebaseError = 
+      event.message?.includes('firebase') || 
+      event.message?.includes('firestore') || 
+      event.message?.includes('INTERNAL');
+      
+    if (isFirebaseError) {
+      console.error('Firebase Error:', {
+        message: event.error?.message || event.message,
+        code: event.error?.code,
+        details: event.error?.details
+      });
+      
+      // You could dispatch a custom event to show a user-friendly error
+      const customEvent = new CustomEvent('firebase-error', {
+        detail: {
+          message: event.error?.message || event.message
+        }
+      });
+      document.dispatchEvent(customEvent);
+      
+      // Prevent the default error handling
+      event.preventDefault();
+      return false;
+    }
+    
+    // Create serializable error object for other errors
     const errorInfo = {
       message: event.error?.message || event.message,
       type: 'Global Error',
@@ -49,6 +76,26 @@ export function initializeErrorHandlers() {
       event.preventDefault();
       return;
     }
+    
+    // Handle Firebase promise errors
+    const isFirebaseError = 
+      event.reason?.message?.includes('firebase') || 
+      event.reason?.message?.includes('firestore') || 
+      event.reason?.message?.includes('INTERNAL') ||
+      event.reason?.code?.includes('auth/') ||
+      event.reason?.code?.includes('firestore/');
+      
+    if (isFirebaseError) {
+      console.error('Firebase Promise Error:', {
+        message: event.reason?.message,
+        code: event.reason?.code,
+        details: event.reason?.details
+      });
+      
+      // Prevent the default error handling
+      event.preventDefault();
+      return;
+    }
 
     const errorInfo = {
       message: typeof event.reason === 'string' ? event.reason : 
@@ -59,6 +106,12 @@ export function initializeErrorHandlers() {
     
     console.error('Unhandled Promise:', errorInfo);
     event.preventDefault();
+  });
+
+  // Add a listener for firebase errors
+  document.addEventListener('firebase-error', (event) => {
+    // You could show a toast message here
+    console.log('Firebase error event detected:', event.detail.message);
   });
 
   // Enhanced postMessage handling
@@ -88,5 +141,5 @@ export function initializeErrorHandlers() {
     }
   };
 
-  console.log('Enhanced error handling initialized with network error filtering');
+  console.log('Enhanced error handling initialized with Firebase error detection');
 }

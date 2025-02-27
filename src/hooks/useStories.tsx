@@ -3,9 +3,7 @@ import { useState } from 'react';
 import type { Story } from '@/types/story';
 import { useStoriesQuery } from './stories/useStoriesQuery';
 import { useStoryMutations } from './stories/useStoryMutations';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useToast } from './use-toast';
-import { functions } from '@/lib/firebase';
 
 export const useStories = (children: any[] = []) => {
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
@@ -15,30 +13,33 @@ export const useStories = (children: any[] = []) => {
 
   const handleStoryCreation = async (formData: { childrenIds: string[], objective: string }) => {
     try {
+      console.log('Starting story creation process', formData);
+      const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
+      const childrenNames = selectedChildren.map(child => child.name);
+      
+      if (childrenNames.length === 0) {
+        throw new Error("Veuillez sélectionner au moins un enfant pour créer une histoire");
+      }
+      
+      console.log('Selected children:', {
+        count: childrenNames.length,
+        names: childrenNames
+      });
+      
       const storyId = await createStory(formData, children);
       
       if (storyId) {
-        console.log('Histoire créée dans Firestore avec ID:', storyId);
-        
-        const generateStoryFunction = httpsCallable(functions, 'generateStory');
-        const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
-        const childrenNames = selectedChildren.map(child => child.name);
-        
-        console.log('Appel de la fonction Cloud avec les données:', {
-          objective: formData.objective,
-          childrenNames: childrenNames
+        console.log('Story created successfully with ID:', storyId);
+        toast({
+          title: "Histoire en cours de création",
+          description: "Votre histoire est en cours de génération et sera bientôt disponible",
         });
-
-        const result = await generateStoryFunction({
-          objective: formData.objective,
-          childrenNames: childrenNames
-        });
-
-        console.log('Résultat de la fonction Cloud:', result);
         return storyId;
+      } else {
+        throw new Error("La création de l'histoire a échoué");
       }
     } catch (error) {
-      console.error('Erreur lors de la création de l\'histoire:', error);
+      console.error('Error during story creation:', error);
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Une erreur est survenue lors de la génération de l'histoire",

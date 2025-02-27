@@ -1,131 +1,110 @@
-
 import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
-import { defineSecret } from 'firebase-functions/params';
 
+export interface StoryGenerationRequest {
+  storyId?: string;
+  objective: string;
+  childrenNames: string[];
+}
+
+// Initialize Firebase if not already initialized
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-export interface StoryGenerationRequest {
-  storyId: string;
-  objective: string;
-  childrenNames: string[];
-  authorId?: string;
-}
-
-const openaiApiKey = defineSecret('OPENAI_API_KEY');
-
-export const generateStory = onCall({
-    secrets: [openaiApiKey],
-    timeoutSeconds: 540,
-    memory: '1GiB',
-  }, async (request) => {
-    console.log('Starting story generation process');
-    
+export const generateStory = onCall(
+  {
+    timeoutSeconds: 120,
+    memory: '1GB',
+  },
+  async (request) => {
     try {
-      if (!request.auth) {
-        throw new Error('Utilisateur non authentifié');
-      }
-
+      console.log('Function called with request data:', request.data);
       const data = request.data as StoryGenerationRequest;
       const { storyId, objective, childrenNames } = data;
-      const authorId = request.auth.uid;
-
-      if (!storyId) {
-        console.error('Missing storyId in request');
-        throw new Error('L\'ID de l\'histoire est requis');
-      }
 
       if (!objective) {
-        console.error('Missing objective in request');
+        console.error('Missing required field: objective');
         throw new Error('L\'objectif est requis');
       }
 
-      if (!Array.isArray(childrenNames) || childrenNames.length === 0) {
-        console.error('Invalid or empty childrenNames array');
-        throw new Error('Les noms des enfants doivent être fournis dans un tableau non vide');
+      if (!Array.isArray(childrenNames)) {
+        console.error('Invalid data format: childrenNames must be an array');
+        throw new Error('Les noms des enfants doivent être fournis dans un tableau');
       }
 
-      const apiKey = openaiApiKey.value();
-      if (!apiKey) {
-        console.error('OpenAI API key is not configured');
-        throw new Error('La clé API OpenAI n\'est pas configurée');
-      }
-
-      console.log('Request validation passed:', {
-        storyId,
-        authorId,
+      console.log('Processing story generation request:', {
+        storyId: storyId || 'Not provided (will be auto-generated)',
         objective,
         childrenNames
       });
 
-      // Vérifier que le document existe
-      const storyRef = admin.firestore().collection('stories').doc(storyId);
-      const storyDoc = await storyRef.get();
-
-      if (!storyDoc.exists) {
-        throw new Error('Document d\'histoire non trouvé');
-      }
-
-      console.log('Starting story generation with OpenAI');
-      const generatedStory = await generateStoryWithAI(objective, childrenNames, apiKey);
-
-      // Utiliser une transaction pour la mise à jour
+      const storyData = await generateStoryWithAI(objective, childrenNames);
+      console.log('Story generated successfully:', {
+        id: storyData.id_stories,
+        title: storyData.title,
+        previewLength: storyData.preview?.length,
+        storyTextLength: storyData.story_text?.length
+      });
+      
+      // If a storyId is provided, update the existing story
+      // Otherwise, the document ID will be auto-generated
+      const docRef = storyId 
+        ? admin.firestore().collection('stories').doc(storyId)
+        : admin.firestore().collection('stories').doc(storyData.id_stories);
+      
+      console.log(`Updating Firestore document: ${docRef.id}`);
+      
+      // Atomic update with transaction to avoid race conditions
       await admin.firestore().runTransaction(async (transaction) => {
-        const storyDoc = await transaction.get(storyRef);
-        if (!storyDoc.exists) {
-          throw new Error('Story document not found during update');
+        // Get the current document if it exists
+        const doc = await transaction.get(docRef);
+        
+        if (storyId && !doc.exists) {
+          console.error(`Story with ID ${storyId} not found`);
+          throw new Error(`Histoire avec l'ID ${storyId} non trouvée`);
         }
-
-        const currentData = storyDoc.data();
-        const updateData = {
-          story_text: generatedStory.story_text,
-          preview: generatedStory.preview,
+        
+        const dataToUpdate = {
+          ...storyData,
           status: 'completed',
-          _version: (currentData?._version || 1) + 1,
-          _lastSync: admin.firestore.FieldValue.serverTimestamp(),
-          _pendingWrites: false,
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
-
-        transaction.update(storyRef, updateData);
-
-        console.log('Story transaction completed successfully:', {
-          id: storyId,
-          newStatus: 'completed',
-          newVersion: updateData._version
-        });
+        
+        if (doc.exists) {
+          // Update existing document
+          console.log('Updating existing story document');
+          transaction.update(docRef, dataToUpdate);
+        } else {
+          // Create new document
+          console.log('Creating new story document');
+          transaction.set(docRef, dataToUpdate);
+        }
       });
-
-      const updatedDoc = await storyRef.get();
-      const finalData = updatedDoc.data();
-
-      if (!finalData || finalData.status !== 'completed') {
-        console.error('Story update verification failed:', {
-          id: storyId,
-          status: finalData?.status,
-          authorId: finalData?.authorId
-        });
-        throw new Error('La mise à jour du statut de l\'histoire a échoué');
-      }
-
-      console.log('Story document updated successfully:', {
-        id: storyId,
-        status: finalData.status,
-        authorId: finalData.authorId,
-        version: finalData._version
-      });
-
-      return {
-        ...finalData,
-        id: storyId
-      };
+      
+      console.log('Firestore update completed successfully');
+      return storyData;
 
     } catch (error) {
-      console.error('Error in generateStory:', error);
-      throw new Error(error instanceof Error ? error.message : 'Une erreur inattendue est survenue');
+      console.error('Error in generateStory function:', error);
+      
+      // Create a clean error message for the client
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Une erreur inconnue est survenue';
+      
+      const errorCode = 'STORY_GENERATION_FAILED';
+      
+      // Log detailed error for debugging
+      console.error(`${errorCode}: ${errorMessage}`, error);
+      
+      // Throw a formatted error
+      throw new Error(JSON.stringify({
+        code: errorCode,
+        message: errorMessage,
+        timestamp: new Date().toISOString()
+      }));
     }
   }
 );
