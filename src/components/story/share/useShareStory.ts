@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { doc, updateDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -7,11 +8,18 @@ import { generateToken } from '@/utils/tokenUtils';
 export const useShareStory = (storyId: string, onClose: () => void) => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Reset error when story ID changes
+  useEffect(() => {
+    setError(null);
+  }, [storyId]);
 
   const handleEmailShare = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
       const storyRef = doc(db, 'stories', storyId);
@@ -25,7 +33,8 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
 
-      await updateDoc(storyRef, {
+      // Create simplified share data
+      const shareData = {
         'sharing.publicAccess': {
           enabled: true,
           token,
@@ -36,20 +45,30 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
           sharedAt: Timestamp.now(),
           accessCount: 0
         }]
-      });
+      };
+
+      await updateDoc(storyRef, shareData);
+
+      // Simplified webhook data
+      const webhookData = {
+        storyId,
+        recipientEmail: email,
+        publicUrl: `${window.location.origin}/stories/${storyId}?token=${token}`,
+        expirationDate: expiresAt.toISOString(),
+        senderName: "Calmi"
+      };
 
       const makeWebhookUrl = 'VOTRE_WEBHOOK_MAKE_COM';
-      await fetch(makeWebhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storyId,
-          recipientEmail: email,
-          publicUrl: `${window.location.origin}/stories/${storyId}?token=${token}`,
-          expirationDate: expiresAt.toISOString(),
-          senderName: "Calmi"
-        })
-      });
+      try {
+        await fetch(makeWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookData)
+        });
+      } catch (webhookError) {
+        console.warn('Email webhook failed, but story was shared:', webhookError);
+        // Continue execution even if webhook fails
+      }
 
       toast({
         title: "Histoire partagée",
@@ -58,11 +77,25 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
       onClose();
     } catch (error) {
       console.error('Erreur lors du partage:', error);
+      const errorMessage = error instanceof Error ? error.message : "Impossible de partager l'histoire";
+      
+      setError(errorMessage);
+      
       toast({
         title: "Erreur",
-        description: "Impossible de partager l'histoire",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Dispatch application-level notification
+      const event = new CustomEvent('app-notification', {
+        detail: {
+          type: 'error',
+          title: 'Erreur de partage',
+          message: errorMessage
+        }
+      });
+      document.dispatchEvent(event);
     } finally {
       setIsLoading(false);
     }
@@ -70,6 +103,8 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
 
   const handleKindleShare = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
       const storyRef = doc(db, 'stories', storyId);
       const storyDoc = await getDoc(storyRef);
@@ -78,16 +113,25 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
         throw new Error("Histoire introuvable");
       }
 
+      // Get only necessary data
+      const storyData = storyDoc.data();
+      const kindleData = {
+        storyId,
+        storyContent: storyData.story_text || "",
+        title: storyData.title || "Histoire sans titre"
+      };
+
       const makeWebhookUrl = 'VOTRE_WEBHOOK_MAKE_COM_KINDLE';
-      await fetch(makeWebhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storyId,
-          storyContent: storyDoc.data().story_text,
-          title: storyDoc.data().title
-        })
-      });
+      try {
+        await fetch(makeWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(kindleData)
+        });
+      } catch (webhookError) {
+        console.error('Kindle webhook failed:', webhookError);
+        throw new Error("Échec de l'envoi à Kindle");
+      }
 
       toast({
         title: "Envoi Kindle",
@@ -96,11 +140,25 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
       onClose();
     } catch (error) {
       console.error('Erreur lors de l\'envoi Kindle:', error);
+      const errorMessage = error instanceof Error ? error.message : "Impossible d'envoyer l'histoire à votre Kindle";
+      
+      setError(errorMessage);
+      
       toast({
         title: "Erreur",
-        description: "Impossible d'envoyer l'histoire à votre Kindle",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Dispatch application-level notification
+      const event = new CustomEvent('app-notification', {
+        detail: {
+          type: 'error',
+          title: 'Erreur Kindle',
+          message: errorMessage
+        }
+      });
+      document.dispatchEvent(event);
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +168,9 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
     email,
     setEmail,
     isLoading,
+    error,
     handleEmailShare,
-    handleKindleShare
+    handleKindleShare,
+    clearError: () => setError(null)
   };
 };

@@ -1,4 +1,8 @@
 
+/**
+ * Initializes comprehensive error handlers for the application
+ * Specifically focuses on handling DataCloneError and postMessage errors
+ */
 export function initializeErrorHandlers() {
   // Global error handler
   window.addEventListener('error', function(event) {
@@ -17,6 +21,7 @@ export function initializeErrorHandlers() {
         event.message?.includes('clone') ||
         event.message?.includes('DataCloneError') ||
         event.filename?.includes('gptengineer.js')) {
+      console.warn('Suppressed non-critical error:', event.message);
       event.preventDefault();
       return false;
     }
@@ -34,7 +39,7 @@ export function initializeErrorHandlers() {
         details: event.error?.details
       });
       
-      // You could dispatch a custom event to show a user-friendly error
+      // Dispatch a custom event to show a user-friendly error
       const customEvent = new CustomEvent('firebase-error', {
         detail: {
           message: event.error?.message || event.message
@@ -73,6 +78,7 @@ export function initializeErrorHandlers() {
         event.reason?.message?.includes('clone') ||
         event.reason?.message?.includes('DataCloneError') ||
         event.reason?.stack?.includes('gptengineer.js')) {
+      console.warn('Suppressed non-critical promise error:', event.reason?.message);
       event.preventDefault();
       return;
     }
@@ -110,27 +116,50 @@ export function initializeErrorHandlers() {
 
   // Add a listener for firebase errors
   document.addEventListener('firebase-error', (event) => {
-    // You could show a toast message here
+    // Show a toast message for Firebase errors
     console.log('Firebase error event detected:', event.detail.message);
+    
+    // Dispatch an application-level event for UI components to respond to
+    const appEvent = new CustomEvent('app-notification', {
+      detail: {
+        type: 'error',
+        title: 'Erreur Firebase',
+        message: event.detail.message || 'Une erreur est survenue avec Firebase'
+      }
+    });
+    document.dispatchEvent(appEvent);
   });
 
-  // Enhanced postMessage handling
+  // Enhanced postMessage handling with safe cloning
   const originalPostMessage = window.postMessage;
   window.postMessage = function(message, targetOrigin, transfer) {
     try {
+      // Simple primitives can be passed directly
       if (message === null || 
           typeof message === 'string' || 
           typeof message === 'number' || 
           typeof message === 'boolean') {
         return originalPostMessage.call(this, message, targetOrigin, transfer);
       }
-
-      const safeMessage = structuredClone(message);
+      
+      // Try using structured clone for objects
+      let safeMessage;
+      try {
+        // First attempt with structuredClone
+        safeMessage = structuredClone(message);
+      } catch (cloneError) {
+        // If structuredClone fails, create a simplified version
+        console.warn('structuredClone failed, creating simplified message');
+        safeMessage = simplifyObject(message);
+      }
+      
       return originalPostMessage.call(this, safeMessage, targetOrigin, transfer);
     } catch (error) {
+      // If we still hit an error, just suppress it
       if (error.message?.includes('postMessage') ||
           error.message?.includes('clone') ||
           error.message?.includes('DataCloneError')) {
+        console.warn('PostMessage error suppressed:', error.message);
         return;
       }
       
@@ -140,6 +169,59 @@ export function initializeErrorHandlers() {
       });
     }
   };
+  
+  // Helper function to create a simplified version of an object 
+  // that can be safely cloned
+  function simplifyObject(obj, depth = 0) {
+    // Prevent infinite recursion
+    if (depth > 3) return "[Object depth limit]";
+    
+    // Handle null or primitive types directly
+    if (obj === null || typeof obj !== 'object') return obj;
+    
+    // Handle Date objects
+    if (obj instanceof Date) return obj.toISOString();
+    
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      return obj.map(item => simplifyObject(item, depth + 1));
+    }
+    
+    // Handle regular objects
+    const result = {};
+    for (const key in obj) {
+      try {
+        // Skip functions, DOM nodes, and other non-serializable items
+        if (typeof obj[key] === 'function') {
+          result[key] = "[Function]";
+        } else if (obj[key] instanceof Node) {
+          result[key] = "[DOM Node]";
+        } else if (obj[key] instanceof Error) {
+          result[key] = {
+            message: obj[key].message,
+            name: obj[key].name
+          };
+        } else if (obj[key] instanceof Request || 
+                  obj[key] instanceof Response || 
+                  obj[key] instanceof ReadableStream) {
+          result[key] = "[Non-serializable Object]";
+        } else {
+          result[key] = simplifyObject(obj[key], depth + 1);
+        }
+      } catch (e) {
+        result[key] = "[Non-serializable value]";
+      }
+    }
+    
+    return result;
+  }
 
-  console.log('Enhanced error handling initialized with Firebase error detection');
+  // Setup a global notification listener for application messages
+  document.addEventListener('app-notification', (event) => {
+    // This can be connected to your toast system
+    console.log('Application notification:', event.detail);
+    // You can dispatch an action to show a toast here
+  });
+
+  console.log('Enhanced error handling initialized with improved DataCloneError protection');
 }
