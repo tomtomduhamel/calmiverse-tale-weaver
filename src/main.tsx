@@ -11,22 +11,32 @@ import { initializeErrorHandlers } from '@/utils/errorHandler';
 // Initialize error handlers first, before rendering the app
 initializeErrorHandlers();
 
+// Define types for the ErrorBoundary component
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
 // Define a global error boundary component
-class ErrorBoundary extends React.Component {
-  constructor(props) {
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, info) {
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
     console.error('React Error Boundary caught an error:', error, info);
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       return (
         <div className="p-4 m-4 bg-red-50 border border-red-200 rounded-md text-center">
