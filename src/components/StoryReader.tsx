@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,12 +13,13 @@ import ReactMarkdown from 'react-markdown';
 
 interface StoryReaderProps {
   story: Story | null;
-  onClose: () => void;
+  onClose?: () => void;
+  onBack?: () => void;
   onToggleFavorite?: (storyId: string) => void;
   childName?: string;
 }
 
-const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavorite, childName }) => {
+const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onBack, onToggleFavorite, childName }) => {
   const [fontSize, setFontSize] = useState(16);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -27,12 +29,15 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
     console.log("Histoire reçue dans le Reader:", story);
   }, [story]);
 
+  // Use onBack if provided, otherwise fallback to onClose
+  const handleBack = onBack || onClose || (() => {});
+
   if (!story) {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center bg-background">
         <Card className="p-6 text-center animate-fade-in">
           <p className="mb-4">Aucune histoire à afficher</p>
-          <Button onClick={onClose}>Retour</Button>
+          <Button onClick={handleBack}>Retour</Button>
         </Card>
       </div>
     );
@@ -59,7 +64,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onToggleFavor
           />
           <Button 
             variant="ghost" 
-            onClick={onClose}
+            onClick={handleBack}
             className="transition-transform hover:scale-105"
           >
             Fermer

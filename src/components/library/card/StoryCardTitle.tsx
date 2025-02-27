@@ -1,59 +1,27 @@
+
 import React from "react";
-import { Input } from "@/components/ui/input";
+import { Star } from "lucide-react";
+import type { Story } from "@/types/story";
 
 interface StoryCardTitleProps {
-  isEditing: boolean;
   title: string;
-  editingTitle: string;
-  onEditingTitleChange: (value: string) => void;
+  isFavorite?: boolean;
+  status: Story['status'];
 }
 
-const StoryCardTitle: React.FC<StoryCardTitleProps> = ({
-  isEditing,
-  title,
-  editingTitle,
-  onEditingTitleChange,
-}) => {
-  const formatTitle = (text: string) => {
-    // Enlever les guillemets au début et à la fin
-    let formattedText = text.replace(/^"|"$/g, '').trim();
-
-    // Gérer les titres avec ###
-    if (formattedText.startsWith('###')) {
-      return (
-        <h3 className="text-xl font-bold text-secondary-dark">
-          {formattedText.replace(/^###\s*/, '')}
-        </h3>
-      );
-    }
-    
-    // Gérer le texte en gras avec **
-    if (formattedText.startsWith('**') && formattedText.endsWith('**')) {
-      return (
-        <h3 className="text-lg font-semibold text-secondary-dark">
-          {formattedText.replace(/^\*\*|\*\*$/g, '')}
-        </h3>
-      );
-    }
-
-    // Texte normal
-    return (
-      <h3 className="text-base font-medium text-secondary-dark">
-        {formattedText}
+const StoryCardTitle: React.FC<StoryCardTitleProps> = ({ title, isFavorite = false, status }) => {
+  return (
+    <div className="flex justify-between items-start mb-2">
+      <h3 className={`text-lg font-semibold truncate ${status === 'error' ? 'text-red-600' : ''}`}>
+        {title || "Nouvelle histoire"}
       </h3>
-    );
-  };
-
-  return isEditing ? (
-    <Input
-      value={editingTitle}
-      onChange={(e) => onEditingTitleChange(e.target.value)}
-      className="font-semibold"
-      onClick={(e) => e.stopPropagation()}
-      autoFocus
-    />
-  ) : (
-    formatTitle(title)
+      {isFavorite && (
+        <Star
+          className="h-5 w-5 text-amber-400 fill-amber-400 flex-shrink-0 ml-2"
+          aria-label="Favori"
+        />
+      )}
+    </div>
   );
 };
 

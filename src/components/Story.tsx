@@ -26,7 +26,7 @@ type View = "create" | "read" | "library";
 
 const Story = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { user: currentUser } = useAuth();
   const { children } = useChildren();
   const { toast } = useToast();
   const [view, setView] = useState<View>("library");
@@ -117,7 +117,7 @@ const Story = () => {
   };
 
   const renderView = () => {
-    if (stories.isLoading || stories.isFetching) {
+    if (stories.isLoading) {
       return <LoadingStory />;
     }
 
