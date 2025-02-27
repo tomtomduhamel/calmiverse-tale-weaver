@@ -1,3 +1,4 @@
+
 import React from "react";
 import SearchBar from "./SearchBar";
 import StatusFilter from "./StatusFilter";
@@ -5,8 +6,8 @@ import StatusFilter from "./StatusFilter";
 interface StoryFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  statusFilter: 'all' | 'pending' | 'completed';
-  onStatusChange: (value: 'all' | 'pending' | 'completed') => void;
+  statusFilter: 'all' | 'pending' | 'completed' | 'read' | 'error';
+  onStatusChange: (status: 'all' | 'pending' | 'completed' | 'read' | 'error') => void;
 }
 
 const StoryFilters: React.FC<StoryFiltersProps> = ({
@@ -18,12 +19,12 @@ const StoryFilters: React.FC<StoryFiltersProps> = ({
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
       <SearchBar 
-        searchTerm={searchTerm}
-        onSearchChange={onSearchChange}
+        value={searchTerm}
+        onChange={onSearchChange}
       />
       <StatusFilter
-        value={statusFilter}
-        onChange={onStatusChange}
+        currentStatus={statusFilter}
+        onStatusChange={onStatusChange}
       />
     </div>
   );

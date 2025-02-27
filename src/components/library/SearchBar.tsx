@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
 interface SearchBarProps {
-  value?: string;
+  value: string;
   onChange: (value: string) => void;
   placeholder?: string;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ 
-  value = "", 
+  value, 
   onChange, 
   placeholder = "Rechercher une histoire..." 
 }) => {
