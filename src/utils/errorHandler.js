@@ -30,7 +30,9 @@ export function initializeErrorHandlers() {
     const isFirebaseError = 
       event.message?.includes('firebase') || 
       event.message?.includes('firestore') || 
-      event.message?.includes('INTERNAL');
+      event.message?.includes('INTERNAL') ||
+      event.message?.includes('Failed to get document') ||
+      event.message?.includes('FirebaseError');
       
     if (isFirebaseError) {
       console.error('Firebase Error:', {
@@ -89,7 +91,8 @@ export function initializeErrorHandlers() {
       event.reason?.message?.includes('firestore') || 
       event.reason?.message?.includes('INTERNAL') ||
       event.reason?.code?.includes('auth/') ||
-      event.reason?.code?.includes('firestore/');
+      event.reason?.code?.includes('firestore/') ||
+      event.reason?.message?.includes('FirebaseError');
       
     if (isFirebaseError) {
       console.error('Firebase Promise Error:', {
@@ -97,6 +100,30 @@ export function initializeErrorHandlers() {
         code: event.reason?.code,
         details: event.reason?.details
       });
+      
+      // Create a user-friendly error message
+      let userMessage = "Une erreur est survenue avec Firebase";
+      
+      // Check for common error codes
+      if (event.reason?.code === 'auth/requires-recent-login') {
+        userMessage = "Votre session a expiré. Veuillez vous reconnecter.";
+      } else if (event.reason?.code === 'auth/network-request-failed') {
+        userMessage = "Problème de connexion réseau. Vérifiez votre connexion internet.";
+      } else if (event.reason?.code?.includes('permission-denied')) {
+        userMessage = "Vous n'avez pas les permissions nécessaires pour cette action.";
+      } else if (event.reason?.message) {
+        userMessage = event.reason.message;
+      }
+      
+      // Dispatch an app notification
+      const appEvent = new CustomEvent('app-notification', {
+        detail: {
+          type: 'error',
+          title: 'Erreur Firebase',
+          message: userMessage
+        }
+      });
+      document.dispatchEvent(appEvent);
       
       // Prevent the default error handling
       event.preventDefault();
@@ -216,12 +243,40 @@ export function initializeErrorHandlers() {
     return result;
   }
 
-  // Setup a global notification listener for application messages
-  document.addEventListener('app-notification', (event) => {
-    // This can be connected to your toast system
-    console.log('Application notification:', event.detail);
-    // You can dispatch an action to show a toast here
-  });
+  // Add application-level notifications manager
+  if (!window.appNotificationManager) {
+    window.appNotificationManager = {
+      notifyError: function(title, message) {
+        const event = new CustomEvent('app-notification', {
+          detail: {
+            type: 'error',
+            title: title || 'Erreur',
+            message: message || 'Une erreur est survenue'
+          }
+        });
+        document.dispatchEvent(event);
+      },
+      notifySuccess: function(title, message) {
+        const event = new CustomEvent('app-notification', {
+          detail: {
+            type: 'success',
+            title: title || 'Succès',
+            message: message || 'Opération réussie'
+          }
+        });
+        document.dispatchEvent(event);
+      },
+      notifyRetry: function(storyId) {
+        const event = new CustomEvent('app-notification', {
+          detail: {
+            type: 'retry',
+            storyId: storyId
+          }
+        });
+        document.dispatchEvent(event);
+      }
+    };
+  }
 
   console.log('Enhanced error handling initialized with improved DataCloneError protection');
 }

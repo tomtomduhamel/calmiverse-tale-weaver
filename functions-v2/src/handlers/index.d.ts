@@ -1,5 +1,6 @@
 
-declare module 'handlers' {
-  export * from './storyHandler';
+export interface StoryGenerationRequest {
+  storyId?: string;
+  objective: string;
+  childrenNames: string[];
 }
-

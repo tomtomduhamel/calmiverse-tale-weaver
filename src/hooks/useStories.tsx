@@ -10,7 +10,7 @@ export const useStories = (children: any[] = []) => {
   const [lastError, setLastError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const stories = useStoriesQuery();
-  const { createStory, deleteStory, updateStoryStatus } = useStoryMutations();
+  const { createStory, deleteStory, updateStoryStatus, retryStoryGeneration } = useStoryMutations();
   const { toast } = useToast();
 
   // Listen for application-level errors
@@ -31,6 +31,16 @@ export const useStories = (children: any[] = []) => {
       document.removeEventListener('app-notification', handleAppNotification as EventListener);
     };
   }, []);
+
+  // Update current story when stories change
+  useEffect(() => {
+    if (currentStory && stories.stories) {
+      const updatedStory = stories.stories.find(story => story.id === currentStory.id);
+      if (updatedStory && JSON.stringify(updatedStory) !== JSON.stringify(currentStory)) {
+        setCurrentStory(updatedStory);
+      }
+    }
+  }, [stories.stories, currentStory]);
 
   const handleStoryCreation = async (formData: { childrenIds: string[], objective: string }) => {
     try {
@@ -108,9 +118,6 @@ export const useStories = (children: any[] = []) => {
         throw new Error("Histoire introuvable");
       }
       
-      // Update the story status to pending
-      await updateStoryStatus(storyId, 'pending');
-      
       // Create a retry event
       const retryEvent = new CustomEvent('app-notification', {
         detail: {
@@ -125,7 +132,8 @@ export const useStories = (children: any[] = []) => {
         description: "Nous réessayons de générer votre histoire",
       });
       
-      // TODO: Call the cloud function again to retry the story generation
+      // Call the retry function
+      await retryStoryGeneration(storyId);
       
       setIsRetrying(false);
       return true;

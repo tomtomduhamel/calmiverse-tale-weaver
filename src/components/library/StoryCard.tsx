@@ -1,194 +1,63 @@
 
-import React, { useState } from "react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { BookOpen, Clock, Loader2, Users } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import type { Story } from "@/types/story";
-import StoryCardActions from "./card/StoryCardActions";
+import React from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import StoryCardTitle from "./card/StoryCardTitle";
 import StoryCardTags from "./card/StoryCardTags";
-import { calculateReadingTime } from "@/utils/readingTime";
+import StoryCardActions from "./card/StoryCardActions";
+import type { Story } from "@/types/story";
 
 interface StoryCardProps {
   story: Story;
   onDelete: (e: React.MouseEvent) => void;
+  onRetry?: (e: React.MouseEvent) => void;
   onClick: () => void;
+  isRetrying?: boolean;
 }
 
-const StoryCard = ({ story, onDelete, onClick }: StoryCardProps) => {
-  const { toast } = useToast();
-  const [isFavorite, setIsFavorite] = useState(story.isFavorite || false);
-  const readingTime = calculateReadingTime(story.story_text);
-
-  console.log('Rendu StoryCard:', {
-    id: story.id,
-    status: story.status,
-    hasContent: Boolean(story.story_text?.trim()),
-    contentLength: story.story_text?.length,
-    preview: story.preview?.substring(0, 50)
-  });
-
-  const formatTitle = (text: string) => {
-    let formattedText = text.replace(/^["']|["']$/g, '').trim();
-    if (formattedText.startsWith('###')) {
-      return formattedText.replace(/^###\s*/, '');
-    }
-    if (formattedText.startsWith('**') && formattedText.endsWith('**')) {
-      return formattedText.replace(/^\*\*|\*\*$/g, '');
-    }
-    return formattedText;
-  };
-
-  const toggleFavorite = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      const storyRef = doc(db, "stories", story.id);
-      const newFavoriteStatus = !isFavorite;
-      await updateDoc(storyRef, {
-        isFavorite: newFavoriteStatus
-      });
-      setIsFavorite(newFavoriteStatus);
-      toast({
-        title: newFavoriteStatus ? "Ajouté aux favoris" : "Retiré des favoris",
-        description: "Mise à jour effectuée avec succès",
-      });
-    } catch (error) {
-      console.error('Erreur mise à jour favori:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour les favoris",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const markAsRead = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      const storyRef = doc(db, "stories", story.id);
-      const newStatus = story.status === 'read' ? 'completed' : 'read';
-      await updateDoc(storyRef, {
-        status: newStatus
-      });
-      toast({
-        title: newStatus === 'read' ? "Histoire marquée comme lue" : "Histoire marquée comme non lue",
-        description: "Mise à jour effectuée avec succès",
-      });
-    } catch (error) {
-      console.error('Erreur mise à jour statut:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le statut de lecture",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const isStoryReady = story.status === 'completed' && story.story_text?.trim();
-
-  const handleCardClick = () => {
-    if (!isStoryReady) {
-      console.log('Histoire non disponible:', {
-        id: story.id,
-        status: story.status,
-        hasContent: Boolean(story.story_text?.trim())
-      });
-      toast({
-        title: "Histoire en cours de génération",
-        description: "Cette histoire n'est pas encore disponible à la lecture. Nous vous notifierons dès qu'elle sera prête !",
-      });
-      return;
-    }
-    
-    console.log('Lecture histoire:', {
-      id: story.id,
-      status: story.status,
-      title: story.title
-    });
-    onClick();
-  };
-
+const StoryCard: React.FC<StoryCardProps> = ({ 
+  story, 
+  onDelete, 
+  onRetry, 
+  onClick, 
+  isRetrying = false
+}) => {
   return (
-    <Card 
-      className={`
-        p-4 transition-all duration-300 relative
-        bg-gradient-to-br from-card-start to-card-end
-        hover:from-card-hover-start hover:to-card-hover-end
-        shadow-soft hover:shadow-soft-lg animate-fade-in
-        ${isStoryReady ? 'cursor-pointer hover:scale-105 active:scale-98' : 'cursor-default'}
-      `}
-      onClick={handleCardClick}
-      role={isStoryReady ? "button" : undefined}
-      tabIndex={isStoryReady ? 0 : undefined}
-      onKeyDown={(e) => {
-        if (isStoryReady && (e.key === 'Enter' || e.key === ' ')) {
-          handleCardClick();
-        }
-      }}
+    <Card
+      className={`h-full flex flex-col justify-between rounded-xl shadow-soft transition-all duration-300 hover:shadow-lg cursor-pointer overflow-hidden border-2 ${
+        story.status === 'error' ? 'border-red-200' : story.isFavorite ? 'border-amber-200' : 'border-transparent'
+      } ${story.status === 'pending' ? 'bg-gray-50' : ''}`}
+      onClick={onClick}
     >
-      <div className="flex flex-col space-y-4">
-        <div className="flex justify-between items-start gap-4">
-          <div className="flex-grow">
-            <h3 className="text-lg font-semibold">{formatTitle(story.title)}</h3>
-            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-              <Users className="w-4 h-4" />
-              <span>Pour : {story.childrenNames?.join(', ') || 'Non spécifié'}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-              <Clock className="w-4 h-4" />
-              <span>{readingTime}</span>
-            </div>
-          </div>
-          <div className="flex-shrink-0">
-            <StoryCardActions
-              isFavorite={isFavorite}
-              isRead={story.status === 'read'}
-              onToggleFavorite={toggleFavorite}
-              onMarkAsRead={markAsRead}
-              onDelete={onDelete}
-            />
-          </div>
-        </div>
-
-        <p className="text-sm text-muted-foreground line-clamp-3">
-          {story.status === 'pending' ? "Histoire en cours de génération..." : story.preview}
-        </p>
-
+      <CardHeader className="p-3 pb-1">
+        <StoryCardTitle
+          title={story.title}
+          isFavorite={story.isFavorite}
+          status={story.status}
+        />
         <StoryCardTags
           tags={story.tags || []}
           objective={story.objective}
           status={story.status}
+          error={story.error}
         />
-        
-        <p className="text-xs text-muted-foreground">
-          Créée le {format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
-        </p>
-        
-        {!isStoryReady ? (
-          <Button
-            className="w-full bg-secondary/50 cursor-not-allowed flex items-center gap-2 animate-pulse"
-            disabled
-          >
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Génération en cours...
-          </Button>
-        ) : (
-          <Button
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground flex items-center gap-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCardClick();
-            }}
-          >
-            <BookOpen className="w-4 h-4" />
-            Lire l'histoire complète
-          </Button>
-        )}
-      </div>
+      </CardHeader>
+      <CardContent className="p-3 pb-4 flex flex-col justify-between flex-grow">
+        <div>
+          <p className="text-sm mb-4 text-gray-700 dark:text-gray-300 line-clamp-3">
+            {story.preview}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {story.childrenNames?.join(", ")}
+          </p>
+        </div>
+        <StoryCardActions
+          storyId={story.id}
+          onDelete={onDelete}
+          onRetry={onRetry}
+          status={story.status}
+          isRetrying={isRetrying}
+        />
+      </CardContent>
     </Card>
   );
 };

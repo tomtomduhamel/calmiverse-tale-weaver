@@ -1,69 +1,83 @@
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { ThemeProvider } from 'next-themes';
-import App from './App';
-import './index.css';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { Toaster } from '@/components/ui/toaster';
-import { initializeErrorHandlers } from '@/utils/errorHandler';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter as Router } from "react-router-dom";
+import App from "./App";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { initializeErrorHandlers } from "@/utils/errorHandler";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Initialize error handlers first, before rendering the app
+// Initialize error handlers
 initializeErrorHandlers();
 
-// Define types for the ErrorBoundary component
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-}
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
 
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
-
-// Define a global error boundary component
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: React.ErrorInfo): void {
-    console.error('React Error Boundary caught an error:', error, info);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("React ErrorBoundary caught an error:", error, errorInfo);
   }
 
-  render(): React.ReactNode {
+  render() {
     if (this.state.hasError) {
       return (
-        <div className="p-4 m-4 bg-red-50 border border-red-200 rounded-md text-center">
-          <h2 className="text-xl font-bold text-red-800 mb-2">Une erreur est survenue</h2>
-          <p className="text-red-600">{this.state.error?.message || 'Erreur inconnue'}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Recharger l'application
-          </button>
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
+          <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-lg">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Oups, quelque chose s'est mal passé</h1>
+            <p className="text-gray-600 mb-4">
+              Une erreur inattendue s'est produite dans l'application.
+            </p>
+            {this.state.error && (
+              <div className="bg-red-50 p-4 rounded-md mb-4">
+                <p className="text-red-800 text-sm font-mono">
+                  {this.state.error.toString()}
+                </p>
+              </div>
+            )}
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-primary text-white py-2 rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Rafraîchir la page
+            </button>
+          </div>
         </div>
       );
     }
+
     return this.props.children;
   }
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ThemeProvider attribute="class" defaultTheme="light">
+      <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <App />
-          <Toaster />
+          <Router>
+            <App />
+            <Toaster />
+          </Router>
         </AuthProvider>
-      </ThemeProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );
