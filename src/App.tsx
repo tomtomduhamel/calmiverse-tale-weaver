@@ -2,25 +2,15 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield, Settings, LogOut } from "lucide-react";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { useAuth } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import SettingsPage from "./pages/Settings";
 import SharedStory from "./pages/SharedStory";
 import LoginForm from "./components/auth/LoginForm";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 const AppContent = () => {
   const navigate = useNavigate();
@@ -131,13 +121,11 @@ const AppContent = () => {
 
 const App = () => (
   <BrowserRouter>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppContent />
-        <Toaster />
-        <Sonner />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <TooltipProvider>
+      <AppContent />
+      <Toaster />
+      <Sonner />
+    </TooltipProvider>
   </BrowserRouter>
 );
 

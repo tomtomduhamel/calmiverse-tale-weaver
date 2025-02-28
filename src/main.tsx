@@ -1,7 +1,6 @@
 
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter as Router } from "react-router-dom";
 import App from "./App";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -72,10 +71,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Router>
-            <App />
-            <Toaster />
-          </Router>
+          <App />
+          <Toaster />
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
