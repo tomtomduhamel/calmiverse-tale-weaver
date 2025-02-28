@@ -9,7 +9,8 @@ export const useStoryCloudFunctions = () => {
     try {
       console.log(`Calling cloud function ${functionName} with data:`, data);
       // Here would be the actual cloud function call implementation
-      return { success: true };
+      // Simulation d'une réponse réussie
+      return { success: true, message: 'Opération réussie' };
     } catch (error) {
       console.error(`Error calling cloud function ${functionName}:`, error);
       if (attempt < 3) {
@@ -28,8 +29,33 @@ export const useStoryCloudFunctions = () => {
   }, [toast]);
   
   const retryStoryGeneration = useCallback(async (storyId: string) => {
-    return callCloudFunctionWithRetry('retryStoryGeneration', { storyId });
-  }, [callCloudFunctionWithRetry]);
+    try {
+      if (!storyId) {
+        throw new Error("ID d'histoire manquant");
+      }
+      console.log(`Attempting to retry story generation for story ID: ${storyId}`);
+      const result = await callCloudFunctionWithRetry('retryStoryGeneration', { storyId });
+      
+      // Success notification
+      toast({
+        title: 'Succès',
+        description: 'Nouvelle tentative de génération lancée avec succès',
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Error in retryStoryGeneration:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Échec de la relance de génération';
+      
+      toast({
+        title: 'Erreur',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      
+      throw error;
+    }
+  }, [callCloudFunctionWithRetry, toast]);
 
   return {
     callCloudFunctionWithRetry,

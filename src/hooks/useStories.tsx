@@ -110,6 +110,7 @@ export const useStories = (children: any[] = []) => {
     try {
       console.log('Retrying failed story with ID:', storyId);
       setIsRetrying(true);
+      setLastError(null);
       
       // Find the story in the collection
       const failedStory = stories.stories?.find(story => story.id === storyId);
@@ -133,7 +134,8 @@ export const useStories = (children: any[] = []) => {
       });
       
       // Call the retry function
-      await retryStoryGeneration(storyId);
+      const result = await retryStoryGeneration(storyId);
+      console.log('Retry result:', result);
       
       setIsRetrying(false);
       return true;
@@ -142,6 +144,7 @@ export const useStories = (children: any[] = []) => {
       setIsRetrying(false);
       
       const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue lors de la nouvelle tentative";
+      setLastError(errorMessage);
       
       toast({
         title: "Erreur",

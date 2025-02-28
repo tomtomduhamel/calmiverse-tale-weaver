@@ -29,10 +29,30 @@ export const useStoryMutations = () => {
     }
   }, [createStoryBase, toast]);
 
+  const retryStory = useCallback(async (storyId) => {
+    try {
+      console.log('Retrying story generation for story ID:', storyId);
+      if (!storyId) {
+        throw new Error("ID d'histoire manquant");
+      }
+      const result = await retryStoryGeneration(storyId);
+      return result;
+    } catch (error) {
+      console.error('Error retrying story generation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Échec de la relance de génération';
+      toast({
+        title: 'Erreur',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [retryStoryGeneration, toast]);
+
   return {
     createStory,
     deleteStory,
     updateStoryStatus,
-    retryStoryGeneration,
+    retryStoryGeneration: retryStory,
   };
 };
