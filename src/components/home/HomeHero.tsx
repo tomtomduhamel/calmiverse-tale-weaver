@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { BookOpen, Users, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ViewType } from "@/types/views";
@@ -9,15 +9,23 @@ interface HomeHeroProps {
 }
 
 const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
-  console.log("Rendering HomeHero component");
+  console.log("Rendering HomeHero component with props:", !!onViewChange);
+  
+  useEffect(() => {
+    console.log("HomeHero mounted successfully");
+  }, []);
   
   const handleViewChange = (view: ViewType) => {
     console.log("HomeHero: Changing view to", view);
-    onViewChange(view);
+    if (typeof onViewChange === 'function') {
+      onViewChange(view);
+    } else {
+      console.error("onViewChange is not a function or undefined");
+    }
   };
   
   return (
-    <div className="text-center space-y-8 animate-fade-in relative py-12">
+    <div className="text-center space-y-8 animate-fade-in relative py-12" data-testid="home-hero">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-20 left-10 opacity-10">
           <div className="w-20 h-20 rounded-full bg-primary animate-pulse"></div>

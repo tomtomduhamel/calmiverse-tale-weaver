@@ -15,11 +15,35 @@ import { useStories } from "@/hooks/useStories";
 import { initializeObjectives } from "@/utils/initializeObjectives";
 import { useLocation } from "react-router-dom";
 
+// Composant de fallback en cas d'erreur
+const ErrorFallback = ({ error }: { error: Error }) => (
+  <div className="p-4 bg-red-50 rounded-md">
+    <h3 className="text-lg font-medium text-red-800">Erreur:</h3>
+    <p>{error.message}</p>
+    <button 
+      onClick={() => window.location.reload()} 
+      className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+    >
+      Recharger la page
+    </button>
+  </div>
+);
+
+// Composant de chargement léger
+const SimpleLoader = () => (
+  <div className="flex justify-center items-center h-64">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+  </div>
+);
+
 const Index = () => {
-  // Définir explicitement le state initial à "home"
+  // Force l'initialisation explicite à "home" pour garantir le bon rendu
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [showGuide, setShowGuide] = useState(false);
   const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
+  const [renderError, setRenderError] = useState<Error | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useChildren();
   const { stories: { stories, isLoading, error }, currentStory, setCurrentStory, createStory, deleteStory } = useStories(children);
   const { toast } = useToast();
@@ -27,14 +51,23 @@ const Index = () => {
 
   // Effet pour vérifier si le guide a déjà été vu
   useEffect(() => {
-    console.log("Index component mounted");
-    const hasSeenGuide = localStorage.getItem("hasSeenGuide");
-    if (!hasSeenGuide) {
-      setShowGuide(true);
-      localStorage.setItem("hasSeenGuide", "true");
-    }
+    console.log("Index component mounted, initializing");
+    
+    try {
+      const hasSeenGuide = localStorage.getItem("hasSeenGuide");
+      if (!hasSeenGuide) {
+        setShowGuide(true);
+        localStorage.setItem("hasSeenGuide", "true");
+      }
 
-    initializeObjectives();
+      initializeObjectives();
+      setIsInitialized(true);
+      console.log("Index initialization completed successfully");
+    } catch (err) {
+      console.error("Error during Index initialization:", err);
+      const error = err instanceof Error ? err : new Error(String(err));
+      setRenderError(error);
+    }
   }, []);
 
   // Effet pour réinitialiser la vue à "home" quand on navigue vers "/"
@@ -96,81 +129,95 @@ const Index = () => {
     }
   };
 
+  // Gestion globale des erreurs de rendu
+  if (renderError) {
+    return <ErrorFallback error={renderError} />;
+  }
+
   console.log("Rendering Index component with view:", currentView);
   console.log("Loading state:", isLoading);
   console.log("Error state:", error);
+  console.log("isInitialized:", isInitialized);
 
-  // Rendre une UI de chargement améliorée
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+  // État d'initialisation - afficher un loader simple mais fiable
+  if (!isInitialized) {
+    return <SimpleLoader />;
   }
 
-  // Améliorer l'affichage des erreurs
+  // Gestion des erreurs de chargement des données
   if (error) {
     return (
       <div className="p-4 bg-red-50 rounded-md">
-        <h3 className="text-lg font-medium text-red-800">Erreur:</h3>
+        <h3 className="text-lg font-medium text-red-800">Erreur de chargement:</h3>
         <p>{error.message}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Réessayer
+        </button>
       </div>
     );
   }
 
-  // Rendu principal avec affichage conditionnel basé sur currentView
+  // Rendu principal sécurisé
   return (
-    <>
+    <div className="index-container">
       {showGuide && <InteractiveGuide />}
       
-      {currentView === "home" && (
-        <HomeHero onViewChange={setCurrentView} />
-      )}
+      {isLoading ? (
+        <SimpleLoader />
+      ) : (
+        <>
+          {currentView === "home" && (
+            <HomeHero onViewChange={setCurrentView} />
+          )}
 
-      {currentView === "create" && (
-        <div className="w-full max-w-4xl mx-auto animate-fade-in">
-          <StoryForm
-            onSubmit={handleStorySubmit}
-            children={children}
-            onCreateChild={handleCreateChildFromStory}
-            onStoryCreated={handleStoryCreated}
-          />
-        </div>
-      )}
+          {currentView === "create" && (
+            <div className="w-full max-w-4xl mx-auto animate-fade-in">
+              <StoryForm
+                onSubmit={handleStorySubmit}
+                children={children}
+                onCreateChild={handleCreateChildFromStory}
+                onStoryCreated={handleStoryCreated}
+              />
+            </div>
+          )}
 
-      {currentView === "profiles" && (
-        <div className="animate-fade-in">
-          <ChildrenProfiles
-            children={children}
-            onAddChild={handleAddChild}
-            onUpdateChild={handleUpdateChild}
-            onDeleteChild={handleDeleteChild}
-            onCreateStory={() => setCurrentView("create")}
-          />
-        </div>
-      )}
+          {currentView === "profiles" && (
+            <div className="animate-fade-in">
+              <ChildrenProfiles
+                children={children}
+                onAddChild={handleAddChild}
+                onUpdateChild={handleUpdateChild}
+                onDeleteChild={handleDeleteChild}
+                onCreateStory={() => setCurrentView("create")}
+              />
+            </div>
+          )}
 
-      {currentView === "library" && (
-        <div className="animate-fade-in">
-          <StoryLibrary
-            stories={stories}
-            onSelectStory={handleSelectStory}
-            onDeleteStory={deleteStory}
-            onViewChange={setCurrentView}
-          />
-        </div>
-      )}
+          {currentView === "library" && (
+            <div className="animate-fade-in">
+              <StoryLibrary
+                stories={stories}
+                onSelectStory={handleSelectStory}
+                onDeleteStory={deleteStory}
+                onViewChange={setCurrentView}
+              />
+            </div>
+          )}
 
-      {currentView === "reader" && currentStory && (
-        <div className="animate-fade-in">
-          <StoryReader
-            story={currentStory}
-            onClose={handleCloseReader}
-          />
-        </div>
+          {currentView === "reader" && currentStory && (
+            <div className="animate-fade-in">
+              <StoryReader
+                story={currentStory}
+                onClose={handleCloseReader}
+              />
+            </div>
+          )}
+        </>
       )}
-    </>
+    </div>
   );
 };
 
