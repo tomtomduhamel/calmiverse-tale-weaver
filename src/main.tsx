@@ -3,7 +3,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { initializeErrorHandlers } from "@/utils/errorHandler";
+import { initializeErrorHandlers } from "@/utils/errorHandling";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Initialiser les gestionnaires d'erreurs
