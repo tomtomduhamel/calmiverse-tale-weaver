@@ -17,6 +17,9 @@ const AppContent = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
 
+  console.log("App rendering with pathname:", location.pathname);
+  console.log("User authenticated:", !!user);
+
   const handleHomeClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -40,6 +43,7 @@ const AppContent = () => {
 
   // Si l'utilisateur n'est pas connecté et n'est pas sur la page de partage, afficher le formulaire de connexion
   if (!user && !location.pathname.startsWith('/shared')) {
+    console.log("Showing login form");
     return (
       <main className="min-h-screen w-full bg-gradient-night dark:bg-gray-900 flex items-center justify-center p-4">
         <LoginForm />
@@ -119,14 +123,18 @@ const AppContent = () => {
   );
 };
 
-const App = () => (
-  <BrowserRouter>
-    <TooltipProvider>
-      <AppContent />
-      <Toaster />
-      <Sonner />
-    </TooltipProvider>
-  </BrowserRouter>
-);
+const App = () => {
+  console.log("App component initializing");
+  
+  return (
+    <BrowserRouter>
+      <TooltipProvider>
+        <AppContent />
+        <Toaster />
+        <Sonner />
+      </TooltipProvider>
+    </BrowserRouter>
+  );
+};
 
 export default App;

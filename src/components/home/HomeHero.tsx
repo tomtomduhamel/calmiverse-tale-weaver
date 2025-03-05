@@ -9,6 +9,13 @@ interface HomeHeroProps {
 }
 
 const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
+  console.log("Rendering HomeHero component");
+  
+  const handleViewChange = (view: ViewType) => {
+    console.log("HomeHero: Changing view to", view);
+    onViewChange(view);
+  };
+  
   return (
     <div className="text-center space-y-8 animate-fade-in relative py-12">
       <div className="absolute inset-0 pointer-events-none">
@@ -28,21 +35,21 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
       </p>
       <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
         <Button
-          onClick={() => onViewChange("create")}
+          onClick={() => handleViewChange("create")}
           className="bg-accent hover:bg-accent/90 text-accent-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg transition-all hover:shadow-xl"
         >
           <BookOpen className="h-5 w-5 mr-2" />
           Créer une histoire
         </Button>
         <Button
-          onClick={() => onViewChange("profiles")}
+          onClick={() => handleViewChange("profiles")}
           className="bg-primary hover:bg-primary/90 text-primary-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg transition-all hover:shadow-xl"
         >
           <Users className="h-5 w-5 mr-2" />
           L'univers des enfants
         </Button>
         <Button
-          onClick={() => onViewChange("library")}
+          onClick={() => handleViewChange("library")}
           className="bg-secondary hover:bg-secondary/90 text-secondary-foreground min-h-[48px] min-w-[200px] rounded-2xl shadow-lg transition-all hover:shadow-xl"
         >
           <Library className="h-5 w-5 mr-2" />

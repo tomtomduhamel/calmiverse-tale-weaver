@@ -6,10 +6,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { initializeErrorHandlers } from "@/utils/errorHandler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Initialize error handlers
+// Initialiser les gestionnaires d'erreurs
 initializeErrorHandlers();
 
-// Create a client
+// Créer un client pour React Query
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -20,6 +20,9 @@ const queryClient = new QueryClient({
   },
 });
 
+console.log("Application initializing...");
+
+// Détecter les erreurs non gérées dans l'application
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: React.ReactNode }) {
     super(props);
@@ -27,6 +30,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 
   static getDerivedStateFromError(error: Error) {
+    console.error("ErrorBoundary caught error:", error);
     return { hasError: true, error };
   }
 

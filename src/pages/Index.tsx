@@ -16,6 +16,7 @@ import { initializeObjectives } from "@/utils/initializeObjectives";
 import { useLocation } from "react-router-dom";
 
 const Index = () => {
+  // Définir explicitement le state initial à "home"
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [showGuide, setShowGuide] = useState(false);
   const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
@@ -24,7 +25,9 @@ const Index = () => {
   const { toast } = useToast();
   const location = useLocation();
 
+  // Effet pour vérifier si le guide a déjà été vu
   useEffect(() => {
+    console.log("Index component mounted");
     const hasSeenGuide = localStorage.getItem("hasSeenGuide");
     if (!hasSeenGuide) {
       setShowGuide(true);
@@ -34,11 +37,19 @@ const Index = () => {
     initializeObjectives();
   }, []);
 
+  // Effet pour réinitialiser la vue à "home" quand on navigue vers "/"
   useEffect(() => {
+    console.log("Location changed:", location.pathname);
     if (location.pathname === "/") {
+      console.log("Setting view to home");
       setCurrentView("home");
     }
   }, [location]);
+
+  // Log lors des changements de vue
+  useEffect(() => {
+    console.log("Current view changed to:", currentView);
+  }, [currentView]);
 
   const handleCreateChildFromStory = () => {
     setCurrentView("profiles");
@@ -85,21 +96,30 @@ const Index = () => {
     }
   };
 
+  console.log("Rendering Index component with view:", currentView);
+  console.log("Loading state:", isLoading);
+  console.log("Error state:", error);
+
+  // Rendre une UI de chargement améliorée
   if (isLoading) {
-    return <div className="flex justify-center items-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-    </div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
+  // Améliorer l'affichage des erreurs
   if (error) {
-    return <div className="p-4 bg-red-50 rounded-md">
-      <h3 className="text-lg font-medium text-red-800">Erreur:</h3>
-      <p>{error.message}</p>
-    </div>;
+    return (
+      <div className="p-4 bg-red-50 rounded-md">
+        <h3 className="text-lg font-medium text-red-800">Erreur:</h3>
+        <p>{error.message}</p>
+      </div>
+    );
   }
 
-  console.log("Current view:", currentView);
-
+  // Rendu principal avec affichage conditionnel basé sur currentView
   return (
     <>
       {showGuide && <InteractiveGuide />}
