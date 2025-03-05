@@ -112,7 +112,7 @@ const AppContent = () => {
           <Route path="/" element={<Index />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/shared" element={<SharedStory />} />
+          <Route path="/shared/*" element={<SharedStory />} />
         </Routes>
       </div>
     </main>

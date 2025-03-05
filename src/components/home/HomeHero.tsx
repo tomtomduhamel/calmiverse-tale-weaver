@@ -1,3 +1,4 @@
+
 import React from "react";
 import { BookOpen, Users, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ interface HomeHeroProps {
 
 const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
   return (
-    <div className="text-center space-y-8 animate-fade-in relative">
+    <div className="text-center space-y-8 animate-fade-in relative py-12">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-20 left-10 opacity-10">
           <div className="w-20 h-20 rounded-full bg-primary animate-pulse"></div>

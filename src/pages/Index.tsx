@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import StoryForm from "@/components/StoryForm";
 import StoryReader from "@/components/StoryReader";
@@ -85,12 +86,19 @@ const Index = () => {
   };
 
   if (isLoading) {
-    return <div>Chargement...</div>;
+    return <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+    </div>;
   }
 
   if (error) {
-    return <div>Erreur: {error.message}</div>;
+    return <div className="p-4 bg-red-50 rounded-md">
+      <h3 className="text-lg font-medium text-red-800">Erreur:</h3>
+      <p>{error.message}</p>
+    </div>;
   }
+
+  console.log("Current view:", currentView);
 
   return (
     <>
