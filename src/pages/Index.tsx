@@ -15,20 +15,6 @@ import { useStories } from "@/hooks/useStories";
 import { initializeObjectives } from "@/utils/initializeObjectives";
 import { useLocation } from "react-router-dom";
 
-// Composant de fallback en cas d'erreur
-const ErrorFallback = ({ error }: { error: Error }) => (
-  <div className="p-4 bg-red-50 rounded-md">
-    <h3 className="text-lg font-medium text-red-800">Erreur:</h3>
-    <p>{error.message}</p>
-    <button 
-      onClick={() => window.location.reload()} 
-      className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-    >
-      Recharger la page
-    </button>
-  </div>
-);
-
 // Composant de chargement léger
 const SimpleLoader = () => (
   <div className="flex justify-center items-center h-64">
@@ -40,8 +26,6 @@ const Index = () => {
   // Force l'initialisation explicite à "home" pour garantir le bon rendu
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [showGuide, setShowGuide] = useState(false);
-  const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
-  const [renderError, setRenderError] = useState<Error | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useChildren();
@@ -65,8 +49,6 @@ const Index = () => {
       console.log("Index initialization completed successfully");
     } catch (err) {
       console.error("Error during Index initialization:", err);
-      const error = err instanceof Error ? err : new Error(String(err));
-      setRenderError(error);
     }
   }, []);
 
@@ -86,10 +68,6 @@ const Index = () => {
 
   const handleCreateChildFromStory = () => {
     setCurrentView("profiles");
-  };
-
-  const handleModeSwitch = () => {
-    setCreationMode(mode => mode === "classic" ? "chat" : "classic");
   };
 
   const handleStorySubmit = async (formData: StoryFormData): Promise<string> => {
@@ -129,21 +107,6 @@ const Index = () => {
     }
   };
 
-  // Gestion globale des erreurs de rendu
-  if (renderError) {
-    return <ErrorFallback error={renderError} />;
-  }
-
-  console.log("Rendering Index component with view:", currentView);
-  console.log("Loading state:", isLoading);
-  console.log("Error state:", error);
-  console.log("isInitialized:", isInitialized);
-
-  // État d'initialisation - afficher un loader simple mais fiable
-  if (!isInitialized) {
-    return <SimpleLoader />;
-  }
-
   // Gestion des erreurs de chargement des données
   if (error) {
     return (
@@ -160,62 +123,61 @@ const Index = () => {
     );
   }
 
-  // Rendu principal sécurisé
+  // État d'initialisation - afficher un loader simple mais fiable
+  if (!isInitialized || isLoading) {
+    return <SimpleLoader />;
+  }
+
+  // Rendu principal
   return (
-    <div className="index-container">
+    <div className="index-container max-w-7xl mx-auto">
       {showGuide && <InteractiveGuide />}
       
-      {isLoading ? (
-        <SimpleLoader />
-      ) : (
-        <>
-          {currentView === "home" && (
-            <HomeHero onViewChange={setCurrentView} />
-          )}
+      {currentView === "home" && (
+        <HomeHero onViewChange={setCurrentView} />
+      )}
 
-          {currentView === "create" && (
-            <div className="w-full max-w-4xl mx-auto animate-fade-in">
-              <StoryForm
-                onSubmit={handleStorySubmit}
-                children={children}
-                onCreateChild={handleCreateChildFromStory}
-                onStoryCreated={handleStoryCreated}
-              />
-            </div>
-          )}
+      {currentView === "create" && (
+        <div className="w-full max-w-4xl mx-auto animate-fade-in">
+          <StoryForm
+            onSubmit={handleStorySubmit}
+            children={children}
+            onCreateChild={handleCreateChildFromStory}
+            onStoryCreated={handleStoryCreated}
+          />
+        </div>
+      )}
 
-          {currentView === "profiles" && (
-            <div className="animate-fade-in">
-              <ChildrenProfiles
-                children={children}
-                onAddChild={handleAddChild}
-                onUpdateChild={handleUpdateChild}
-                onDeleteChild={handleDeleteChild}
-                onCreateStory={() => setCurrentView("create")}
-              />
-            </div>
-          )}
+      {currentView === "profiles" && (
+        <div className="animate-fade-in">
+          <ChildrenProfiles
+            children={children}
+            onAddChild={handleAddChild}
+            onUpdateChild={handleUpdateChild}
+            onDeleteChild={handleDeleteChild}
+            onCreateStory={() => setCurrentView("create")}
+          />
+        </div>
+      )}
 
-          {currentView === "library" && (
-            <div className="animate-fade-in">
-              <StoryLibrary
-                stories={stories}
-                onSelectStory={handleSelectStory}
-                onDeleteStory={deleteStory}
-                onViewChange={setCurrentView}
-              />
-            </div>
-          )}
+      {currentView === "library" && (
+        <div className="animate-fade-in">
+          <StoryLibrary
+            stories={stories}
+            onSelectStory={handleSelectStory}
+            onDeleteStory={deleteStory}
+            onViewChange={setCurrentView}
+          />
+        </div>
+      )}
 
-          {currentView === "reader" && currentStory && (
-            <div className="animate-fade-in">
-              <StoryReader
-                story={currentStory}
-                onClose={handleCloseReader}
-              />
-            </div>
-          )}
-        </>
+      {currentView === "reader" && currentStory && (
+        <div className="animate-fade-in">
+          <StoryReader
+            story={currentStory}
+            onClose={handleCloseReader}
+          />
+        </div>
       )}
     </div>
   );
