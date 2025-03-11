@@ -6,6 +6,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { initializeErrorHandlers } from "@/utils/errorHandling";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+// Import CSS
+import "./index.css";
+import "./App.css";
+
 // Initialiser les gestionnaires d'erreurs
 initializeErrorHandlers();
 

@@ -17,10 +17,10 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
   };
   
   return (
-    <div className="min-h-[calc(100vh-4rem)] relative flex flex-col justify-center overflow-hidden">
+    <div className="min-h-[calc(100vh-4rem)] relative flex flex-col justify-center overflow-hidden animate-fade-in">
       {/* Arrière-plan avec gradient */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-card-start via-card-end to-muted"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-hero"></div>
       </div>
       
       {/* Contenu principal */}
@@ -36,11 +36,11 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
             </div>
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold text-primary-dark">
+          <h1 className="text-4xl md:text-6xl font-bold text-primary-dark animate-fade-in">
             Bienvenue sur Calmi
           </h1>
           
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-in">
             Créez des histoires personnalisées pour accompagner vos enfants 
             dans leur bien-être et leur développement
           </p>
@@ -49,7 +49,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
         {/* Cartes */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {/* Créer une histoire */}
-          <Card className="border border-primary/20 bg-white/80 hover:shadow-md transition-all duration-300">
+          <Card className="border border-primary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
             <CardContent className="p-6 flex flex-col h-full">
               <div className="mb-4 p-3 bg-primary/20 w-14 h-14 rounded-xl flex items-center justify-center">
                 <BookOpen className="h-6 w-6 text-primary-dark" />
@@ -68,7 +68,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
           </Card>
 
           {/* Univers des enfants */}
-          <Card className="border border-secondary/20 bg-white/80 hover:shadow-md transition-all duration-300">
+          <Card className="border border-secondary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
             <CardContent className="p-6 flex flex-col h-full">
               <div className="mb-4 p-3 bg-secondary/20 w-14 h-14 rounded-xl flex items-center justify-center">
                 <Users className="h-6 w-6 text-secondary" />
@@ -87,7 +87,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
           </Card>
 
           {/* Bibliothèque */}
-          <Card className="border border-accent/20 bg-white/80 hover:shadow-md transition-all duration-300">
+          <Card className="border border-accent/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
             <CardContent className="p-6 flex flex-col h-full">
               <div className="mb-4 p-3 bg-accent/20 w-14 h-14 rounded-xl flex items-center justify-center">
                 <Library className="h-6 w-6 text-accent-dark" />
