@@ -22,45 +22,51 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
   };
   
   return (
-    <div className="space-y-8 animate-fade-in relative py-6" data-testid="home-hero">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4 text-primary">
+    <div className="space-y-10 py-8 max-w-6xl mx-auto px-4 sm:px-6" data-testid="home-hero">
+      {/* Background decorations */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-0 right-0 -translate-y-25 translate-x-1/4 transform">
+          <div className="h-[300px] w-[300px] rounded-full bg-primary/20 blur-[100px]"></div>
+        </div>
+        <div className="absolute bottom-0 left-0 translate-y-25 -translate-x-1/4 transform">
+          <div className="h-[250px] w-[250px] rounded-full bg-secondary/20 blur-[100px]"></div>
+        </div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="h-[350px] w-[350px] rounded-full bg-accent/10 blur-[120px]"></div>
+        </div>
+      </div>
+
+      {/* Header section */}
+      <div className="text-center relative z-10">
+        <div className="inline-block mb-3">
+          <div className="flex items-center justify-center space-x-2 p-1.5 px-3 bg-white/50 dark:bg-white/10 rounded-full border border-primary/20 shadow-sm">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary-foreground/80">Histoires personnalisées</span>
+          </div>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
           Bienvenue sur Calmi
         </h1>
-        <p className="text-lg text-muted-foreground mb-2 max-w-2xl mx-auto">
-          Créez des histoires personnalisées pour le bien-être de vos enfants
+        <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
+          Créez des histoires personnalisées pour accompagner vos enfants dans leur bien-être et leur développement
         </p>
       </div>
       
-      {/* Background Elements */}
-      <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-10 opacity-10">
-          <div className="w-20 h-20 rounded-full bg-primary animate-pulse"></div>
-        </div>
-        <div className="absolute bottom-20 right-10 opacity-10">
-          <div className="w-16 h-16 rounded-full bg-accent animate-pulse delay-300"></div>
-        </div>
-        <div className="absolute top-40 right-1/4 opacity-10">
-          <div className="w-12 h-12 rounded-full bg-secondary animate-pulse delay-500"></div>
-        </div>
-      </div>
-      
-      {/* Feature Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-        {/* Créer une histoire */}
-        <Card className="bg-gradient-to-br from-accent/30 to-accent/10 border-accent/20 shadow-md hover:shadow-lg transition-all">
-          <CardContent className="p-6 flex flex-col items-center">
-            <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center mb-4">
+      {/* Main cards container with grid layout */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+        {/* Card 1: Créer une histoire */}
+        <Card className="group overflow-hidden border-0 bg-gradient-to-br from-accent/20 to-white dark:to-transparent shadow-[0_0_1px_rgba(0,0,0,0.1),0_8px_20px_-8px_rgba(0,0,0,0.1)] hover:shadow-[0_0_1px_rgba(0,0,0,0.1),0_8px_30px_-8px_rgba(0,0,0,0.2)] transition-all duration-300">
+          <CardContent className="p-6 flex flex-col h-full">
+            <div className="p-3 mb-4 bg-accent/20 w-14 h-14 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <BookOpen className="h-6 w-6 text-accent-foreground" />
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-center">Créer une histoire</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Créez des histoires uniques adaptées aux besoins de votre enfant
+            <h3 className="text-xl font-bold mb-2">Créer une histoire</h3>
+            <p className="text-muted-foreground text-sm mb-6 flex-grow">
+              Générez des histoires uniques adaptées aux besoins spécifiques de votre enfant
             </p>
-            <Button
+            <Button 
               onClick={() => handleViewChange("create")}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground mt-auto w-full"
+              className="w-full bg-accent hover:bg-accent/80 text-accent-foreground group-hover:translate-y-0 translate-y-1 transition-transform"
             >
               <BookOpen className="h-5 w-5 mr-2" />
               Commencer
@@ -68,19 +74,19 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
           </CardContent>
         </Card>
         
-        {/* Univers des enfants */}
-        <Card className="bg-gradient-to-br from-primary/30 to-primary/10 border-primary/20 shadow-md hover:shadow-lg transition-all">
-          <CardContent className="p-6 flex flex-col items-center">
-            <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+        {/* Card 2: Univers des enfants */}
+        <Card className="group overflow-hidden border-0 bg-gradient-to-br from-primary/20 to-white dark:to-transparent shadow-[0_0_1px_rgba(0,0,0,0.1),0_8px_20px_-8px_rgba(0,0,0,0.1)] hover:shadow-[0_0_1px_rgba(0,0,0,0.1),0_8px_30px_-8px_rgba(0,0,0,0.2)] transition-all duration-300">
+          <CardContent className="p-6 flex flex-col h-full">
+            <div className="p-3 mb-4 bg-primary/20 w-14 h-14 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <Users className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-center">Univers des enfants</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Gérez les profils de vos enfants et personnalisez leur expérience
+            <h3 className="text-xl font-bold mb-2">Univers des enfants</h3>
+            <p className="text-muted-foreground text-sm mb-6 flex-grow">
+              Gérez les profils et préférences de vos enfants pour une expérience personnalisée
             </p>
-            <Button
+            <Button 
               onClick={() => handleViewChange("profiles")}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground mt-auto w-full"
+              className="w-full bg-primary hover:bg-primary/80 text-primary-foreground group-hover:translate-y-0 translate-y-1 transition-transform"
             >
               <Users className="h-5 w-5 mr-2" />
               Explorer
@@ -88,19 +94,19 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
           </CardContent>
         </Card>
         
-        {/* Bibliothèque */}
-        <Card className="bg-gradient-to-br from-secondary/30 to-secondary/10 border-secondary/20 shadow-md hover:shadow-lg transition-all">
-          <CardContent className="p-6 flex flex-col items-center">
-            <div className="h-12 w-12 rounded-full bg-secondary/20 flex items-center justify-center mb-4">
+        {/* Card 3: Bibliothèque */}
+        <Card className="group overflow-hidden border-0 bg-gradient-to-br from-secondary/20 to-white dark:to-transparent shadow-[0_0_1px_rgba(0,0,0,0.1),0_8px_20px_-8px_rgba(0,0,0,0.1)] hover:shadow-[0_0_1px_rgba(0,0,0,0.1),0_8px_30px_-8px_rgba(0,0,0,0.2)] transition-all duration-300">
+          <CardContent className="p-6 flex flex-col h-full">
+            <div className="p-3 mb-4 bg-secondary/20 w-14 h-14 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <Library className="h-6 w-6 text-secondary-foreground" />
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-center">Bibliothèque</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Retrouvez toutes vos histoires et accédez à du contenu inspirant
+            <h3 className="text-xl font-bold mb-2">Bibliothèque</h3>
+            <p className="text-muted-foreground text-sm mb-6 flex-grow">
+              Retrouvez toutes vos histoires et accédez à du contenu inspirant pour vos enfants
             </p>
-            <Button
+            <Button 
               onClick={() => handleViewChange("library")}
-              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground mt-auto w-full"
+              className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground group-hover:translate-y-0 translate-y-1 transition-transform"
             >
               <Library className="h-5 w-5 mr-2" />
               Consulter
@@ -109,12 +115,12 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
         </Card>
       </div>
       
-      {/* Additional Feature Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8 pt-4">
+      {/* Footer section */}
+      <div className="flex justify-center pt-4 relative z-10">
         <Button
           variant="outline"
           onClick={() => handleViewChange("settings")}
-          className="min-h-[48px] min-w-[200px] rounded-xl border-2 hover:bg-muted/20 transition-all"
+          className="min-h-[48px] px-6 border border-muted-foreground/20 bg-white/50 dark:bg-white/5 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-white/10 transition-all duration-300"
         >
           <Settings className="h-5 w-5 mr-2" />
           Paramètres
