@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -62,6 +63,7 @@ export default {
       },
       backgroundImage: {
         'gradient-serene': 'linear-gradient(135deg, var(--card-bg-start), var(--card-bg-end))',
+        'gradient-hero': 'linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #F1FAEE 100%)',
         'gradient-night': 'linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #1A2238 100%)',
       },
       animation: {
@@ -70,6 +72,8 @@ export default {
         'fade-in': 'fadeIn 0.3s ease-out',
         'scale-up': 'scaleUp 0.2s ease-out',
         'float': 'float 6s ease-in-out infinite',
+        'pulse-slow': 'pulse 8s ease-in-out infinite',
+        'gradient': 'gradient 8s linear infinite',
       },
       keyframes: {
         slideDown: {
@@ -81,8 +85,8 @@ export default {
           '100%': { transform: 'translateY(-100%)', opacity: '0' },
         },
         fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         scaleUp: {
           '0%': { transform: 'scale(0.95)', opacity: '0' },
@@ -91,6 +95,15 @@ export default {
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-10px)' },
+        },
+        pulse: {
+          '0%, 100%': { opacity: '0.8', transform: 'scale(1)' },
+          '50%': { opacity: '1', transform: 'scale(1.05)' },
+        },
+        gradient: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
         },
       },
       boxShadow: {

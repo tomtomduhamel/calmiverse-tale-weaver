@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -41,10 +42,7 @@
   color: #888;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-in-out;
-}
-
+/* Animation Keyframes */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -56,8 +54,24 @@
   }
 }
 
-.bg-gradient-night {
-  background: linear-gradient(135deg, #1a1f2c 0%, #2c3e50 100%);
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }
 
 @keyframes gradient {
@@ -72,7 +86,68 @@
   }
 }
 
+/* Animation Classes */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse 8s ease-in-out infinite;
+}
+
 .animate-gradient {
   background-size: 200% auto;
   animation: gradient 8s linear infinite;
+}
+
+/* Gradients */
+.bg-gradient-night {
+  background: linear-gradient(135deg, #1a1f2c 0%, #2c3e50 100%);
+}
+
+.bg-gradient-day {
+  background: linear-gradient(135deg, #D6EAF8 0%, #C9E4DE 100%);
+}
+
+.bg-gradient-hero {
+  background: linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #F1FAEE 100%);
+}
+
+/* Glass Effects */
+.glass-effect {
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+/* Hover Effects */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Text Effects */
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
