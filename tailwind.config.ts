@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -62,7 +61,7 @@ export default {
         },
       },
       backgroundImage: {
-        'gradient-serene': 'linear-gradient(135deg, var(--card-bg-start), var(--card-bg-end))',
+        'gradient-serene': 'linear-gradient(135deg, #D6EAF8, #B7CFEA)',
         'gradient-hero': 'linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #F1FAEE 100%)',
         'gradient-night': 'linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #1A2238 100%)',
       },

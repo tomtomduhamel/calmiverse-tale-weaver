@@ -6,40 +6,9 @@
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+/* Styles de base */
+html, body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 /* Animation Keyframes */
@@ -86,7 +55,7 @@
   }
 }
 
-/* Animation Classes */
+/* Classes d'animation */
 .animate-fade-in {
   animation: fadeIn 0.5s ease-in-out;
 }
@@ -104,7 +73,7 @@
   animation: gradient 8s linear infinite;
 }
 
-/* Gradients */
+/* Fonds dégradés */
 .bg-gradient-night {
   background: linear-gradient(135deg, #1a1f2c 0%, #2c3e50 100%);
 }
@@ -117,7 +86,7 @@
   background: linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #F1FAEE 100%);
 }
 
-/* Glass Effects */
+/* Effets de verre */
 .glass-effect {
   backdrop-filter: blur(8px);
   background-color: rgba(255, 255, 255, 0.1);
@@ -131,7 +100,7 @@
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
 }
 
-/* Hover Effects */
+/* Effets de survol */
 .hover-lift {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -141,7 +110,7 @@
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* Text Effects */
+/* Effets de texte */
 .text-gradient {
   background-clip: text;
   -webkit-background-clip: text;
