@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
   GoogleAuthProvider, 
@@ -41,6 +42,8 @@ const getAuthErrorMessage = (error: AuthError) => {
       return "Trop de tentatives de connexion. Veuillez réessayer plus tard.";
     case 'auth/popup-closed-by-user':
       return "La fenêtre de connexion a été fermée. Veuillez réessayer.";
+    case 'auth/unauthorized-domain':
+      return "Ce domaine n'est pas autorisé pour l'authentification. Veuillez utiliser l'email et le mot de passe.";
     default:
       console.error('Firebase Auth Error:', error);
       return "Une erreur est survenue lors de la connexion. Veuillez réessayer.";
@@ -76,6 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: getAuthErrorMessage(error),
         variant: "destructive",
       });
+      throw error; // Propager l'erreur pour la gestion dans le composant
     }
   };
 

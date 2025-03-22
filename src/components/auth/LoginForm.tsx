@@ -1,16 +1,19 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useAuth } from '@/contexts/AuthContext';
-import { Mail } from 'lucide-react';
+import { Mail, AlertCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleAuthError, setGoogleAuthError] = useState(false);
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const { toast } = useToast();
 
@@ -36,6 +39,17 @@ const LoginForm = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      console.error('Google sign-in error:', error);
+      if (error.code === 'auth/unauthorized-domain') {
+        setGoogleAuthError(true);
+      }
+    }
+  };
+
   return (
     <Card className="w-full max-w-md p-6 space-y-6 bg-white/80 backdrop-blur-sm">
       <div className="text-center">
@@ -46,6 +60,15 @@ const LoginForm = () => {
           {isLogin ? 'Bienvenue sur Calmi' : 'Créez votre compte Calmi'}
         </p>
       </div>
+
+      {googleAuthError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            La connexion avec Google n'est pas disponible sur ce domaine. Veuillez utiliser l'email et le mot de passe.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -92,7 +115,7 @@ const LoginForm = () => {
         type="button"
         variant="outline"
         className="w-full"
-        onClick={signInWithGoogle}
+        onClick={handleGoogleSignIn}
         disabled={isLoading}
       >
         <Mail className="mr-2 h-4 w-4" />
