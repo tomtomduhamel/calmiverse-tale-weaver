@@ -11,11 +11,18 @@ export const useStoryCloudFunctions = () => {
     try {
       console.log(`Calling cloud function ${functionName} with data:`, data);
       
+      // Prefixing 'v2-' for all functions-v2 functions
+      const fullFunctionName = functionName.startsWith('v2-') 
+        ? functionName 
+        : `v2-${functionName}`;
+      
+      console.log(`Using full function name: ${fullFunctionName}`);
+      
       // Use Firebase httpsCallable to call the cloud function
-      const cloudFunction = httpsCallable(functions, functionName);
+      const cloudFunction = httpsCallable(functions, fullFunctionName);
       const result = await cloudFunction(data);
       
-      console.log(`Cloud function ${functionName} returned:`, result);
+      console.log(`Cloud function ${fullFunctionName} returned:`, result);
       return result.data;
     } catch (error) {
       console.error(`Error calling cloud function ${functionName}:`, error);
@@ -63,8 +70,33 @@ export const useStoryCloudFunctions = () => {
     }
   }, [callCloudFunctionWithRetry, toast]);
 
+  const generateStory = useCallback(async (objective: string, childrenNames: string[]) => {
+    try {
+      console.log('Calling generateStory cloud function with:', { objective, childrenNames });
+      const result = await callCloudFunctionWithRetry('generateStory', { 
+        objective,
+        childrenNames
+      });
+      
+      console.log('Story generation result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in generateStory:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Échec de la génération de l\'histoire';
+      
+      toast({
+        title: 'Erreur',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      
+      throw error;
+    }
+  }, [callCloudFunctionWithRetry, toast]);
+
   return {
     callCloudFunctionWithRetry,
-    retryStoryGeneration
+    retryStoryGeneration,
+    generateStory
   };
 };

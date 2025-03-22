@@ -10,10 +10,13 @@ const getOpenAIApiKey = async () => {
   try {
     const name = 'projects/calmi-99482/secrets/openai-api-key/versions/latest';
     const [version] = await secretClient.accessSecretVersion({ name });
-    return version.payload?.data?.toString() || process.env.OPENAI_API_KEY;
+    const apiKey = version.payload?.data?.toString() || process.env.OPENAI_API_KEY;
+    console.log("API Key récupérée avec succès (sans afficher la clé)");
+    return apiKey;
   } catch (error) {
     console.error('Error accessing secret:', error);
     // Fallback to environment variable
+    console.log("Utilisation de la variable d'environnement OPENAI_API_KEY");
     return process.env.OPENAI_API_KEY;
   }
 };
@@ -43,7 +46,7 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
     console.log("Création de la requête OpenAI");
     
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o', // Utiliser gpt-4o au lieu de gpt-4
       messages: [
         {
           role: 'system',
@@ -103,7 +106,7 @@ CONTRAINTES SPÉCIFIQUES :
         },
         {
           role: 'user',
-          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames} avec l'objectif suivant : ${objective}. 
+          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
           L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
           Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.`,
         },
@@ -113,8 +116,7 @@ CONTRAINTES SPÉCIFIQUES :
     });
 
     console.log("Réponse d'OpenAI reçue");
-    console.log("Contenu de la réponse:", completion.choices[0].message);
-
+    
     const story = completion.choices[0].message.content;
     if (!story) {
       console.error("Erreur: Aucune histoire générée par OpenAI");
@@ -135,7 +137,7 @@ CONTRAINTES SPÉCIFIQUES :
       preview: story.substring(0, 200) + "..."
     };
 
-    console.log("Données de l'histoire formatées avec succès:", storyData);
+    console.log("Données de l'histoire formatées avec succès");
     return storyData;
   } catch (error) {
     console.error("Erreur lors de la génération de l'histoire avec OpenAI:", error);

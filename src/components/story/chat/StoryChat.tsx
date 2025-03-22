@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -31,9 +32,8 @@ interface StoryResponse {
 }
 
 interface GenerateStoryParams {
-  prompt: string;
-  objective?: string;
-  childrenNames?: string[];
+  objective: string;
+  childrenNames: string[];
 }
 
 interface CloudFunctionResponse {
@@ -48,9 +48,9 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
   const { processUserMessage } = useStoryChat();
   const { toast } = useToast();
   const functions = getFunctions();
-  const generateStory = httpsCallable<GenerateStoryParams, CloudFunctionResponse>(
+  const generateStoryFunction = httpsCallable<GenerateStoryParams, CloudFunctionResponse>(
     functions, 
-    'generateStory'
+    'v2-generateStory'
   );
 
   useEffect(() => {
@@ -87,23 +87,34 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
     setIsGenerating(true);
 
     try {
-      const prompt = selectedChild 
-        ? `Crée une histoire pour ${selectedChild.name}${selectedChild.teddyName ? ` qui a un doudou nommé ${selectedChild.teddyName}` : ''}. Contexte de la conversation : ${userMessage.content}`
-        : userMessage.content;
-
-      const result = await generateStory({ 
-        prompt,
-        childrenNames: selectedChild ? [selectedChild.name] : undefined
+      console.log('Envoi de la requête à Firebase Function');
+      
+      // Créer l'objectif basé sur l'input utilisateur
+      const objective = userMessage.content;
+      // Récupérer le nom de l'enfant s'il est sélectionné
+      const childrenNames = selectedChild ? [selectedChild.name] : ['votre enfant'];
+      
+      console.log('Paramètres envoyés:', { objective, childrenNames });
+      
+      const result = await generateStoryFunction({ 
+        objective,
+        childrenNames
       });
       
+      console.log('Réponse reçue de la fonction Cloud:', result);
+      
       if (result.data) {
+        const storyText = result.data.story_text;
+        
         const aiResponse: ChatMessageType = {
           id: `ai-${Date.now()}`,
           type: 'ai',
-          content: result.data.data.story_text,
+          content: storyText || "Désolé, je n'ai pas pu générer une histoire pour le moment.",
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, aiResponse]);
+      } else {
+        throw new Error("Aucune réponse valide reçue");
       }
     } catch (error) {
       console.error('Erreur lors de la génération de l\'histoire:', error);
