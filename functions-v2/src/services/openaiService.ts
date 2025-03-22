@@ -1,157 +1,144 @@
 
 import OpenAI from 'openai';
-import * as admin from 'firebase-admin';
-import { getSecret } from './secretManager';
+import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
-// Initialize OpenAI client with API key from Secret Manager
-const initializeOpenAI = async (): Promise<OpenAI> => {
+// Initialize Secret Manager client
+const secretClient = new SecretManagerServiceClient();
+
+// Function to get the OpenAI API key from Secret Manager
+const getOpenAIApiKey = async () => {
   try {
-    console.log('Retrieving OpenAI API key from Secret Manager');
-    const apiKey = await getSecret('OPENAI_API_KEY');
-    
-    if (!apiKey) {
-      throw new Error('API key not found in Secret Manager');
-    }
-    
-    console.log('OpenAI API key retrieved successfully');
-    return new OpenAI({
-      apiKey: apiKey
-    });
+    const name = 'projects/calmi-99482/secrets/openai-api-key/versions/latest';
+    const [version] = await secretClient.accessSecretVersion({ name });
+    return version.payload?.data?.toString() || process.env.OPENAI_API_KEY;
   } catch (error) {
-    console.error('Failed to initialize OpenAI client:', error);
-    throw new Error('Failed to initialize OpenAI client. Check Secret Manager configuration.');
+    console.error('Error accessing secret:', error);
+    // Fallback to environment variable
+    return process.env.OPENAI_API_KEY;
   }
 };
 
+// Create OpenAI client - initialize with environment variable first
+// It will be replaced with the secret value before first API call
+let openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || 'placeholder',
+});
+
 export const generateStoryWithAI = async (objective: string, childrenNames: string[]) => {
-  console.log('Starting OpenAI story generation process');
-  console.log('Parameters received:', { objective, childrenNames });
-  console.log('Validating input parameters');
-  
-  // Input validation
-  if (!objective || objective.trim() === '') {
-    throw new Error('Objective is required');
-  }
-  
-  if (!Array.isArray(childrenNames) || childrenNames.length === 0) {
-    throw new Error('At least one child name is required');
-  }
+  console.log("Début de la génération avec OpenAI");
+  console.log("Paramètres reçus:", { objective, childrenNames });
   
   try {
-    console.log('Initializing OpenAI client');
-    const openai = await initializeOpenAI();
+    // Ensure we have the API key from Secret Manager
+    const apiKey = await getOpenAIApiKey();
     
-    const childrenNamesString = childrenNames.join(', ');
-    console.log(`Creating story for children: ${childrenNamesString}`);
-    console.log(`Story objective: ${objective}`);
+    if (!apiKey) {
+      throw new Error("Clé API OpenAI non disponible. Veuillez configurer la variable d'environnement OPENAI_API_KEY ou le secret dans Secret Manager.");
+    }
     
-    console.log('Sending request to OpenAI');
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    // Reinitialize the OpenAI client with the actual API key
+    openai = new OpenAI({ apiKey });
+    
+    console.log("Clé API OpenAI récupérée avec succès");
+    console.log("Création de la requête OpenAI");
+    
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4',
       messages: [
         {
-          role: "system",
-          content: `Tu es un conteur d'histoires pour enfants expérimenté. Ta mission est de créer des histoires captivantes, 
-          éducatives et adaptées aux enfants. Les histoires doivent être structurées avec un début, un milieu et une fin claire.
-          Utilise un langage simple mais riche, avec des mots adaptés au niveau des enfants.
-          Crée des personnages mémorables, y compris les enfants mentionnés dans la demande.
-          Inclus des dialogues engageants et des descriptions vivantes.
-          L'histoire doit promouvoir des valeurs positives comme l'amitié, le courage, la gentillesse.
-          Évite tout contenu effrayant, violent ou inapproprié pour les enfants.
-          L'histoire doit avoir une longueur d'environ 1000-1500 mots, avec des paragraphes courts.
-          Assure-toi que l'histoire répond spécifiquement à l'objectif donné (relaxation, sommeil, etc.).
-          
-          Tu dois générer une histoire structurée avec:
-          1. Un titre accrocheur
-          2. Une histoire complète
-          3. Un résumé court de l'histoire (50-100 mots maximum)
-          
-          Format de sortie (JSON):
-          ```json
-          {
-            "title": "Le titre de l'histoire",
-            "story_text": "Le texte complet de l'histoire...",
-            "summary": "Un bref résumé de l'histoire..."
-          }
-          ```
-          
-          N'inclus rien d'autre que ce JSON dans ta réponse.`
+          role: 'system',
+          content: `Tu es un expert en création d'histoires pour enfants.
+
+FORMAT DE L'HISTOIRE :
+- Longueur : 6000-10000 mots
+- Structure narrative fluide et continue, sans découpage visible
+- Pas de titre explicite
+
+RÈGLES FONDAMENTALES :
+- Adapte le langage à l'âge de l'enfant
+- Crée des personnages mémorables et appropriés
+- Utilise des dialogues engageants
+- Ajoute des répétitions pour les jeunes enfants
+- Évite tout contenu effrayant ou angoissant
+- Termine toujours sur une note positive
+
+STRUCTURE CACHÉE (ne pas la rendre visible) :
+1. Introduction et mise en contexte :
+   - Cadre sécurisant et familier
+   - Personnages principaux introduits naturellement
+   - Description sensorielle de l'environnement
+   - Transition douce
+
+2. Développement de l'ambiance :
+   - Descriptions sensorielles riches
+   - Éléments naturels ou fantastiques
+   - Ton calme et rassurant
+   - Métaphores apaisantes
+
+3. Progression de l'histoire :
+   - Langage indirect et suggestions positives
+   - Introduction de compagnons bienveillants
+   - Symboles rassurants
+   - Progression naturelle
+
+4. Cœur de l'histoire :
+   - Aventure captivante mais apaisante
+   - Descriptions immersives
+   - Rencontres positives
+   - Rythme lent et régulier
+
+5. Conclusion :
+   - Renforcement du sentiment de sécurité
+   - Phrases rassurantes
+   - Transition douce vers l'objectif
+   - Message final positif
+
+CONTRAINTES SPÉCIFIQUES :
+- Vocabulaire simple et accessible
+- Pas de termes liés à l'hypnose
+- Grammaire et orthographe impeccables
+- Éviter l'excès de superlatifs
+- Noms de personnages appropriés
+- Univers cohérent et captivant`,
         },
         {
-          role: "user",
-          content: `Crée une histoire pour les enfants suivants: ${childrenNamesString}. L'objectif de l'histoire est: ${objective}.
-           
-          Assure-toi que ces enfants sont les personnages principaux de l'histoire.
-          
-          Réponds UNIQUEMENT avec le JSON contenant le titre, l'histoire complète et le résumé.`
-        }
+          role: 'user',
+          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames} avec l'objectif suivant : ${objective}. 
+          L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
+          Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.`,
+        },
       ],
       temperature: 0.7,
       max_tokens: 4000,
-      response_format: { type: "json_object" }
     });
-    
-    console.log('Received response from OpenAI');
-    console.log('Response status:', response.choices[0].finish_reason);
-    
-    const story = response.choices[0].message.content;
+
+    console.log("Réponse d'OpenAI reçue");
+    console.log("Contenu de la réponse:", completion.choices[0].message);
+
+    const story = completion.choices[0].message.content;
     if (!story) {
-      console.error('OpenAI returned empty response');
-      throw new Error('La génération de l\'histoire a échoué: réponse vide');
+      console.error("Erreur: Aucune histoire générée par OpenAI");
+      throw new Error('Aucune histoire n\'a été générée');
     }
-    
-    console.log('Parsing JSON response');
-    let parsedStory;
-    try {
-      parsedStory = JSON.parse(story);
-    } catch (parseError) {
-      console.error('Failed to parse OpenAI response as JSON:', parseError);
-      console.error('Raw response:', story);
-      throw new Error('La réponse du service de génération n\'est pas dans un format valide');
-    }
-    
-    // Validate the structure of the response
-    if (!parsedStory.title || !parsedStory.story_text || !parsedStory.summary) {
-      console.error('Malformed OpenAI response - missing required fields');
-      console.error('Parsed response:', parsedStory);
-      throw new Error('La réponse du service de génération est incomplète');
-    }
-    
-    console.log('Successfully parsed story data');
-    console.log('Story title:', parsedStory.title);
-    console.log('Story summary length:', parsedStory.summary.length);
-    console.log('Story text length:', parsedStory.story_text.length);
-    
-    // Generate a unique ID for the story
-    const storyId = `story_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    
-    console.log('Preparing final story object structure');
+
+    console.log("Génération de l'ID unique pour l'histoire");
+    const uniqueId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    console.log("Formatage des données de l'histoire");
     const storyData = {
-      id_stories: storyId,
-      title: parsedStory.title,
-      story_text: parsedStory.story_text,
-      story_summary: parsedStory.summary,
-      status: 'completed',
+      id_stories: uniqueId,
+      story_text: story,
+      story_summary: "Résumé en cours de génération...",
+      status: 'pending',
       createdAt: new Date(),
-      preview: parsedStory.story_text.substring(0, 200) + '...'
+      title: "Nouvelle histoire",
+      preview: story.substring(0, 200) + "..."
     };
-    
-    console.log('Story generation completed successfully');
+
+    console.log("Données de l'histoire formatées avec succès:", storyData);
     return storyData;
-    
   } catch (error) {
-    console.error('Error during story generation:', error);
-    
-    // Check if it's an OpenAI API error
-    if (error.response) {
-      console.error('OpenAI API error:', {
-        status: error.response.status,
-        data: error.response.data
-      });
-      throw new Error(`Erreur lors de la génération: ${error.response.data?.error?.message || 'Erreur du service OpenAI'}`);
-    }
-    
-    // Rethrow with a user-friendly message
-    throw new Error(`La génération de l'histoire a échoué: ${error.message || 'Erreur inconnue'}`);
+    console.error("Erreur lors de la génération de l'histoire avec OpenAI:", error);
+    throw error;
   }
 };
