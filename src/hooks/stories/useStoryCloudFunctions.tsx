@@ -1,16 +1,22 @@
 
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export const useStoryCloudFunctions = () => {
   const { toast } = useToast();
+  const functions = getFunctions();
   
   const callCloudFunctionWithRetry = useCallback(async (functionName: string, data: any, attempt = 1) => {
     try {
       console.log(`Calling cloud function ${functionName} with data:`, data);
-      // Here would be the actual cloud function call implementation
-      // Simulation d'une réponse réussie
-      return { success: true, message: 'Opération réussie' };
+      
+      // Use Firebase httpsCallable to call the cloud function
+      const cloudFunction = httpsCallable(functions, functionName);
+      const result = await cloudFunction(data);
+      
+      console.log(`Cloud function ${functionName} returned:`, result);
+      return result.data;
     } catch (error) {
       console.error(`Error calling cloud function ${functionName}:`, error);
       if (attempt < 3) {
@@ -26,7 +32,7 @@ export const useStoryCloudFunctions = () => {
       });
       throw error;
     }
-  }, [toast]);
+  }, [toast, functions]);
   
   const retryStoryGeneration = useCallback(async (storyId: string) => {
     try {
@@ -34,7 +40,7 @@ export const useStoryCloudFunctions = () => {
         throw new Error("ID d'histoire manquant");
       }
       console.log(`Attempting to retry story generation for story ID: ${storyId}`);
-      const result = await callCloudFunctionWithRetry('retryStoryGeneration', { storyId });
+      const result = await callCloudFunctionWithRetry('retryFailedStory', { storyId });
       
       // Success notification
       toast({
