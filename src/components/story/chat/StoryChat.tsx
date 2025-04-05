@@ -73,22 +73,29 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
       
       console.log('Paramètres envoyés:', { objective, childrenNames });
       
-      const result = await generateStory(objective, childrenNames);
+      // Processing message
+      const processingMessage: ChatMessageType = {
+        id: `processing-${Date.now()}`,
+        type: 'ai',
+        content: "Je génère une histoire personnalisée pour toi...",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, processingMessage]);
       
-      console.log('Réponse reçue de la fonction Cloud:', result);
+      const storyResponse = await generateStory(objective, childrenNames);
       
-      if (result) {
-        const storyText = result.story_text;
-        
-        const aiResponse: ChatMessageType = {
+      console.log('Réponse reçue de la fonction Cloud:', storyResponse);
+      
+      if (storyResponse && storyResponse.story_text) {
+        // Remplacer le message de traitement par le texte de l'histoire
+        setMessages(prev => prev.filter(msg => msg.id !== `processing-${Date.now()-1}`).concat({
           id: `ai-${Date.now()}`,
           type: 'ai',
-          content: storyText || "Désolé, je n'ai pas pu générer une histoire pour le moment.",
+          content: storyResponse.story_text,
           timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, aiResponse]);
+        }));
       } else {
-        throw new Error("Aucune réponse valide reçue");
+        throw new Error("Format de réponse invalide");
       }
     } catch (error) {
       console.error('Erreur lors de la génération de l\'histoire:', error);

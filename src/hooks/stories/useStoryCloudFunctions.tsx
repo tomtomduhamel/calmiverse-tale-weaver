@@ -15,6 +15,14 @@ export interface StoryResponse {
   preview: string;
 }
 
+// Define the expected structure of the cloud function response
+interface CloudFunctionResult {
+  success?: boolean;
+  storyData?: StoryResponse;
+  error?: string;
+  message?: string;
+}
+
 export const useStoryCloudFunctions = () => {
   const { toast } = useToast();
   const functions = getFunctions();
@@ -35,6 +43,20 @@ export const useStoryCloudFunctions = () => {
       const result = await cloudFunction(data);
       
       console.log(`Cloud function ${fullFunctionName} returned:`, result);
+      
+      // Check if the result has a "data" property that contains our actual response
+      if (result && result.data) {
+        const responseData = result.data as CloudFunctionResult;
+        
+        // If there's an error field in the response, throw it
+        if (responseData.error) {
+          throw new Error(responseData.error);
+        }
+        
+        // Extract storyData if it exists, otherwise return the whole response
+        return responseData.storyData || responseData;
+      }
+      
       return result.data;
     } catch (error) {
       console.error(`Error calling cloud function ${functionName}:`, error);
@@ -88,10 +110,24 @@ export const useStoryCloudFunctions = () => {
       const result = await callCloudFunctionWithRetry('generateStory', { 
         objective,
         childrenNames
-      }) as StoryResponse;
+      });
       
       console.log('Story generation result:', result);
-      return result;
+      
+      // Ensure we have a properly formatted StoryResponse object
+      if (result && typeof result === 'object') {
+        // If result contains storyData property, use that
+        if (result.storyData && typeof result.storyData === 'object') {
+          return result.storyData as StoryResponse;
+        }
+        
+        // If result itself appears to be a StoryResponse, return it
+        if ('story_text' in result && 'id_stories' in result) {
+          return result as StoryResponse;
+        }
+      }
+      
+      throw new Error("Format de réponse invalide du générateur d'histoire");
     } catch (error) {
       console.error('Error in generateStory:', error);
       const errorMessage = error instanceof Error ? error.message : 'Échec de la génération de l\'histoire';

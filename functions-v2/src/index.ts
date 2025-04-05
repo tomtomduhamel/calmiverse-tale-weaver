@@ -9,3 +9,4 @@ if (!admin.apps.length) {
 
 // Export the cloud functions
 export { generateStory, retryFailedStory };
+
