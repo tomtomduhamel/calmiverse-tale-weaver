@@ -11,6 +11,7 @@ import TypingIndicator from './TypingIndicator';
 import ChatHeader from './ChatHeader';
 import { useStoryChat } from '@/hooks/useStoryChat';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
+import { useStoryCloudFunctions } from '@/hooks/stories/useStoryCloudFunctions';
 
 interface StoryChatProps {
   onSwitchMode: () => void;
@@ -31,15 +32,6 @@ interface StoryResponse {
   preview: string;
 }
 
-interface GenerateStoryParams {
-  objective: string;
-  childrenNames: string[];
-}
-
-interface CloudFunctionResponse {
-  data: StoryResponse;
-}
-
 const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) => {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -47,11 +39,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { processUserMessage } = useStoryChat();
   const { toast } = useToast();
-  const functions = getFunctions();
-  const generateStoryFunction = httpsCallable<GenerateStoryParams, CloudFunctionResponse>(
-    functions, 
-    'v2-generateStory'
-  );
+  const { generateStory } = useStoryCloudFunctions();
 
   useEffect(() => {
     const welcomeMessage: ChatMessageType = {
@@ -96,15 +84,13 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
       
       console.log('Paramètres envoyés:', { objective, childrenNames });
       
-      const result = await generateStoryFunction({ 
-        objective,
-        childrenNames
-      });
+      const result = await generateStory(objective, childrenNames);
       
       console.log('Réponse reçue de la fonction Cloud:', result);
       
-      if (result.data) {
-        const storyText = result.data.story_text;
+      if (result) {
+        // Le résultat est directement la réponse StoryResponse, pas enveloppé dans data
+        const storyText = result.story_text;
         
         const aiResponse: ChatMessageType = {
           id: `ai-${Date.now()}`,
