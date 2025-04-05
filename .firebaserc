@@ -2,5 +2,17 @@
 {
   "projects": {
     "default": "calmi-99482"
+  },
+  "targets": {
+    "calmi-99482": {
+      "hosting": {
+        "production": [
+          "calmi-99482"
+        ],
+        "staging": [
+          "calmi-staging"
+        ]
+      }
+    }
   }
 }

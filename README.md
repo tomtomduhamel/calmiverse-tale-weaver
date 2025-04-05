@@ -1,69 +1,75 @@
-# Welcome to your Lovable project
 
-## Project info
+# Calmiverse Tale Weaver
 
-**URL**: https://lovable.dev/projects/a3a7afdb-6cda-4ac0-ae38-aab4d04d9624
+Application de génération d'histoires personnalisées pour enfants avec intelligence artificielle.
 
-## How can I edit this code?
+## À propos du projet
 
-There are several ways of editing your application.
+Calmiverse Tale Weaver est une application qui permet de créer des histoires personnalisées pour enfants en utilisant l'intelligence artificielle.
 
-**Use Lovable**
+## URL du projet
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a3a7afdb-6cda-4ac0-ae38-aab4d04d9624) and start prompting.
+**Production**: [https://calmi-99482.web.app](https://calmi-99482.web.app)
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
+## Technologies utilisées
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- Firebase (Hosting, Functions, Firestore)
+- OpenAI
 
-## How can I deploy this project?
+## Développement local
 
-Simply open [Lovable](https://lovable.dev/projects/a3a7afdb-6cda-4ac0-ae38-aab4d04d9624) and click on Share -> Publish.
+### Prérequis
 
-## I want to use a custom domain - is that possible?
+- Node.js 20 ou supérieur
+- npm 9 ou supérieur
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+### Installation
+
+1. Clonez le dépôt:
+```sh
+git clone <YOUR_GIT_URL>
+cd calmiverse-tale-weaver
+```
+
+2. Installez les dépendances:
+```sh
+npm install
+cd functions
+npm install
+cd ../functions-v2
+npm install
+cd ..
+```
+
+3. Configurez les variables d'environnement:
+   - Créez un fichier `.env.local` à la racine du projet
+   - Ajoutez votre clé API OpenAI: `OPENAI_API_KEY=votre_clé_api`
+
+4. Lancez le serveur de développement:
+```sh
+npm run dev
+```
+
+## Déploiement
+
+Le déploiement est automatisé via GitHub Actions. Les pushes vers la branche `main` déclenchent un déploiement en production.
+
+Pour déployer manuellement:
+
+```sh
+npm run build
+firebase deploy
+```
+
+## Comment contribuer
+
+Consultez notre [Guide de contribution](CONTRIBUTING.md) pour plus d'informations.
+
+## License
+
+Ce projet est sous licence [MIT](LICENSE).
