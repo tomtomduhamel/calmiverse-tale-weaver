@@ -124,9 +124,17 @@ export const useStoryCloudFunctions = () => {
           return resultObj.storyData as StoryResponse;
         }
         
-        // If result itself appears to be a StoryResponse, return it
-        if ('story_text' in resultObj && 'id_stories' in resultObj) {
-          return resultObj as StoryResponse;
+        // If result itself appears to be a StoryResponse, verify required properties
+        if (
+          'story_text' in resultObj && 
+          'id_stories' in resultObj &&
+          'story_summary' in resultObj &&
+          'status' in resultObj &&
+          'title' in resultObj &&
+          'preview' in resultObj
+        ) {
+          // Cast to unknown first, then to StoryResponse as TypeScript suggests
+          return resultObj as unknown as StoryResponse;
         }
       }
       
