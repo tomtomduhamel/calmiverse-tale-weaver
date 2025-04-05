@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
 import ChatHeader from './ChatHeader';
 import { useStoryChat } from '@/hooks/useStoryChat';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
-import { useStoryCloudFunctions } from '@/hooks/stories/useStoryCloudFunctions';
+import { useStoryCloudFunctions, StoryResponse } from '@/hooks/stories/useStoryCloudFunctions';
 
 interface StoryChatProps {
   onSwitchMode: () => void;
@@ -20,16 +19,6 @@ interface StoryChatProps {
     age?: number;
     teddyName?: string;
   };
-}
-
-interface StoryResponse {
-  story_text: string;
-  story_summary: string;
-  id_stories: string;
-  status: 'pending' | 'completed' | 'read';
-  createdAt: Date;
-  title: string;
-  preview: string;
 }
 
 const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) => {
@@ -89,7 +78,6 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
       console.log('Réponse reçue de la fonction Cloud:', result);
       
       if (result) {
-        // Le résultat est directement la réponse StoryResponse, pas enveloppé dans data
         const storyText = result.story_text;
         
         const aiResponse: ChatMessageType = {

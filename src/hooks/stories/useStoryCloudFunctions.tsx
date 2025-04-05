@@ -2,6 +2,18 @@
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import type { Story } from '@/types/story';
+
+// Define type for story response from cloud function
+export interface StoryResponse {
+  id_stories: string;
+  story_text: string;
+  story_summary: string;
+  status: 'pending' | 'completed' | 'read';
+  createdAt: Date;
+  title: string;
+  preview: string;
+}
 
 export const useStoryCloudFunctions = () => {
   const { toast } = useToast();
@@ -70,13 +82,13 @@ export const useStoryCloudFunctions = () => {
     }
   }, [callCloudFunctionWithRetry, toast]);
 
-  const generateStory = useCallback(async (objective: string, childrenNames: string[]) => {
+  const generateStory = useCallback(async (objective: string, childrenNames: string[]): Promise<StoryResponse> => {
     try {
       console.log('Calling generateStory cloud function with:', { objective, childrenNames });
       const result = await callCloudFunctionWithRetry('generateStory', { 
         objective,
         childrenNames
-      });
+      }) as StoryResponse;
       
       console.log('Story generation result:', result);
       return result;
