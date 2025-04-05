@@ -116,14 +116,17 @@ export const useStoryCloudFunctions = () => {
       
       // Ensure we have a properly formatted StoryResponse object
       if (result && typeof result === 'object') {
+        // Use type assertion with proper checking
+        const resultObj = result as Record<string, unknown>;
+        
         // If result contains storyData property, use that
-        if (result.storyData && typeof result.storyData === 'object') {
-          return result.storyData as StoryResponse;
+        if (resultObj.storyData && typeof resultObj.storyData === 'object') {
+          return resultObj.storyData as StoryResponse;
         }
         
         // If result itself appears to be a StoryResponse, return it
-        if ('story_text' in result && 'id_stories' in result) {
-          return result as StoryResponse;
+        if ('story_text' in resultObj && 'id_stories' in resultObj) {
+          return resultObj as StoryResponse;
         }
       }
       
