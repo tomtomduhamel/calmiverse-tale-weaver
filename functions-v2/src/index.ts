@@ -8,5 +8,7 @@ if (!admin.apps.length) {
 }
 
 // Export the cloud functions
-export { generateStory, retryFailedStory };
-
+export {
+  generateStory,
+  retryFailedStory
+};

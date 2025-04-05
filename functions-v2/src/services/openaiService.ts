@@ -1,52 +1,57 @@
 
 import OpenAI from 'openai';
-import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import { getSecret } from './secretManager';
 
-// Initialize Secret Manager client
-const secretClient = new SecretManagerServiceClient();
+// Initialize with a placeholder API key
+let openai = new OpenAI({
+  apiKey: 'placeholder', // Will be replaced with actual key before use
+});
 
-// Function to get the OpenAI API key from Secret Manager
-const getOpenAIApiKey = async () => {
+let apiKeyInitialized = false;
+
+/**
+ * Initializes the OpenAI API client with a key from Secret Manager or environment variables
+ */
+const initializeOpenAI = async () => {
+  if (apiKeyInitialized) {
+    return;
+  }
+  
   try {
-    const name = 'projects/calmi-99482/secrets/openai-api-key/versions/latest';
-    const [version] = await secretClient.accessSecretVersion({ name });
-    const apiKey = version.payload?.data?.toString() || process.env.OPENAI_API_KEY;
-    console.log("API Key récupérée avec succès (sans afficher la clé)");
-    return apiKey;
-  } catch (error) {
-    console.error('Error accessing secret:', error);
-    // Fallback to environment variable
-    console.log("Utilisation de la variable d'environnement OPENAI_API_KEY");
-    return process.env.OPENAI_API_KEY;
+    // Try to get API key from Secret Manager
+    const secretApiKey = await getSecret('openai-api-key');
+    
+    console.log("API Key récupérée avec succès depuis Secret Manager");
+    openai = new OpenAI({ apiKey: secretApiKey });
+    apiKeyInitialized = true;
+  } catch (secretError) {
+    console.warn('Failed to get API key from Secret Manager:', secretError);
+    
+    // Fall back to environment variable
+    const envApiKey = process.env.OPENAI_API_KEY;
+    if (envApiKey) {
+      console.log("Utilisation de la variable d'environnement OPENAI_API_KEY");
+      openai = new OpenAI({ apiKey: envApiKey });
+      apiKeyInitialized = true;
+    } else {
+      throw new Error("Impossible de récupérer la clé API OpenAI. Vérifiez que le secret ou la variable d'environnement est configuré.");
+    }
   }
 };
-
-// Create OpenAI client - initialize with environment variable first
-// It will be replaced with the secret value before first API call
-let openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'placeholder',
-});
 
 export const generateStoryWithAI = async (objective: string, childrenNames: string[]) => {
   console.log("Début de la génération avec OpenAI");
   console.log("Paramètres reçus:", { objective, childrenNames });
   
   try {
-    // Ensure we have the API key from Secret Manager
-    const apiKey = await getOpenAIApiKey();
+    // Ensure the API key is initialized
+    await initializeOpenAI();
     
-    if (!apiKey) {
-      throw new Error("Clé API OpenAI non disponible. Veuillez configurer la variable d'environnement OPENAI_API_KEY ou le secret dans Secret Manager.");
-    }
-    
-    // Reinitialize the OpenAI client with the actual API key
-    openai = new OpenAI({ apiKey });
-    
-    console.log("Clé API OpenAI récupérée avec succès");
+    console.log("OpenAI client initialisé avec succès");
     console.log("Création de la requête OpenAI");
     
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o', // Utiliser gpt-4o au lieu de gpt-4
+      model: 'gpt-4o', // Utiliser gpt-4o
       messages: [
         {
           role: 'system',
@@ -131,10 +136,12 @@ CONTRAINTES SPÉCIFIQUES :
       id_stories: uniqueId,
       story_text: story,
       story_summary: "Résumé en cours de génération...",
-      status: 'pending',
+      status: 'completed',
       createdAt: new Date(),
-      title: "Nouvelle histoire",
-      preview: story.substring(0, 200) + "..."
+      title: "Nouvelle histoire pour " + childrenNames.join(" et "),
+      preview: story.substring(0, 200) + "...",
+      childrenNames: childrenNames,
+      objective: objective
     };
 
     console.log("Données de l'histoire formatées avec succès");

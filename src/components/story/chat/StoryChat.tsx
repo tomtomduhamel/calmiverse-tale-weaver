@@ -8,8 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
 import ChatHeader from './ChatHeader';
-import { useStoryChat } from '@/hooks/useStoryChat';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
+import { useStoryChat } from '@/hooks/useStoryChat';
 import { useStoryCloudFunctions, StoryResponse } from '@/hooks/stories/useStoryCloudFunctions';
 
 interface StoryChatProps {
@@ -25,6 +25,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedStory, setGeneratedStory] = useState<StoryResponse | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { processUserMessage } = useStoryChat();
   const { toast } = useToast();
@@ -82,23 +83,36 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
       };
       setMessages(prev => [...prev, processingMessage]);
       
-      const storyResponse = await generateStory(objective, childrenNames);
-      
-      console.log('Réponse reçue de la fonction Cloud:', storyResponse);
-      
-      if (storyResponse && storyResponse.story_text) {
+      try {
+        const storyResponse = await generateStory(objective, childrenNames);
+        console.log('Réponse reçue de la fonction Cloud:', storyResponse);
+        
+        setGeneratedStory(storyResponse);
+        
         // Remplacer le message de traitement par le texte de l'histoire
-        setMessages(prev => prev.filter(msg => msg.id !== `processing-${Date.now()-1}`).concat({
-          id: `ai-${Date.now()}`,
-          type: 'ai',
-          content: storyResponse.story_text,
-          timestamp: new Date(),
-        }));
-      } else {
-        throw new Error("Format de réponse invalide");
+        setMessages(prev => 
+          prev.filter(msg => !msg.id.startsWith('processing')).concat({
+            id: `ai-${Date.now()}`,
+            type: 'ai',
+            content: storyResponse.story_text,
+            timestamp: new Date(),
+          })
+        );
+        
+        toast({
+          title: "Histoire générée avec succès",
+          description: "Votre histoire a été créée et ajoutée à votre bibliothèque",
+        });
+      } catch (error) {
+        console.error('Erreur lors de l\'appel à generateStory:', error);
+        throw error; // Re-throw to be caught by the outer try/catch
       }
     } catch (error) {
       console.error('Erreur lors de la génération de l\'histoire:', error);
+      
+      // Remove processing message
+      setMessages(prev => prev.filter(msg => !msg.id.startsWith('processing')));
+      
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la génération de l'histoire. Veuillez réessayer.",

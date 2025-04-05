@@ -114,30 +114,31 @@ export const useStoryCloudFunctions = () => {
       
       console.log('Story generation result:', result);
       
-      // Ensure we have a properly formatted StoryResponse object
-      if (result && typeof result === 'object') {
-        // Use type assertion with proper checking
-        const resultObj = result as Record<string, unknown>;
+      // Validate the response data
+      if (!result || typeof result !== 'object') {
+        throw new Error("Invalid response format from story generator");
+      }
+      
+      // Convert to a generic record for safer access
+      const resultData = result as Record<string, unknown>;
+      
+      // If the result contains a storyData property that is an object, use that
+      if (resultData.storyData && typeof resultData.storyData === 'object') {
+        const storyData = resultData.storyData as Record<string, unknown>;
         
-        // If result contains storyData property, use that
-        if (resultObj.storyData && typeof resultObj.storyData === 'object') {
-          return resultObj.storyData as StoryResponse;
-        }
-        
-        // If result itself appears to be a StoryResponse, verify required properties
-        if (
-          'story_text' in resultObj && 
-          'id_stories' in resultObj &&
-          'story_summary' in resultObj &&
-          'status' in resultObj &&
-          'title' in resultObj &&
-          'preview' in resultObj
-        ) {
-          // Cast to unknown first, then to StoryResponse as TypeScript suggests
-          return resultObj as unknown as StoryResponse;
+        // Validate that it has all required fields
+        if (validateStoryResponseFields(storyData)) {
+          return storyData as unknown as StoryResponse;
         }
       }
       
+      // Check if the result itself is a valid StoryResponse
+      if (validateStoryResponseFields(resultData)) {
+        return resultData as unknown as StoryResponse;
+      }
+      
+      // If we get here, the response format is invalid
+      console.error("Invalid response format:", result);
       throw new Error("Format de réponse invalide du générateur d'histoire");
     } catch (error) {
       console.error('Error in generateStory:', error);
@@ -152,6 +153,19 @@ export const useStoryCloudFunctions = () => {
       throw error;
     }
   }, [callCloudFunctionWithRetry, toast]);
+  
+  // Helper function to validate a response has all required StoryResponse fields
+  const validateStoryResponseFields = (data: Record<string, unknown>): boolean => {
+    const requiredFields = ['id_stories', 'story_text', 'story_summary', 'status', 'title', 'preview'];
+    
+    return requiredFields.every(field => {
+      const hasField = field in data;
+      if (!hasField) {
+        console.error(`Missing required field in response: ${field}`);
+      }
+      return hasField;
+    });
+  };
 
   return {
     callCloudFunctionWithRetry,

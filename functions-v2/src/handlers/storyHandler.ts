@@ -93,7 +93,12 @@ export const generateStory = onCall(
         });
         
         console.log('Firestore update completed successfully');
-        return { success: true, storyData };
+        
+        // Return a standardized response with the generated story data
+        return { 
+          success: true, 
+          storyData: storyData 
+        };
       } catch (error) {
         console.error('Error generating story:', error);
         
@@ -150,6 +155,8 @@ export const retryFailedStory = onCall(
         throw new Error('L\'identifiant de l\'histoire est requis');
       }
       
+      console.log(`Retrying story generation for story ID: ${storyId}`);
+      
       // Get the story document
       const storyRef = admin.firestore().collection('stories').doc(storyId);
       const storyDoc = await storyRef.get();
@@ -160,6 +167,10 @@ export const retryFailedStory = onCall(
       
       const storyData = storyDoc.data();
       
+      if (!storyData) {
+        throw new Error(`Données de l'histoire manquantes pour ${storyId}`);
+      }
+      
       // Update story status to pending
       await storyRef.update({
         status: 'pending',
@@ -167,14 +178,45 @@ export const retryFailedStory = onCall(
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
       
-      // Call generateStory function with the story data
-      return generateStory.call(request.context, {
-        storyId,
-        objective: typeof storyData.objective === 'string' 
-          ? storyData.objective 
-          : storyData.objective.value,
-        childrenNames: storyData.childrenNames || []
+      console.log(`Updated story ${storyId} status to pending for retry`);
+      
+      // Extract objective and childrenNames from story data
+      let objective: string;
+      let childrenNames: string[] = [];
+      
+      if (typeof storyData.objective === 'string') {
+        objective = storyData.objective;
+      } else if (storyData.objective && typeof storyData.objective === 'object' && 'value' in storyData.objective) {
+        objective = storyData.objective.value;
+      } else {
+        throw new Error(`Format d'objectif invalide pour l'histoire ${storyId}`);
+      }
+      
+      if (Array.isArray(storyData.childrenNames)) {
+        childrenNames = storyData.childrenNames;
+      }
+      
+      console.log(`Retrying story generation with:`, {
+        objective,
+        childrenNames
       });
+      
+      // Call generateStory function with the story data
+      const result = await generateStoryWithAI(objective, childrenNames);
+      
+      // Update the story with the new content
+      await storyRef.update({
+        ...result,
+        status: 'completed',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      
+      console.log(`Successfully regenerated story ${storyId}`);
+      
+      return { 
+        success: true, 
+        storyData: result 
+      };
       
     } catch (error) {
       console.error('Error in retryFailedStory function:', error);

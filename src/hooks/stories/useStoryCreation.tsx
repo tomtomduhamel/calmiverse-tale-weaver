@@ -61,8 +61,29 @@ export const useStoryCreation = () => {
         objective: formData.objective,
         childrenNames: childrenNames
       })
-        .then(() => {
-          console.log('Story generation completed for story ID:', storyId);
+        .then((result) => {
+          console.log('Story generation completed for story ID:', storyId, result);
+          
+          // Update the document with the generated story
+          if (result && typeof result === 'object') {
+            const resultData = result as Record<string, unknown>;
+            const storyData = resultData.storyData || result;
+            
+            // Update the document with the generated story
+            runTransaction(db, async (transaction) => {
+              const storyRef = doc(db, 'stories', storyId);
+              transaction.update(storyRef, {
+                story_text: (storyData as any).story_text || '',
+                story_summary: (storyData as any).story_summary || 'Résumé en cours de génération...',
+                preview: (storyData as any).preview || '',
+                title: (storyData as any).title || 'Nouvelle histoire',
+                status: 'completed',
+                updatedAt: serverTimestamp(),
+                _pendingWrites: false
+              });
+            });
+          }
+          
           toast({
             title: "Histoire générée",
             description: "Votre histoire est maintenant disponible dans votre bibliothèque.",
