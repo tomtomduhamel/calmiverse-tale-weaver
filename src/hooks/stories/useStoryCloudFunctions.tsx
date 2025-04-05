@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -31,18 +30,11 @@ export const useStoryCloudFunctions = () => {
     try {
       console.log(`Calling cloud function ${functionName} with data:`, data);
       
-      // Prefixing 'v2-' for all functions-v2 functions
-      const fullFunctionName = functionName.startsWith('v2-') 
-        ? functionName 
-        : `v2-${functionName}`;
-      
-      console.log(`Using full function name: ${fullFunctionName}`);
-      
-      // Use Firebase httpsCallable to call the cloud function
-      const cloudFunction = httpsCallable(functions, fullFunctionName);
+      // Using the exact function name without prefixing
+      const cloudFunction = httpsCallable(functions, functionName);
       const result = await cloudFunction(data);
       
-      console.log(`Cloud function ${fullFunctionName} returned:`, result);
+      console.log(`Cloud function ${functionName} returned:`, result);
       
       // Check if the result has a "data" property that contains our actual response
       if (result && result.data) {

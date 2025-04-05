@@ -1,3 +1,4 @@
+
 name: Deploy to Firebase
 on:
   push:
@@ -8,27 +9,40 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
           
-      - name: Install Dependencies
+      - name: Install Dependencies for functions
         run: |
           cd functions
-          npm install
-          cd ..
-          npm install
+          npm ci
+          
+      - name: Install Dependencies for functions-v2
+        run: |
+          cd functions-v2
+          npm ci
+          
+      - name: Install Dependencies for main app
+        run: npm ci
         
       - name: Build
         run: npm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+        
+      - name: Setup OpenAI API Key
+        run: |
+          cd functions-v2
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
         
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only hosting,functions
+          args: deploy --only hosting,functions,functions:v2
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJECT_PATH: ./
