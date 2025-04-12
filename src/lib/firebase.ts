@@ -5,14 +5,15 @@ import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
+// Configuration Firebase utilisant les variables d'environnement Vite
 const firebaseConfig = {
-  apiKey: "AIzaSyCVFRZKBvJEMB6mXbdWB3h_oJTSb-VstdE",
-  authDomain: "calmi-99482.firebaseapp.com",
-  projectId: "calmi-99482",
-  storageBucket: "calmi-99482.appspot.com",
-  messagingSenderId: "811759661179",
-  appId: "1:811759661179:web:0dc8e3609f4ea0972a72de",
-  measurementId: "G-T4WEMQLSMZ"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCVFRZKBvJEMB6mXbdWB3h_oJTSb-VstdE",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "calmi-99482.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "calmi-99482",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "calmi-99482.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "811759661179",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:811759661179:web:0dc8e3609f4ea0972a72de",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-T4WEMQLSMZ"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -38,4 +39,3 @@ export const functions = getFunctions(app, 'us-central1');
 // }
 
 export default app;
-

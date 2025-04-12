@@ -58,13 +58,18 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
         senderName: "Calmi"
       };
 
-      const makeWebhookUrl = 'VOTRE_WEBHOOK_MAKE_COM';
+      // PLACEHOLDER: Remplacez cette URL par votre webhook Make.com réel dans votre environnement de production
+      const makeWebhookUrl = import.meta.env.VITE_EMAIL_WEBHOOK_URL || 'PLACEHOLDER_EMAIL_WEBHOOK_URL';
       try {
-        await fetch(makeWebhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookData)
-        });
+        if (makeWebhookUrl && makeWebhookUrl !== 'PLACEHOLDER_EMAIL_WEBHOOK_URL') {
+          await fetch(makeWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(webhookData)
+          });
+        } else {
+          console.log('Email webhook URL not configured:', webhookData);
+        }
       } catch (webhookError) {
         console.warn('Email webhook failed, but story was shared:', webhookError);
         // Continue execution even if webhook fails
@@ -121,13 +126,18 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
         title: storyData.title || "Histoire sans titre"
       };
 
-      const makeWebhookUrl = 'VOTRE_WEBHOOK_MAKE_COM_KINDLE';
+      // PLACEHOLDER: Remplacez cette URL par votre webhook Make.com pour Kindle dans votre environnement de production
+      const makeWebhookUrl = import.meta.env.VITE_KINDLE_WEBHOOK_URL || 'PLACEHOLDER_KINDLE_WEBHOOK_URL';
       try {
-        await fetch(makeWebhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(kindleData)
-        });
+        if (makeWebhookUrl && makeWebhookUrl !== 'PLACEHOLDER_KINDLE_WEBHOOK_URL') {
+          await fetch(makeWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(kindleData)
+          });
+        } else {
+          console.log('Kindle webhook URL not configured:', kindleData);
+        }
       } catch (webhookError) {
         console.error('Kindle webhook failed:', webhookError);
         throw new Error("Échec de l'envoi à Kindle");

@@ -48,7 +48,24 @@ cd ..
 
 3. Configurez les variables d'environnement:
    - Créez un fichier `.env.local` à la racine du projet
-   - Ajoutez votre clé API OpenAI: `OPENAI_API_KEY=votre_clé_api`
+   - Ajoutez vos variables d'environnement:
+   ```
+   # OpenAI
+   OPENAI_API_KEY=votre_clé_api
+   
+   # Firebase (optionnel - valeurs par défaut définies dans le code)
+   VITE_FIREBASE_API_KEY=your_firebase_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+   VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_firebase_app_id
+   VITE_FIREBASE_MEASUREMENT_ID=your_firebase_measurement_id
+   
+   # Webhooks (optionnel)
+   VITE_EMAIL_WEBHOOK_URL=your_email_webhook_url
+   VITE_KINDLE_WEBHOOK_URL=your_kindle_webhook_url
+   ```
 
 4. Lancez le serveur de développement:
 ```sh
