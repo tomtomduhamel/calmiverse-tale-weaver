@@ -1,5 +1,8 @@
 
 import { db, auth, functions, storage } from './firebase';
+import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { ref, uploadString, deleteObject } from 'firebase/storage';
 
 /**
  * Vérifie le statut de la connexion Firebase
@@ -17,9 +20,10 @@ export const checkFirebaseStatus = async () => {
   try {
     // Vérifier Firestore
     try {
-      const testCollection = db.collection('_status_check');
-      await testCollection.doc('test').set({ timestamp: new Date() });
-      await testCollection.doc('test').delete();
+      const testCollection = collection(db, '_status_check');
+      const testDoc = doc(testCollection, 'test');
+      await setDoc(testDoc, { timestamp: new Date() });
+      await deleteDoc(testDoc);
       status.firestore = true;
     } catch (error) {
       console.error('Erreur de test Firestore:', error);
@@ -31,7 +35,7 @@ export const checkFirebaseStatus = async () => {
     // Vérifier Functions
     try {
       // Ping simple pour vérifier la disponibilité
-      const pingFunction = functions.httpsCallable('ping');
+      const pingFunction = httpsCallable(functions, 'ping');
       await pingFunction();
       status.functions = true;
     } catch (error) {
@@ -45,9 +49,9 @@ export const checkFirebaseStatus = async () => {
 
     // Vérifier Storage
     try {
-      const testRef = storage.ref('_status_check/test.txt');
-      await testRef.putString('test');
-      await testRef.delete();
+      const testRef = ref(storage, '_status_check/test.txt');
+      await uploadString(testRef, 'test');
+      await deleteObject(testRef);
       status.storage = true;
     } catch (error) {
       console.error('Erreur de test Storage:', error);
