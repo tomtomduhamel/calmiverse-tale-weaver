@@ -11,7 +11,9 @@
     "typeRoots": [
       "node_modules/@types",
       "src/handlers",
-      "src/services"
+      "src/services",
+      "src/services/ai",
+      "src/services/story"
     ],
     "skipLibCheck": true,
     "esModuleInterop": true,
