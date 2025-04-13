@@ -13,7 +13,7 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
   try {
     console.log("Création de la requête OpenAI");
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o', // Utiliser un modèle plus récent
       messages: [
         {
           role: 'system',
@@ -73,7 +73,7 @@ CONTRAINTES SPÉCIFIQUES :
         },
         {
           role: 'user',
-          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames} avec l'objectif suivant : ${objective}. 
+          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
           L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
           Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.`,
         },
@@ -101,8 +101,10 @@ CONTRAINTES SPÉCIFIQUES :
       story_summary: "Résumé en cours de génération...",
       status: 'pending',
       createdAt: new Date(),
-      title: "Nouvelle histoire",
-      preview: story.substring(0, 200) + "..."
+      title: "Nouvelle histoire pour " + childrenNames.join(" et "),
+      preview: story.substring(0, 200) + "...",
+      childrenNames: childrenNames,
+      objective: objective
     };
 
     console.log("Données de l'histoire formatées avec succès:", storyData);

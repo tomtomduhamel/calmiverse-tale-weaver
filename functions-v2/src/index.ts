@@ -1,6 +1,7 @@
 
 import * as admin from 'firebase-admin';
 import { generateStory, retryFailedStory } from './handlers/storyHandler';
+import { ping } from './handlers/ping';
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
@@ -10,5 +11,6 @@ if (!admin.apps.length) {
 // Export the cloud functions
 export {
   generateStory,
-  retryFailedStory
+  retryFailedStory,
+  ping
 };
