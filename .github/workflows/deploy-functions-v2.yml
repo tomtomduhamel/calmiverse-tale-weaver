@@ -30,7 +30,7 @@ jobs:
       - name: Install Dependencies for functions-v2
         run: |
           cd functions-v2
-          npm ci
+          npm install
       
       - name: Setup OpenAI API Key
         run: |
