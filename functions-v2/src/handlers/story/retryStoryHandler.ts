@@ -1,0 +1,82 @@
+
+import { onCall } from 'firebase-functions/v2/https';
+import * as admin from 'firebase-admin';
+import { generateStoryWithAI } from '../../services/openaiService';
+import { StoryResponse } from '../types';
+import { extractStoryParameters, createErrorResponse } from './storyUtils';
+
+// Function to manually retry failed stories
+export const retryFailedStory = onCall(
+  {
+    timeoutSeconds: 300,
+    memory: '2GB',
+  },
+  async (request) => {
+    try {
+      const { storyId } = request.data;
+      
+      if (!storyId) {
+        throw new Error('L\'identifiant de l\'histoire est requis');
+      }
+      
+      console.log(`Retrying story generation for story ID: ${storyId}`);
+      
+      // Get the story document
+      const storyRef = admin.firestore().collection('stories').doc(storyId);
+      const storyDoc = await storyRef.get();
+      
+      if (!storyDoc.exists) {
+        throw new Error(`Histoire avec l'ID ${storyId} non trouvée`);
+      }
+      
+      const storyData = storyDoc.data();
+      
+      if (!storyData) {
+        throw new Error(`Données de l'histoire manquantes pour ${storyId}`);
+      }
+      
+      // Update story status to pending
+      await storyRef.update({
+        status: 'pending',
+        error: admin.firestore.FieldValue.delete(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      
+      console.log(`Updated story ${storyId} status to pending for retry`);
+      
+      // Extract objective and childrenNames from story data
+      const { objective, childrenNames } = extractStoryParameters(storyData);
+      
+      console.log(`Retrying story generation with:`, {
+        objective,
+        childrenNames
+      });
+      
+      // Call generateStory function with the story data
+      const result = await generateStoryWithAI(objective, childrenNames);
+      
+      // Update the story with the new content
+      await storyRef.update({
+        ...result,
+        status: 'completed',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      
+      console.log(`Successfully regenerated story ${storyId}`);
+      
+      return { 
+        success: true, 
+        storyData: result 
+      } as StoryResponse;
+      
+    } catch (error: any) {
+      console.error('Error in retryFailedStory function:', error);
+      
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Une erreur est survenue lors de la nouvelle tentative';
+      
+      throw new Error(errorMessage);
+    }
+  }
+);

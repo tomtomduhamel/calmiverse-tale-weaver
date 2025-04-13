@@ -1,6 +1,6 @@
 
 import * as admin from 'firebase-admin';
-import { generateStory, retryFailedStory } from './handlers/storyHandler';
+import { generateStory, retryFailedStory } from './handlers/story';
 import { ping } from './handlers/ping';
 
 // Initialize Firebase Admin

@@ -1,0 +1,73 @@
+
+import * as admin from 'firebase-admin';
+import { StoryData } from '../types';
+
+// Initialize Firebase if not already initialized
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+/**
+ * Updates a story document with error status
+ * @param storyId The ID of the story to update
+ * @param error The error message or object
+ */
+export const updateStoryWithErrorStatus = async (storyId: string, error: any): Promise<void> => {
+  try {
+    await admin.firestore().collection('stories').doc(storyId).update({
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Failed to generate story content',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    console.log(`Updated story ${storyId} with error status`);
+  } catch (updateError: any) {
+    console.error('Error updating story with error status:', updateError);
+  }
+};
+
+/**
+ * Creates a standardized error response
+ * @param error The error object or message
+ * @returns Formatted error message as a string
+ */
+export const createErrorResponse = (error: any): string => {
+  const errorMessage = error instanceof Error 
+    ? error.message 
+    : 'Une erreur inconnue est survenue';
+  
+  const errorCode = 'STORY_GENERATION_FAILED';
+  
+  // Log detailed error for debugging
+  console.error(`${errorCode}: ${errorMessage}`, error);
+  
+  // Return a formatted error
+  return JSON.stringify({
+    code: errorCode,
+    message: errorMessage,
+    timestamp: new Date().toISOString()
+  });
+};
+
+/**
+ * Extract objective and childrenNames from story data
+ * @param storyData The story data object
+ * @returns Object containing objective and childrenNames
+ */
+export const extractStoryParameters = (storyData: any): { objective: string, childrenNames: string[] } => {
+  let objective: string;
+  let childrenNames: string[] = [];
+  
+  if (typeof storyData.objective === 'string') {
+    objective = storyData.objective;
+  } else if (storyData.objective && typeof storyData.objective === 'object' && 'value' in storyData.objective) {
+    objective = storyData.objective.value;
+  } else {
+    throw new Error(`Format d'objectif invalide`);
+  }
+  
+  if (Array.isArray(storyData.childrenNames)) {
+    childrenNames = storyData.childrenNames;
+  }
+  
+  return { objective, childrenNames };
+};
