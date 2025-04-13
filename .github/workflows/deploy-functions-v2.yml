@@ -1,0 +1,51 @@
+
+name: Deploy Firebase Functions v2
+on:
+  workflow_dispatch:
+    # Permet de lancer le workflow manuellement depuis l'interface GitHub
+    inputs:
+      environment:
+        description: 'Environnement de déploiement'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      
+      - name: Install Dependencies for functions-v2
+        run: |
+          cd functions-v2
+          npm ci
+      
+      - name: Setup OpenAI API Key
+        run: |
+          cd functions-v2
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
+      
+      - name: Build Functions v2
+        run: |
+          cd functions-v2
+          npm run build
+      
+      - name: Deploy only Firebase Functions v2
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only functions:v2
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PROJECT_PATH: ./
