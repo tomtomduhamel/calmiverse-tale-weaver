@@ -1,3 +1,4 @@
+
 import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../services/openaiService';
@@ -99,7 +100,7 @@ export const generateStory = onCall(
           success: true, 
           storyData: storyData 
         };
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error generating story:', error);
         
         // Update the story with error status
@@ -118,7 +119,7 @@ export const generateStory = onCall(
         
         throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in generateStory function:', error);
       
       // Create a clean error message for the client
@@ -218,7 +219,7 @@ export const retryFailedStory = onCall(
         storyData: result 
       };
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in retryFailedStory function:', error);
       
       const errorMessage = error instanceof Error 

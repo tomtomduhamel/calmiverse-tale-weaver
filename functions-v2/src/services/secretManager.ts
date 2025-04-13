@@ -33,7 +33,7 @@ export const getSecret = async (secretName: string): Promise<string> => {
 
     console.log(`Successfully retrieved secret '${secretName}'`);
     return version.payload.data.toString();
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error accessing secret '${secretName}':`, error);
     
     // Create a detailed error message with troubleshooting hints
