@@ -1,6 +1,5 @@
 
 import * as admin from 'firebase-admin';
-import { StoryData } from '../types';
 
 // Initialize Firebase if not already initialized
 if (!admin.apps.length) {
@@ -41,11 +40,7 @@ export const createErrorResponse = (error: any): string => {
   console.error(`${errorCode}: ${errorMessage}`, error);
   
   // Return a formatted error
-  return JSON.stringify({
-    code: errorCode,
-    message: errorMessage,
-    timestamp: new Date().toISOString()
-  });
+  return errorMessage;
 };
 
 /**

@@ -3,7 +3,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../../services/ai/story-generator';
 import { StoryResponse } from '../types';
-import { extractStoryParameters, createErrorResponse } from './storyUtils';
+import { extractStoryParameters } from './storyUtils';
 
 // Function to manually retry failed stories
 export const retryFailedStory = onCall(
