@@ -1,7 +1,7 @@
 
 import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { generateStoryWithAI } from '../../services/openaiService';
+import { generateStoryWithAI } from '../../services/ai/story-generator';
 import { StoryResponse } from '../types';
 import { extractStoryParameters, createErrorResponse } from './storyUtils';
 
@@ -9,7 +9,7 @@ import { extractStoryParameters, createErrorResponse } from './storyUtils';
 export const retryFailedStory = onCall(
   {
     timeoutSeconds: 300,
-    memory: '2GB',
+    memory: '2GiB',
   },
   async (request) => {
     try {

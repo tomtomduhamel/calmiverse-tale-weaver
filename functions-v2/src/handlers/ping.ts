@@ -7,7 +7,7 @@ import { onCall } from 'firebase-functions/v2/https';
 export const ping = onCall(
   {
     timeoutSeconds: 10,
-    memory: '128MB',
+    memory: '128MiB',
   },
   async (request) => {
     return {

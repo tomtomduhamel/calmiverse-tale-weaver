@@ -1,13 +1,14 @@
+
 import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { generateStoryWithAI } from '../../services/openaiService';
+import { generateStoryWithAI } from '../../services/ai/story-generator';
 import { StoryGenerationRequest, StoryResponse } from '../types';
 import { updateStoryWithErrorStatus, createErrorResponse } from './storyUtils';
 
 export const generateStory = onCall(
   {
     timeoutSeconds: 300, // Increased timeout for longer stories
-    memory: '2GB',       // Increased memory
+    memory: '2GiB',       // Increased memory
     minInstances: 0,
     maxInstances: 10,
     concurrency: 5,
