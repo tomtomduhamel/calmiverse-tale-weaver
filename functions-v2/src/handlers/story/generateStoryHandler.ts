@@ -1,4 +1,3 @@
-
 import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../../services/ai/story-generator';

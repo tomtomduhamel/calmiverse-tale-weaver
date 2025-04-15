@@ -39,7 +39,7 @@ export const createErrorResponse = (error: any): string => {
   // Log detailed error for debugging
   console.error(`${errorCode}: ${errorMessage}`, error);
   
-  // Return a formatted error
+  // Return a simplified error message
   return errorMessage;
 };
 
