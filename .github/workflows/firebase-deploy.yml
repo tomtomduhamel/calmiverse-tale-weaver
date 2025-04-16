@@ -39,6 +39,22 @@ jobs:
           cd functions-v2
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
           echo "GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}" >> .env
+          
+          # Debug information
+          echo "Variables d'environnement configurées:"
+          echo "GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
+          echo "Présence de OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' }}"
+      
+      - name: Export Google App Credentials
+        run: |
+          # Vérification et exportation des identifiants Google
+          if [ "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" != "" ]; then
+            echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > /tmp/google-credentials.json
+            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/google-credentials.json" >> $GITHUB_ENV
+            echo "Identifiants Google configurés"
+          else
+            echo "ATTENTION: Identifiants Google non configurés"
+          fi
         
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
@@ -47,4 +63,5 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJECT_PATH: ./
-          GCP_SA_KEY: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          GCP_SA_KEY: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS || '' }}
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/google-credentials.json
