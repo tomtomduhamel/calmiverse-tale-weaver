@@ -29,13 +29,8 @@ jobs:
           cd functions-v2
           rm -rf node_modules lib
           rm -f package-lock.json
-          # Utiliser npm install au lieu de npm ci
           npm install --no-package-lock
           npm list --depth=0
-          echo "Vérification des dépendances clés:"
-          npm list firebase-functions || true
-          npm list firebase-admin || true
-          npm list openai || true
           
       - name: Install Dependencies for main app
         run: npm ci
@@ -51,52 +46,27 @@ jobs:
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
           echo "GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}" >> .env
           
-          # Debug information
           echo "Variables d'environnement configurées:"
           echo "GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
           echo "Présence de OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' }}"
       
-      - name: Setup Firebase service account
-        id: setup-firebase
+      - name: Setup Firebase service account (méthode simplifiée)
         run: |
-          # Méthode plus robuste pour traiter le JSON
+          # Créer le répertoire temporaire
           mkdir -p /tmp
           
-          # Test pour FIREBASE_SERVICE_ACCOUNT
-          if [ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
+          # Vérifier et configurer le compte de service Firebase
+          if [[ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]]; then
             echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > /tmp/firebase-service-account.json
-            # Vérifier que le fichier est un JSON valide
-            if jq empty /tmp/firebase-service-account.json 2>/dev/null; then
-              echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
-              echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
-              echo "✅ Compte de service Firebase configuré via FIREBASE_SERVICE_ACCOUNT"
-              exit 0
-            else
-              echo "❌ Le fichier JSON fourni dans FIREBASE_SERVICE_ACCOUNT n'est pas valide"
-              cat /tmp/firebase-service-account.json | wc -c
-              echo "Premiers caractères du fichier:"
-              head -c 50 /tmp/firebase-service-account.json || true
-            fi
+            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
+            echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
+            echo "✅ Compte de service Firebase configuré via FIREBASE_SERVICE_ACCOUNT"
+          else
+            echo "❌ ERREUR: FIREBASE_SERVICE_ACCOUNT non configuré"
+            echo "Veuillez configurer le secret FIREBASE_SERVICE_ACCOUNT dans les paramètres du projet GitHub"
+            exit 1
           fi
-          
-          # Test pour GOOGLE_APPLICATION_CREDENTIALS_JSON
-          if [ -n "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" ]; then
-            echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > /tmp/firebase-service-account.json
-            # Vérifier que le fichier est un JSON valide
-            if jq empty /tmp/firebase-service-account.json 2>/dev/null; then
-              echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
-              echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
-              echo "✅ Compte de service Firebase configuré via GOOGLE_APPLICATION_CREDENTIALS_JSON"
-              exit 0
-            else
-              echo "❌ Le fichier JSON fourni dans GOOGLE_APPLICATION_CREDENTIALS_JSON n'est pas valide"
-            fi
-          fi
-          
-          echo "❌ ERREUR: Aucun compte de service Firebase configuré correctement"
-          echo "Veuillez configurer soit FIREBASE_SERVICE_ACCOUNT soit GOOGLE_APPLICATION_CREDENTIALS_JSON avec un JSON valide"
-          exit 1
-          
+      
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@latest
         
@@ -110,17 +80,13 @@ jobs:
         
       - name: Deploy to Firebase Staging
         run: |
-          if [ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
+          if [[ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]]; then
             echo "❌ ERREUR: Impossible de trouver le fichier d'identifiants pour le déploiement"
             echo "Chemin attendu: $GOOGLE_APPLICATION_CREDENTIALS"
             exit 1
           fi
           
-          echo "Fichier d'identifiants trouvé à: $GOOGLE_APPLICATION_CREDENTIALS"
-          echo "Taille du fichier: $(wc -c < $GOOGLE_APPLICATION_CREDENTIALS) octets"
-          echo "Vérification JSON: $(jq 'keys' $GOOGLE_APPLICATION_CREDENTIALS | grep -c "project_id" || echo "0") occurrence(s) de project_id"
-          
           echo "Déploiement sur le projet: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
           firebase deploy --only hosting:staging,functions,functions:v2 --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} --debug
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.setup-firebase.outputs.service_account_path }}
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json
