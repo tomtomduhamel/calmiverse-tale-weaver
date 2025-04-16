@@ -18,12 +18,16 @@ export const initializeOpenAI = async () => {
   }
   
   try {
-    let apiKey;
+    let apiKey: string;
     
     // Essayer d'obtenir la clé API depuis les variables d'environnement d'abord
     if (process.env.OPENAI_API_KEY) {
       console.log("Utilisation de la variable d'environnement OPENAI_API_KEY");
-      apiKey = process.env.OPENAI_API_KEY;
+      const envApiKey = process.env.OPENAI_API_KEY;
+      if (!envApiKey) {
+        throw new Error("La variable d'environnement OPENAI_API_KEY est définie mais vide");
+      }
+      apiKey = envApiKey;
     } else {
       // Fallback vers Secret Manager
       console.log("Tentative de récupération de la clé API depuis Secret Manager");

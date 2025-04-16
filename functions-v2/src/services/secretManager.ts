@@ -30,7 +30,10 @@ export const getSecret = async (secretName: string): Promise<string> => {
       // Convertir nom-de-secret en NOM_DE_SECRET pour recherche env var
       const envVar = secretName.toUpperCase().replace(/-/g, '_');
       if (process.env[envVar]) {
-        return process.env[envVar];
+        const value = process.env[envVar];
+        if (value) { // Vérification explicite pour s'assurer que value n'est pas undefined
+          return value;
+        }
       }
       
       throw new Error(`Variable d'environnement ${envVar} non trouvée en développement`);
@@ -61,14 +64,18 @@ export const getSecret = async (secretName: string): Promise<string> => {
     }
     
     console.log(`Secret '${secretName}' récupéré avec succès`);
-    return version.payload.data.toString();
+    const data = version.payload.data.toString();
+    return data;
   } catch (error) {
     console.error(`Erreur d'accès au secret '${secretName}':`, error);
     
     // Dernier recours: vérifier la variable d'environnement directe
     if (secretName === 'openai-api-key' && process.env.OPENAI_API_KEY) {
       console.log("Utilisation de OPENAI_API_KEY comme dernier recours");
-      return process.env.OPENAI_API_KEY;
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (apiKey) {
+        return apiKey;
+      }
     }
     
     throw new Error(`Impossible d'accéder au secret '${secretName}'`);
