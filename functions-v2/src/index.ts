@@ -1,6 +1,10 @@
 
 import * as admin from 'firebase-admin';
-import { generateStory, retryFailedStory } from './handlers/story';
+import { onCall } from 'firebase-functions/v2/https';
+
+// Handlers des fonctions
+import { generateStory } from './handlers/story/generateStoryHandler';
+import { retryFailedStory } from './handlers/story/retryStoryHandler';
 import { ping } from './handlers/ping';
 
 // Initialiser Firebase Admin (une seule fois)

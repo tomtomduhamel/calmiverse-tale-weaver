@@ -5,7 +5,9 @@ import { generateStoryWithAI } from '../../services/ai/story-generator';
 import { StoryResponse } from '../types';
 import { extractStoryParameters, updateStoryWithErrorStatus } from './storyUtils';
 
-// Function to manually retry failed stories
+/**
+ * Fonction pour réessayer la génération d'histoires ayant échoué
+ */
 export const retryFailedStory = onCall(
   {
     timeoutSeconds: 300,
@@ -19,9 +21,9 @@ export const retryFailedStory = onCall(
         throw new Error('L\'identifiant de l\'histoire est requis');
       }
       
-      console.log(`Retrying story generation for story ID: ${storyId}`);
+      console.log(`Nouvelle tentative de génération pour l'histoire ID: ${storyId}`);
       
-      // Get the story document
+      // Récupérer le document de l'histoire
       const storyRef = admin.firestore().collection('stories').doc(storyId);
       const storyDoc = await storyRef.get();
       
@@ -35,51 +37,51 @@ export const retryFailedStory = onCall(
         throw new Error(`Données de l'histoire manquantes pour ${storyId}`);
       }
       
-      // Update story status to pending
+      // Mettre à jour le statut de l'histoire à "en attente"
       await storyRef.update({
         status: 'pending',
         error: admin.firestore.FieldValue.delete(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
       
-      console.log(`Updated story ${storyId} status to pending for retry`);
+      console.log(`Statut de l'histoire ${storyId} mis à jour à "pending" pour une nouvelle tentative`);
       
-      // Extract objective and childrenNames from story data
+      // Extraire l'objectif et les noms d'enfants des données de l'histoire
       let { objective, childrenNames } = extractStoryParameters(storyData);
       
-      console.log(`Retrying story generation with:`, {
+      console.log(`Nouvelle tentative de génération avec:`, {
         objective,
         childrenNames
       });
       
       try {
-        // Call generateStory function with the story data
+        // Appeler la fonction generateStory avec les données de l'histoire
         const result = await generateStoryWithAI(objective, childrenNames);
         
-        // Update the story with the new content
+        // Mettre à jour l'histoire avec le nouveau contenu
         await storyRef.update({
           ...result,
           status: 'completed',
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
         
-        console.log(`Successfully regenerated story ${storyId}`);
+        console.log(`Histoire ${storyId} régénérée avec succès`);
         
         return { 
           success: true, 
           storyData: result 
         } as StoryResponse;
       } catch (error) {
-        console.error(`Error regenerating story ${storyId}:`, error);
+        console.error(`Erreur lors de la régénération de l'histoire ${storyId}:`, error);
         
-        // Update the story with error status
+        // Mettre à jour l'histoire avec le statut d'erreur
         await updateStoryWithErrorStatus(storyId, error);
         
         throw error;
       }
       
     } catch (error) {
-      console.error('Error in retryFailedStory function:', error);
+      console.error('Erreur dans la fonction retryFailedStory:', error);
       
       const errorMessage = error instanceof Error 
         ? error.message 

@@ -4,17 +4,17 @@ import { getStorySystemPrompt, getStoryUserPrompt } from './story-prompt';
 import { formatStoryData } from './story-formatting';
 
 /**
- * Generates a story using OpenAI's API
+ * Génère une histoire en utilisant l'API OpenAI
  */
 export const generateStoryWithAI = async (objective: string, childrenNames: string[]) => {
   console.log("Début de la génération avec OpenAI");
   console.log("Paramètres reçus:", { objective, childrenNames });
   
   try {
-    // Ensure the API key is initialized
+    // S'assurer que la clé API est initialisée
     await initializeOpenAI();
     
-    console.log("OpenAI client initialisé avec succès");
+    console.log("Client OpenAI initialisé avec succès");
     console.log("Création de la requête OpenAI");
     
     const systemPrompt = getStorySystemPrompt();
@@ -57,7 +57,7 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
 
     console.log("Formatage des données de l'histoire");
     
-    // Format and return the story data
+    // Formater et retourner les données de l'histoire
     const formattedStory = formatStoryData(story, childrenNames, objective);
     
     console.log("Histoire générée avec succès:", {

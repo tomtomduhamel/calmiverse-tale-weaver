@@ -1,64 +1,76 @@
 
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
-// Initialize Secret Manager client
-const client = new SecretManagerServiceClient();
+// Initialisation du client Secret Manager avec configuration explicite des options
+let client: SecretManagerServiceClient;
+
+try {
+  client = new SecretManagerServiceClient();
+  console.log("Client Secret Manager initialisé avec succès");
+} catch (error) {
+  console.error("Erreur lors de l'initialisation du client Secret Manager:", error);
+}
 
 /**
  * Récupère une valeur de secret depuis Google Cloud Secret Manager
- * avec fallback pour les environnements de développement
  * @param secretName Nom du secret à récupérer
  * @returns La valeur du secret sous forme de chaîne
  */
 export const getSecret = async (secretName: string): Promise<string> => {
   try {
-    // Vérifier d'abord si nous sommes en environnement de développement
+    // Logique spécifique pour l'environnement de développement
     if (process.env.NODE_ENV === 'development' || process.env.FUNCTIONS_EMULATOR === 'true') {
-      console.log(`Environnement de développement détecté, utilisation des variables d'environnement pour ${secretName}`);
-      const envVar = secretName.toUpperCase().replace(/-/g, '_');
-      const envValue = process.env[envVar];
+      console.log(`Environnement de développement détecté, recherche de variable d'environnement pour ${secretName}`);
       
-      if (envValue) {
-        return envValue;
-      }
-      
-      // Pour faciliter le développement, si OPENAI_API_KEY est défini, on l'utilise pour openai-api-key
+      // Pour openai-api-key, utiliser directement OPENAI_API_KEY
       if (secretName === 'openai-api-key' && process.env.OPENAI_API_KEY) {
         return process.env.OPENAI_API_KEY;
       }
       
-      console.warn(`Variable d'environnement ${envVar} non trouvée, utilisation d'une valeur de test`);
-      return 'mock-secret-value-for-development';
+      // Convertir nom-de-secret en NOM_DE_SECRET pour recherche env var
+      const envVar = secretName.toUpperCase().replace(/-/g, '_');
+      if (process.env[envVar]) {
+        return process.env[envVar];
+      }
+      
+      throw new Error(`Variable d'environnement ${envVar} non trouvée en développement`);
     }
     
-    // En production, récupérer le projectId correctement
-    const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || 'calmi-99482';
+    // Vérification du client
+    if (!client) {
+      throw new Error("Client Secret Manager non initialisé");
+    }
     
-    console.log(`Récupération du secret '${secretName}' depuis le projet '${projectId}'`);
+    // Récupération du projectId depuis les variables d'environnement
+    const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT;
     
+    if (!projectId) {
+      throw new Error("ID du projet Google Cloud non défini");
+    }
+    
+    console.log(`Tentative d'accès au secret '${secretName}' dans le projet '${projectId}'`);
+    
+    // Format du nom complet du secret
     const name = `projects/${projectId}/secrets/${secretName}/versions/latest`;
     
-    // Récupérer la version du secret
-    const [version] = await client.accessSecretVersion({
-      name: name,
-    });
-
-    // Vérifier que la charge utile du secret existe
+    // Récupération du secret
+    const [version] = await client.accessSecretVersion({ name });
+    
     if (!version.payload?.data) {
-      throw new Error(`Secret '${secretName}' non trouvé ou avec une charge utile vide`);
+      throw new Error(`Secret '${secretName}' non trouvé ou vide`);
     }
-
+    
     console.log(`Secret '${secretName}' récupéré avec succès`);
     return version.payload.data.toString();
   } catch (error) {
     console.error(`Erreur d'accès au secret '${secretName}':`, error);
     
-    // Fallback pour OPENAI_API_KEY si disponible
+    // Dernier recours: vérifier la variable d'environnement directe
     if (secretName === 'openai-api-key' && process.env.OPENAI_API_KEY) {
-      console.log(`Utilisation de la variable d'environnement OPENAI_API_KEY comme fallback`);
+      console.log("Utilisation de OPENAI_API_KEY comme dernier recours");
       return process.env.OPENAI_API_KEY;
     }
     
-    throw new Error(`Impossible d'accéder au secret '${secretName}'. Vérifiez les permissions et la configuration.`);
+    throw new Error(`Impossible d'accéder au secret '${secretName}'`);
   }
 };

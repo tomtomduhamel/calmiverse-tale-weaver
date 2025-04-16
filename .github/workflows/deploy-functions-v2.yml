@@ -2,7 +2,6 @@
 name: Deploy Firebase Functions v2
 on:
   workflow_dispatch:
-    # Permet de lancer le workflow manuellement depuis l'interface GitHub
     inputs:
       environment:
         description: 'Environnement de déploiement'
@@ -26,6 +25,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'functions-v2/package-lock.json'
       
       - name: Install Dependencies for functions-v2
         run: |
@@ -33,25 +34,30 @@ jobs:
           npm ci
       
       - name: Setup Environment Variables
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
         run: |
           cd functions-v2
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
-          echo "GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}" >> .env
+          echo "OPENAI_API_KEY=$OPENAI_API_KEY" > .env
+          echo "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT" >> .env
           
-          # Afficher env vars disponibles pour le débogage (sans les secrets)
+          # Debug info (sans afficher les valeurs sensibles)
           echo "Variables d'environnement configurées:"
-          echo "GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
-          echo "Présence de OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' }}"
+          echo "GOOGLE_CLOUD_PROJECT: $GOOGLE_CLOUD_PROJECT"
+          echo "OPENAI_API_KEY présente: ${{ secrets.OPENAI_API_KEY != '' }}"
       
-      - name: Export Google App Credentials
+      - name: Setup Firebase service account
+        id: setup-firebase
         run: |
-          # Vérification et exportation des identifiants Google
-          if [ "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" != "" ]; then
-            echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > /tmp/google-credentials.json
-            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/google-credentials.json" >> $GITHUB_ENV
-            echo "Identifiants Google configurés"
+          if [ "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" != "" ]; then
+            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > /tmp/firebase-service-account.json
+            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
+            echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
+            echo "✅ Compte de service Firebase configuré"
           else
-            echo "ATTENTION: Identifiants Google non configurés"
+            echo "❌ ERREUR: FIREBASE_SERVICE_ACCOUNT non configuré"
+            exit 1
           fi
       
       - name: Build Functions v2
@@ -62,9 +68,8 @@ jobs:
       - name: Deploy only Firebase Functions v2
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only functions:v2
+          args: deploy --only functions:v2 --debug
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.setup-firebase.outputs.service_account_path }}
           PROJECT_PATH: ./
-          GCP_SA_KEY: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS || '' }}
-          GOOGLE_APPLICATION_CREDENTIALS: /tmp/google-credentials.json

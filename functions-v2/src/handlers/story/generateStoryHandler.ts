@@ -1,9 +1,13 @@
+
 import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { generateStoryWithAI } from '../../services/ai/story-generator';
 import { StoryGenerationRequest, StoryResponse } from '../types';
 import { updateStoryWithErrorStatus, createErrorResponse } from './storyUtils';
 
+/**
+ * Fonction Cloud pour générer une nouvelle histoire
+ */
 export const generateStory = onCall(
   {
     timeoutSeconds: 300,
@@ -14,51 +18,52 @@ export const generateStory = onCall(
   },
   async (request) => {
     try {
-      console.log('Function called with request data:', request.data);
+      console.log('Fonction generateStory appelée avec les données:', request.data);
       const data = request.data as StoryGenerationRequest;
       const { storyId, objective, childrenNames } = data;
 
+      // Validation des données requises
       if (!objective) {
-        console.error('Missing required field: objective');
+        console.error('Champ requis manquant: objective');
         throw new Error('L\'objectif est requis');
       }
 
       if (!Array.isArray(childrenNames) || childrenNames.length === 0) {
-        console.error('Invalid data format: childrenNames must be a non-empty array');
+        console.error('Format de données invalide: childrenNames doit être un tableau non vide');
         throw new Error('Les noms des enfants doivent être fournis dans un tableau non vide');
       }
 
-      console.log('Processing story generation request:', {
-        storyId: storyId || 'Not provided (will be auto-generated)',
+      console.log('Traitement de la demande de génération d\'histoire:', {
+        storyId: storyId || 'Non fourni (sera généré automatiquement)',
         objective,
         childrenNames
       });
 
       try {
-        // Generate the story using OpenAI
+        // Générer l'histoire avec OpenAI
         const storyData = await generateStoryWithAI(objective, childrenNames);
-        console.log('Story generated successfully:', {
+        console.log('Histoire générée avec succès:', {
           id: storyData.id_stories,
-          title: storyData.title,
-          previewLength: storyData.preview?.length,
-          storyTextLength: storyData.story_text?.length
+          titre: storyData.title,
+          longueurAperçu: storyData.preview?.length,
+          longueurTexte: storyData.story_text?.length
         });
         
-        // If a storyId is provided, update the existing story
-        // Otherwise, the document ID will be auto-generated
+        // Si un storyId est fourni, mettre à jour l'histoire existante
+        // Sinon, l'ID du document sera généré automatiquement
         const docRef = storyId 
           ? admin.firestore().collection('stories').doc(storyId)
           : admin.firestore().collection('stories').doc(storyData.id_stories);
         
-        console.log(`Updating Firestore document: ${docRef.id}`);
+        console.log(`Mise à jour du document Firestore: ${docRef.id}`);
         
-        // Atomic update with transaction to avoid race conditions
+        // Mise à jour atomique avec transaction pour éviter les conditions de course
         await admin.firestore().runTransaction(async (transaction) => {
-          // Get the current document if it exists
+          // Obtenir le document actuel s'il existe
           const doc = await transaction.get(docRef);
           
           if (storyId && !doc.exists) {
-            console.error(`Story with ID ${storyId} not found`);
+            console.error(`Histoire avec l'ID ${storyId} non trouvée`);
             throw new Error(`Histoire avec l'ID ${storyId} non trouvée`);
           }
           
@@ -69,27 +74,27 @@ export const generateStory = onCall(
           };
           
           if (doc.exists) {
-            // Update existing document
-            console.log('Updating existing story document');
+            // Mettre à jour le document existant
+            console.log('Mise à jour du document d\'histoire existant');
             transaction.update(docRef, dataToUpdate);
           } else {
-            // Create new document
-            console.log('Creating new story document');
+            // Créer un nouveau document
+            console.log('Création d\'un nouveau document d\'histoire');
             transaction.set(docRef, dataToUpdate);
           }
         });
         
-        console.log('Firestore update completed successfully');
+        console.log('Mise à jour Firestore terminée avec succès');
         
-        // Return a standardized response with the generated story data
+        // Retourner une réponse standardisée avec les données de l'histoire générée
         return { 
           success: true, 
           storyData: storyData 
         } as StoryResponse;
       } catch (error) {
-        console.error('Error generating story:', error);
+        console.error('Erreur lors de la génération de l\'histoire:', error);
         
-        // Update the story with error status
+        // Mettre à jour l'histoire avec le statut d'erreur
         if (storyId) {
           await updateStoryWithErrorStatus(storyId, error);
         }
@@ -97,9 +102,9 @@ export const generateStory = onCall(
         throw error;
       }
     } catch (error) {
-      console.error('Error in generateStory function:', error);
+      console.error('Erreur dans la fonction generateStory:', error);
       
-      // Throw a formatted error
+      // Lancer une erreur formatée
       throw new Error(createErrorResponse(error));
     }
   }
