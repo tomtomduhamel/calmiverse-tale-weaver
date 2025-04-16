@@ -18,24 +18,29 @@ export const initializeOpenAI = async () => {
   }
   
   try {
-    // Try to get API key from Secret Manager
-    const secretApiKey = await getSecret('openai-api-key');
+    let apiKey;
     
-    console.log("API Key récupérée avec succès depuis Secret Manager");
-    openai = new OpenAI({ apiKey: secretApiKey });
-    apiKeyInitialized = true;
-  } catch (secretError: any) {
-    console.warn('Failed to get API key from Secret Manager:', secretError);
-    
-    // Fall back to environment variable
-    const envApiKey = process.env.OPENAI_API_KEY;
-    if (envApiKey) {
+    // Try to get API key from environment first (for local dev and CI/CD)
+    if (process.env.OPENAI_API_KEY) {
       console.log("Utilisation de la variable d'environnement OPENAI_API_KEY");
-      openai = new OpenAI({ apiKey: envApiKey });
-      apiKeyInitialized = true;
+      apiKey = process.env.OPENAI_API_KEY;
     } else {
-      throw new Error("Impossible de récupérer la clé API OpenAI. Vérifiez que le secret ou la variable d'environnement est configuré.");
+      // Fall back to Secret Manager (for production)
+      console.log("Tentative de récupération de la clé API depuis Secret Manager");
+      apiKey = await getSecret('openai-api-key');
+      console.log("API Key récupérée avec succès depuis Secret Manager");
     }
+    
+    if (!apiKey) {
+      throw new Error("Aucune clé API OpenAI trouvée");
+    }
+    
+    openai = new OpenAI({ apiKey });
+    apiKeyInitialized = true;
+    console.log("Client OpenAI initialisé avec succès");
+  } catch (error) {
+    console.error("Erreur lors de l'initialisation du client OpenAI:", error);
+    throw new Error("Impossible d'initialiser le client OpenAI. Vérifiez que la clé API est configurée.");
   }
 };
 

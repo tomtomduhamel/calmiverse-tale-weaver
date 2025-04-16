@@ -34,10 +34,11 @@ jobs:
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
         
-      - name: Setup OpenAI API Key
+      - name: Setup Environment Variables
         run: |
           cd functions-v2
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
+          echo "GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}" >> .env
         
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
@@ -46,3 +47,4 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJECT_PATH: ./
+          GCP_SA_KEY: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}

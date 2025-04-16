@@ -20,8 +20,19 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
     const systemPrompt = getStorySystemPrompt();
     const userPrompt = getStoryUserPrompt(childrenNames, objective);
     
+    // Vérifier que l'objectif et les noms d'enfants sont valides
+    if (!objective || objective.trim() === '') {
+      throw new Error("L'objectif de l'histoire ne peut pas être vide");
+    }
+    
+    if (!childrenNames || !Array.isArray(childrenNames) || childrenNames.length === 0) {
+      throw new Error("Au moins un nom d'enfant doit être fourni");
+    }
+    
+    console.log("Envoi de la requête à OpenAI");
+    
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o', // Utiliser gpt-4o
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -44,10 +55,27 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
       throw new Error('Aucune histoire n\'a été générée');
     }
 
+    console.log("Formatage des données de l'histoire");
+    
     // Format and return the story data
-    return formatStoryData(story, childrenNames, objective);
-  } catch (error: any) {
+    const formattedStory = formatStoryData(story, childrenNames, objective);
+    
+    console.log("Histoire générée avec succès:", {
+      title: formattedStory.title,
+      id: formattedStory.id_stories,
+      length: formattedStory.story_text?.length || 0
+    });
+    
+    return formattedStory;
+  } catch (error) {
     console.error("Erreur lors de la génération de l'histoire avec OpenAI:", error);
-    throw error;
+    
+    // Créer un message d'erreur plus descriptif
+    const errorMessage = error instanceof Error 
+      ? `Erreur de génération: ${error.message}` 
+      : "Erreur inconnue lors de la génération de l'histoire";
+      
+    console.error(errorMessage);
+    throw new Error(errorMessage);
   }
 };

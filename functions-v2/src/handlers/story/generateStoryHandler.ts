@@ -6,8 +6,8 @@ import { updateStoryWithErrorStatus, createErrorResponse } from './storyUtils';
 
 export const generateStory = onCall(
   {
-    timeoutSeconds: 300, // Increased timeout for longer stories
-    memory: '2GiB',       // Increased memory
+    timeoutSeconds: 300,
+    memory: '2GiB',
     minInstances: 0,
     maxInstances: 10,
     concurrency: 5,
@@ -86,7 +86,7 @@ export const generateStory = onCall(
           success: true, 
           storyData: storyData 
         } as StoryResponse;
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error generating story:', error);
         
         // Update the story with error status
@@ -96,7 +96,7 @@ export const generateStory = onCall(
         
         throw error;
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error in generateStory function:', error);
       
       // Throw a formatted error

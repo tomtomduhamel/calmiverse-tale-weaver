@@ -14,10 +14,18 @@ export const getSecret = async (secretName: string): Promise<string> => {
     const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT;
     
     if (!projectId) {
+      console.warn('Google Cloud project ID not available in environment, using fallback');
+      
+      // Check if we're in a development environment
+      if (process.env.NODE_ENV === 'development' || process.env.FUNCTIONS_EMULATOR === 'true') {
+        console.log('Development environment detected, using mock secret');
+        return process.env[secretName.toUpperCase().replace(/-/g, '_')] || 'mock-secret-value';
+      }
+      
       throw new Error('Google Cloud project ID not available in environment');
     }
     
-    console.log(`Attempting to access secret '${secretName}' from project '${projectId}'`);
+    console.log(`Récupération du secret '${secretName}' depuis le projet '${projectId}'`);
     
     const name = `projects/${projectId}/secrets/${secretName}/versions/latest`;
     
@@ -31,25 +39,23 @@ export const getSecret = async (secretName: string): Promise<string> => {
       throw new Error(`Secret '${secretName}' not found or has empty payload`);
     }
 
-    console.log(`Successfully retrieved secret '${secretName}'`);
+    console.log(`Secret '${secretName}' récupéré avec succès`);
     return version.payload.data.toString();
-  } catch (error: any) {
-    console.error(`Error accessing secret '${secretName}':`, error);
+  } catch (error) {
+    console.error(`Erreur d'accès au secret '${secretName}':`, error);
     
-    // Create a detailed error message with troubleshooting hints
-    let errorMessage = `Failed to access secret '${secretName}'`;
-    
-    if (error.code) {
-      errorMessage += ` (Error code: ${error.code})`;
+    // Fallback pour les environnements de développement
+    if (process.env.NODE_ENV === 'development' || process.env.FUNCTIONS_EMULATOR === 'true') {
+      console.log('Environnement de développement détecté, utilisation de la variable d\'environnement');
+      const envVar = secretName.toUpperCase().replace(/-/g, '_');
+      const envValue = process.env[envVar];
+      
+      if (envValue) {
+        console.log(`Utilisation de la variable d'environnement ${envVar} comme fallback`);
+        return envValue;
+      }
     }
     
-    // Add specific guidance based on common errors
-    if (error.message?.includes('Permission denied')) {
-      errorMessage += '. Check IAM permissions for the service account.';
-    } else if (error.message?.includes('not found')) {
-      errorMessage += '. Verify the secret exists in Secret Manager.';
-    }
-    
-    throw new Error(errorMessage);
+    throw new Error(`Impossible d'accéder au secret '${secretName}'. Vérifiez les permissions du compte de service.`);
   }
 };
