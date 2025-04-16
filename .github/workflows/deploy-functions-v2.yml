@@ -55,22 +55,40 @@ jobs:
           echo "GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
           echo "Présence de OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' }}"
       
-      - name: Setup Firebase service account (méthode simplifiée)
+      - name: Setup Firebase Service Account
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           # Créer le répertoire temporaire
           mkdir -p /tmp
           
-          # Vérifier et configurer le compte de service Firebase
-          if [[ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]]; then
-            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > /tmp/firebase-service-account.json
-            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
-            echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
-            echo "✅ Compte de service Firebase configuré via FIREBASE_SERVICE_ACCOUNT"
-          else
-            echo "❌ ERREUR: FIREBASE_SERVICE_ACCOUNT non configuré"
-            echo "Veuillez configurer le secret FIREBASE_SERVICE_ACCOUNT dans les paramètres du projet GitHub"
+          # Vérifier que le secret existe
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
+            echo "❌ ERREUR: FIREBASE_SERVICE_ACCOUNT n'est pas configuré."
+            echo "Veuillez configurer le secret FIREBASE_SERVICE_ACCOUNT dans les paramètres du projet GitHub."
             exit 1
           fi
+          
+          # Écrire le secret dans un fichier
+          echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > /tmp/firebase-service-account.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
+          echo "✅ Compte de service Firebase configuré"
+          
+          # Vérifier que le fichier existe
+          if [ ! -f "/tmp/firebase-service-account.json" ]; then
+            echo "❌ ERREUR: Le fichier de compte de service n'a pas été créé correctement."
+            exit 1
+          fi
+          
+          # Vérifier la taille du fichier (doit être > 0)
+          if [ ! -s "/tmp/firebase-service-account.json" ]; then
+            echo "❌ ERREUR: Le fichier de compte de service est vide."
+            exit 1
+          fi
+          
+          # Debug (sans révéler d'informations sensibles)
+          echo "Fichier de compte de service créé: /tmp/firebase-service-account.json"
+          echo "Taille du fichier: $(wc -c < /tmp/firebase-service-account.json) octets"
       
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@latest
@@ -85,9 +103,7 @@ jobs:
       
       - name: Deploy only Firebase Functions v2
         run: |
-          cd functions-v2
-          
-          if [[ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]]; then
+          if [ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
             echo "❌ ERREUR: Impossible de trouver le fichier d'identifiants pour le déploiement"
             echo "Chemin attendu: $GOOGLE_APPLICATION_CREDENTIALS"
             exit 1
