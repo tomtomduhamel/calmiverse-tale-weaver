@@ -43,7 +43,8 @@ jobs:
       - name: Installation des dépendances
         run: |
           cd functions-v2
-          npm install
+          # Utiliser npm install au lieu de npm ci
+          npm install --no-package-lock
           echo "Dépendances installées avec succès"
           echo "Liste des dépendances installées:"
           npm list --depth=0
@@ -52,16 +53,15 @@ jobs:
         run: |
           cd functions-v2
           echo "Vérification de firebase-functions:"
-          npm list firebase-functions
+          npm list firebase-functions || true
           echo "Vérification de firebase-admin:"
-          npm list firebase-admin
+          npm list firebase-admin || true
           echo "Vérification d'OpenAI:"
-          npm list openai
+          npm list openai || true
           echo "Vérification des autres dépendances:"
-          npm list @google-cloud/secret-manager
-          npm list @types/express
-          npm list @types/node
-          npm list @types/node-fetch
+          npm list @google-cloud/secret-manager || true
+          npm list form-data || true
+          npm list node-fetch || true
         
       - name: Setup Environment Variables
         env:

@@ -29,7 +29,8 @@ jobs:
           cd functions-v2
           rm -rf node_modules lib
           rm -f package-lock.json
-          npm install
+          # Utiliser npm install au lieu de npm ci
+          npm install --no-package-lock
           npm list --depth=0
           echo "Vérification des dépendances clés:"
           npm list firebase-functions || true
