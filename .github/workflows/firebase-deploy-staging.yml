@@ -71,14 +71,32 @@ jobs:
             echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
             echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
             echo "✅ Compte de service Firebase configuré via FIREBASE_SERVICE_ACCOUNT"
+            cat /tmp/firebase-service-account.json | grep "type" || echo "Fichier créé mais contenu non valide"
           elif [ "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" != "" ]; then
             echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > /tmp/firebase-service-account.json
             echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
             echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
             echo "✅ Compte de service Firebase configuré via GOOGLE_APPLICATION_CREDENTIALS_JSON"
+            cat /tmp/firebase-service-account.json | grep "type" || echo "Fichier créé mais contenu non valide"
           else
             echo "⚠️ ATTENTION: Aucun compte de service Firebase configuré"
             echo "Le déploiement pourrait échouer. Configurez FIREBASE_SERVICE_ACCOUNT ou GOOGLE_APPLICATION_CREDENTIALS_JSON"
+            exit 1
+          fi
+          
+          # Vérifier que le fichier existe et a un contenu
+          if [ -f "/tmp/firebase-service-account.json" ]; then
+            echo "Le fichier d'identifiants existe"
+            ls -la /tmp/firebase-service-account.json
+            file_size=$(stat -c%s "/tmp/firebase-service-account.json")
+            echo "Taille du fichier: $file_size bytes"
+            if [ "$file_size" -eq 0 ]; then
+              echo "❌ ERREUR: Le fichier d'identifiants est vide"
+              exit 1
+            fi
+          else
+            echo "❌ ERREUR: Le fichier d'identifiants n'existe pas"
+            exit 1
           fi
           
       - name: Install Firebase CLI
@@ -98,8 +116,10 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS défini: $(if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then echo "Oui"; else echo "Non"; fi)"
           if [ -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
             echo "Le fichier d'identifiants existe"
+            jq 'keys' "$GOOGLE_APPLICATION_CREDENTIALS" || echo "Impossible de lire le fichier JSON"
           else 
             echo "⚠️ ATTENTION: Le fichier d'identifiants n'existe pas"
+            exit 1
           fi
           
           # Déploiement avec logs détaillés

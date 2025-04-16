@@ -43,7 +43,6 @@ jobs:
       - name: Installation des dépendances
         run: |
           cd functions-v2
-          # Utiliser npm install au lieu de npm ci
           npm install --no-package-lock
           echo "Dépendances installées avec succès"
           echo "Liste des dépendances installées:"
@@ -92,14 +91,31 @@ jobs:
             echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
             echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
             echo "✅ Compte de service Firebase configuré via FIREBASE_SERVICE_ACCOUNT"
+            cat /tmp/firebase-service-account.json | grep "type" || echo "Fichier créé mais contenu non valide"
           elif [ "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" != "" ]; then
             echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > /tmp/firebase-service-account.json
             echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
             echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
             echo "✅ Compte de service Firebase configuré via GOOGLE_APPLICATION_CREDENTIALS_JSON"
+            cat /tmp/firebase-service-account.json | grep "type" || echo "Fichier créé mais contenu non valide"
           else
             echo "❌ ERREUR: Aucun compte de service Firebase configuré"
             echo "Veuillez configurer soit FIREBASE_SERVICE_ACCOUNT soit GOOGLE_APPLICATION_CREDENTIALS_JSON"
+            exit 1
+          fi
+          
+          # Vérifier que le fichier existe et a un contenu
+          if [ -f "/tmp/firebase-service-account.json" ]; then
+            echo "Le fichier d'identifiants existe"
+            ls -la /tmp/firebase-service-account.json
+            file_size=$(stat -c%s "/tmp/firebase-service-account.json")
+            echo "Taille du fichier: $file_size bytes"
+            if [ "$file_size" -eq 0 ]; then
+              echo "❌ ERREUR: Le fichier d'identifiants est vide"
+              exit 1
+            fi
+          else
+            echo "❌ ERREUR: Le fichier d'identifiants n'existe pas"
             exit 1
           fi
       
