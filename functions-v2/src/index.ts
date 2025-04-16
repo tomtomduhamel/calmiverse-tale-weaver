@@ -1,6 +1,5 @@
 
 import * as admin from 'firebase-admin';
-import { onCall } from 'firebase-functions/v2/https';
 
 // Handlers des fonctions
 import { generateStory } from './handlers/story/generateStoryHandler';
