@@ -48,12 +48,26 @@ jobs:
       - name: Setup Environment Variables
         run: |
           cd functions-v2
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
-          echo "GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}" >> .env
+          # Vérifier si la clé API OpenAI est définie
+          if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+            echo "⚠️ AVERTISSEMENT: La variable OPENAI_API_KEY n'est pas définie dans les secrets GitHub."
+            echo "Assurez-vous de configurer cette variable pour que l'API OpenAI fonctionne correctement."
+          else
+            echo "✅ Variable OPENAI_API_KEY trouvée dans les secrets."
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
+          fi
+          
+          # Vérifier et configurer le projet Google Cloud
+          if [ -z "${{ secrets.GOOGLE_CLOUD_PROJECT }}" ]; then
+            echo "⚠️ Utilisation du projet par défaut 'calmi-99482' car GOOGLE_CLOUD_PROJECT n'est pas défini."
+            echo "GOOGLE_CLOUD_PROJECT=calmi-99482" >> .env
+          else
+            echo "✅ Variable GOOGLE_CLOUD_PROJECT trouvée: ${{ secrets.GOOGLE_CLOUD_PROJECT }}"
+            echo "GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT }}" >> .env
+          fi
           
           echo "Variables d'environnement configurées:"
-          echo "GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
-          echo "Présence de OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' }}"
+          cat .env | grep -v "KEY"
       
       - name: Setup Firebase Service Account
         env:
@@ -61,25 +75,33 @@ jobs:
         run: |
           # Vérifier si la variable de secret est définie
           if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
-            echo "❌ ERREUR: Le secret FIREBASE_SERVICE_ACCOUNT n'est pas configuré"
-            echo "Veuillez configurer ce secret dans les paramètres de votre dépôt GitHub."
+            echo "❌ ERREUR: Le secret FIREBASE_SERVICE_ACCOUNT n'est pas configuré!"
+            echo "Veuillez configurer ce secret dans les paramètres de votre dépôt GitHub:"
+            echo "  1. Allez dans 'Settings' > 'Secrets and variables' > 'Actions'"
+            echo "  2. Ajoutez un secret nommé FIREBASE_SERVICE_ACCOUNT avec le contenu du fichier JSON de votre compte de service"
             exit 1
           fi
           
           # Créer le fichier de service account
           echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > /tmp/firebase-service-account.json
           
-          # Vérifier la création du fichier
+          # Vérifier la création du fichier et son contenu
           if [ ! -f "/tmp/firebase-service-account.json" ]; then
             echo "❌ ERREUR: Le fichier de compte de service n'a pas pu être créé"
             exit 1
           fi
           
-          # Vérifier que le fichier n'est pas vide
           if [ ! -s "/tmp/firebase-service-account.json" ]; then
             echo "❌ ERREUR: Le fichier de compte de service est vide"
-            echo "Contenu exact de la variable FIREBASE_SERVICE_ACCOUNT:"
-            echo "$FIREBASE_SERVICE_ACCOUNT_JSON" | wc -c
+            echo "Vérifiez que le secret FIREBASE_SERVICE_ACCOUNT contient le contenu JSON complet du fichier"
+            exit 1
+          fi
+          
+          # Vérifier la validité du JSON
+          jq empty /tmp/firebase-service-account.json 2>/dev/null
+          if [ $? -ne 0 ]; then
+            echo "❌ ERREUR: Le fichier JSON du compte de service n'est pas valide"
+            echo "Vérifiez que le secret FIREBASE_SERVICE_ACCOUNT contient un JSON valide"
             exit 1
           fi
           
@@ -91,11 +113,17 @@ jobs:
         run: |
           if [ -z "${{ secrets.FIREBASE_TOKEN }}" ]; then
             echo "❌ ERREUR: Le secret FIREBASE_TOKEN n'est pas configuré"
-            echo "Veuillez configurer ce secret dans les paramètres de votre dépôt GitHub."
+            echo "Veuillez configurer ce secret dans les paramètres de votre dépôt GitHub:"
+            echo "  1. Allez dans 'Settings' > 'Secrets and variables' > 'Actions'"
+            echo "  2. Exécutez 'firebase login:ci' en local et utilisez le token généré"
+            echo "  3. Ajoutez un secret nommé FIREBASE_TOKEN avec ce token"
             exit 1
           else
             echo "✅ Token Firebase présent"
           fi
+      
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@latest
       
       - name: Build Functions v2
         id: build_functions
@@ -111,6 +139,7 @@ jobs:
           ls -la lib/
       
       - name: Deploy only Firebase Functions v2
+        if: success()
         run: |
           echo "Déploiement des fonctions v2 sur le projet: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
           firebase deploy --only functions:v2 --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} --token "${{ secrets.FIREBASE_TOKEN }}" --debug

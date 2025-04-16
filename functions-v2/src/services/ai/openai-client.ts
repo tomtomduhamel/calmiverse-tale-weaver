@@ -24,8 +24,8 @@ export const initializeOpenAI = async () => {
     if (process.env.OPENAI_API_KEY) {
       console.log("Utilisation de la variable d'environnement OPENAI_API_KEY");
       const envApiKey = process.env.OPENAI_API_KEY;
-      if (!envApiKey) {
-        throw new Error("La variable d'environnement OPENAI_API_KEY est définie mais vide");
+      if (typeof envApiKey !== 'string') {
+        throw new Error("La variable d'environnement OPENAI_API_KEY est définie mais n'est pas une chaîne valide");
       }
       apiKey = envApiKey;
     } else {

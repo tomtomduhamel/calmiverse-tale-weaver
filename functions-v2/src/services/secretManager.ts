@@ -24,16 +24,21 @@ export const getSecret = async (secretName: string): Promise<string> => {
       
       // Pour openai-api-key, utiliser directement OPENAI_API_KEY
       if (secretName === 'openai-api-key' && process.env.OPENAI_API_KEY) {
-        return process.env.OPENAI_API_KEY;
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (typeof apiKey === 'string') {
+          return apiKey;
+        }
+        throw new Error("La variable OPENAI_API_KEY existe mais n'est pas une chaîne valide");
       }
       
       // Convertir nom-de-secret en NOM_DE_SECRET pour recherche env var
       const envVar = secretName.toUpperCase().replace(/-/g, '_');
       if (process.env[envVar]) {
         const value = process.env[envVar];
-        if (value) { // Vérification explicite pour s'assurer que value n'est pas undefined
+        if (typeof value === 'string') {
           return value;
         }
+        throw new Error(`Variable d'environnement ${envVar} existe mais n'est pas une chaîne valide`);
       }
       
       throw new Error(`Variable d'environnement ${envVar} non trouvée en développement`);
@@ -73,9 +78,10 @@ export const getSecret = async (secretName: string): Promise<string> => {
     if (secretName === 'openai-api-key' && process.env.OPENAI_API_KEY) {
       console.log("Utilisation de OPENAI_API_KEY comme dernier recours");
       const apiKey = process.env.OPENAI_API_KEY;
-      if (apiKey) {
+      if (typeof apiKey === 'string') {
         return apiKey;
       }
+      throw new Error("La variable OPENAI_API_KEY existe en dernier recours mais n'est pas une chaîne valide");
     }
     
     throw new Error(`Impossible d'accéder au secret '${secretName}'`);
