@@ -56,15 +56,29 @@ jobs:
           echo "GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
           echo "Présence de OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' }}"
       
-      - name: Export Google App Credentials
+      - name: Setup Firebase service account
+        id: setup-firebase
         run: |
-          # Vérification et exportation des identifiants Google
-          if [ "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" != "" ]; then
-            echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > /tmp/google-credentials.json
-            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/google-credentials.json" >> $GITHUB_ENV
-            echo "Identifiants Google configurés"
+          # Vérification des variables disponibles
+          echo "Vérification des secrets disponibles..."
+          echo "FIREBASE_TOKEN présent: ${{ secrets.FIREBASE_TOKEN != '' }}"
+          echo "FIREBASE_SERVICE_ACCOUNT présent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}"
+          echo "GOOGLE_APPLICATION_CREDENTIALS_JSON présent: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON != '' }}"
+          
+          # Utiliser l'un ou l'autre des comptes de service disponibles
+          if [ "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" != "" ]; then
+            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > /tmp/firebase-service-account.json
+            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
+            echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
+            echo "✅ Compte de service Firebase configuré via FIREBASE_SERVICE_ACCOUNT"
+          elif [ "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" != "" ]; then
+            echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > /tmp/firebase-service-account.json
+            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
+            echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
+            echo "✅ Compte de service Firebase configuré via GOOGLE_APPLICATION_CREDENTIALS_JSON"
           else
-            echo "ATTENTION: Identifiants Google non configurés"
+            echo "⚠️ ATTENTION: Aucun compte de service Firebase configuré"
+            echo "Le déploiement pourrait échouer. Configurez FIREBASE_SERVICE_ACCOUNT ou GOOGLE_APPLICATION_CREDENTIALS_JSON"
           fi
           
       - name: Install Firebase CLI
@@ -80,6 +94,15 @@ jobs:
         
       - name: Deploy to Firebase Staging
         run: |
-          firebase deploy --token "${{ secrets.FIREBASE_TOKEN }}" --only hosting:staging,functions,functions:v2 --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
+          # Vérifier la présence de variables d'environnement
+          echo "GOOGLE_APPLICATION_CREDENTIALS défini: $(if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then echo "Oui"; else echo "Non"; fi)"
+          if [ -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
+            echo "Le fichier d'identifiants existe"
+          else 
+            echo "⚠️ ATTENTION: Le fichier d'identifiants n'existe pas"
+          fi
+          
+          # Déploiement avec logs détaillés
+          firebase deploy --token "${{ secrets.FIREBASE_TOKEN }}" --only hosting:staging,functions,functions:v2 --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} --debug
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: /tmp/google-credentials.json
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.setup-firebase.outputs.service_account_path }}
