@@ -26,18 +26,37 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Clean npm cache and node_modules
+      - name: Vérifier structure du projet
         run: |
-          cd functions-v2
-          rm -rf node_modules
-          rm -f package-lock.json
-          echo "Nettoyage terminé"
+          echo "Structure du dossier functions-v2:"
+          ls -la functions-v2/
+          echo "package.json:"
+          cat functions-v2/package.json
       
-      - name: Install Dependencies for functions-v2
+      - name: Clean installation
         run: |
           cd functions-v2
-          npm install --no-audit --no-fund
+          rm -rf node_modules lib
+          rm -f package-lock.json
+          echo "Nettoyage complet effectué"
+      
+      - name: Installation des dépendances avec clean-install
+        run: |
+          cd functions-v2
+          npm install --no-package-lock
           echo "Dépendances installées avec succès"
+          echo "Liste des dépendances installées:"
+          npm list --depth=0
+        
+      - name: Vérification des dépendances
+        run: |
+          cd functions-v2
+          echo "Vérification de firebase-functions:"
+          npm list firebase-functions || true
+          echo "Vérification de firebase-admin:"
+          npm list firebase-admin || true
+          echo "Vérification d'OpenAI:"
+          npm list openai || true
         
       - name: Setup Environment Variables
         env:
@@ -71,6 +90,7 @@ jobs:
           cd functions-v2
           npm run build
           echo "Build des fonctions terminé"
+          echo "Contenu du dossier lib:"
           ls -la lib/
       
       - name: Install Firebase CLI

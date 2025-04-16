@@ -1,5 +1,9 @@
 
 import * as admin from 'firebase-admin';
+import * as dotenv from 'dotenv';
+
+// Charger les variables d'environnement
+dotenv.config();
 
 // Handlers des fonctions
 import { generateStory } from './handlers/story/generateStoryHandler';

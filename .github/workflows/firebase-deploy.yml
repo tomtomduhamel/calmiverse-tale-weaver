@@ -26,9 +26,14 @@ jobs:
       - name: Clean npm cache and install dependencies for functions-v2
         run: |
           cd functions-v2
-          rm -rf node_modules
+          rm -rf node_modules lib
           rm -f package-lock.json
           npm install --no-audit --no-fund
+          npm list --depth=0
+          echo "Vérification des dépendances clés:"
+          npm list firebase-functions || true
+          npm list firebase-admin || true
+          npm list openai || true
           
       - name: Install Dependencies for main app
         run: npm ci
@@ -68,6 +73,8 @@ jobs:
           cd functions-v2
           npm run build
           echo "Build des fonctions v2 terminé"
+          echo "Contenu du dossier lib:"
+          ls -la lib/
         
       - name: Deploy to Firebase
         run: |
