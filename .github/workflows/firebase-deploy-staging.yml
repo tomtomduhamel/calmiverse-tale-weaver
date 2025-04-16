@@ -59,43 +59,43 @@ jobs:
       - name: Setup Firebase service account
         id: setup-firebase
         run: |
-          # Correction du script pour éviter les erreurs de syntaxe
-          if [[ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]]; then
+          # Méthode plus robuste pour traiter le JSON
+          mkdir -p /tmp
+          
+          # Test pour FIREBASE_SERVICE_ACCOUNT
+          if [ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
             echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > /tmp/firebase-service-account.json
-            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
-            echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
-            echo "✅ Compte de service Firebase configuré via FIREBASE_SERVICE_ACCOUNT"
-          elif [[ -n "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" ]]; then
-            echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > /tmp/firebase-service-account.json
-            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
-            echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
-            echo "✅ Compte de service Firebase configuré via GOOGLE_APPLICATION_CREDENTIALS_JSON"
-          else
-            echo "❌ ERREUR: Aucun compte de service Firebase configuré"
-            echo "Le déploiement pourrait échouer. Configurez FIREBASE_SERVICE_ACCOUNT ou GOOGLE_APPLICATION_CREDENTIALS_JSON"
-            exit 1
+            # Vérifier que le fichier est un JSON valide
+            if jq empty /tmp/firebase-service-account.json 2>/dev/null; then
+              echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
+              echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
+              echo "✅ Compte de service Firebase configuré via FIREBASE_SERVICE_ACCOUNT"
+              exit 0
+            else
+              echo "❌ Le fichier JSON fourni dans FIREBASE_SERVICE_ACCOUNT n'est pas valide"
+              cat /tmp/firebase-service-account.json | wc -c
+              echo "Premiers caractères du fichier:"
+              head -c 50 /tmp/firebase-service-account.json || true
+            fi
           fi
           
-          # Vérifier que le fichier existe et a un contenu
-          if [[ -f "/tmp/firebase-service-account.json" ]]; then
-            echo "Le fichier d'identifiants existe"
-            ls -la /tmp/firebase-service-account.json
-            file_size=$(stat -c%s "/tmp/firebase-service-account.json")
-            echo "Taille du fichier: $file_size bytes"
-            if [[ "$file_size" -eq 0 ]]; then
-              echo "❌ ERREUR: Le fichier d'identifiants est vide"
-              exit 1
+          # Test pour GOOGLE_APPLICATION_CREDENTIALS_JSON
+          if [ -n "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" ]; then
+            echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > /tmp/firebase-service-account.json
+            # Vérifier que le fichier est un JSON valide
+            if jq empty /tmp/firebase-service-account.json 2>/dev/null; then
+              echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
+              echo "service_account_path=/tmp/firebase-service-account.json" >> $GITHUB_OUTPUT
+              echo "✅ Compte de service Firebase configuré via GOOGLE_APPLICATION_CREDENTIALS_JSON"
+              exit 0
+            else
+              echo "❌ Le fichier JSON fourni dans GOOGLE_APPLICATION_CREDENTIALS_JSON n'est pas valide"
             fi
-            
-            # Vérifier que le fichier contient du JSON valide
-            if ! jq . /tmp/firebase-service-account.json >/dev/null 2>&1; then
-              echo "❌ ERREUR: Le fichier d'identifiants n'est pas un JSON valide"
-              exit 1
-            fi
-          else
-            echo "❌ ERREUR: Le fichier d'identifiants n'existe pas"
-            exit 1
           fi
+          
+          echo "❌ ERREUR: Aucun compte de service Firebase configuré correctement"
+          echo "Veuillez configurer soit FIREBASE_SERVICE_ACCOUNT soit GOOGLE_APPLICATION_CREDENTIALS_JSON avec un JSON valide"
+          exit 1
           
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@latest
@@ -110,15 +110,17 @@ jobs:
         
       - name: Deploy to Firebase Staging
         run: |
-          # Utiliser le compte de service pour le déploiement
-          if [[ -f "$GOOGLE_APPLICATION_CREDENTIALS" ]]; then
-            echo "Utilisation du fichier d'identifiants pour le déploiement"
-            echo "Déploiement sur le projet: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
-            
-            firebase deploy --token "${{ secrets.FIREBASE_TOKEN }}" --only hosting:staging,functions,functions:v2 --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} --debug
-          else
+          if [ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
             echo "❌ ERREUR: Impossible de trouver le fichier d'identifiants pour le déploiement"
+            echo "Chemin attendu: $GOOGLE_APPLICATION_CREDENTIALS"
             exit 1
           fi
+          
+          echo "Fichier d'identifiants trouvé à: $GOOGLE_APPLICATION_CREDENTIALS"
+          echo "Taille du fichier: $(wc -c < $GOOGLE_APPLICATION_CREDENTIALS) octets"
+          echo "Vérification JSON: $(jq 'keys' $GOOGLE_APPLICATION_CREDENTIALS | grep -c "project_id" || echo "0") occurrence(s) de project_id"
+          
+          echo "Déploiement sur le projet: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
+          firebase deploy --only hosting:staging,functions,functions:v2 --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} --debug
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.setup-firebase.outputs.service_account_path }}
