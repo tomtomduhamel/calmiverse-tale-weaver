@@ -28,7 +28,7 @@ jobs:
           cd functions-v2
           rm -rf node_modules lib
           rm -f package-lock.json
-          npm install --no-audit --no-fund
+          npm install
           npm list --depth=0
           echo "Vérification des dépendances clés:"
           npm list firebase-functions || true

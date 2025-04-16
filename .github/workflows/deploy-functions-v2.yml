@@ -40,10 +40,10 @@ jobs:
           rm -f package-lock.json
           echo "Nettoyage complet effectué"
       
-      - name: Installation des dépendances avec clean-install
+      - name: Installation des dépendances
         run: |
           cd functions-v2
-          npm install --no-package-lock
+          npm install
           echo "Dépendances installées avec succès"
           echo "Liste des dépendances installées:"
           npm list --depth=0
@@ -52,11 +52,16 @@ jobs:
         run: |
           cd functions-v2
           echo "Vérification de firebase-functions:"
-          npm list firebase-functions || true
+          npm list firebase-functions
           echo "Vérification de firebase-admin:"
-          npm list firebase-admin || true
+          npm list firebase-admin
           echo "Vérification d'OpenAI:"
-          npm list openai || true
+          npm list openai
+          echo "Vérification des autres dépendances:"
+          npm list @google-cloud/secret-manager
+          npm list @types/express
+          npm list @types/node
+          npm list @types/node-fetch
         
       - name: Setup Environment Variables
         env:
