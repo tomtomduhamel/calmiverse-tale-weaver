@@ -5,12 +5,25 @@ import { formatStoryData } from './story-formatting';
 
 /**
  * Génère une histoire en utilisant l'API OpenAI
+ * @param objective Objectif de l'histoire
+ * @param childrenNames Noms des enfants pour lesquels générer l'histoire
+ * @returns Données formatées de l'histoire générée
+ * @throws Error si la génération échoue
  */
 export const generateStoryWithAI = async (objective: string, childrenNames: string[]) => {
   console.log("Début de la génération avec OpenAI");
   console.log("Paramètres reçus:", { objective, childrenNames });
   
   try {
+    // Validation des entrées
+    if (!objective || typeof objective !== 'string' || objective.trim() === '') {
+      throw new Error("L'objectif de l'histoire ne peut pas être vide");
+    }
+    
+    if (!Array.isArray(childrenNames) || childrenNames.length === 0) {
+      throw new Error("Au moins un nom d'enfant doit être fourni");
+    }
+    
     // S'assurer que la clé API est initialisée
     await initializeOpenAI();
     
@@ -19,15 +32,6 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
     
     const systemPrompt = getStorySystemPrompt();
     const userPrompt = getStoryUserPrompt(childrenNames, objective);
-    
-    // Vérifier que l'objectif et les noms d'enfants sont valides
-    if (!objective || objective.trim() === '') {
-      throw new Error("L'objectif de l'histoire ne peut pas être vide");
-    }
-    
-    if (!childrenNames || !Array.isArray(childrenNames) || childrenNames.length === 0) {
-      throw new Error("Au moins un nom d'enfant doit être fourni");
-    }
     
     console.log("Envoi de la requête à OpenAI");
     
@@ -49,8 +53,8 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
 
     console.log("Réponse d'OpenAI reçue");
     
-    const story = completion.choices[0].message.content;
-    if (!story) {
+    const storyContent = completion.choices[0].message.content;
+    if (!storyContent) {
       console.error("Erreur: Aucune histoire générée par OpenAI");
       throw new Error('Aucune histoire n\'a été générée');
     }
@@ -58,7 +62,7 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
     console.log("Formatage des données de l'histoire");
     
     // Formater et retourner les données de l'histoire
-    const formattedStory = formatStoryData(story, childrenNames, objective);
+    const formattedStory = formatStoryData(storyContent, childrenNames, objective);
     
     console.log("Histoire générée avec succès:", {
       title: formattedStory.title,

@@ -51,13 +51,16 @@ jobs:
           # Créer le fichier .env s'il n'existe pas
           touch .env
           
+          # Définir l'environnement Node.js
+          echo "NODE_ENV=production" >> .env
+          
           # Vérifier si la clé API OpenAI est définie
           if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
             echo "⚠️ AVERTISSEMENT: La variable OPENAI_API_KEY n'est pas définie dans les secrets GitHub."
             echo "Assurez-vous de configurer cette variable pour que l'API OpenAI fonctionne correctement."
           else
             echo "✅ Variable OPENAI_API_KEY trouvée dans les secrets."
-            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
           fi
           
           # Vérifier et configurer le projet Google Cloud
@@ -177,7 +180,7 @@ jobs:
           echo "Version de Node: $(node -v)"
           echo "Version de npm: $(npm -v)"
           
-          # Afficher les dépendances installeés
+          # Afficher les dépendances installées
           echo "Dépendances installées:"
           npm list --depth=0
           

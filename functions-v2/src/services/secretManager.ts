@@ -16,6 +16,7 @@ try {
  * Récupère une valeur de secret depuis Google Cloud Secret Manager
  * @param secretName Nom du secret à récupérer
  * @returns La valeur du secret sous forme de chaîne
+ * @throws Error si le secret n'est pas trouvé ou s'il est invalide
  */
 export const getSecret = async (secretName: string): Promise<string> => {
   if (!secretName || typeof secretName !== 'string') {
@@ -38,10 +39,11 @@ export const getSecret = async (secretName: string): Promise<string> => {
       
       // Convertir nom-de-secret en NOM_DE_SECRET pour recherche env var
       const envVar = secretName.toUpperCase().replace(/-/g, '_');
-      if (process.env[envVar]) {
-        const value = process.env[envVar];
-        if (typeof value === 'string' && value.trim() !== '') {
-          return value;
+      const envValue = process.env[envVar];
+      
+      if (envValue !== undefined) {
+        if (typeof envValue === 'string' && envValue.trim() !== '') {
+          return envValue;
         }
         throw new Error(`Variable d'environnement ${envVar} existe mais n'est pas une chaîne valide`);
       }
@@ -57,8 +59,8 @@ export const getSecret = async (secretName: string): Promise<string> => {
     // Récupération du projectId depuis les variables d'environnement
     const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT;
     
-    if (!projectId || typeof projectId !== 'string' || projectId.trim() === '') {
-      throw new Error("ID du projet Google Cloud non défini ou invalide");
+    if (!projectId) {
+      throw new Error("ID du projet Google Cloud non défini");
     }
     
     console.log(`Tentative d'accès au secret '${secretName}' dans le projet '${projectId}'`);

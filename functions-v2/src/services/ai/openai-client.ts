@@ -11,8 +11,9 @@ let apiKeyInitialized = false;
 
 /**
  * Initialise le client OpenAI avec une clé provenant de Secret Manager ou des variables d'environnement
+ * @throws Error si la clé API ne peut pas être récupérée ou est invalide
  */
-export const initializeOpenAI = async () => {
+export const initializeOpenAI = async (): Promise<void> => {
   if (apiKeyInitialized) {
     return;
   }
@@ -37,19 +38,11 @@ export const initializeOpenAI = async () => {
       console.log("Tentative de récupération de la clé API depuis Secret Manager");
       try {
         apiKey = await getSecret('openai-api-key');
-        if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
-          throw new Error("La clé API OpenAI récupérée est invalide");
-        }
         console.log("API Key récupérée avec succès depuis Secret Manager");
       } catch (error) {
         console.error("Erreur lors de la récupération depuis Secret Manager:", error);
         throw new Error(`La clé API OpenAI n'a pas pu être récupérée: ${error instanceof Error ? error.message : String(error)}`);
       }
-    }
-    
-    // Vérification supplémentaire
-    if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
-      throw new Error("Aucune clé API OpenAI valide trouvée");
     }
     
     // Créer une nouvelle instance avec la clé récupérée
@@ -61,6 +54,15 @@ export const initializeOpenAI = async () => {
     apiKeyInitialized = false; // Marquer comme non initialisé pour permettre de réessayer
     throw new Error(`Impossible d'initialiser le client OpenAI: ${error instanceof Error ? error.message : String(error)}`);
   }
+};
+
+/**
+ * Réinitialise l'état du client OpenAI pour forcer une réinitialisation lors du prochain appel
+ * Utile pour les tests ou pour forcer le rechargement de la clé API
+ */
+export const resetOpenAIClient = (): void => {
+  apiKeyInitialized = false;
+  console.log("État du client OpenAI réinitialisé");
 };
 
 export { openai };
