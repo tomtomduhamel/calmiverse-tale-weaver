@@ -49,7 +49,7 @@ export const createErrorResponse = (error: any): string => {
  * @returns Object containing objective and childrenNames
  */
 export const extractStoryParameters = (storyData: any): { objective: string, childrenNames: string[] } => {
-  let objective: string;
+  let objective: string = '';
   let childrenNames: string[] = [];
   
   if (typeof storyData.objective === 'string') {
@@ -62,6 +62,10 @@ export const extractStoryParameters = (storyData: any): { objective: string, chi
   
   if (Array.isArray(storyData.childrenNames)) {
     childrenNames = storyData.childrenNames;
+  }
+  
+  if (!objective) {
+    throw new Error("L'objectif est requis");
   }
   
   return { objective, childrenNames };
