@@ -55,13 +55,13 @@ export const extractStoryParameters = (storyData: any): { objective: string, chi
   if (typeof storyData.objective === 'string') {
     objective = storyData.objective;
   } else if (storyData.objective && typeof storyData.objective === 'object' && 'value' in storyData.objective) {
-    objective = storyData.objective.value;
+    objective = String(storyData.objective.value || '');
   } else {
     throw new Error(`Format d'objectif invalide`);
   }
   
   if (Array.isArray(storyData.childrenNames)) {
-    childrenNames = storyData.childrenNames;
+    childrenNames = storyData.childrenNames.map(name => String(name || ''));
   }
   
   if (!objective) {

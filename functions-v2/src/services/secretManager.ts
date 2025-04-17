@@ -26,16 +26,16 @@ export const getSecret = async (secretName: string): Promise<string> => {
     
     // Vérification spéciale pour OpenAI API Key
     if (secretName === 'openai-api-key') {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (typeof apiKey === 'string' && apiKey.trim()) {
+      const apiKey = process.env.OPENAI_API_KEY || '';
+      if (apiKey && apiKey.trim()) {
         return apiKey;
       }
       throw new Error("OPENAI_API_KEY non définie ou invalide");
     }
     
     // Vérification des autres variables d'environnement
-    const envValue = process.env[envVar];
-    if (typeof envValue === 'string' && envValue.trim()) {
+    const envValue = process.env[envVar] || '';
+    if (envValue && envValue.trim()) {
       return envValue;
     }
     throw new Error(`Variable d'environnement ${envVar} non trouvée ou invalide`);
@@ -45,7 +45,7 @@ export const getSecret = async (secretName: string): Promise<string> => {
     throw new Error("Client Secret Manager non initialisé");
   }
   
-  const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT;
+  const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || '';
   if (!projectId) {
     throw new Error("ID du projet Google Cloud non défini");
   }
@@ -68,8 +68,8 @@ export const getSecret = async (secretName: string): Promise<string> => {
   } catch (error) {
     // Dernier recours pour OpenAI API Key
     if (secretName === 'openai-api-key' && process.env.OPENAI_API_KEY) {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (typeof apiKey === 'string' && apiKey.trim()) {
+      const apiKey = process.env.OPENAI_API_KEY || '';
+      if (apiKey && apiKey.trim()) {
         return apiKey;
       }
     }
