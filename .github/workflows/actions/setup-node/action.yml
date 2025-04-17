@@ -1,0 +1,11 @@
+
+name: 'Configuration de Node.js'
+description: 'Configure Node.js pour le déploiement'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Installation de Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'

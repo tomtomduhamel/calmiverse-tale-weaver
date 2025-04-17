@@ -1,0 +1,19 @@
+
+name: 'Installation des dépendances'
+description: 'Installe les dépendances npm'
+
+inputs:
+  working-directory:
+    description: 'Répertoire de travail'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Installation des dépendances
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        npm ci
+        echo "✅ Dépendances installées avec succès"
+        npm list --depth=0

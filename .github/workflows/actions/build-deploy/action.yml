@@ -1,0 +1,36 @@
+
+name: 'Build et déploiement'
+description: 'Compile et déploie les functions Firebase'
+
+inputs:
+  project-id:
+    description: 'ID du projet Firebase'
+    required: true
+  firebase-token:
+    description: 'Token Firebase CLI'
+    required: true
+  working-directory:
+    description: 'Répertoire de travail'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Build Functions v2
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        npm run build
+        
+        if [ $? -ne 0 ]; then
+          echo "❌ ERREUR de compilation"
+          exit 1
+        fi
+        echo "✅ Build terminé avec succès"
+    
+    - name: Déploiement des Functions v2
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        echo "🚀 Déploiement des fonctions v2 sur ${{ inputs.project-id }}"
+        firebase deploy --only functions:v2 --project ${{ inputs.project-id }} --token "${{ inputs.firebase-token }}" --non-interactive --debug

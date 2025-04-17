@@ -1,5 +1,5 @@
 
-name: Deploy Firebase Functions v2
+name: Déploiement des Functions v2
 on:
   workflow_dispatch:
     inputs:
@@ -18,75 +18,35 @@ jobs:
     environment: ${{ github.event.inputs.environment }}
     
     steps:
-      - name: Checkout code
+      - name: Checkout du code
         uses: actions/checkout@v3
       
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+      - name: Configuration de Node.js
+        uses: ./.github/workflows/actions/setup-node
       
       - name: Installation des dépendances
-        working-directory: functions-v2
-        run: |
-          npm ci
-          echo "✅ Dépendances installées avec succès"
-          npm list --depth=0
-        
-      - name: Setup Environment Variables
-        working-directory: functions-v2
-        run: |
-          echo "NODE_ENV=production" > .env
-          
-          if [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then
-            echo "✅ Configuration de OPENAI_API_KEY"
-            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
-          else
-            echo "❌ ERREUR: OPENAI_API_KEY manquante"
-            exit 1
-          fi
-          
-          echo "GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}" >> .env
-          
-          echo "Variables d'environnement configurées avec succès"
+        uses: ./.github/workflows/actions/install-dependencies
+        with:
+          working-directory: functions-v2
       
-      - name: Setup Firebase Service Account
-        env:
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
-            echo "❌ ERREUR: FIREBASE_SERVICE_ACCOUNT manquant"
-            exit 1
-          fi
-          
-          echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > /tmp/firebase-service-account.json
-          chmod 600 /tmp/firebase-service-account.json
-          
-          if ! jq empty /tmp/firebase-service-account.json; then
-            echo "❌ ERREUR: JSON du compte de service invalide"
-            exit 1
-          fi
-          
-          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
-          echo "✅ Compte de service Firebase configuré"
+      - name: Configuration des variables d'environnement
+        uses: ./.github/workflows/actions/setup-env
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          google-cloud-project: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
+          working-directory: functions-v2
       
-      - name: Install Firebase CLI
+      - name: Configuration du compte de service Firebase
+        uses: ./.github/workflows/actions/setup-firebase-service
+        with:
+          firebase-service-account: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      
+      - name: Installation de Firebase CLI
         run: npm install -g firebase-tools@latest
       
-      - name: Build Functions v2
-        working-directory: functions-v2
-        run: |
-          npm run build
-          
-          if [ $? -ne 0 ]; then
-            echo "❌ ERREUR de compilation"
-            exit 1
-          fi
-          echo "✅ Build terminé avec succès"
-      
-      - name: Deploy Firebase Functions v2
-        working-directory: functions-v2
-        run: |
-          echo "🚀 Déploiement des fonctions v2 sur ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
-          firebase deploy --only functions:v2 --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} --token "${{ secrets.FIREBASE_TOKEN }}" --non-interactive --debug
-
+      - name: Build et déploiement
+        uses: ./.github/workflows/actions/build-deploy
+        with:
+          project-id: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
+          firebase-token: ${{ secrets.FIREBASE_TOKEN }}
+          working-directory: functions-v2
