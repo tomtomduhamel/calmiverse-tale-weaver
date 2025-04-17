@@ -20,6 +20,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
+        echo "🔨 Compilation des fonctions v2..."
         npm run build
         
         if [ $? -ne 0 ]; then
@@ -27,6 +28,16 @@ runs:
           exit 1
         fi
         echo "✅ Build terminé avec succès"
+        
+        # Vérification supplémentaire du contenu du dossier lib
+        if [ ! -d "lib" ] || [ -z "$(ls -A lib 2>/dev/null)" ]; then
+          echo "❌ Le dossier lib est vide ou n'existe pas après la compilation"
+          ls -la
+          exit 1
+        fi
+        
+        echo "📁 Contenu du dossier lib:"
+        ls -la lib/
     
     - name: Déploiement des Functions v2
       shell: bash

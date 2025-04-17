@@ -45,7 +45,7 @@ export const getSecret = async (secretName: string): Promise<string> => {
     throw new Error("Client Secret Manager non initialisé");
   }
   
-  // Utilisation de chaînes vides comme valeur par défaut pour éviter undefined
+  // Résolution du problème de type ici - s'assurer que projectId n'est jamais undefined
   const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || "";
   if (!projectId) {
     throw new Error("ID du projet Google Cloud non défini");
@@ -56,12 +56,12 @@ export const getSecret = async (secretName: string): Promise<string> => {
   try {
     const [version] = await client.accessSecretVersion({ name });
     
-    if (!version.payload?.data) {
+    if (!version.payload || !version.payload.data) {
       throw new Error(`Secret '${secretName}' non trouvé ou vide`);
     }
     
     const data = version.payload.data.toString();
-    if (!data.trim()) {
+    if (!data || !data.trim()) {
       throw new Error(`Secret '${secretName}' récupéré est vide`);
     }
     
