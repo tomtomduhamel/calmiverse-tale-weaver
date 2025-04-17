@@ -30,7 +30,8 @@ export const generateStoryWithAI = async (objective: string, childrenNames: stri
       max_tokens: 4000,
     });
 
-    const storyContent = completion.choices[0]?.message?.content || '';
+    // Utilisation d'une chaîne vide comme valeur par défaut
+    const storyContent = completion.choices[0]?.message?.content || "";
     if (!storyContent.trim()) {
       throw new Error("Aucun contenu généré par OpenAI");
     }

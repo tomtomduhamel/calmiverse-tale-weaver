@@ -2,6 +2,7 @@
 import OpenAI from 'openai';
 import { getSecret } from '../secretManager';
 
+// Initialisation avec une clé factice pour éviter les problèmes de typage
 let openai = new OpenAI({
   apiKey: 'placeholder'
 });

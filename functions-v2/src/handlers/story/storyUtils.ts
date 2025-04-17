@@ -53,15 +53,17 @@ export const extractStoryParameters = (storyData: any): { objective: string, chi
   let childrenNames: string[] = [];
   
   if (typeof storyData.objective === 'string') {
-    objective = storyData.objective;
+    objective = storyData.objective.trim();
   } else if (storyData.objective && typeof storyData.objective === 'object' && 'value' in storyData.objective) {
-    objective = String(storyData.objective.value || '');
+    // Conversion explicite en chaîne et traitement de undefined/null
+    objective = String(storyData.objective.value || '').trim();
   } else {
     throw new Error(`Format d'objectif invalide`);
   }
   
   if (Array.isArray(storyData.childrenNames)) {
-    childrenNames = storyData.childrenNames.map(name => String(name || ''));
+    // Conversion explicite de chaque élément en chaîne
+    childrenNames = storyData.childrenNames.map(name => String(name || '').trim());
   }
   
   if (!objective) {
