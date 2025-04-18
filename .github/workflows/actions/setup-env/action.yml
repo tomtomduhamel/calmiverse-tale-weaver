@@ -1,6 +1,6 @@
 
-name: 'Configuration des variables d'environnement'
-description: 'Configure les variables d'environnement pour le déploiement'
+name: 'Configuration des variables d''environnement'
+description: 'Configure les variables d''environnement pour le déploiement'
 
 inputs:
   openai-api-key:
