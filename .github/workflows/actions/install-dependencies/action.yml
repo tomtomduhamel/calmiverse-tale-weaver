@@ -14,9 +14,29 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "🔧 Installation des dépendances avec mise à jour du package-lock.json..."
-        # Utilisation de npm install au lieu de npm ci pour mettre à jour le package-lock.json
-        npm install
+        echo "🔧 Préparation de l'installation..."
+        
+        # Vérifier la présence de package.json
+        if [ ! -f "package.json" ]; then
+          echo "❌ package.json non trouvé dans $(pwd)"
+          exit 1
+        fi
+        
+        # Nettoyer le cache npm et node_modules
+        echo "🧹 Nettoyage des dépendances existantes..."
+        rm -rf node_modules
+        rm -f package-lock.json
+        
+        # Installation des dépendances
+        echo "📦 Installation des dépendances..."
+        npm install --no-package-lock
+        
+        if [ $? -ne 0 ]; then
+          echo "❌ Erreur lors de l'installation des dépendances"
+          exit 1
+        fi
+        
         echo "✅ Dépendances installées avec succès"
         echo "📋 Liste des dépendances principales installées:"
         npm list --depth=0
+

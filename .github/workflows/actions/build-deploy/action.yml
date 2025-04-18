@@ -23,37 +23,73 @@ runs:
         echo "🔍 Vérification de l'environnement de build..."
         echo "📦 Version de Node.js: $(node -v)"
         echo "📦 Version de npm: $(npm -v)"
-        echo "📁 Contenu du répertoire de travail:"
-        ls -la
-        echo "📄 Contenu du package.json:"
-        cat package.json
+        
+        if [ ! -f "package.json" ]; then
+          echo "❌ package.json non trouvé dans $(pwd)"
+          exit 1
+        fi
+        
+        # Vérifier que les variables d'environnement sont définies
+        if [ -z "${{ inputs.project-id }}" ]; then
+          echo "❌ project-id manquant"
+          exit 1
+        fi
+        
+        if [ -z "${{ inputs.firebase-token }}" ]; then
+          echo "❌ firebase-token manquant"
+          exit 1
+        fi
         
     - name: Build Functions v2
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
         echo "🔨 Compilation des fonctions v2..."
+        # Nettoyer le dossier lib avant la compilation
+        rm -rf lib
+        
+        # Compiler avec TypeScript
         npm run build
         
         if [ $? -ne 0 ]; then
           echo "❌ ERREUR de compilation"
           exit 1
         fi
-        echo "✅ Build terminé avec succès"
         
-        # Vérification supplémentaire du contenu du dossier lib
+        # Vérifier le contenu du dossier lib
         if [ ! -d "lib" ] || [ -z "$(ls -A lib 2>/dev/null)" ]; then
           echo "❌ Le dossier lib est vide ou n'existe pas après la compilation"
           ls -la
           exit 1
         fi
         
-        echo "📁 Contenu du dossier lib:"
-        ls -la lib/
+        echo "✅ Build terminé avec succès"
+        echo "📁 Structure du dossier lib:"
+        tree lib/
+    
+    - name: Configuration de Firebase
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        echo "🔧 Configuration de Firebase pour le projet ${{ inputs.project-id }}..."
+        echo '{"projects": {"default": "${{ inputs.project-id }}"}}' > .firebaserc
     
     - name: Déploiement des Functions v2
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "🚀 Déploiement des fonctions v2 sur ${{ inputs.project-id }}"
-        firebase deploy --only functions:v2 --project ${{ inputs.project-id }} --token "${{ inputs.firebase-token }}" --non-interactive --debug
+        echo "🚀 Déploiement des fonctions v2 sur ${{ inputs.project-id }}..."
+        
+        # Vérifier une dernière fois que le dossier lib existe
+        if [ ! -d "lib" ]; then
+          echo "❌ Le dossier lib n'existe pas avant le déploiement"
+          exit 1
+        fi
+        
+        # Déployer avec le mode debug pour plus d'informations
+        firebase deploy --only functions:v2 \
+          --project ${{ inputs.project-id }} \
+          --token "${{ inputs.firebase-token }}" \
+          --non-interactive \
+          --debug
+

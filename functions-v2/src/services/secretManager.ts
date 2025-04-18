@@ -14,6 +14,7 @@ try {
 
 /**
  * Récupère une valeur de secret depuis Google Cloud Secret Manager
+ * avec une gestion améliorée des erreurs et des cas limites
  */
 export const getSecret = async (secretName: string): Promise<string> => {
   if (!secretName || typeof secretName !== 'string') {
@@ -22,59 +23,65 @@ export const getSecret = async (secretName: string): Promise<string> => {
 
   // Logique spécifique pour l'environnement de développement
   if (process.env.NODE_ENV === 'development' || process.env.FUNCTIONS_EMULATOR === 'true') {
-    const envVar = secretName.toUpperCase().replace(/-/g, '_');
+    console.log(`Recherche de la variable d'environnement pour ${secretName} en mode développement`);
     
     // Vérification spéciale pour OpenAI API Key
     if (secretName === 'openai-api-key') {
-      const apiKey = process.env.OPENAI_API_KEY || "";
-      if (apiKey && apiKey.trim()) {
-        return apiKey;
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new Error("OPENAI_API_KEY non définie dans l'environnement de développement");
       }
-      throw new Error("OPENAI_API_KEY non définie ou invalide");
+      console.log("✅ OPENAI_API_KEY trouvée dans l'environnement");
+      return apiKey;
     }
     
-    // Vérification des autres variables d'environnement
-    const envValue = process.env[envVar] || "";
-    if (envValue && envValue.trim()) {
-      return envValue;
+    // Pour les autres secrets, chercher dans les variables d'environnement
+    const envVar = secretName.toUpperCase().replace(/-/g, '_');
+    const value = process.env[envVar];
+    
+    if (!value) {
+      throw new Error(`Variable d'environnement ${envVar} non trouvée`);
     }
-    throw new Error(`Variable d'environnement ${envVar} non trouvée ou invalide`);
+    
+    return value;
   }
   
   if (!client) {
     throw new Error("Client Secret Manager non initialisé");
   }
   
-  // Résolution du problème de type ici - s'assurer que projectId n'est jamais undefined
-  const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || "";
+  const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT;
   if (!projectId) {
     throw new Error("ID du projet Google Cloud non défini");
   }
   
   const name = `projects/${projectId}/secrets/${secretName}/versions/latest`;
+  console.log(`Récupération du secret ${secretName} depuis Secret Manager...`);
   
   try {
     const [version] = await client.accessSecretVersion({ name });
     
-    if (!version.payload || !version.payload.data) {
+    if (!version.payload?.data) {
       throw new Error(`Secret '${secretName}' non trouvé ou vide`);
     }
     
-    const data = version.payload.data.toString();
-    if (!data || !data.trim()) {
-      throw new Error(`Secret '${secretName}' récupéré est vide`);
+    const value = version.payload.data.toString();
+    if (!value.trim()) {
+      throw new Error(`Secret '${secretName}' est vide`);
     }
     
-    return data;
+    console.log(`✅ Secret ${secretName} récupéré avec succès`);
+    return value;
   } catch (error) {
+    console.error(`Erreur lors de la récupération du secret ${secretName}:`, error);
+    
     // Dernier recours pour OpenAI API Key
     if (secretName === 'openai-api-key' && process.env.OPENAI_API_KEY) {
-      const apiKey = process.env.OPENAI_API_KEY || "";
-      if (apiKey && apiKey.trim()) {
-        return apiKey;
-      }
+      console.log("Utilisation de OPENAI_API_KEY depuis les variables d'environnement");
+      return process.env.OPENAI_API_KEY;
     }
     
     throw new Error(`Impossible d'accéder au secret '${secretName}': ${error instanceof Error ? error.message : String(error)}`);
   }
 };
+
