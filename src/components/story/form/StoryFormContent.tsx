@@ -1,5 +1,5 @@
 
-import { StoryObjectives } from "../StoryObjectives";
+import { default as StoryObjectives } from "../StoryObjectives";
 import { StoryError } from "./StoryError";
 import { StoryProgress } from "./StoryProgress";
 import ChildrenSelection from "../ChildrenSelection";

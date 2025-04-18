@@ -12,6 +12,10 @@ inputs:
   working-directory:
     description: "Répertoire de travail"
     required: true
+  deploy-target:
+    description: "Cible de déploiement (functions ou functionsV2)"
+    required: false
+    default: "functions"
 
 runs:
   using: "composite"
@@ -40,11 +44,11 @@ runs:
           exit 1
         fi
         
-    - name: Build Functions v2
+    - name: Build Functions
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "🔨 Compilation des fonctions v2..."
+        echo "🔨 Compilation des fonctions..."
         # Nettoyer le dossier lib avant la compilation
         rm -rf lib
         
@@ -74,11 +78,11 @@ runs:
         echo "🔧 Configuration de Firebase pour le projet ${{ inputs.project-id }}..."
         echo '{"projects": {"default": "${{ inputs.project-id }}"}}' > .firebaserc
     
-    - name: Déploiement des Functions v2
+    - name: Déploiement des Functions
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "🚀 Déploiement des fonctions v2 sur ${{ inputs.project-id }}..."
+        echo "🚀 Déploiement des fonctions sur ${{ inputs.project-id }}..."
         
         # Vérifier une dernière fois que le dossier lib existe
         if [ ! -d "lib" ]; then
@@ -86,8 +90,15 @@ runs:
           exit 1
         fi
         
+        # Déterminer la cible de déploiement
+        if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
+          DEPLOY_TARGET="--only functions:v2"
+        else
+          DEPLOY_TARGET="--only functions"
+        fi
+        
         # Déployer avec le mode debug pour plus d'informations
-        firebase deploy --only functionsV2 \
+        firebase deploy $DEPLOY_TARGET \
           --project ${{ inputs.project-id }} \
           --token "${{ inputs.firebase-token }}" \
           --non-interactive \
