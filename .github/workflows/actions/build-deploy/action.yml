@@ -43,30 +43,31 @@ runs:
           echo "❌ firebase-token manquant"
           exit 1
         fi
-
-        # Installation explicite des dépendances critiques
-        echo "📦 Installation explicite des dépendances critiques..."
-        npm install firebase-admin firebase-functions --no-save
         
-        # Vérifier l'installation de firebase-admin
-        if [ -d "node_modules/firebase-admin" ]; then
+        # Installation explicite des dépendances critiques avec résolution des conflits
+        echo "📦 Installation explicite des dépendances critiques..."
+        rm -rf node_modules/firebase-admin node_modules/firebase-functions
+        npm install firebase-admin@latest firebase-functions@latest --force --no-package-lock
+        
+        # Vérification approfondie des dépendances
+        if [ ! -d "node_modules/firebase-admin" ]; then
+          echo "❌ firebase-admin n'est PAS installé correctement!"
+          mkdir -p node_modules
+          npm install firebase-admin@latest --force --no-package-lock
+        else
           echo "✅ firebase-admin est correctement installé"
           ls -la node_modules/firebase-admin
-        else
-          echo "❌ firebase-admin n'est PAS installé correctement!"
-          echo "Installation de firebase-admin..."
-          npm install firebase-admin --save --no-package-lock
         fi
         
-        # Vérifier firebase-functions également
-        if [ -d "node_modules/firebase-functions" ]; then
+        if [ ! -d "node_modules/firebase-functions" ]; then
+          echo "❌ firebase-functions n'est PAS installé correctement!"
+          mkdir -p node_modules
+          npm install firebase-functions@latest --force --no-package-lock
+        else
           echo "✅ firebase-functions est installé avec succès"
           ls -la node_modules/firebase-functions
-        else
-          echo "❌ firebase-functions n'est PAS installé correctement!"
-          npm install firebase-functions --save --no-package-lock
         fi
-        
+
     - name: Build Functions
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -100,24 +101,36 @@ runs:
         
         # Vérification des dépendances copiées
         echo "📦 Vérification des dépendances copiées:"
-        if [ -d "lib/node_modules/firebase-admin" ]; then
-          echo "✅ firebase-admin est présent dans lib/node_modules"
-          ls -la lib/node_modules/firebase-admin
-        else
-          echo "❌ ERREUR: firebase-admin manquant dans lib/node_modules"
-          # Copie d'urgence
+        if [ ! -d "lib/node_modules/firebase-admin" ]; then
+          echo "⚠️ firebase-admin manquant dans lib/node_modules, copie d'urgence..."
           mkdir -p lib/node_modules
           cp -r node_modules/firebase-admin lib/node_modules/
+          
+          # Double vérification après copie
+          if [ ! -d "lib/node_modules/firebase-admin" ]; then
+            echo "❌ ERREUR CRITIQUE: Impossible de copier firebase-admin dans lib/node_modules"
+            ls -la node_modules
+            exit 1
+          fi
+        else
+          echo "✅ firebase-admin est présent dans lib/node_modules"
+          ls -la lib/node_modules/firebase-admin
         fi
         
-        if [ -d "lib/node_modules/firebase-functions" ]; then
-          echo "✅ firebase-functions est présent dans lib/node_modules"
-          ls -la lib/node_modules/firebase-functions
-        else
-          echo "❌ ERREUR: firebase-functions manquant dans lib/node_modules"
-          # Copie d'urgence
+        if [ ! -d "lib/node_modules/firebase-functions" ]; then
+          echo "⚠️ firebase-functions manquant dans lib/node_modules, copie d'urgence..."
           mkdir -p lib/node_modules
           cp -r node_modules/firebase-functions lib/node_modules/
+          
+          # Double vérification après copie
+          if [ ! -d "lib/node_modules/firebase-functions" ]; then
+            echo "❌ ERREUR CRITIQUE: Impossible de copier firebase-functions dans lib/node_modules"
+            ls -la node_modules
+            exit 1
+          fi
+        else
+          echo "✅ firebase-functions est présent dans lib/node_modules"
+          ls -la lib/node_modules/firebase-functions
         fi
     
     - name: Configuration de Firebase
@@ -139,22 +152,33 @@ runs:
           exit 1
         fi
         
+        # Créer un package.json simplifié dans lib si nécessaire
+        if [ ! -f "lib/package.json" ]; then
+          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^13.0.2\", \"firebase-functions\": \"^6.3.1\"}}" > lib/package.json
+          echo "✅ package.json simplifié créé dans lib"
+        fi
+        
         # Vérifier le contenu du dossier lib/node_modules
         echo "📦 Contenu de lib/node_modules avant déploiement:"
-        ls -la lib/node_modules
+        ls -la lib/node_modules || echo "lib/node_modules n'existe pas"
         
-        # Vérifier si firebase-admin est disponible dans lib/node_modules
+        # Copie d'urgence des dépendances critiques
         if [ ! -d "lib/node_modules/firebase-admin" ]; then
-          echo "⚠️ firebase-admin n'est pas trouvé dans lib/node_modules, copie en cours..."
+          echo "⚠️ Copie d'urgence de firebase-admin dans lib/node_modules..."
           mkdir -p lib/node_modules
           cp -r node_modules/firebase-admin lib/node_modules/
         fi
         
-        # Vérifier si firebase-functions est disponible dans lib/node_modules
         if [ ! -d "lib/node_modules/firebase-functions" ]; then
-          echo "⚠️ firebase-functions n'est pas trouvé dans lib/node_modules, copie en cours..."
+          echo "⚠️ Copie d'urgence de firebase-functions dans lib/node_modules..."
           mkdir -p lib/node_modules
           cp -r node_modules/firebase-functions lib/node_modules/
+        fi
+        
+        # Installer npm dans lib si nécessaire
+        if [ ! -d "lib/node_modules/npm" ]; then
+          echo "📦 Installation de npm dans lib/node_modules..."
+          cd lib && npm install npm --no-save --no-package-lock && cd ..
         fi
         
         # Ajouter node_modules à NODE_PATH pour s'assurer que les modules sont trouvés
@@ -169,6 +193,11 @@ runs:
           DEPLOY_TARGET="--only functions"
           echo "Déploiement des functions standard"
         fi
+        
+        # Créer un functions.yml temporaire pour debug
+        echo "functions:" > functions.yml
+        echo "  - source: ." >> functions.yml
+        echo "    runtime: nodejs20" >> functions.yml
         
         # Déployer avec le mode debug pour plus d'informations
         firebase deploy $DEPLOY_TARGET \
