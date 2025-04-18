@@ -1,14 +1,14 @@
 
-name: 'Configuration du compte de service Firebase'
-description: 'Configure le compte de service Firebase pour le déploiement'
+name: "Configuration du compte de service Firebase"
+description: "Configure le compte de service Firebase pour le déploiement"
 
 inputs:
   firebase-service-account:
-    description: 'Compte de service Firebase au format JSON'
+    description: "Compte de service Firebase au format JSON"
     required: true
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Configuration du compte de service Firebase
       shell: bash
