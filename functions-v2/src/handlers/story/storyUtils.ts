@@ -62,8 +62,8 @@ export const extractStoryParameters = (storyData: any): { objective: string, chi
   }
   
   if (Array.isArray(storyData.childrenNames)) {
-    // Conversion explicite de chaque élément en chaîne
-    childrenNames = storyData.childrenNames.map(name => String(name || '').trim());
+    // Conversion explicite de chaque élément en chaîne avec typage explicite
+    childrenNames = storyData.childrenNames.map((name: string | null | undefined) => String(name || '').trim());
   }
   
   if (!objective) {
@@ -72,3 +72,4 @@ export const extractStoryParameters = (storyData: any): { objective: string, chi
   
   return { objective, childrenNames };
 };
+
