@@ -1,20 +1,20 @@
 
-name: 'Build et déploiement'
-description: 'Compile et déploie les functions Firebase'
+name: "Build et déploiement"
+description: "Compile et déploie les functions Firebase"
 
 inputs:
   project-id:
-    description: 'ID du projet Firebase'
+    description: "ID du projet Firebase"
     required: true
   firebase-token:
-    description: 'Token Firebase CLI'
+    description: "Token Firebase CLI"
     required: true
   working-directory:
-    description: 'Répertoire de travail'
+    description: "Répertoire de travail"
     required: true
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Vérification de l'environnement
       shell: bash
@@ -92,4 +92,3 @@ runs:
           --token "${{ inputs.firebase-token }}" \
           --non-interactive \
           --debug
-
