@@ -54,6 +54,15 @@ runs:
           npm install firebase-admin --save --no-package-lock
         fi
         
+        # Vérifier firebase-functions également
+        if [ -d "node_modules/firebase-functions" ]; then
+          echo "✅ firebase-functions est installé avec succès"
+          ls -la node_modules/firebase-functions
+        else
+          echo "❌ firebase-functions n'est PAS installé correctement!"
+          npm install firebase-functions --save --no-package-lock
+        fi
+        
     - name: Build Functions
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -80,6 +89,16 @@ runs:
         echo "✅ Build terminé avec succès"
         echo "📁 Structure du dossier lib:"
         find lib -type f | sort
+        
+        # Copier package.json dans lib pour que Firebase puisse résoudre les dépendances
+        echo "📦 Copie de package.json dans lib pour le déploiement..."
+        cp package.json lib/
+        
+        # Copier les dépendances dans lib/node_modules
+        echo "📦 Copie des node_modules dans lib pour le déploiement..."
+        mkdir -p lib/node_modules
+        cp -r node_modules/firebase-admin lib/node_modules/
+        cp -r node_modules/firebase-functions lib/node_modules/
     
     - name: Configuration de Firebase
       shell: bash
@@ -100,6 +119,20 @@ runs:
           exit 1
         fi
         
+        # Vérifier si firebase-admin est disponible dans lib/node_modules
+        if [ ! -d "lib/node_modules/firebase-admin" ]; then
+          echo "⚠️ firebase-admin n'est pas trouvé dans lib/node_modules, copie en cours..."
+          mkdir -p lib/node_modules
+          cp -r node_modules/firebase-admin lib/node_modules/
+        fi
+        
+        # Vérifier si firebase-functions est disponible dans lib/node_modules
+        if [ ! -d "lib/node_modules/firebase-functions" ]; then
+          echo "⚠️ firebase-functions n'est pas trouvé dans lib/node_modules, copie en cours..."
+          mkdir -p lib/node_modules
+          cp -r node_modules/firebase-functions lib/node_modules/
+        fi
+        
         # Déterminer la cible de déploiement
         if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
           DEPLOY_TARGET="--only functions:v2"
@@ -108,10 +141,6 @@ runs:
           DEPLOY_TARGET="--only functions"
           echo "Déploiement des functions standard"
         fi
-        
-        # Copier node_modules dans lib pour s'assurer que les dépendances sont là lors du déploiement
-        echo "📦 Copie des node_modules dans lib pour le déploiement..."
-        cp -r node_modules lib/
         
         # Déployer avec le mode debug pour plus d'informations
         firebase deploy $DEPLOY_TARGET \

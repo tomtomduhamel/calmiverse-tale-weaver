@@ -11,9 +11,13 @@ import { retryFailedStory } from './handlers/story/retryStoryHandler';
 import { ping } from './handlers/ping';
 
 // Initialiser Firebase Admin (une seule fois)
-if (!admin.apps.length) {
-  admin.initializeApp();
-  console.log('Firebase Admin SDK initialisé');
+try {
+  if (!admin.apps.length) {
+    admin.initializeApp();
+    console.log('Firebase Admin SDK initialisé avec succès dans functions-v2/src/index.ts');
+  }
+} catch (error) {
+  console.error('Erreur lors de l\'initialisation de Firebase Admin:', error);
 }
 
 // Exporter les fonctions cloud

@@ -29,6 +29,15 @@ jobs:
           node -v
           npm -v
       
+      - name: Installation explicite de firebase-admin
+        working-directory: functions-v2
+        run: |
+          rm -rf node_modules
+          rm -f package-lock.json
+          npm install firebase-admin --save --no-package-lock
+          npm list firebase-admin --depth=0
+          ls -la node_modules/firebase-admin
+      
       - name: Installation des dépendances
         uses: ./.github/workflows/actions/install-dependencies
         with:
@@ -40,6 +49,7 @@ jobs:
           ls -la node_modules
           ls -la node_modules/firebase-admin || echo "firebase-admin non trouvé"
           npm list firebase-admin
+          npm list firebase-functions
       
       - name: Configuration des variables d'environnement
         uses: ./.github/workflows/actions/setup-env
@@ -62,6 +72,12 @@ jobs:
           npm run build
           echo "Contenu du dossier lib:"
           ls -la lib/
+          
+          # Copier package.json et node_modules dans lib
+          cp package.json lib/
+          mkdir -p lib/node_modules
+          cp -r node_modules/firebase-admin lib/node_modules/
+          cp -r node_modules/firebase-functions lib/node_modules/
       
       - name: Build et déploiement
         uses: ./.github/workflows/actions/build-deploy

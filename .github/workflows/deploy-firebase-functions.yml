@@ -26,12 +26,22 @@ jobs:
         with:
           node-version: "20"
       
-      - name: Installation des dépendances de Functions V2
+      - name: Installation explicite de firebase-admin pour Functions V2
         working-directory: functions-v2
         run: |
           rm -rf node_modules lib
           rm -f package-lock.json
-          npm install --no-package-lock --verbose
+          npm install firebase-admin --save --no-package-lock
+          npm install firebase-functions --save --no-package-lock
+          npm list --depth=0
+          ls -la node_modules/firebase-admin
+          ls -la node_modules/firebase-functions
+      
+      - name: Installation complète des dépendances Functions V2
+        working-directory: functions-v2
+        run: |
+          npm install --no-package-lock --verbose --production
+          echo "✅ Installation complète terminée"
           npm list --depth=0
           
           # Vérifier l'installation de firebase-admin
@@ -79,14 +89,38 @@ jobs:
             exit 1
           fi
           
+          # Copier package.json dans lib
+          cp package.json lib/
+          
           # Copier node_modules dans lib pour s'assurer que les dépendances sont là lors du déploiement
           echo "📦 Copie des node_modules dans lib pour le déploiement..."
-          cp -r node_modules lib/
+          mkdir -p lib/node_modules
+          cp -r node_modules/firebase-admin lib/node_modules/
+          cp -r node_modules/firebase-functions lib/node_modules/
+          
+          # Vérifier que les dépendances sont bien copiées
+          echo "Vérification des dépendances copiées:"
+          ls -la lib/node_modules/firebase-admin
+          ls -la lib/node_modules/firebase-functions
       
       - name: Déploiement des Functions V2
         working-directory: functions-v2
         run: |
           echo "Déploiement des fonctions v2 sur ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}..."
+          
+          # Vérifier une dernière fois la présence des modules critiques
+          if [ ! -d "lib/node_modules/firebase-admin" ]; then
+            echo "⚠️ firebase-admin n'est pas dans lib/node_modules, copie d'urgence..."
+            mkdir -p lib/node_modules
+            cp -r node_modules/firebase-admin lib/node_modules/
+          fi
+          
+          if [ ! -d "lib/node_modules/firebase-functions" ]; then
+            echo "⚠️ firebase-functions n'est pas dans lib/node_modules, copie d'urgence..."
+            mkdir -p lib/node_modules
+            cp -r node_modules/firebase-functions lib/node_modules/
+          fi
+          
           firebase deploy --only functions:v2 \
             --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \
             --token "${{ secrets.FIREBASE_TOKEN }}" \

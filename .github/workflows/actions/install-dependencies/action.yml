@@ -27,9 +27,9 @@ runs:
         rm -rf node_modules
         rm -f package-lock.json
         
-        # Installation des dépendances avec plus de détails
-        echo "📦 Installation des dépendances..."
-        npm install --no-package-lock --verbose
+        # Installation des dépendances avec plus de détails et forçant la production
+        echo "📦 Installation des dépendances en mode PRODUCTION..."
+        npm install --no-package-lock --verbose --production
         
         # Vérifier que firebase-admin est correctement installé
         if [ -d "node_modules/firebase-admin" ]; then
@@ -41,6 +41,17 @@ runs:
           npm install firebase-admin --save --no-package-lock
         fi
         
+        # Vérifier firebase-functions également
+        if [ -d "node_modules/firebase-functions" ]; then
+          echo "✅ firebase-functions est installé avec succès"
+          ls -la node_modules/firebase-functions
+        else
+          echo "❌ firebase-functions n'est PAS installé correctement!"
+          echo "Installation explicite de firebase-functions..."
+          npm install firebase-functions --save --no-package-lock
+        fi
+        
+        # Vérifier si l'installation a échoué
         if [ $? -ne 0 ]; then
           echo "❌ Erreur lors de l'installation des dépendances"
           exit 1
@@ -48,4 +59,4 @@ runs:
         
         echo "✅ Dépendances installées avec succès"
         echo "📋 Liste des dépendances principales installées:"
-        npm list --depth=0
+        npm list --depth=0 firebase-admin firebase-functions

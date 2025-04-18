@@ -8,10 +8,11 @@
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions:v2",
+    "deploy": "npm run prepare-deploy && firebase deploy --only functions:v2",
     "logs": "firebase functions:log",
     "clean": "rm -rf node_modules lib && rm -f package-lock.json",
-    "clean:install": "npm run clean && npm install"
+    "clean:install": "npm run clean && npm install",
+    "prepare-deploy": "npm run build && cp package.json lib/ && mkdir -p lib/node_modules && cp -r node_modules/firebase-admin node_modules/firebase-functions lib/node_modules/"
   },
   "engines": {
     "node": "20"
