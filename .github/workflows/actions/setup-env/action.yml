@@ -20,27 +20,27 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "🔧 Configuration des variables d'environnement..."
+        echo "Configuration des variables d'environnement..."
         
         # Créer le fichier .env dans le répertoire de travail
         echo "NODE_ENV=production" > .env
         
         if [ -n "${{ inputs.openai-api-key }}" ]; then
-          echo "✅ Configuration de OPENAI_API_KEY"
+          echo "Configuration de OPENAI_API_KEY"
           echo "OPENAI_API_KEY=${{ inputs.openai-api-key }}" >> .env
         else
-          echo "❌ ERREUR: OPENAI_API_KEY manquante"
+          echo "ERREUR: OPENAI_API_KEY manquante"
           exit 1
         fi
         
         if [ -n "${{ inputs.google-cloud-project }}" ]; then
-          echo "✅ Configuration de GOOGLE_CLOUD_PROJECT"
+          echo "Configuration de GOOGLE_CLOUD_PROJECT"
           echo "GOOGLE_CLOUD_PROJECT=${{ inputs.google-cloud-project }}" >> .env
         else
-          echo "❌ ERREUR: GOOGLE_CLOUD_PROJECT manquant"
+          echo "ERREUR: GOOGLE_CLOUD_PROJECT manquant"
           exit 1
         fi
         
-        echo "✅ Variables d'environnement configurées avec succès dans $(pwd)/.env"
-        echo "📋 Contenu du fichier .env (sans les valeurs sensibles):"
+        echo "Variables d'environnement configurées avec succès dans $(pwd)/.env"
+        echo "Contenu du fichier .env (sans les valeurs sensibles):"
         grep -v "OPENAI_API_KEY" .env | cat -n
