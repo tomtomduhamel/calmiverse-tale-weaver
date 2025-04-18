@@ -1,20 +1,20 @@
 
-name: 'Configuration des variables d''environnement'
-description: 'Configure les variables d''environnement pour le déploiement'
+name: "Configuration des variables d'environnement"
+description: "Configure les variables d'environnement pour le déploiement"
 
 inputs:
   openai-api-key:
-    description: 'Clé API OpenAI'
+    description: "Clé API OpenAI"
     required: true
   google-cloud-project:
-    description: 'ID du projet Google Cloud'
+    description: "ID du projet Google Cloud"
     required: true
   working-directory:
-    description: 'Répertoire de travail'
+    description: "Répertoire de travail"
     required: true
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Configuration des variables d'environnement
       shell: bash
