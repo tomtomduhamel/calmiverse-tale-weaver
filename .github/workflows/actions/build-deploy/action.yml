@@ -16,6 +16,18 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Vérification de l'environnement
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        echo "🔍 Vérification de l'environnement de build..."
+        echo "📦 Version de Node.js: $(node -v)"
+        echo "📦 Version de npm: $(npm -v)"
+        echo "📁 Contenu du répertoire de travail:"
+        ls -la
+        echo "📄 Contenu du package.json:"
+        cat package.json
+        
     - name: Build Functions v2
       shell: bash
       working-directory: ${{ inputs.working-directory }}

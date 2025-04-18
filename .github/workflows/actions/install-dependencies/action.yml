@@ -14,6 +14,9 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        npm ci
+        echo "🔧 Installation des dépendances avec mise à jour du package-lock.json..."
+        # Utilisation de npm install au lieu de npm ci pour mettre à jour le package-lock.json
+        npm install
         echo "✅ Dépendances installées avec succès"
+        echo "📋 Liste des dépendances principales installées:"
         npm list --depth=0
