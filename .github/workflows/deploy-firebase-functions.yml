@@ -31,8 +31,17 @@ jobs:
         run: |
           rm -rf node_modules lib
           rm -f package-lock.json
-          npm install --no-package-lock
+          npm install --no-package-lock --verbose
           npm list --depth=0
+          
+          # Vérifier l'installation de firebase-admin
+          if [ -d "node_modules/firebase-admin" ]; then
+            echo "✅ firebase-admin est correctement installé"
+            ls -la node_modules/firebase-admin
+          else
+            echo "❌ firebase-admin n'est PAS installé correctement!"
+            npm install firebase-admin --save --no-package-lock
+          fi
       
       - name: Configuration des variables d'environnement
         working-directory: functions-v2
@@ -63,6 +72,16 @@ jobs:
           echo "Build des fonctions v2 terminé"
           echo "Contenu du dossier lib:"
           ls -la lib/
+          
+          # Vérifier que l'index.js est correctement généré
+          if [ ! -f "lib/index.js" ]; then
+            echo "❌ lib/index.js n'existe pas après la compilation"
+            exit 1
+          fi
+          
+          # Copier node_modules dans lib pour s'assurer que les dépendances sont là lors du déploiement
+          echo "📦 Copie des node_modules dans lib pour le déploiement..."
+          cp -r node_modules lib/
       
       - name: Déploiement des Functions V2
         working-directory: functions-v2
@@ -71,6 +90,7 @@ jobs:
           firebase deploy --only functions:v2 \
             --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \
             --token "${{ secrets.FIREBASE_TOKEN }}" \
-            --non-interactive
+            --non-interactive \
+            --debug
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json

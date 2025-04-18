@@ -27,9 +27,19 @@ runs:
         rm -rf node_modules
         rm -f package-lock.json
         
-        # Installation des dépendances
+        # Installation des dépendances avec plus de détails
         echo "📦 Installation des dépendances..."
-        npm install --no-package-lock
+        npm install --no-package-lock --verbose
+        
+        # Vérifier que firebase-admin est correctement installé
+        if [ -d "node_modules/firebase-admin" ]; then
+          echo "✅ firebase-admin est installé avec succès"
+          ls -la node_modules/firebase-admin
+        else
+          echo "❌ firebase-admin n'est PAS installé correctement!"
+          echo "Tentative d'installation explicite de firebase-admin..."
+          npm install firebase-admin --save --no-package-lock
+        fi
         
         if [ $? -ne 0 ]; then
           echo "❌ Erreur lors de l'installation des dépendances"

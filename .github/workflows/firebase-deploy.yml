@@ -22,6 +22,7 @@ jobs:
           rm -rf node_modules
           rm -f package-lock.json
           npm install --no-audit --no-fund
+          ls -la node_modules/firebase-admin
           
       - name: Clean npm cache and install dependencies for functions-v2
         run: |
@@ -30,6 +31,7 @@ jobs:
           rm -f package-lock.json
           npm install --no-package-lock
           npm list --depth=0
+          ls -la node_modules/firebase-admin
           
       - name: Install Dependencies for main app
         run: npm ci
@@ -82,7 +84,15 @@ jobs:
       
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@latest
-        
+      
+      - name: Build Functions
+        run: |
+          cd functions
+          npm run build
+          echo "Build des fonctions terminé"
+          echo "Contenu du dossier lib:"
+          ls -la lib/
+          
       - name: Build Functions v2
         run: |
           cd functions-v2

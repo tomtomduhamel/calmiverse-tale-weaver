@@ -43,6 +43,16 @@ runs:
           echo "❌ firebase-token manquant"
           exit 1
         fi
+
+        # Vérifier l'installation de firebase-admin
+        if [ -d "node_modules/firebase-admin" ]; then
+          echo "✅ firebase-admin est correctement installé"
+          ls -la node_modules/firebase-admin
+        else
+          echo "❌ firebase-admin n'est PAS installé correctement!"
+          echo "Installation de firebase-admin..."
+          npm install firebase-admin --save --no-package-lock
+        fi
         
     - name: Build Functions
       shell: bash
@@ -69,7 +79,7 @@ runs:
         
         echo "✅ Build terminé avec succès"
         echo "📁 Structure du dossier lib:"
-        tree lib/
+        find lib -type f | sort
     
     - name: Configuration de Firebase
       shell: bash
@@ -93,9 +103,15 @@ runs:
         # Déterminer la cible de déploiement
         if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
           DEPLOY_TARGET="--only functions:v2"
+          echo "Déploiement des functions v2"
         else
           DEPLOY_TARGET="--only functions"
+          echo "Déploiement des functions standard"
         fi
+        
+        # Copier node_modules dans lib pour s'assurer que les dépendances sont là lors du déploiement
+        echo "📦 Copie des node_modules dans lib pour le déploiement..."
+        cp -r node_modules lib/
         
         # Déployer avec le mode debug pour plus d'informations
         firebase deploy $DEPLOY_TARGET \
