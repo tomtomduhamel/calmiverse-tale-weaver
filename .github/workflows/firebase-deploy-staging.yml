@@ -98,4 +98,3 @@ jobs:
           firebase deploy --only hosting:staging,functions,functions:v2 --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} --token "${{ secrets.FIREBASE_TOKEN }}" --debug
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json
-

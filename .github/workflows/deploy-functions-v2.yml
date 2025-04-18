@@ -50,4 +50,4 @@ jobs:
           project-id: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
           firebase-token: ${{ secrets.FIREBASE_TOKEN }}
           working-directory: functions-v2
-          deploy-target: "functions"
+          deploy-target: "functionsV2"
