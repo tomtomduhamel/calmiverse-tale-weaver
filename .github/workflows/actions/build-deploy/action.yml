@@ -87,7 +87,7 @@ runs:
         fi
         
         # Déployer avec le mode debug pour plus d'informations
-        firebase deploy --only functions:v2 \
+        firebase deploy --only functionsV2 \
           --project ${{ inputs.project-id }} \
           --token "${{ inputs.firebase-token }}" \
           --non-interactive \
