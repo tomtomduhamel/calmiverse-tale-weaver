@@ -29,27 +29,41 @@ jobs:
           node -v
           npm -v
       
-      - name: Installation explicite de firebase-admin
+      - name: Installation explicite des dépendances critiques
         working-directory: functions-v2
         run: |
           rm -rf node_modules
           rm -f package-lock.json
-          npm install firebase-admin --save --no-package-lock
-          npm list firebase-admin --depth=0
+          echo "📦 Installation explicite de firebase-admin et firebase-functions..."
+          npm install firebase-admin firebase-functions --no-package-lock --no-save
+          npm list firebase-admin firebase-functions --depth=0
           ls -la node_modules/firebase-admin
+          ls -la node_modules/firebase-functions
       
       - name: Installation des dépendances
         uses: ./.github/workflows/actions/install-dependencies
         with:
           working-directory: functions-v2
       
-      - name: Vérification des dépendances installées
+      - name: Vérification complète des dépendances
         working-directory: functions-v2
         run: |
-          ls -la node_modules
-          ls -la node_modules/firebase-admin || echo "firebase-admin non trouvé"
-          npm list firebase-admin
-          npm list firebase-functions
+          echo "📦 Vérification des dépendances critiques..."
+          if [ ! -d "node_modules/firebase-admin" ]; then
+            echo "⚠️ Installation manuelle de firebase-admin..."
+            npm install firebase-admin --save --no-package-lock
+          else
+            echo "✅ firebase-admin correctement installé"
+            ls -la node_modules/firebase-admin
+          fi
+          
+          if [ ! -d "node_modules/firebase-functions" ]; then
+            echo "⚠️ Installation manuelle de firebase-functions..."
+            npm install firebase-functions --save --no-package-lock
+          else
+            echo "✅ firebase-functions correctement installé"
+            ls -la node_modules/firebase-functions
+          fi
       
       - name: Configuration des variables d'environnement
         uses: ./.github/workflows/actions/setup-env
@@ -66,20 +80,7 @@ jobs:
       - name: Installation de Firebase CLI
         run: npm install -g firebase-tools@latest
       
-      - name: Build des fonctions
-        working-directory: functions-v2
-        run: |
-          npm run build
-          echo "Contenu du dossier lib:"
-          ls -la lib/
-          
-          # Copier package.json et node_modules dans lib
-          cp package.json lib/
-          mkdir -p lib/node_modules
-          cp -r node_modules/firebase-admin lib/node_modules/
-          cp -r node_modules/firebase-functions lib/node_modules/
-      
-      - name: Build et déploiement
+      - name: Préparation et déploiement
         uses: ./.github/workflows/actions/build-deploy
         with:
           project-id: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
