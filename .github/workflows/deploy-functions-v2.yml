@@ -99,6 +99,14 @@ jobs:
             exit 1
           fi
           
+          # Création du fichier functions.yaml explicite
+          echo "functions:" > functions.yaml
+          echo "  - source: ." >> functions.yaml
+          echo "    codebase: v2" >> functions.yaml
+          echo "    runtime: nodejs20" >> functions.yaml
+          echo "    memory: 1GB" >> functions.yaml
+          echo "    timeout: 540s" >> functions.yaml
+          
           # Copie des dépendances dans lib
           echo "📦 Copie des dépendances dans lib..."
           npm run copy-deps
@@ -139,10 +147,13 @@ jobs:
           export NODE_PATH="$PWD/lib/node_modules:$NODE_PATH"
           echo "NODE_PATH=$NODE_PATH"
           
-          # Création d'un functions.yaml pour debug
-          echo "functions:" > functions.yaml
-          echo "  - source: ." >> functions.yaml
-          echo "    runtime: nodejs20" >> functions.yaml
+          # Configuration explicite du codebase
+          echo "firebase:" > .firebaserc
+          echo "  projects:" >> .firebaserc
+          echo "    default: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}" >> .firebaserc
+          echo "  functions:" >> .firebaserc
+          echo "    - source: ." >> .firebaserc
+          echo "      codebase: v2" >> .firebaserc
           
           # Déploiement avec debug
           firebase deploy --only functions:v2 \

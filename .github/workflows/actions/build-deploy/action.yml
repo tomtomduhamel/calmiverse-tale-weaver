@@ -67,6 +67,18 @@ runs:
           echo "✅ firebase-functions est installé avec succès"
           ls -la node_modules/firebase-functions
         fi
+        
+        # Création du fichier functions.yaml explicite
+        echo "functions:" > functions.yaml
+        echo "  - source: ." >> functions.yaml
+        if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
+          echo "    codebase: v2" >> functions.yaml
+        else
+          echo "    codebase: default" >> functions.yaml
+        fi
+        echo "    runtime: nodejs20" >> functions.yaml
+        echo "    memory: 1GB" >> functions.yaml
+        echo "    timeout: 540s" >> functions.yaml
 
     - name: Build Functions
       shell: bash
@@ -132,13 +144,17 @@ runs:
           echo "✅ firebase-functions est présent dans lib/node_modules"
           ls -la lib/node_modules/firebase-functions
         fi
+        
+        # Création d'un package.json simplifié dans lib
+        echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^13.0.2\", \"firebase-functions\": \"^6.3.1\"}}" > lib/package.json
+        echo "✅ package.json simplifié créé dans lib"
     
     - name: Configuration de Firebase
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
         echo "🔧 Configuration de Firebase pour le projet ${{ inputs.project-id }}..."
-        echo '{"projects": {"default": "${{ inputs.project-id }}"}}' > .firebaserc
+        echo "{\"projects\": {\"default\": \"${{ inputs.project-id }}\"}}" > .firebaserc
     
     - name: Déploiement des Functions
       shell: bash
@@ -150,12 +166,6 @@ runs:
         if [ ! -d "lib" ]; then
           echo "❌ Le dossier lib n'existe pas avant le déploiement"
           exit 1
-        fi
-        
-        # Créer un package.json simplifié dans lib si nécessaire
-        if [ ! -f "lib/package.json" ]; then
-          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^13.0.2\", \"firebase-functions\": \"^6.3.1\"}}" > lib/package.json
-          echo "✅ package.json simplifié créé dans lib"
         fi
         
         # Vérifier le contenu du dossier lib/node_modules
@@ -191,7 +201,6 @@ runs:
         # Créer un functions.yml temporaire pour debug
         echo "functions:" > functions.yml
         echo "  - source: ." >> functions.yml
-        echo "  - main: lib/index.js" >> functions.yml
         echo "    runtime: nodejs20" >> functions.yml
         
         # Déployer avec le mode debug pour plus d'informations

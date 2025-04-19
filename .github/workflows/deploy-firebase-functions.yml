@@ -136,6 +136,28 @@ jobs:
       - name: Installation de Firebase CLI
         run: npm install -g firebase-tools@latest
       
+      - name: Création du fichier functions.yaml pour functions
+        working-directory: functions
+        run: |
+          echo "functions:" > functions.yaml
+          echo "  - source: ." >> functions.yaml
+          echo "    codebase: default" >> functions.yaml
+          echo "    runtime: nodejs20" >> functions.yaml
+          echo "    memory: 1GB" >> functions.yaml
+          echo "    timeout: 540s" >> functions.yaml
+          cat functions.yaml
+
+      - name: Création du fichier functions.yaml pour functions-v2
+        working-directory: functions-v2
+        run: |
+          echo "functions:" > functions.yaml
+          echo "  - source: ." >> functions.yaml
+          echo "    codebase: v2" >> functions.yaml
+          echo "    runtime: nodejs20" >> functions.yaml
+          echo "    memory: 1GB" >> functions.yaml
+          echo "    timeout: 540s" >> functions.yaml
+          cat functions.yaml
+      
       - name: Build et préparation des Functions
         working-directory: functions
         run: |
@@ -188,16 +210,40 @@ jobs:
           echo "✅ Préparation des fonctions v2 terminée"
           ls -la lib/node_modules
       
-      - name: Création d'un functions.yaml pour debug
+      - name: Création d'un firebase.json temporaire
         run: |
-          echo "# Configuration Firebase Functions" > functions.yaml
-          echo "functions:" >> functions.yaml
-          echo "  - source: functions" >> functions.yaml
-          echo "    runtime: nodejs20" >> functions.yaml
-          echo "  - source: functions-v2" >> functions.yaml
-          echo "    codebase: v2" >> functions.yaml
-          echo "    runtime: nodejs20" >> functions.yaml
-          cat functions.yaml
+          cat firebase.json
+          echo "Création d'un fichier firebase.json temporaire pour le déploiement..."
+          cp firebase.json firebase.json.bak
+          cat > firebase.json << EOL
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs20",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    },
+    {
+      "source": "functions-v2",
+      "codebase": "v2",
+      "runtime": "nodejs20",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ]
+}
+EOL
+          cat firebase.json
       
       - name: Déploiement vers Firebase
         run: |
@@ -212,5 +258,8 @@ jobs:
             --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \
             --token "${{ secrets.FIREBASE_TOKEN }}" \
             --debug
+          
+          # Restauration du firebase.json original
+          mv firebase.json.bak firebase.json
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json
