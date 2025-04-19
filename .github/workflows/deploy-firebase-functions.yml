@@ -1,3 +1,4 @@
+
 name: Déploiement Firebase Functions
 on:
   workflow_dispatch:
@@ -132,8 +133,11 @@ jobs:
             exit 1
           fi
       
-      - name: Installation de Firebase CLI
-        run: npm install -g firebase-tools@latest
+      - name: Installation et mise à jour de Firebase CLI
+        run: |
+          npm uninstall -g firebase-tools
+          npm install -g firebase-tools@latest
+          firebase --version
       
       - name: Création du fichier functions.yaml pour functions
         working-directory: functions
@@ -184,6 +188,9 @@ jobs:
             cp -r node_modules/firebase-admin node_modules/firebase-functions lib/node_modules/
           fi
           
+          # Création d'un package.json dans lib
+          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^13.0.2\", \"firebase-functions\": \"^6.3.1\"}}" > lib/package.json
+          
           echo "✅ Préparation des fonctions terminée"
           ls -la lib/node_modules
       
@@ -209,6 +216,9 @@ jobs:
             mkdir -p lib/node_modules
             cp -r node_modules/firebase-admin node_modules/firebase-functions lib/node_modules/
           fi
+          
+          # Création d'un package.json simplifié
+          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^13.0.2\", \"firebase-functions\": \"^6.3.1\"}}" > lib/package.json
           
           echo "✅ Préparation des fonctions v2 terminée"
           ls -la lib/node_modules

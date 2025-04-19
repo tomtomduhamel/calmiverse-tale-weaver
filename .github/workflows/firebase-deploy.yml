@@ -83,7 +83,38 @@ jobs:
           fi
       
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools@latest
+        run: |
+          npm uninstall -g firebase-tools
+          npm install -g firebase-tools@latest
+          firebase --version
+      
+      - name: Création des fichiers functions.yaml
+        run: |
+          # Pour functions
+          cd functions
+          echo "# Configuration Firebase Functions" > functions.yaml
+          echo "specVersion: v1" >> functions.yaml
+          echo "functions:" >> functions.yaml
+          echo "  - source: ." >> functions.yaml
+          echo "    codebase: default" >> functions.yaml
+          echo "    runtime: nodejs20" >> functions.yaml
+          echo "    memory: 1GB" >> functions.yaml
+          echo "    timeout: 540s" >> functions.yaml
+          cat functions.yaml
+          cd ..
+          
+          # Pour functions-v2
+          cd functions-v2
+          echo "# Configuration Firebase Functions v2" > functions.yaml
+          echo "specVersion: v1" >> functions.yaml
+          echo "functions:" >> functions.yaml
+          echo "  - source: ." >> functions.yaml
+          echo "    codebase: v2" >> functions.yaml
+          echo "    runtime: nodejs20" >> functions.yaml
+          echo "    memory: 1GB" >> functions.yaml
+          echo "    timeout: 540s" >> functions.yaml
+          cat functions.yaml
+          cd ..
       
       - name: Build Functions
         run: |
@@ -93,6 +124,15 @@ jobs:
           echo "Contenu du dossier lib:"
           ls -la lib/
           
+          # Création d'un package.json dans lib
+          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^13.0.2\", \"firebase-functions\": \"^6.3.1\"}}" > lib/package.json
+          
+          # Copie manuelle des dépendances critiques
+          echo "Copie des dépendances dans lib..."
+          mkdir -p lib/node_modules
+          cp -r node_modules/firebase-admin node_modules/firebase-functions lib/node_modules/
+          ls -la lib/node_modules
+          
       - name: Build Functions v2
         run: |
           cd functions-v2
@@ -100,10 +140,94 @@ jobs:
           echo "Build des fonctions v2 terminé"
           echo "Contenu du dossier lib:"
           ls -la lib/
+          
+          # Création d'un package.json dans lib
+          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^13.0.2\", \"firebase-functions\": \"^6.3.1\"}}" > lib/package.json
+          
+          # Copie manuelle des dépendances critiques
+          echo "Copie des dépendances dans lib..."
+          mkdir -p lib/node_modules
+          cp -r node_modules/firebase-admin node_modules/firebase-functions node_modules/@google-cloud node_modules/cors node_modules/dotenv node_modules/openai lib/node_modules/
+          ls -la lib/node_modules
         
       - name: Deploy to Firebase
         run: |
           echo "Déploiement sur le projet: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
-          firebase deploy --only hosting,functions,functions:v2 --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} --token "${{ secrets.FIREBASE_TOKEN }}" --debug
+          
+          # Configuration du NODE_PATH pour aider à trouver les modules
+          export NODE_PATH="$PWD/functions/lib/node_modules:$PWD/functions-v2/lib/node_modules:$NODE_PATH"
+          echo "NODE_PATH=$NODE_PATH"
+          
+          # Création d'un firebase.json temporaire
+          cp firebase.json firebase.json.bak
+          cat > firebase.json << EOL
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs20",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    },
+    {
+      "source": "functions-v2",
+      "codebase": "v2",
+      "runtime": "nodejs20",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ],
+  "hosting": [
+    {
+      "target": "production",
+      "public": "dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "target": "staging",
+      "public": "dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
+}
+EOL
+          
+          # Déploiement avec debug
+          firebase deploy --only hosting,functions,functions:v2 \
+            --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \
+            --token "${{ secrets.FIREBASE_TOKEN }}" \
+            --debug
+          
+          # Restauration du firebase.json original
+          mv firebase.json.bak firebase.json
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json
