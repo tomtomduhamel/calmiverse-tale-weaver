@@ -175,12 +175,6 @@ runs:
           cp -r node_modules/firebase-functions lib/node_modules/
         fi
         
-        # Installer npm dans lib si nécessaire
-        if [ ! -d "lib/node_modules/npm" ]; then
-          echo "📦 Installation de npm dans lib/node_modules..."
-          cd lib && npm install npm --no-save --no-package-lock && cd ..
-        fi
-        
         # Ajouter node_modules à NODE_PATH pour s'assurer que les modules sont trouvés
         export NODE_PATH="$PWD/lib/node_modules:$NODE_PATH"
         echo "NODE_PATH=$NODE_PATH"
@@ -197,6 +191,7 @@ runs:
         # Créer un functions.yml temporaire pour debug
         echo "functions:" > functions.yml
         echo "  - source: ." >> functions.yml
+        echo "  - main: lib/index.js" >> functions.yml
         echo "    runtime: nodejs20" >> functions.yml
         
         # Déployer avec le mode debug pour plus d'informations
