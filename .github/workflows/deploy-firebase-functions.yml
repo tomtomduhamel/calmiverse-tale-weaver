@@ -22,257 +22,44 @@ jobs:
         uses: actions/checkout@v3
       
       - name: Configuration de Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "20"
-      
-      - name: Préparation des dossiers de déploiement
-        run: |
-          # Créer les dossiers de fonctions s'ils n'existent pas
-          mkdir -p functions/lib
-          mkdir -p functions-v2/lib
-          
-          # Visualiser la structure actuelle
-          echo "Structure actuelle des dossiers de fonctions:"
-          ls -la functions/
-          ls -la functions-v2/
+        uses: ./.github/workflows/actions/setup-node
       
       - name: Installation des dépendances pour Functions
-        working-directory: functions
-        run: |
-          rm -rf node_modules lib
-          rm -f package-lock.json
-          
-          # Installation explicite des dépendances critiques
-          echo "📦 Installation explicite des dépendances critiques pour Functions..."
-          npm install firebase-admin firebase-functions --no-package-lock
-          
-          # Vérification des installations
-          echo "📦 Vérification de l'installation:"
-          ls -la node_modules/firebase-admin || echo "firebase-admin non installé"
-          ls -la node_modules/firebase-functions || echo "firebase-functions non installé"
-          
-          # Installation complète
-          echo "📦 Installation complète des dépendances..."
-          npm install --no-package-lock
-          
-          # Vérification finale des dépendances critiques
-          if [ ! -d "node_modules/firebase-admin" ]; then
-            echo "⚠️ firebase-admin non trouvé, réinstallation..."
-            npm install firebase-admin@latest --no-package-lock
-          else
-            echo "✅ firebase-admin présent"
-          fi
-          
-          if [ ! -d "node_modules/firebase-functions" ]; then
-            echo "⚠️ firebase-functions non trouvé, réinstallation..."
-            npm install firebase-functions@latest --no-package-lock
-          else
-            echo "✅ firebase-functions présent"
-          fi
+        uses: ./.github/workflows/actions/install-dependencies
+        with:
+          working-directory: functions
+          codebase: functions
       
       - name: Installation des dépendances pour Functions V2
-        working-directory: functions-v2
-        run: |
-          rm -rf node_modules lib
-          rm -f package-lock.json
-          
-          # Installation explicite des dépendances critiques
-          echo "📦 Installation explicite des dépendances critiques pour Functions V2..."
-          npm install firebase-admin firebase-functions --no-package-lock
-          
-          # Vérification des installations
-          echo "📦 Vérification de l'installation:"
-          ls -la node_modules/firebase-admin || echo "firebase-admin non installé"
-          ls -la node_modules/firebase-functions || echo "firebase-functions non installé"
-          
-          # Installation complète
-          echo "📦 Installation complète des dépendances..."
-          npm install --no-package-lock
-          
-          # Vérification finale des dépendances critiques
-          if [ ! -d "node_modules/firebase-admin" ]; then
-            echo "⚠️ firebase-admin non trouvé, réinstallation..."
-            npm install firebase-admin@latest --no-package-lock
-          else
-            echo "✅ firebase-admin présent"
-          fi
-          
-          if [ ! -d "node_modules/firebase-functions" ]; then
-            echo "⚠️ firebase-functions non trouvé, réinstallation..."
-            npm install firebase-functions@latest --no-package-lock
-          else
-            echo "✅ firebase-functions présent"
-          fi
+        uses: ./.github/workflows/actions/install-dependencies
+        with:
+          working-directory: functions-v2
+          codebase: functions-v2
       
-      - name: Configuration des variables d'environnement
-        working-directory: functions-v2
-        run: |
-          echo "NODE_ENV=production" > .env
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
-          echo "GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}" >> .env
-          
-          echo "Variables d'environnement configurées avec succès"
-          echo "GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
-          echo "Présence de OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' }}"
+      - name: Préparation des variables d'environnement
+        uses: ./.github/workflows/actions/setup-env
+        with:
+          working-directory: functions-v2
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          google-cloud-project: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
       
       - name: Configuration du compte de service Firebase
-        env:
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > /tmp/firebase-service-account.json
-          chmod 600 /tmp/firebase-service-account.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
-          
-          # Vérification du fichier de service
-          if [ -f "/tmp/firebase-service-account.json" ]; then
-            echo "✅ Fichier de service configuré avec succès"
-            stat /tmp/firebase-service-account.json
-          else
-            echo "❌ Erreur: fichier de service non créé"
-            exit 1
-          fi
+        uses: ./.github/workflows/actions/setup-firebase-service
+        with:
+          firebase-service-account: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       
-      - name: Installation et mise à jour de Firebase CLI
-        run: |
-          npm uninstall -g firebase-tools
-          npm install -g firebase-tools@latest
-          firebase --version
+      - name: Build et déploiement Functions
+        uses: ./.github/workflows/actions/build-deploy
+        with:
+          working-directory: functions
+          project-id: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
+          firebase-token: ${{ secrets.FIREBASE_TOKEN }}
+          deploy-target: functions
       
-      - name: Création du fichier functions.yaml pour functions
-        working-directory: functions
-        run: |
-          echo "# Configuration Firebase Functions" > functions.yaml
-          echo "specVersion: v1" >> functions.yaml
-          echo "functions:" >> functions.yaml
-          echo "  - source: ." >> functions.yaml
-          echo "    codebase: default" >> functions.yaml
-          echo "    runtime: nodejs20" >> functions.yaml
-          echo "    memory: 1GB" >> functions.yaml
-          echo "    timeout: 540s" >> functions.yaml
-          cat functions.yaml
-
-      - name: Création du fichier functions.yaml pour functions-v2
-        working-directory: functions-v2
-        run: |
-          echo "# Configuration Firebase Functions v2" > functions.yaml
-          echo "specVersion: v1" >> functions.yaml
-          echo "functions:" >> functions.yaml
-          echo "  - source: ." >> functions.yaml
-          echo "    codebase: v2" >> functions.yaml
-          echo "    runtime: nodejs20" >> functions.yaml
-          echo "    memory: 1GB" >> functions.yaml
-          echo "    timeout: 540s" >> functions.yaml
-          cat functions.yaml
-      
-      - name: Build et préparation des Functions
-        working-directory: functions
-        run: |
-          # Compilation
-          npm run build
-          echo "Build des fonctions terminé"
-          
-          # Copie des dépendances
-          echo "Copie des dépendances dans lib..."
-          npm run copy-deps
-          
-          # Vérification
-          if [ ! -f "lib/index.js" ]; then
-            echo "❌ lib/index.js n'existe pas après la compilation"
-            exit 1
-          fi
-          
-          if [ ! -d "lib/node_modules/firebase-admin" ] || [ ! -d "lib/node_modules/firebase-functions" ]; then
-            echo "⚠️ Copie manuelle des dépendances critiques..."
-            mkdir -p lib/node_modules
-            cp -r node_modules/firebase-admin node_modules/firebase-functions lib/node_modules/
-          fi
-          
-          # Création d'un package.json dans lib
-          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^13.0.2\", \"firebase-functions\": \"^6.3.1\"}}" > lib/package.json
-          
-          echo "✅ Préparation des fonctions terminée"
-          ls -la lib/node_modules
-      
-      - name: Build et préparation des Functions V2
-        working-directory: functions-v2
-        run: |
-          # Compilation
-          npm run build
-          echo "Build des fonctions v2 terminé"
-          
-          # Copie des dépendances
-          echo "Copie des dépendances dans lib..."
-          npm run copy-deps
-          
-          # Vérification
-          if [ ! -f "lib/index.js" ]; then
-            echo "❌ lib/index.js n'existe pas après la compilation"
-            exit 1
-          fi
-          
-          if [ ! -d "lib/node_modules/firebase-admin" ] || [ ! -d "lib/node_modules/firebase-functions" ]; then
-            echo "⚠️ Copie manuelle des dépendances critiques..."
-            mkdir -p lib/node_modules
-            cp -r node_modules/firebase-admin node_modules/firebase-functions lib/node_modules/
-          fi
-          
-          # Création d'un package.json simplifié
-          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^13.0.2\", \"firebase-functions\": \"^6.3.1\"}}" > lib/package.json
-          
-          echo "✅ Préparation des fonctions v2 terminée"
-          ls -la lib/node_modules
-      
-      - name: Création d'un firebase.json temporaire
-        run: |
-          cat firebase.json
-          echo "Création d'un fichier firebase.json temporaire pour le déploiement..."
-          cp firebase.json firebase.json.bak
-          cat > firebase.json << EOL
-{
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "runtime": "nodejs20",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log"
-      ]
-    },
-    {
-      "source": "functions-v2",
-      "codebase": "v2",
-      "runtime": "nodejs20",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log"
-      ]
-    }
-  ]
-}
-EOL
-          cat firebase.json
-      
-      - name: Déploiement vers Firebase
-        run: |
-          echo "Déploiement sur le projet: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
-          
-          # Exportation du NODE_PATH pour aider à trouver les modules
-          export NODE_PATH="$PWD/functions/lib/node_modules:$PWD/functions-v2/lib/node_modules:$NODE_PATH"
-          echo "NODE_PATH=$NODE_PATH"
-          
-          # Déploiement avec debug
-          firebase deploy --only functions,functions:v2 \
-            --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \
-            --token "${{ secrets.FIREBASE_TOKEN }}" \
-            --debug
-          
-          # Restauration du firebase.json original
-          mv firebase.json.bak firebase.json
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json
+      - name: Build et déploiement Functions V2
+        uses: ./.github/workflows/actions/build-deploy
+        with:
+          working-directory: functions-v2
+          project-id: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
+          firebase-token: ${{ secrets.FIREBASE_TOKEN }}
+          deploy-target: functionsV2
