@@ -42,7 +42,7 @@ jobs:
           rm -rf node_modules
           rm -f package-lock.json
           echo "📦 Installation explicite de firebase-admin et firebase-functions..."
-          npm install firebase-admin firebase-functions --no-package-lock
+          npm install firebase-admin@latest firebase-functions@latest --no-package-lock
           mkdir -p node_modules
           ls -la node_modules/firebase-admin || echo "firebase-admin non installé"
           ls -la node_modules/firebase-functions || echo "firebase-functions non installé"
@@ -85,6 +85,15 @@ jobs:
           npm uninstall -g firebase-tools
           npm install -g firebase-tools@latest
           firebase --version
+          # Vérification que la version CLI est compatible avec le SDK
+          FIREBASE_CLI_VERSION=$(firebase --version)
+          echo "Version de Firebase CLI installée: $FIREBASE_CLI_VERSION"
+          # S'assurer que la version est suffisamment récente (12.0.0+)
+          if [[ "$FIREBASE_CLI_VERSION" =~ ^([0-9]+) && "${BASH_REMATCH[1]}" -lt 12 ]]; then
+            echo "⚠️ La version de Firebase CLI est trop ancienne. Installation forcée de la dernière version."
+            npm install -g firebase-tools@latest --force
+            firebase --version
+          fi
       
       - name: Build et préparation pour le déploiement
         working-directory: functions-v2
@@ -102,7 +111,7 @@ jobs:
             exit 1
           fi
           
-          # Création du fichier functions.yaml explicite
+          # Création du fichier functions.yaml explicite avec specVersion v1
           echo "# Configuration Firebase Functions v2" > functions.yaml
           echo "specVersion: v1" >> functions.yaml
           echo "functions:" >> functions.yaml
@@ -140,8 +149,12 @@ jobs:
           ls -la lib/node_modules/
           
           # Création d'un package.json simplifié dans lib
-          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^13.0.2\", \"firebase-functions\": \"^6.3.1\"}}" > lib/package.json
-          echo "✅ package.json simplifié créé dans lib"
+          # Utiliser les versions exactes installées pour assurer la compatibilité
+          FIREBASE_ADMIN_VERSION=$(npm list firebase-admin --json | jq -r '.dependencies["firebase-admin"].version')
+          FIREBASE_FUNCTIONS_VERSION=$(npm list firebase-functions --json | jq -r '.dependencies["firebase-functions"].version')
+          
+          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^${FIREBASE_ADMIN_VERSION:-13.0.2}\", \"firebase-functions\": \"^${FIREBASE_FUNCTIONS_VERSION:-6.3.1}\"}}" > lib/package.json
+          echo "✅ package.json simplifié créé dans lib avec versions: admin=${FIREBASE_ADMIN_VERSION:-13.0.2}, functions=${FIREBASE_FUNCTIONS_VERSION:-6.3.1}"
       
       - name: Déploiement des Functions v2
         working-directory: functions-v2
@@ -160,8 +173,8 @@ jobs:
           echo "    - source: ." >> .firebaserc
           echo "      codebase: v2" >> .firebaserc
           
-          # Création d'un firebase.json local pour le déploiement
-          echo "{\"functions\": [{\"source\": \".\", \"codebase\": \"v2\", \"runtime\": \"nodejs20\"}]}" > firebase.json
+          # Création d'un firebase.json local pour le déploiement avec specVersion explicite
+          echo "{\"functions\": [{\"source\": \".\", \"codebase\": \"v2\", \"runtime\": \"nodejs20\", \"specVersion\": \"v1\"}]}" > firebase.json
           
           # Déploiement avec debug
           firebase deploy --only functions:v2 \
