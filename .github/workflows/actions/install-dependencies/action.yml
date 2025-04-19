@@ -6,6 +6,10 @@ inputs:
   working-directory:
     description: "Répertoire de travail"
     required: true
+  codebase:
+    description: "Type de codebase (functions ou functions-v2)"
+    required: false
+    default: "functions"
 
 runs:
   using: "composite"
@@ -52,17 +56,25 @@ runs:
         echo "📦 Installation complète des dépendances..."
         npm install --no-package-lock
         
-        # Vérification finale
+        # Vérification finale des dépendances critiques
         if [ ! -d "node_modules/firebase-admin" ] || [ ! -d "node_modules/firebase-functions" ]; then
           echo "❌ Dépendances critiques manquantes après installation complète!"
-          echo "Installation de secours des dépendances critiques..."
           npm install firebase-admin@latest firebase-functions@latest --force --no-package-lock --save
         fi
         
         # Création du fichier functions.yaml
-        echo "functions:" > functions.yaml
+        echo "# Configuration Firebase Functions" > functions.yaml
+        echo "specVersion: v1" >> functions.yaml
+        echo "functions:" >> functions.yaml
         echo "  - source: ." >> functions.yaml
+        if [ "${{ inputs.codebase }}" = "functions-v2" ]; then
+          echo "    codebase: v2" >> functions.yaml
+        else
+          echo "    codebase: default" >> functions.yaml
+        fi
         echo "    runtime: nodejs20" >> functions.yaml
+        echo "    memory: 1GB" >> functions.yaml
+        echo "    timeout: 540s" >> functions.yaml
         
         echo "✅ Dépendances installées avec succès"
         echo "📋 Liste des dépendances principales installées:"
