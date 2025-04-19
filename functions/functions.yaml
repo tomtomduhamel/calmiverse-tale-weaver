@@ -1,5 +1,6 @@
 
 # Configuration pour Firebase Functions
+specVersion: v1
 functions:
   - source: .
     codebase: default

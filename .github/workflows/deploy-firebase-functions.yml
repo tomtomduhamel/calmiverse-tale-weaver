@@ -1,4 +1,3 @@
-
 name: Déploiement Firebase Functions
 on:
   workflow_dispatch:
@@ -139,7 +138,9 @@ jobs:
       - name: Création du fichier functions.yaml pour functions
         working-directory: functions
         run: |
-          echo "functions:" > functions.yaml
+          echo "# Configuration Firebase Functions" > functions.yaml
+          echo "specVersion: v1" >> functions.yaml
+          echo "functions:" >> functions.yaml
           echo "  - source: ." >> functions.yaml
           echo "    codebase: default" >> functions.yaml
           echo "    runtime: nodejs20" >> functions.yaml
@@ -150,7 +151,9 @@ jobs:
       - name: Création du fichier functions.yaml pour functions-v2
         working-directory: functions-v2
         run: |
-          echo "functions:" > functions.yaml
+          echo "# Configuration Firebase Functions v2" > functions.yaml
+          echo "specVersion: v1" >> functions.yaml
+          echo "functions:" >> functions.yaml
           echo "  - source: ." >> functions.yaml
           echo "    codebase: v2" >> functions.yaml
           echo "    runtime: nodejs20" >> functions.yaml

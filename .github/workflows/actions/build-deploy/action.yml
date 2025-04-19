@@ -1,4 +1,3 @@
-
 name: "Build et déploiement"
 description: "Compile et déploie les functions Firebase"
 
@@ -69,7 +68,9 @@ runs:
         fi
         
         # Création du fichier functions.yaml explicite
-        echo "functions:" > functions.yaml
+        echo "# Configuration Firebase Functions" > functions.yaml
+        echo "specVersion: v1" >> functions.yaml
+        echo "functions:" >> functions.yaml
         echo "  - source: ." >> functions.yaml
         if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
           echo "    codebase: v2" >> functions.yaml

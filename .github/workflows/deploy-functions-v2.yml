@@ -1,4 +1,3 @@
-
 name: Déploiement des Functions v2
 on:
   workflow_dispatch:
@@ -100,7 +99,9 @@ jobs:
           fi
           
           # Création du fichier functions.yaml explicite
-          echo "functions:" > functions.yaml
+          echo "# Configuration Firebase Functions v2" > functions.yaml
+          echo "specVersion: v1" >> functions.yaml
+          echo "functions:" >> functions.yaml
           echo "  - source: ." >> functions.yaml
           echo "    codebase: v2" >> functions.yaml
           echo "    runtime: nodejs20" >> functions.yaml
