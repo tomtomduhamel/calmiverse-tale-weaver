@@ -34,13 +34,6 @@ runs:
           
           echo "Version après mise à jour forcée:"
           firebase --version
-          
-          # Vérification critique finale
-          CLI_VERSION=$(firebase --version | cut -d' ' -f1)
-          if [[ "$CLI_VERSION" != "13.0.2" ]]; then
-            echo "❌ ERREUR CRITIQUE: Impossible d'installer la version correcte. Abandon."
-            exit 1
-          fi
         fi
         
         echo "✅ Firebase CLI v13.0.2 correctement configurée"
@@ -63,84 +56,32 @@ runs:
           exit 1
         fi
         
-        # Création d'un package.json complet dans lib avec toutes les dépendances
-        echo "📦 Création du package.json pour lib avec versions compatibles..."
-        echo '{
-          "main": "index.js",
-          "dependencies": {
-            "firebase-admin": "13.0.2",
-            "firebase-functions": "6.3.1",
-            "@google-cloud/storage": "7.15.0",
-            "openai": "4.28.0",
-            "cors": "2.8.5",
-            "dotenv": "16.3.1",
-            "node-fetch": "2.6.12",
-            "form-data": "4.0.2"
-          }
-        }' > lib/package.json
+        # Copie du package.json et installation des dépendances
+        cp package.json lib/
         
-        echo "✅ Build terminé avec succès"
-        echo "📄 package.json créé dans lib:"
-        cat lib/package.json
+        # Configuration du .firebaserc
+        echo "{\"projects\": {\"default\": \"${{ inputs.project-id }}\"}}" > lib/.firebaserc
         
-        # Installation des dépendances directement dans le dossier lib
-        echo "📦 Installation des dépendances dans le dossier lib..."
+        # Copie du fichier functions.yaml dans lib
+        cp functions.yaml lib/
+        
+        echo "📦 Installation des dépendances dans lib..."
         cd lib
-        npm install --production --no-optional --no-package-lock
+        npm install --production --no-package-lock
         
-        # Vérification de l'installation des modules critiques
+        # Vérification des modules critiques
         if [ ! -d "node_modules/firebase-admin" ] || [ ! -d "node_modules/firebase-functions" ]; then
           echo "⚠️ Modules Firebase manquants, installation manuelle..."
           npm install firebase-admin@13.0.2 firebase-functions@6.3.1 --save --no-package-lock
         fi
         
-        cd ..
-        
-        # Copie du fichier functions.yaml dans lib
-        cp functions.yaml lib/
-        
-        # Vérification des fichiers critiques
-        if [ ! -f "lib/index.js" ]; then
-          echo "❌ ERREUR: lib/index.js manquant!"
-          exit 1
-        fi
-        
-        echo "📂 Contenu final du dossier lib:"
-        ls -la lib
-        echo "📂 Vérification des modules Firebase:"
-        ls -la lib/node_modules/firebase-admin || echo "Module firebase-admin manquant!"
-        ls -la lib/node_modules/firebase-functions || echo "Module firebase-functions manquant!"
+        echo "📂 Vérification du contenu de lib/node_modules:"
+        ls -la node_modules/firebase-admin || echo "❌ firebase-admin est manquant!"
+        ls -la node_modules/firebase-functions || echo "❌ firebase-functions est manquant!"
 
-    - name: Configuration finale de Firebase
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: |
-        echo "🔧 Configuration de Firebase pour le projet ${{ inputs.project-id }}..."
-        echo "{\"projects\": {\"default\": \"${{ inputs.project-id }}\"}}" > .firebaserc
-        
-        # Vérification que le fichier functions.yaml existe
-        if [ ! -f "functions.yaml" ]; then
-          echo "❌ functions.yaml manquant, création..."
-          echo "# Configuration Firebase Functions" > functions.yaml
-          echo "specVersion: v1" >> functions.yaml
-          echo "functions:" >> functions.yaml
-          echo "  - source: ." >> functions.yaml
-          if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
-            echo "    codebase: v2" >> functions.yaml
-          else
-            echo "    codebase: default" >> functions.yaml
-          fi
-          echo "    runtime: nodejs20" >> functions.yaml
-          echo "    memory: 1GB" >> functions.yaml
-          echo "    timeout: 540s" >> functions.yaml
-        fi
-        
-        echo "📄 Configuration functions.yaml finale:"
-        cat functions.yaml
-    
     - name: Déploiement avec CLI Firebase 13.0.2
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
+      working-directory: ${{ inputs.working-directory }}/lib
       run: |
         echo "🚀 Déploiement des fonctions sur ${{ inputs.project-id }}..."
         
@@ -157,12 +98,6 @@ runs:
           firebase --version
         fi
         
-        # Déploiement à partir du dossier lib
-        cd lib
-        
-        # Création d'un .firebaserc minimal dans lib
-        echo "{\"projects\": {\"default\": \"${{ inputs.project-id }}\"}}" > .firebaserc
-        
         # Déterminer la cible de déploiement
         if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
           DEPLOY_TARGET="functions:v2"
@@ -174,7 +109,7 @@ runs:
         
         # Déploiement avec debug complet
         echo "🔍 Exécution du déploiement Firebase avec debug activé..."
-        firebase deploy --only ${DEPLOY_TARGET} \
+        GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json firebase deploy --only ${DEPLOY_TARGET} \
           --project ${{ inputs.project-id }} \
           --token "${{ inputs.firebase-token }}" \
           --non-interactive \

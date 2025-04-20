@@ -36,6 +36,9 @@ runs:
         FIREBASE_ADMIN_VERSION="13.0.2"
         FIREBASE_FUNCTIONS_VERSION="6.3.1"
         
+        echo "📦 Installation complète des dépendances..."
+        npm install --no-package-lock
+        
         echo "📦 Installation explicite des dépendances Firebase avec versions fixes..."
         npm install firebase-admin@${FIREBASE_ADMIN_VERSION} firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --save --force
         
@@ -78,10 +81,6 @@ runs:
           fi
         fi
         
-        # Installation des dépendances restantes
-        echo "📦 Installation complète des dépendances restantes..."
-        npm install --no-package-lock
-        
         # Mise à jour forcée du package.json avec les versions exactes
         echo "📝 Mise à jour du package.json avec les versions fixes..."
         node -e "const fs=require('fs');const pkg=require('./package.json');pkg.dependencies['firebase-admin']='13.0.2';pkg.dependencies['firebase-functions']='6.3.1';fs.writeFileSync('package.json',JSON.stringify(pkg,null,2));"
@@ -100,8 +99,5 @@ runs:
         echo "    runtime: nodejs20" >> functions.yaml
         echo "    memory: 1GB" >> functions.yaml
         echo "    timeout: 540s" >> functions.yaml
-        
-        echo "📄 Contenu du fichier functions.yaml créé:"
-        cat functions.yaml
         
         echo "✅ Installation complète et vérifiée des dépendances"
