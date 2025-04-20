@@ -38,46 +38,56 @@ runs:
         
         echo "✅ Firebase CLI v13.0.2 correctement configurée"
 
-    - name: Build Functions
+    - name: Build et préparation des fonctions
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "🔨 Compilation des fonctions..."
+        echo "🔨 Compilation et préparation des fonctions..."
         
-        # Nettoyage du dossier lib
-        rm -rf lib
-        mkdir -p lib
+        # Nettoyage des répertoires
+        rm -rf lib node_modules/firebase-admin/node_modules node_modules/firebase-functions/node_modules
         
-        # Compilation directe
+        # Compilation TypeScript
         npm run build
         
-        if [ $? -ne 0 ]; then
-          echo "❌ ERREUR de compilation"
-          exit 1
-        fi
-        
-        # Copie du package.json et installation des dépendances
+        # Préparation du dossier lib pour le déploiement
         cp package.json lib/
-        
-        # Configuration du .firebaserc
-        echo "{\"projects\": {\"default\": \"${{ inputs.project-id }}\"}}" > lib/.firebaserc
-        
-        # Copie du fichier functions.yaml dans lib
         cp functions.yaml lib/
         
-        echo "📦 Installation des dépendances dans lib..."
+        # Création du .firebaserc
+        echo "{\"projects\": {\"default\": \"${{ inputs.project-id }}\"}}" > lib/.firebaserc
+        
+        # Installer les dépendances dans le dossier lib
         cd lib
+        FIREBASE_ADMIN_VERSION="13.0.2"
+        FIREBASE_FUNCTIONS_VERSION="6.3.1"
+        
+        echo "📦 Installation des dépendances dans lib..."
         npm install --production --no-package-lock
         
-        # Vérification des modules critiques
-        if [ ! -d "node_modules/firebase-admin" ] || [ ! -d "node_modules/firebase-functions" ]; then
-          echo "⚠️ Modules Firebase manquants, installation manuelle..."
-          npm install firebase-admin@13.0.2 firebase-functions@6.3.1 --save --no-package-lock
-        fi
+        # Assurez-vous que firebase-admin et firebase-functions sont correctement installés
+        npm install firebase-admin@${FIREBASE_ADMIN_VERSION} firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --save --no-package-lock
         
         echo "📂 Vérification du contenu de lib/node_modules:"
         ls -la node_modules/firebase-admin || echo "❌ firebase-admin est manquant!"
         ls -la node_modules/firebase-functions || echo "❌ firebase-functions est manquant!"
+        
+        if [ ! -d "node_modules/firebase-admin" ]; then
+          echo "❌ ERREUR CRITIQUE: firebase-admin n'est pas installé correctement. Installation forcée..."
+          npm install firebase-admin@${FIREBASE_ADMIN_VERSION} --save --no-package-lock --force
+        fi
+        
+        if [ ! -d "node_modules/firebase-functions" ]; then
+          echo "❌ ERREUR CRITIQUE: firebase-functions n'est pas installé correctement. Installation forcée..."
+          npm install firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --save --no-package-lock --force
+        fi
+        
+        # Vérifications finales
+        echo "📝 Package.json dans lib:"
+        cat package.json
+        
+        echo "📁 Structure des dossiers dans lib/node_modules:"
+        ls -la node_modules | grep firebase
 
     - name: Déploiement avec CLI Firebase 13.0.2
       shell: bash
@@ -105,6 +115,13 @@ runs:
         else
           DEPLOY_TARGET="functions"
           echo "Déploiement des functions standard"
+        fi
+        
+        # Vérification critique finale avant déploiement
+        if [ ! -d "node_modules/firebase-admin" ] || [ ! -d "node_modules/firebase-functions" ]; then
+          echo "❌ ERREUR CRITIQUE: Modules Firebase manquants avant déploiement!"
+          echo "Installation de secours des modules essentiels..."
+          npm install firebase-admin@13.0.2 firebase-functions@6.3.1 --save --no-package-lock --force
         fi
         
         # Déploiement avec debug complet

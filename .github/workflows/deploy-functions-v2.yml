@@ -45,6 +45,25 @@ jobs:
           
           echo "✅ Firebase CLI v13.0.2 correctement installée"
       
+      - name: Préparation des dépendances pour functions-v2
+        working-directory: functions-v2
+        run: |
+          echo "🧹 Nettoyage radical des installations précédentes..."
+          rm -rf node_modules lib package-lock.json
+          
+          echo "📦 Installation des dépendances avec versions précises..."
+          npm install --no-package-lock
+          
+          # Installer explicitement les packages critiques
+          npm install firebase-admin@13.0.2 firebase-functions@6.3.1 --save --no-package-lock
+          
+          echo "📋 Vérification des dépendances Firebase installées:"
+          npm list firebase-admin firebase-functions --depth=0
+          
+          echo "🔍 Vérification physique des dossiers:"
+          ls -la node_modules/firebase-admin || echo "❌ firebase-admin est MANQUANT!"
+          ls -la node_modules/firebase-functions || echo "❌ firebase-functions est MANQUANT!"
+      
       - name: Préparation de l'environnement de déploiement
         uses: ./.github/workflows/actions/setup-env
         with:
@@ -52,56 +71,15 @@ jobs:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           google-cloud-project: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
       
-      - name: Installation des dépendances dans functions-v2
-        working-directory: functions-v2
-        run: |
-          echo "📦 Nettoyage et installation complète des dépendances..."
-          rm -rf node_modules lib package-lock.json
-          npm install --no-package-lock
-          
-          # Vérification des dépendances Firebase
-          echo "🔍 Vérification des dépendances Firebase..."
-          if [ ! -d "node_modules/firebase-admin" ]; then
-            echo "⚠️ firebase-admin manquant, installation spécifique..."
-            npm install firebase-admin@13.0.2 --save --no-package-lock
-          fi
-          
-          if [ ! -d "node_modules/firebase-functions" ]; then
-            echo "⚠️ firebase-functions manquant, installation spécifique..."
-            npm install firebase-functions@6.3.1 --save --no-package-lock
-          fi
-          
-          # Vérification finale
-          echo "📋 Liste des dépendances Firebase installées:"
-          npm list firebase-admin firebase-functions --depth=0
-      
       - name: Configuration du compte de service Firebase
         uses: ./.github/workflows/actions/setup-firebase-service
         with:
           firebase-service-account: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       
-      - name: Build et préparation du répertoire lib
-        working-directory: functions-v2
-        run: |
-          echo "🔨 Compilation des fonctions..."
-          npm run build
-          
-          echo "📦 Préparation du répertoire lib pour le déploiement..."
-          cp package.json lib/
-          cp functions.yaml lib/
-          
-          echo "📦 Installation des dépendances dans lib..."
-          cd lib
-          npm install --production --no-package-lock
-          
-          echo "📂 Vérification du contenu de lib/node_modules:"
-          ls -la node_modules/firebase-admin || echo "❌ firebase-admin est manquant!"
-          ls -la node_modules/firebase-functions || echo "❌ firebase-functions est manquant!"
-          
-          echo "{\"projects\": {\"default\": \"${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}\"}}" > .firebaserc
-      
-      - name: Déploiement avec Firebase CLI
-        working-directory: functions-v2/lib
-        run: |
-          echo "🚀 Déploiement des fonctions v2..."
-          GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json firebase deploy --only functions:v2 --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} --token "${{ secrets.FIREBASE_TOKEN }}" --debug
+      - name: Build et déploiement
+        uses: ./.github/workflows/actions/build-deploy
+        with:
+          working-directory: functions-v2
+          project-id: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
+          firebase-token: ${{ secrets.FIREBASE_TOKEN }}
+          deploy-target: functionsV2
