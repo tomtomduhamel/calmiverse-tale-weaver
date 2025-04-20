@@ -24,25 +24,34 @@ jobs:
       - name: Configuration de Node.js
         uses: ./.github/workflows/actions/setup-node
       
-      - name: Installation de Firebase CLI
+      - name: Installation et vérification de Firebase CLI
         run: |
-          echo "🔧 Installation de la dernière version de Firebase CLI..."
-          npm cache clean --force
+          echo "🔄 Désinstallation de Firebase CLI existante..."
           npm uninstall -g firebase-tools || true
-          npm install -g firebase-tools@latest --force
-          echo "Version Firebase CLI installée:"
+          
+          echo "🔧 Installation de Firebase CLI v13.0.2 spécifiquement..."
+          npm install -g firebase-tools@13.0.2 --force
+          
+          echo "🔍 Vérification de la version installée:"
           firebase --version
           
-          # Vérifier si la version est suffisamment récente (au moins 12.x)
+          # Vérification critique que la version 13.0.2 est bien installée
           CLI_VERSION=$(firebase --version | cut -d' ' -f1)
-          if [[ "$CLI_VERSION" < "13.0.0" ]]; then
-            echo "⚠️ La version de Firebase CLI est trop ancienne. Installation forcée de la version 13.0.2..."
+          if [[ "$CLI_VERSION" != "13.0.2" ]]; then
+            echo "⚠️ ERREUR: La version installée n'est pas 13.0.2 mais $CLI_VERSION. Nouvelle tentative..."
+            npm cache clean --force
             npm install -g firebase-tools@13.0.2 --force
             firebase --version
+            
+            # Seconde vérification critique
+            CLI_VERSION=$(firebase --version | cut -d' ' -f1)
+            if [[ "$CLI_VERSION" != "13.0.2" ]]; then
+              echo "❌ ÉCHEC: Impossible d'installer Firebase CLI 13.0.2"
+              exit 1
+            fi
           fi
           
-          # Vérification supplémentaire que la CLI est bien installée
-          which firebase || npm install -g firebase-tools@13.0.2 --force
+          echo "✅ Firebase CLI v13.0.2 correctement installée"
       
       - name: Préparation de l'environnement de déploiement
         uses: ./.github/workflows/actions/setup-env
@@ -62,25 +71,24 @@ jobs:
         with:
           firebase-service-account: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       
-      - name: Vérification des versions Firebase dans functions-v2
+      - name: Vérification approfondie de la configuration
         working-directory: functions-v2
         run: |
-          echo "Version de Firebase CLI installée:"
-          firebase --version
-          echo "Vérification des versions de firebase-admin et firebase-functions dans functions-v2:"
-          npm list firebase-admin firebase-functions
-      
-      - name: Vérification de la configuration Firebase
-        run: |
-          echo "Contenu du fichier firebase.json:"
-          cat firebase.json
-          echo "Contenu du fichier functions-v2/functions.yaml:"
-          cat functions-v2/functions.yaml
+          echo "📦 Verification des dépendances installées:"
+          npm list firebase-admin firebase-functions --depth=0
           
-          # Vérifier que les fichiers nécessaires existent
-          if [ ! -f "functions-v2/lib/index.js" ]; then
-            echo "❌ ERREUR: Le fichier index.js n'existe pas dans functions-v2/lib!"
-            ls -la functions-v2/lib || echo "Le dossier lib n'existe pas"
+          echo "📄 Contenu du functions.yaml:"
+          cat functions.yaml
+          
+          echo "📄 Contenu du package.json des functions-v2:"
+          cat package.json
+          
+          # Vérification critique des fichiers compilés
+          if [ ! -d "lib" ]; then
+            echo "❌ Le dossier lib n'existe pas encore, doit être créé par l'étape build"
+          else
+            echo "📂 Contenu du dossier lib:"
+            ls -la lib
           fi
       
       - name: Build et déploiement

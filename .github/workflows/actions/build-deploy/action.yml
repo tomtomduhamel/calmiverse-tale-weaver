@@ -20,47 +20,42 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Vérification de l'environnement
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: |
-        echo "🔍 Vérification de l'environnement de build..."
-        echo "📦 Version de Node.js: $(node -v)"
-        echo "📦 Version de npm: $(npm -v)"
-        
-        if [ ! -f "package.json" ]; then
-          echo "❌ package.json non trouvé dans $(pwd)"
-          exit 1
-        fi
-
-    - name: Mise à jour de Firebase CLI (dernière tentative)
+    - name: Mise à jour finale de Firebase CLI
       shell: bash
       run: |
-        echo "🔧 Mise à jour finale de Firebase CLI avant déploiement..."
-        npm cache clean --force
-        npm uninstall -g firebase-tools || true
-        npm install -g firebase-tools@13.0.2 --force
-        echo "Version Firebase CLI après mise à jour finale:"
-        firebase --version
-        
-        # Assurer que la version est bien 13.x
+        echo "🔧 Vérification finale de Firebase CLI avant déploiement..."
         CLI_VERSION=$(firebase --version | cut -d' ' -f1)
-        if [[ "$CLI_VERSION" < "13.0.0" ]]; then
-          echo "⚠️ La version Firebase CLI est encore trop ancienne. Nouvelle tentative..."
+        
+        if [[ "$CLI_VERSION" != "13.0.2" ]]; then
+          echo "⚠️ Version incorrecte détectée: $CLI_VERSION. Installation forcée de Firebase CLI 13.0.2..."
+          npm uninstall -g firebase-tools || true
+          npm cache clean --force
           npm install -g firebase-tools@13.0.2 --force
-          echo "Version après nouvelle tentative:"
+          
+          echo "Version après mise à jour forcée:"
           firebase --version
+          
+          # Vérification critique finale
+          CLI_VERSION=$(firebase --version | cut -d' ' -f1)
+          if [[ "$CLI_VERSION" != "13.0.2" ]]; then
+            echo "❌ ERREUR CRITIQUE: Impossible d'installer la version correcte. Abandon."
+            exit 1
+          fi
         fi
+        
+        echo "✅ Firebase CLI v13.0.2 correctement configurée"
 
     - name: Build Functions
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
         echo "🔨 Compilation des fonctions..."
-        # Nettoyer le dossier lib avant la compilation
-        rm -rf lib
         
-        # Compiler avec TypeScript
+        # Nettoyage du dossier lib
+        rm -rf lib
+        mkdir -p lib
+        
+        # Compilation directe
         npm run build
         
         if [ $? -ne 0 ]; then
@@ -68,74 +63,84 @@ runs:
           exit 1
         fi
         
-        # Synchroniser les versions firebase dans lib/package.json pour éviter les incompatibilités
-        echo "📦 Préparation du package.json pour déploiement dans lib..."
-        FIREBASE_ADMIN_VERSION="13.0.2"
-        FIREBASE_FUNCTIONS_VERSION="6.3.1"
+        # Création d'un package.json compatible dans lib
+        echo "📦 Création du package.json pour lib avec versions compatibles..."
+        echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"13.0.2\", \"firebase-functions\": \"6.3.1\"}}" > lib/package.json
         
-        # Créer/mettre à jour package.json dans lib avec les bonnes versions
-        echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^${FIREBASE_ADMIN_VERSION}\", \"firebase-functions\": \"^${FIREBASE_FUNCTIONS_VERSION}\"}}" > lib/package.json
-        
-        echo "✅ Build terminé, lib/package.json créé avec versions:"
+        echo "✅ Build terminé avec succès"
+        echo "📄 package.json créé dans lib:"
         cat lib/package.json
+        
+        # Copie du fichier functions.yaml dans lib
+        cp functions.yaml lib/
+        
+        # Vérification des fichiers critiques
+        if [ ! -f "lib/index.js" ]; then
+          echo "❌ ERREUR: lib/index.js manquant!"
+          exit 1
+        fi
+        
+        echo "📂 Contenu final du dossier lib:"
+        ls -la lib
 
-    - name: Configuration de Firebase
+    - name: Configuration finale de Firebase
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
         echo "🔧 Configuration de Firebase pour le projet ${{ inputs.project-id }}..."
         echo "{\"projects\": {\"default\": \"${{ inputs.project-id }}\"}}" > .firebaserc
         
-        # Création/mise à jour du fichier functions.yaml avec configuration appropriée
-        echo "# Configuration Firebase Functions" > functions.yaml
-        echo "specVersion: v1" >> functions.yaml
-        echo "functions:" >> functions.yaml
-        echo "  - source: ." >> functions.yaml
-        if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
-          echo "    codebase: v2" >> functions.yaml
-        else
-          echo "    codebase: default" >> functions.yaml
+        # Vérification que le fichier functions.yaml existe
+        if [ ! -f "functions.yaml" ]; then
+          echo "❌ functions.yaml manquant, création..."
+          echo "# Configuration Firebase Functions" > functions.yaml
+          echo "specVersion: v1" >> functions.yaml
+          echo "functions:" >> functions.yaml
+          echo "  - source: ." >> functions.yaml
+          if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
+            echo "    codebase: v2" >> functions.yaml
+          else
+            echo "    codebase: default" >> functions.yaml
+          fi
+          echo "    runtime: nodejs20" >> functions.yaml
+          echo "    memory: 1GB" >> functions.yaml
+          echo "    timeout: 540s" >> functions.yaml
         fi
-        echo "    runtime: nodejs20" >> functions.yaml
-        echo "    memory: 1GB" >> functions.yaml
-        echo "    timeout: 540s" >> functions.yaml
         
-        echo "📄 Contenu du fichier functions.yaml créé:"
+        echo "📄 Configuration functions.yaml finale:"
         cat functions.yaml
     
-    - name: Déploiement des Functions
+    - name: Déploiement avec CLI Firebase 13.0.2
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "🚀 Déploiement des fonctions sur ${{ inputs.project-id }} avec cible ${{ inputs.deploy-target }}..."
+        echo "🚀 Déploiement des fonctions sur ${{ inputs.project-id }}..."
         
-        # Vérifier la version Firebase CLI installée
-        FIREBASE_CLI_VERSION=$(firebase --version | cut -d' ' -f1)
-        echo "Version Firebase CLI pour déploiement: $FIREBASE_CLI_VERSION"
+        # Dernière vérification de CLI
+        CLI_VERSION=$(firebase --version | cut -d' ' -f1)
+        echo "Version Firebase CLI pour déploiement: $CLI_VERSION"
         
-        # Si version trop ancienne, mettre à jour une dernière fois
-        if [[ "$FIREBASE_CLI_VERSION" < "13.0.0" ]]; then
-          echo "⚠️ Version Firebase CLI trop ancienne, mise à jour forcée avant déploiement..."
+        # Si version incorrecte, mise à jour d'urgence
+        if [[ "$CLI_VERSION" != "13.0.2" ]]; then
+          echo "⚠️ Version Firebase CLI incorrecte, mise à jour d'urgence..."
+          npm uninstall -g firebase-tools || true
+          npm cache clean --force
           npm install -g firebase-tools@13.0.2 --force
           firebase --version
         fi
         
         # Déterminer la cible de déploiement
         if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
-          DEPLOY_TARGET="--only functions:v2"
+          DEPLOY_TARGET="functions:v2"
           echo "Déploiement des functions v2"
         else
-          DEPLOY_TARGET="--only functions"
+          DEPLOY_TARGET="functions"
           echo "Déploiement des functions standard"
         fi
         
-        # Afficher le contenu du fichier functions.yaml
-        echo "📄 Contenu du fichier functions.yaml avant déploiement:"
-        cat functions.yaml
-        
-        # Déployer avec la Firebase CLI mise à jour
-        echo "🔍 Déploiement avec Firebase CLI $(firebase --version)"
-        firebase deploy $DEPLOY_TARGET \
+        # Déploiement avec debug complet
+        echo "🔍 Exécution du déploiement Firebase avec debug activé..."
+        firebase deploy --only ${DEPLOY_TARGET} \
           --project ${{ inputs.project-id }} \
           --token "${{ inputs.firebase-token }}" \
           --non-interactive \
