@@ -37,7 +37,7 @@ runs:
         
         # Installation explicite des dépendances critiques avec versions fixes
         echo "📦 Installation explicite de firebase-admin et firebase-functions avec versions fixes..."
-        npm install firebase-admin@${FIREBASE_ADMIN_VERSION} firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --no-package-lock --save
+        npm install firebase-admin@${FIREBASE_ADMIN_VERSION} firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --no-package-lock --save --force
         
         # Vérifier que les dépendances critiques sont installées
         if [ ! -d "node_modules/firebase-admin" ]; then

@@ -27,18 +27,22 @@ jobs:
       - name: Installation de Firebase CLI
         run: |
           echo "🔧 Installation de la dernière version de Firebase CLI..."
-          npm uninstall -g firebase-tools || true
           npm cache clean --force
+          npm uninstall -g firebase-tools || true
           npm install -g firebase-tools@latest --force
           echo "Version Firebase CLI installée:"
           firebase --version
+          
           # Vérifier si la version est suffisamment récente (au moins 12.x)
           CLI_VERSION=$(firebase --version | cut -d' ' -f1)
-          if [[ "$CLI_VERSION" < "12.0.0" ]]; then
-            echo "⚠️ La version de Firebase CLI est trop ancienne. Tentative de mise à jour forcée..."
+          if [[ "$CLI_VERSION" < "13.0.0" ]]; then
+            echo "⚠️ La version de Firebase CLI est trop ancienne. Installation forcée de la version 13.0.2..."
             npm install -g firebase-tools@13.0.2 --force
             firebase --version
           fi
+          
+          # Vérification supplémentaire que la CLI est bien installée
+          which firebase || npm install -g firebase-tools@13.0.2 --force
       
       - name: Préparation de l'environnement de déploiement
         uses: ./.github/workflows/actions/setup-env
@@ -72,6 +76,12 @@ jobs:
           cat firebase.json
           echo "Contenu du fichier functions-v2/functions.yaml:"
           cat functions-v2/functions.yaml
+          
+          # Vérifier que les fichiers nécessaires existent
+          if [ ! -f "functions-v2/lib/index.js" ]; then
+            echo "❌ ERREUR: Le fichier index.js n'existe pas dans functions-v2/lib!"
+            ls -la functions-v2/lib || echo "Le dossier lib n'existe pas"
+          fi
       
       - name: Build et déploiement
         uses: ./.github/workflows/actions/build-deploy
