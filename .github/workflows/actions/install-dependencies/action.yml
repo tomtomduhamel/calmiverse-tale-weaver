@@ -33,7 +33,7 @@ runs:
         
         # Installation explicite des dépendances critiques en premier
         echo "📦 Installation explicite de firebase-admin et firebase-functions..."
-        npm install firebase-admin firebase-functions --no-package-lock --save
+        npm install firebase-admin@latest firebase-functions@latest --no-package-lock --save
         
         # Vérifier que les dépendances critiques sont installées
         if [ ! -d "node_modules/firebase-admin" ]; then
@@ -62,7 +62,7 @@ runs:
           npm install firebase-admin@latest firebase-functions@latest --force --no-package-lock --save
         fi
         
-        # Création du fichier functions.yaml
+        # Création du fichier functions.yaml avec les bonnes valeurs selon le codebase
         echo "# Configuration Firebase Functions" > functions.yaml
         echo "specVersion: v1" >> functions.yaml
         echo "functions:" >> functions.yaml

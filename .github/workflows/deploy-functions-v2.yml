@@ -24,6 +24,13 @@ jobs:
       - name: Configuration de Node.js
         uses: ./.github/workflows/actions/setup-node
       
+      - name: Installation de Firebase CLI
+        run: |
+          echo "🔧 Installation de la dernière version de Firebase CLI..."
+          npm uninstall -g firebase-tools
+          npm install -g firebase-tools@latest --force
+          firebase --version
+      
       - name: Préparation de l'environnement de déploiement
         uses: ./.github/workflows/actions/setup-env
         with:

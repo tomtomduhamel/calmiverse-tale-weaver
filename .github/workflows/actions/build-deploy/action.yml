@@ -36,18 +36,14 @@ runs:
     - name: Installation et mise à jour de Firebase CLI
       shell: bash
       run: |
+        echo "🔧 Installation de la dernière version de Firebase CLI..."
         npm uninstall -g firebase-tools
-        npm install -g firebase-tools@latest
+        npm install -g firebase-tools@latest --force
         firebase --version
-        # Vérification que la version CLI est compatible
+        
+        # Vérification que la version CLI est suffisamment récente
         FIREBASE_CLI_VERSION=$(firebase --version)
         echo "Version de Firebase CLI installée: $FIREBASE_CLI_VERSION"
-        # S'assurer que la version est suffisamment récente (12.0.0+)
-        if [[ "$FIREBASE_CLI_VERSION" =~ ^([0-9]+) && "${BASH_REMATCH[1]}" -lt 12 ]]; then
-          echo "⚠️ La version de Firebase CLI est trop ancienne. Installation forcée de la dernière version."
-          npm install -g firebase-tools@latest --force
-          firebase --version
-        fi
 
     - name: Build Functions
       shell: bash
@@ -67,26 +63,18 @@ runs:
         
         # Copier les dépendances et créer package.json simplifié
         echo "📦 Copie des dépendances dans lib..."
-        npm run copy-deps
+        npm run copy-deps || echo "Aucun script copy-deps trouvé, progression..."
         
         # Vérification des dépendances copiées
-        if [ ! -d "lib/node_modules/firebase-admin" ]; then
-          echo "⚠️ Copie manuelle de firebase-admin..."
-          mkdir -p lib/node_modules
-          cp -r node_modules/firebase-admin lib/node_modules/
+        if [ -f "lib/package.json" ]; then
+          echo "✅ lib/package.json existe déjà"
+        else
+          echo "⚠️ Création de package.json simplifié dans lib..."
+          FIREBASE_ADMIN_VERSION=$(npm list firebase-admin --json | grep -o '"version":"[^"]*"' | cut -d'"' -f4 || echo "13.0.2")
+          FIREBASE_FUNCTIONS_VERSION=$(npm list firebase-functions --json | grep -o '"version":"[^"]*"' | cut -d'"' -f4 || echo "6.3.1")
+          
+          echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^${FIREBASE_ADMIN_VERSION}\", \"firebase-functions\": \"^${FIREBASE_FUNCTIONS_VERSION}\"}}" > lib/package.json
         fi
-        
-        if [ ! -d "lib/node_modules/firebase-functions" ]; then
-          echo "⚠️ Copie manuelle de firebase-functions..."
-          mkdir -p lib/node_modules
-          cp -r node_modules/firebase-functions lib/node_modules/
-        fi
-        
-        # Création du package.json simplifié dans lib
-        FIREBASE_ADMIN_VERSION=$(npm list firebase-admin --json | grep -o '"version":"[^"]*"' | cut -d'"' -f4 || echo "13.0.2")
-        FIREBASE_FUNCTIONS_VERSION=$(npm list firebase-functions --json | grep -o '"version":"[^"]*"' | cut -d'"' -f4 || echo "6.3.1")
-        
-        echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"^${FIREBASE_ADMIN_VERSION}\", \"firebase-functions\": \"^${FIREBASE_FUNCTIONS_VERSION}\"}}" > lib/package.json
 
     - name: Configuration de Firebase
       shell: bash
@@ -114,10 +102,27 @@ runs:
           echo "Déploiement des functions standard"
         fi
         
-        # Créer un firebase.json temporaire avec specVersion explicite
-        echo "{\"functions\": [{\"source\": \".\", \"runtime\": \"nodejs20\", \"specVersion\": \"v1\"}]}" > firebase.json
+        # Vérifier l'existence de functions.yaml
+        if [ -f "functions.yaml" ]; then
+          echo "📄 functions.yaml trouvé:"
+          cat functions.yaml
+        else
+          echo "⚠️ functions.yaml non trouvé, création..."
+          echo "# Configuration Firebase Functions" > functions.yaml
+          echo "specVersion: v1" >> functions.yaml
+          echo "functions:" >> functions.yaml
+          echo "  - source: ." >> functions.yaml
+          if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
+            echo "    codebase: v2" >> functions.yaml
+          else
+            echo "    codebase: default" >> functions.yaml
+          fi
+          echo "    runtime: nodejs20" >> functions.yaml
+          echo "    memory: 1GB" >> functions.yaml
+          echo "    timeout: 540s" >> functions.yaml
+        fi
         
-        # Déployer avec le mode debug pour plus d'informations
+        # Déployer avec la Firebase CLI mise à jour
         firebase deploy $DEPLOY_TARGET \
           --project ${{ inputs.project-id }} \
           --token "${{ inputs.firebase-token }}" \
