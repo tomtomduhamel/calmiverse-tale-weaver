@@ -30,6 +30,7 @@ runs:
         echo "🧹 Nettoyage radical des dépendances existantes..."
         rm -rf node_modules
         rm -f package-lock.json
+        rm -rf lib/node_modules
         
         # Versions fixes absolues pour les paquets Firebase
         FIREBASE_ADMIN_VERSION="13.0.2"

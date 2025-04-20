@@ -61,10 +61,15 @@ jobs:
           google-cloud-project: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
       
       - name: Installation des dépendances
-        uses: ./.github/workflows/actions/install-dependencies
-        with:
-          working-directory: functions-v2
-          codebase: functions-v2
+        run: |
+          cd functions-v2
+          echo "📦 Installation complète des dépendances..."
+          rm -rf node_modules package-lock.json
+          npm install --no-package-lock
+          
+          # Vérification des dépendances essentielles
+          echo "🔍 Vérification des dépendances Firebase..."
+          npm list firebase-admin firebase-functions --depth=0
       
       - name: Configuration du compte de service Firebase
         uses: ./.github/workflows/actions/setup-firebase-service
@@ -82,14 +87,6 @@ jobs:
           
           echo "📄 Contenu du package.json des functions-v2:"
           cat package.json
-          
-          # Vérification critique des fichiers compilés
-          if [ ! -d "lib" ]; then
-            echo "❌ Le dossier lib n'existe pas encore, doit être créé par l'étape build"
-          else
-            echo "📂 Contenu du dossier lib:"
-            ls -la lib
-          fi
       
       - name: Build et déploiement
         uses: ./.github/workflows/actions/build-deploy

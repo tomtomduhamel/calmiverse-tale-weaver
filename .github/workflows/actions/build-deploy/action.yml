@@ -63,13 +63,38 @@ runs:
           exit 1
         fi
         
-        # Création d'un package.json compatible dans lib
+        # Création d'un package.json complet dans lib avec toutes les dépendances
         echo "📦 Création du package.json pour lib avec versions compatibles..."
-        echo "{\"main\": \"index.js\", \"dependencies\": {\"firebase-admin\": \"13.0.2\", \"firebase-functions\": \"6.3.1\"}}" > lib/package.json
+        echo '{
+          "main": "index.js",
+          "dependencies": {
+            "firebase-admin": "13.0.2",
+            "firebase-functions": "6.3.1",
+            "@google-cloud/storage": "7.15.0",
+            "openai": "4.28.0",
+            "cors": "2.8.5",
+            "dotenv": "16.3.1",
+            "node-fetch": "2.6.12",
+            "form-data": "4.0.2"
+          }
+        }' > lib/package.json
         
         echo "✅ Build terminé avec succès"
         echo "📄 package.json créé dans lib:"
         cat lib/package.json
+        
+        # Installation des dépendances directement dans le dossier lib
+        echo "📦 Installation des dépendances dans le dossier lib..."
+        cd lib
+        npm install --production --no-optional --no-package-lock
+        
+        # Vérification de l'installation des modules critiques
+        if [ ! -d "node_modules/firebase-admin" ] || [ ! -d "node_modules/firebase-functions" ]; then
+          echo "⚠️ Modules Firebase manquants, installation manuelle..."
+          npm install firebase-admin@13.0.2 firebase-functions@6.3.1 --save --no-package-lock
+        fi
+        
+        cd ..
         
         # Copie du fichier functions.yaml dans lib
         cp functions.yaml lib/
@@ -82,6 +107,9 @@ runs:
         
         echo "📂 Contenu final du dossier lib:"
         ls -la lib
+        echo "📂 Vérification des modules Firebase:"
+        ls -la lib/node_modules/firebase-admin || echo "Module firebase-admin manquant!"
+        ls -la lib/node_modules/firebase-functions || echo "Module firebase-functions manquant!"
 
     - name: Configuration finale de Firebase
       shell: bash
@@ -128,6 +156,12 @@ runs:
           npm install -g firebase-tools@13.0.2 --force
           firebase --version
         fi
+        
+        # Déploiement à partir du dossier lib
+        cd lib
+        
+        # Création d'un .firebaserc minimal dans lib
+        echo "{\"projects\": {\"default\": \"${{ inputs.project-id }}\"}}" > .firebaserc
         
         # Déterminer la cible de déploiement
         if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
