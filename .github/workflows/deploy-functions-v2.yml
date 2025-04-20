@@ -30,7 +30,15 @@ jobs:
           npm uninstall -g firebase-tools || true
           npm cache clean --force
           npm install -g firebase-tools@latest --force
+          echo "Version Firebase CLI installée:"
           firebase --version
+          # Vérifier si la version est suffisamment récente (au moins 12.x)
+          CLI_VERSION=$(firebase --version | cut -d' ' -f1)
+          if [[ "$CLI_VERSION" < "12.0.0" ]]; then
+            echo "⚠️ La version de Firebase CLI est trop ancienne. Tentative de mise à jour forcée..."
+            npm install -g firebase-tools@13.0.2 --force
+            firebase --version
+          fi
       
       - name: Préparation de l'environnement de déploiement
         uses: ./.github/workflows/actions/setup-env
@@ -50,13 +58,20 @@ jobs:
         with:
           firebase-service-account: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       
-      - name: Vérification des versions Firebase
+      - name: Vérification des versions Firebase dans functions-v2
+        working-directory: functions-v2
         run: |
-          echo "Version de Firebase CLI installée:" 
+          echo "Version de Firebase CLI installée:"
           firebase --version
           echo "Vérification des versions de firebase-admin et firebase-functions dans functions-v2:"
-          cd functions-v2
           npm list firebase-admin firebase-functions
+      
+      - name: Vérification de la configuration Firebase
+        run: |
+          echo "Contenu du fichier firebase.json:"
+          cat firebase.json
+          echo "Contenu du fichier functions-v2/functions.yaml:"
+          cat functions-v2/functions.yaml
       
       - name: Build et déploiement
         uses: ./.github/workflows/actions/build-deploy

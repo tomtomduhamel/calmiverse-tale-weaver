@@ -31,14 +31,18 @@ runs:
         rm -rf node_modules
         rm -f package-lock.json
         
-        # Installation explicite des dépendances critiques en premier
-        echo "📦 Installation explicite de firebase-admin et firebase-functions..."
-        npm install firebase-admin@latest firebase-functions@latest --no-package-lock --save
+        # Détermination de la version fixe sûre pour firebase packages
+        FIREBASE_ADMIN_VERSION="13.0.2"
+        FIREBASE_FUNCTIONS_VERSION="6.3.1"
+        
+        # Installation explicite des dépendances critiques avec versions fixes
+        echo "📦 Installation explicite de firebase-admin et firebase-functions avec versions fixes..."
+        npm install firebase-admin@${FIREBASE_ADMIN_VERSION} firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --no-package-lock --save
         
         # Vérifier que les dépendances critiques sont installées
         if [ ! -d "node_modules/firebase-admin" ]; then
           echo "❌ firebase-admin n'est PAS installé correctement!"
-          npm install firebase-admin@latest --force --no-package-lock --save
+          npm install firebase-admin@${FIREBASE_ADMIN_VERSION} --force --no-package-lock --save
         else
           echo "✅ firebase-admin est installé avec succès"
           ls -la node_modules/firebase-admin
@@ -46,28 +50,28 @@ runs:
         
         if [ ! -d "node_modules/firebase-functions" ]; then
           echo "❌ firebase-functions n'est PAS installé correctement!"
-          npm install firebase-functions@latest --force --no-package-lock --save
+          npm install firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --force --no-package-lock --save
         else
           echo "✅ firebase-functions est installé avec succès"
           ls -la node_modules/firebase-functions
         fi
         
-        # Installation des dépendances avec plus de détails
+        # Installation des dépendances restantes avec détails
         echo "📦 Installation complète des dépendances..."
         npm install --no-package-lock
         
         # Vérification finale des dépendances critiques
         if [ ! -d "node_modules/firebase-admin" ] || [ ! -d "node_modules/firebase-functions" ]; then
           echo "❌ Dépendances critiques manquantes après installation complète!"
-          npm install firebase-admin@latest firebase-functions@latest --force --no-package-lock --save
+          npm install firebase-admin@${FIREBASE_ADMIN_VERSION} firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --force --no-package-lock --save
         fi
         
-        # Mise à jour du package.json avec les versions récentes
-        echo "📝 Mise à jour de package.json avec les dernières versions..."
-        FIREBASE_ADMIN_VERSION=$(npm list firebase-admin --json | grep -o '"version":"[^"]*"' | cut -d'"' -f4 || echo "13.0.2")
-        FIREBASE_FUNCTIONS_VERSION=$(npm list firebase-functions --json | grep -o '"version":"[^"]*"' | cut -d'"' -f4 || echo "6.3.1")
+        # Mise à jour du package.json avec les versions spécifiques pour éviter les updates automatiques
+        echo "📝 Mise à jour de package.json avec les versions fixées..."
+        sed -i 's/"firebase-admin": "\^[0-9.]*"/"firebase-admin": "^'${FIREBASE_ADMIN_VERSION}'"/g' package.json
+        sed -i 's/"firebase-functions": "\^[0-9.]*"/"firebase-functions": "^'${FIREBASE_FUNCTIONS_VERSION}'"/g' package.json
         
-        # Création du fichier functions.yaml avec les bonnes valeurs selon le codebase
+        # Création du fichier functions.yaml avec configuration correcte
         echo "# Configuration Firebase Functions" > functions.yaml
         echo "specVersion: v1" >> functions.yaml
         echo "functions:" >> functions.yaml
@@ -81,6 +85,7 @@ runs:
         echo "    memory: 1GB" >> functions.yaml
         echo "    timeout: 540s" >> functions.yaml
         
+        # Afficher les versions installées pour vérification
         echo "✅ Dépendances installées avec succès"
-        echo "📋 Liste des dépendances principales installées:"
-        npm list --depth=0 firebase-admin firebase-functions
+        echo "📋 Versions de firebase installées:"
+        npm list firebase-admin firebase-functions --depth=0
