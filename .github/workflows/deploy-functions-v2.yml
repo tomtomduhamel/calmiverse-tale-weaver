@@ -27,7 +27,8 @@ jobs:
       - name: Installation de Firebase CLI
         run: |
           echo "🔧 Installation de la dernière version de Firebase CLI..."
-          npm uninstall -g firebase-tools
+          npm uninstall -g firebase-tools || true
+          npm cache clean --force
           npm install -g firebase-tools@latest --force
           firebase --version
       
@@ -48,6 +49,14 @@ jobs:
         uses: ./.github/workflows/actions/setup-firebase-service
         with:
           firebase-service-account: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      
+      - name: Vérification des versions Firebase
+        run: |
+          echo "Version de Firebase CLI installée:" 
+          firebase --version
+          echo "Vérification des versions de firebase-admin et firebase-functions dans functions-v2:"
+          cd functions-v2
+          npm list firebase-admin firebase-functions
       
       - name: Build et déploiement
         uses: ./.github/workflows/actions/build-deploy

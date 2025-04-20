@@ -33,17 +33,15 @@ runs:
           exit 1
         fi
 
-    - name: Installation et mise à jour de Firebase CLI
+    - name: Mise à jour de Firebase CLI
       shell: bash
       run: |
-        echo "🔧 Installation de la dernière version de Firebase CLI..."
-        npm uninstall -g firebase-tools
+        echo "🔧 Mise à jour forcée de Firebase CLI..."
+        npm uninstall -g firebase-tools || true
+        npm cache clean --force
         npm install -g firebase-tools@latest --force
+        echo "Version Firebase CLI après mise à jour:"
         firebase --version
-        
-        # Vérification que la version CLI est suffisamment récente
-        FIREBASE_CLI_VERSION=$(firebase --version)
-        echo "Version de Firebase CLI installée: $FIREBASE_CLI_VERSION"
 
     - name: Build Functions
       shell: bash
@@ -82,6 +80,20 @@ runs:
       run: |
         echo "🔧 Configuration de Firebase pour le projet ${{ inputs.project-id }}..."
         echo "{\"projects\": {\"default\": \"${{ inputs.project-id }}\"}}" > .firebaserc
+        
+        # Assurer que le bon fichier functions.yaml est présent et valide
+        echo "# Configuration Firebase Functions" > functions.yaml
+        echo "specVersion: v1" >> functions.yaml
+        echo "functions:" >> functions.yaml
+        echo "  - source: ." >> functions.yaml
+        if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
+          echo "    codebase: v2" >> functions.yaml
+        else
+          echo "    codebase: default" >> functions.yaml
+        fi
+        echo "    runtime: nodejs20" >> functions.yaml
+        echo "    memory: 1GB" >> functions.yaml
+        echo "    timeout: 540s" >> functions.yaml
     
     - name: Déploiement des Functions
       shell: bash
@@ -102,27 +114,12 @@ runs:
           echo "Déploiement des functions standard"
         fi
         
-        # Vérifier l'existence de functions.yaml
-        if [ -f "functions.yaml" ]; then
-          echo "📄 functions.yaml trouvé:"
-          cat functions.yaml
-        else
-          echo "⚠️ functions.yaml non trouvé, création..."
-          echo "# Configuration Firebase Functions" > functions.yaml
-          echo "specVersion: v1" >> functions.yaml
-          echo "functions:" >> functions.yaml
-          echo "  - source: ." >> functions.yaml
-          if [ "${{ inputs.deploy-target }}" = "functionsV2" ]; then
-            echo "    codebase: v2" >> functions.yaml
-          else
-            echo "    codebase: default" >> functions.yaml
-          fi
-          echo "    runtime: nodejs20" >> functions.yaml
-          echo "    memory: 1GB" >> functions.yaml
-          echo "    timeout: 540s" >> functions.yaml
-        fi
+        # Afficher le contenu du fichier functions.yaml
+        echo "📄 Contenu du fichier functions.yaml:"
+        cat functions.yaml
         
         # Déployer avec la Firebase CLI mise à jour
+        echo "🔍 Déploiement avec Firebase CLI $(firebase --version)"
         firebase deploy $DEPLOY_TARGET \
           --project ${{ inputs.project-id }} \
           --token "${{ inputs.firebase-token }}" \

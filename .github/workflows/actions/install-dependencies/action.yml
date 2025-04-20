@@ -62,6 +62,11 @@ runs:
           npm install firebase-admin@latest firebase-functions@latest --force --no-package-lock --save
         fi
         
+        # Mise à jour du package.json avec les versions récentes
+        echo "📝 Mise à jour de package.json avec les dernières versions..."
+        FIREBASE_ADMIN_VERSION=$(npm list firebase-admin --json | grep -o '"version":"[^"]*"' | cut -d'"' -f4 || echo "13.0.2")
+        FIREBASE_FUNCTIONS_VERSION=$(npm list firebase-functions --json | grep -o '"version":"[^"]*"' | cut -d'"' -f4 || echo "6.3.1")
+        
         # Création du fichier functions.yaml avec les bonnes valeurs selon le codebase
         echo "# Configuration Firebase Functions" > functions.yaml
         echo "specVersion: v1" >> functions.yaml
