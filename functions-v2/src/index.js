@@ -7,8 +7,6 @@
 // Imports essentiels
 const admin = require('firebase-admin');
 const functions = require('firebase-functions');
-const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
-const { OpenAI } = require('openai');
 const cors = require('cors')({ origin: true });
 
 // Initialisation de Firebase Admin
@@ -82,15 +80,15 @@ exports.retryFailedStory = functions.https.onCall(async (data, context) => {
 exports.generateStory = functions.https.onCall(async (data, context) => {
   try {
     // Vérifier les paramètres
-    if (!data || !data.storyId || !data.objective || !data.childrenNames) {
+    if (!data || !data.objective || !data.childrenNames) {
       throw new Error('Paramètres manquants');
     }
     
     const { storyId, objective, childrenNames } = data;
-    console.log(`Génération d'histoire: ${storyId}`, { objective, childrenNames });
+    console.log(`Génération d'histoire:`, { objective, childrenNames });
     
-    // Mettre à jour le statut
-    const storyRef = admin.firestore().collection('stories').doc(storyId);
+    // Générer un ID si non fourni
+    const actualStoryId = storyId || admin.firestore().collection('stories').doc().id;
     
     // La vraie génération serait ici
     // Pour simplifier, on simule juste une histoire basique
@@ -104,12 +102,16 @@ exports.generateStory = functions.https.onCall(async (data, context) => {
     };
     
     // Mise à jour dans Firestore
-    await storyRef.update(storyData);
-    console.log('Histoire générée et enregistrée:', { id: storyId });
+    await admin.firestore().collection('stories').doc(actualStoryId).set({
+      ...storyData,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    
+    console.log('Histoire générée et enregistrée:', { id: actualStoryId });
     
     return {
       success: true,
-      storyId: storyId,
+      storyId: actualStoryId,
       storyData: storyData
     };
   } catch (error) {

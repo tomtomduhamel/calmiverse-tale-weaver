@@ -10,7 +10,7 @@ import TypingIndicator from './TypingIndicator';
 import ChatHeader from './ChatHeader';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
 import { useStoryChat } from '@/hooks/useStoryChat';
-import { useStoryCloudFunctions, StoryResponse } from '@/hooks/stories/useStoryCloudFunctions';
+import { useStoryCloudFunctions } from '@/hooks/stories/useStoryCloudFunctions';
 
 interface StoryChatProps {
   onSwitchMode: () => void;
@@ -25,7 +25,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedStory, setGeneratedStory] = useState<StoryResponse | null>(null);
+  const [generatedStory, setGeneratedStory] = useState<any | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { processUserMessage } = useStoryChat();
   const { toast } = useToast();
@@ -84,9 +84,14 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
       setMessages(prev => [...prev, processingMessage]);
       
       try {
-        const storyResponse = await generateStory(objective, childrenNames);
-        console.log('Réponse reçue de la fonction Cloud:', storyResponse);
+        const response = await generateStory(objective, childrenNames);
+        console.log('Réponse reçue de la fonction Cloud:', response);
         
+        if (!response || !response.storyData) {
+          throw new Error("Réponse invalide du serveur");
+        }
+        
+        const storyResponse = response.storyData;
         setGeneratedStory(storyResponse);
         
         // Remplacer le message de traitement par le texte de l'histoire
@@ -94,7 +99,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
           prev.filter(msg => !msg.id.startsWith('processing')).concat({
             id: `ai-${Date.now()}`,
             type: 'ai',
-            content: storyResponse.story_text,
+            content: storyResponse.story_text || "Une histoire a été générée mais le contenu est indisponible.",
             timestamp: new Date(),
           })
         );

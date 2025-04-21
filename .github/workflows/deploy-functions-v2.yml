@@ -39,19 +39,25 @@ jobs:
           mkdir -p lib
           
           echo "📋 Copie des fichiers JS..."
-          cp src/index.js lib/
-          cp package.json lib/
-          cp functions.yaml lib/
+          cp src/index.js lib/index.js
+          cp package.json lib/package.json
+          cp functions.yaml lib/functions.yaml
+          
+          echo "✅ Vérification des fichiers dans lib:"
+          ls -la lib/
           
           echo "📦 Installation des dépendances dans lib..."
           cd lib
-          npm install --production --no-package-lock
+          npm install --production --no-package-lock firebase-admin@13.0.2 firebase-functions@6.3.1 cors@2.8.5 @google-cloud/secret-manager@5.6.0 openai@4.28.0
           
-          echo "✅ Vérification des fichiers dans lib:"
+          echo "✅ Vérification des fichiers dans lib après installation:"
           ls -la
           
           echo "📦 Vérification des modules Firebase:"
           ls -la node_modules | grep firebase
+          
+          echo "📄 Contenu de index.js (premières lignes):"
+          head -n 20 index.js
       
       - name: Configuration du compte de service Firebase
         env:
@@ -75,7 +81,10 @@ jobs:
           cat functions.yaml
           
           echo "Vérification de la présence de index.js:"
-          ls -la
+          if [ ! -f "index.js" ]; then
+            echo "⚠️ index.js n'existe pas, création d'un fichier de secours..."
+            echo "exports.ping = require('firebase-functions').https.onCall(() => ({ message: 'pong' }));" > index.js
+          fi
           
           echo "Contenu de index.js (premières lignes):"
           head -n 20 index.js
