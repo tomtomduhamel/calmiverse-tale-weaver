@@ -1,4 +1,3 @@
-
 {
   "functions": [
     {
@@ -19,9 +18,6 @@
       "source": "functions-v2",
       "codebase": "v2",
       "runtime": "nodejs20",
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ],
       "ignore": [
         "node_modules",
         ".git",

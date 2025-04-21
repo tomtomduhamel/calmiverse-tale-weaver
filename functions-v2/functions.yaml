@@ -1,5 +1,5 @@
 
-# Configuration pour Firebase Functions v2
+# Configuration pour Firebase Functions v2 (simplifiée)
 specVersion: v1
 functions:
   - source: .

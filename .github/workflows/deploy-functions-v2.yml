@@ -1,5 +1,5 @@
 
-name: Déploiement des Functions v2
+name: Déploiement des Functions v2 Simplifiées
 on:
   workflow_dispatch:
     inputs:
@@ -26,38 +26,26 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Installation directe et simplifiée
+      - name: Installation directe (ultra-simplifiée)
         working-directory: functions-v2
         run: |
-          echo "🧹 Nettoyage complet..."
+          echo "📢 Début de l'installation ultra-simplifiée"
+          
+          echo "🧹 Nettoyage des dossiers..."
           rm -rf node_modules lib package-lock.json
+
+          echo "📁 Vérification de la structure de répertoires..."
+          mkdir -p functions-v2
           
-          echo "📦 Installation des dépendances..."
-          npm install --no-package-lock
+          echo "📦 Installation des dépendances minimales (sans build)..."
+          npm ci --omit=dev
           
-          echo "📂 Création du dossier lib..."
-          mkdir -p lib
+          echo "✅ Dépendances installées:"
+          npm list --depth=0
           
-          echo "📋 Copie des fichiers JS..."
-          cp src/index.js lib/index.js
-          cp package.json lib/package.json
-          cp functions.yaml lib/functions.yaml
-          
-          echo "✅ Vérification des fichiers dans lib:"
-          ls -la lib/
-          
-          echo "📦 Installation des dépendances dans lib..."
-          cd lib
-          npm install --production --no-package-lock firebase-admin@13.0.2 firebase-functions@6.3.1 cors@2.8.5 @google-cloud/secret-manager@5.6.0 openai@4.28.0
-          
-          echo "✅ Vérification des fichiers dans lib après installation:"
+          echo "📄 Vérification des fichiers importants:" 
           ls -la
-          
-          echo "📦 Vérification des modules Firebase:"
-          ls -la node_modules | grep firebase
-          
-          echo "📄 Contenu de index.js (premières lignes):"
-          head -n 20 index.js
+          cat index.js
       
       - name: Configuration du compte de service Firebase
         env:
@@ -65,31 +53,31 @@ jobs:
         run: |
           echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > /tmp/firebase-service-account.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
+          
+          echo "✅ Variables d'environnement définies:"
+          env | grep GOOGLE
       
       - name: Installation de Firebase CLI
         run: npm install -g firebase-tools@13.0.2
       
       - name: Déploiement direct des Functions v2
-        working-directory: functions-v2/lib
+        working-directory: functions-v2
         run: |
-          echo "🚀 Déploiement des fonctions v2 sur ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}..."
+          echo "🚀 Début du déploiement des fonctions v2..."
           
-          echo "Contenu du package.json:"
+          echo "📄 Vérification de l'index.js avant déploiement:"
+          cat index.js
+          
+          echo "📄 Vérification de package.json avant déploiement:"
           cat package.json
           
-          echo "Contenu de functions.yaml:"
+          echo "📄 Vérification de functions.yaml avant déploiement:"
           cat functions.yaml
           
-          echo "Vérification de la présence de index.js:"
-          if [ ! -f "index.js" ]; then
-            echo "⚠️ index.js n'existe pas, création d'un fichier de secours..."
-            echo "exports.ping = require('firebase-functions').https.onCall(() => ({ message: 'pong' }));" > index.js
-          fi
+          echo "🔑 Utilisation des variables d'environnement:"
+          echo "GOOGLE_APPLICATION_CREDENTIALS: $GOOGLE_APPLICATION_CREDENTIALS"
+          echo "GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
           
-          echo "Contenu de index.js (premières lignes):"
-          head -n 20 index.js
-          
-          GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json \
           firebase deploy --only functions:v2 \
             --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \
             --token "${{ secrets.FIREBASE_TOKEN }}" \
