@@ -48,14 +48,9 @@ jobs:
           cat index.js
       
       - name: Configuration du compte de service Firebase
-        env:
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > /tmp/firebase-service-account.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
-          
-          echo "✅ Variables d'environnement définies:"
-          env | grep GOOGLE
+        uses: ./.github/workflows/actions/setup-firebase-service
+        with:
+          firebase-service-account: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       
       - name: Installation de Firebase CLI
         run: npm install -g firebase-tools@13.0.2
@@ -82,4 +77,3 @@ jobs:
             --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \
             --token "${{ secrets.FIREBASE_TOKEN }}" \
             --debug
-
