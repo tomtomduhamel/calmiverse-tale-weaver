@@ -38,7 +38,7 @@ jobs:
           mkdir -p functions-v2
           
           echo "📦 Installation des dépendances minimales (sans build)..."
-          npm ci --omit=dev
+          npm install --omit=dev
           
           echo "✅ Dépendances installées:"
           npm list --depth=0
@@ -82,3 +82,4 @@ jobs:
             --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \
             --token "${{ secrets.FIREBASE_TOKEN }}" \
             --debug
+
