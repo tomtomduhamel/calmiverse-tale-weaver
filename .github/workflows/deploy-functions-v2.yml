@@ -26,75 +26,52 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Installation de Firebase CLI
-        run: npm install -g firebase-tools@13.0.2
-      
-      - name: Préparation des Functions v2
+      - name: Installation simplifiée
         working-directory: functions-v2
         run: |
           echo "🧹 Nettoyage complet..."
           rm -rf node_modules lib package-lock.json
           
           echo "📦 Installation des dépendances..."
-          npm install --no-package-lock
+          npm install
           
           echo "🔨 Construction du code..."
           npm run build
           
-          echo "📝 Copie de package.json dans lib..."
+          echo "📝 Préparation du dossier lib..."
           cp package.json lib/
           cp functions.yaml lib/
           
-          echo "📂 Installation des dépendances de production dans lib..."
+          # Assurer que firebase-admin est bien installé dans lib
           cd lib
-          npm install --production --omit=dev
+          npm install --production firebase-admin@13.0.2 firebase-functions@6.3.1
           
-          echo "🔍 Vérification critique des modules Firebase..."
-          if [ ! -d "node_modules/firebase-admin" ]; then
-            echo "❌ Module firebase-admin manquant! Installation forcée..."
-            npm install firebase-admin@13.0.2 --no-package-lock
-          fi
-          
-          if [ ! -d "node_modules/firebase-functions" ]; then
-            echo "❌ Module firebase-functions manquant! Installation forcée..."
-            npm install firebase-functions@6.3.1 --no-package-lock
-          fi
-          
-          echo "📋 Liste des modules installés:"
-          ls -l node_modules | grep firebase
+          echo "📋 Vérification des modules critiques:"
+          ls -la node_modules/firebase-admin
+          ls -la node_modules/firebase-functions
       
       - name: Configuration des variables d'environnement
-        uses: ./.github/workflows/actions/setup-env
-        with:
-          working-directory: functions-v2/lib
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          google-cloud-project: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}
-      
-      - name: Configuration du compte de service Firebase
-        uses: ./.github/workflows/actions/setup-firebase-service
-        with:
-          firebase-service-account: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      
-      - name: Déploiement des Functions v2
         working-directory: functions-v2/lib
         run: |
-          echo "🔍 Vérification pré-déploiement..."
-          if [ ! -d "node_modules/firebase-admin" ] || [ ! -d "node_modules/firebase-functions" ]; then
-            echo "⚠️ Modules Firebase manquants, installation d'urgence..."
-            npm install firebase-admin@13.0.2 firebase-functions@6.3.1 --no-package-lock
-          fi
-          
-          echo "📂 Contenu actuel du dossier $(pwd):"
-          ls -la
-          
-          echo "📂 Structure de node_modules:"
-          ls -la node_modules | grep firebase
-          
-          echo "📄 Contenu du package.json:"
-          cat package.json
-          
-          echo "🚀 Déploiement des Functions v2..."
-          GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json firebase deploy --only functions:v2 \
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
+          echo "GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}" >> .env
+      
+      - name: Configuration du compte de service Firebase
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > /tmp/firebase-service-account.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json" >> $GITHUB_ENV
+      
+      - name: Installation de Firebase CLI
+        run: npm install -g firebase-tools@13.0.2
+      
+      - name: Déploiement direct des Functions v2
+        working-directory: functions-v2/lib
+        run: |
+          echo "🚀 Déploiement des fonctions v2 sur ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}..."
+          GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json \
+          firebase deploy --only functions:v2 \
             --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \
             --token "${{ secrets.FIREBASE_TOKEN }}" \
             --debug

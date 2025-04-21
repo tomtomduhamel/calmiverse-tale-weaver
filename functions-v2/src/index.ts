@@ -5,11 +5,6 @@ import * as dotenv from 'dotenv';
 // Charger les variables d'environnement
 dotenv.config();
 
-// Handlers des fonctions
-import { generateStory } from './handlers/story/generateStoryHandler';
-import { retryFailedStory } from './handlers/story/retryStoryHandler';
-import { ping } from './handlers/ping';
-
 // Initialiser Firebase Admin (une seule fois)
 try {
   if (!admin.apps.length) {
@@ -19,6 +14,11 @@ try {
 } catch (error) {
   console.error('Erreur lors de l\'initialisation de Firebase Admin:', error);
 }
+
+// Import des handlers de fonctions
+import { generateStory } from './handlers/story/generateStoryHandler';
+import { retryFailedStory } from './handlers/story/retryStoryHandler';
+import { ping } from './handlers/ping';
 
 // Exporter les fonctions cloud
 export {
