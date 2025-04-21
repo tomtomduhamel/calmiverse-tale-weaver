@@ -26,35 +26,32 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Installation simplifiée
+      - name: Installation directe et simplifiée
         working-directory: functions-v2
         run: |
           echo "🧹 Nettoyage complet..."
           rm -rf node_modules lib package-lock.json
           
           echo "📦 Installation des dépendances..."
-          npm install
+          npm install --no-package-lock
           
-          echo "🔨 Construction du code..."
-          npm run build
+          echo "📂 Création du dossier lib..."
+          mkdir -p lib
           
-          echo "📝 Préparation du dossier lib..."
+          echo "📋 Copie des fichiers JS..."
+          cp src/index.js lib/
           cp package.json lib/
           cp functions.yaml lib/
           
-          # Assurer que firebase-admin est bien installé dans lib
+          echo "📦 Installation des dépendances dans lib..."
           cd lib
-          npm install --production firebase-admin@13.0.2 firebase-functions@6.3.1
+          npm install --production --no-package-lock
           
-          echo "📋 Vérification des modules critiques:"
-          ls -la node_modules/firebase-admin
-          ls -la node_modules/firebase-functions
-      
-      - name: Configuration des variables d'environnement
-        working-directory: functions-v2/lib
-        run: |
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
-          echo "GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}" >> .env
+          echo "✅ Vérification des fichiers dans lib:"
+          ls -la
+          
+          echo "📦 Vérification des modules Firebase:"
+          ls -la node_modules | grep firebase
       
       - name: Configuration du compte de service Firebase
         env:
@@ -70,6 +67,19 @@ jobs:
         working-directory: functions-v2/lib
         run: |
           echo "🚀 Déploiement des fonctions v2 sur ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}..."
+          
+          echo "Contenu du package.json:"
+          cat package.json
+          
+          echo "Contenu de functions.yaml:"
+          cat functions.yaml
+          
+          echo "Vérification de la présence de index.js:"
+          ls -la
+          
+          echo "Contenu de index.js (premières lignes):"
+          head -n 20 index.js
+          
           GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json \
           firebase deploy --only functions:v2 \
             --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \

@@ -1,9 +1,10 @@
+
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import type { Story } from '@/types/story';
 
-// Define type for story response from cloud function
+// Définir le type pour la réponse de la fonction cloud d'histoire
 export interface StoryResponse {
   id_stories: string;
   story_text: string;
@@ -14,7 +15,7 @@ export interface StoryResponse {
   preview: string;
 }
 
-// Define the expected structure of the cloud function response
+// Définir la structure attendue de la réponse de la fonction cloud
 interface CloudFunctionResult {
   success?: boolean;
   storyData?: StoryResponse;
@@ -28,32 +29,32 @@ export const useStoryCloudFunctions = () => {
   
   const callCloudFunctionWithRetry = useCallback(async (functionName: string, data: any, attempt = 1) => {
     try {
-      console.log(`Calling cloud function ${functionName} with data:`, data);
+      console.log(`Appel de la fonction cloud ${functionName} avec les données:`, data);
       
-      // Using the exact function name without prefixing
+      // Utilisation du nom exact de la fonction sans préfixe
       const cloudFunction = httpsCallable(functions, functionName);
       const result = await cloudFunction(data);
       
-      console.log(`Cloud function ${functionName} returned:`, result);
+      console.log(`La fonction cloud ${functionName} a retourné:`, result);
       
-      // Check if the result has a "data" property that contains our actual response
+      // Vérifier si le résultat contient une propriété "data" qui contient notre réponse réelle
       if (result && result.data) {
         const responseData = result.data as CloudFunctionResult;
         
-        // If there's an error field in the response, throw it
+        // S'il y a un champ d'erreur dans la réponse, le lancer
         if (responseData.error) {
           throw new Error(responseData.error);
         }
         
-        // Extract storyData if it exists, otherwise return the whole response
+        // Extraire storyData s'il existe, sinon retourner la réponse entière
         return responseData.storyData || responseData;
       }
       
       return result.data;
     } catch (error) {
-      console.error(`Error calling cloud function ${functionName}:`, error);
+      console.error(`Erreur lors de l'appel de la fonction cloud ${functionName}:`, error);
       if (attempt < 3) {
-        console.log(`Retrying cloud function ${functionName}, attempt ${attempt + 1}`);
+        console.log(`Nouvelle tentative pour la fonction cloud ${functionName}, tentative ${attempt + 1}`);
         return callCloudFunctionWithRetry(functionName, data, attempt + 1);
       }
       
@@ -72,10 +73,10 @@ export const useStoryCloudFunctions = () => {
       if (!storyId) {
         throw new Error("ID d'histoire manquant");
       }
-      console.log(`Attempting to retry story generation for story ID: ${storyId}`);
+      console.log(`Tentative de régénération d'histoire pour l'ID: ${storyId}`);
       const result = await callCloudFunctionWithRetry('retryFailedStory', { storyId });
       
-      // Success notification
+      // Notification de réussite
       toast({
         title: 'Succès',
         description: 'Nouvelle tentative de génération lancée avec succès',
@@ -83,7 +84,7 @@ export const useStoryCloudFunctions = () => {
       
       return result;
     } catch (error) {
-      console.error('Error in retryStoryGeneration:', error);
+      console.error('Erreur dans retryStoryGeneration:', error);
       const errorMessage = error instanceof Error ? error.message : 'Échec de la relance de génération';
       
       toast({
@@ -98,42 +99,42 @@ export const useStoryCloudFunctions = () => {
 
   const generateStory = useCallback(async (objective: string, childrenNames: string[]): Promise<StoryResponse> => {
     try {
-      console.log('Calling generateStory cloud function with:', { objective, childrenNames });
+      console.log('Appel de la fonction cloud generateStory avec:', { objective, childrenNames });
       const result = await callCloudFunctionWithRetry('generateStory', { 
         objective,
         childrenNames
       });
       
-      console.log('Story generation result:', result);
+      console.log('Résultat de la génération d\'histoire:', result);
       
-      // Validate the response data
+      // Valider les données de réponse
       if (!result || typeof result !== 'object') {
-        throw new Error("Invalid response format from story generator");
+        throw new Error("Format de réponse invalide du générateur d'histoire");
       }
       
-      // Convert to a generic record for safer access
+      // Convertir en un enregistrement générique pour un accès plus sûr
       const resultData = result as Record<string, unknown>;
       
-      // If the result contains a storyData property that is an object, use that
+      // Si le résultat contient une propriété storyData qui est un objet, l'utiliser
       if (resultData.storyData && typeof resultData.storyData === 'object') {
         const storyData = resultData.storyData as Record<string, unknown>;
         
-        // Validate that it has all required fields
+        // Vérifier que toutes les propriétés requises sont présentes
         if (validateStoryResponseFields(storyData)) {
           return storyData as unknown as StoryResponse;
         }
       }
       
-      // Check if the result itself is a valid StoryResponse
+      // Vérifier si le résultat lui-même est une StoryResponse valide
       if (validateStoryResponseFields(resultData)) {
         return resultData as unknown as StoryResponse;
       }
       
-      // If we get here, the response format is invalid
-      console.error("Invalid response format:", result);
+      // Si nous arrivons ici, le format de réponse est invalide
+      console.error("Format de réponse invalide:", result);
       throw new Error("Format de réponse invalide du générateur d'histoire");
     } catch (error) {
-      console.error('Error in generateStory:', error);
+      console.error('Erreur dans generateStory:', error);
       const errorMessage = error instanceof Error ? error.message : 'Échec de la génération de l\'histoire';
       
       toast({
@@ -146,14 +147,14 @@ export const useStoryCloudFunctions = () => {
     }
   }, [callCloudFunctionWithRetry, toast]);
   
-  // Helper function to validate a response has all required StoryResponse fields
+  // Fonction utilitaire pour valider qu'une réponse a tous les champs StoryResponse requis
   const validateStoryResponseFields = (data: Record<string, unknown>): boolean => {
-    const requiredFields = ['id_stories', 'story_text', 'story_summary', 'status', 'title', 'preview'];
+    const requiredFields = ['success', 'storyId', 'storyData'];
     
     return requiredFields.every(field => {
       const hasField = field in data;
       if (!hasField) {
-        console.error(`Missing required field in response: ${field}`);
+        console.error(`Champ requis manquant dans la réponse: ${field}`);
       }
       return hasField;
     });
