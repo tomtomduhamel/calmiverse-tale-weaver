@@ -14,11 +14,11 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Installation des dépendances critiques
+    - name: Installation des dépendances
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "🔧 Préparation de l'installation..."
+        echo "🔧 Installation des dépendances dans ${{ inputs.working-directory }}..."
         
         # Vérifier la présence de package.json
         if [ ! -f "package.json" ]; then
@@ -26,78 +26,50 @@ runs:
           exit 1
         fi
         
-        # Nettoyage complet pour éviter tout conflit
-        echo "🧹 Nettoyage radical des dépendances existantes..."
-        rm -rf node_modules
-        rm -f package-lock.json
-        rm -rf lib/node_modules
+        # Nettoyage complet
+        echo "🧹 Nettoyage des installations précédentes..."
+        rm -rf node_modules lib/node_modules package-lock.json
         
-        # Versions fixes absolues pour les paquets Firebase
-        FIREBASE_ADMIN_VERSION="13.0.2"
-        FIREBASE_FUNCTIONS_VERSION="6.3.1"
-        
-        echo "📦 Installation complète des dépendances..."
+        # Installation complète
+        echo "📦 Installation des dépendances..."
         npm install --no-package-lock
         
-        echo "📦 Installation explicite des dépendances Firebase avec versions fixes..."
-        npm install firebase-admin@${FIREBASE_ADMIN_VERSION} firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --save --force
-        
-        # Vérification exhaustive des installations
-        if [ ! -d "node_modules/firebase-admin" ]; then
-          echo "❌ ERREUR CRITIQUE: firebase-admin n'est PAS installé correctement!"
-          npm install firebase-admin@${FIREBASE_ADMIN_VERSION} --save --force
-          
-          if [ ! -d "node_modules/firebase-admin" ]; then
-            echo "❌ Installation échouée même après nouvelle tentative. Abandon."
-            exit 1
-          fi
-        else
-          INSTALLED_VERSION=$(node -e "console.log(require('./node_modules/firebase-admin/package.json').version)")
-          echo "✅ firebase-admin est installé: version ${INSTALLED_VERSION}"
-          
-          if [ "$INSTALLED_VERSION" != "$FIREBASE_ADMIN_VERSION" ]; then
-            echo "⚠️ Version incorrecte! Réinstallation forcée..."
-            rm -rf node_modules/firebase-admin
-            npm install firebase-admin@${FIREBASE_ADMIN_VERSION} --save --force
-          fi
-        fi
-        
-        if [ ! -d "node_modules/firebase-functions" ]; then
-          echo "❌ ERREUR CRITIQUE: firebase-functions n'est PAS installé correctement!"
-          npm install firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --save --force
-          
-          if [ ! -d "node_modules/firebase-functions" ]; then
-            echo "❌ Installation échouée même après nouvelle tentative. Abandon."
-            exit 1
-          fi
-        else
-          INSTALLED_VERSION=$(node -e "console.log(require('./node_modules/firebase-functions/package.json').version)")
-          echo "✅ firebase-functions est installé: version ${INSTALLED_VERSION}"
-          
-          if [ "$INSTALLED_VERSION" != "$FIREBASE_FUNCTIONS_VERSION" ]; then
-            echo "⚠️ Version incorrecte! Réinstallation forcée..."
-            rm -rf node_modules/firebase-functions
-            npm install firebase-functions@${FIREBASE_FUNCTIONS_VERSION} --save --force
-          fi
-        fi
-        
-        # Mise à jour forcée du package.json avec les versions exactes
-        echo "📝 Mise à jour du package.json avec les versions fixes..."
-        node -e "const fs=require('fs');const pkg=require('./package.json');pkg.dependencies['firebase-admin']='13.0.2';pkg.dependencies['firebase-functions']='6.3.1';fs.writeFileSync('package.json',JSON.stringify(pkg,null,2));"
-        
-        # Création du fichier functions.yaml 100% compatible
-        echo "📄 Création du fichier functions.yaml compatible..."
+        # Création du fichier functions.yaml
+        echo "📄 Création du fichier functions.yaml..."
         echo "# Configuration Firebase Functions" > functions.yaml
         echo "specVersion: v1" >> functions.yaml
         echo "functions:" >> functions.yaml
         echo "  - source: ." >> functions.yaml
+        
         if [ "${{ inputs.codebase }}" = "functions-v2" ]; then
           echo "    codebase: v2" >> functions.yaml
         else
           echo "    codebase: default" >> functions.yaml
         fi
+        
         echo "    runtime: nodejs20" >> functions.yaml
         echo "    memory: 1GB" >> functions.yaml
         echo "    timeout: 540s" >> functions.yaml
         
-        echo "✅ Installation complète et vérifiée des dépendances"
+        # Build si nécessaire
+        if [ ! -d "lib" ]; then
+          echo "🏗️ Compilation du code..."
+          npm run build
+        fi
+        
+        # Préparation du dossier lib
+        if [ -d "lib" ]; then
+          echo "📋 Copie de package.json dans lib..."
+          cp package.json lib/
+          cp functions.yaml lib/
+          
+          echo "📦 Installation des dépendances dans lib..."
+          cd lib
+          npm install --production --omit=dev
+          
+          # Installation explicite des modules Firebase
+          npm install firebase-admin@13.0.2 firebase-functions@6.3.1 --no-package-lock
+          
+          echo "✅ Modules installés dans lib/node_modules:"
+          ls -la node_modules | grep firebase
+        fi

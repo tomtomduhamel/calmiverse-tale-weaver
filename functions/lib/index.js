@@ -1,42 +1,28 @@
+
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateStory = exports.uploadEpub = void 0;
-const admin = __importStar(require("firebase-admin"));
-const uploadHandler_1 = require("./handlers/uploadHandler");
-Object.defineProperty(exports, "uploadEpub", { enumerable: true, get: function () { return uploadHandler_1.uploadEpub; } });
-const storyHandler_1 = require("./handlers/storyHandler");
-Object.defineProperty(exports, "generateStory", { enumerable: true, get: function () { return storyHandler_1.generateStory; } });
+
+// Importation explicite de firebase-admin
 try {
-    if (!admin.apps.length) {
-        admin.initializeApp({
-            credential: admin.credential.applicationDefault()
-        });
-    }
+  const admin = require('firebase-admin');
+  
+  // Initialisation de Firebase Admin si nécessaire
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault()
+    });
+    console.log('Firebase Admin SDK initialisé avec succès dans functions/lib/index.js');
+  }
+  
+  // Importation des handlers
+  const uploadHandler = require('./handlers/uploadHandler');
+  const storyHandler = require('./handlers/storyHandler');
+  
+  // Exports
+  exports.uploadEpub = uploadHandler.uploadEpub;
+  exports.generateStory = storyHandler.generateStory;
+  
+  console.log('functions/lib/index.js chargé avec succès');
+} catch (error) {
+  console.error('Erreur critique dans functions/lib/index.js:', error);
+  throw error;
 }
-catch (error) {
-    console.error('Error initializing Firebase Admin:', error);
-}
-//# sourceMappingURL=index.js.map

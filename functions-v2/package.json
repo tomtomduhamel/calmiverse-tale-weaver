@@ -12,7 +12,7 @@
     "logs": "firebase functions:log",
     "clean": "rm -rf node_modules lib && rm -f package-lock.json",
     "clean:install": "npm run clean && npm install",
-    "prepare-deploy": "npm run build && cp package.json lib/ && cd lib && npm install --production --no-package-lock"
+    "prepare-deploy": "npm run build && cp package.json lib/ && cd lib && npm install --production --omit=dev"
   },
   "engines": {
     "node": "20"
