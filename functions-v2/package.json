@@ -1,7 +1,8 @@
 
 {
   "name": "functions-v2",
-  "description": "Functions v2 simplifiées pour Firebase",
+  "description": "Firebase Functions v2 simplifiées",
+  "version": "1.0.0",
   "main": "index.js",
   "engines": {
     "node": "20"
