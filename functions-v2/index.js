@@ -4,10 +4,36 @@
  * Version totalement JavaScript, sans TypeScript
  */
 
-// Imports essentiels
-const admin = require('firebase-admin');
-const functions = require('firebase-functions');
-const cors = require('cors')({ origin: true });
+// Imports essentiels avec gestion des erreurs
+let admin;
+try {
+  console.log('Tentative d\'importation de firebase-admin...');
+  admin = require('firebase-admin');
+  console.log('✅ firebase-admin importé avec succès');
+} catch (error) {
+  console.error('❌ ERREUR lors de l\'importation de firebase-admin:', error);
+  throw new Error(`Impossible d'importer firebase-admin: ${error.message}`);
+}
+
+let functions;
+try {
+  console.log('Tentative d\'importation de firebase-functions...');
+  functions = require('firebase-functions');
+  console.log('✅ firebase-functions importé avec succès');
+} catch (error) {
+  console.error('❌ ERREUR lors de l\'importation de firebase-functions:', error);
+  throw new Error(`Impossible d'importer firebase-functions: ${error.message}`);
+}
+
+let cors;
+try {
+  console.log('Tentative d\'importation de cors...');
+  cors = require('cors')({ origin: true });
+  console.log('✅ cors importé avec succès');
+} catch (error) {
+  console.error('❌ ERREUR lors de l\'importation de cors:', error);
+  // Non bloquant pour cors
+}
 
 // Initialisation de Firebase Admin avec logs détaillés
 try {
@@ -22,6 +48,7 @@ try {
   }
 } catch (error) {
   console.error('❌ ERREUR lors de l\'initialisation de Firebase Admin:', error);
+  throw new Error(`Impossible d'initialiser Firebase Admin: ${error.message}`);
 }
 
 // Affichage de toutes les variables d'environnement (sans les secrets)

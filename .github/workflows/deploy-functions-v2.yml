@@ -26,26 +26,25 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Installation directe (ultra-simplifiée)
+      - name: Installation complète avec logs détaillés
         working-directory: functions-v2
         run: |
-          echo "📢 Début de l'installation ultra-simplifiée"
+          echo "📢 Début de l'installation complète avec logs détaillés"
           
           echo "🧹 Nettoyage des dossiers..."
-          rm -rf node_modules lib package-lock.json
-
-          echo "📁 Vérification de la structure de répertoires..."
-          mkdir -p functions-v2
+          rm -rf node_modules lib
           
-          echo "📦 Installation des dépendances minimales (sans build)..."
-          npm install --omit=dev
+          echo "📦 Installation des dépendances avec logs..."
+          npm install firebase-admin@13.0.2 firebase-functions@6.3.1 cors@2.8.5 --save
           
-          echo "✅ Dépendances installées:"
-          npm list --depth=0
+          echo "📋 Vérification du package.json"
+          cat package.json
           
-          echo "📄 Vérification des fichiers importants:" 
-          ls -la
-          cat index.js
+          echo "📋 Vérification des node_modules"
+          ls -la node_modules | grep firebase
+          ls -la node_modules/firebase-admin || echo "❌ firebase-admin NON TROUVÉ!"
+          
+          echo "✅ Installation terminée"
       
       - name: Configuration du compte de service Firebase
         uses: ./.github/workflows/actions/setup-firebase-service
@@ -72,6 +71,9 @@ jobs:
           echo "🔑 Utilisation des variables d'environnement:"
           echo "GOOGLE_APPLICATION_CREDENTIALS: $GOOGLE_APPLICATION_CREDENTIALS"
           echo "GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }}"
+          
+          echo "📦 Installation locale des dépendances manquantes..."
+          npm install --no-package-lock
           
           firebase deploy --only functions:v2 \
             --project ${{ secrets.GOOGLE_CLOUD_PROJECT || 'calmi-99482' }} \
