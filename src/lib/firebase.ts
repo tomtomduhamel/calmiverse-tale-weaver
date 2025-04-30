@@ -1,13 +1,12 @@
 
 /**
- * Module d'adaptation Firebase -> Supabase
+ * Module principal Firebase
  * 
- * Ce fichier redirige les imports Firebase vers l'utilisation de Supabase
- * pour faciliter la migration progressive.
+ * Ce fichier expose les fonctionnalités Firebase pour l'application.
+ * Une migration vers Supabase est en cours.
  */
 
 import * as compatModule from './firebase-compat';
-import { supabase } from './supabase';
 
 // Afficher un avertissement de migration
 console.warn(
@@ -21,8 +20,5 @@ export const db = compatModule.db;
 export const auth = compatModule.auth;
 export const storage = compatModule.storage;
 export const functions = compatModule.functions;
-
-// Faciliter la transition vers Supabase
-export const getSupabase = () => supabase;
 
 export default app;

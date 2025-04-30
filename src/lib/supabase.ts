@@ -1,12 +1,22 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Utilisez ces valeurs temporaires pour le développement
-// Vous devrez remplacer ces valeurs par vos propres clés Supabase
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://votre-projet.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'votre-clé-anon-supabase';
+// Utiliser les variables d'environnement pour les clés Supabase
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Vérifier que les variables d'environnement sont définies
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    "❌ Variables d'environnement Supabase manquantes. " +
+    "Assurez-vous d'avoir défini VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans votre fichier .env"
+  );
+}
+
+export const supabase = createClient(
+  supabaseUrl || 'https://exemple.supabase.co', 
+  supabaseAnonKey || 'exemple-clé-publique'
+);
 
 // Types pour les tables Supabase
 export type Tables = {
@@ -34,10 +44,12 @@ export type Tables = {
     preview: string;
     status: 'pending' | 'completed' | 'read' | 'error';
     childrenIds: string[];
+    childrenNames: string[];
     objective: string;
     authorId: string;
     createdAt: string;
     updatedAt: string;
+    error?: string;
   };
 };
 
