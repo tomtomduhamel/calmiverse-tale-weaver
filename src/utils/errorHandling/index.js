@@ -1,6 +1,6 @@
 
 /**
- * Main error handling module that initializes all error handlers
+ * Module principal de gestion d'erreur qui initialise tous les gestionnaires d'erreur
  */
 import { setupGlobalErrorHandler, setupPromiseErrorHandler } from './globalErrorHandlers';
 import { setupSafePostMessage } from './postMessageHandler';
@@ -9,28 +9,28 @@ import { handleGeneralError } from './generalErrorHandler';
 import { handleNetworkError } from './networkErrorHandler';
 
 /**
- * Initializes comprehensive error handlers for the application
- * Configures all error handling subsystems
+ * Initialise les gestionnaires d'erreurs complets pour l'application
+ * Configure tous les sous-systèmes de gestion d'erreur
  */
 export function initializeErrorHandlers() {
-  console.log("Initializing modular error handling system");
+  console.log("Initialisation du système de gestion d'erreurs modulaire");
   
-  // Setup global error handlers
+  // Configuration des gestionnaires d'erreur globaux
   setupGlobalErrorHandler();
   
-  // Setup promise rejection handlers
+  // Configuration des gestionnaires de rejet de promesse
   setupPromiseErrorHandler();
   
-  // Setup notification system
+  // Configuration du système de notification
   initializeNotificationManager();
   
-  // Enhanced postMessage handling with safe cloning
+  // Gestion améliorée des postMessage avec clonage sécurisé
   setupSafePostMessage();
   
-  console.log('Enhanced error handling initialized with improved organization');
+  console.log('Gestion d\'erreurs améliorée initialisée avec une organisation améliorée');
 }
 
-// Export individual handlers for direct use in components
+// Exporter les gestionnaires individuels pour utilisation directe dans les composants
 export {
   handleGeneralError,
   handleNetworkError

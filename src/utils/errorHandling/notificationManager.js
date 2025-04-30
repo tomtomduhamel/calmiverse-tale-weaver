@@ -1,13 +1,13 @@
 
 /**
- * Application-level notification management
+ * Gestion des notifications au niveau de l'application
  */
 
 /**
- * Initialize the notification manager for application-wide error handling
+ * Initialise le gestionnaire de notifications pour la gestion globale des erreurs de l'application
  */
 export function initializeNotificationManager() {
-  console.log('Initializing notification manager');
+  console.log('Initialisation du gestionnaire de notifications');
   
   if (!window.appNotificationManager) {
     window.appNotificationManager = {
@@ -62,14 +62,4 @@ export function initializeNotificationManager() {
       }
     };
   }
-  
-  // Add a listener for firebase errors
-  document.addEventListener('firebase-error', (event) => {
-    console.log('Firebase error event detected:', event.detail.message);
-    
-    window.appNotificationManager.notifyError(
-      'Erreur Firebase',
-      event.detail.message || 'Une erreur est survenue avec Firebase'
-    );
-  });
 }

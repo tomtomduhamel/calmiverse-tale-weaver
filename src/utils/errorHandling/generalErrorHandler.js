@@ -1,6 +1,6 @@
 
 /**
- * Gestionnaire d'erreur général pour remplacer le gestionnaire Firebase
+ * Gestionnaire d'erreur général pour l'application
  */
 
 /**
@@ -71,6 +71,5 @@ export function isDatabaseError(error) {
   
   return errorCode.includes('supabase') || 
          errorMessage.includes('database') ||
-         errorMessage.includes('query') ||
-         errorMessage.includes('Failed to get document');
+         errorMessage.includes('query');
 }
