@@ -1,17 +1,17 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { UserSettings, SecuritySettings } from '@/types/user-settings';
-import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useToast } from '@/hooks/use-toast';
+import type { UserSettings } from '@/types/user-settings';
 
 export const useSupabaseUserSettings = () => {
-  const [isLoading, setIsLoading] = useState(true);
   const [userSettings, setUserSettings] = useState<UserSettings>({
     firstName: '',
     lastName: '',
+    email: '',
     language: 'fr',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: 'Europe/Paris',
     notifications: {
       email: true,
       inApp: true,
@@ -19,168 +19,154 @@ export const useSupabaseUserSettings = () => {
       system: true,
     },
   });
-  const { toast } = useToast();
-  const { user } = useSupabaseAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
+  const { user } = useSupabaseAuth();
+  const { toast } = useToast();
+
+  // Charger les paramètres utilisateur depuis Supabase
   useEffect(() => {
     const loadUserSettings = async () => {
-      if (!user) {
-        console.log('Aucun utilisateur connecté');
-        setIsLoading(false);
-        return;
-      }
-      
+      if (!user) return;
+
       try {
-        console.log('Chargement des paramètres pour:', user.id);
-        
+        setIsLoading(true);
+        setError(null);
+
         const { data, error } = await supabase
           .from('users')
           .select('*')
           .eq('id', user.id)
           .single();
-        
-        if (error && error.code !== 'PGRST116') { // PGRST116 = Not found
-          throw error;
-        }
-        
+
+        if (error) throw error;
+
         if (data) {
-          console.log('Document utilisateur trouvé:', data);
-          
-          // Transformer les données pour correspondre à UserSettings
-          const settings: UserSettings = {
+          setUserSettings({
             firstName: data.firstname || '',
             lastName: data.lastname || '',
+            email: data.email || '',
             language: data.language || 'fr',
-            timezone: data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezone: data.timezone || 'Europe/Paris',
             notifications: {
-              email: data.email_notifications !== false,
-              inApp: data.inapp_notifications !== false,
-              stories: data.story_notifications !== false,
-              system: data.system_notifications !== false,
+              email: data.email_notifications ?? true,
+              inApp: data.inapp_notifications ?? true,
+              stories: data.story_notifications ?? true,
+              system: data.system_notifications ?? true,
             },
-          };
-          
-          setUserSettings(settings);
-        } else {
-          console.log('Aucun document utilisateur trouvé, utilisation des valeurs par défaut');
-          
-          // Créer un document pour l'utilisateur avec les valeurs par défaut
-          const userData = {
-            id: user.id,
-            email: user.email,
-            firstname: '',
-            lastname: '',
-            language: 'fr',
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            email_notifications: true,
-            inapp_notifications: true,
-            story_notifications: true,
-            system_notifications: true,
-          };
-          
-          await supabase.from('users').upsert([userData]);
+          });
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error('Erreur lors du chargement des paramètres:', err);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger vos paramètres",
-          variant: "destructive",
-        });
+        setError(err instanceof Error ? err : new Error('Erreur inconnue'));
       } finally {
         setIsLoading(false);
       }
     };
 
     loadUserSettings();
-  }, [user, toast]);
+  }, [user]);
 
-  const updateUserSettings = async (newSettings: Partial<UserSettings>) => {
-    if (!user) {
-      console.error('Tentative de mise à jour sans utilisateur connecté');
-      return;
-    }
-    
-    try {
-      setIsLoading(true);
-      console.log('Mise à jour des paramètres pour:', user.id);
-      console.log('Nouvelles valeurs:', newSettings);
-      
-      // Transformer les données pour correspondre au schéma Supabase
-      const supabaseData: Record<string, any> = {};
-      
-      if (newSettings.firstName !== undefined) supabaseData.firstname = newSettings.firstName;
-      if (newSettings.lastName !== undefined) supabaseData.lastname = newSettings.lastName;
-      if (newSettings.language !== undefined) supabaseData.language = newSettings.language;
-      if (newSettings.timezone !== undefined) supabaseData.timezone = newSettings.timezone;
-      
-      if (newSettings.notifications) {
-        if (newSettings.notifications.email !== undefined) supabaseData.email_notifications = newSettings.notifications.email;
-        if (newSettings.notifications.inApp !== undefined) supabaseData.inapp_notifications = newSettings.notifications.inApp;
-        if (newSettings.notifications.stories !== undefined) supabaseData.story_notifications = newSettings.notifications.stories;
-        if (newSettings.notifications.system !== undefined) supabaseData.system_notifications = newSettings.notifications.system;
+  // Mettre à jour les paramètres utilisateur
+  const updateUserSettings = useCallback(
+    async (updates: Partial<UserSettings>) => {
+      if (!user) return;
+
+      try {
+        const updateData: Record<string, any> = {};
+
+        // Mappage des champs de UserSettings vers la structure de la base de données
+        if (updates.firstName !== undefined) updateData.firstname = updates.firstName;
+        if (updates.lastName !== undefined) updateData.lastname = updates.lastName;
+        if (updates.language !== undefined) updateData.language = updates.language;
+        if (updates.timezone !== undefined) updateData.timezone = updates.timezone;
+
+        // Mappage des notifications
+        if (updates.notifications?.email !== undefined)
+          updateData.email_notifications = updates.notifications.email;
+        if (updates.notifications?.inApp !== undefined)
+          updateData.inapp_notifications = updates.notifications.inApp;
+        if (updates.notifications?.stories !== undefined)
+          updateData.story_notifications = updates.notifications.stories;
+        if (updates.notifications?.system !== undefined)
+          updateData.system_notifications = updates.notifications.system;
+
+        // Si aucun champ à mettre à jour, ne rien faire
+        if (Object.keys(updateData).length === 0) return;
+
+        const { error } = await supabase
+          .from('users')
+          .update(updateData)
+          .eq('id', user.id);
+
+        if (error) throw error;
+
+        // Mettre à jour l'état local avec les nouvelles valeurs
+        setUserSettings((prev) => ({
+          ...prev,
+          ...updates,
+        }));
+
+        toast({
+          title: 'Paramètres mis à jour',
+          description: 'Vos paramètres ont été enregistrés avec succès.',
+        });
+
+        return true;
+      } catch (err) {
+        console.error('Erreur lors de la mise à jour des paramètres:', err);
+
+        toast({
+          title: 'Erreur',
+          description:
+            'Impossible de mettre à jour vos paramètres. Veuillez réessayer.',
+          variant: 'destructive',
+        });
+
+        return false;
       }
-      
-      const { error } = await supabase
-        .from('users')
-        .update(supabaseData)
-        .eq('id', user.id);
-        
-      if (error) throw error;
-      
-      setUserSettings(prev => ({ ...prev, ...newSettings }));
-      console.log('Paramètres mis à jour avec succès');
-      
-      toast({
-        title: "Succès",
-        description: "Vos paramètres ont été mis à jour",
-      });
-    } catch (error: any) {
-      console.error('Erreur détaillée lors de la mise à jour:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour vos paramètres",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [user, toast]
+  );
 
-  const updateUserPassword = async ({ currentPassword, newPassword }: SecuritySettings) => {
-    if (!user) return;
-    
-    try {
-      setIsLoading(true);
-      
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Succès",
-        description: "Votre mot de passe a été mis à jour",
-      });
-    } catch (error: any) {
-      console.error('Erreur lors du changement de mot de passe:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour votre mot de passe",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Mettre à jour le mot de passe utilisateur
+  const updateUserPassword = useCallback(
+    async ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) => {
+      try {
+        const { error } = await supabase.auth.updateUser({
+          password: newPassword,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: 'Mot de passe mis à jour',
+          description: 'Votre mot de passe a été modifié avec succès.',
+        });
+
+        return true;
+      } catch (err) {
+        console.error('Erreur lors de la mise à jour du mot de passe:', err);
+
+        toast({
+          title: 'Erreur',
+          description:
+            'Impossible de mettre à jour votre mot de passe. Veuillez réessayer.',
+          variant: 'destructive',
+        });
+
+        return false;
+      }
+    },
+    [toast]
+  );
 
   return {
     userSettings,
     isLoading,
+    error,
     updateUserSettings,
     updateUserPassword,
   };
 };
-
-export default useSupabaseUserSettings;

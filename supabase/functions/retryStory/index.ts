@@ -15,7 +15,8 @@ serve(async (req) => {
   }
 
   try {
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    // Récupérer la clé API OpenAI depuis les secrets Supabase
+    const OPENAI_API_KEY = Deno.env.get('Calmi OpenAI');
     
     if (!OPENAI_API_KEY) {
       console.error('Clé API OpenAI manquante');
@@ -29,9 +30,9 @@ serve(async (req) => {
     }
     
     // Obtenir les données de la requête
-    const { storyId, objective, childrenNames } = await req.json();
+    const { storyId } = await req.json();
     
-    if (!storyId || !objective || !Array.isArray(childrenNames) || childrenNames.length === 0) {
+    if (!storyId) {
       return new Response(
         JSON.stringify({ error: 'Paramètres manquants ou invalides' }),
         { 
@@ -40,6 +41,24 @@ serve(async (req) => {
         }
       );
     }
+
+    // Accéder à Supabase pour récupérer l'histoire
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Récupérer l'histoire existante
+    const { data: story, error: storyError } = await supabase
+      .from('stories')
+      .select('*')
+      .eq('id', storyId)
+      .single();
+      
+    if (storyError || !story) {
+      throw new Error('Histoire non trouvée');
+    }
+    
+    const { objective, childrennames: childrenNames } = story;
 
     console.log('Nouvelle tentative de génération pour:', { storyId, objective, childrenNames });
 
@@ -80,9 +99,9 @@ RÈGLES FONDAMENTALES :
       max_tokens: 4000,
     });
 
-    const story = completion.data.choices[0].message?.content;
+    const storyText = completion.data.choices[0].message?.content;
     
-    if (!story) {
+    if (!storyText) {
       throw new Error('Aucune histoire générée par OpenAI');
     }
 
@@ -96,7 +115,7 @@ RÈGLES FONDAMENTALES :
         },
         {
           role: 'user',
-          content: `Résume cette histoire en 3-4 phrases : ${story.substring(0, 2000)}...`
+          content: `Résume cette histoire en 3-4 phrases : ${storyText.substring(0, 2000)}...`
         }
       ],
       temperature: 0.5,
@@ -115,7 +134,7 @@ RÈGLES FONDAMENTALES :
         },
         {
           role: 'user',
-          content: `Crée un titre court et captivant pour cette histoire : ${story.substring(0, 1000)}...`
+          content: `Crée un titre court et captivant pour cette histoire : ${storyText.substring(0, 1000)}...`
         }
       ],
       temperature: 0.8,
@@ -124,38 +143,34 @@ RÈGLES FONDAMENTALES :
 
     const title = titleCompletion.data.choices[0].message?.content?.replace(/["']/g, '') || `Histoire pour ${childrenNames.join(' et ')}`;
 
-    // Créer la réponse
-    const storyData = {
-      title,
-      story_text: story,
-      story_summary: summary,
-      preview: story.substring(0, 200) + "...",
-    };
-
-    // Accéder à Supabase pour mettre à jour l'histoire
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     // Mettre à jour l'histoire dans la base de données
     const { error: updateError } = await supabase
       .from('stories')
       .update({
-        title: storyData.title,
-        content: storyData.story_text,
-        summary: storyData.story_summary,
-        preview: storyData.preview,
+        title,
+        content: storyText,
+        summary,
+        preview: storyText.substring(0, 200) + "...",
         status: 'completed',
-        updatedAt: new Date().toISOString()
+        error: null,
+        updatedat: new Date().toISOString()
       })
       .eq('id', storyId);
 
     if (updateError) {
       throw updateError;
     }
+    
+    console.log('Histoire régénérée avec succès:', { storyId, title });
 
     return new Response(
-      JSON.stringify(storyData),
+      JSON.stringify({ 
+        success: true,
+        message: 'Histoire régénérée avec succès',
+        title,
+        summary,
+        preview: storyText.substring(0, 200) + "..."
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }

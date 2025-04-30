@@ -15,7 +15,8 @@ serve(async (req) => {
   }
 
   try {
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    // Récupérer la clé API OpenAI depuis les secrets Supabase
+    const OPENAI_API_KEY = Deno.env.get('Calmi OpenAI');
     
     if (!OPENAI_API_KEY) {
       console.error('Clé API OpenAI manquante');

@@ -24,11 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
-interface AccountManagementSectionProps {
-  onDeleteAccount?: () => Promise<void>;
-}
-
-export const AccountManagementSection = ({ onDeleteAccount }: AccountManagementSectionProps) => {
+export const AccountManagementSection = () => {
   const { user } = useSupabaseAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -37,11 +33,6 @@ export const AccountManagementSection = ({ onDeleteAccount }: AccountManagementS
   const handleDeleteAccount = async () => {
     try {
       setIsDeleting(true);
-      
-      if (onDeleteAccount) {
-        await onDeleteAccount();
-        return;
-      }
       
       if (!user) return;
       
