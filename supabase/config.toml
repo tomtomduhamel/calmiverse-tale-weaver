@@ -1,1 +1,8 @@
+
 project_id = "ioeihnoxvtpxtqhxklpw"
+
+[functions.generateStory]
+verify_jwt = true
+
+[functions.retryStory]
+verify_jwt = true

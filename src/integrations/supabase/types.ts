@@ -9,7 +9,108 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      children: {
+        Row: {
+          authorid: string
+          birthdate: string
+          createdat: string
+          gender: string | null
+          id: string
+          interests: string[] | null
+          name: string
+        }
+        Insert: {
+          authorid: string
+          birthdate: string
+          createdat?: string
+          gender?: string | null
+          id?: string
+          interests?: string[] | null
+          name: string
+        }
+        Update: {
+          authorid?: string
+          birthdate?: string
+          createdat?: string
+          gender?: string | null
+          id?: string
+          interests?: string[] | null
+          name?: string
+        }
+        Relationships: []
+      }
+      stories: {
+        Row: {
+          authorid: string
+          childrenids: string[] | null
+          childrennames: string[] | null
+          content: string | null
+          createdat: string
+          error: string | null
+          id: string
+          objective: string | null
+          preview: string | null
+          status: string | null
+          summary: string | null
+          title: string
+          updatedat: string
+        }
+        Insert: {
+          authorid: string
+          childrenids?: string[] | null
+          childrennames?: string[] | null
+          content?: string | null
+          createdat?: string
+          error?: string | null
+          id?: string
+          objective?: string | null
+          preview?: string | null
+          status?: string | null
+          summary?: string | null
+          title: string
+          updatedat?: string
+        }
+        Update: {
+          authorid?: string
+          childrenids?: string[] | null
+          childrennames?: string[] | null
+          content?: string | null
+          createdat?: string
+          error?: string | null
+          id?: string
+          objective?: string | null
+          preview?: string | null
+          status?: string | null
+          summary?: string | null
+          title?: string
+          updatedat?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          firstname: string | null
+          id: string
+          lastname: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          firstname?: string | null
+          id: string
+          lastname?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          firstname?: string | null
+          id?: string
+          lastname?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

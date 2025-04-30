@@ -1,109 +1,168 @@
 
-/**
- * Utilitaires pour faciliter la migration de Firebase vers Supabase
- */
-
-import { db, auth, storage } from '@/lib/firebase';
-import { supabase } from '@/lib/supabase';
+import { auth, db } from '@/lib/firebase';
+import { supabase } from '@/integrations/supabase/client';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { getDownloadURL, ref as storageRef } from 'firebase/storage';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 /**
- * Migre les données Firebase d'un utilisateur vers Supabase
+ * Migre un utilisateur de Firebase vers Supabase
  */
-export const migrateUserData = async (userId: string) => {
+export const migrateFirebaseUser = async () => {
   try {
-    console.log(`Démarrage de la migration des données pour l'utilisateur: ${userId}`);
+    // Vérifier si l'utilisateur est connecté à Firebase
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) {
+      return { success: false, error: "Aucun utilisateur Firebase connecté" };
+    }
+
+    console.log("Migration de l'utilisateur Firebase:", firebaseUser.email);
+
+    // Vérifier si l'utilisateur est déjà dans Supabase
+    const { data: existingUser, error: checkError } = await supabase.auth.getUser();
+    
+    if (existingUser?.user) {
+      console.log("L'utilisateur existe déjà dans Supabase", existingUser.user);
+      
+      // Si l'utilisateur existe déjà, migrer ses données
+      await migrateUserData(firebaseUser.uid);
+      return { success: true, message: "L'utilisateur existe déjà dans Supabase, données migrées" };
+    }
+
+    // Créer l'utilisateur dans Supabase
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: firebaseUser.email,
+      password: `${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`, // Mot de passe aléatoire
+    });
+
+    if (signUpError) {
+      console.error("Erreur lors de la création du compte Supabase:", signUpError);
+      return { success: false, error: signUpError.message };
+    }
+
+    console.log("Utilisateur créé dans Supabase:", signUpData.user);
+
+    // Migrer les données de l'utilisateur
+    await migrateUserData(firebaseUser.uid);
+
+    return { success: true, message: "Utilisateur et données migrés avec succès" };
+  } catch (error) {
+    console.error("Erreur lors de la migration:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Migre les données d'un utilisateur de Firebase vers Supabase
+ */
+export const migrateUserData = async (firebaseUid: string) => {
+  try {
+    console.log("Migration des données de l'utilisateur:", firebaseUid);
     
     // 1. Migrer les enfants
-    await migrateChildren(userId);
+    await migrateChildren(firebaseUid);
     
     // 2. Migrer les histoires
-    await migrateStories(userId);
+    await migrateStories(firebaseUid);
     
-    console.log(`Migration terminée avec succès pour l'utilisateur: ${userId}`);
-    return { success: true };
+    return { success: true, message: "Données migrées avec succès" };
   } catch (error) {
     console.error("Erreur lors de la migration des données:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Erreur inconnue"
-    };
+    return { success: false, error: error.message };
   }
 };
 
 /**
  * Migre les enfants de Firebase vers Supabase
  */
-const migrateChildren = async (userId: string) => {
+const migrateChildren = async (firebaseUid: string) => {
   try {
-    console.log("Migration des profils d'enfants...");
+    // Obtenir les enfants depuis Firebase
+    const childrenSnapshot = await getDocs(
+      query(collection(db, "children"), where("authorId", "==", firebaseUid))
+    );
     
-    // Récupérer les enfants depuis Firebase
-    const childrenRef = collection(db, 'children');
-    const childrenQuery = query(childrenRef, where("authorId", "==", userId));
-    const childrenSnapshot = await getDocs(childrenQuery);
+    console.log(`${childrenSnapshot.size} enfants trouvés dans Firebase`);
     
-    if (childrenSnapshot.empty) {
-      console.log("Aucun profil d'enfant à migrer");
-      return;
+    const { data: supabaseUser } = await supabase.auth.getUser();
+    const supabaseUid = supabaseUser?.user?.id;
+
+    if (!supabaseUid) {
+      throw new Error("Aucun utilisateur Supabase connecté");
     }
     
     // Migrer chaque enfant
-    for (const childDoc of childrenSnapshot.docs) {
-      const childData = childDoc.data();
+    const promises = childrenSnapshot.docs.map(async (doc) => {
+      const childData = doc.data();
       
-      // Formater les données pour Supabase
+      // Convertir les données au format Supabase
       const supabaseChildData = {
-        id: childDoc.id,
         name: childData.name,
-        birthDate: childData.birthDate?.toDate?.()?.toISOString() || new Date().toISOString(),
+        birthDate: childData.birthDate ? new Date(childData.birthDate.toDate()).toISOString() : new Date().toISOString(),
+        authorId: supabaseUid,
         interests: childData.interests || [],
         gender: childData.gender || 'unknown',
-        authorId: userId,
-        createdAt: childData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString()
+        createdAt: new Date().toISOString()
       };
       
-      // Insérer dans Supabase
+      // Vérifier si l'enfant existe déjà dans Supabase
+      const { data: existingChildren } = await supabase
+        .from('children')
+        .select('*')
+        .eq('name', childData.name)
+        .eq('authorId', supabaseUid);
+        
+      if (existingChildren && existingChildren.length > 0) {
+        console.log(`L'enfant ${childData.name} existe déjà dans Supabase`);
+        return;
+      }
+      
+      // Insérer l'enfant dans Supabase
       const { error } = await supabase
         .from('children')
-        .upsert(supabaseChildData, { onConflict: 'id' });
+        .insert(supabaseChildData);
+        
+      if (error) {
+        throw error;
+      }
       
-      if (error) throw error;
-      console.log(`Enfant migré avec succès: ${childDoc.id}`);
-    }
+      console.log(`Enfant ${childData.name} migré avec succès`);
+    });
     
-    console.log(`Migration terminée pour ${childrenSnapshot.size} profils d'enfants`);
+    await Promise.all(promises);
+    console.log("Migration des enfants terminée");
+    
+    return { success: true };
   } catch (error) {
     console.error("Erreur lors de la migration des enfants:", error);
-    throw error;
+    return { success: false, error };
   }
 };
 
 /**
  * Migre les histoires de Firebase vers Supabase
  */
-const migrateStories = async (userId: string) => {
+const migrateStories = async (firebaseUid: string) => {
   try {
-    console.log("Migration des histoires...");
+    // Obtenir les histoires depuis Firebase
+    const storiesSnapshot = await getDocs(
+      query(collection(db, "stories"), where("authorId", "==", firebaseUid))
+    );
     
-    // Récupérer les histoires depuis Firebase
-    const storiesRef = collection(db, 'stories');
-    const storiesQuery = query(storiesRef, where("authorId", "==", userId));
-    const storiesSnapshot = await getDocs(storiesQuery);
+    console.log(`${storiesSnapshot.size} histoires trouvées dans Firebase`);
     
-    if (storiesSnapshot.empty) {
-      console.log("Aucune histoire à migrer");
-      return;
+    const { data: supabaseUser } = await supabase.auth.getUser();
+    const supabaseUid = supabaseUser?.user?.id;
+
+    if (!supabaseUid) {
+      throw new Error("Aucun utilisateur Supabase connecté");
     }
     
     // Migrer chaque histoire
-    for (const storyDoc of storiesSnapshot.docs) {
-      const storyData = storyDoc.data();
+    const promises = storiesSnapshot.docs.map(async (doc) => {
+      const storyData = doc.data();
       
-      // Formater les données pour Supabase
+      // Convertir les données au format Supabase
       const supabaseStoryData = {
-        id: storyDoc.id,
         title: storyData.title || "Histoire sans titre",
         content: storyData.story_text || storyData.content || "",
         summary: storyData.story_summary || storyData.summary || "",
@@ -111,70 +170,42 @@ const migrateStories = async (userId: string) => {
         status: storyData.status || "completed",
         childrenIds: storyData.childrenIds || [],
         childrenNames: storyData.childrenNames || [],
-        objective: storyData.objective || "",
-        authorId: userId,
-        createdAt: storyData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-        updatedAt: storyData.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+        objective: storyData.objective ? (typeof storyData.objective === 'object' ? storyData.objective.value : storyData.objective) : "",
+        authorId: supabaseUid,
+        createdAt: storyData.createdAt ? new Date(storyData.createdAt.toDate()).toISOString() : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
       
-      // Insérer dans Supabase
+      // Vérifier si l'histoire existe déjà dans Supabase par titre
+      const { data: existingStories } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('title', supabaseStoryData.title)
+        .eq('authorId', supabaseUid);
+        
+      if (existingStories && existingStories.length > 0) {
+        console.log(`L'histoire "${supabaseStoryData.title}" existe déjà dans Supabase`);
+        return;
+      }
+      
+      // Insérer l'histoire dans Supabase
       const { error } = await supabase
         .from('stories')
-        .upsert(supabaseStoryData, { onConflict: 'id' });
-      
-      if (error) throw error;
-      console.log(`Histoire migrée avec succès: ${storyDoc.id}`);
-    }
-    
-    console.log(`Migration terminée pour ${storiesSnapshot.size} histoires`);
-  } catch (error) {
-    console.error("Erreur lors de la migration des histoires:", error);
-    throw error;
-  }
-};
-
-/**
- * Utilitaire pour migrer un utilisateur Firebase vers Supabase
- */
-export const migrateFirebaseUser = async () => {
-  if (!auth.currentUser) {
-    throw new Error("Utilisateur non connecté");
-  }
-  
-  try {
-    const { uid, email, displayName } = auth.currentUser;
-    
-    // Collecter les informations utilisateur depuis Firebase
-    console.log(`Tentative de migration de l'utilisateur: ${email}`);
-    
-    // 1. Migrer l'utilisateur vers Supabase
-    const { data: { user }, error } = await supabase.auth.signUp({
-      email: email || '',
-      password: `migrated_${Date.now()}`, // Mot de passe temporaire
-      options: {
-        data: {
-          firstName: displayName?.split(' ')[0] || '',
-          lastName: displayName?.split(' ')[1] || '',
-          firebase_uid: uid
-        }
+        .insert(supabaseStoryData);
+        
+      if (error) {
+        throw error;
       }
+      
+      console.log(`Histoire "${supabaseStoryData.title}" migrée avec succès`);
     });
     
-    if (error) throw error;
-    if (!user) throw new Error("Échec de la création de l'utilisateur dans Supabase");
+    await Promise.all(promises);
+    console.log("Migration des histoires terminée");
     
-    console.log(`Utilisateur migré avec succès vers Supabase: ${user.id}`);
-    
-    // 2. Migrer les données utilisateur
-    await migrateUserData(uid);
-    
-    return { success: true, userId: user.id };
+    return { success: true };
   } catch (error) {
-    console.error("Erreur lors de la migration de l'utilisateur:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Erreur inconnue"
-    };
+    console.error("Erreur lors de la migration des histoires:", error);
+    return { success: false, error };
   }
 };
-
