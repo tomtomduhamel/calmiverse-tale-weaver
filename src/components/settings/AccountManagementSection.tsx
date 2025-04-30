@@ -111,6 +111,7 @@ export const AccountManagementSection = () => {
               <AlertDialogAction 
                 className="bg-destructive text-destructive-foreground"
                 onClick={handleDeleteAccount}
+                disabled={isDeleting}
               >
                 {isDeleting ? 'Suppression...' : 'Supprimer mon compte'}
               </AlertDialogAction>

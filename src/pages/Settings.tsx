@@ -47,7 +47,8 @@ const Settings = () => {
     try {
       await updateUserPassword({
         currentPassword: data.currentPassword,
-        newPassword: data.newPassword
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword
       });
     } catch (error) {
       console.error("Erreur lors de la mise à jour du mot de passe:", error);

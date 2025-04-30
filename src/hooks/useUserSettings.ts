@@ -139,7 +139,7 @@ export const useUserSettings = () => {
     }
   };
 
-  const updateUserPassword = async ({ currentPassword, newPassword }: SecuritySettings): Promise<void> => {
+  const updateUserPassword = async ({ currentPassword, newPassword, confirmPassword }: SecuritySettings): Promise<void> => {
     try {
       setIsLoading(true);
       
