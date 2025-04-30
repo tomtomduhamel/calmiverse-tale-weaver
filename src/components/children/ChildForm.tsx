@@ -1,12 +1,12 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
-import { isValidBirthDate } from "@/utils/age";
 import { DatePickerWithInput } from "@/components/ui/date-picker/DatePickerWithInput";
-import TeddyPhotoUpload from "./TeddyPhotoUpload";
+import SupabaseTeddyPhotoUpload from "./SupabaseTeddyPhotoUpload";
 import TeddyPhotoGallery from "./TeddyPhotoGallery";
 import type { Child } from "@/types/child";
 
@@ -96,7 +96,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
             photos={teddyPhotos || []}
             onDeletePhoto={onPhotoDeleted}
           />
-          <TeddyPhotoUpload
+          <SupabaseTeddyPhotoUpload
             childId={childId}
             existingPhotos={teddyPhotos || []}
             onPhotoUploaded={onPhotoUploaded}
