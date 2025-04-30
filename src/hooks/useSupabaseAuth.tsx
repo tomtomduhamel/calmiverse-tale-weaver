@@ -25,28 +25,45 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("Initializing auth state listener");
+    
     // Configurer le listener d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      console.log('Auth state change event:', event);
+      console.log('Auth state change event:', event, currentSession?.user?.id);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      
+      if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
+      } else if (event === 'SIGNED_IN') {
+        console.log('User signed in');
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed');
+      }
+      
       setLoading(false);
     });
 
     // Vérifier la session existante
+    console.log("Checking existing session");
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log('Current session:', currentSession);
+      console.log('Current session:', currentSession?.user?.id);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      setLoading(false);
+    }).catch(err => {
+      console.error('Error getting session:', err);
       setLoading(false);
     });
 
     return () => {
+      console.log("Cleaning up auth listener");
       subscription.unsubscribe();
     };
   }, []);
 
   const getAuthErrorMessage = (error: AuthError) => {
+    console.log("Auth error:", error.message);
     switch (error.message) {
       case 'Invalid login credentials':
         return "Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.";
@@ -64,9 +81,11 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   const signInWithEmail = async (email: string, password: string) => {
     try {
       setError(null);
+      console.log("Tentative de connexion avec email:", email);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
+        console.error("Erreur de connexion:", error);
         setError(error);
         toast({
           title: "Erreur de connexion",
@@ -76,6 +95,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
         throw error;
       }
       
+      console.log("Connexion réussie");
       toast({
         title: "Connexion réussie",
         description: "Bienvenue sur Calmi !",
@@ -89,9 +109,11 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   const signUpWithEmail = async (email: string, password: string) => {
     try {
       setError(null);
+      console.log("Tentative d'inscription avec email:", email);
       const { error } = await supabase.auth.signUp({ email, password });
       
       if (error) {
+        console.error("Erreur d'inscription:", error);
         setError(error);
         toast({
           title: "Erreur d'inscription",
@@ -101,6 +123,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
         throw error;
       }
       
+      console.log("Inscription réussie");
       toast({
         title: "Inscription réussie",
         description: "Bienvenue sur Calmi ! Veuillez vérifier votre boîte mail pour confirmer votre compte.",
@@ -126,6 +149,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
       console.log('Résultat de la tentative de connexion Google:', { data, error });
       
       if (error) {
+        console.error("Erreur lors de la connexion avec Google:", error);
         setError(error);
         toast({
           title: "Erreur de connexion",
@@ -143,9 +167,11 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   const logout = async () => {
     try {
       setError(null);
+      console.log("Tentative de déconnexion");
       const { error } = await supabase.auth.signOut();
       
       if (error) {
+        console.error("Erreur lors de la déconnexion:", error);
         setError(error);
         toast({
           title: "Erreur de déconnexion",
@@ -155,6 +181,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
         throw error;
       }
       
+      console.log("Déconnexion réussie");
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
@@ -164,6 +191,11 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
       throw err;
     }
   };
+
+  // Exposer des informations de débogage dans la console
+  useEffect(() => {
+    console.log("Auth state updated - User:", user?.id, "Loading:", loading);
+  }, [user, loading]);
 
   return (
     <SupabaseAuthContext.Provider value={{

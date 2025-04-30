@@ -10,10 +10,11 @@ import type { ViewType } from "@/types/views";
 import type { StoryFormData } from "@/components/story/StoryFormTypes";
 import type { Story } from "@/types/story";
 import { useToast } from "@/hooks/use-toast";
-import { useChildren } from "@/hooks/useChildren";
+import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useStories } from "@/hooks/useStories";
 import { initializeObjectives } from "@/utils/initializeObjectives";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 // Composant de chargement léger
 const SimpleLoader = () => (
@@ -28,11 +29,21 @@ const Index = () => {
   const [showGuide, setShowGuide] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   
-  const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useChildren();
+  const { children, handleAddChild, handleUpdateChild, handleDeleteChild, loading: childrenLoading } = useSupabaseChildren();
   const { stories: { stories, isLoading, error }, currentStory, setCurrentStory, createStory, deleteStory } = useStories(children);
   const { toast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useSupabaseAuth();
 
+  // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
+  useEffect(() => {
+    if (!authLoading && !user) {
+      console.log("Utilisateur non connecté, redirection vers /auth");
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+  
   // Effet pour vérifier si le guide a déjà été vu
   useEffect(() => {
     console.log("Index component mounted, initializing");
@@ -74,7 +85,7 @@ const Index = () => {
     try {
       const story = await createStory(formData);
       return story;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de la création de l'histoire:", error);
       toast({
         title: "Erreur",
@@ -107,6 +118,11 @@ const Index = () => {
     }
   };
 
+  // État de chargement - afficher un loader simple mais fiable
+  if (authLoading || !isInitialized || isLoading || childrenLoading) {
+    return <SimpleLoader />;
+  }
+
   // Gestion des erreurs de chargement des données
   if (error) {
     return (
@@ -123,8 +139,8 @@ const Index = () => {
     );
   }
 
-  // État d'initialisation - afficher un loader simple mais fiable
-  if (!isInitialized || isLoading) {
+  // Si l'utilisateur n'est pas connecté, ne pas afficher le contenu
+  if (!user) {
     return <SimpleLoader />;
   }
 

@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { auth } from "@/lib/firebase";
 import type { Child } from "@/types/child";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => void) => {
   const [showChildForm, setShowChildForm] = useState(false);
@@ -11,6 +12,7 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => v
   const [teddyDescription, setTeddyDescription] = useState("");
   const [imaginaryWorld, setImaginaryWorld] = useState("");
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
 
   const handleChildFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +26,7 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => v
       return;
     }
 
-    if (!auth.currentUser) {
+    if (!user) {
       toast({
         title: "Erreur",
         description: "Vous devez être connecté pour effectuer cette action",
@@ -43,7 +45,7 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => v
       teddyName,
       teddyDescription,
       imaginaryWorld,
-      authorId: auth.currentUser.uid,
+      authorId: user.id,
     };
 
     try {

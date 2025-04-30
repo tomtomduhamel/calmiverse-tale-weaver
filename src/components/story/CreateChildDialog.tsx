@@ -1,8 +1,11 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { useState } from "react";
 
 interface CreateChildDialogProps {
   open: boolean;
@@ -26,21 +29,37 @@ const CreateChildDialog = ({
   onChildAgeChange,
 }: CreateChildDialogProps) => {
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour effectuer cette action",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
+      setIsSubmitting(true);
       await onSubmit(e);
       toast({
         title: "Succès",
         description: "L'enfant a été ajouté avec succès",
       });
     } catch (error) {
+      console.error("Erreur lors de l'ajout de l'enfant:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'ajout de l'enfant",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -98,9 +117,10 @@ const CreateChildDialog = ({
           <div className="flex gap-3">
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-soft hover:shadow-soft-lg transition-all"
             >
-              Ajouter
+              {isSubmitting ? 'Ajout en cours...' : 'Ajouter'}
             </Button>
             <DialogClose asChild>
               <Button
@@ -108,6 +128,7 @@ const CreateChildDialog = ({
                 variant="outline"
                 onClick={handleReset}
                 className="flex-1 border-secondary/20 hover:bg-secondary/10 transition-all"
+                disabled={isSubmitting}
               >
                 Annuler
               </Button>

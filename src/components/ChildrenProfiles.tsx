@@ -1,11 +1,12 @@
+
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Child } from "@/types/child";
-import { auth, storage } from "@/lib/firebase";
-import { ref, deleteObject } from "firebase/storage";
 import ProfileHeader from "./children/ProfileHeader";
 import ProfileGrid from "./children/ProfileGrid";
 import ProfileFormWrapper from "./children/ProfileFormWrapper";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChildrenProfilesProps {
   children: Child[];
@@ -30,6 +31,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
   const [newImaginaryWorld, setNewImaginaryWorld] = useState("");
   const [editingChild, setEditingChild] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
 
   const resetForm = () => {
     setNewChildName("");
@@ -57,11 +59,14 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
       const child = children.find((c) => c.id === childId);
       if (!child) return;
 
-      // Supprimer le fichier de Firebase Storage
-      const storageRef = ref(storage, photoPath);
-      await deleteObject(storageRef);
+      // Supprimer le fichier de Supabase Storage
+      const { error: deleteError } = await supabase.storage
+        .from('teddy-photos')
+        .remove([photoPath]);
+        
+      if (deleteError) throw deleteError;
 
-      // Mettre à jour Firestore
+      // Mettre à jour la base de données
       const updatedPhotos = child.teddyPhotos?.filter(
         (photo) => photo.path !== photoPath
       ) || [];
@@ -75,7 +80,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
         title: "Succès",
         description: "La photo a été supprimée",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de la suppression de la photo:", error);
       toast({
         title: "Erreur",
@@ -96,7 +101,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
       return;
     }
 
-    if (!auth.currentUser) {
+    if (!user) {
       toast({
         title: "Erreur",
         description: "Vous devez être connecté pour effectuer cette action",
@@ -111,7 +116,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
       teddyName: newTeddyName,
       teddyDescription: newTeddyDescription,
       imaginaryWorld: newImaginaryWorld,
-      authorId: auth.currentUser.uid,
+      authorId: user.id,
       teddyPhotos: [],
     };
 
