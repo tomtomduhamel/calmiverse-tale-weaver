@@ -1,0 +1,30 @@
+
+import React from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Home } from "lucide-react";
+
+const NotFound = () => {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+      <h1 className="text-6xl font-bold text-primary mb-4">404</h1>
+      <p className="text-xl mb-8 text-center">
+        Oups ! Cette page semble s'être perdue dans un monde imaginaire.
+      </p>
+      <div className="max-w-md text-center mb-8">
+        <p className="mb-4">
+          Ne vous inquiétez pas, même les meilleures histoires ont parfois des pages égarées.
+          Retournez à l'accueil pour continuer votre aventure avec Calmiverse.
+        </p>
+      </div>
+      <Button asChild size="lg">
+        <Link to="/" className="flex items-center gap-2">
+          <Home className="h-5 w-5" />
+          Retour à l'accueil
+        </Link>
+      </Button>
+    </div>
+  );
+};
+
+export default NotFound;
