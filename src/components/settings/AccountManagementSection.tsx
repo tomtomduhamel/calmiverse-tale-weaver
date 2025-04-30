@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -59,8 +59,8 @@ export const AccountManagementSection = () => {
       if (deleteUserDataError) throw deleteUserDataError;
       
       // 2. Supprimer le compte utilisateur via RPC
-      // Appel corrigé de la fonction RPC sans paramètres
-      const { error: deleteUserError } = await supabase.rpc('delete_user');
+      // Cette fonction RPC ne prend pas de paramètres, elle utilisera auth.uid() en interne
+      const { error: deleteUserError } = await supabase.rpc('delete_user', {});
       
       if (deleteUserError) throw deleteUserError;
       
