@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Child } from "@/types/child";
 import ProfileHeader from "./children/ProfileHeader";
 import ProfileGrid from "./children/ProfileGrid";
@@ -153,34 +154,36 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      <ProfileHeader 
-        onShowForm={() => setShowForm(true)} 
-        showForm={showForm}
-        onCreateStory={onCreateStory}
-      />
-      <ProfileGrid children={children} onEdit={handleEdit} onDelete={onDeleteChild} />
-      <ProfileFormWrapper
-        showForm={showForm}
-        childName={newChildName}
-        birthDate={newBirthDate}
-        teddyName={newTeddyName}
-        teddyDescription={newTeddyDescription}
-        imaginaryWorld={newImaginaryWorld}
-        editingChild={editingChild}
-        childId={editingChild || undefined}
-        teddyPhotos={editingChild ? children.find(c => c.id === editingChild)?.teddyPhotos : []}
-        onSubmit={handleSubmit}
-        onReset={resetForm}
-        onChildNameChange={setNewChildName}
-        onBirthDateChange={setNewBirthDate}
-        onTeddyNameChange={setNewTeddyName}
-        onTeddyDescriptionChange={setNewTeddyDescription}
-        onImaginaryWorldChange={setNewImaginaryWorld}
-        onPhotoUploaded={(photo) => editingChild && handlePhotoUploaded(editingChild, photo)}
-        onPhotoDeleted={(path) => editingChild && handlePhotoDeleted(editingChild, path)}
-      />
-    </div>
+    <ScrollArea className="h-[calc(100vh-100px)] w-full">
+      <div className="space-y-6 p-4">
+        <ProfileHeader 
+          onShowForm={() => setShowForm(true)} 
+          showForm={showForm}
+          onCreateStory={onCreateStory}
+        />
+        <ProfileGrid children={children} onEdit={handleEdit} onDelete={onDeleteChild} />
+        <ProfileFormWrapper
+          showForm={showForm}
+          childName={newChildName}
+          birthDate={newBirthDate}
+          teddyName={newTeddyName}
+          teddyDescription={newTeddyDescription}
+          imaginaryWorld={newImaginaryWorld}
+          editingChild={editingChild}
+          childId={editingChild || undefined}
+          teddyPhotos={editingChild ? children.find(c => c.id === editingChild)?.teddyPhotos : []}
+          onSubmit={handleSubmit}
+          onReset={resetForm}
+          onChildNameChange={setNewChildName}
+          onBirthDateChange={setNewBirthDate}
+          onTeddyNameChange={setNewTeddyName}
+          onTeddyDescriptionChange={setNewTeddyDescription}
+          onImaginaryWorldChange={setNewImaginaryWorld}
+          onPhotoUploaded={(photo) => editingChild && handlePhotoUploaded(editingChild, photo)}
+          onPhotoDeleted={(path) => editingChild && handlePhotoDeleted(editingChild, path)}
+        />
+      </div>
+    </ScrollArea>
   );
 };
 

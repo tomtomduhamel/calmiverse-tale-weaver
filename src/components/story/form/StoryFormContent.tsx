@@ -1,4 +1,5 @@
 
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { default as StoryObjectives } from "../StoryObjectives";
 import { StoryError } from "./StoryError";
 import { StoryProgress } from "./StoryProgress";
@@ -37,30 +38,32 @@ export const StoryFormContent = ({
   onModeSwitch,
 }: StoryFormContentProps) => {
   return (
-    <form onSubmit={onSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
-      <StoryFormHeader onModeSwitch={onModeSwitch} />
-      <StoryError error={formError} />
-      
-      <ChildrenSelection
-        children={children}
-        selectedChildrenIds={selectedChildrenIds}
-        onChildToggle={onChildToggle}
-        onCreateChildClick={onCreateChildClick}
-      />
-
-      <div className="space-y-4">
-        <label className="text-secondary dark:text-white text-lg font-medium">
-          Je souhaite créer un moment de lecture qui va...
-        </label>
-        <StoryObjectives
-          objectives={objectives}
-          selectedObjective={objective}
-          onObjectiveSelect={setObjective}
+    <ScrollArea className="h-[calc(100vh-150px)]">
+      <form onSubmit={onSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
+        <StoryFormHeader onModeSwitch={onModeSwitch} />
+        <StoryError error={formError} />
+        
+        <ChildrenSelection
+          children={children}
+          selectedChildrenIds={selectedChildrenIds}
+          onChildToggle={onChildToggle}
+          onCreateChildClick={onCreateChildClick}
         />
-      </div>
 
-      <StoryProgress isSubmitting={isSubmitting} progress={progress} />
-      <GenerateStoryButton disabled={isSubmitting} />
-    </form>
+        <div className="space-y-4">
+          <label className="text-secondary dark:text-white text-lg font-medium">
+            Je souhaite créer un moment de lecture qui va...
+          </label>
+          <StoryObjectives
+            objectives={objectives}
+            selectedObjective={objective}
+            onObjectiveSelect={setObjective}
+          />
+        </div>
+
+        <StoryProgress isSubmitting={isSubmitting} progress={progress} />
+        <GenerateStoryButton disabled={isSubmitting} />
+      </form>
+    </ScrollArea>
   );
 };

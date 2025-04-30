@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import StoryForm from "@/components/StoryForm";
 import StoryReader from "@/components/StoryReader";
 import StoryLibrary from "@/components/StoryLibrary";
@@ -146,56 +146,58 @@ const Index = () => {
 
   // Rendu principal
   return (
-    <div className="index-container max-w-7xl mx-auto">
-      {showGuide && <InteractiveGuide />}
-      
-      {currentView === "home" && (
-        <HomeHero onViewChange={setCurrentView} />
-      )}
+    <ScrollArea className="h-screen w-full">
+      <div className="index-container max-w-7xl mx-auto p-4 mb-20">
+        {showGuide && <InteractiveGuide />}
+        
+        {currentView === "home" && (
+          <HomeHero onViewChange={setCurrentView} />
+        )}
 
-      {currentView === "create" && (
-        <div className="w-full max-w-4xl mx-auto animate-fade-in">
-          <StoryForm
-            onSubmit={handleStorySubmit}
-            children={children}
-            onCreateChild={handleCreateChildFromStory}
-            onStoryCreated={handleStoryCreated}
-          />
-        </div>
-      )}
+        {currentView === "create" && (
+          <div className="w-full max-w-4xl mx-auto animate-fade-in">
+            <StoryForm
+              onSubmit={handleStorySubmit}
+              children={children}
+              onCreateChild={handleCreateChildFromStory}
+              onStoryCreated={handleStoryCreated}
+            />
+          </div>
+        )}
 
-      {currentView === "profiles" && (
-        <div className="animate-fade-in">
-          <ChildrenProfiles
-            children={children}
-            onAddChild={handleAddChild}
-            onUpdateChild={handleUpdateChild}
-            onDeleteChild={handleDeleteChild}
-            onCreateStory={() => setCurrentView("create")}
-          />
-        </div>
-      )}
+        {currentView === "profiles" && (
+          <div className="animate-fade-in">
+            <ChildrenProfiles
+              children={children}
+              onAddChild={handleAddChild}
+              onUpdateChild={handleUpdateChild}
+              onDeleteChild={handleDeleteChild}
+              onCreateStory={() => setCurrentView("create")}
+            />
+          </div>
+        )}
 
-      {currentView === "library" && (
-        <div className="animate-fade-in">
-          <StoryLibrary
-            stories={stories}
-            onSelectStory={handleSelectStory}
-            onDeleteStory={deleteStory}
-            onViewChange={setCurrentView}
-          />
-        </div>
-      )}
+        {currentView === "library" && (
+          <div className="animate-fade-in">
+            <StoryLibrary
+              stories={stories}
+              onSelectStory={handleSelectStory}
+              onDeleteStory={deleteStory}
+              onViewChange={setCurrentView}
+            />
+          </div>
+        )}
 
-      {currentView === "reader" && currentStory && (
-        <div className="animate-fade-in">
-          <StoryReader
-            story={currentStory}
-            onClose={handleCloseReader}
-          />
-        </div>
-      )}
-    </div>
+        {currentView === "reader" && currentStory && (
+          <div className="animate-fade-in">
+            <StoryReader
+              story={currentStory}
+              onClose={handleCloseReader}
+            />
+          </div>
+        )}
+      </div>
+    </ScrollArea>
   );
 };
 

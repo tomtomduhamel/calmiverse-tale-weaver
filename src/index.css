@@ -71,29 +71,33 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground transition-colors duration-300 min-h-screen overflow-x-hidden;
+    @apply bg-background text-foreground transition-colors duration-300 min-h-screen overflow-y-auto;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-/* Masquer les scrollbars par défaut */
+/* Modifier les règles de scrollbar pour les afficher quand nécessaire */
 ::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+  width: 4px;
+  height: 4px;
 }
 
-/* N'afficher la scrollbar que lorsque c'est absolument nécessaire */
+/* Afficher les scrollbars par défaut */
 .overflow-auto, 
 .overflow-y-auto, 
-.overflow-x-auto {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.overflow-x-auto,
+body, 
+html {
+  scrollbar-width: thin;
+  -ms-overflow-style: auto;
 }
 
 .overflow-auto::-webkit-scrollbar,
 .overflow-y-auto::-webkit-scrollbar,
-.overflow-x-auto::-webkit-scrollbar {
-  display: none;
+.overflow-x-auto::-webkit-scrollbar,
+body::-webkit-scrollbar,
+html::-webkit-scrollbar {
+  display: block;
 }
 
 /* Style pour les conteneurs qui nécessitent absolument une scrollbar */
@@ -197,3 +201,4 @@
   @apply shadow-xl;
   transform: translateY(-2px);
 }
+
