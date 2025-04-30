@@ -94,14 +94,14 @@ const migrateChildren = async (firebaseUid: string) => {
     const promises = childrenSnapshot.docs.map(async (doc) => {
       const childData = doc.data();
       
-      // Convertir les données au format Supabase
+      // Convertir les données au format Supabase (en respectant les noms des colonnes en minuscule)
       const supabaseChildData = {
         name: childData.name,
-        birthDate: childData.birthDate ? new Date(childData.birthDate.toDate()).toISOString() : new Date().toISOString(),
-        authorId: supabaseUid,
+        birthdate: childData.birthDate ? new Date(childData.birthDate.toDate()).toISOString() : new Date().toISOString(),
+        authorid: supabaseUid,
         interests: childData.interests || [],
         gender: childData.gender || 'unknown',
-        createdAt: new Date().toISOString()
+        createdat: new Date().toISOString()
       };
       
       // Vérifier si l'enfant existe déjà dans Supabase
@@ -109,7 +109,7 @@ const migrateChildren = async (firebaseUid: string) => {
         .from('children')
         .select('*')
         .eq('name', childData.name)
-        .eq('authorId', supabaseUid);
+        .eq('authorid', supabaseUid);
         
       if (existingChildren && existingChildren.length > 0) {
         console.log(`L'enfant ${childData.name} existe déjà dans Supabase`);
@@ -161,19 +161,19 @@ const migrateStories = async (firebaseUid: string) => {
     const promises = storiesSnapshot.docs.map(async (doc) => {
       const storyData = doc.data();
       
-      // Convertir les données au format Supabase
+      // Convertir les données au format Supabase (en respectant les noms des colonnes en minuscule)
       const supabaseStoryData = {
         title: storyData.title || "Histoire sans titre",
         content: storyData.story_text || storyData.content || "",
         summary: storyData.story_summary || storyData.summary || "",
         preview: storyData.preview || "",
         status: storyData.status || "completed",
-        childrenIds: storyData.childrenIds || [],
-        childrenNames: storyData.childrenNames || [],
+        childrenids: storyData.childrenIds || [],
+        childrennames: storyData.childrenNames || [],
         objective: storyData.objective ? (typeof storyData.objective === 'object' ? storyData.objective.value : storyData.objective) : "",
-        authorId: supabaseUid,
-        createdAt: storyData.createdAt ? new Date(storyData.createdAt.toDate()).toISOString() : new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        authorid: supabaseUid,
+        createdat: storyData.createdAt ? new Date(storyData.createdAt.toDate()).toISOString() : new Date().toISOString(),
+        updatedat: new Date().toISOString()
       };
       
       // Vérifier si l'histoire existe déjà dans Supabase par titre
@@ -181,7 +181,7 @@ const migrateStories = async (firebaseUid: string) => {
         .from('stories')
         .select('*')
         .eq('title', supabaseStoryData.title)
-        .eq('authorId', supabaseUid);
+        .eq('authorid', supabaseUid);
         
       if (existingStories && existingStories.length > 0) {
         console.log(`L'histoire "${supabaseStoryData.title}" existe déjà dans Supabase`);

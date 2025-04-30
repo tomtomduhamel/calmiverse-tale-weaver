@@ -1,5 +1,4 @@
 
-// Ce fichier est généré automatiquement. Ne pas le modifier directement.
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
