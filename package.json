@@ -56,7 +56,6 @@
     "embla-carousel-react": "^8.3.0",
     "epubjs": "^0.3.93",
     "esbuild": "^0.25.0",
-    "firebase-admin": "^13.0.2",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
