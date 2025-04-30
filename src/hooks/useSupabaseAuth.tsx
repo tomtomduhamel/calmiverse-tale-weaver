@@ -27,6 +27,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   useEffect(() => {
     // Configurer le listener d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      console.log('Auth state change event:', event);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
@@ -34,6 +35,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
 
     // Vérifier la session existante
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log('Current session:', currentSession);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
@@ -112,12 +114,16 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   const signInWithGoogle = async () => {
     try {
       setError(null);
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('Tentative de connexion avec Google...');
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin
         }
       });
+      
+      console.log('Résultat de la tentative de connexion Google:', { data, error });
       
       if (error) {
         setError(error);
