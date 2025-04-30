@@ -1,8 +1,5 @@
 
 project_id = "ioeihnoxvtpxtqhxklpw"
 
-[functions.generate-story]
-verify_jwt = true
-
-[functions.retry-story]
+[functions.delete-user]
 verify_jwt = true

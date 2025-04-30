@@ -60,8 +60,8 @@ export const AccountManagementSection = () => {
       
       // 2. Supprimer le compte utilisateur via RPC
       // Cette fonction RPC ne prend pas de paramètres, elle utilisera auth.uid() en interne
-      // Mais l'API Supabase nécessite un objet de paramètres, même s'il est vide
-      const { error: deleteUserError } = await supabase.rpc('delete_user');
+      // Utilisation correcte de l'API supabase.rpc pour les fonctions sans paramètres
+      const { error: deleteUserError } = await supabase.functions.invoke('delete-user');
       
       if (deleteUserError) throw deleteUserError;
       
