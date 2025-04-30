@@ -1,5 +1,15 @@
 
 project_id = "ioeihnoxvtpxtqhxklpw"
+[api]
+[api.schema]
 
-[functions.delete-user]
-verify_jwt = true
+[db]
+
+[db.pooler]
+
+[realtime]
+
+[functions]
+
+[functions.upload-epub]
+verify_jwt = false

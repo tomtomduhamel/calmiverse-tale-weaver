@@ -2,7 +2,7 @@
 /**
  * Global error event handlers for the application
  */
-import { isFirebaseError, handleFirebaseError } from './firebaseErrorHandler';
+import { isDatabaseError, handleGeneralError } from './generalErrorHandler';
 import { isNetworkError, handleNetworkError } from './networkErrorHandler';
 
 /**
@@ -24,7 +24,7 @@ export function setupGlobalErrorHandler() {
       return false;
     }
     
-    // Ignore network-related errors for Firebase services
+    // Ignore network-related errors for services
     if (event.target?.tagName === 'LINK' || 
         event.target?.tagName === 'SCRIPT' ||
         isNetworkError(event)) {
@@ -33,9 +33,9 @@ export function setupGlobalErrorHandler() {
       return false;
     }
     
-    // Handle Firebase errors more gracefully
-    if (isFirebaseError(event.error || event)) {
-      handleFirebaseError(event.error || event);
+    // Handle database errors more gracefully
+    if (isDatabaseError(event.error || event)) {
+      handleGeneralError(event.error || event);
       
       // Prevent the default error handling
       event.preventDefault();
@@ -80,9 +80,9 @@ export function setupPromiseErrorHandler() {
       return;
     }
     
-    // Handle Firebase promise errors
-    if (isFirebaseError(event.reason)) {
-      handleFirebaseError(event.reason);
+    // Handle database promise errors
+    if (isDatabaseError(event.reason)) {
+      handleGeneralError(event.reason);
       
       // Prevent the default error handling
       event.preventDefault();

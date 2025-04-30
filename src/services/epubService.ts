@@ -1,5 +1,5 @@
 
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { supabase } from '@/integrations/supabase/client';
 import type { Story } from '@/types/story';
 
 export const generateAndUploadEpub = async (story: Story): Promise<string> => {
@@ -32,13 +32,14 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
 
     const filename = `${story.id}_${Date.now()}.epub`;
 
-    // Call Cloud Function for upload
-    const functions = getFunctions();
-    const uploadEpubFn = httpsCallable(functions, 'uploadEpub');
-    const result = await uploadEpubFn({ content: htmlContent, filename });
+    // Appel à la fonction Edge Supabase
+    const { data, error } = await supabase.functions.invoke('upload-epub', {
+      body: { content: htmlContent, filename }
+    });
 
-    // @ts-ignore - we know result.data contains url
-    const { url } = result.data;
+    if (error) throw error;
+    
+    const { url } = data;
     
     console.log("EPUB généré et uploadé avec succès:", url);
     return url;

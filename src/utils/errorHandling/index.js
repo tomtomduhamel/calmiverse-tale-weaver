@@ -5,7 +5,7 @@
 import { setupGlobalErrorHandler, setupPromiseErrorHandler } from './globalErrorHandlers';
 import { setupSafePostMessage } from './postMessageHandler';
 import { initializeNotificationManager } from './notificationManager';
-import { handleFirebaseError } from './firebaseErrorHandler';
+import { handleGeneralError } from './generalErrorHandler';
 import { handleNetworkError } from './networkErrorHandler';
 
 /**
@@ -32,6 +32,6 @@ export function initializeErrorHandlers() {
 
 // Export individual handlers for direct use in components
 export {
-  handleFirebaseError,
+  handleGeneralError,
   handleNetworkError
 };
