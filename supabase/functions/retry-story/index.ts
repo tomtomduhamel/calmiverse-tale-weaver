@@ -1,34 +1,47 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.5";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { storyId } = await req.json()
+    // Récupérer les données de la requête
+    const requestData = await req.json();
+    
+    // Traitement du ping pour le test de connexion
+    if (requestData.ping) {
+      console.log("Ping de test reçu");
+      return new Response(
+        JSON.stringify({ success: true, message: "Edge Function accessible" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const { storyId } = requestData;
 
     if (!storyId) {
-      throw new Error('Paramètre manquant: storyId est requis')
+      throw new Error('Paramètre manquant: storyId est requis');
     }
 
     // Récupérer les informations de l'histoire
-    const supabaseClient = await createSupabaseClient()
+    const supabaseClient = await createSupabaseClient();
     const { data: story, error: storyError } = await supabaseClient
       .from('stories')
       .select('*')
       .eq('id', storyId)
-      .single()
+      .single();
     
-    if (storyError) throw storyError
-    if (!story) throw new Error('Histoire non trouvée')
+    if (storyError) throw storyError;
+    if (!story) throw new Error('Histoire non trouvée');
     
     // Mettre à jour le statut à "pending"
     await supabaseClient
@@ -37,19 +50,19 @@ serve(async (req) => {
         status: 'pending',
         updatedat: new Date().toISOString()
       })
-      .eq('id', storyId)
+      .eq('id', storyId);
     
     // Simuler un délai pour la génération
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     // Générer un conte simple
-    const childrenString = story.childrennames.join(' et ')
-    const title = `L'aventure de ${childrenString}`
+    const childrenString = story.childrennames.join(' et ');
+    const title = `L'aventure de ${childrenString}`;
     const content = `Il était une fois ${childrenString} qui ${story.objective.toLowerCase()}. 
                     Après beaucoup d'efforts et de péripéties, ils ont réussi et sont rentrés chez eux 
-                    heureux et enrichis par cette expérience. Cette histoire est une nouvelle tentative de génération.`
-    const summary = `Une histoire où ${childrenString} ${story.objective.toLowerCase()}`
-    const preview = `${childrenString} partent à l'aventure...`
+                    heureux et enrichis par cette expérience. Cette histoire est une nouvelle tentative de génération.`;
+    const summary = `Une histoire où ${childrenString} ${story.objective.toLowerCase()}`;
+    const preview = `${childrenString} partent à l'aventure...`;
     
     // Mettre à jour l'histoire dans la base de données
     const { error } = await supabaseClient
@@ -63,11 +76,11 @@ serve(async (req) => {
         error: null,
         updatedat: new Date().toISOString()
       })
-      .eq('id', storyId)
+      .eq('id', storyId);
     
-    if (error) throw error
+    if (error) throw error;
     
-    console.log('Histoire régénérée avec succès:', { storyId, title })
+    console.log('Histoire régénérée avec succès:', { storyId, title });
 
     return new Response(
       JSON.stringify({ 
@@ -80,15 +93,15 @@ serve(async (req) => {
           'Content-Type': 'application/json' 
         } 
       }
-    )
+    );
   } catch (error) {
-    console.error('Erreur lors de la régénération de l\'histoire:', error)
+    console.error('Erreur lors de la régénération de l\'histoire:', error);
     
     // Mettre à jour le statut de l'histoire en cas d'erreur
     try {
-      const { storyId } = await req.json()
+      const { storyId } = await req.json();
       if (storyId) {
-        const supabaseClient = await createSupabaseClient()
+        const supabaseClient = await createSupabaseClient();
         await supabaseClient
           .from('stories')
           .update({
@@ -96,10 +109,10 @@ serve(async (req) => {
             error: error instanceof Error ? error.message : 'Erreur inconnue',
             updatedat: new Date().toISOString()
           })
-          .eq('id', storyId)
+          .eq('id', storyId);
       }
     } catch (e) {
-      console.error('Erreur lors de la mise à jour du statut de l\'histoire:', e)
+      console.error('Erreur lors de la mise à jour du statut de l\'histoire:', e);
     }
     
     return new Response(
@@ -114,16 +127,18 @@ serve(async (req) => {
           'Content-Type': 'application/json' 
         } 
       }
-    )
+    );
   }
-})
+});
 
 // Fonction helper pour créer un client Supabase
 async function createSupabaseClient() {
-  const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.38.5")
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
   
-  return createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  )
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Variables d'environnement Supabase manquantes");
+  }
+  
+  return createClient(supabaseUrl, supabaseKey);
 }
