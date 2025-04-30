@@ -12,13 +12,13 @@ export const migrateUserData = async (firebaseUid: string) => {
     // 1. Migrer les enfants
     const childrenResult = await migrateChildren(firebaseUid);
     if (!childrenResult.success) {
-      console.error("Erreur lors de la migration des enfants:", childrenResult.error);
+      console.error("Erreur lors de la migration des enfants");
     }
     
     // 2. Migrer les histoires
     const storiesResult = await migrateStories(firebaseUid);
     if (!storiesResult.success) {
-      console.error("Erreur lors de la migration des histoires:", storiesResult.error);
+      console.error("Erreur lors de la migration des histoires");
     }
     
     // Vérifier si la migration a réussi
@@ -28,8 +28,8 @@ export const migrateUserData = async (firebaseUid: string) => {
       success, 
       message: success ? "Données migrées avec succès" : "Échec de la migration des données"
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur lors de la migration des données:", error);
-    return { success: false, error: error.message };
+    return { success: false, message: error.message };
   }
 };

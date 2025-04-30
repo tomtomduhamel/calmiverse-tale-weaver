@@ -29,17 +29,5 @@ export const migrateStories = async (firebaseUid: string) => {
   return { success: true };
 };
 
-export const transformStoryForSupabase = (data: any, supabaseUid: string) => {
-  return {
-    title: data.title || 'Histoire sans titre',
-    content: data.story_text || '',
-    summary: data.story_summary || '',
-    preview: data.preview || '',
-    status: data.status || 'completed',
-    childrenids: data.childrenIds || [],
-    childrennames: data.childrenNames || [],
-    objective: data.objective || '',
-    authorid: supabaseUid,
-    createdat: new Date().toISOString()
-  };
-};
+// Export de la fonction de transformation pour la compatibilité
+export { transformStoryForSupabase };
