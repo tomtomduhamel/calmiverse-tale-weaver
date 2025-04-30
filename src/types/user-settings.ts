@@ -1,6 +1,8 @@
+
 export interface UserSettings {
   firstName: string;
   lastName: string;
+  email: string;
   language: 'fr' | 'en';
   timezone: string;
   notifications: {

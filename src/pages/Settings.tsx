@@ -10,7 +10,7 @@ import { KindleSection } from '@/components/settings/KindleSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
 import { SecuritySection } from '@/components/settings/SecuritySection';
 import { AccountManagementSection } from '@/components/settings/AccountManagementSection';
-import type { UserSettings } from '@/types/user-settings';
+import type { UserSettings, SecuritySettings } from '@/types/user-settings';
 
 const Settings = () => {
   const { user } = useSupabaseAuth();
@@ -22,13 +22,36 @@ const Settings = () => {
     updateUserPassword,
   } = useSupabaseUserSettings();
 
-  const handleNotificationChange = async (key: keyof UserSettings['notifications'], value: boolean) => {
-    await updateUserSettings({
-      notifications: {
-        ...userSettings.notifications,
-        [key]: value,
-      },
-    });
+  const handleProfileSubmit = async (data: Partial<UserSettings>): Promise<void> => {
+    try {
+      await updateUserSettings(data);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du profil:", error);
+    }
+  };
+
+  const handleNotificationChange = async (key: keyof UserSettings['notifications'], value: boolean): Promise<void> => {
+    try {
+      await updateUserSettings({
+        notifications: {
+          ...userSettings.notifications,
+          [key]: value,
+        },
+      });
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour des notifications:", error);
+    }
+  };
+
+  const handleSecuritySubmit = async (data: SecuritySettings): Promise<void> => {
+    try {
+      await updateUserPassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      });
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du mot de passe:", error);
+    }
   };
 
   if (isLoading || !user) {
@@ -51,7 +74,7 @@ const Settings = () => {
 
       <ProfileSection 
         userSettings={userSettings}
-        onSubmit={updateUserSettings}
+        onSubmit={handleProfileSubmit}
       />
 
       <AccountInfoSection user={user} />
@@ -64,7 +87,7 @@ const Settings = () => {
       />
 
       <SecuritySection 
-        onSubmit={updateUserPassword}
+        onSubmit={handleSecuritySubmit}
         showPasswordChange={showPasswordChange}
       />
 

@@ -47,7 +47,7 @@ export const useSupabaseUserSettings = () => {
             firstName: data.firstname || '',
             lastName: data.lastname || '',
             email: data.email || '',
-            language: data.language || 'fr',
+            language: (data.language as 'fr' | 'en') || 'fr',
             timezone: data.timezone || 'Europe/Paris',
             notifications: {
               email: data.email_notifications ?? true,
@@ -70,7 +70,7 @@ export const useSupabaseUserSettings = () => {
 
   // Mettre à jour les paramètres utilisateur
   const updateUserSettings = useCallback(
-    async (updates: Partial<UserSettings>) => {
+    async (updates: Partial<UserSettings>): Promise<void> => {
       if (!user) return;
 
       try {
@@ -112,8 +112,6 @@ export const useSupabaseUserSettings = () => {
           title: 'Paramètres mis à jour',
           description: 'Vos paramètres ont été enregistrés avec succès.',
         });
-
-        return true;
       } catch (err) {
         console.error('Erreur lors de la mise à jour des paramètres:', err);
 
@@ -124,7 +122,7 @@ export const useSupabaseUserSettings = () => {
           variant: 'destructive',
         });
 
-        return false;
+        throw err;
       }
     },
     [user, toast]
@@ -132,7 +130,7 @@ export const useSupabaseUserSettings = () => {
 
   // Mettre à jour le mot de passe utilisateur
   const updateUserPassword = useCallback(
-    async ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) => {
+    async ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }): Promise<void> => {
       try {
         const { error } = await supabase.auth.updateUser({
           password: newPassword,
@@ -144,8 +142,6 @@ export const useSupabaseUserSettings = () => {
           title: 'Mot de passe mis à jour',
           description: 'Votre mot de passe a été modifié avec succès.',
         });
-
-        return true;
       } catch (err) {
         console.error('Erreur lors de la mise à jour du mot de passe:', err);
 
@@ -156,7 +152,7 @@ export const useSupabaseUserSettings = () => {
           variant: 'destructive',
         });
 
-        return false;
+        throw err;
       }
     },
     [toast]
