@@ -20,7 +20,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
 }) => {
   const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
-  const { formData, isLoading, handleChildToggle, setObjective, handleSubmit, authChecked } = useStoryForm(onStoryCreated, onSubmit);
+  const { formData, isLoading, error, authChecked, handleChildToggle, setObjective, handleSubmit, resetError } = useStoryForm(onStoryCreated, onSubmit);
   const { user, loading: authLoading } = useSupabaseAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -160,7 +160,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
           objectives={objectives}
           isSubmitting={isSubmitting}
           progress={progress}
-          formError={formError}
+          formError={formError || error}
           onSubmit={handleFormSubmit}
           onModeSwitch={() => setCreationMode("chat")}
         />

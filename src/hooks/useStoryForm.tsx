@@ -13,6 +13,7 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { children } = useSupabaseChildren();
   const { createStory } = useSupabaseStories();
   const { toast } = useToast();
@@ -49,6 +50,7 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
 
     try {
       setIsSubmitting(true);
+      setError(null);
       console.log("Tentative de création d'histoire, état auth:", { 
         user: user?.id,
         sessionExists: !!session,
@@ -104,6 +106,7 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
       });
     } catch (error: any) {
       console.error("Erreur lors de la création de l'histoire:", error);
+      setError(error?.message || "Une erreur est survenue lors de la création de l'histoire");
       toast({
         title: "Erreur",
         description: error?.message || "Une erreur est survenue lors de la création de l'histoire",
@@ -115,13 +118,17 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     }
   };
 
+  const resetError = () => setError(null);
+
   return {
     formData,
     isLoading,
     isSubmitting,
+    error,
     authChecked,
     handleChildToggle,
     setObjective,
     handleSubmit,
+    resetError,
   };
 };

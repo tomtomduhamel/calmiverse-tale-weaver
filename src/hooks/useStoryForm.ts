@@ -1,12 +1,22 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 export const useStoryForm = (onStoryCreated, onSubmit) => {
   const [formData, setFormData] = useState({ childrenIds: [], objective: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const { toast } = useToast();
+  const { user, session, loading } = useSupabaseAuth();
+
+  // Vérifier l'état d'authentification au chargement
+  useState(() => {
+    if (!loading) {
+      setAuthChecked(true);
+    }
+  });
 
   const handleChildToggle = (childId) => {
     setFormData((prev) => {
@@ -30,6 +40,12 @@ export const useStoryForm = (onStoryCreated, onSubmit) => {
     setIsLoading(true);
 
     try {
+      // Vérification de l'authentification
+      if (!user || !session) {
+        console.error("Erreur d'authentification: Utilisateur non connecté", { user, session });
+        throw new Error("Vous devez être connecté pour créer une histoire");
+      }
+
       // Basic validation
       if (formData.childrenIds.length === 0) {
         throw new Error("Veuillez sélectionner au moins un enfant");
@@ -70,6 +86,7 @@ export const useStoryForm = (onStoryCreated, onSubmit) => {
     formData,
     isLoading,
     error,
+    authChecked,
     handleChildToggle,
     setObjective,
     handleSubmit,

@@ -9,7 +9,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true, 
     detectSessionInUrl: true,
-    storage: localStorage
+    storage: localStorage,
+    debug: true, // Active le mode de débogage pour aider à diagnostiquer les problèmes d'auth
+    flowType: 'pkce', // Utilise PKCE pour une meilleure sécurité
   },
 });
 
@@ -17,5 +19,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export const checkAuthState = async () => {
   const session = await supabase.auth.getSession();
   console.log("État de session actuel:", session);
-  return session;
+  
+  const user = await supabase.auth.getUser();
+  console.log("Utilisateur actuel:", user);
+  
+  return { session, user };
 };
+
+// Ajouter un écouteur global pour les changements d'authentification
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log("Événement d'authentification:", event, session?.user?.id);
+});
