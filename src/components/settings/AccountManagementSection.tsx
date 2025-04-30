@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Card,
@@ -18,12 +19,71 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from 'lucide-react';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
-interface AccountManagementSectionProps {
-  onDeleteAccount: () => Promise<void>;
-}
+export const AccountManagementSection = () => {
+  const { user } = useSupabaseAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  const onDeleteAccount = async () => {
+    try {
+      if (!user) return;
+      
+      // 1. Supprimer les données de l'utilisateur
+      const { error: deleteChildrenError } = await supabase
+        .from('children')
+        .delete()
+        .eq('authorid', user.id);
+        
+      if (deleteChildrenError) throw deleteChildrenError;
+      
+      const { error: deleteStoriesError } = await supabase
+        .from('stories')
+        .delete()
+        .eq('authorid', user.id);
+        
+      if (deleteStoriesError) throw deleteStoriesError;
+      
+      const { error: deleteUserDataError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', user.id);
+        
+      if (deleteUserDataError) throw deleteUserDataError;
+      
+      // 2. Supprimer le compte utilisateur
+      const { error: deleteUserError } = await supabase.auth.admin.deleteUser(
+        user.id
+      );
+      
+      if (deleteUserError) {
+        // Fallback: utiliser la méthode standard si la méthode admin échoue
+        const { error: standardDeleteError } = await supabase.rpc('delete_user');
+        if (standardDeleteError) throw standardDeleteError;
+      }
+      
+      toast({
+        title: "Compte supprimé",
+        description: "Votre compte et toutes vos données ont été supprimés.",
+      });
+      
+      // Rediriger vers la page d'accueil
+      navigate('/');
+      
+    } catch (error: any) {
+      console.error("Erreur lors de la suppression du compte:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer votre compte: " + (error.message || "Erreur inconnue"),
+        variant: "destructive",
+      });
+    }
+  };
 
-export const AccountManagementSection = ({ onDeleteAccount }: AccountManagementSectionProps) => {
   return (
     <Card>
       <CardHeader>

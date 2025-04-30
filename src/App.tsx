@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield, Settings, LogOut } from "lucide-react";
-import { useAuth } from "./contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import Index from "./pages/Index";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import SettingsPage from "./pages/Settings";
@@ -15,7 +15,7 @@ import LoginForm from "./components/auth/LoginForm";
 const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout } = useSupabaseAuth();
 
   console.log("App rendering with pathname:", location.pathname);
   console.log("User authenticated:", !!user);

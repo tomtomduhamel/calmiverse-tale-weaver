@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Mail, AlertCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,7 +14,7 @@ const LoginForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [googleAuthError, setGoogleAuthError] = useState(false);
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useSupabaseAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,7 +27,7 @@ const LoginForm = () => {
       } else {
         await signUpWithEmail(email, password);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({
         title: isLogin ? "Échec de la connexion" : "Échec de l'inscription",
@@ -44,7 +44,7 @@ const LoginForm = () => {
       await signInWithGoogle();
     } catch (error: any) {
       console.error('Google sign-in error:', error);
-      if (error.code === 'auth/unauthorized-domain') {
+      if (error.message && error.message.includes('popup')) {
         setGoogleAuthError(true);
       }
     }
@@ -65,7 +65,7 @@ const LoginForm = () => {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            La connexion avec Google n'est pas disponible sur ce domaine. Veuillez utiliser l'email et le mot de passe.
+            La connexion avec Google n'est pas disponible. Veuillez utiliser l'email et le mot de passe.
           </AlertDescription>
         </Alert>
       )}
