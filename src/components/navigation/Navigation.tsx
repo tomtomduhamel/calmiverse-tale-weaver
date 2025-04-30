@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Home, BookOpen, Users, Settings, LogOut } from 'lucide-react';
 
 const Navigation = () => {
-  const { user, signOut } = useSupabaseAuth();
+  const { user, logout } = useSupabaseAuth();
 
   // Si l'utilisateur n'est pas connecté, ne pas afficher la navigation
   if (!user) {
@@ -43,7 +43,7 @@ const Navigation = () => {
           </div>
           
           <div className="hidden md:block">
-            <Button variant="ghost" onClick={signOut} className="flex items-center">
+            <Button variant="ghost" onClick={logout} className="flex items-center">
               <LogOut className="w-4 h-4 mr-2" />
               Déconnexion
             </Button>

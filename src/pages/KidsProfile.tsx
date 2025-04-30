@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Edit, Book } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SimpleLoader } from '@/components/ui/SimpleLoader';
-import { ChildForm } from '@/components/children/ChildForm';
+import ChildForm from '@/components/children/ChildForm';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { calculateAge } from '@/utils/age';
@@ -86,9 +86,9 @@ const KidsProfile = () => {
           </CardHeader>
           <CardContent>
             <ChildForm 
-              initialValues={child} 
-              onSubmit={handleSaveProfile} 
-              onCancel={() => setIsEditing(false)} 
+              initialValues={child}
+              onSubmit={handleSaveProfile}
+              onCancel={() => setIsEditing(false)}
             />
           </CardContent>
         </Card>
@@ -110,8 +110,8 @@ const KidsProfile = () => {
               <div>
                 <h3 className="font-medium text-muted-foreground">Âge</h3>
                 <p>
-                  {calculateAge(new Date(child.birthdate))} ans
-                  (né{child.gender === 'female' ? 'e' : ''} le {format(new Date(child.birthdate), 'dd MMMM yyyy', { locale: fr })})
+                  {calculateAge(new Date(child.birthDate))} ans
+                  (né{child.gender === 'female' ? 'e' : ''} le {format(new Date(child.birthDate), 'dd MMMM yyyy', { locale: fr })})
                 </p>
               </div>
               <div>
@@ -120,7 +120,7 @@ const KidsProfile = () => {
               </div>
               <div>
                 <h3 className="font-medium text-muted-foreground">Doudou préféré</h3>
-                <p>{child.favoriteComfort || 'Non spécifié'}</p>
+                <p>{child.teddyName || 'Non spécifié'}</p>
               </div>
               <div>
                 <h3 className="font-medium text-muted-foreground">Monde imaginaire</h3>
