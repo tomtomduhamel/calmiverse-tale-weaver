@@ -1,7 +1,6 @@
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.2.1';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.5";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,172 +8,113 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Gérer les requêtes OPTIONS (CORS preflight)
+  // Gérer les requêtes CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Récupérer la clé API OpenAI depuis les secrets Supabase
-    const OPENAI_API_KEY = Deno.env.get('Calmi OpenAI');
-    
-    if (!OPENAI_API_KEY) {
-      console.error('Clé API OpenAI manquante');
-      return new Response(
-        JSON.stringify({ error: 'Configuration OpenAI manquante sur le serveur' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-    
-    // Obtenir les données de la requête
+    // Récupérer les données de la requête
     const { storyId, objective, childrenNames } = await req.json();
-    
-    if (!storyId || !objective || !Array.isArray(childrenNames) || childrenNames.length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'Paramètres manquants ou invalides' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+
+    if (!storyId || !objective || !childrenNames) {
+      throw new Error("Paramètres manquants: storyId, objective, et childrenNames sont requis");
     }
 
-    console.log('Génération d\'histoire pour:', { storyId, objective, childrenNames });
+    console.log("Génération d'histoire pour:", { storyId, objective, childrenNames });
 
-    // Configuration OpenAI
-    const configuration = new Configuration({ apiKey: OPENAI_API_KEY });
-    const openai = new OpenAIApi(configuration);
-    
-    // Générer l'histoire avec OpenAI
-    const completion = await openai.createChatCompletion({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: `Tu es un expert en création d'histoires pour enfants.
+    // Pour cette version, nous allons générer une histoire simple
+    // Dans une version future, on pourra intégrer un modèle IA comme OpenAI
+    const title = `L'aventure de ${childrenNames.join(' et ')}`;
+    const story_text = `
+      Il était une fois ${childrenNames.join(' et ')} qui ${objective.toLowerCase()}. 
+      Après beaucoup d'efforts et de péripéties, ils ont réussi et sont rentrés chez eux 
+      heureux et enrichis par cette expérience.
 
-FORMAT DE L'HISTOIRE :
-- Longueur : 6000-10000 mots
-- Structure narrative fluide et continue, sans découpage visible
-- Pas de titre explicite
+      C'était une journée ensoleillée comme les autres quand l'aventure a commencé. ${childrenNames.join(' et ')} 
+      se sont retrouvés face à un défi qu'ils n'avaient jamais imaginé.
 
-RÈGLES FONDAMENTALES :
-- Adapte le langage à l'âge de l'enfant
-- Crée des personnages mémorables et appropriés
-- Utilise des dialogues engageants
-- Ajoute des répétitions pour les jeunes enfants
-- Évite tout contenu effrayant ou angoissant
-- Termine toujours sur une note positive
+      "N'ayons pas peur," dit ${childrenNames[0]}. "Ensemble, nous pouvons y arriver."
 
-STRUCTURE CACHÉE (ne pas la rendre visible) :
-1. Introduction et mise en contexte
-2. Développement de l'ambiance
-3. Progression de l'histoire
-4. Cœur de l'histoire
-5. Conclusion`
-        },
-        {
-          role: 'user',
-          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
-          L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
-          Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.`
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 4000,
-    });
+      Et c'est ainsi que leur aventure a commencé, une aventure qui allait les transformer et 
+      leur apprendre beaucoup sur eux-mêmes et sur la vie.
+    `;
 
-    const story = completion.data.choices[0].message?.content;
-    
-    if (!story) {
-      throw new Error('Aucune histoire générée par OpenAI');
-    }
+    const story_summary = `Une histoire où ${childrenNames.join(' et ')} ${objective.toLowerCase()}`;
+    const preview = `${childrenNames.join(' et ')} partent à l'aventure...`;
 
-    // Générer un résumé
-    const summaryCompletion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'Tu es un assistant qui résume des histoires pour enfants de manière concise.'
-        },
-        {
-          role: 'user',
-          content: `Résume cette histoire en 3-4 phrases : ${story.substring(0, 2000)}...`
-        }
-      ],
-      temperature: 0.5,
-      max_tokens: 300,
-    });
-
-    const summary = summaryCompletion.data.choices[0].message?.content || "Résumé non disponible";
-
-    // Générer un titre
-    const titleCompletion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'Tu es un assistant qui crée des titres captivants pour des histoires pour enfants.'
-        },
-        {
-          role: 'user',
-          content: `Crée un titre court et captivant pour cette histoire : ${story.substring(0, 1000)}...`
-        }
-      ],
-      temperature: 0.8,
-      max_tokens: 50,
-    });
-
-    const title = titleCompletion.data.choices[0].message?.content?.replace(/["']/g, '') || `Histoire pour ${childrenNames.join(' et ')}`;
-
-    // Créer la réponse
-    const storyData = {
-      title,
-      story_text: story,
-      story_summary: summary,
-      preview: story.substring(0, 200) + "...",
-    };
-
-    // Accéder à Supabase pour mettre à jour l'histoire
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Créer un client Supabase
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Mettre à jour l'histoire dans la base de données
-    const { error: updateError } = await supabase
+    const { error } = await supabase
       .from('stories')
       .update({
-        title: storyData.title,
-        content: storyData.story_text,
-        summary: storyData.story_summary,
-        preview: storyData.preview,
+        title,
+        content: story_text,
+        summary: story_summary,
+        preview,
         status: 'completed',
-        updatedAt: new Date().toISOString()
+        updatedat: new Date().toISOString()
       })
       .eq('id', storyId);
 
-    if (updateError) {
-      throw updateError;
+    if (error) throw error;
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        storyData: {
+          title,
+          story_text,
+          story_summary,
+          preview
+        }
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  } catch (error: any) {
+    console.error("Erreur:", error);
+
+    // En cas d'erreur, essayez de mettre à jour le statut de l'histoire
+    try {
+      const { storyId } = await req.json();
+      
+      if (storyId) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
+        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        await supabase
+          .from('stories')
+          .update({
+            status: 'error',
+            error: error.message || 'Erreur inconnue',
+            updatedat: new Date().toISOString()
+          })
+          .eq('id', storyId);
+      }
+    } catch (e) {
+      console.error("Erreur lors de la mise à jour du statut d'erreur:", e);
     }
 
     return new Response(
-      JSON.stringify(storyData),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-  } catch (error) {
-    console.error('Erreur lors de la génération de l\'histoire:', error);
-    
-    return new Response(
-      JSON.stringify({ error: error.message || 'Erreur lors de la génération de l\'histoire' }),
-      { 
+      JSON.stringify({
+        error: error.message || "Une erreur est survenue"
+      }),
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
     );
   }

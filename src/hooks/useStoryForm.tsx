@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useSupabaseChildren } from "./useSupabaseChildren";
 import { useSupabaseStories } from "./useSupabaseStories";
 import { useToast } from "./use-toast";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
   const { children } = useSupabaseChildren();
   const { createStory } = useSupabaseStories();
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
 
   const handleChildToggle = (childId: string) => {
     setFormData((prev) => {
@@ -34,6 +36,16 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
 
     try {
       setIsSubmitting(true);
+
+      // Vérifier si l'utilisateur est connecté
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté pour créer une histoire",
+          variant: "destructive",
+        });
+        throw new Error("Utilisateur non connecté");
+      }
 
       if (!formData.objective) {
         throw new Error("Veuillez sélectionner un objectif pour l'histoire");

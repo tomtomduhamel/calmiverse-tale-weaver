@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { StoryFormProps } from "./story/StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoryForm } from "@/hooks/useStoryForm";
@@ -8,6 +8,8 @@ import CreateChildDialog from "./story/CreateChildDialog";
 import StoryChat from "./story/chat/StoryChat";
 import { useChildFormLogic } from "./story/useChildFormLogic";
 import { StoryFormContent } from "./story/form/StoryFormContent";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const StoryForm: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -18,6 +20,9 @@ const StoryForm: React.FC<StoryFormProps> = ({
   const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
   const { formData, isLoading, handleChildToggle, setObjective, handleSubmit } = useStoryForm(onStoryCreated, onSubmit);
+  const { user } = useSupabaseAuth();
+  const { toast } = useToast();
+  
   const {
     showChildForm,
     setShowChildForm,
@@ -32,6 +37,15 @@ const StoryForm: React.FC<StoryFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [formError, setFormError] = useState<string | null>(null);
+  
+  // Vérifier si l'utilisateur est connecté
+  useEffect(() => {
+    if (!user) {
+      setFormError("Utilisateur non connecté");
+    } else {
+      setFormError(null);
+    }
+  }, [user]);
 
   // Écouter les erreurs du processus de génération d'histoire
   React.useEffect(() => {
@@ -85,6 +99,18 @@ const StoryForm: React.FC<StoryFormProps> = ({
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    
+    // Vérifier si l'utilisateur est connecté
+    if (!user) {
+      setFormError("Utilisateur non connecté");
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour créer une histoire",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
