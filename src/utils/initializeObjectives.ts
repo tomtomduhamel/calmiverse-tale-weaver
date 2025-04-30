@@ -1,5 +1,10 @@
-import { collection, getDocs, deleteDoc, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+
+/**
+ * @deprecated Ce fichier est maintenu uniquement pour la compatibilité.
+ * Les objectifs sont désormais stockés dans Supabase.
+ */
+
+import { supabase } from '@/integrations/supabase/client';
 
 const objectives = [
   {
@@ -26,20 +31,26 @@ const objectives = [
 
 export const initializeObjectives = async () => {
   try {
-    const objectivesCollection = collection(db, 'story_objectives');
-    const snapshot = await getDocs(objectivesCollection);
+    // Vérifier si les objectifs existent déjà dans Supabase
+    const { data, error } = await supabase
+      .from('story_objectives')
+      .select('count')
+      .single();
+      
+    if (error) throw error;
     
-    // Only initialize if collection is empty
-    if (snapshot.empty) {
-      const addPromises = objectives.map(objective => 
-        addDoc(objectivesCollection, objective)
-      );
-      await Promise.all(addPromises);
+    // Initialiser seulement si la table est vide
+    if (!data || data.count === 0) {
+      const { error: insertError } = await supabase
+        .from('story_objectives')
+        .insert(objectives);
+        
+      if (insertError) throw insertError;
     }
     
     return true;
   } catch (error) {
-    console.error("Failed to initialize objectives");
+    console.error("Échec de l'initialisation des objectifs:", error);
     return false;
   }
 };

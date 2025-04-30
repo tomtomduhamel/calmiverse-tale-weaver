@@ -1,28 +1,47 @@
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+
+/**
+ * @deprecated Ce hook est maintenu uniquement pour la compatibilité.
+ * Utiliser useSupabaseStories à la place.
+ */
+
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from "@/hooks/use-toast";
-import type { Story } from '@/types/story';
 
 export const useStoriesCollection = () => {
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
 
   const saveStory = async (content: string, childrenIds: string[], objective: string) => {
     try {
+      if (!user) {
+        throw new Error("Utilisateur non connecté");
+      }
+      
       const storyData = {
         content,
-        childrenIds,
+        childrenids: childrenIds,
         objective,
-        createdAt: serverTimestamp(),
+        authorid: user.id,
+        createdat: new Date().toISOString(),
+        updatedat: new Date().toISOString(),
+        status: 'completed'
       };
 
-      const docRef = await addDoc(collection(db, 'stories'), storyData);
+      const { data, error } = await supabase
+        .from('stories')
+        .insert(storyData)
+        .select()
+        .single();
+
+      if (error) throw error;
 
       toast({
         title: "Succès",
         description: "L'histoire a été sauvegardée avec succès",
       });
 
-      return docRef.id;
+      return data.id;
     } catch (error) {
       console.error("Erreur lors de la sauvegarde de l'histoire:", error);
       toast({

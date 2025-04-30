@@ -1,23 +1,22 @@
 
-import { collection, addDoc, runTransaction, serverTimestamp, doc } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from "@/hooks/use-toast";
 import { createStoryData } from './storyFormatters';
-import { useStoryCloudFunctions } from './useStoryCloudFunctions';
 
 export const useStoryCreation = () => {
   const { toast } = useToast();
-  const { callCloudFunctionWithRetry } = useStoryCloudFunctions();
+  const { user } = useSupabaseAuth();
 
   const createStory = async (formData: { childrenIds: string[], objective: string }, children: any[] = []) => {
-    if (!auth.currentUser) {
+    if (!user) {
       throw new Error("Utilisateur non connecté");
     }
 
     try {
       console.log('🚀 Starting story creation process...', {
         formData,
-        currentUser: auth.currentUser.uid
+        currentUser: user.id
       });
       
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
@@ -35,81 +34,66 @@ export const useStoryCreation = () => {
       
       const storyData = {
         ...createStoryData(formData, childrenNames),
-        authorId: auth.currentUser.uid,
-        _version: 1,
-        _lastSync: serverTimestamp(),
-        _pendingWrites: true
+        authorid: user.id
       };
 
       console.log('Creating initial story document with pending status');
-      const docRef = await addDoc(collection(db, 'stories'), storyData);
-      const storyId = docRef.id;
+      const { data, error } = await supabase
+        .from('stories')
+        .insert(storyData)
+        .select()
+        .single();
       
+      if (error) throw error;
+      
+      const storyId = data.id;
       console.log('Initial story document created with ID:', storyId);
       
-      console.log('Triggering story generation cloud function');
+      console.log('Triggering story generation Supabase Edge Function');
       
-      // Show initial toast before calling the function
+      // Afficher un toast initial avant d'appeler la fonction
       toast({
         title: "Génération en cours",
         description: "Nous commençons à générer votre histoire, merci de patienter...",
       });
       
-      // Call the cloud function asynchronously
-      callCloudFunctionWithRetry('generateStory', {
-        storyId: storyId,
-        objective: formData.objective,
-        childrenNames: childrenNames
+      // Appeler la fonction Edge Supabase de manière asynchrone
+      supabase.functions.invoke('generate-story', {
+        body: {
+          storyId: storyId,
+          objective: formData.objective,
+          childrenNames: childrenNames
+        }
       })
         .then((result) => {
-          console.log('Story generation completed for story ID:', storyId, result);
+          console.log('Story generation completed for story ID:', storyId, result.data);
           
-          // Update the document with the generated story
-          if (result && typeof result === 'object') {
-            const resultData = result as Record<string, unknown>;
-            const storyData = resultData.storyData || result;
-            
-            // Update the document with the generated story
-            runTransaction(db, async (transaction) => {
-              const storyRef = doc(db, 'stories', storyId);
-              transaction.update(storyRef, {
-                story_text: (storyData as any).story_text || '',
-                story_summary: (storyData as any).story_summary || 'Résumé en cours de génération...',
-                preview: (storyData as any).preview || '',
-                title: (storyData as any).title || 'Nouvelle histoire',
-                status: 'completed',
-                updatedAt: serverTimestamp(),
-                _pendingWrites: false
-              });
+          if (!result.error) {
+            toast({
+              title: "Histoire générée",
+              description: "Votre histoire est maintenant disponible dans votre bibliothèque.",
             });
           }
-          
-          toast({
-            title: "Histoire générée",
-            description: "Votre histoire est maintenant disponible dans votre bibliothèque.",
-          });
         })
         .catch(error => {
           console.error('Failed to generate story:', error);
           
-          // Update story document with error status
-          runTransaction(db, async (transaction) => {
-            const storyRef = doc(db, 'stories', storyId);
-            transaction.update(storyRef, {
+          // Mettre à jour le statut de l'histoire à "error"
+          supabase
+            .from('stories')
+            .update({
               status: 'error',
               error: error instanceof Error ? error.message : 'Story generation failed',
-              updatedAt: serverTimestamp()
+              updatedat: new Date().toISOString()
+            })
+            .eq('id', storyId)
+            .then(() => {
+              toast({
+                title: "Erreur de génération",
+                description: error instanceof Error ? error.message : "La génération de l'histoire a échoué",
+                variant: "destructive",
+              });
             });
-          }).catch(err => {
-            console.error('Failed to update story status to error:', err);
-          });
-          
-          // Show error toast
-          toast({
-            title: "Erreur de génération",
-            description: error instanceof Error ? error.message : "La génération de l'histoire a échoué",
-            variant: "destructive",
-          });
         });
       
       return storyId;

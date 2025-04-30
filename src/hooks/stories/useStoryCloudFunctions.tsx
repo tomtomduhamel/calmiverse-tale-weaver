@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { supabase } from '@/integrations/supabase/client';
 
 // Définir le type pour la réponse de la fonction cloud d'histoire
 export interface StoryResponse {
@@ -25,35 +25,24 @@ interface CloudFunctionResult {
 
 export const useStoryCloudFunctions = () => {
   const { toast } = useToast();
-  const functions = getFunctions();
   
   const callCloudFunctionWithRetry = useCallback(async (functionName: string, data: any, attempt = 1) => {
     try {
-      console.log(`Appel de la fonction cloud ${functionName} avec les données:`, data);
+      console.log(`Appel de la fonction Edge Supabase ${functionName} avec les données:`, data);
       
-      // Utilisation du nom exact de la fonction sans préfixe
-      const cloudFunction = httpsCallable(functions, functionName);
-      const result = await cloudFunction(data);
+      const { data: result, error } = await supabase.functions.invoke(functionName, {
+        body: data
+      });
       
-      console.log(`La fonction cloud ${functionName} a retourné:`, result);
+      if (error) throw error;
       
-      // Vérifier si le résultat contient une propriété "data" qui contient notre réponse réelle
-      if (result && result.data) {
-        const responseData = result.data as CloudFunctionResult;
-        
-        // S'il y a un champ d'erreur dans la réponse, le lancer
-        if (responseData.error) {
-          throw new Error(responseData.error);
-        }
-        
-        return responseData;
-      }
+      console.log(`La fonction ${functionName} a retourné:`, result);
       
-      return result.data;
+      return result;
     } catch (error) {
-      console.error(`Erreur lors de l'appel de la fonction cloud ${functionName}:`, error);
+      console.error(`Erreur lors de l'appel de la fonction ${functionName}:`, error);
       if (attempt < 3) {
-        console.log(`Nouvelle tentative pour la fonction cloud ${functionName}, tentative ${attempt + 1}`);
+        console.log(`Nouvelle tentative pour la fonction ${functionName}, tentative ${attempt + 1}`);
         return callCloudFunctionWithRetry(functionName, data, attempt + 1);
       }
       
@@ -65,7 +54,7 @@ export const useStoryCloudFunctions = () => {
       });
       throw error;
     }
-  }, [toast, functions]);
+  }, [toast]);
   
   const retryStoryGeneration = useCallback(async (storyId: string) => {
     try {
@@ -73,7 +62,7 @@ export const useStoryCloudFunctions = () => {
         throw new Error("ID d'histoire manquant");
       }
       console.log(`Tentative de régénération d'histoire pour l'ID: ${storyId}`);
-      const result = await callCloudFunctionWithRetry('retryFailedStory', { storyId });
+      const result = await callCloudFunctionWithRetry('retry-story', { storyId });
       
       // Notification de réussite
       toast({
@@ -98,12 +87,12 @@ export const useStoryCloudFunctions = () => {
 
   const generateStory = useCallback(async (objective: string, childrenNames: string[]): Promise<any> => {
     try {
-      console.log('Appel de la fonction cloud generateStory avec:', { objective, childrenNames });
+      console.log('Appel de la fonction Edge Supabase generate-story avec:', { objective, childrenNames });
       
       // Générer un ID aléatoire pour l'histoire
       const storyId = Date.now().toString();
       
-      const result = await callCloudFunctionWithRetry('generateStory', { 
+      const result = await callCloudFunctionWithRetry('generate-story', { 
         storyId,
         objective,
         childrenNames

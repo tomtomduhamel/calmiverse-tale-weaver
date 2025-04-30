@@ -1,50 +1,42 @@
 
-import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useStoryCloudFunctions } from './useStoryCloudFunctions';
 import { useToast } from "@/hooks/use-toast";
 
 export const useStoryUpdate = () => {
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
   const { callCloudFunctionWithRetry } = useStoryCloudFunctions();
 
   const updateStoryStatus = async (storyId: string, status: 'pending' | 'completed' | 'read' | 'error', errorDetails?: string) => {
-    if (!auth.currentUser) {
+    if (!user) {
       throw new Error("Utilisateur non connecté");
     }
 
     try {
       console.log(`Updating story status: ${storyId} -> ${status}`);
       
-      await runTransaction(db, async (transaction) => {
-        const storyRef = doc(db, 'stories', storyId);
-        const storyDoc = await transaction.get(storyRef);
-
-        if (!storyDoc.exists()) {
-          throw new Error('Histoire non trouvée');
-        }
-
-        const currentData = storyDoc.data();
-        
-        const updateData: any = {
-          status,
-          _version: (currentData._version || 1) + 1,
-          _lastSync: serverTimestamp(),
-          _pendingWrites: false,
-          updatedAt: serverTimestamp()
-        };
-        
-        // Add error details if provided
-        if (status === 'error' && errorDetails) {
-          updateData.error = errorDetails;
-        } else if (status !== 'error' && currentData.error) {
-          // Clear error field if status is no longer error
-          updateData.error = null;
-        }
-        
-        transaction.update(storyRef, updateData);
-      });
-
+      const updateData: any = {
+        status,
+        updatedat: new Date().toISOString()
+      };
+      
+      // Ajouter les détails d'erreur si fournis
+      if (status === 'error' && errorDetails) {
+        updateData.error = errorDetails;
+      } else if (status !== 'error') {
+        updateData.error = null;
+      }
+      
+      const { error } = await supabase
+        .from('stories')
+        .update(updateData)
+        .eq('id', storyId)
+        .eq('authorid', user.id);
+      
+      if (error) throw error;
+      
       console.log('✅ Story status updated successfully:', {
         id: storyId,
         newStatus: status
@@ -56,29 +48,33 @@ export const useStoryUpdate = () => {
   };
 
   const retryStoryGeneration = async (storyId: string) => {
-    if (!auth.currentUser) {
+    if (!user) {
       throw new Error("Utilisateur non connecté");
     }
 
     try {
       console.log(`Retrying story generation for: ${storyId}`);
-      // Update story status to pending
+      // Mettre à jour le statut de l'histoire à "pending"
       await updateStoryStatus(storyId, 'pending');
       
-      // Call the retry function
-      const result = await callCloudFunctionWithRetry('retryFailedStory', { storyId });
+      // Appeler la fonction Edge de Supabase pour réessayer
+      const { data, error } = await supabase.functions.invoke('retry-story', {
+        body: { storyId }
+      });
       
-      console.log('Story retry request successful:', result);
+      if (error) throw error;
+      
+      console.log('Story retry request successful:', data);
       toast({
         title: "Nouvelle tentative",
         description: "La génération de l'histoire a été relancée",
       });
       
-      return result;
+      return data;
     } catch (error) {
       console.error('Error retrying story generation:', error);
       
-      // Update story status back to error
+      // Remettre le statut de l'histoire à "error"
       const errorMessage = error instanceof Error ? error.message : 'Failed to retry story generation';
       await updateStoryStatus(storyId, 'error', errorMessage);
       

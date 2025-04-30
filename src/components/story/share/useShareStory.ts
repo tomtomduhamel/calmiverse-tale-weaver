@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { doc, updateDoc, getDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/integrations/supabase/client';
 import { generateToken } from '@/utils/tokenUtils';
 
 export const useShareStory = (storyId: string, onClose: () => void) => {
@@ -22,10 +21,13 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
     setError(null);
 
     try {
-      const storyRef = doc(db, 'stories', storyId);
-      const storyDoc = await getDoc(storyRef);
+      const { data: storyData, error: storyError } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('id', storyId)
+        .single();
       
-      if (!storyDoc.exists()) {
+      if (storyError || !storyData) {
         throw new Error("Histoire introuvable");
       }
 
@@ -33,23 +35,28 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
 
-      // Create simplified share data
-      const shareData = {
-        'sharing.publicAccess': {
-          enabled: true,
-          token,
-          expiresAt: Timestamp.fromDate(expiresAt)
-        },
-        'sharing.sharedEmails': [{
-          email,
-          sharedAt: Timestamp.now(),
-          accessCount: 0
-        }]
-      };
+      // Mettre à jour les données de partage dans Supabase
+      const { error: updateError } = await supabase
+        .from('stories')
+        .update({
+          sharing: {
+            publicAccess: {
+              enabled: true,
+              token,
+              expiresAt: expiresAt.toISOString()
+            },
+            sharedEmails: [{
+              email,
+              sharedAt: new Date().toISOString(),
+              accessCount: 0
+            }]
+          }
+        })
+        .eq('id', storyId);
 
-      await updateDoc(storyRef, shareData);
+      if (updateError) throw updateError;
 
-      // Simplified webhook data
+      // Données pour le webhook
       const webhookData = {
         storyId,
         recipientEmail: email,
@@ -111,18 +118,20 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
     setError(null);
     
     try {
-      const storyRef = doc(db, 'stories', storyId);
-      const storyDoc = await getDoc(storyRef);
+      const { data: storyData, error: storyError } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('id', storyId)
+        .single();
       
-      if (!storyDoc.exists()) {
+      if (storyError || !storyData) {
         throw new Error("Histoire introuvable");
       }
 
-      // Get only necessary data
-      const storyData = storyDoc.data();
+      // Préparer les données pour Kindle
       const kindleData = {
         storyId,
-        storyContent: storyData.story_text || "",
+        storyContent: storyData.content || "",
         title: storyData.title || "Histoire sans titre"
       };
 

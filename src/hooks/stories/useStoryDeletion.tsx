@@ -1,20 +1,27 @@
 
-import { deleteDoc, doc } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 export const useStoryDeletion = () => {
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
 
   const deleteStory = async (storyId: string) => {
-    if (!auth.currentUser) {
+    if (!user) {
       throw new Error("Utilisateur non connecté");
     }
 
     try {
       console.log(`Deleting story: ${storyId}`);
-      const storyRef = doc(db, 'stories', storyId);
-      await deleteDoc(storyRef);
+      
+      const { error } = await supabase
+        .from('stories')
+        .delete()
+        .eq('id', storyId)
+        .eq('authorid', user.id);
+      
+      if (error) throw error;
       
       console.log('Story deleted successfully');
       toast({

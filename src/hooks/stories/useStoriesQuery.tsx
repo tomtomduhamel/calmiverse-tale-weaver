@@ -1,9 +1,14 @@
 
+/**
+ * @deprecated Ce hook est maintenu uniquement pour la compatibilité.
+ * Utiliser useSupabaseStories à la place.
+ */
+
 import { useEffect, useState } from 'react';
-import { collection, query, onSnapshot, where, orderBy } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import type { Story } from '@/types/story';
-import { formatStoryFromFirestore } from './storyFormatters';
+import { formatStoryFromSupabase } from './storyFormatters';
 import { useToast } from "@/hooks/use-toast";
 
 export const useStoriesQuery = () => {
@@ -11,100 +16,95 @@ export const useStoriesQuery = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
 
   useEffect(() => {
-    if (!auth.currentUser) {
+    if (!user) {
       console.log('Pas d\'utilisateur connecté');
       setIsLoading(false);
+      setStories([]);
       return;
     }
 
-    console.log('🔄 Initialisation de la requête Firestore:', {
-      userId: auth.currentUser.uid,
+    console.log('🔄 Initialisation de la requête Supabase:', {
+      userId: user.id,
       timestamp: new Date().toISOString()
     });
 
     setIsLoading(true);
 
-    const storiesQuery = query(
-      collection(db, 'stories'),
-      where('authorId', '==', auth.currentUser.uid),
-      orderBy('createdAt', 'desc')
-    );
+    const fetchStories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('stories')
+          .select('*')
+          .eq('authorid', user.id)
+          .order('createdat', { ascending: false });
 
-    const unsubscribe = onSnapshot(
-      storiesQuery,
-      { includeMetadataChanges: true },
-      (snapshot) => {
-        try {
-          console.log('📥 Réception mise à jour Firestore:', {
-            numberOfDocs: snapshot.docs.length,
-            fromCache: snapshot.metadata.fromCache,
-            hasPendingWrites: snapshot.metadata.hasPendingWrites,
-            timestamp: new Date().toISOString()
-          });
+        if (error) throw error;
 
-          if (!snapshot.metadata.hasPendingWrites) {
-            const loadedStories = snapshot.docs.map(doc => {
-              try {
-                const story = formatStoryFromFirestore(doc);
-                console.log('📄 Histoire chargée:', {
-                  id: story.id,
-                  status: story.status,
-                  version: story._version,
-                  hasContent: Boolean(story.story_text?.trim())
-                });
-                return story;
-              } catch (err) {
-                console.error('❌ Erreur formatage histoire:', {
-                  docId: doc.id,
-                  error: err
-                });
-                return null;
-              }
-            }).filter((story): story is Story => story !== null);
+        console.log('📥 Réception données Supabase:', {
+          numberOfStories: data?.length || 0,
+          timestamp: new Date().toISOString()
+        });
 
-            console.log('📊 Résumé du chargement:', {
-              total: loadedStories.length,
-              statuses: loadedStories.reduce((acc, story) => ({
-                ...acc,
-                [story.status]: (acc[story.status] || 0) + 1
-              }), {} as Record<string, number>),
-              timestamp: new Date().toISOString()
+        const loadedStories = data?.map(storyData => {
+          try {
+            const story = formatStoryFromSupabase(storyData);
+            console.log('📄 Histoire chargée:', {
+              id: story.id,
+              status: story.status,
             });
-
-            setStories(loadedStories);
-            setError(null);
+            return story;
+          } catch (err) {
+            console.error('❌ Erreur formatage histoire:', {
+              storyId: storyData.id,
+              error: err
+            });
+            return null;
           }
-        } catch (err) {
-          console.error('❌ Erreur traitement données:', err);
-          setError(err instanceof Error ? err : new Error('Erreur inconnue'));
-          toast({
-            title: "Erreur de synchronisation",
-            description: "Une erreur est survenue lors de la synchronisation des histoires",
-            variant: "destructive",
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      },
-      (err) => {
-        console.error('❌ Erreur listener Firestore:', err);
-        setError(err);
-        setIsLoading(false);
+        }).filter((story): story is Story => story !== null) || [];
+
+        console.log('📊 Résumé du chargement:', {
+          total: loadedStories.length,
+          timestamp: new Date().toISOString()
+        });
+
+        setStories(loadedStories);
+        setError(null);
+      } catch (err) {
+        console.error('❌ Erreur chargement des histoires:', err);
+        setError(err instanceof Error ? err : new Error('Erreur inconnue'));
         toast({
-          title: "Erreur de connexion",
-          description: "Impossible de se connecter à la base de données",
+          title: "Erreur de synchronisation",
+          description: "Une erreur est survenue lors de la synchronisation des histoires",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
-    );
+    };
+
+    fetchStories();
+
+    // Configurer un abonnement en temps réel pour les mises à jour (Supabase Realtime)
+    const channel = supabase
+      .channel('stories_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'stories',
+        filter: `authorid=eq.${user.id}`
+      }, () => {
+        fetchStories();
+      })
+      .subscribe();
 
     return () => {
-      console.log('🧹 Nettoyage listener Firestore');
-      unsubscribe();
+      console.log('🧹 Nettoyage abonnement Supabase');
+      supabase.removeChannel(channel);
     };
-  }, [toast]);
+  }, [toast, user]);
 
   return { stories, isLoading, error };
 };

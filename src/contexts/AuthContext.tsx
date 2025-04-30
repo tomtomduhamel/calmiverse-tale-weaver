@@ -1,17 +1,13 @@
 
+/**
+ * @deprecated Ce fichier est maintenu uniquement pour la compatibilité.
+ * Utiliser SupabaseAuthContext à la place.
+ */
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  User,
-  AuthError
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { User, AuthError } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
@@ -25,27 +21,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const getAuthErrorMessage = (error: AuthError) => {
-  switch (error.code) {
-    case 'auth/invalid-login-credentials':
+  switch (error.message) {
+    case 'Invalid login credentials':
       return "Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.";
-    case 'auth/user-not-found':
+    case 'User not found':
       return "Aucun compte ne correspond à cet email. Veuillez vous inscrire.";
-    case 'auth/wrong-password':
+    case 'Wrong password':
       return "Mot de passe incorrect. Veuillez réessayer.";
-    case 'auth/email-already-in-use':
+    case 'User already exists':
+    case 'Email already registered':
       return "Un compte existe déjà avec cet email. Veuillez vous connecter.";
-    case 'auth/weak-password':
+    case 'Password too short':
       return "Le mot de passe doit contenir au moins 6 caractères.";
-    case 'auth/network-request-failed':
+    case 'Network error':
       return "Problème de connexion réseau. Veuillez vérifier votre connexion et réessayer.";
-    case 'auth/too-many-requests':
+    case 'Rate limit exceeded':
       return "Trop de tentatives de connexion. Veuillez réessayer plus tard.";
-    case 'auth/popup-closed-by-user':
-      return "La fenêtre de connexion a été fermée. Veuillez réessayer.";
-    case 'auth/unauthorized-domain':
-      return "Ce domaine n'est pas autorisé pour l'authentification. Veuillez utiliser l'email et le mot de passe.";
+    case 'Auth session missing':
+      return "Session expirée. Veuillez vous reconnecter.";
     default:
-      console.error('Firebase Auth Error:', error);
+      console.error('Supabase Auth Error:', error);
       return "Une erreur est survenue lors de la connexion. Veuillez réessayer.";
   }
 };
@@ -56,18 +51,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null);
+        setLoading(false);
+      }
+    );
+
+    // Récupérer l'utilisateur courant au chargement
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google'
+      });
+      
+      if (error) throw error;
+      
       toast({
         title: "Connexion réussie",
         description: "Bienvenue sur Calmi !",
@@ -76,16 +85,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Erreur de connexion Google:', error);
       toast({
         title: "Erreur de connexion",
-        description: getAuthErrorMessage(error),
+        description: getAuthErrorMessage(error as AuthError),
         variant: "destructive",
       });
-      throw error; // Propager l'erreur pour la gestion dans le composant
+      throw error;
     }
   };
 
   const signInWithEmail = async (email: string, password: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
       toast({
         title: "Connexion réussie",
         description: "Bienvenue sur Calmi !",
@@ -94,16 +109,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Erreur de connexion email:', error);
       toast({
         title: "Erreur de connexion",
-        description: getAuthErrorMessage(error),
+        description: getAuthErrorMessage(error as AuthError),
         variant: "destructive",
       });
-      throw error; // Propager l'erreur pour la gestion dans le formulaire
+      throw error;
     }
   };
 
   const signUpWithEmail = async (email: string, password: string) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
       toast({
         title: "Inscription réussie",
         description: "Bienvenue sur Calmi !",
@@ -112,16 +133,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Erreur d\'inscription:', error);
       toast({
         title: "Erreur d'inscription",
-        description: getAuthErrorMessage(error),
+        description: getAuthErrorMessage(error as AuthError),
         variant: "destructive",
       });
-      throw error; // Propager l'erreur pour la gestion dans le formulaire
+      throw error;
     }
   };
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
@@ -130,7 +154,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Erreur de déconnexion:', error);
       toast({
         title: "Erreur",
-        description: getAuthErrorMessage(error),
+        description: getAuthErrorMessage(error as AuthError),
         variant: "destructive",
       });
     }

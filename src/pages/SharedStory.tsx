@@ -1,8 +1,8 @@
+
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { doc, getDoc, collection, addDoc, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { Story } from "@/types/story";
+import { supabase } from '@/integrations/supabase/client';
 import StoryReader from "@/components/StoryReader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -19,14 +19,24 @@ const SharedStory = () => {
   const logAccess = async (storyId: string) => {
     try {
       const accessLog = {
-        timestamp: Timestamp.now(),
+        timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
-        ipAddress: "GDPR compliant - not stored", // Pour la conformité RGPD
         referrer: document.referrer || "direct",
       };
 
-      await addDoc(collection(db, `stories/${storyId}/accessLogs`), accessLog);
-      console.log("Accès enregistré avec succès");
+      // Enregistrer l'accès dans Supabase - table d'analyse
+      const { error } = await supabase
+        .from('story_access_logs')
+        .insert({
+          story_id: storyId,
+          access_data: accessLog
+        });
+        
+      if (error) {
+        console.error("Erreur lors de l'enregistrement de l'accès:", error);
+      } else {
+        console.log("Accès enregistré avec succès");
+      }
     } catch (error) {
       console.error("Erreur lors de l'enregistrement de l'accès:", error);
       // On ne montre pas d'erreur à l'utilisateur car ce n'est pas critique
@@ -50,10 +60,14 @@ const SharedStory = () => {
           return;
         }
 
-        const storyRef = doc(db, "stories", storyId);
-        const storyDoc = await getDoc(storyRef);
+        // Récupérer l'histoire depuis Supabase
+        const { data: storyData, error } = await supabase
+          .from('stories')
+          .select('*')
+          .eq('id', storyId)
+          .single();
 
-        if (!storyDoc.exists()) {
+        if (error || !storyData) {
           toast({
             title: "Erreur",
             description: "Cette histoire n'existe pas",
@@ -63,12 +77,13 @@ const SharedStory = () => {
           return;
         }
 
-        const storyData = storyDoc.data() as Story;
-        
         // Vérifier si l'histoire est partagée publiquement et si le token correspond
-        if (!storyData.sharing?.publicAccess?.enabled || 
-            storyData.sharing.publicAccess.token !== token ||
-            new Date(storyData.sharing.publicAccess.expiresAt) < new Date()) {
+        const sharingData = storyData.sharing || {};
+        const publicAccess = sharingData.publicAccess || {};
+        
+        if (!publicAccess.enabled || 
+            publicAccess.token !== token ||
+            new Date(publicAccess.expiresAt) < new Date()) {
           toast({
             title: "Erreur",
             description: "Ce lien de partage a expiré ou n'est plus valide",
@@ -78,7 +93,22 @@ const SharedStory = () => {
           return;
         }
 
-        setStory({ ...storyData, id: storyDoc.id });
+        // Transformer les données pour correspondre au type Story attendu
+        const story: Story = {
+          id: storyData.id,
+          title: storyData.title,
+          authorId: storyData.authorid,
+          preview: storyData.preview,
+          objective: storyData.objective,
+          childrenIds: storyData.childrenids || [],
+          childrenNames: storyData.childrennames || [],
+          status: storyData.status,
+          story_text: storyData.content,
+          story_summary: storyData.summary,
+          createdAt: new Date(storyData.createdat),
+        };
+
+        setStory(story);
         
         // Log de l'accès une fois que l'histoire est validée
         await logAccess(storyId);
