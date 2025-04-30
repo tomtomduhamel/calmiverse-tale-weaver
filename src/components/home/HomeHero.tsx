@@ -23,11 +23,11 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-hero"></div>
       </div>
       
-      {/* Contenu principal */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 w-full space-y-12 py-8 z-10">
-        {/* En-tête */}
-        <div className="text-center space-y-6">
-          <div className="inline-flex items-center justify-center mb-2">
+      {/* Contenu principal avec espacement réduit */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 w-full space-y-6 z-10 py-4">
+        {/* En-tête avec espacement réduit */}
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center mb-1">
             <div className="rounded-full bg-primary/20 px-4 py-1">
               <span className="text-sm font-medium text-primary-dark flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
@@ -36,26 +36,26 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
             </div>
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold text-primary-dark animate-fade-in">
+          <h1 className="text-3xl md:text-5xl font-bold text-primary-dark animate-fade-in">
             Bienvenue sur Calmi
           </h1>
           
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-in">
+          <p className="text-base text-muted-foreground max-w-2xl mx-auto animate-fade-in">
             Créez des histoires personnalisées pour accompagner vos enfants 
             dans leur bien-être et leur développement
           </p>
         </div>
 
-        {/* Cartes */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        {/* Cartes avec hauteur réduite */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {/* Créer une histoire */}
           <Card className="border border-primary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
-            <CardContent className="p-6 flex flex-col h-full">
-              <div className="mb-4 p-3 bg-primary/20 w-14 h-14 rounded-xl flex items-center justify-center">
-                <BookOpen className="h-6 w-6 text-primary-dark" />
+            <CardContent className="p-4 flex flex-col h-full">
+              <div className="mb-3 p-2 bg-primary/20 w-12 h-12 rounded-xl flex items-center justify-center">
+                <BookOpen className="h-5 w-5 text-primary-dark" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-primary-dark">Créer une histoire</h3>
-              <p className="text-muted-foreground text-sm mb-6 flex-grow">
+              <h3 className="text-lg font-semibold mb-1 text-primary-dark">Créer une histoire</h3>
+              <p className="text-muted-foreground text-xs mb-3 flex-grow">
                 Générez des histoires uniques adaptées aux besoins spécifiques de votre enfant
               </p>
               <Button 
@@ -69,12 +69,12 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
 
           {/* Univers des enfants */}
           <Card className="border border-secondary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
-            <CardContent className="p-6 flex flex-col h-full">
-              <div className="mb-4 p-3 bg-secondary/20 w-14 h-14 rounded-xl flex items-center justify-center">
-                <Users className="h-6 w-6 text-secondary" />
+            <CardContent className="p-4 flex flex-col h-full">
+              <div className="mb-3 p-2 bg-secondary/20 w-12 h-12 rounded-xl flex items-center justify-center">
+                <Users className="h-5 w-5 text-secondary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-secondary-dark">Univers des enfants</h3>
-              <p className="text-muted-foreground text-sm mb-6 flex-grow">
+              <h3 className="text-lg font-semibold mb-1 text-secondary-dark">Univers des enfants</h3>
+              <p className="text-muted-foreground text-xs mb-3 flex-grow">
                 Gérez les profils et préférences de vos enfants pour une expérience personnalisée
               </p>
               <Button 
@@ -88,12 +88,12 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
 
           {/* Bibliothèque */}
           <Card className="border border-accent/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
-            <CardContent className="p-6 flex flex-col h-full">
-              <div className="mb-4 p-3 bg-accent/20 w-14 h-14 rounded-xl flex items-center justify-center">
-                <Library className="h-6 w-6 text-accent-dark" />
+            <CardContent className="p-4 flex flex-col h-full">
+              <div className="mb-3 p-2 bg-accent/20 w-12 h-12 rounded-xl flex items-center justify-center">
+                <Library className="h-5 w-5 text-accent-dark" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-accent-dark">Bibliothèque</h3>
-              <p className="text-muted-foreground text-sm mb-6 flex-grow">
+              <h3 className="text-lg font-semibold mb-1 text-accent-dark">Bibliothèque</h3>
+              <p className="text-muted-foreground text-xs mb-3 flex-grow">
                 Retrouvez toutes vos histoires et accédez à du contenu inspirant pour vos enfants
               </p>
               <Button 
@@ -106,8 +106,8 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
           </Card>
         </div>
 
-        {/* Pied de page */}
-        <div className="text-center pt-8">
+        {/* Pied de page avec espacement réduit */}
+        <div className="text-center pt-2">
           <p className="text-xs text-muted-foreground/70">
             Calmi - Histoires personnalisées pour le bien-être des enfants
           </p>

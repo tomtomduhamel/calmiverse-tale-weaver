@@ -11,9 +11,9 @@ interface HomeViewProps {
 
 export const HomeView: React.FC<HomeViewProps> = ({ onViewChange, showGuide }) => {
   return (
-    <>
+    <div className="h-full w-full">
       {showGuide && <InteractiveGuide />}
       <HomeHero onViewChange={onViewChange} />
-    </>
+    </div>
   );
 };
