@@ -15,7 +15,7 @@ import { User, Calendar, Clock } from 'lucide-react';
 // Interface pour les utilisateurs Supabase
 interface AccountInfoSectionProps {
   user: {
-    email: string;
+    email?: string; // Maintenant optionnel pour correspondre au type User de Supabase
     created_at?: string;
     last_sign_in_at?: string;
     app_metadata?: {
