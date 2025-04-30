@@ -5,11 +5,13 @@ Ce document explique la migration progressive de notre application de Firebase v
 
 ## Étapes réalisées
 
-1. Installation des dépendances Supabase
-2. Configuration du client Supabase
-3. Création du contexte d'authentification Supabase
-4. Création des hooks pour gérer les enfants avec Supabase
-5. Création des hooks pour gérer les histoires avec Supabase
+1. ✅ Installation des dépendances Supabase
+2. ✅ Configuration du client Supabase
+3. ✅ Création du contexte d'authentification Supabase
+4. ✅ Création des hooks pour gérer les enfants avec Supabase
+5. ✅ Création des hooks pour gérer les histoires avec Supabase
+6. ✅ Création d'utilitaires pour la migration des données
+7. ✅ Adaptation du module Firebase pour la compatibilité avec Supabase
 
 ## Étapes à venir
 
@@ -60,16 +62,30 @@ Vous devrez créer deux fonctions edge dans Supabase:
 1. `generateStory` - Pour générer une nouvelle histoire
 2. `retryStory` - Pour réessayer une histoire échouée
 
-## Migration des données
+## Guide de migration des données
 
-Pour migrer les données existantes de Firebase vers Supabase, nous vous recommandons d'utiliser un script personnalisé qui:
+Pour faciliter la migration, vous pouvez utiliser le composant `FirebaseToSupabaseMigration` qui va:
 
-1. Lit les données depuis Firebase Firestore
-2. Transforme les données au format Supabase
-3. Insère les données dans les tables Supabase
+1. Créer un compte Supabase pour l'utilisateur actuel de Firebase
+2. Migrer les données des enfants depuis Firebase vers Supabase
+3. Migrer les histoires depuis Firebase vers Supabase
+
+Vous pouvez également utiliser les fonctions de migration dans `utils/firebase-to-supabase.ts` directement:
+
+```typescript
+import { migrateFirebaseUser, migrateUserData } from '@/utils/firebase-to-supabase';
+
+// Pour migrer un utilisateur complet
+const result = await migrateFirebaseUser();
+
+// Pour migrer uniquement les données
+const result = await migrateUserData(userId);
+```
 
 ## Prochaines étapes
 
 1. Mettez à jour vos variables d'environnement avec vos clés Supabase
 2. Créez les tables dans Supabase
 3. Migrez progressivement les composants pour utiliser les hooks Supabase au lieu des hooks Firebase
+4. Testez l'application avec Supabase et Firebase en parallèle avant de supprimer Firebase
+

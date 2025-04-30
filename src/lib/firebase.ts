@@ -1,46 +1,28 @@
 
-import { initializeApp } from 'firebase/app';
-import { initializeFirestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
-import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
+/**
+ * Module d'adaptation Firebase -> Supabase
+ * 
+ * Ce fichier redirige les imports Firebase vers l'utilisation de Supabase
+ * pour faciliter la migration progressive.
+ */
 
-// Configuration Firebase utilisant les variables d'environnement Vite
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCVFRZKBvJEMB6mXbdWB3h_oJTSb-VstdE",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "calmi-99482.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "calmi-99482",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "calmi-99482.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "811759661179",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:811759661179:web:0dc8e3609f4ea0972a72de",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-T4WEMQLSMZ"
-};
+import * as compatModule from './firebase-compat';
+import { supabase } from './supabase';
 
-const app = initializeApp(firebaseConfig);
+// Afficher un avertissement de migration
+console.warn(
+  "MIGRATION EN COURS: Firebase vers Supabase\n" +
+  "Pour accélérer la migration, utilisez les hooks Supabase (useSupabaseAuth, useSupabaseChildren, useSupabaseStories)."
+);
 
-// Initialize Firestore with enhanced settings
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-  cacheSizeBytes: CACHE_SIZE_UNLIMITED
-});
+// Exporter les objets Firebase pour compatibilité
+export const app = compatModule.default;
+export const db = compatModule.db;
+export const auth = compatModule.auth;
+export const storage = compatModule.storage;
+export const functions = compatModule.functions;
 
-// Enable offline persistence
-enableIndexedDbPersistence(db).catch((err) => {
-  console.error("Erreur lors de l'activation de la persistence:", err);
-});
-
-export const auth = getAuth(app);
-export const storage = getStorage(app);
-export const functions = getFunctions(app, 'us-central1');
-
-// Connect to Firebase emulator in development mode
-if (import.meta.env.DEV) {
-  try {
-    connectFunctionsEmulator(functions, 'localhost', 5001);
-    console.log('Connected to Firebase Functions emulator');
-  } catch (error) {
-    console.warn('Failed to connect to Firebase emulator:', error);
-  }
-}
+// Faciliter la transition vers Supabase
+export const getSupabase = () => supabase;
 
 export default app;
