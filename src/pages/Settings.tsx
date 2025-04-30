@@ -1,8 +1,5 @@
 
 import React from 'react';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { useSupabaseUserSettings } from '@/hooks/useSupabaseUserSettings';
-import { useKindleSettings } from '@/hooks/useKindleSettings';
 import { SettingsIcon } from 'lucide-react';
 import { ProfileSection } from '@/components/settings/ProfileSection';
 import { AccountInfoSection } from '@/components/settings/AccountInfoSection';
@@ -10,6 +7,9 @@ import { KindleSection } from '@/components/settings/KindleSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
 import { SecuritySection } from '@/components/settings/SecuritySection';
 import { AccountManagementSection } from '@/components/settings/AccountManagementSection';
+import { useUserSettings } from '@/hooks/useUserSettings';
+import { useKindleSettings } from '@/hooks/useKindleSettings';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import type { UserSettings, SecuritySettings } from '@/types/user-settings';
 
 const Settings = () => {
@@ -20,7 +20,7 @@ const Settings = () => {
     isLoading,
     updateUserSettings,
     updateUserPassword,
-  } = useSupabaseUserSettings();
+  } = useUserSettings();
 
   const handleProfileSubmit = async (data: Partial<UserSettings>): Promise<void> => {
     try {
