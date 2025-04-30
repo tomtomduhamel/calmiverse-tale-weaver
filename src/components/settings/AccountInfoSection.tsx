@@ -12,28 +12,26 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { User, Calendar, Clock } from 'lucide-react';
 
-// Adapter l'interface pour prendre en charge les utilisateurs Supabase
+// Interface pour les utilisateurs Supabase
 interface AccountInfoSectionProps {
-  user: any;  // On utilise any pour supporter à la fois les utilisateurs Firebase et Supabase
+  user: {
+    email: string;
+    created_at?: string;
+    last_sign_in_at?: string;
+    app_metadata?: {
+      provider?: string;
+    };
+  };
 }
 
 export const AccountInfoSection = ({ user }: AccountInfoSectionProps) => {
-  // Déterminer si on utilise un utilisateur Supabase ou Firebase
-  const isSupabaseUser = !user.metadata?.creationTime;
-  
-  // Adapter les données en fonction du type d'utilisateur
+  // Extraire les données de l'utilisateur Supabase
   const email = user.email || '';
-  const creationTime = isSupabaseUser 
-    ? user.created_at || new Date().toISOString()
-    : user.metadata?.creationTime || new Date().toISOString();
-  const lastSignInTime = isSupabaseUser
-    ? user.last_sign_in_at || new Date().toISOString()
-    : user.metadata?.lastSignInTime || new Date().toISOString();
+  const creationTime = user.created_at || new Date().toISOString();
+  const lastSignInTime = user.last_sign_in_at || new Date().toISOString();
 
-  // Déterminer le provider d'authentification
-  const authProvider = isSupabaseUser
-    ? user.app_metadata?.provider || 'email'
-    : user.providerData && user.providerData[0]?.providerId === 'password' ? 'Email' : 'Google';
+  // Récupérer le provider d'authentification
+  const authProvider = user.app_metadata?.provider || 'email';
 
   return (
     <Card>

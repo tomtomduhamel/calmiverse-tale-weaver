@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-// Définir le type pour la réponse de la fonction cloud d'histoire
+// Définir le type pour la réponse de la fonction edge d'histoire
 export interface StoryResponse {
   id_stories?: string;
   story_text: string;
@@ -14,7 +14,7 @@ export interface StoryResponse {
   preview: string;
 }
 
-// Définir la structure attendue de la réponse de la fonction cloud
+// Définir la structure attendue de la réponse de la fonction edge
 interface CloudFunctionResult {
   success?: boolean;
   storyData?: StoryResponse;

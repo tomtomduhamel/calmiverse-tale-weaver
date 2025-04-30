@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -65,7 +64,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
     setIsGenerating(true);
 
     try {
-      console.log('Envoi de la requête à Firebase Function');
+      console.log('Envoi de la requête à la fonction Edge Supabase');
       
       // Créer l'objectif basé sur l'input utilisateur
       const objective = userMessage.content;
@@ -85,7 +84,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
       
       try {
         const response = await generateStory(objective, childrenNames);
-        console.log('Réponse reçue de la fonction Cloud:', response);
+        console.log('Réponse reçue de la fonction Edge Supabase:', response);
         
         if (!response || !response.storyData) {
           throw new Error("Réponse invalide du serveur");
