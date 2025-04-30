@@ -18,6 +18,7 @@ serve(async (req) => {
     const { storyId, objective, childrenNames } = await req.json();
 
     if (!storyId || !objective || !childrenNames) {
+      console.error("Paramètres manquants:", { storyId, objective, childrenNames });
       throw new Error("Paramètres manquants: storyId, objective, et childrenNames sont requis");
     }
 
@@ -46,6 +47,13 @@ serve(async (req) => {
     // Créer un client Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("Variables d'environnement Supabase manquantes");
+      throw new Error("Configuration Supabase manquante");
+    }
+    
+    console.log("Connexion à Supabase pour mettre à jour l'histoire");
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Mettre à jour l'histoire dans la base de données
@@ -61,8 +69,13 @@ serve(async (req) => {
       })
       .eq('id', storyId);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erreur lors de la mise à jour de l'histoire:", error);
+      throw error;
+    }
 
+    console.log("Histoire générée avec succès:", { storyId, title });
+    
     return new Response(
       JSON.stringify({
         success: true,
@@ -92,6 +105,7 @@ serve(async (req) => {
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
         const supabase = createClient(supabaseUrl, supabaseKey);
 
+        console.log("Mise à jour du statut d'erreur pour l'histoire:", storyId);
         await supabase
           .from('stories')
           .update({

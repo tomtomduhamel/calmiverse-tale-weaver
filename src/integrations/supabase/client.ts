@@ -7,8 +7,15 @@ const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
-    autoRefreshToken: true,
+    autoRefreshToken: true, 
     detectSessionInUrl: true,
     storage: localStorage
   },
 });
+
+// Fonction de débogage pour vérifier l'état de l'authentification
+export const checkAuthState = async () => {
+  const session = await supabase.auth.getSession();
+  console.log("État de session actuel:", session);
+  return session;
+};

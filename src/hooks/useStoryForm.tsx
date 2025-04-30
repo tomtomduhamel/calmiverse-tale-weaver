@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSupabaseChildren } from "./useSupabaseChildren";
 import { useSupabaseStories } from "./useSupabaseStories";
 import { useToast } from "./use-toast";
@@ -12,10 +12,23 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const { children } = useSupabaseChildren();
   const { createStory } = useSupabaseStories();
   const { toast } = useToast();
-  const { user } = useSupabaseAuth();
+  const { user, session, loading } = useSupabaseAuth();
+
+  // Vérifier l'état de l'authentification au chargement du composant
+  useEffect(() => {
+    if (!loading) {
+      console.log("État d'authentification dans useStoryForm:", { 
+        user: user?.id, 
+        sessionExists: !!session,
+        loading
+      });
+      setAuthChecked(true);
+    }
+  }, [user, session, loading]);
 
   const handleChildToggle = (childId: string) => {
     setFormData((prev) => {
@@ -36,9 +49,15 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
 
     try {
       setIsSubmitting(true);
+      console.log("Tentative de création d'histoire, état auth:", { 
+        user: user?.id,
+        sessionExists: !!session,
+        authChecked
+      });
 
-      // Vérifier si l'utilisateur est connecté
-      if (!user) {
+      // Double vérification de l'authentification
+      if (!user || !session) {
+        console.error("Erreur d'authentification: Utilisateur non connecté", { user, session });
         toast({
           title: "Erreur",
           description: "Vous devez être connecté pour créer une histoire",
@@ -55,8 +74,15 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
         throw new Error("Veuillez sélectionner au moins un enfant");
       }
 
+      console.log("Création d'histoire avec les données:", { 
+        formData, 
+        userId: user.id,
+        childrenCount: children.length
+      });
+      
       // Appeler la fonction de création d'histoire
       const storyId = await createStory(formData, children);
+      console.log("Histoire créée avec succès, ID:", storyId);
       
       if (onStoryCreated) {
         onStoryCreated(storyId);
@@ -93,6 +119,7 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     formData,
     isLoading,
     isSubmitting,
+    authChecked,
     handleChildToggle,
     setObjective,
     handleSubmit,

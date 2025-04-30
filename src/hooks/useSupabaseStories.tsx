@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -10,16 +10,22 @@ export const useSupabaseStories = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
-  const { user, session } = useSupabaseAuth();
+  const { user, session, loading: authLoading } = useSupabaseAuth();
 
+  // Récupérer les histoires lorsque l'utilisateur est authentifié
   useEffect(() => {
-    if (user) {
-      fetchStories();
-    } else {
+    if (authLoading) return; // Attendre que l'état d'auth soit déterminé
+    
+    if (!user) {
+      console.log("Pas d'utilisateur connecté, réinitialisation des histoires");
       setStories([]);
       setIsLoading(false);
+      return;
     }
-  }, [user]);
+    
+    console.log("Utilisateur connecté, chargement des histoires:", user.id);
+    fetchStories();
+  }, [user, authLoading]);
 
   const fetchStories = async () => {
     try {
@@ -32,6 +38,7 @@ export const useSupabaseStories = () => {
         return;
       }
 
+      console.log("Récupération des histoires pour l'utilisateur:", user.id);
       const { data, error } = await supabase
         .from('stories')
         .select('*')
@@ -42,6 +49,7 @@ export const useSupabaseStories = () => {
         throw error;
       }
 
+      console.log(`${data?.length || 0} histoires trouvées pour l'utilisateur:`, user.id);
       setStories(data || []);
     } catch (err: any) {
       console.error('Erreur lors de la récupération des histoires:', err);
@@ -59,7 +67,14 @@ export const useSupabaseStories = () => {
 
   const createStory = async (formData: { childrenIds: string[], objective: string }, children = []) => {
     try {
+      console.log("Début de la création d'histoire, vérification de l'authentification", {
+        userExists: !!user,
+        userId: user?.id,
+        sessionExists: !!session
+      });
+      
       if (!user) {
+        console.error("Erreur: Tentative de création d'histoire sans authentification");
         toast({
           title: "Erreur",
           description: "Vous devez être connecté pour créer une histoire",
@@ -73,7 +88,10 @@ export const useSupabaseStories = () => {
       const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
       
+      console.log("Enfants sélectionnés:", childrenNames);
+      
       // Créer l'enregistrement d'histoire dans Supabase
+      console.log("Insertion d'une nouvelle histoire dans Supabase");
       const { data, error } = await supabase
         .from('stories')
         .insert({
@@ -92,7 +110,12 @@ export const useSupabaseStories = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur d'insertion:", error);
+        throw error;
+      }
+      
+      console.log("Histoire créée avec succès, ID:", data.id);
       
       toast({
         title: "Création en cours",
@@ -101,6 +124,7 @@ export const useSupabaseStories = () => {
       
       // Appeler la fonction Edge pour générer l'histoire
       try {
+        console.log("Appel de la fonction Edge generateStory");
         const { data: functionData, error: functionError } = await supabase.functions.invoke(
           'generateStory',
           {
@@ -123,7 +147,7 @@ export const useSupabaseStories = () => {
         fetchStories();
         
         return data.id;
-      } catch (functionErr) {
+      } catch (functionErr: any) {
         console.error('Erreur lors de l\'appel à la fonction Edge:', functionErr);
         
         // Mettre à jour le statut de l'histoire en cas d'erreur

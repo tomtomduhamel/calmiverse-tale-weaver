@@ -25,45 +25,47 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log("Initializing auth state listener");
+    console.log("Initialisation de l'authentification Supabase");
     
-    // Configurer le listener d'authentification
+    // 1. D'abord configurer le listener d'état d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      console.log('Auth state change event:', event, currentSession?.user?.id);
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
+      console.log('Changement d\'état d\'authentification:', event, currentSession?.user?.id);
       
-      if (event === 'SIGNED_OUT') {
-        console.log('User signed out');
-      } else if (event === 'SIGNED_IN') {
-        console.log('User signed in');
-      } else if (event === 'TOKEN_REFRESHED') {
-        console.log('Token refreshed');
+      if (currentSession) {
+        console.log('Session trouvée:', currentSession.user.id);
+        setSession(currentSession);
+        setUser(currentSession.user);
+      } else {
+        console.log('Aucune session trouvée');
+        setSession(null);
+        setUser(null);
       }
       
       setLoading(false);
     });
 
-    // Vérifier la session existante
-    console.log("Checking existing session");
+    // 2. Ensuite vérifier la session existante
+    console.log("Vérification de la session existante");
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log('Current session:', currentSession?.user?.id);
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
+      console.log('Session existante:', currentSession?.user?.id);
+      if (currentSession) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+      }
       setLoading(false);
     }).catch(err => {
-      console.error('Error getting session:', err);
+      console.error('Erreur lors de la récupération de la session:', err);
       setLoading(false);
     });
 
     return () => {
-      console.log("Cleaning up auth listener");
+      console.log("Nettoyage du listener d'authentification");
       subscription.unsubscribe();
     };
   }, []);
 
   const getAuthErrorMessage = (error: AuthError) => {
-    console.log("Auth error:", error.message);
+    console.log("Erreur d'authentification:", error.message);
     switch (error.message) {
       case 'Invalid login credentials':
         return "Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.";
@@ -82,7 +84,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
     try {
       setError(null);
       console.log("Tentative de connexion avec email:", email);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         console.error("Erreur de connexion:", error);
@@ -94,8 +96,11 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
         });
         throw error;
       }
+
+      console.log("Connexion réussie, session:", data.session?.user.id);
+      setSession(data.session);
+      setUser(data.session?.user || null);
       
-      console.log("Connexion réussie");
       toast({
         title: "Connexion réussie",
         description: "Bienvenue sur Calmi !",
@@ -110,7 +115,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
     try {
       setError(null);
       console.log("Tentative d'inscription avec email:", email);
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
       
       if (error) {
         console.error("Erreur d'inscription:", error);
@@ -124,6 +129,11 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
       }
       
       console.log("Inscription réussie");
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+      }
+      
       toast({
         title: "Inscription réussie",
         description: "Bienvenue sur Calmi ! Veuillez vérifier votre boîte mail pour confirmer votre compte.",
@@ -182,6 +192,9 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
       }
       
       console.log("Déconnexion réussie");
+      setSession(null);
+      setUser(null);
+      
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
@@ -194,7 +207,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
 
   // Exposer des informations de débogage dans la console
   useEffect(() => {
-    console.log("Auth state updated - User:", user?.id, "Loading:", loading);
+    console.log("État d'authentification mis à jour - Utilisateur:", user?.id, "Chargement:", loading);
   }, [user, loading]);
 
   return (
@@ -216,7 +229,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
 export const useSupabaseAuth = () => {
   const context = useContext(SupabaseAuthContext);
   if (!context) {
-    throw new Error('useSupabaseAuth must be used within a SupabaseAuthProvider');
+    throw new Error('useSupabaseAuth doit être utilisé à l\'intérieur d\'un SupabaseAuthProvider');
   }
   return context;
 };

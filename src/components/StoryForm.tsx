@@ -10,6 +10,7 @@ import { useChildFormLogic } from "./story/useChildFormLogic";
 import { StoryFormContent } from "./story/form/StoryFormContent";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const StoryForm: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -19,9 +20,10 @@ const StoryForm: React.FC<StoryFormProps> = ({
 }) => {
   const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
-  const { formData, isLoading, handleChildToggle, setObjective, handleSubmit } = useStoryForm(onStoryCreated, onSubmit);
-  const { user } = useSupabaseAuth();
+  const { formData, isLoading, handleChildToggle, setObjective, handleSubmit, authChecked } = useStoryForm(onStoryCreated, onSubmit);
+  const { user, loading: authLoading } = useSupabaseAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const {
     showChildForm,
@@ -38,17 +40,30 @@ const StoryForm: React.FC<StoryFormProps> = ({
   const [progress, setProgress] = useState(0);
   const [formError, setFormError] = useState<string | null>(null);
   
-  // Vérifier si l'utilisateur est connecté
+  // Vérifier si l'utilisateur est connecté et rediriger vers la page d'authentification si nécessaire
   useEffect(() => {
-    if (!user) {
+    console.log("Vérification de l'authentification dans StoryForm", { 
+      user: user?.id, 
+      authLoading,
+      authChecked
+    });
+    
+    if (!authLoading && !user) {
+      console.log("Utilisateur non connecté, affichage de l'erreur");
       setFormError("Utilisateur non connecté");
-    } else {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour créer une histoire",
+        variant: "destructive",
+      });
+    } else if (user) {
+      console.log("Utilisateur connecté:", user.id);
       setFormError(null);
     }
-  }, [user]);
+  }, [user, authLoading, toast, authChecked]);
 
   // Écouter les erreurs du processus de génération d'histoire
-  React.useEffect(() => {
+  useEffect(() => {
     const handleAppNotification = (event: CustomEvent) => {
       if (event.detail.type === 'error') {
         setFormError(event.detail.message || "Une erreur est survenue");
@@ -67,7 +82,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
   }, []);
 
   // Simuler la progression pour une meilleure expérience utilisateur
-  React.useEffect(() => {
+  useEffect(() => {
     if (isSubmitting) {
       const interval = setInterval(() => {
         setProgress((prev) => {
@@ -83,6 +98,14 @@ const StoryForm: React.FC<StoryFormProps> = ({
       setTimeout(() => setProgress(0), 1000);
     }
   }, [isSubmitting, progress]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-primary">Vérification de l'authentification...</div>
+      </div>
+    );
+  }
 
   if (objectivesLoading) {
     return (
@@ -114,6 +137,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
     setIsSubmitting(true);
     
     try {
+      console.log("Soumission du formulaire avec utilisateur:", user.id);
       await handleSubmit(e);
     } catch (error) {
       console.error("Erreur lors de la soumission:", error);
