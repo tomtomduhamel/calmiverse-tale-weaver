@@ -35,15 +35,18 @@ export const useSupabaseStories = () => {
         const loadedStories = data.map(story => ({
           id: story.id,
           title: story.title || 'Nouvelle histoire',
-          content: story.content || story.story_text || '',
-          summary: story.summary || story.story_summary || '',
+          content: story.content || '',
+          summary: story.summary || '',
           preview: story.preview || '',
           status: story.status || 'completed',
           childrenIds: story.childrenIds || [],
+          childrenNames: story.childrenNames || [],
           objective: story.objective || '',
           authorId: story.authorId,
           createdAt: new Date(story.createdAt),
-          updatedAt: story.updatedAt ? new Date(story.updatedAt) : new Date()
+          updatedAt: story.updatedAt ? new Date(story.updatedAt) : new Date(),
+          story_text: story.content || '', // Ajout de story_text pour correspondre au type Story
+          story_summary: story.summary || '', // Ajout de story_summary pour correspondre au type Story
         })) as Story[];
         
         setStories(loadedStories);
