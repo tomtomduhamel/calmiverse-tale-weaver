@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -10,6 +11,7 @@ export const useUserSettings = () => {
   const [userSettings, setUserSettings] = useState<UserSettings>({
     firstName: '',
     lastName: '',
+    email: '', // Ajout de la propriété email manquante
     language: 'fr',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     notifications: {
@@ -38,6 +40,13 @@ export const useUserSettings = () => {
           setUserSettings(userDoc.data() as UserSettings);
         } else {
           console.log('Aucun document utilisateur trouvé, utilisation des valeurs par défaut');
+          // S'assurer que l'email est défini si l'utilisateur est connecté
+          if (auth.currentUser.email) {
+            setUserSettings(prev => ({
+              ...prev,
+              email: auth.currentUser.email || '',
+            }));
+          }
         }
       } catch (error) {
         console.error('Erreur lors du chargement des paramètres:', error);
