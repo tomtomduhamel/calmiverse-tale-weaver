@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Child } from "@/types/child";
@@ -88,9 +87,9 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newChildName.trim()) {
+  // Updated handleSubmit to accept a Child object instead of a form event
+  const handleSubmit = (childData: Child) => {
+    if (!childData.name.trim()) {
       toast({
         title: "Erreur",
         description: "Le nom de l'enfant est requis",
@@ -108,12 +107,13 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
       return;
     }
 
-    const childData = {
-      name: newChildName,
-      birthDate: newBirthDate,
-      teddyName: newTeddyName,
-      teddyDescription: newTeddyDescription,
-      imaginaryWorld: newImaginaryWorld,
+    // Prepare the data without changing its type
+    const submissionData = {
+      name: childData.name,
+      birthDate: childData.birthDate,
+      teddyName: childData.teddyName || "",
+      teddyDescription: childData.teddyDescription || "",
+      imaginaryWorld: childData.imaginaryWorld || "",
       authorId: user.id,
       teddyPhotos: [],
     };
@@ -121,14 +121,14 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
     if (editingChild) {
       const currentChild = children.find((c) => c.id === editingChild);
       if (currentChild) {
-        onUpdateChild(editingChild, childData);
+        onUpdateChild(editingChild, submissionData);
       }
       toast({
         title: "Succès",
         description: "Le profil a été mis à jour avec succès",
       });
     } else {
-      onAddChild(childData);
+      onAddChild(submissionData);
       toast({
         title: "Succès",
         description: "Le profil a été ajouté avec succès",
