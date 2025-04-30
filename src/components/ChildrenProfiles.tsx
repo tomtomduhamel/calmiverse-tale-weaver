@@ -1,7 +1,6 @@
 
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Child } from "@/types/child";
 import ProfileHeader from "./children/ProfileHeader";
 import ProfileGrid from "./children/ProfileGrid";
@@ -12,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface ChildrenProfilesProps {
   children: Child[];
   onAddChild: (child: Omit<Child, "id">) => void;
-  onUpdateChild: (childId: string, updatedChild: Omit<Child, "id">) => void;
+  onUpdateChild: (childId: string, updatedChild: Partial<Child>) => void;
   onDeleteChild: (childId: string) => void;
   onCreateStory?: () => void;
 }
@@ -50,7 +49,6 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
 
     const updatedPhotos = [...(child.teddyPhotos || []), photo];
     await onUpdateChild(childId, {
-      ...child,
       teddyPhotos: updatedPhotos,
     });
   };
@@ -73,7 +71,6 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
       ) || [];
       
       await onUpdateChild(childId, {
-        ...child,
         teddyPhotos: updatedPhotos,
       });
 
@@ -124,10 +121,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
     if (editingChild) {
       const currentChild = children.find((c) => c.id === editingChild);
       if (currentChild) {
-        onUpdateChild(editingChild, {
-          ...childData,
-          teddyPhotos: currentChild.teddyPhotos || [],
-        });
+        onUpdateChild(editingChild, childData);
       }
       toast({
         title: "Succès",
@@ -154,36 +148,34 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
   };
 
   return (
-    <ScrollArea className="h-[calc(100vh-100px)] w-full">
-      <div className="space-y-6 p-4">
-        <ProfileHeader 
-          onShowForm={() => setShowForm(true)} 
-          showForm={showForm}
-          onCreateStory={onCreateStory}
-        />
-        <ProfileGrid children={children} onEdit={handleEdit} onDelete={onDeleteChild} />
-        <ProfileFormWrapper
-          showForm={showForm}
-          childName={newChildName}
-          birthDate={newBirthDate}
-          teddyName={newTeddyName}
-          teddyDescription={newTeddyDescription}
-          imaginaryWorld={newImaginaryWorld}
-          editingChild={editingChild}
-          childId={editingChild || undefined}
-          teddyPhotos={editingChild ? children.find(c => c.id === editingChild)?.teddyPhotos : []}
-          onSubmit={handleSubmit}
-          onReset={resetForm}
-          onChildNameChange={setNewChildName}
-          onBirthDateChange={setNewBirthDate}
-          onTeddyNameChange={setNewTeddyName}
-          onTeddyDescriptionChange={setNewTeddyDescription}
-          onImaginaryWorldChange={setNewImaginaryWorld}
-          onPhotoUploaded={(photo) => editingChild && handlePhotoUploaded(editingChild, photo)}
-          onPhotoDeleted={(path) => editingChild && handlePhotoDeleted(editingChild, path)}
-        />
-      </div>
-    </ScrollArea>
+    <div className="space-y-6 p-4">
+      <ProfileHeader 
+        onShowForm={() => setShowForm(true)} 
+        showForm={showForm}
+        onCreateStory={onCreateStory}
+      />
+      <ProfileGrid children={children} onEdit={handleEdit} onDelete={onDeleteChild} />
+      <ProfileFormWrapper
+        showForm={showForm}
+        childName={newChildName}
+        birthDate={newBirthDate}
+        teddyName={newTeddyName}
+        teddyDescription={newTeddyDescription}
+        imaginaryWorld={newImaginaryWorld}
+        editingChild={editingChild}
+        childId={editingChild || undefined}
+        teddyPhotos={editingChild ? children.find(c => c.id === editingChild)?.teddyPhotos : []}
+        onSubmit={handleSubmit}
+        onReset={resetForm}
+        onChildNameChange={setNewChildName}
+        onBirthDateChange={setNewBirthDate}
+        onTeddyNameChange={setNewTeddyName}
+        onTeddyDescriptionChange={setNewTeddyDescription}
+        onImaginaryWorldChange={setNewImaginaryWorld}
+        onPhotoUploaded={(photo) => editingChild && handlePhotoUploaded(editingChild, photo)}
+        onPhotoDeleted={(path) => editingChild && handlePhotoDeleted(editingChild, path)}
+      />
+    </div>
   );
 };
 

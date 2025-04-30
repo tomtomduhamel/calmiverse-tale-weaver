@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import ChildForm from "./ChildForm";
 import type { Child } from "@/types/child";
 
@@ -49,29 +48,27 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
   if (!showForm) return null;
 
   return (
-    <ScrollArea className="h-[calc(100vh-200px)]">
-      <Card className="p-6 bg-white/80 backdrop-blur-sm mt-6">
-        <ChildForm
-          childName={childName}
-          birthDate={birthDate}
-          teddyName={teddyName}
-          teddyDescription={teddyDescription}
-          imaginaryWorld={imaginaryWorld}
-          isEditing={!!editingChild}
-          childId={childId}
-          teddyPhotos={teddyPhotos}
-          onSubmit={onSubmit}
-          onReset={onReset}
-          onChildNameChange={onChildNameChange}
-          onBirthDateChange={onBirthDateChange}
-          onTeddyNameChange={onTeddyNameChange}
-          onTeddyDescriptionChange={onTeddyDescriptionChange}
-          onImaginaryWorldChange={onImaginaryWorldChange}
-          onPhotoUploaded={onPhotoUploaded}
-          onPhotoDeleted={onPhotoDeleted}
-        />
-      </Card>
-    </ScrollArea>
+    <Card className="p-6 bg-white/80 backdrop-blur-sm mt-6">
+      <ChildForm
+        childName={childName}
+        birthDate={birthDate}
+        teddyName={teddyName}
+        teddyDescription={teddyDescription}
+        imaginaryWorld={imaginaryWorld}
+        isEditing={!!editingChild}
+        childId={childId}
+        teddyPhotos={teddyPhotos}
+        onSubmit={onSubmit}
+        onReset={onReset}
+        onChildNameChange={onChildNameChange}
+        onBirthDateChange={onBirthDateChange}
+        onTeddyNameChange={onTeddyNameChange}
+        onTeddyDescriptionChange={onTeddyDescriptionChange}
+        onImaginaryWorldChange={onImaginaryWorldChange}
+        onPhotoUploaded={onPhotoUploaded}
+        onPhotoDeleted={onPhotoDeleted}
+      />
+    </Card>
   );
 };
 

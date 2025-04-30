@@ -38,6 +38,10 @@ export const useSupabaseChildren = () => {
           interests: child.interests || [],
           gender: child.gender || 'unknown',
           authorId: child.authorid,
+          teddyName: child.teddyname,
+          teddyDescription: child.teddydescription,
+          teddyPhotos: child.teddyphotos || [],
+          imaginaryWorld: child.imaginaryworld,
           createdAt: new Date(child.createdat)
         })) as Child[];
         
@@ -90,6 +94,10 @@ export const useSupabaseChildren = () => {
           interests: childData.interests || [],
           gender: childData.gender || 'unknown',
           authorid: user.id,
+          teddyname: childData.teddyName,
+          teddydescription: childData.teddyDescription,
+          teddyphotos: childData.teddyPhotos || [],
+          imaginaryworld: childData.imaginaryWorld,
           createdat: new Date().toISOString()
         })
         .select()
@@ -118,6 +126,12 @@ export const useSupabaseChildren = () => {
       if (updatedData.birthDate !== undefined) supabaseData.birthdate = updatedData.birthDate.toISOString();
       if (updatedData.interests !== undefined) supabaseData.interests = updatedData.interests;
       if (updatedData.gender !== undefined) supabaseData.gender = updatedData.gender;
+      if (updatedData.teddyName !== undefined) supabaseData.teddyname = updatedData.teddyName;
+      if (updatedData.teddyDescription !== undefined) supabaseData.teddydescription = updatedData.teddyDescription;
+      if (updatedData.teddyPhotos !== undefined) supabaseData.teddyphotos = updatedData.teddyPhotos;
+      if (updatedData.imaginaryWorld !== undefined) supabaseData.imaginaryworld = updatedData.imaginaryWorld;
+      
+      console.log("Mise à jour des données enfant:", childId, supabaseData);
       
       const { error } = await supabase
         .from('children')
@@ -126,6 +140,16 @@ export const useSupabaseChildren = () => {
         .eq('authorid', user.id);
         
       if (error) throw error;
+      
+      // Mettre à jour l'état local pour une réponse immédiate de l'UI
+      setChildren(prevChildren => 
+        prevChildren.map(child => 
+          child.id === childId 
+            ? { ...child, ...updatedData } 
+            : child
+        )
+      );
+      
     } catch (error: any) {
       console.error("Erreur lors de la mise à jour de l'enfant:", error);
       throw error;
@@ -145,6 +169,9 @@ export const useSupabaseChildren = () => {
         .eq('authorid', user.id);
         
       if (error) throw error;
+      
+      // Mettre à jour l'état local
+      setChildren(prevChildren => prevChildren.filter(child => child.id !== childId));
     } catch (error: any) {
       console.error("Erreur lors de la suppression de l'enfant:", error);
       throw error;

@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ViewType } from "@/types/views";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
@@ -25,8 +24,7 @@ const Index = () => {
   
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild, loading: childrenLoading } = useSupabaseChildren();
   const { stories: { stories, isLoading, error }, createStory, deleteStory } = useStories(children);
-  const { viewManagement } = useViewManagement();
-  const { currentView, setCurrentView, showGuide } = viewManagement;
+  const { currentView, setCurrentView, showGuide } = useViewManagement();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useSupabaseAuth();
   
@@ -80,7 +78,7 @@ const Index = () => {
 
   // Rendu principal
   return (
-    <ScrollArea className="h-screen w-full">
+    <div className="h-screen w-full overflow-hidden">
       <div className="index-container max-w-7xl mx-auto p-4 mb-20">
         {currentView === "home" && (
           <HomeView 
@@ -124,7 +122,7 @@ const Index = () => {
           />
         )}
       </div>
-    </ScrollArea>
+    </div>
   );
 };
 
