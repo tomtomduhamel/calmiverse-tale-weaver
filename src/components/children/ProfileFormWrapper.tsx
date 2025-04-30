@@ -14,7 +14,7 @@ interface ProfileFormWrapperProps {
   editingChild: string | null;
   childId?: string;
   teddyPhotos?: Child["teddyPhotos"];
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (child: Child) => void; // This expects a Child object
   onReset: () => void;
   onChildNameChange: (value: string) => void;
   onBirthDateChange: (value: Date) => void;
@@ -47,6 +47,11 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
 }) => {
   if (!showForm) return null;
 
+  // Create a wrapper function to transform the event to a Child object
+  const handleSubmit = (childData: Child) => {
+    onSubmit(childData);
+  };
+
   return (
     <Card className="p-6 bg-white/80 backdrop-blur-sm mt-6">
       <ChildForm
@@ -58,7 +63,7 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
         isEditing={!!editingChild}
         childId={childId}
         teddyPhotos={teddyPhotos}
-        onSubmit={onSubmit}
+        onSubmit={handleSubmit}
         onReset={onReset}
         onChildNameChange={onChildNameChange}
         onBirthDateChange={onBirthDateChange}

@@ -41,7 +41,8 @@ const KidsProfile = () => {
 
   const handleSaveProfile = async (updatedChild: Child) => {
     try {
-      await handleUpdateChild(updatedChild);
+      // Make sure to pass both arguments to handleUpdateChild
+      await handleUpdateChild(updatedChild.id, updatedChild);
       setIsEditing(false);
       toast({
         title: "Profil mis à jour",

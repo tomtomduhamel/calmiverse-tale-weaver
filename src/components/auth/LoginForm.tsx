@@ -8,10 +8,14 @@ import { Mail, AlertCircle, LogIn } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const LoginForm = () => {
+interface LoginFormProps {
+  isRegister: boolean;
+}
+
+const LoginForm = ({ isRegister: initialIsRegister = false }: LoginFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(!initialIsRegister);
   const [isLoading, setIsLoading] = useState(false);
   const [googleAuthError, setGoogleAuthError] = useState(false);
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useSupabaseAuth();
