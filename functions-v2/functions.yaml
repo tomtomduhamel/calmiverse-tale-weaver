@@ -1,9 +1,0 @@
-
-# Configuration simplifiée pour Firebase Functions v2
-specVersion: v1
-functions:
-  - source: .
-    codebase: v2
-    runtime: nodejs20
-    memory: 1GB
-    timeout: 540s
