@@ -67,9 +67,9 @@ export const AccountManagementSection = ({ onDeleteAccount }: AccountManagementS
         
       if (deleteUserDataError) throw deleteUserDataError;
       
-      // 2. Supprimer le compte utilisateur
+      // 2. Supprimer le compte utilisateur via RPC
       const { error: deleteUserError } = await supabase.rpc('delete_user');
-        
+      
       if (deleteUserError) throw deleteUserError;
       
       toast({

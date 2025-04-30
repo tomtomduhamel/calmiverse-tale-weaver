@@ -91,23 +91,41 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          email_notifications: boolean | null
           firstname: string | null
           id: string
+          inapp_notifications: boolean | null
+          language: string | null
           lastname: string | null
+          story_notifications: boolean | null
+          system_notifications: boolean | null
+          timezone: string | null
         }
         Insert: {
           created_at?: string
           email: string
+          email_notifications?: boolean | null
           firstname?: string | null
           id: string
+          inapp_notifications?: boolean | null
+          language?: string | null
           lastname?: string | null
+          story_notifications?: boolean | null
+          system_notifications?: boolean | null
+          timezone?: string | null
         }
         Update: {
           created_at?: string
           email?: string
+          email_notifications?: boolean | null
           firstname?: string | null
           id?: string
+          inapp_notifications?: boolean | null
+          language?: string | null
           lastname?: string | null
+          story_notifications?: boolean | null
+          system_notifications?: boolean | null
+          timezone?: string | null
         }
         Relationships: []
       }

@@ -39,6 +39,9 @@ const Settings = () => {
     );
   }
 
+  // Déterminer si utilisateur est connecté avec mot de passe (pour afficher l'option de changement de mot de passe)
+  const showPasswordChange = user.app_metadata?.provider === 'email';
+  
   return (
     <div className="container mx-auto py-6 space-y-8">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
@@ -62,7 +65,7 @@ const Settings = () => {
 
       <SecuritySection 
         onSubmit={updateUserPassword}
-        showPasswordChange={user.providerData && user.providerData[0]?.providerId === 'password'}
+        showPasswordChange={showPasswordChange}
       />
 
       <AccountManagementSection />
