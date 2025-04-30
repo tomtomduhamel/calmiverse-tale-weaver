@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { migrateFirebaseUser } from '@/utils/firebase-to-supabase';
+import { migrateFirebaseUser } from '@/utils/migration/firebase-to-supabase';
 
 export const FirebaseToSupabaseMigrationButton: React.FC = () => {
   const [migrationProgress, setMigrationProgress] = useState(0);

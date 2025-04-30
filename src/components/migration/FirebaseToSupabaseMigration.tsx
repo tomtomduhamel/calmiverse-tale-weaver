@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { migrateFirebaseUser, migrateUserData } from '@/utils/firebase-to-supabase';
+import { migrateFirebaseUser, migrateUserData } from '@/utils/migration/firebase-to-supabase';
 import { auth } from '@/lib/firebase';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
