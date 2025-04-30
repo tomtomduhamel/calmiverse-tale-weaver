@@ -65,23 +65,23 @@ export const useSupabaseUserSettings = () => {
           console.log('Aucun document utilisateur trouvé, utilisation des valeurs par défaut');
           
           // Créer un document pour l'utilisateur avec les valeurs par défaut
-          await supabase
-            .from('users')
-            .insert({
-              id: user.id,
-              email: user.email,
-              firstname: '',
-              lastname: '',
-              language: 'fr',
-              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-              email_notifications: true,
-              inapp_notifications: true,
-              story_notifications: true,
-              system_notifications: true,
-            });
+          const userData = {
+            id: user.id,
+            email: user.email,
+            firstname: '',
+            lastname: '',
+            language: 'fr',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            email_notifications: true,
+            inapp_notifications: true,
+            story_notifications: true,
+            system_notifications: true,
+          };
+          
+          await supabase.from('users').upsert([userData]);
         }
-      } catch (error: any) {
-        console.error('Erreur lors du chargement des paramètres:', error);
+      } catch (err: any) {
+        console.error('Erreur lors du chargement des paramètres:', err);
         toast({
           title: "Erreur",
           description: "Impossible de charger vos paramètres",

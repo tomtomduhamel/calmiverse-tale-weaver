@@ -1,6 +1,7 @@
+
 import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useUserSettings } from '@/hooks/useUserSettings';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useSupabaseUserSettings } from '@/hooks/useSupabaseUserSettings';
 import { useKindleSettings } from '@/hooks/useKindleSettings';
 import { SettingsIcon } from 'lucide-react';
 import { ProfileSection } from '@/components/settings/ProfileSection';
@@ -12,14 +13,14 @@ import { AccountManagementSection } from '@/components/settings/AccountManagemen
 import type { UserSettings } from '@/types/user-settings';
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const { settings: kindleSettings } = useKindleSettings();
   const {
     userSettings,
     isLoading,
     updateUserSettings,
     updateUserPassword,
-  } = useUserSettings();
+  } = useSupabaseUserSettings();
 
   const handleNotificationChange = async (key: keyof UserSettings['notifications'], value: boolean) => {
     await updateUserSettings({
@@ -61,15 +62,10 @@ const Settings = () => {
 
       <SecuritySection 
         onSubmit={updateUserPassword}
-        showPasswordChange={user.providerData[0]?.providerId === 'password'}
+        showPasswordChange={user.providerData && user.providerData[0]?.providerId === 'password'}
       />
 
-      <AccountManagementSection 
-        onDeleteAccount={async () => {
-          // Implement account deletion logic here
-          console.log('Delete account');
-        }}
-      />
+      <AccountManagementSection />
     </div>
   );
 };

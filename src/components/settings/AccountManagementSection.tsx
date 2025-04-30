@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -24,13 +24,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
-export const AccountManagementSection = () => {
+interface AccountManagementSectionProps {
+  onDeleteAccount?: () => Promise<void>;
+}
+
+export const AccountManagementSection = ({ onDeleteAccount }: AccountManagementSectionProps) => {
   const { user } = useSupabaseAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  const onDeleteAccount = async () => {
+  const handleDeleteAccount = async () => {
     try {
+      setIsDeleting(true);
+      
+      if (onDeleteAccount) {
+        await onDeleteAccount();
+        return;
+      }
+      
       if (!user) return;
       
       // 1. Supprimer les données de l'utilisateur
@@ -56,15 +68,9 @@ export const AccountManagementSection = () => {
       if (deleteUserDataError) throw deleteUserDataError;
       
       // 2. Supprimer le compte utilisateur
-      const { error: deleteUserError } = await supabase.auth.admin.deleteUser(
-        user.id
-      );
-      
-      if (deleteUserError) {
-        // Fallback: utiliser la méthode standard si la méthode admin échoue
-        const { error: standardDeleteError } = await supabase.rpc('delete_user');
-        if (standardDeleteError) throw standardDeleteError;
-      }
+      const { error: deleteUserError } = await supabase.rpc('delete_user');
+        
+      if (deleteUserError) throw deleteUserError;
       
       toast({
         title: "Compte supprimé",
@@ -81,6 +87,8 @@ export const AccountManagementSection = () => {
         description: "Impossible de supprimer votre compte: " + (error.message || "Erreur inconnue"),
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -111,9 +119,9 @@ export const AccountManagementSection = () => {
               <AlertDialogCancel>Annuler</AlertDialogCancel>
               <AlertDialogAction 
                 className="bg-destructive text-destructive-foreground"
-                onClick={onDeleteAccount}
+                onClick={handleDeleteAccount}
               >
-                Supprimer mon compte
+                {isDeleting ? 'Suppression...' : 'Supprimer mon compte'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

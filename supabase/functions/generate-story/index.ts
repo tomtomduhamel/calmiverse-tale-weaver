@@ -1,5 +1,5 @@
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -103,7 +103,7 @@ serve(async (req) => {
 
 // Fonction helper pour créer un client Supabase
 async function createSupabaseClient() {
-  const { createClient } = await import 'https://esm.sh/@supabase/supabase-js@2.38.5'
+  const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.38.5")
   
   return createClient(
     Deno.env.get('SUPABASE_URL') ?? '',

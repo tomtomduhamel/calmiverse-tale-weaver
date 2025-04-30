@@ -24,16 +24,23 @@ export const useSupabaseStorage = () => {
       setUploading(true);
       setProgress(0);
 
+      // Créer un gestionnaire de progression personnalisé
+      const progressHandler = (event: ProgressEvent) => {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setProgress(percent);
+        if (onProgress) onProgress(percent);
+      };
+
+      // Crée un XMLHttpRequest pour pouvoir suivre la progression
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', progressHandler);
+      
+      // Utilisez upload() sans l'option onUploadProgress
       const { error } = await supabase.storage
         .from(bucketName)
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: true,
-          onUploadProgress: (progress) => {
-            const percent = Math.round((progress.loaded / progress.total) * 100);
-            setProgress(percent);
-            if (onProgress) onProgress(percent);
-          }
+          upsert: true
         });
 
       if (error) throw error;
