@@ -38,7 +38,10 @@ export const useStoryGeneration = () => {
         .select()
         .single();
         
-      if (storyError) throw storyError;
+      if (storyError) {
+        console.error('Erreur lors de la création de l\'enregistrement temporaire:', storyError);
+        throw storyError;
+      }
       
       // Appeler la fonction Edge pour générer l'histoire complète
       const { data, error } = await supabase.functions.invoke('generateStory', {
@@ -53,7 +56,7 @@ export const useStoryGeneration = () => {
         console.error('Erreur lors de la génération d\'histoire:', error);
         toast({
           title: 'Erreur',
-          description: error.message || 'La génération de l\'histoire a échoué',
+          description: `La génération de l'histoire a échoué: ${error.message || 'Erreur inconnue'}`,
           variant: 'destructive',
         });
         throw error;

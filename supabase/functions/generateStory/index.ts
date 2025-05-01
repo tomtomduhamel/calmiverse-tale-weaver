@@ -26,11 +26,11 @@ serve(async (req) => {
     console.log("Génération d'histoire pour:", { storyId, objective, childrenNames });
 
     // Récupérer la clé API OpenAI depuis les secrets Supabase
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    const OPENAI_API_KEY = Deno.env.get('Calmi OpenAI');
     
     if (!OPENAI_API_KEY) {
       console.error('Clé API OpenAI manquante');
-      throw new Error('Configuration OpenAI manquante sur le serveur');
+      throw new Error('La clé API OpenAI n\'est pas configurée sur le serveur (Calmi OpenAI)');
     }
     
     // Configuration OpenAI

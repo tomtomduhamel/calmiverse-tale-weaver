@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.5";
+import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.2.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,113 +33,170 @@ serve(async (req) => {
       throw new Error('Paramètre manquant: storyId est requis');
     }
 
+    // Récupérer la clé API OpenAI depuis les secrets Supabase
+    const OPENAI_API_KEY = Deno.env.get('Calmi OpenAI');
+    
+    if (!OPENAI_API_KEY) {
+      console.error('Clé API OpenAI manquante');
+      throw new Error('La clé API OpenAI n\'est pas configurée sur le serveur (Calmi OpenAI)');
+    }
+    
     // Récupérer les informations de l'histoire
-    const supabaseClient = await createSupabaseClient();
-    const { data: story, error: storyError } = await supabaseClient
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Variables d'environnement Supabase manquantes");
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Récupérer l'histoire existante
+    const { data: story, error: storyError } = await supabase
       .from('stories')
       .select('*')
       .eq('id', storyId)
       .single();
+      
+    if (storyError || !story) {
+      throw new Error('Histoire non trouvée');
+    }
     
-    if (storyError) throw storyError;
-    if (!story) throw new Error('Histoire non trouvée');
-    
+    const { objective, childrennames: childrenNames } = story;
+
+    console.log('Nouvelle tentative de génération pour:', { storyId, objective, childrenNames });
+
     // Mettre à jour le statut à "pending"
-    await supabaseClient
+    await supabase
       .from('stories')
       .update({
         status: 'pending',
         updatedat: new Date().toISOString()
       })
       .eq('id', storyId);
+
+    // Configuration OpenAI
+    const configuration = new Configuration({ apiKey: OPENAI_API_KEY });
+    const openai = new OpenAIApi(configuration);
     
-    // Simuler un délai pour la génération
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Générer l'histoire avec OpenAI
+    const completion = await openai.createChatCompletion({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `Tu es un expert en création d'histoires pour enfants. 
+          
+FORMAT DE L'HISTOIRE :
+- Longueur : 6000-10000 mots
+- Structure narrative fluide et continue, sans découpage visible
+- Pas de titre explicite
+
+RÈGLES FONDAMENTALES :
+- Adapte le langage à l'âge de l'enfant
+- Crée des personnages mémorables et appropriés
+- Utilise des dialogues engageants
+- Ajoute des répétitions pour les jeunes enfants
+- Évite tout contenu effrayant ou angoissant
+- Termine toujours sur une note positive`
+        },
+        {
+          role: 'user',
+          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
+          L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
+          Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.
+          Ceci est une nouvelle tentative, alors essaie une approche différente.`
+        }
+      ],
+      temperature: 0.8, // Augmenter légèrement la température pour plus de diversité
+      max_tokens: 3500,
+    });
+
+    const storyText = completion.data.choices[0].message?.content;
     
-    // Générer un conte simple
-    const childrenString = story.childrennames.join(' et ');
-    const title = `L'aventure de ${childrenString}`;
-    const content = `Il était une fois ${childrenString} qui ${story.objective.toLowerCase()}. 
-                    Après beaucoup d'efforts et de péripéties, ils ont réussi et sont rentrés chez eux 
-                    heureux et enrichis par cette expérience. Cette histoire est une nouvelle tentative de génération.`;
-    const summary = `Une histoire où ${childrenString} ${story.objective.toLowerCase()}`;
-    const preview = `${childrenString} partent à l'aventure...`;
-    
+    if (!storyText) {
+      throw new Error('Aucune histoire générée par OpenAI');
+    }
+
+    // Générer un résumé
+    const summaryCompletion = await openai.createChatCompletion({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Tu es un assistant qui résume des histoires pour enfants de manière concise.'
+        },
+        {
+          role: 'user',
+          content: `Résume cette histoire en 3-4 phrases : ${storyText.substring(0, 2000)}...`
+        }
+      ],
+      temperature: 0.5,
+      max_tokens: 300,
+    });
+
+    const summary = summaryCompletion.data.choices[0].message?.content || "Résumé non disponible";
+
+    // Générer un titre
+    const titleCompletion = await openai.createChatCompletion({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Tu es un assistant qui crée des titres captivants pour des histoires pour enfants.'
+        },
+        {
+          role: 'user',
+          content: `Crée un titre court et captivant pour cette histoire : ${storyText.substring(0, 1000)}...`
+        }
+      ],
+      temperature: 0.8,
+      max_tokens: 50,
+    });
+
+    const title = titleCompletion.data.choices[0].message?.content?.replace(/["']/g, '') || `Histoire pour ${childrenNames.join(' et ')}`;
+
     // Mettre à jour l'histoire dans la base de données
-    const { error } = await supabaseClient
+    const { error: updateError } = await supabase
       .from('stories')
       .update({
         title,
-        content,
+        content: storyText,
         summary,
-        preview,
+        preview: storyText.substring(0, 200) + "...",
         status: 'completed',
         error: null,
         updatedat: new Date().toISOString()
       })
       .eq('id', storyId);
-    
-    if (error) throw error;
+
+    if (updateError) {
+      throw updateError;
+    }
     
     console.log('Histoire régénérée avec succès:', { storyId, title });
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: 'Histoire régénérée avec succès'
+        message: 'Histoire régénérée avec succès',
+        title,
+        summary,
+        preview: storyText.substring(0, 200) + "..."
       }),
       { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   } catch (error) {
-    console.error('Erreur lors de la régénération de l\'histoire:', error);
-    
-    // Mettre à jour le statut de l'histoire en cas d'erreur
-    try {
-      const { storyId } = await req.json();
-      if (storyId) {
-        const supabaseClient = await createSupabaseClient();
-        await supabaseClient
-          .from('stories')
-          .update({
-            status: 'error',
-            error: error instanceof Error ? error.message : 'Erreur inconnue',
-            updatedat: new Date().toISOString()
-          })
-          .eq('id', storyId);
-      }
-    } catch (e) {
-      console.error('Erreur lors de la mise à jour du statut de l\'histoire:', e);
-    }
+    console.error('Erreur lors de la nouvelle tentative:', error);
     
     return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
-      }),
+      JSON.stringify({ error: error.message || 'Erreur lors de la nouvelle tentative' }),
       { 
         status: 500,
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
 });
-
-// Fonction helper pour créer un client Supabase
-async function createSupabaseClient() {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error("Variables d'environnement Supabase manquantes");
-  }
-  
-  return createClient(supabaseUrl, supabaseKey);
-}
