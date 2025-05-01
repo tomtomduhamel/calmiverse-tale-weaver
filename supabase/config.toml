@@ -15,9 +15,8 @@ project_id = "ioeihnoxvtpxtqhxklpw"
 [functions.upload-epub]
 verify_jwt = false
 
-[functions.generate-story]
+[functions.generateStory]
 verify_jwt = true
 
 [functions.retry-story]
 verify_jwt = true
-

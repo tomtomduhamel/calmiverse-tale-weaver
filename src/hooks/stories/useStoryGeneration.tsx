@@ -44,6 +44,7 @@ export const useStoryGeneration = () => {
       }
       
       // Appeler la fonction Edge pour générer l'histoire complète
+      // Utiliser le nom approprié de la fonction (generateStory, pas generate-story)
       const { data, error } = await supabase.functions.invoke('generateStory', {
         body: {
           storyId: storyData.id,

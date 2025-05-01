@@ -21,22 +21,10 @@ export const useStoryRetry = () => {
       // Mettre à jour le statut de l'histoire à "pending"
       await updateStoryStatus(storyId, 'pending');
       
-      // Obtenir les informations de l'histoire
-      const { data: storyData, error: storyError } = await supabase
-        .from('stories')
-        .select('*')
-        .eq('id', storyId)
-        .eq('authorid', user.id)
-        .single();
-      
-      if (storyError) throw storyError;
-      
       // Appeler la fonction edge pour régénérer l'histoire
       const { data: generationData, error: generationError } = await supabase.functions.invoke('retry-story', {
         body: {
-          storyId: storyId,
-          objective: storyData.objective,
-          childrenNames: storyData.childrennames
+          storyId: storyId
         }
       });
       
@@ -54,19 +42,6 @@ export const useStoryRetry = () => {
         
         throw generationError;
       }
-      
-      // Mettre à jour l'histoire avec le contenu régénéré
-      await supabase
-        .from('stories')
-        .update({
-          title: generationData.title || storyData.title,
-          content: generationData.story_text || '',
-          summary: generationData.story_summary || '',
-          preview: generationData.preview || '',
-          status: 'completed',
-          updatedat: new Date().toISOString()
-        })
-        .eq('id', storyId);
       
       toast({
         title: "Nouvelle tentative",

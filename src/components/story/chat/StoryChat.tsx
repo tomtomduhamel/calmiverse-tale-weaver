@@ -10,7 +10,7 @@ import TypingIndicator from './TypingIndicator';
 import ChatHeader from './ChatHeader';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
 import { useStoryChat } from '@/hooks/useStoryChat';
-import { useStoryCloudFunctions } from '@/hooks/stories/useStoryCloudFunctions';
+import { useStoryGeneration } from '@/hooks/stories/useStoryGeneration';
 
 interface StoryChatProps {
   onSwitchMode: () => void;
@@ -29,7 +29,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { processUserMessage } = useStoryChat();
   const { toast } = useToast();
-  const { generateStory } = useStoryCloudFunctions();
+  const { generateStory } = useStoryGeneration();
 
   useEffect(() => {
     const welcomeMessage: ChatMessageType = {
