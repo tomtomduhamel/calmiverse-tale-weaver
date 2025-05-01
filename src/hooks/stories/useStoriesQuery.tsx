@@ -20,40 +20,6 @@ export const useStoriesQuery = () => {
       return;
     }
 
-    const fetchStories = async () => {
-      try {
-        console.log("Fetching stories for user:", user.id);
-        setIsLoading(true);
-        setError(null);
-        
-        const { data, error: queryError } = await supabase
-          .from('stories')
-          .select('*')
-          .eq('authorid', user.id)
-          .order('createdat', { ascending: false });
-        
-        if (queryError) {
-          console.error("Error fetching stories:", queryError);
-          throw queryError;
-        }
-        
-        console.log(`Found ${data?.length || 0} stories for user ${user.id}`);
-        
-        const formattedStories = formatStoriesFromSupabase(data || []);
-        setStories(formattedStories);
-      } catch (err: any) {
-        console.error("Error in useStoriesQuery:", err);
-        setError(err);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger vos histoires",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchStories();
     
     // Set up real-time subscription
@@ -79,6 +45,7 @@ export const useStoriesQuery = () => {
     if (!user) return;
     
     try {
+      console.log("Fetching stories for user:", user.id);
       setIsLoading(true);
       setError(null);
       
@@ -88,13 +55,23 @@ export const useStoriesQuery = () => {
         .eq('authorid', user.id)
         .order('createdat', { ascending: false });
       
-      if (queryError) throw queryError;
+      if (queryError) {
+        console.error("Error fetching stories:", queryError);
+        throw queryError;
+      }
+      
+      console.log(`Found ${data?.length || 0} stories for user ${user.id}`);
       
       const formattedStories = formatStoriesFromSupabase(data || []);
       setStories(formattedStories);
     } catch (err: any) {
-      console.error("Error fetching stories:", err);
+      console.error("Error in useStoriesQuery:", err);
       setError(err);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger vos histoires",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

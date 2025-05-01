@@ -1,12 +1,12 @@
 
-import { useStoriesQuery } from './stories/useStoriesQuery';
+import { useSupabaseStories } from './stories/useSupabaseStories';
 import { useStoryMutations } from './stories/useStoryMutations';
 import { useStoriesState } from './stories/useStoriesState';
 import { useStoryOperations } from './stories/useStoryOperations';
 import { useStoryEvents } from './stories/useStoryEvents';
 
 export const useStories = (children: any[] = []) => {
-  const stories = useStoriesQuery();
+  const stories = useSupabaseStories();
   const { createStory, deleteStory, updateStoryStatus, retryStoryGeneration } = useStoryMutations();
   
   const {

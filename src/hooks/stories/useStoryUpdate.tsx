@@ -14,14 +14,14 @@ export const useStoryUpdate = () => {
     }
 
     try {
-      console.log(`Mise à jour du statut de l'histoire: ${storyId} -> ${status}`);
+      console.log(`Updating story status: ${storyId} -> ${status}`);
       
       const updateData: any = {
         status,
         updatedat: new Date().toISOString()
       };
       
-      // Ajouter les détails d'erreur si fournis
+      // Add error details if provided
       if (status === 'error' && errorDetails) {
         updateData.error = errorDetails;
       } else if (status !== 'error') {
@@ -36,12 +36,12 @@ export const useStoryUpdate = () => {
       
       if (error) throw error;
       
-      console.log('✅ Statut de l\'histoire mis à jour avec succès:', {
+      console.log('✅ Story status updated successfully:', {
         id: storyId,
         newStatus: status
       });
     } catch (error) {
-      console.error('❌ Erreur lors de la mise à jour du statut de l\'histoire:', error);
+      console.error('❌ Error updating story status:', error);
       throw error;
     }
   }, [user]);

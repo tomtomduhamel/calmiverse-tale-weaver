@@ -1,8 +1,8 @@
 
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from "@/hooks/use-toast";
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useStoryUpdate } from './useStoryUpdate';
 
 export const useStoryRetry = () => {
@@ -16,52 +16,46 @@ export const useStoryRetry = () => {
     }
 
     try {
-      console.log(`Nouvelle tentative de génération pour l'histoire: ${storyId}`);
+      console.log(`Retrying story generation for: ${storyId}`);
       
-      // Mettre à jour le statut de l'histoire à "pending"
+      // Update status to "pending"
       await updateStoryStatus(storyId, 'pending');
       
-      // Appeler la fonction edge pour régénérer l'histoire
-      const { data: generationData, error: generationError } = await supabase.functions.invoke('retry-story', {
-        body: {
-          storyId: storyId
-        }
+      // Call edge function to retry
+      const { data, error } = await supabase.functions.invoke('retry-story', {
+        body: { storyId }
       });
       
-      if (generationError) {
-        console.error('Erreur lors de la nouvelle tentative de génération:', generationError);
+      if (error) {
+        console.error("Error calling retry function:", error);
         
-        // Mettre à jour l'histoire avec une erreur
-        await updateStoryStatus(storyId, 'error', generationError.message);
-        
-        toast({
-          title: "Erreur",
-          description: "La nouvelle tentative a échoué: " + generationError.message,
-          variant: "destructive",
-        });
-        
-        throw generationError;
+        // Update status to "error"
+        await updateStoryStatus(storyId, 'error', error.message || "Échec de la relance");
+        throw error;
       }
+      
+      console.log("Retry initiated successfully:", data);
       
       toast({
         title: "Nouvelle tentative",
-        description: "La régénération de l'histoire a réussi",
+        description: "La génération de l'histoire a été relancée",
       });
       
-      return generationData;
-    } catch (error) {
-      console.error('Erreur lors de la nouvelle tentative de génération:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Échec de la nouvelle tentative de génération';
+      return data;
+    } catch (error: any) {
+      console.error('Error retrying story generation:', error);
       
       toast({
         title: "Erreur",
-        description: errorMessage,
+        description: "La nouvelle tentative a échoué: " + (error.message || "Erreur inconnue"),
         variant: "destructive",
       });
       
       throw error;
     }
-  }, [user, toast, updateStoryStatus]);
+  }, [user, updateStoryStatus, toast]);
 
-  return { retryStoryGeneration };
+  return {
+    retryStoryGeneration
+  };
 };

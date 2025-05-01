@@ -14,7 +14,7 @@ export const useStoryDeletion = () => {
     }
 
     try {
-      console.log(`Suppression de l'histoire: ${storyId}`);
+      console.log(`Deleting story: ${storyId}`);
       
       const { error } = await supabase
         .from('stories')
@@ -24,13 +24,13 @@ export const useStoryDeletion = () => {
       
       if (error) throw error;
       
-      console.log('Histoire supprimée avec succès');
+      console.log('Story deleted successfully');
       toast({
         title: "Succès",
         description: "L'histoire a été supprimée",
       });
     } catch (error: any) {
-      console.error('Erreur lors de la suppression de l\'histoire:', error);
+      console.error('Error deleting story:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer l'histoire",
