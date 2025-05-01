@@ -113,13 +113,39 @@ export const useUserSettings = () => {
       if (newSettings.notifications?.system !== undefined) 
         supabaseData.system_notifications = newSettings.notifications.system;
       
-      const { error } = await supabase
+      // Vérifier si l'utilisateur existe déjà dans la table
+      const { data: existingUser } = await supabase
         .from('users')
-        .update(supabaseData)
-        .eq('id', user.id);
+        .select('id')
+        .eq('id', user.id)
+        .single();
+      
+      let error;
+      
+      if (existingUser) {
+        // Mettre à jour l'utilisateur existant
+        const result = await supabase
+          .from('users')
+          .update(supabaseData)
+          .eq('id', user.id);
+          
+        error = result.error;
+      } else {
+        // Créer un nouvel utilisateur
+        const result = await supabase
+          .from('users')
+          .insert({
+            ...supabaseData,
+            id: user.id,
+            email: user.email
+          });
+          
+        error = result.error;
+      }
       
       if (error) throw error;
       
+      // Mettre à jour l'état local avec les nouvelles valeurs
       setUserSettings(prev => ({ ...prev, ...newSettings }));
       console.log('Paramètres mis à jour avec succès');
       

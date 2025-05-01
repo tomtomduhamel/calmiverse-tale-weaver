@@ -20,7 +20,7 @@ interface KindleSectionProps {
 export const KindleSection = ({ kindleEmail }: KindleSectionProps) => {
   const [email, setEmail] = useState(kindleEmail);
   const [isUpdating, setIsUpdating] = useState(false);
-  const { updateSettings } = useKindleSettings();
+  const { settings, updateSettings } = useKindleSettings();
   const { toast } = useToast();
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,8 +29,8 @@ export const KindleSection = ({ kindleEmail }: KindleSectionProps) => {
     
     try {
       const result = await updateSettings({
-        firstName: '',  // Utilisez les valeurs existantes si nécessaire
-        lastName: '',   // Utilisez les valeurs existantes si nécessaire
+        firstName: settings.firstName,  // Utilise les valeurs existantes
+        lastName: settings.lastName,    // Utilise les valeurs existantes
         kindleEmail: email
       });
       

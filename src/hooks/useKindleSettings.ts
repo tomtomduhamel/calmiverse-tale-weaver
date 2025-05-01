@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
 
@@ -8,8 +9,8 @@ export interface KindleSettings {
 }
 
 const kindleSettingsSchema = z.object({
-  firstName: z.string().min(1, "Le prénom est requis"),
-  lastName: z.string().min(1, "Le nom est requis"),
+  firstName: z.string().optional(), // Modification ici pour permettre des valeurs optionnelles
+  lastName: z.string().optional(),  // Modification ici pour permettre des valeurs optionnelles
   kindleEmail: z.string()
     .email("Format d'email invalide")
     .regex(/@kindle\.com$/, "L'email doit se terminer par @kindle.com")
@@ -31,9 +32,9 @@ export const useKindleSettings = () => {
         if (validated.success) {
           // Ensure all required properties are present
           const validatedSettings: KindleSettings = {
-            firstName: validated.data.firstName,
-            lastName: validated.data.lastName,
-            kindleEmail: validated.data.kindleEmail,
+            firstName: validated.data.firstName || '',
+            lastName: validated.data.lastName || '',
+            kindleEmail: validated.data.kindleEmail || '',
           };
           setSettings(validatedSettings);
         }
@@ -43,15 +44,23 @@ export const useKindleSettings = () => {
     }
   }, []);
 
-  const updateSettings = async (newSettings: KindleSettings) => {
+  const updateSettings = async (newSettings: Partial<KindleSettings>) => {
     try {
-      const validated = await kindleSettingsSchema.parseAsync(newSettings);
-      // Ensure all required properties are present
+      // Fusionner les paramètres existants avec les nouveaux paramètres
+      const mergedSettings = {
+        ...settings,
+        ...newSettings,
+      };
+      
+      const validated = await kindleSettingsSchema.parseAsync(mergedSettings);
+      
+      // Ensure all properties are present
       const validatedSettings: KindleSettings = {
-        firstName: validated.firstName,
-        lastName: validated.lastName,
+        firstName: validated.firstName || '',
+        lastName: validated.lastName || '',
         kindleEmail: validated.kindleEmail,
       };
+      
       setSettings(validatedSettings);
       localStorage.setItem('kindleSettings', JSON.stringify(validatedSettings));
       return { success: true };
