@@ -1,151 +1,123 @@
 
 import { useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
-// Définir le type pour la réponse de la fonction edge d'histoire
-export interface StoryResponse {
-  id_stories?: string;
-  story_text: string;
-  story_summary: string;
-  status: 'pending' | 'completed' | 'read';
-  createdAt?: Date;
-  title: string;
-  preview: string;
-}
-
-// Définir la structure attendue de la réponse de la fonction edge
-interface CloudFunctionResult {
-  success?: boolean;
-  storyData?: StoryResponse;
-  error?: string;
-  message?: string;
-  storyId?: string;
-}
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useToast } from "@/hooks/use-toast";
+import { useStoryUpdate } from './useStoryUpdate';
 
 export const useStoryCloudFunctions = () => {
   const { toast } = useToast();
-  
-  const callCloudFunctionWithRetry = useCallback(async (functionName: string, data: any, attempt = 1) => {
-    try {
-      console.log(`Appel de la fonction Edge Supabase ${functionName} avec les données:`, data);
-      
-      const { data: result, error } = await supabase.functions.invoke(functionName, {
-        body: data
-      });
-      
-      if (error) throw error;
-      
-      console.log(`La fonction ${functionName} a retourné:`, result);
-      
-      return result;
-    } catch (error) {
-      console.error(`Erreur lors de l'appel de la fonction ${functionName}:`, error);
-      if (attempt < 3) {
-        console.log(`Nouvelle tentative pour la fonction ${functionName}, tentative ${attempt + 1}`);
-        return callCloudFunctionWithRetry(functionName, data, attempt + 1);
-      }
-      
-      const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
-      toast({
-        title: 'Erreur',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  }, [toast]);
-  
-  const retryStoryGeneration = useCallback(async (storyId: string) => {
-    try {
-      if (!storyId) {
-        throw new Error("ID d'histoire manquant");
-      }
-      console.log(`Tentative de régénération d'histoire pour l'ID: ${storyId}`);
-      const result = await callCloudFunctionWithRetry('retry-story', { storyId });
-      
-      // Notification de réussite
-      toast({
-        title: 'Succès',
-        description: 'Nouvelle tentative de génération lancée avec succès',
-      });
-      
-      return result;
-    } catch (error) {
-      console.error('Erreur dans retryStoryGeneration:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Échec de la relance de génération';
-      
-      toast({
-        title: 'Erreur',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      
-      throw error;
-    }
-  }, [callCloudFunctionWithRetry, toast]);
+  const { user } = useSupabaseAuth();
+  const { updateStoryStatus } = useStoryUpdate();
 
-  const generateStory = useCallback(async (objective: string, childrenNames: string[]): Promise<any> => {
+  const retryStoryGeneration = useCallback(async (storyId: string) => {
+    if (!user) {
+      throw new Error("Utilisateur non connecté");
+    }
+
     try {
-      console.log('Appel de la fonction Edge Supabase generate-story avec:', { objective, childrenNames });
+      console.log(`Nouvelle tentative de génération pour l'histoire: ${storyId}`);
       
-      // Générer un ID aléatoire pour l'histoire
-      const storyId = Date.now().toString();
+      // Mettre à jour le statut de l'histoire à "pending"
+      await updateStoryStatus(storyId, 'pending');
       
-      const result = await callCloudFunctionWithRetry('generate-story', { 
-        storyId,
-        objective,
-        childrenNames
+      // Obtenir les informations de l'histoire
+      const { data: storyData, error: storyError } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('id', storyId)
+        .eq('authorid', user.id)
+        .single();
+      
+      if (storyError) throw storyError;
+      
+      // Appeler la fonction edge pour régénérer l'histoire
+      const { data: generationData, error: generationError } = await supabase.functions.invoke('retry-story', {
+        body: {
+          storyId: storyId,
+          objective: storyData.objective,
+          childrenNames: storyData.childrennames
+        }
       });
       
-      console.log('Résultat de la génération d\'histoire:', result);
-      
-      // Valider les données de réponse
-      if (!result || typeof result !== 'object') {
-        throw new Error("Format de réponse invalide du générateur d'histoire");
+      if (generationError) {
+        console.error('Erreur lors de la nouvelle tentative de génération:', generationError);
+        
+        // Mettre à jour l'histoire avec une erreur
+        await updateStoryStatus(storyId, 'error', generationError.message);
+        
+        toast({
+          title: "Erreur",
+          description: "La nouvelle tentative a échoué: " + generationError.message,
+          variant: "destructive",
+        });
+        
+        throw generationError;
       }
       
-      // Convertir en un enregistrement générique pour un accès plus sûr
-      const resultData = result as CloudFunctionResult;
-      
-      // Si le résultat contient une propriété storyData qui est un objet, l'utiliser
-      if (resultData.storyData && typeof resultData.storyData === 'object') {
-        return {
-          success: true,
-          storyData: resultData.storyData,
-          storyId: resultData.storyId || storyId
-        };
-      }
-      
-      // Construire une réponse minimale si storyData n'existe pas
-      return {
-        success: resultData.success || false,
-        storyId: resultData.storyId || storyId,
-        storyData: {
-          title: "Histoire générée",
-          story_text: "Le contenu de l'histoire n'a pas pu être récupéré correctement.",
-          story_summary: "Résumé non disponible",
-          preview: "Prévisualisation non disponible",
-          status: "completed"
-        }
-      };
-    } catch (error) {
-      console.error('Erreur dans generateStory:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Échec de la génération de l\'histoire';
+      // Mettre à jour l'histoire avec le contenu régénéré
+      await supabase
+        .from('stories')
+        .update({
+          title: generationData.title || storyData.title,
+          content: generationData.story_text || '',
+          summary: generationData.story_summary || '',
+          preview: generationData.preview || '',
+          status: 'completed',
+          updatedat: new Date().toISOString()
+        })
+        .eq('id', storyId);
       
       toast({
-        title: 'Erreur',
+        title: "Nouvelle tentative",
+        description: "La régénération de l'histoire a réussi",
+      });
+      
+      return generationData;
+    } catch (error) {
+      console.error('Erreur lors de la nouvelle tentative de génération:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Échec de la nouvelle tentative de génération';
+      
+      toast({
+        title: "Erreur",
         description: errorMessage,
-        variant: 'destructive',
+        variant: "destructive",
       });
       
       throw error;
     }
-  }, [callCloudFunctionWithRetry, toast]);
+  }, [user, toast, updateStoryStatus]);
+
+  const callCloudFunctionWithRetry = useCallback(async (functionName: string, payload: any, maxRetries = 3) => {
+    let retries = 0;
+    
+    while (retries < maxRetries) {
+      try {
+        console.log(`Appel de la fonction cloud ${functionName} (tentative ${retries + 1}/${maxRetries})`, payload);
+        
+        const { data, error } = await supabase.functions.invoke(functionName, { body: payload });
+        
+        if (error) throw error;
+        
+        console.log(`Fonction ${functionName} exécutée avec succès:`, data);
+        return data;
+      } catch (error) {
+        console.error(`Erreur lors de l'appel à ${functionName}:`, error);
+        retries++;
+        
+        if (retries >= maxRetries) {
+          console.error(`Nombre maximum de tentatives atteint pour ${functionName}`);
+          throw error;
+        }
+        
+        // Attendre un peu avant de réessayer (backoff exponentiel)
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
+      }
+    }
+  }, []);
 
   return {
-    callCloudFunctionWithRetry,
     retryStoryGeneration,
-    generateStory
+    callCloudFunctionWithRetry
   };
 };

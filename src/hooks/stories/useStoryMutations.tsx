@@ -13,11 +13,11 @@ export const useStoryMutations = () => {
   const { retryStoryGeneration } = useStoryCloudFunctions();
   const { toast } = useToast();
 
-  const createStory = useCallback(async (formData, children = []) => {
+  const createStory = useCallback(async (formData: any, children = []) => {
     try {
       console.log('Creating story with data:', formData);
       return await createStoryBase(formData, children);
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
       console.error('Error creating story:', error);
       toast({
@@ -29,7 +29,7 @@ export const useStoryMutations = () => {
     }
   }, [createStoryBase, toast]);
 
-  const retryStory = useCallback(async (storyId) => {
+  const retryStory = useCallback(async (storyId: string) => {
     try {
       console.log('Retrying story generation for story ID:', storyId);
       if (!storyId) {
@@ -37,7 +37,7 @@ export const useStoryMutations = () => {
       }
       const result = await retryStoryGeneration(storyId);
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error retrying story generation:', error);
       const errorMessage = error instanceof Error ? error.message : 'Échec de la relance de génération';
       toast({

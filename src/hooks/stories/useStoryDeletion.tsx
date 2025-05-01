@@ -1,4 +1,5 @@
 
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -7,13 +8,13 @@ export const useStoryDeletion = () => {
   const { toast } = useToast();
   const { user } = useSupabaseAuth();
 
-  const deleteStory = async (storyId: string) => {
+  const deleteStory = useCallback(async (storyId: string) => {
     if (!user) {
       throw new Error("Utilisateur non connecté");
     }
 
     try {
-      console.log(`Deleting story: ${storyId}`);
+      console.log(`Suppression de l'histoire: ${storyId}`);
       
       const { error } = await supabase
         .from('stories')
@@ -23,13 +24,13 @@ export const useStoryDeletion = () => {
       
       if (error) throw error;
       
-      console.log('Story deleted successfully');
+      console.log('Histoire supprimée avec succès');
       toast({
         title: "Succès",
         description: "L'histoire a été supprimée",
       });
-    } catch (error) {
-      console.error('Error deleting story:', error);
+    } catch (error: any) {
+      console.error('Erreur lors de la suppression de l\'histoire:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer l'histoire",
@@ -37,7 +38,7 @@ export const useStoryDeletion = () => {
       });
       throw error;
     }
-  };
+  }, [user, toast]);
 
   return {
     deleteStory

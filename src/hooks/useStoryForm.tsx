@@ -54,7 +54,7 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
         authChecked
       });
 
-      // Double vérification de l'authentification
+      // Validation de l'authentification
       if (!user || !session) {
         console.error("Erreur d'authentification: Utilisateur non connecté", { user, session });
         toast({

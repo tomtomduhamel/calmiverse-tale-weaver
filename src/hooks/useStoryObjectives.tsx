@@ -14,8 +14,7 @@ export const useStoryObjectives = () => {
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
-  // Pour l'instant, nous utilisons des objectifs statiques
-  // Dans le futur, ils pourront être chargés depuis la base de données
+  // Charger les objectifs (statiques pour l'instant)
   useEffect(() => {
     setIsLoading(false);
     console.log("Objectifs chargés:", objectives);
