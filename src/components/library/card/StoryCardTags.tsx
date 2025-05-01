@@ -4,13 +4,13 @@ import { Tag, AlertCircle } from "lucide-react";
 import type { Story } from "@/types/story";
 
 interface StoryCardTagsProps {
-  tags: string[];
+  tags?: string[];
   objective: Story['objective'];
   status: Story['status'];
   error?: string;
 }
 
-const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags, objective, status, error }) => {
+const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags = [], objective, status, error }) => {
   const getObjectiveText = (objective: Story['objective']) => {
     if (typeof objective === 'string') {
       return objective;

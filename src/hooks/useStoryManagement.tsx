@@ -7,7 +7,7 @@ import type { ViewType } from "@/types/views";
 
 export const useStoryManagement = (
   createStory: (formData: StoryFormData, children?: any[]) => Promise<string>,
-  deleteStory: (storyId: string) => Promise<void>,
+  deleteStory: (storyId: string) => Promise<any>, // Modification ici pour accepter tout type de retour
   setCurrentView: (view: ViewType) => void
 ) => {
   const [currentStory, setCurrentStory] = useState<Story | null>(null);

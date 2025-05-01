@@ -74,7 +74,12 @@ const StoryCard: React.FC<StoryCardProps> = ({
           {story.preview || "Chargement de l'aperçu..."}
         </p>
 
-        <StoryCardTags story={story} />
+        <StoryCardTags 
+          tags={story.tags} 
+          objective={story.objective} 
+          status={story.status}
+          error={story.error}
+        />
       </CardContent>
 
       <CardFooter className="absolute bottom-0 w-full p-3 border-t bg-white/80 backdrop-blur-sm">

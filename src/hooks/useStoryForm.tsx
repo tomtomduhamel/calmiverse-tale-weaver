@@ -48,7 +48,8 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     try {
       setIsSubmitting(true);
       setError(null);
-      console.log("Tentative de création d'histoire, état auth:", { 
+      console.log("Tentative de création d'histoire, données du formulaire:", formData);
+      console.log("État auth:", { 
         user: user?.id,
         sessionExists: !!session,
         authChecked
@@ -66,11 +67,13 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
       }
 
       // Validation des données
-      if (formData.childrenIds.length === 0) {
+      if (!formData.childrenIds || formData.childrenIds.length === 0) {
+        console.error("Erreur: Aucun enfant sélectionné", formData);
         throw new Error("Veuillez sélectionner au moins un enfant");
       }
 
       if (!formData.objective) {
+        console.error("Erreur: Aucun objectif sélectionné", formData);
         throw new Error("Veuillez sélectionner un objectif pour l'histoire");
       }
 
