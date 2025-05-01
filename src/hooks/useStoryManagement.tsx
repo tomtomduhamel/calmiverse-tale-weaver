@@ -6,7 +6,7 @@ import type { StoryFormData } from "@/components/story/StoryFormTypes";
 import type { ViewType } from "@/types/views";
 
 export const useStoryManagement = (
-  createStory: (formData: StoryFormData) => Promise<string>,
+  createStory: (formData: StoryFormData, children?: any[]) => Promise<string>,
   deleteStory: (storyId: string) => Promise<void>,
   setCurrentView: (view: ViewType) => void
 ) => {
