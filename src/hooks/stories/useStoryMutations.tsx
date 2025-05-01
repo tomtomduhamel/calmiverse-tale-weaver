@@ -18,7 +18,7 @@ export const useStoryMutations = () => {
       console.log('Creating story with data:', formData);
       const result = await createStoryBase(formData, children);
       console.log('Story creation result:', result);
-      return result;
+      return result && result.storyId ? result.storyId : null;
     } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
       console.error('Error creating story:', error);

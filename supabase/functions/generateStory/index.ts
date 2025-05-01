@@ -27,19 +27,19 @@ serve(async (req) => {
 
     console.log("Génération d'histoire pour:", { storyId, objective, childrenNames });
     
-    // Initialiser le client Supabase et l'API OpenAI
+    // Initialiser le client Supabase et obtenir la clé API OpenAI
     const supabase = initializeSupabase();
-    const openai = initializeOpenAI();
+    const openAIApiKey = initializeOpenAI();
     
     try {
       // Générer le texte principal de l'histoire
-      const storyText = await generateStoryText(openai, objective, childrenNames);
+      const storyText = await generateStoryText(openAIApiKey, objective, childrenNames);
       
       // Générer le résumé de l'histoire
-      const summary = await generateSummary(openai, storyText);
+      const summary = await generateSummary(openAIApiKey, storyText);
       
       // Générer un titre pour l'histoire
-      const title = await generateTitle(openai, storyText, childrenNames);
+      const title = await generateTitle(openAIApiKey, storyText, childrenNames);
       
       // Mettre à jour l'histoire dans la base de données
       await updateStoryInDb(supabase, storyId, {

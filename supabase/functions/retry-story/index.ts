@@ -37,7 +37,7 @@ serve(async (req) => {
 
     // Initialiser le client Supabase et l'API OpenAI
     const supabase = initializeSupabase();
-    const openai = initializeOpenAI();
+    const openAIApiKey = initializeOpenAI();
     
     // Récupérer l'histoire existante
     const { data: story, error: storyError } = await supabase
@@ -65,13 +65,13 @@ serve(async (req) => {
 
     try {
       // Générer une nouvelle version de l'histoire
-      const storyText = await generateStoryText(openai, objective, childrenNames, true);
+      const storyText = await generateStoryText(openAIApiKey, objective, childrenNames, true);
       
       // Générer un nouveau résumé
-      const summary = await generateSummary(openai, storyText);
+      const summary = await generateSummary(openAIApiKey, storyText);
       
       // Générer un nouveau titre
-      const title = await generateTitle(openai, storyText, childrenNames);
+      const title = await generateTitle(openAIApiKey, storyText, childrenNames);
       
       // Mettre à jour l'histoire dans la base de données
       await updateStoryInDb(supabase, storyId, {
