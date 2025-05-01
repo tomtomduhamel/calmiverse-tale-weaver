@@ -1,7 +1,7 @@
 
 import React, { ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Navigation } from './navigation/Navigation';
+import Navigation from './navigation/Navigation';
 
 interface ShellProps {
   children?: ReactNode;
