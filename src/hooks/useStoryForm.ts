@@ -6,6 +6,7 @@ import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 export const useStoryForm = (onStoryCreated, onSubmit) => {
   const [formData, setFormData] = useState({ childrenIds: [], objective: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const { toast } = useToast();
@@ -37,7 +38,7 @@ export const useStoryForm = (onStoryCreated, onSubmit) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       // Vérification de l'authentification
@@ -78,13 +79,14 @@ export const useStoryForm = (onStoryCreated, onSubmit) => {
       
       throw error; // Rethrow to allow the parent component to handle it
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return {
     formData,
     isLoading,
+    isSubmitting,
     error,
     authChecked,
     handleChildToggle,
