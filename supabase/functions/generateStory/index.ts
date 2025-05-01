@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.5";
+import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.2.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,25 +25,93 @@ serve(async (req) => {
 
     console.log("Génération d'histoire pour:", { storyId, objective, childrenNames });
 
-    // Pour cette version, nous allons générer une histoire simple
-    // Dans une version future, on pourra intégrer un modèle IA comme OpenAI
-    const title = `L'aventure de ${childrenNames.join(' et ')}`;
-    const story_text = `
-      Il était une fois ${childrenNames.join(' et ')} qui ${objective.toLowerCase()}. 
-      Après beaucoup d'efforts et de péripéties, ils ont réussi et sont rentrés chez eux 
-      heureux et enrichis par cette expérience.
+    // Récupérer la clé API OpenAI depuis les secrets Supabase
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    
+    if (!OPENAI_API_KEY) {
+      console.error('Clé API OpenAI manquante');
+      throw new Error('Configuration OpenAI manquante sur le serveur');
+    }
+    
+    // Configuration OpenAI
+    const configuration = new Configuration({ apiKey: OPENAI_API_KEY });
+    const openai = new OpenAIApi(configuration);
+    
+    // Générer l'histoire avec OpenAI
+    const completion = await openai.createChatCompletion({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `Tu es un expert en création d'histoires pour enfants. 
+          
+FORMAT DE L'HISTOIRE :
+- Longueur : 6000-10000 mots
+- Structure narrative fluide et continue, sans découpage visible
+- Pas de titre explicite
 
-      C'était une journée ensoleillée comme les autres quand l'aventure a commencé. ${childrenNames.join(' et ')} 
-      se sont retrouvés face à un défi qu'ils n'avaient jamais imaginé.
+RÈGLES FONDAMENTALES :
+- Adapte le langage à l'âge de l'enfant
+- Crée des personnages mémorables et appropriés
+- Utilise des dialogues engageants
+- Ajoute des répétitions pour les jeunes enfants
+- Évite tout contenu effrayant ou angoissant
+- Termine toujours sur une note positive`
+        },
+        {
+          role: 'user',
+          content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
+          L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
+          Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.`
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 3500,
+    });
 
-      "N'ayons pas peur," dit ${childrenNames[0]}. "Ensemble, nous pouvons y arriver."
+    const storyText = completion.data.choices[0].message?.content;
+    
+    if (!storyText) {
+      throw new Error('Aucune histoire générée par OpenAI');
+    }
 
-      Et c'est ainsi que leur aventure a commencé, une aventure qui allait les transformer et 
-      leur apprendre beaucoup sur eux-mêmes et sur la vie.
-    `;
+    // Générer un résumé
+    const summaryCompletion = await openai.createChatCompletion({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Tu es un assistant qui résume des histoires pour enfants de manière concise.'
+        },
+        {
+          role: 'user',
+          content: `Résume cette histoire en 3-4 phrases : ${storyText.substring(0, 2000)}...`
+        }
+      ],
+      temperature: 0.5,
+      max_tokens: 300,
+    });
 
-    const story_summary = `Une histoire où ${childrenNames.join(' et ')} ${objective.toLowerCase()}`;
-    const preview = `${childrenNames.join(' et ')} partent à l'aventure...`;
+    const summary = summaryCompletion.data.choices[0].message?.content || "Résumé non disponible";
+
+    // Générer un titre
+    const titleCompletion = await openai.createChatCompletion({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Tu es un assistant qui crée des titres captivants pour des histoires pour enfants.'
+        },
+        {
+          role: 'user',
+          content: `Crée un titre court et captivant pour cette histoire : ${storyText.substring(0, 1000)}...`
+        }
+      ],
+      temperature: 0.8,
+      max_tokens: 50,
+    });
+
+    const title = titleCompletion.data.choices[0].message?.content?.replace(/["']/g, '') || `L'aventure de ${childrenNames.join(' et ')}`;
 
     // Créer un client Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
@@ -61,9 +130,9 @@ serve(async (req) => {
       .from('stories')
       .update({
         title,
-        content: story_text,
-        summary: story_summary,
-        preview,
+        content: storyText,
+        summary: summary,
+        preview: storyText.substring(0, 200) + "...",
         status: 'completed',
         updatedat: new Date().toISOString()
       })
@@ -81,9 +150,9 @@ serve(async (req) => {
         success: true,
         storyData: {
           title,
-          story_text,
-          story_summary,
-          preview
+          story_text: storyText,
+          story_summary: summary,
+          preview: storyText.substring(0, 200) + "..."
         }
       }),
       {

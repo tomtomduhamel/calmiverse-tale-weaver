@@ -16,7 +16,7 @@ serve(async (req) => {
 
   try {
     // Récupérer la clé API OpenAI depuis les secrets Supabase
-    const OPENAI_API_KEY = Deno.env.get('Calmi OpenAI');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     
     if (!OPENAI_API_KEY) {
       console.error('Clé API OpenAI manquante');
@@ -68,7 +68,7 @@ serve(async (req) => {
     
     // Générer l'histoire avec OpenAI
     const completion = await openai.createChatCompletion({
-      model: 'gpt-4',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -96,7 +96,7 @@ RÈGLES FONDAMENTALES :
         }
       ],
       temperature: 0.8, // Augmenter légèrement la température pour plus de diversité
-      max_tokens: 4000,
+      max_tokens: 3500,
     });
 
     const storyText = completion.data.choices[0].message?.content;
@@ -107,7 +107,7 @@ RÈGLES FONDAMENTALES :
 
     // Générer un résumé
     const summaryCompletion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -126,7 +126,7 @@ RÈGLES FONDAMENTALES :
 
     // Générer un titre
     const titleCompletion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
