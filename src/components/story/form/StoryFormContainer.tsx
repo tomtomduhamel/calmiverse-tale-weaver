@@ -25,13 +25,21 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
   const [formError, setFormError] = useState<string | null>(null);
   
-  // Utilisation du nouveau hook d'authentification
+  // Utilisation du hook d'authentification
   const { user, authLoading, authChecked } = useStoryFormAuth(setFormError);
   
-  // Utilisation du nouveau hook de notifications
+  // Utilisation du hook de notifications
   const { toast } = useNotifications(setFormError);
   
-  const { formData, isLoading, error, handleChildToggle, setObjective, handleSubmit, resetError } = useStoryForm(onStoryCreated, onSubmit);
+  const { 
+    formData, 
+    isLoading, 
+    error, 
+    handleChildToggle, 
+    setObjective, 
+    handleSubmit, 
+    resetError 
+  } = useStoryForm(onStoryCreated, onSubmit);
   
   const {
     showChildForm,
@@ -44,13 +52,11 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     setChildAge,
   } = useChildFormLogic(onCreateChild);
 
-  const { isSubmitting, handleFormSubmit } = useStoryFormSubmission({
-    user,
-    formData,
-    handleSubmit,
-    toast,
-    setFormError
-  });
+  // Utiliser le hook useStoryFormSubmission avec la fonction de soumission appropriée
+  const { isSubmitting, handleSubmit: handleFormSubmit } = useStoryFormSubmission(
+    onSubmit,
+    onStoryCreated
+  );
 
   const { progress } = useStoryProgress(isSubmitting);
 
@@ -74,6 +80,34 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     return <LoadingStory />;
   }
 
+  const handleFormSubmission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      setFormError("Vous devez être connecté pour créer une histoire");
+      return;
+    }
+    
+    try {
+      // Vérifier si des enfants sont sélectionnés
+      if (formData.childrenIds.length === 0) {
+        setFormError("Veuillez sélectionner au moins un enfant");
+        return;
+      }
+      
+      // Vérifier si un objectif est sélectionné
+      if (!formData.objective) {
+        setFormError("Veuillez sélectionner un objectif pour l'histoire");
+        return;
+      }
+      
+      // Appeler la fonction de soumission du formulaire avec les données
+      await handleFormSubmit(formData);
+    } catch (error: any) {
+      console.error("Erreur lors de la soumission du formulaire:", error);
+      setFormError(error.message || "Une erreur est survenue");
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       {creationMode === "classic" ? (
@@ -95,7 +129,7 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
             isSubmitting={isSubmitting}
             progress={progress}
             formError={formError || error}
-            onSubmit={handleFormSubmit}
+            onSubmit={handleFormSubmission}
             onModeSwitch={() => setCreationMode("chat")}
           />
         </>
