@@ -42,7 +42,15 @@ export const useUserSettings = () => {
           .eq('id', user.id)
           .single();
         
-        if (error) throw error;
+        if (error) {
+          // Si l'erreur est "No rows found", ce n'est pas une erreur fatale
+          if (error.code === 'PGRST116') {
+            console.log('Aucun profil trouvé, utilisation des paramètres par défaut');
+            // Nous continuerons avec les valeurs par défaut et les sauvegarderons plus tard
+          } else {
+            throw error;
+          }
+        }
         
         if (data) {
           console.log('Document utilisateur trouvé:', data);
@@ -87,6 +95,11 @@ export const useUserSettings = () => {
   const updateUserSettings = async (newSettings: Partial<UserSettings>): Promise<void> => {
     if (!user) {
       console.error('Tentative de mise à jour sans utilisateur connecté');
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour modifier vos paramètres",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -114,15 +127,21 @@ export const useUserSettings = () => {
         supabaseData.system_notifications = newSettings.notifications.system;
       
       // Vérifier si l'utilisateur existe déjà dans la table
-      const { data: existingUser } = await supabase
+      const { data: existingUser, error: checkError } = await supabase
         .from('users')
         .select('id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error('Erreur lors de la vérification du profil:', checkError);
+        throw new Error('Impossible de vérifier votre profil');
+      }
       
       let error;
       
       if (existingUser) {
+        console.log('Mise à jour du profil existant');
         // Mettre à jour l'utilisateur existant
         const result = await supabase
           .from('users')
@@ -131,6 +150,7 @@ export const useUserSettings = () => {
           
         error = result.error;
       } else {
+        console.log('Création d\'un nouveau profil');
         // Créer un nouvel utilisateur
         const result = await supabase
           .from('users')
@@ -143,7 +163,10 @@ export const useUserSettings = () => {
         error = result.error;
       }
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur lors de la sauvegarde:', error);
+        throw new Error('Impossible de sauvegarder vos paramètres');
+      }
       
       // Mettre à jour l'état local avec les nouvelles valeurs
       setUserSettings(prev => ({ ...prev, ...newSettings }));
@@ -157,7 +180,7 @@ export const useUserSettings = () => {
       console.error('Erreur détaillée lors de la mise à jour:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour vos paramètres",
+        description: error instanceof Error ? error.message : "Impossible de mettre à jour vos paramètres",
         variant: "destructive",
       });
     } finally {

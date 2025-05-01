@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -23,15 +23,25 @@ export const KindleSection = ({ kindleEmail }: KindleSectionProps) => {
   const { settings, updateSettings } = useKindleSettings();
   const { toast } = useToast();
   
+  // Mettre à jour l'email local lorsque kindleEmail change
+  useEffect(() => {
+    if (kindleEmail) {
+      setEmail(kindleEmail);
+    }
+  }, [kindleEmail]);
+  
+  const isValidEmail = email.trim() !== '' && email.endsWith('@kindle.com');
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdating(true);
     
     try {
+      console.log('Sauvegarde des paramètres Kindle avec email:', email);
       const result = await updateSettings({
-        firstName: settings.firstName,  // Utilise les valeurs existantes
-        lastName: settings.lastName,    // Utilise les valeurs existantes
-        kindleEmail: email
+        firstName: settings.firstName || '',
+        lastName: settings.lastName || '',
+        kindleEmail: email.trim()
       });
       
       if (result.success) {
@@ -43,6 +53,7 @@ export const KindleSection = ({ kindleEmail }: KindleSectionProps) => {
         throw new Error(result.errors?.[0]?.message || "Une erreur est survenue");
       }
     } catch (error) {
+      console.error('Erreur lors de la sauvegarde de l\'email Kindle:', error);
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Impossible de mettre à jour l'adresse email",
@@ -75,7 +86,7 @@ export const KindleSection = ({ kindleEmail }: KindleSectionProps) => {
               <Button 
                 type="submit" 
                 size="sm" 
-                disabled={isUpdating || !email.endsWith('@kindle.com')}
+                disabled={isUpdating || !isValidEmail}
               >
                 {isUpdating ? (
                   <span className="animate-spin mr-2">⟳</span>

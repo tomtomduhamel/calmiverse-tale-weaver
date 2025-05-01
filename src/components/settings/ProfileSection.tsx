@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,8 +19,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User, Clock } from 'lucide-react';
+import { User, Clock, Save } from 'lucide-react';
 import { UserSettings } from '@/types/user-settings';
+import { useToast } from '@/hooks/use-toast';
 
 const userFormSchema = z.object({
   firstName: z.string().min(1, "Le prénom est requis"),
@@ -32,11 +34,42 @@ interface ProfileSectionProps {
 }
 
 export const ProfileSection = ({ userSettings, onSubmit }: ProfileSectionProps) => {
+  const { toast } = useToast();
   const userForm = useForm<UserSettings>({
     resolver: zodResolver(userFormSchema),
-    defaultValues: userSettings,
-    values: userSettings,
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      ...userSettings
+    },
   });
+
+  // Mettre à jour le formulaire lorsque userSettings change
+  useEffect(() => {
+    userForm.reset({
+      firstName: userSettings.firstName,
+      lastName: userSettings.lastName,
+      ...userSettings
+    });
+  }, [userSettings, userForm]);
+
+  const handleSubmit = async (data: UserSettings) => {
+    try {
+      console.log('Soumission du formulaire avec données:', data);
+      await onSubmit({
+        firstName: data.firstName,
+        lastName: data.lastName
+      });
+      userForm.reset(data);
+    } catch (error) {
+      console.error('Erreur lors de la soumission du formulaire:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder les modifications",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Card>
@@ -48,7 +81,7 @@ export const ProfileSection = ({ userSettings, onSubmit }: ProfileSectionProps) 
       </CardHeader>
       <CardContent>
         <Form {...userForm}>
-          <form onSubmit={userForm.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={userForm.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={userForm.control}
               name="firstName"
@@ -80,11 +113,12 @@ export const ProfileSection = ({ userSettings, onSubmit }: ProfileSectionProps) 
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">
-                  {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                  {userSettings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
                 </span>
               </div>
             </div>
-            <Button type="submit">
+            <Button type="submit" className="flex gap-2 items-center">
+              <Save className="h-4 w-4" />
               Enregistrer les modifications
             </Button>
           </form>

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { SettingsIcon } from 'lucide-react';
 import { ProfileSection } from '@/components/settings/ProfileSection';
 import { AccountInfoSection } from '@/components/settings/AccountInfoSection';
@@ -10,11 +10,15 @@ import { AccountManagementSection } from '@/components/settings/AccountManagemen
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { useKindleSettings } from '@/hooks/useKindleSettings';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useToast } from '@/hooks/use-toast';
 import type { UserSettings, SecuritySettings } from '@/types/user-settings';
 
 const Settings = () => {
   const { user } = useSupabaseAuth();
   const { settings: kindleSettings } = useKindleSettings();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const {
     userSettings,
     isLoading,
@@ -24,14 +28,24 @@ const Settings = () => {
 
   const handleProfileSubmit = async (data: Partial<UserSettings>): Promise<void> => {
     try {
+      setIsSubmitting(true);
+      console.log('Soumission du profil avec données:', data);
       await updateUserSettings(data);
     } catch (error) {
       console.error("Erreur lors de la mise à jour du profil:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour votre profil",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleNotificationChange = async (key: keyof UserSettings['notifications'], value: boolean): Promise<void> => {
     try {
+      setIsSubmitting(true);
       await updateUserSettings({
         notifications: {
           ...userSettings.notifications,
@@ -40,11 +54,19 @@ const Settings = () => {
       });
     } catch (error) {
       console.error("Erreur lors de la mise à jour des notifications:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour vos préférences de notifications",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleSecuritySubmit = async (data: SecuritySettings): Promise<void> => {
     try {
+      setIsSubmitting(true);
       await updateUserPassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
@@ -52,8 +74,22 @@ const Settings = () => {
       });
     } catch (error) {
       console.error("Erreur lors de la mise à jour du mot de passe:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour votre mot de passe",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Afficher un message de débogage pour vérifier les données utilisateur
+  useEffect(() => {
+    if (user && !isLoading) {
+      console.log('Données utilisateur chargées:', userSettings);
+    }
+  }, [user, userSettings, isLoading]);
 
   if (isLoading || !user) {
     return (
