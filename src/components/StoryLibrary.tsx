@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
@@ -84,11 +83,6 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
 
-  const indexOfLastStory = currentPage * storiesPerPage;
-  const indexOfFirstStory = indexOfLastStory - storiesPerPage;
-  const currentStories = filteredStories.slice(indexOfFirstStory, indexOfLastStory);
-  const totalPages = Math.ceil(filteredStories.length / storiesPerPage);
-
   // Count error stories
   const errorStories = stories.filter(story => story.status === 'error');
 
@@ -143,7 +137,10 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
       </div>
 
       <StoryGrid
-        stories={currentStories}
+        stories={filteredStories.slice(
+          (currentPage - 1) * storiesPerPage,
+          currentPage * storiesPerPage
+        )}
         onDelete={handleDelete}
         onRetry={handleRetry}
         onCardClick={onSelectStory}
@@ -152,7 +149,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
 
       <Pagination
         currentPage={currentPage}
-        totalPages={totalPages}
+        totalPages={Math.ceil(filteredStories.length / storiesPerPage)}
         onPageChange={setCurrentPage}
       />
     </div>

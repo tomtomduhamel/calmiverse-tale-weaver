@@ -4,11 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { formatStoriesFromSupabase } from './storyFormatters';
+import type { Story } from '@/types/story';
 
 export const useStoriesQuery = () => {
-  const [stories, setStories] = useState([]);
+  const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
   const { user } = useSupabaseAuth();
 
@@ -40,7 +41,7 @@ export const useStoriesQuery = () => {
         
         const formattedStories = formatStoriesFromSupabase(data || []);
         setStories(formattedStories);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error in useStoriesQuery:", err);
         setError(err);
         toast({
@@ -91,7 +92,7 @@ export const useStoriesQuery = () => {
       
       const formattedStories = formatStoriesFromSupabase(data || []);
       setStories(formattedStories);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching stories:", err);
       setError(err);
     } finally {

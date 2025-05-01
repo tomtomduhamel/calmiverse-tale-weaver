@@ -1,35 +1,65 @@
 
-import { useCallback } from 'react';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 export const useCloudFunctionUtils = () => {
-  const callCloudFunctionWithRetry = useCallback(async (functionName: string, payload: any, maxRetries = 3) => {
-    let retries = 0;
-    
-    while (retries < maxRetries) {
-      try {
-        console.log(`Appel de la fonction cloud ${functionName} (tentative ${retries + 1}/${maxRetries})`, payload);
-        
-        const { data, error } = await supabase.functions.invoke(functionName, { body: payload });
-        
-        if (error) throw error;
-        
-        console.log(`Fonction ${functionName} exécutée avec succès:`, data);
-        return data;
-      } catch (error) {
-        console.error(`Erreur lors de l'appel à ${functionName}:`, error);
-        retries++;
-        
-        if (retries >= maxRetries) {
-          console.error(`Nombre maximum de tentatives atteint pour ${functionName}`);
-          throw error;
-        }
-        
-        // Attendre un peu avant de réessayer (backoff exponentiel)
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
-      }
-    }
-  }, []);
+  const { user } = useSupabaseAuth();
+  const { toast } = useToast();
+  const [isRetrying, setIsRetrying] = useState(false);
 
-  return { callCloudFunctionWithRetry };
+  const callCloudFunctionWithRetry = async (
+    functionName: string, 
+    body: any, 
+    options = { maxRetries: 2, retryDelay: 1500 }
+  ) => {
+    if (!user) {
+      throw new Error("Utilisateur non connecté");
+    }
+
+    let retries = 0;
+    setIsRetrying(true);
+
+    try {
+      while (retries <= options.maxRetries) {
+        try {
+          console.log(`Appel de la fonction cloud ${functionName} (tentative ${retries + 1})`, body);
+          
+          const { data, error } = await supabase.functions.invoke(functionName, { body });
+          
+          if (error) throw error;
+          
+          console.log(`Fonction ${functionName} exécutée avec succès:`, data);
+          setIsRetrying(false);
+          return data;
+        } catch (err: any) {
+          console.error(`Erreur lors de l'appel à ${functionName} (tentative ${retries + 1}):`, err);
+          
+          if (retries >= options.maxRetries) {
+            throw err;
+          }
+          
+          // Attendre avant de réessayer
+          await new Promise(resolve => setTimeout(resolve, options.retryDelay));
+          retries++;
+        }
+      }
+    } catch (error: any) {
+      setIsRetrying(false);
+      toast({
+        title: "Erreur",
+        description: `Échec de l'appel à ${functionName}: ${error.message || 'Erreur inconnue'}`,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  return {
+    callCloudFunctionWithRetry,
+    isRetrying
+  };
 };

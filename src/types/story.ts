@@ -33,6 +33,9 @@ export interface Story {
     }[];
   };
   error?: string;
+  tags?: string[];
+  isFavorite?: boolean;
+  updatedAt?: Date;
 }
 
 export interface Objective {

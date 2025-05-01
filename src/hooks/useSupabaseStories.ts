@@ -1,4 +1,10 @@
 
+/**
+ * @deprecated Ce hook est devenu trop volumineux et a été divisé en plusieurs hooks spécialisés.
+ * Utilisez plutôt les hooks dans src/hooks/stories/
+ * Ce hook reste disponible pour la rétrocompatibilité.
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "./use-toast";
@@ -45,8 +51,10 @@ export const useSupabaseStories = () => {
           authorId: story.authorid,
           createdAt: new Date(story.createdat),
           updatedAt: story.updatedat ? new Date(story.updatedat) : new Date(),
-          story_text: story.content || '', // Pour la compatibilité
-          story_summary: story.summary || '', // Pour la compatibilité
+          story_text: story.content || '', 
+          story_summary: story.summary || '',
+          error: story.error || null,
+          tags: story.tags || [],
         })) as Story[];
         
         setStories(loadedStories);

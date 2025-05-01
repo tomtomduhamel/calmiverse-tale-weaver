@@ -37,7 +37,10 @@ export const formatStoryFromSupabase = (story: any) => {
     status: story.status || 'pending',
     story_text: story.content || '',
     story_summary: story.summary || '',
-    authorId: story.authorid
+    authorId: story.authorid,
+    error: story.error || null,
+    tags: story.tags || [],
+    updatedAt: story.updatedat ? new Date(story.updatedat) : undefined,
   };
 };
 
