@@ -1,3 +1,4 @@
+
 import React, { Suspense, useEffect, useState } from 'react';
 import {
   BrowserRouter as Router,
@@ -8,18 +9,18 @@ import {
 } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
-import { Shell } from './components/Shell';
-import { Auth } from './pages/Auth';
-import { Index } from './pages/Index';
-import { NotFound } from './pages/NotFound';
-import { PrivacyPolicy } from './pages/PrivacyPolicy';
-import { TestConnection } from './pages/TestConnection';
-import { Settings } from './pages/Settings';
-import { KidsProfile } from './pages/KidsProfile';
-import { PublicStory } from './pages/PublicStory';
-import { SupabaseProvider } from './providers/SupabaseProvider';
-import { ThemeProvider } from './providers/ThemeProvider';
-import { SupabaseAuth } from './contexts/SupabaseAuthContext';
+import Shell from './components/Shell';
+import Auth from './pages/Auth';
+import Index from './pages/Index';
+import NotFound from './pages/NotFound';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TestConnection from './pages/TestConnection';
+import Settings from './pages/Settings';
+import KidsProfile from './pages/KidsProfile';
+import PublicStory from './pages/PublicStory';
+import SupabaseProvider from './providers/SupabaseProvider';
+import ThemeProvider from './providers/ThemeProvider';
+import { useSupabaseAuth } from './contexts/SupabaseAuthContext';
 import { checkAuthState } from './integrations/supabase/client';
 import SharedStory from './pages/SharedStory';
 
@@ -28,7 +29,7 @@ function PublicRoute() {
 }
 
 function PrivateRoute() {
-  const { session, loading } = SupabaseAuth();
+  const { session, loading } = useSupabaseAuth();
   const location = useLocation();
   const { toast } = useToast();
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
