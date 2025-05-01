@@ -8,25 +8,14 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Gérer les requêtes CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     // Récupérer les données de la requête
-    const requestData = await req.json();
-    
-    // Traitement du ping pour le test de connexion
-    if (requestData.ping) {
-      console.log("Ping de test reçu");
-      return new Response(
-        JSON.stringify({ success: true, message: "Edge Function accessible" }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    const { storyId, objective, childrenNames } = requestData;
+    const { storyId, objective, childrenNames } = await req.json();
 
     if (!storyId || !objective || !childrenNames) {
       console.error("Paramètres manquants:", { storyId, objective, childrenNames });
@@ -68,7 +57,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Mettre à jour l'histoire dans la base de données
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('stories')
       .update({
         title,
@@ -109,8 +98,7 @@ serve(async (req) => {
 
     // En cas d'erreur, essayez de mettre à jour le statut de l'histoire
     try {
-      const requestData = await req.json();
-      const storyId = requestData.storyId;
+      const { storyId } = await req.json();
       
       if (storyId) {
         const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;

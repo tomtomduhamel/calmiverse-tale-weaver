@@ -1,56 +1,17 @@
 
-/**
- * @deprecated Ce fichier est maintenu uniquement pour la compatibilité.
- * Les objectifs sont désormais stockés dans Supabase.
- */
+import { useToast } from "@/hooks/use-toast";
 
-import { supabase } from '@/integrations/supabase/client';
-
-const objectives = [
-  {
-    name: "Aider à s'endormir",
-    value: "sleep",
-    label: "Aider à s'endormir"
-  },
-  {
-    name: "Se concentrer",
-    value: "focus",
-    label: "Se concentrer"
-  },
-  {
-    name: "Se détendre",
-    value: "relax",
-    label: "Se détendre"
-  },
-  {
-    name: "S'amuser",
-    value: "fun",
-    label: "S'amuser"
-  }
+// Objectifs prédéfinis pour les histoires
+const DEFAULT_OBJECTIVES = [
+  { id: "sleep", label: "Aider à s'endormir", value: "sleep" },
+  { id: "focus", label: "Se concentrer", value: "focus" },
+  { id: "relax", label: "Se détendre", value: "relax" },
+  { id: "fun", label: "S'amuser", value: "fun" }
 ];
 
-export const initializeObjectives = async () => {
-  try {
-    // Vérifier si les objectifs existent déjà dans Supabase
-    const { data, error } = await supabase
-      .from('story_objectives')
-      .select('count')
-      .single();
-      
-    if (error) throw error;
-    
-    // Initialiser seulement si la table est vide
-    if (!data || data.count === 0) {
-      const { error: insertError } = await supabase
-        .from('story_objectives')
-        .insert(objectives);
-        
-      if (insertError) throw insertError;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("Échec de l'initialisation des objectifs:", error);
-    return false;
-  }
+export const initializeObjectives = () => {
+  // Cette fonction ne fait rien pour l'instant
+  // À l'avenir, elle pourrait initialiser les objectifs dans la base de données
+  console.log("Initialisation des objectifs d'histoires");
+  return DEFAULT_OBJECTIVES;
 };

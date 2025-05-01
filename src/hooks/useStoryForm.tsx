@@ -1,12 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { useSupabaseChildren } from "./useSupabaseChildren";
-import { useSupabaseStories } from "./useSupabaseStories";
-import { useToast } from "./use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import type { StoryFormData } from "@/components/story/StoryFormTypes";
 
 export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<StoryFormData>({
     childrenIds: [] as string[],
     objective: "",
   });
@@ -14,8 +13,6 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
   const [isLoading, setIsLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { children } = useSupabaseChildren();
-  const { createStory } = useSupabaseStories();
   const { toast } = useToast();
   const { user, session, loading } = useSupabaseAuth();
 
@@ -68,30 +65,26 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
         throw new Error("Utilisateur non connecté");
       }
 
-      if (!formData.objective) {
-        throw new Error("Veuillez sélectionner un objectif pour l'histoire");
-      }
-
+      // Validation des données
       if (formData.childrenIds.length === 0) {
         throw new Error("Veuillez sélectionner au moins un enfant");
       }
 
+      if (!formData.objective) {
+        throw new Error("Veuillez sélectionner un objectif pour l'histoire");
+      }
+
       console.log("Création d'histoire avec les données:", { 
         formData, 
-        userId: user.id,
-        childrenCount: children.length
+        userId: user.id
       });
       
       // Appeler la fonction de création d'histoire
-      const storyId = await createStory(formData, children);
+      const storyId = await onSubmit(formData);
       console.log("Histoire créée avec succès, ID:", storyId);
       
-      if (onStoryCreated) {
+      if (storyId && onStoryCreated) {
         onStoryCreated(storyId);
-      }
-      
-      if (onSubmit) {
-        onSubmit(formData);
       }
       
       toast({
@@ -104,6 +97,8 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
         childrenIds: [],
         objective: "",
       });
+      
+      return storyId;
     } catch (error: any) {
       console.error("Erreur lors de la création de l'histoire:", error);
       setError(error?.message || "Une erreur est survenue lors de la création de l'histoire");

@@ -11,6 +11,7 @@ import { StoryFormContent } from "./story/form/StoryFormContent";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { StoryError } from "./story/form/StoryError";
 
 const StoryForm: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -134,14 +135,47 @@ const StoryForm: React.FC<StoryFormProps> = ({
       return;
     }
     
+    // Vérifier que des enfants ont été sélectionnés
+    if (formData.childrenIds.length === 0) {
+      setFormError("Veuillez sélectionner au moins un enfant");
+      toast({
+        title: "Erreur", 
+        description: "Veuillez sélectionner au moins un enfant",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Vérifier qu'un objectif a été sélectionné
+    if (!formData.objective) {
+      setFormError("Veuillez sélectionner un objectif pour l'histoire");
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un objectif pour l'histoire",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
       console.log("Soumission du formulaire avec utilisateur:", user.id);
+      console.log("Données du formulaire:", formData);
       await handleSubmit(e);
+      
+      toast({
+        title: "Création en cours",
+        description: "Votre histoire est en cours de génération",
+      });
     } catch (error) {
       console.error("Erreur lors de la soumission:", error);
       setFormError(error instanceof Error ? error.message : "Une erreur est survenue");
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la création",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -150,20 +184,28 @@ const StoryForm: React.FC<StoryFormProps> = ({
   return (
     <div className="w-full max-w-4xl mx-auto">
       {creationMode === "classic" ? (
-        <StoryFormContent
-          children={children}
-          selectedChildrenIds={formData.childrenIds}
-          onChildToggle={handleChildToggle}
-          onCreateChildClick={() => setShowChildForm(true)}
-          objective={formData.objective}
-          setObjective={setObjective}
-          objectives={objectives}
-          isSubmitting={isSubmitting}
-          progress={progress}
-          formError={formError || error}
-          onSubmit={handleFormSubmit}
-          onModeSwitch={() => setCreationMode("chat")}
-        />
+        <>
+          {formError && <StoryError error={formError} />}
+          <StoryFormContent
+            children={children}
+            selectedChildrenIds={formData.childrenIds}
+            onChildToggle={handleChildToggle}
+            onCreateChildClick={() => setShowChildForm(true)}
+            objective={formData.objective}
+            setObjective={setObjective}
+            objectives={objectives || [
+              { id: "sleep", label: "Aider à s'endormir", value: "sleep" },
+              { id: "focus", label: "Se concentrer", value: "focus" },
+              { id: "relax", label: "Se détendre", value: "relax" },
+              { id: "fun", label: "S'amuser", value: "fun" },
+            ]}
+            isSubmitting={isSubmitting}
+            progress={progress}
+            formError={formError || error}
+            onSubmit={handleFormSubmit}
+            onModeSwitch={() => setCreationMode("chat")}
+          />
+        </>
       ) : (
         <div className="animate-fade-in">
           <StoryChat onSwitchMode={() => setCreationMode("classic")} />

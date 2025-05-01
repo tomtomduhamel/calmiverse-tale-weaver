@@ -32,8 +32,18 @@ export const useStoryCreation = () => {
         throw new Error("Veuillez sélectionner au moins un enfant pour créer une histoire");
       }
       
+      // Créer les données initiales de l'histoire
       const storyData = {
-        ...createStoryData(formData, childrenNames),
+        title: `Histoire pour ${childrenNames.join(', ')}`,
+        content: "Génération en cours...",
+        summary: "Résumé en cours de génération...",
+        preview: "Histoire en cours de génération...",
+        objective: formData.objective,
+        childrenids: formData.childrenIds,
+        childrennames: childrenNames,
+        status: "pending",
+        createdat: new Date().toISOString(),
+        updatedat: new Date().toISOString(),
         authorid: user.id
       };
 
@@ -44,7 +54,10 @@ export const useStoryCreation = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur lors de la création de l'histoire:", error);
+        throw error;
+      }
       
       const storyId = data.id;
       console.log('Initial story document created with ID:', storyId);
@@ -73,6 +86,23 @@ export const useStoryCreation = () => {
               title: "Histoire générée",
               description: "Votre histoire est maintenant disponible dans votre bibliothèque.",
             });
+          } else {
+            console.error('Error in story generation:', result.error);
+            toast({
+              title: "Erreur",
+              description: "La génération de l'histoire a échoué: " + result.error.message,
+              variant: "destructive",
+            });
+
+            // Mettre à jour le statut de l'histoire à "error"
+            supabase
+              .from('stories')
+              .update({
+                status: 'error',
+                error: result.error.message,
+                updatedat: new Date().toISOString()
+              })
+              .eq('id', storyId);
           }
         })
         .catch(error => {
