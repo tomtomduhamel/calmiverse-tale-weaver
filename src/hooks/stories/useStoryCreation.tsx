@@ -60,7 +60,7 @@ export const useStoryCreation = () => {
       console.log('Document d\'histoire initial créé avec l\'ID:', storyId);
       
       // Appeler la fonction edge pour générer l'histoire
-      const { data: generationData, error: generationError } = await supabase.functions.invoke('generate-story', {
+      const { data: generationData, error: generationError } = await supabase.functions.invoke('generateStory', {
         body: {
           storyId: storyId,
           objective: formData.objective,
@@ -86,15 +86,29 @@ export const useStoryCreation = () => {
           description: generationError.message || "La génération de l'histoire a échoué",
           variant: "destructive",
         });
+        throw generationError;
       } else {
-        console.log('Génération d\'histoire terminée:', generationData);
+        console.log('Génération d\'histoire terminée avec succès:', generationData);
+        
+        // Récupérer l'histoire complète pour la retourner
+        const { data: completedStory, error: fetchError } = await supabase
+          .from('stories')
+          .select('*')
+          .eq('id', storyId)
+          .single();
+          
+        if (fetchError) {
+          console.error('Erreur lors de la récupération de l\'histoire complétée:', fetchError);
+          throw fetchError;
+        }
+        
         toast({
           title: "Histoire générée",
           description: "Votre histoire est maintenant disponible dans votre bibliothèque.",
         });
+        
+        return { storyId, storyData: completedStory };
       }
-      
-      return storyId;
     } catch (error: any) {
       console.error('❌ Erreur durant la création d\'histoire:', error);
       toast({

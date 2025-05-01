@@ -16,7 +16,9 @@ export const useStoryMutations = () => {
   const createStory = useCallback(async (formData: any, children = []) => {
     try {
       console.log('Creating story with data:', formData);
-      return await createStoryBase(formData, children);
+      const result = await createStoryBase(formData, children);
+      console.log('Story creation result:', result);
+      return result;
     } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
       console.error('Error creating story:', error);

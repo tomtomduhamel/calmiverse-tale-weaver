@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import StoryForm from "../StoryForm";
 import StoryReader from "../StoryReader";
@@ -30,6 +30,13 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
     lastError,
     isRetrying,
   } = useStories(children);
+
+  // Effet pour changer de vue lorsqu'une nouvelle histoire est sélectionnée
+  useEffect(() => {
+    if (currentStory && currentStory.status === 'completed' && view !== 'read') {
+      setView('read');
+    }
+  }, [currentStory, view]);
 
   const handleViewChange = (newView: ViewMode) => {
     setView(newView);
@@ -62,10 +69,21 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
     }
   };
 
-  const handleStoryCreated = (storyId: string) => {
+  const handleStoryCreated = async (storyId: string) => {
     console.log("Story created, ID:", storyId);
     setSelectedStoryId(storyId);
-    setView("list");
+    
+    // Rafraîchir la liste des histoires pour inclure la nouvelle histoire
+    await stories.fetchStories();
+    
+    // Trouver la nouvelle histoire dans la liste
+    const newStory = stories.stories?.find(s => s.id === storyId);
+    if (newStory) {
+      setCurrentStory(newStory);
+      setView("read");
+    } else {
+      setView("list");
+    }
   };
 
   const handleRetryStory = async (storyId: string) => {
@@ -97,7 +115,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
             childName={getChildName(currentStory.childrenIds, children)}
           />
         ) : (
-          <div>Story not found</div>
+          <div>Histoire non trouvée</div>
         );
       case "list":
       default:

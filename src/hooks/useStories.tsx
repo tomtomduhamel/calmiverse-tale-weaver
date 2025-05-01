@@ -67,15 +67,42 @@ export const useStories = (children: any[] = []) => {
         timestamp: new Date().toISOString()
       };
       
-      const storyId = await createStory(safeFormData, children);
+      const result = await createStory(safeFormData, children);
       
-      if (storyId) {
-        console.log('Story created successfully with ID:', storyId);
+      if (result && result.storyId) {
+        console.log('Story created successfully with ID:', result.storyId);
+        
+        // Récupérer l'histoire complétée depuis le résultat
+        if (result.storyData) {
+          // Formater l'histoire pour l'état local en utilisant les données renvoyées
+          const formattedStory: Story = {
+            id: result.storyData.id,
+            title: result.storyData.title,
+            preview: result.storyData.preview || result.storyData.content.substring(0, 200) + "...",
+            objective: result.storyData.objective,
+            childrenIds: result.storyData.childrenids || [],
+            childrenNames: result.storyData.childrennames || childrenNames,
+            createdAt: new Date(result.storyData.createdat),
+            status: result.storyData.status,
+            story_text: result.storyData.content,
+            story_summary: result.storyData.summary,
+            error: result.storyData.error || null,
+            updatedAt: new Date(result.storyData.updatedat)
+          };
+          
+          // Mettre à jour l'état local avec la nouvelle histoire
+          setCurrentStory(formattedStory);
+          
+          // Forcer le rafraîchissement de la liste des histoires
+          stories.fetchStories();
+        }
+        
         toast({
-          title: "Histoire en cours de création",
-          description: "Votre histoire est en cours de génération et sera bientôt disponible",
+          title: "Histoire créée",
+          description: "Votre histoire a été générée avec succès",
         });
-        return storyId;
+        
+        return result.storyId;
       } else {
         throw new Error("La création de l'histoire a échoué");
       }
@@ -136,6 +163,18 @@ export const useStories = (children: any[] = []) => {
       // Call the retry function
       const result = await retryStoryGeneration(storyId);
       console.log('Retry result:', result);
+      
+      // Forcer le rafraîchissement de la liste des histoires
+      await stories.fetchStories();
+      
+      // Si l'histoire a été relancée avec succès, mettre à jour l'histoire courante
+      if (result && result.title) {
+        // Trouver l'histoire mise à jour dans la liste des histoires
+        const updatedStory = stories.stories?.find(story => story.id === storyId);
+        if (updatedStory) {
+          setCurrentStory(updatedStory);
+        }
+      }
       
       setIsRetrying(false);
       return true;

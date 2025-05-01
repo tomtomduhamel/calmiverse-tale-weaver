@@ -1,85 +1,64 @@
 
 import { useState } from "react";
-import { ToastAction } from "@/components/ui/toast";
-import type { StoryFormData } from "@/components/story/StoryFormTypes";
+import { useToast } from "@/hooks/use-toast";
 
-interface UseStoryFormSubmissionProps {
-  user: any;
-  formData: StoryFormData;
-  handleSubmit: (e: React.FormEvent) => Promise<any>;
-  toast: any;
-  setFormError: (error: string | null) => void;
-}
-
-export const useStoryFormSubmission = ({
-  user,
-  formData,
-  handleSubmit,
-  toast,
-  setFormError
-}: UseStoryFormSubmissionProps) => {
+export const useStoryFormSubmission = (
+  onSubmit: (formData: any) => Promise<string>,
+  onStoryCreated?: (storyId: string) => void
+) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-    
-    // Vérifier si l'utilisateur est connecté
-    if (!user) {
-      setFormError("Utilisateur non connecté");
-      toast({
-        title: "Erreur",
-        description: "Vous devez être connecté pour créer une histoire",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Vérifier que des enfants ont été sélectionnés
-    if (formData.childrenIds.length === 0) {
-      setFormError("Veuillez sélectionner au moins un enfant");
-      toast({
-        title: "Erreur", 
-        description: "Veuillez sélectionner au moins un enfant",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Vérifier qu'un objectif a été sélectionné
-    if (!formData.objective) {
-      setFormError("Veuillez sélectionner un objectif pour l'histoire");
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner un objectif pour l'histoire",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
+  const handleSubmit = async (formData: any) => {
     try {
-      console.log("Soumission du formulaire avec utilisateur:", user.id);
-      console.log("Données du formulaire:", formData);
-      await handleSubmit(e);
+      setIsSubmitting(true);
+      setError(null);
+      
+      console.log("Submitting story form with data:", formData);
+      
+      const storyId = await onSubmit(formData);
+      
+      if (!storyId) {
+        throw new Error("Aucun identifiant d'histoire n'a été retourné");
+      }
+      
+      console.log("Story created successfully with ID:", storyId);
       
       toast({
-        title: "Création en cours",
-        description: "Votre histoire est en cours de génération",
+        title: "Succès",
+        description: "Votre histoire est en cours de génération.",
       });
-    } catch (error) {
-      console.error("Erreur lors de la soumission:", error);
-      setFormError(error instanceof Error ? error.message : "Une erreur est survenue");
+      
+      if (onStoryCreated) {
+        // Ajouter un délai pour s'assurer que l'histoire a été complètement générée
+        await new Promise(resolve => setTimeout(resolve, 500));
+        onStoryCreated(storyId);
+      }
+      
+      return storyId;
+    } catch (error: any) {
+      console.error("Error submitting story form:", error);
+      
+      const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue";
+      setError(errorMessage);
+      
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la création",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return { isSubmitting, handleFormSubmit };
+  return {
+    handleSubmit,
+    isSubmitting,
+    error,
+    setError,
+  };
 };
