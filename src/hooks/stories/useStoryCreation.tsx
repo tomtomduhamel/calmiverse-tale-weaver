@@ -34,7 +34,19 @@ export const useStoryCreation = () => {
       }
       
       // Créer l'histoire avec statut en attente
-      const storyData = createStoryData(formData, childrenNames);
+      const storyData = {
+        title: `Histoire pour ${childrenNames.join(' et ')}`,
+        content: '',
+        summary: 'Génération en cours...',
+        preview: 'Histoire en cours de création...',
+        status: 'pending',
+        childrenids: formData.childrenIds,
+        childrennames: childrenNames,
+        objective: formData.objective,
+        authorid: user.id,
+        createdat: new Date().toISOString(),
+        updatedat: new Date().toISOString()
+      };
 
       const { data, error } = await supabase
         .from('stories')

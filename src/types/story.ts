@@ -11,9 +11,6 @@ export interface Story {
   status: 'pending' | 'completed' | 'read' | 'error';
   story_text: string;
   story_summary: string;
-  isFavorite?: boolean;
-  tags?: string[];
-  epubFile?: string;
   authorId?: string;
   sharedWith?: string[];
   _version?: number;

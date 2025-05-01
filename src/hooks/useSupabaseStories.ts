@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from "@/hooks/use-toast";
-import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { useToast } from "./use-toast";
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import type { Story } from '@/types/story';
 
 export const useSupabaseStories = () => {
@@ -53,9 +53,10 @@ export const useSupabaseStories = () => {
       } catch (err: any) {
         console.error("Erreur lors du chargement des histoires:", err);
         setError(err);
+        
         toast({
           title: "Erreur",
-          description: "Impossible de charger les histoires",
+          description: "Impossible de charger vos histoires",
           variant: "destructive",
         });
       } finally {
@@ -129,13 +130,16 @@ export const useSupabaseStories = () => {
       if (insertError) throw insertError;
       
       // Appeler la fonction edge pour générer l'histoire
-      const { data: generationData, error: functionError } = await supabase.functions.invoke('generate-story', {
-        body: {
-          storyId: story.id,
-          objective: formData.objective,
-          childrenNames: childrenNames
+      const { data: functionData, error: functionError } = await supabase.functions.invoke(
+        'generate-story',
+        {
+          body: {
+            storyId: story.id,
+            objective: formData.objective,
+            childrenNames: childrenNames
+          },
         }
-      });
+      );
       
       if (functionError) {
         // Mettre à jour l'histoire avec le statut d'erreur
