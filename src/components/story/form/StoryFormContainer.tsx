@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type { StoryFormProps } from "../StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoryForm } from "@/hooks/useStoryForm";
@@ -8,12 +8,12 @@ import CreateChildDialog from "../CreateChildDialog";
 import StoryChat from "../chat/StoryChat";
 import { useChildFormLogic } from "../useChildFormLogic";
 import { StoryFormContent } from "./StoryFormContent";
-import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
-import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { StoryError } from "./StoryError";
 import { useStoryFormSubmission } from "./hooks/useStoryFormSubmission";
 import { useStoryProgress } from "./hooks/useStoryProgress";
+import { useStoryFormAuth } from "@/hooks/useStoryFormAuth";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const StoryFormContainer: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -23,10 +23,15 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
 }) => {
   const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
-  const { formData, isLoading, error, authChecked, handleChildToggle, setObjective, handleSubmit, resetError } = useStoryForm(onStoryCreated, onSubmit);
-  const { user, loading: authLoading } = useSupabaseAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const [formError, setFormError] = useState<string | null>(null);
+  
+  // Utilisation du nouveau hook d'authentification
+  const { user, authLoading, authChecked } = useStoryFormAuth(setFormError);
+  
+  // Utilisation du nouveau hook de notifications
+  const { toast } = useNotifications(setFormError);
+  
+  const { formData, isLoading, error, handleChildToggle, setObjective, handleSubmit, resetError } = useStoryForm(onStoryCreated, onSubmit);
   
   const {
     showChildForm,
@@ -39,7 +44,6 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     setChildAge,
   } = useChildFormLogic(onCreateChild);
 
-  const [formError, setFormError] = useState<string | null>(null);
   const { isSubmitting, handleFormSubmit } = useStoryFormSubmission({
     user,
     formData,
@@ -49,45 +53,6 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   });
 
   const { progress } = useStoryProgress(isSubmitting);
-  
-  // Vérifier si l'utilisateur est connecté et rediriger vers la page d'authentification si nécessaire
-  useEffect(() => {
-    console.log("Vérification de l'authentification dans StoryForm", { 
-      user: user?.id, 
-      authLoading,
-      authChecked
-    });
-    
-    if (!authLoading && !user) {
-      console.log("Utilisateur non connecté, affichage de l'erreur");
-      setFormError("Utilisateur non connecté");
-      toast({
-        title: "Erreur",
-        description: "Vous devez être connecté pour créer une histoire",
-        variant: "destructive",
-      });
-    } else if (user) {
-      console.log("Utilisateur connecté:", user.id);
-      setFormError(null);
-    }
-  }, [user, authLoading, toast, authChecked]);
-
-  // Écouter les erreurs du processus de génération d'histoire
-  useEffect(() => {
-    const handleAppNotification = (event: CustomEvent) => {
-      if (event.detail.type === 'error') {
-        setFormError(event.detail.message || "Une erreur est survenue");
-      } else if (event.detail.type === 'success') {
-        setFormError(null);
-      }
-    };
-    
-    document.addEventListener('app-notification', handleAppNotification as EventListener);
-    
-    return () => {
-      document.removeEventListener('app-notification', handleAppNotification as EventListener);
-    };
-  }, []);
 
   if (authLoading) {
     return (
