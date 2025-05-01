@@ -7,7 +7,8 @@ import {
   generateStoryText,
   generateSummary,
   generateTitle,
-  updateStoryInDb
+  updateStoryInDb,
+  checkStoryExists
 } from "../_shared/story-utils.ts";
 
 serve(async (req) => {
@@ -18,7 +19,10 @@ serve(async (req) => {
 
   try {
     // Récupérer les données de la requête
-    const requestData = await req.json();
+    const requestData = await req.json().catch(error => {
+      console.error("Erreur lors de la lecture du corps de la requête:", error);
+      throw new Error("Format de requête invalide");
+    });
     
     // Traitement du ping pour le test de connexion
     if (requestData.ping) {
@@ -32,8 +36,20 @@ serve(async (req) => {
     const { storyId } = requestData;
 
     if (!storyId) {
-      throw new Error('Paramètre manquant: storyId est requis');
+      console.error("ID d'histoire manquant dans la requête");
+      return new Response(
+        JSON.stringify({ 
+          error: true, 
+          message: "Paramètre manquant: storyId est requis" 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
+
+    console.log(`Requête de relance reçue pour l'histoire: ${storyId}`);
 
     // Initialiser le client Supabase et l'API OpenAI
     const supabase = initializeSupabase();
@@ -47,38 +63,63 @@ serve(async (req) => {
       .single();
       
     if (storyError || !story) {
-      throw new Error('Histoire non trouvée');
+      console.error("Erreur lors de la récupération de l'histoire:", storyError);
+      return new Response(
+        JSON.stringify({ 
+          error: true, 
+          message: "Histoire non trouvée",
+          details: storyError ? storyError.message : "Données manquantes"
+        }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
     
     const { objective, childrennames: childrenNames } = story;
 
+    // Validation des données
+    if (!objective) {
+      throw new Error("L'objectif de l'histoire est manquant");
+    }
+    
+    if (!childrenNames || childrenNames.length === 0) {
+      throw new Error("Les noms des enfants sont manquants");
+    }
+
     console.log('Nouvelle tentative de génération pour:', { storyId, objective, childrenNames });
 
     // Mettre à jour le statut à "pending"
-    await supabase
-      .from('stories')
-      .update({
-        status: 'pending',
-        updatedat: new Date().toISOString()
-      })
-      .eq('id', storyId);
+    await updateStoryInDb(supabase, storyId, {
+      status: 'pending',
+      error: null
+    });
 
     try {
+      console.log("Début de la génération d'une nouvelle version de l'histoire...");
+      
       // Générer une nouvelle version de l'histoire
       const storyText = await generateStoryText(openAIApiKey, objective, childrenNames, true);
+      console.log(`Nouvelle version générée avec succès (${storyText.length} caractères)`);
       
       // Générer un nouveau résumé
+      console.log("Génération du nouveau résumé...");
       const summary = await generateSummary(openAIApiKey, storyText);
       
       // Générer un nouveau titre
+      console.log("Génération du nouveau titre...");
       const title = await generateTitle(openAIApiKey, storyText, childrenNames);
+      
+      // Créer un nouvel extrait
+      const preview = storyText.substring(0, 200) + "...";
       
       // Mettre à jour l'histoire dans la base de données
       await updateStoryInDb(supabase, storyId, {
         title,
         content: storyText,
         summary,
-        preview: storyText.substring(0, 200) + "...",
+        preview,
         status: 'completed',
         error: null
       });
@@ -91,7 +132,7 @@ serve(async (req) => {
           message: 'Histoire régénérée avec succès',
           title,
           summary,
-          preview: storyText.substring(0, 200) + "..."
+          preview
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -101,22 +142,22 @@ serve(async (req) => {
       console.error('Erreur lors de la génération:', error);
       
       // Mettre à jour l'histoire avec une erreur
-      await supabase
-        .from('stories')
-        .update({
-          status: 'error',
-          error: error.message || 'Erreur lors de la génération',
-          updatedat: new Date().toISOString()
-        })
-        .eq('id', storyId);
+      await updateStoryInDb(supabase, storyId, {
+        status: 'error',
+        error: error.message || 'Erreur lors de la génération'
+      });
         
       throw error;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur lors de la nouvelle tentative:', error);
     
     return new Response(
-      JSON.stringify({ error: error.message || 'Erreur lors de la nouvelle tentative' }),
+      JSON.stringify({ 
+        error: true, 
+        message: error.message || 'Erreur lors de la nouvelle tentative',
+        details: error.stack ? error.stack.split("\n").slice(0, 3).join(" → ") : "Pas de détails"
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
