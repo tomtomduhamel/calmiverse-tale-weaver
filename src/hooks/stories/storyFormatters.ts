@@ -41,6 +41,7 @@ export const formatStoryFromSupabase = (story: any) => {
     error: story.error || null,
     tags: story.tags || [],
     updatedAt: story.updatedat ? new Date(story.updatedat) : undefined,
+    isFavorite: story.is_favorite || false
   };
 };
 
