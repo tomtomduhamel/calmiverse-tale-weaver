@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import LoadingStory from "@/components/LoadingStory";
+import { formatStoryFromSupabase } from "@/hooks/stories/storyFormatters";
 
 const SharedStory = () => {
   const [story, setStory] = useState<Story | null>(null);
@@ -94,21 +95,8 @@ const SharedStory = () => {
         }
 
         // Transformer les données pour correspondre au type Story attendu
-        const story: Story = {
-          id: storyData.id,
-          title: storyData.title,
-          authorId: storyData.authorid,
-          preview: storyData.preview,
-          objective: storyData.objective,
-          childrenIds: storyData.childrenids || [],
-          childrenNames: storyData.childrennames || [],
-          status: storyData.status,
-          story_text: storyData.content,
-          story_summary: storyData.summary,
-          createdAt: new Date(storyData.createdat),
-        };
-
-        setStory(story);
+        const formattedStory = formatStoryFromSupabase(storyData);
+        setStory(formattedStory);
         
         // Log de l'accès une fois que l'histoire est validée
         await logAccess(storyId);

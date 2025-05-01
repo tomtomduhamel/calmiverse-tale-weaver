@@ -1,41 +1,91 @@
-
-import React, { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import React, { Suspense, useEffect, useState } from 'react';
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useLocation,
+  Navigate,
+} from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
-import { SimpleLoader } from '@/components/ui/SimpleLoader';
-import { SupabaseAuthProvider } from '@/contexts/SupabaseAuthContext';
-import Navigation from '@/components/navigation/Navigation';
+import { useToast } from '@/hooks/use-toast';
+import { Shell } from './components/Shell';
+import { Auth } from './pages/Auth';
+import { Index } from './pages/Index';
+import { NotFound } from './pages/NotFound';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { TestConnection } from './pages/TestConnection';
+import { Settings } from './pages/Settings';
+import { KidsProfile } from './pages/KidsProfile';
+import { PublicStory } from './pages/PublicStory';
+import { SupabaseProvider } from './providers/SupabaseProvider';
+import { ThemeProvider } from './providers/ThemeProvider';
+import { SupabaseAuth } from './contexts/SupabaseAuthContext';
+import { checkAuthState } from './integrations/supabase/client';
+import SharedStory from './pages/SharedStory';
 
-// Lazy-loaded pages
-const Index = lazy(() => import('@/pages/Index'));
-const Auth = lazy(() => import('@/pages/Auth'));
-const Settings = lazy(() => import('@/pages/Settings'));
-const TestConnection = lazy(() => import('@/pages/TestConnection'));
-const SharedStory = lazy(() => import('@/pages/SharedStory'));
-const KidsProfile = lazy(() => import('@/pages/KidsProfile'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
+function PublicRoute() {
+  return <Shell />;
+}
+
+function PrivateRoute() {
+  const { session, loading } = SupabaseAuth();
+  const location = useLocation();
+  const { toast } = useToast();
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (!session && !loading) {
+        toast({
+          title: 'Non authentifié',
+          description:
+            'Vous devez être connecté pour accéder à cette page. Redirection vers la page de connexion...',
+        });
+      }
+      setHasCheckedAuth(true);
+    };
+
+    checkAuth();
+  }, [session, loading, toast, location]);
+
+  if (loading || !hasCheckedAuth) {
+    return <div>Chargement...</div>;
+  }
+
+  return session ? (
+    <Shell />
+  ) : (
+    <Navigate to="/login" replace state={{ from: location }} />
+  );
+}
 
 function App() {
   return (
-    <Router>
-      <div className="flex flex-col min-h-screen bg-primary/5 overflow-x-hidden">
-        <Navigation />
-        <main className="flex-1">
-          <Suspense fallback={<SimpleLoader />}>
-            <Routes>
+    <ThemeProvider defaultTheme="system" storageKey="vite-react-theme">
+      <SupabaseProvider>
+        <Router>
+          <Routes>
+            <Route element={<PublicRoute />}>
               <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/settings" element={<Settings />} />
+              <Route path="/login" element={<Auth />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/test-connection" element={<TestConnection />} />
-              <Route path="/stories/:storyId" element={<SharedStory />} />
-              <Route path="/kids-profile/:profileId" element={<KidsProfile />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </main>
+              <Route path="/shared-story" element={<SharedStory />} />
+            </Route>
+
+            <Route element={<PrivateRoute />}>
+              <Route path="/app" element={<Index />} />
+              <Route path="/profiles" element={<KidsProfile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/story/:storyId" element={<PublicStory />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
         <Toaster />
-      </div>
-    </Router>
+      </SupabaseProvider>
+    </ThemeProvider>
   );
 }
 

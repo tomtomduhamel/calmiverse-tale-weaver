@@ -50,6 +50,7 @@ export type Database = {
           id: string
           objective: string | null
           preview: string | null
+          sharing: Json | null
           status: string | null
           summary: string | null
           title: string
@@ -65,6 +66,7 @@ export type Database = {
           id?: string
           objective?: string | null
           preview?: string | null
+          sharing?: Json | null
           status?: string | null
           summary?: string | null
           title: string
@@ -80,12 +82,42 @@ export type Database = {
           id?: string
           objective?: string | null
           preview?: string | null
+          sharing?: Json | null
           status?: string | null
           summary?: string | null
           title?: string
           updatedat?: string
         }
         Relationships: []
+      }
+      story_access_logs: {
+        Row: {
+          access_data: Json
+          created_at: string
+          id: string
+          story_id: string
+        }
+        Insert: {
+          access_data: Json
+          created_at?: string
+          id?: string
+          story_id: string
+        }
+        Update: {
+          access_data?: Json
+          created_at?: string
+          id?: string
+          story_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_access_logs_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {

@@ -1,15 +1,20 @@
-export const generateToken = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const tokenLength = 32;
+
+/**
+ * Génère un token aléatoire sécurisé pour le partage d'histoires
+ * @returns string Un token unique de 32 caractères
+ */
+export const generateToken = (): string => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const length = 32;
   let token = '';
   
-  for (let i = 0; i < tokenLength; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  // Utilisation de crypto.getRandomValues pour une génération sécurisée
+  const randomValues = new Uint8Array(length);
+  window.crypto.getRandomValues(randomValues);
+  
+  randomValues.forEach(value => {
+    token += characters.charAt(value % characters.length);
+  });
   
   return token;
-};
-
-export const isTokenValid = (token: string, expiresAt: Date): boolean => {
-  return token.length === 32 && new Date() < expiresAt;
 };
