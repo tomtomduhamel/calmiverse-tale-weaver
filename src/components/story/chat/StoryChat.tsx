@@ -84,7 +84,9 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
       setMessages(prev => [...prev, processingMessage]);
       
       try {
-        const response = await generateStory(objective, childrenNames);
+        // Générer un ID temporaire pour l'histoire
+        const storyId = `temp-${Date.now()}`;
+        const response = await generateStory(storyId, objective, childrenNames);
         console.log('Réponse reçue de la fonction Edge Supabase:', response);
         
         if (!response || !response.storyData) {

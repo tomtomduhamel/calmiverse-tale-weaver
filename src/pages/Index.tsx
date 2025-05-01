@@ -23,7 +23,7 @@ const Index = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild, loading: childrenLoading } = useSupabaseChildren();
-  const { stories: { stories, isLoading, error }, createStory, deleteStory } = useStories(children);
+  const { stories, createStory, deleteStory } = useStories(children);
   const { currentView, setCurrentView, showGuide } = useViewManagement();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useSupabaseAuth();
@@ -62,13 +62,13 @@ const Index = () => {
   };
 
   // État de chargement - afficher un loader simple mais fiable
-  if (authLoading || !isInitialized || isLoading || childrenLoading) {
+  if (authLoading || !isInitialized || stories.isLoading || childrenLoading) {
     return <SimpleLoader />;
   }
 
   // Gestion des erreurs de chargement des données
-  if (error) {
-    return <ErrorDisplay message={error.message} onRetry={() => window.location.reload()} />;
+  if (stories.error) {
+    return <ErrorDisplay message={stories.error.message} onRetry={() => window.location.reload()} />;
   }
 
   // Si l'utilisateur n'est pas connecté, ne pas afficher le contenu
@@ -108,7 +108,7 @@ const Index = () => {
 
         {currentView === "library" && (
           <LibraryView
-            stories={stories}
+            stories={stories.stories}
             onSelectStory={handleSelectStory}
             onDeleteStory={deleteStory}
             onViewChange={setCurrentView}

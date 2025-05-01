@@ -6,7 +6,7 @@ import { useStoryOperations } from './stories/useStoryOperations';
 import { useStoryEvents } from './stories/useStoryEvents';
 
 export const useStories = (children: any[] = []) => {
-  const stories = useSupabaseStories();
+  const supabaseStories = useSupabaseStories();
   const { createStory, deleteStory, updateStoryStatus, retryStoryGeneration } = useStoryMutations();
   
   const {
@@ -17,7 +17,7 @@ export const useStories = (children: any[] = []) => {
     isRetrying,
     setIsRetrying,
     clearError
-  } = useStoriesState(stories);
+  } = useStoriesState(supabaseStories);
 
   // Set up event listeners
   useStoryEvents(setLastError, setIsRetrying);
@@ -28,15 +28,15 @@ export const useStories = (children: any[] = []) => {
     setLastError,
     setIsRetrying,
     setCurrentStory,
-    stories.fetchStories
+    supabaseStories.fetchStories
   );
 
   const handleRetryFailedStory = async (storyId: string) => {
-    return await retryFailedStory(storyId, retryStoryGeneration, stories);
+    return await retryFailedStory(storyId, retryStoryGeneration, supabaseStories);
   };
 
   return {
-    stories,
+    stories: supabaseStories,
     currentStory,
     setCurrentStory,
     createStory: handleStoryCreation,

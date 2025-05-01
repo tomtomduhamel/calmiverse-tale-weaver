@@ -14,11 +14,9 @@ export const useSupabaseStories = () => {
   const { retryStoryGeneration } = useStoryCloudFunctions();
 
   return {
-    stories: {
-      stories,
-      isLoading,
-      error
-    },
+    stories,
+    isLoading,
+    error,
     fetchStories,
     createStory,
     deleteStory,

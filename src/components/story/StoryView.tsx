@@ -77,7 +77,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
     await stories.fetchStories();
     
     // Trouver la nouvelle histoire dans la liste
-    const newStory = stories.stories?.find(s => s.id === storyId);
+    const newStory = stories.stories.find(s => s.id === storyId);
     if (newStory) {
       setCurrentStory(newStory);
       setView("read");
@@ -121,7 +121,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
       default:
         return (
           <StoryLibrary
-            stories={stories.stories || []}
+            stories={stories.stories}
             onSelectStory={handleSelectStory}
             onDeleteStory={handleDeleteStory}
             onRetryStory={handleRetryStory}
