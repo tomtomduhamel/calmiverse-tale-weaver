@@ -8,7 +8,7 @@ import { useStoryCloudFunctions } from './useStoryCloudFunctions';
 
 export const useStoryMutations = () => {
   const { createStory: createStoryBase } = useStoryCreation();
-  const { deleteStory } = useStoryDeletion();
+  const { deleteStory: deleteStoryBase } = useStoryDeletion();
   const { updateStoryStatus } = useStoryUpdate();
   const { retryStoryGeneration } = useStoryCloudFunctions();
   const { toast } = useToast();
@@ -19,10 +19,12 @@ export const useStoryMutations = () => {
       
       // Validation des données d'entrée
       if (!formData || !formData.childrenIds || formData.childrenIds.length === 0) {
+        console.error("Validation échouée : aucun enfant sélectionné", formData);
         throw new Error("Données d'entrée invalides: sélectionnez au moins un enfant");
       }
       
       if (!formData.objective) {
+        console.error("Validation échouée : aucun objectif sélectionné", formData);
         throw new Error("Veuillez spécifier un objectif pour l'histoire");
       }
       
@@ -52,6 +54,36 @@ export const useStoryMutations = () => {
       throw error;
     }
   }, [createStoryBase, toast]);
+
+  const deleteStory = useCallback(async (storyId: string) => {
+    try {
+      console.log('Demande de suppression de l\'histoire:', storyId);
+      
+      if (!storyId) {
+        throw new Error("ID d'histoire manquant");
+      }
+      
+      // Appeler la fonction de suppression de base
+      const result = await deleteStoryBase(storyId);
+      console.log('Résultat de la suppression:', result);
+      
+      return result;
+    } catch (error: any) {
+      console.error('Erreur lors de la suppression:', error);
+      
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Erreur lors de la suppression de l\'histoire';
+      
+      toast({
+        title: 'Erreur',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      
+      throw error;
+    }
+  }, [deleteStoryBase, toast]);
 
   const retryStory = useCallback(async (storyId: string) => {
     try {

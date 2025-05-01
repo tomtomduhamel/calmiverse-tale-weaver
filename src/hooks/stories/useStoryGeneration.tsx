@@ -6,10 +6,11 @@ export const useStoryGeneration = () => {
   const { callCloudFunctionWithRetry } = useCloudFunctionUtils();
 
   const generateStory = useCallback(async (
-    storyId: string, 
+    storyId: string,
     objective: string, 
     childrenNames: string[]
   ) => {
+    console.log("Génération d'histoire: ", { storyId, objective, childrenNames });
     return await callCloudFunctionWithRetry(
       'generateStory',
       { storyId, objective, childrenNames }

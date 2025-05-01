@@ -1,95 +1,75 @@
 
-import React, { useState } from "react";
-import { Trash2, RefreshCw, Share2, Star, StarOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Story } from "@/types/story";
-import { ShareStoryManager } from "@/components/story/ShareStoryManager";
+import React from "react";
+import { Trash2, RefreshCw } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import type { Story } from "@/types/story";
+import { Loader2 } from "lucide-react";
 
 interface StoryCardActionsProps {
-  storyId: string;
+  story: Story;
   onDelete: (e: React.MouseEvent) => void;
   onRetry?: (e: React.MouseEvent) => void;
-  onToggleFavorite?: (e: React.MouseEvent) => void;
-  onShare?: (e: React.MouseEvent) => void;
-  isFavorite?: boolean;
-  status: Story['status'];
   isRetrying?: boolean;
+  isDeleting?: boolean;
 }
 
-const StoryCardActions: React.FC<StoryCardActionsProps> = ({
-  storyId,
-  onDelete,
+const StoryCardActions: React.FC<StoryCardActionsProps> = ({ 
+  story, 
+  onDelete, 
   onRetry,
-  onToggleFavorite,
-  isFavorite = false,
-  status,
   isRetrying = false,
+  isDeleting = false
 }) => {
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-
-  const handleShare = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShareDialogOpen(true);
-  };
-
   return (
-    <>
-      <div
-        className="flex justify-end space-x-2 mt-2"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {status === 'completed' || status === 'read' ? (
-          <Button variant="ghost" size="sm" onClick={handleShare}>
-            <Share2 className="h-4 w-4 text-gray-500 hover:text-blue-500" />
-            <span className="sr-only">Partager</span>
-          </Button>
-        ) : null}
-        
-        {onToggleFavorite && (
-          <Button variant="ghost" size="sm" onClick={onToggleFavorite}>
-            {isFavorite ? (
-              <StarOff className="h-4 w-4 text-amber-500 hover:text-amber-600" />
-            ) : (
-              <Star className="h-4 w-4 text-gray-500 hover:text-amber-500" />
-            )}
-            <span className="sr-only">
-              {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-            </span>
-          </Button>
+    <div className="flex space-x-1">
+      <TooltipProvider>
+        {story.status === "error" && onRetry && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onRetry}
+                disabled={isRetrying || isDeleting}
+                className={`p-1.5 rounded-full text-amber-600 hover:bg-amber-100 ${
+                  isRetrying ? "cursor-not-allowed opacity-50" : ""
+                }`}
+                aria-label="Réessayer cette histoire"
+              >
+                {isRetrying ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isRetrying ? "Nouvelle tentative en cours..." : "Réessayer la génération"}</p>
+            </TooltipContent>
+          </Tooltip>
         )}
-        
-        {status === 'error' && onRetry && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onRetry}
-            disabled={isRetrying}
-            className="text-green-600 hover:text-green-700 hover:bg-green-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
-            <span className="sr-only">Réessayer</span>
-          </Button>
-        )}
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onDelete}
-          className="text-red-500 hover:text-red-600 hover:bg-red-50"
-        >
-          <Trash2 className="h-4 w-4" />
-          <span className="sr-only">Supprimer</span>
-        </Button>
-      </div>
 
-      {shareDialogOpen && (
-        <ShareStoryManager
-          storyId={storyId}
-          isOpen={shareDialogOpen}
-          onClose={() => setShareDialogOpen(false)}
-        />
-      )}
-    </>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onDelete}
+              disabled={isDeleting || isRetrying}
+              className={`p-1.5 rounded-full text-red-600 hover:bg-red-100 ${
+                isDeleting ? "cursor-not-allowed opacity-50" : ""
+              }`}
+              aria-label="Supprimer l'histoire"
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{isDeleting ? "Suppression en cours..." : "Supprimer l'histoire"}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   );
 };
 

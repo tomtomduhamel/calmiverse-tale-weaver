@@ -38,7 +38,8 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     handleChildToggle, 
     setObjective, 
     handleSubmit, 
-    resetError 
+    resetError,
+    isSubmitting: formIsSubmitting
   } = useStoryForm(onStoryCreated, onSubmit);
   
   const {
@@ -58,7 +59,7 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     onStoryCreated
   );
 
-  const { progress } = useStoryProgress(isSubmitting);
+  const { progress } = useStoryProgress(isSubmitting || formIsSubmitting);
 
   if (authLoading) {
     return (
@@ -89,19 +90,27 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     
     try {
       // Vérifier si des enfants sont sélectionnés
-      if (formData.childrenIds.length === 0) {
+      console.log("Soumission du formulaire, données:", formData);
+      
+      // Réinitialiser les erreurs précédentes
+      resetError();
+      setFormError(null);
+      
+      if (!formData.childrenIds || formData.childrenIds.length === 0) {
+        console.log("Erreur: aucun enfant sélectionné!");
         setFormError("Veuillez sélectionner au moins un enfant");
         return;
       }
       
       // Vérifier si un objectif est sélectionné
       if (!formData.objective) {
+        console.log("Erreur: aucun objectif sélectionné!");
         setFormError("Veuillez sélectionner un objectif pour l'histoire");
         return;
       }
       
       // Appeler la fonction de soumission du formulaire avec les données
-      await handleFormSubmit(formData);
+      await handleSubmit(e);
     } catch (error: any) {
       console.error("Erreur lors de la soumission du formulaire:", error);
       setFormError(error.message || "Une erreur est survenue");
@@ -112,7 +121,6 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     <div className="w-full max-w-4xl mx-auto">
       {creationMode === "classic" ? (
         <>
-          {formError && <StoryError error={formError} />}
           <StoryFormContent
             children={children}
             selectedChildrenIds={formData.childrenIds}
@@ -126,7 +134,7 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
               { id: "relax", label: "Se détendre", value: "relax" },
               { id: "fun", label: "S'amuser", value: "fun" },
             ]}
-            isSubmitting={isSubmitting}
+            isSubmitting={isSubmitting || formIsSubmitting}
             progress={progress}
             formError={formError || error}
             onSubmit={handleFormSubmission}

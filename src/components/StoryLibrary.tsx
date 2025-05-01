@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
@@ -32,23 +33,54 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed' | 'read' | 'error'>('all');
   const [isZenMode, setIsZenMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const storiesPerPage = 6;
 
-  const handleDelete = (e: React.MouseEvent, storyId: string) => {
+  const handleDelete = async (e: React.MouseEvent, storyId: string) => {
     e.stopPropagation();
-    if (onDeleteStory) {
-      onDeleteStory(storyId);
+    e.preventDefault();
+    
+    try {
+      console.log("Tentative de suppression de l'histoire:", storyId);
+      setIsDeletingId(storyId);
+      
+      if (onDeleteStory) {
+        await onDeleteStory(storyId);
+        toast({
+          title: "Histoire supprimée",
+          description: "L'histoire a été supprimée avec succès",
+        });
+      } else {
+        console.error("Fonction onDeleteStory non définie");
+        toast({
+          title: "Erreur",
+          description: "Impossible de supprimer l'histoire: fonction non disponible",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Erreur lors de la suppression:", error);
       toast({
-        title: "Histoire supprimée",
-        description: "L'histoire a été supprimée avec succès",
+        title: "Erreur",
+        description: error?.message || "Une erreur est survenue lors de la suppression",
+        variant: "destructive",
       });
+    } finally {
+      setIsDeletingId(null);
     }
   };
 
-  const handleRetry = (e: React.MouseEvent, storyId: string) => {
+  const handleRetry = async (e: React.MouseEvent, storyId: string) => {
     e.stopPropagation();
+    e.preventDefault();
+    
     if (onRetryStory) {
-      onRetryStory(storyId);
+      try {
+        console.log("Tentative de relance de l'histoire:", storyId);
+        await onRetryStory(storyId);
+      } catch (error) {
+        console.error("Erreur lors de la relance:", error);
+      }
     }
   };
 
@@ -145,6 +177,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         onRetry={handleRetry}
         onCardClick={onSelectStory}
         isRetrying={isRetrying}
+        isDeletingId={isDeletingId}
       />
 
       <Pagination

@@ -10,6 +10,7 @@ interface StoryGridProps {
   onRetry?: (e: React.MouseEvent, storyId: string) => void;
   onCardClick: (story: Story) => void;
   isRetrying?: boolean;
+  isDeletingId?: string | null;
 }
 
 const StoryGrid: React.FC<StoryGridProps> = ({ 
@@ -17,7 +18,8 @@ const StoryGrid: React.FC<StoryGridProps> = ({
   onDelete, 
   onRetry, 
   onCardClick,
-  isRetrying = false
+  isRetrying = false,
+  isDeletingId = null
 }) => {
   return (
     <ScrollArea className="h-[calc(100vh-300px)]">
@@ -33,6 +35,7 @@ const StoryGrid: React.FC<StoryGridProps> = ({
               onCardClick(story);
             }}
             isRetrying={isRetrying && story.status === 'error'}
+            isDeleting={isDeletingId === story.id}
           />
         ))}
       </div>

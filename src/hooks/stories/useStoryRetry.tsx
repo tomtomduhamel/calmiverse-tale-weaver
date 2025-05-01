@@ -12,29 +12,30 @@ export const useStoryRetry = () => {
 
   const retryStoryGeneration = useCallback(async (storyId: string) => {
     if (!user) {
+      console.error("Erreur: utilisateur non connecté lors de la relance");
       throw new Error("Utilisateur non connecté");
     }
 
     try {
-      console.log(`Retrying story generation for: ${storyId}`);
+      console.log(`Relance de la génération pour l'histoire: ${storyId}`);
       
-      // Update status to "pending"
+      // Mise à jour du statut à "pending"
       await updateStoryStatus(storyId, 'pending');
       
-      // Call edge function to retry
+      // Appel à la fonction Edge pour réessayer
       const { data, error } = await supabase.functions.invoke('retry-story', {
         body: { storyId }
       });
       
       if (error) {
-        console.error("Error calling retry function:", error);
+        console.error("Erreur lors de l'appel à la fonction retry-story:", error);
         
-        // Update status to "error"
+        // Mise à jour du statut à "error"
         await updateStoryStatus(storyId, 'error', error.message || "Échec de la relance");
         throw error;
       }
       
-      console.log("Retry initiated successfully:", data);
+      console.log("Relance initiée avec succès:", data);
       
       toast({
         title: "Nouvelle tentative",
@@ -43,7 +44,14 @@ export const useStoryRetry = () => {
       
       return data;
     } catch (error: any) {
-      console.error('Error retrying story generation:', error);
+      console.error('Erreur lors de la relance de génération:', error);
+      
+      // S'assurer que le statut est mis à jour en cas d'erreur
+      try {
+        await updateStoryStatus(storyId, 'error', error.message || "La relance a échoué");
+      } catch (updateError) {
+        console.error("Impossible de mettre à jour le statut après l'échec:", updateError);
+      }
       
       toast({
         title: "Erreur",
