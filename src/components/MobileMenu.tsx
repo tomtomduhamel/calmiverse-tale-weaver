@@ -22,7 +22,6 @@ const menuItems = [
 ];
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) => {
-  const { setOpen, setOpenMobile } = useSidebar();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(false);
   const isMobile = useIsMobile();
@@ -32,10 +31,21 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
     return null;
   }
 
+  // Utilisons try/catch pour gérer le cas où useSidebar n'est pas dans un provider
+  let sidebarContext;
+  try {
+    sidebarContext = useSidebar();
+  } catch (e) {
+    console.warn("useSidebar n'est pas disponible, utilisation du comportement par défaut");
+    // Continuons sans sidebar context
+  }
+
   const handleNavigation = (view: ViewType) => {
     onViewChange(view);
-    setOpenMobile(false);
-    setOpen(false);
+    if (sidebarContext) {
+      sidebarContext.setOpenMobile(false);
+      sidebarContext.setOpen(false);
+    }
     setIsOpen(false);
     if (view === "home") {
       navigate("/");
