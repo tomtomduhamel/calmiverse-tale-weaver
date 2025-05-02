@@ -7,7 +7,7 @@ import { KindleSection } from '@/components/settings/KindleSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
 import { SecuritySection } from '@/components/settings/SecuritySection';
 import { AccountManagementSection } from '@/components/settings/AccountManagementSection';
-import { useUserSettings } from '@/hooks/useUserSettings';
+import { useUserSettings } from '@/hooks/settings/useUserSettings';
 import { useKindleSettings } from '@/hooks/useKindleSettings';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
