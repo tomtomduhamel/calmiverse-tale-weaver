@@ -17,7 +17,7 @@ const NotFound = () => {
           Retournez à l'accueil pour continuer votre aventure avec Calmiverse.
         </p>
       </div>
-      <Button asChild size="lg">
+      <Button asChild size="lg" className="bg-primary hover:bg-primary-dark text-white">
         <Link to="/" className="flex items-center gap-2">
           <Home className="h-5 w-5" />
           Retour à l'accueil

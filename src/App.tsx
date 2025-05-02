@@ -69,6 +69,7 @@ function App() {
             <Route element={<PublicRoute />}>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Auth />} />
+              <Route path="/auth" element={<Auth />} /> {/* Ajout d'une route alternative pour auth */}
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/test-connection" element={<TestConnection />} />
               <Route path="/shared-story" element={<SharedStory />} />
