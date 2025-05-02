@@ -28,17 +28,59 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     }
   }, [user, session, loading]);
 
+  // Fonction de validation du formulaire
+  const validateForm = (): { isValid: boolean; error: string | null } => {
+    // Vérification de l'authentification
+    if (!user || !session) {
+      return {
+        isValid: false,
+        error: "Vous devez être connecté pour créer une histoire"
+      };
+    }
+
+    // Vérification de la sélection d'enfant
+    if (!formData.childrenIds || formData.childrenIds.length === 0) {
+      return {
+        isValid: false,
+        error: "Veuillez sélectionner au moins un enfant pour créer une histoire"
+      };
+    }
+
+    // Vérification de l'objectif
+    if (!formData.objective) {
+      return {
+        isValid: false,
+        error: "Veuillez sélectionner un objectif pour l'histoire"
+      };
+    }
+
+    return { isValid: true, error: null };
+  };
+
   const handleChildToggle = (childId: string) => {
+    console.log("Toggle enfant:", childId, "État actuel:", formData.childrenIds);
     setFormData((prev) => {
       const childrenIds = prev.childrenIds.includes(childId)
         ? prev.childrenIds.filter((id) => id !== childId)
         : [...prev.childrenIds, childId];
+      console.log("Nouveaux IDs d'enfant:", childrenIds);
       return { ...prev, childrenIds };
     });
+    
+    // Réinitialiser l'erreur si elle concerne la sélection d'enfants
+    if (error && error.includes("Veuillez sélectionner au moins un enfant")) {
+      setError(null);
+    }
   };
 
   const setObjective = (objective: string) => {
+    console.log("Nouvel objectif sélectionné:", objective);
     setFormData((prev) => ({ ...prev, objective }));
+    
+    // Réinitialiser l'erreur si elle concerne l'objectif
+    if (error && error.includes("Veuillez sélectionner un objectif")) {
+      setError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,41 +89,19 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
 
     try {
       setIsSubmitting(true);
+      
+      // Valider le formulaire avant de continuer
+      const validation = validateForm();
+      if (!validation.isValid) {
+        console.error("Erreur de validation:", validation.error);
+        setError(validation.error);
+        throw new Error(validation.error);
+      }
+      
+      // Réinitialiser l'erreur si la validation a réussi
       setError(null);
       console.log("Tentative de création d'histoire, données du formulaire:", formData);
-      console.log("État auth:", { 
-        user: user?.id,
-        sessionExists: !!session,
-        authChecked
-      });
 
-      // Validation de l'authentification
-      if (!user || !session) {
-        console.error("Erreur d'authentification: Utilisateur non connecté", { user, session });
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté pour créer une histoire",
-          variant: "destructive",
-        });
-        throw new Error("Utilisateur non connecté");
-      }
-
-      // Validation des données
-      if (!formData.childrenIds || formData.childrenIds.length === 0) {
-        console.error("Erreur: Aucun enfant sélectionné", formData);
-        throw new Error("Veuillez sélectionner au moins un enfant");
-      }
-
-      if (!formData.objective) {
-        console.error("Erreur: Aucun objectif sélectionné", formData);
-        throw new Error("Veuillez sélectionner un objectif pour l'histoire");
-      }
-
-      console.log("Création d'histoire avec les données:", { 
-        formData, 
-        userId: user.id
-      });
-      
       // Appeler la fonction de création d'histoire
       const storyId = await onSubmit(formData);
       console.log("Histoire créée avec succès, ID:", storyId);
@@ -104,7 +124,12 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
       return storyId;
     } catch (error: any) {
       console.error("Erreur lors de la création de l'histoire:", error);
-      setError(error?.message || "Une erreur est survenue lors de la création de l'histoire");
+      
+      // Ne pas écraser une erreur de validation si elle existe déjà
+      if (!error) {
+        setError(error?.message || "Une erreur est survenue lors de la création de l'histoire");
+      }
+      
       toast({
         title: "Erreur",
         description: error?.message || "Une erreur est survenue lors de la création de l'histoire",
@@ -128,5 +153,6 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     setObjective,
     handleSubmit,
     resetError,
+    validateForm,
   };
 };

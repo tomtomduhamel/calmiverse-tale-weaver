@@ -1,19 +1,22 @@
 
+import { cn } from "@/lib/utils";
 import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface StoryErrorProps {
   error: string | null;
+  className?: string;
 }
 
-export const StoryError = ({ error }: StoryErrorProps) => {
+export const StoryError = ({ error, className }: StoryErrorProps) => {
   if (!error) return null;
 
   return (
-    <Alert variant="destructive" className="bg-red-50 text-red-800 border-red-200">
-      <AlertCircle className="h-4 w-4" />
-      <AlertTitle>Erreur</AlertTitle>
-      <AlertDescription>{error}</AlertDescription>
-    </Alert>
+    <div className={cn(
+      "p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive flex items-center gap-2",
+      className
+    )}>
+      <AlertCircle className="h-5 w-5 flex-shrink-0" />
+      <div className="text-sm font-medium">{error}</div>
+    </div>
   );
 };

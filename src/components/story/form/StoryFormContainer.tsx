@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { StoryFormProps } from "../StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoryForm } from "@/hooks/useStoryForm";
@@ -34,12 +34,13 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   const { 
     formData, 
     isLoading, 
-    error, 
+    error: storyFormError, 
     handleChildToggle, 
     setObjective, 
     handleSubmit, 
     resetError,
-    isSubmitting: formIsSubmitting
+    isSubmitting: formIsSubmitting,
+    validateForm
   } = useStoryForm(onStoryCreated, onSubmit);
   
   const {
@@ -60,6 +61,18 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   );
 
   const { progress } = useStoryProgress(isSubmitting || formIsSubmitting);
+
+  // Synchroniser les erreurs
+  useEffect(() => {
+    if (storyFormError) {
+      setFormError(storyFormError);
+    }
+  }, [storyFormError]);
+
+  // Vérifier si le bouton de génération doit être désactivé
+  const isGenerateButtonDisabled = () => {
+    return isSubmitting || formIsSubmitting || !formData.childrenIds.length || !formData.objective;
+  };
 
   if (authLoading) {
     return (
@@ -83,33 +96,20 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
 
   const handleFormSubmission = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      setFormError("Vous devez être connecté pour créer une histoire");
-      return;
-    }
+    
+    // Réinitialiser les erreurs avant validation
+    resetError();
+    setFormError(null);
     
     try {
-      // Vérifier si des enfants sont sélectionnés
-      console.log("Soumission du formulaire, données:", formData);
-      
-      // Réinitialiser les erreurs précédentes
-      resetError();
-      setFormError(null);
-      
-      if (!formData.childrenIds || formData.childrenIds.length === 0) {
-        console.log("Erreur: aucun enfant sélectionné!");
-        setFormError("Veuillez sélectionner au moins un enfant");
+      // Valider le formulaire avant soumission
+      const validation = validateForm();
+      if (!validation.isValid) {
+        setFormError(validation.error);
         return;
       }
       
-      // Vérifier si un objectif est sélectionné
-      if (!formData.objective) {
-        console.log("Erreur: aucun objectif sélectionné!");
-        setFormError("Veuillez sélectionner un objectif pour l'histoire");
-        return;
-      }
-      
-      // Appeler la fonction de soumission du formulaire avec les données
+      // Soumettre le formulaire si la validation réussit
       await handleSubmit(e);
     } catch (error: any) {
       console.error("Erreur lors de la soumission du formulaire:", error);
@@ -136,9 +136,10 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
             ]}
             isSubmitting={isSubmitting || formIsSubmitting}
             progress={progress}
-            formError={formError || error}
+            formError={formError}
             onSubmit={handleFormSubmission}
             onModeSwitch={() => setCreationMode("chat")}
+            isGenerateButtonDisabled={isGenerateButtonDisabled()}
           />
         </>
       ) : (

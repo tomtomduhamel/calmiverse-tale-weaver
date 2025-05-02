@@ -1,51 +1,72 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Moon, Brain, Heart, Star } from "lucide-react";
-import type { Objective } from "@/types/story";
 
-interface StoryObjectivesProps {
-  objectives: Objective[];
-  selectedObjective: string;
-  onObjectiveSelect: (objective: string) => void;
+import React from "react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { Moon, Brain, Heart, Sparkles } from "lucide-react";
+
+interface ObjectiveOption {
+  id: string;
+  label: string;
+  value: string;
+  icon?: React.ReactNode;
 }
 
+interface StoryObjectivesProps {
+  objectives: ObjectiveOption[];
+  selectedObjective: string;
+  onObjectiveSelect: (value: string) => void;
+  hasError?: boolean;
+}
+
+const defaultObjectives: ObjectiveOption[] = [
+  { id: "sleep", label: "Aider à s'endormir", value: "sleep", icon: <Moon className="h-5 w-5" /> },
+  { id: "focus", label: "Se concentrer", value: "focus", icon: <Brain className="h-5 w-5" /> },
+  { id: "relax", label: "Se détendre", value: "relax", icon: <Heart className="h-5 w-5" /> }, 
+  { id: "fun", label: "S'amuser", value: "fun", icon: <Sparkles className="h-5 w-5" /> }
+];
+
 const StoryObjectives: React.FC<StoryObjectivesProps> = ({
-  objectives,
+  objectives = defaultObjectives,
   selectedObjective,
   onObjectiveSelect,
+  hasError = false
 }) => {
-  const getObjectiveIcon = (value: string) => {
-    switch (value) {
-      case "sleep":
-        return <Moon className="w-5 h-5 shrink-0" />;
-      case "focus":
-        return <Brain className="w-5 h-5 shrink-0" />;
-      case "relax":
-        return <Heart className="w-5 h-5 shrink-0" />;
-      default:
-        return <Star className="w-5 h-5 shrink-0" />;
-    }
-  };
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <RadioGroup
+      className={cn(
+        "grid grid-cols-1 md:grid-cols-2 gap-4",
+        hasError ? "border-2 border-destructive/20 p-2 rounded-lg" : ""
+      )}
+      value={selectedObjective}
+      onValueChange={onObjectiveSelect}
+    >
       {objectives.map((objective) => (
-        <Button
+        <div
           key={objective.id}
-          type="button"
-          variant={selectedObjective === objective.value ? "default" : "outline"}
-          onClick={() => onObjectiveSelect(objective.value)}
-          className={`flex items-center justify-start gap-3 p-4 h-auto text-left min-h-[64px] ${
-            selectedObjective === objective.value
-              ? "bg-primary text-primary-foreground hover:bg-primary/90"
-              : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
-          }`}
+          className={cn(
+            "relative flex items-center space-x-2 rounded-md border border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground",
+            selectedObjective === objective.value && "border-primary bg-muted",
+            hasError && "border-destructive/30"
+          )}
         >
-          {getObjectiveIcon(objective.value)}
-          <span className="flex-1">{objective.label}</span>
-        </Button>
+          <RadioGroupItem
+            value={objective.value}
+            id={objective.id}
+            className="absolute top-4 right-4"
+          />
+          <div className="flex items-center gap-3">
+            {objective.icon || null}
+            <Label
+              htmlFor={objective.id}
+              className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              {objective.label}
+            </Label>
+          </div>
+        </div>
       ))}
-    </div>
+    </RadioGroup>
   );
 };
 

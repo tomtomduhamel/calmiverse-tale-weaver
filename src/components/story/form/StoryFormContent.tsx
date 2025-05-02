@@ -22,6 +22,7 @@ interface StoryFormContentProps {
   formError: string | null;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onModeSwitch: () => void;
+  isGenerateButtonDisabled?: boolean;
 }
 
 export const StoryFormContent = ({
@@ -37,9 +38,13 @@ export const StoryFormContent = ({
   formError,
   onSubmit,
   onModeSwitch,
+  isGenerateButtonDisabled = false,
 }: StoryFormContentProps) => {
   const isMobile = useIsMobile();
   const scrollAreaHeight = isMobile ? "h-[calc(100vh-120px)]" : "h-[calc(100vh-150px)]";
+  
+  const hasChildrenError = formError && formError.includes("enfant");
+  const hasObjectiveError = formError && formError.includes("objectif");
   
   return (
     <ScrollArea className={scrollAreaHeight}>
@@ -48,16 +53,22 @@ export const StoryFormContent = ({
         className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl"
       >
         <StoryFormHeader onModeSwitch={onModeSwitch} />
-        <StoryError error={formError} />
         
-        <ChildrenSelection
-          children={children}
-          selectedChildrenIds={selectedChildrenIds}
-          onChildToggle={onChildToggle}
-          onCreateChildClick={onCreateChildClick}
-        />
+        {formError && (
+          <StoryError error={formError} className="animate-pulse" />
+        )}
+        
+        <div className={`space-y-4 ${hasChildrenError ? 'ring-2 ring-destructive/20 rounded-lg p-4' : ''}`}>
+          <ChildrenSelection
+            children={children}
+            selectedChildrenIds={selectedChildrenIds}
+            onChildToggle={onChildToggle}
+            onCreateChildClick={onCreateChildClick}
+            hasError={hasChildrenError}
+          />
+        </div>
 
-        <div className="space-y-4">
+        <div className={`space-y-4 ${hasObjectiveError ? 'ring-2 ring-destructive/20 rounded-lg p-4' : ''}`}>
           <label className="text-secondary dark:text-white text-base sm:text-lg font-medium">
             Je souhaite créer un moment de lecture qui va...
           </label>
@@ -65,11 +76,12 @@ export const StoryFormContent = ({
             objectives={objectives}
             selectedObjective={objective}
             onObjectiveSelect={setObjective}
+            hasError={hasObjectiveError}
           />
         </div>
 
         <StoryProgress isSubmitting={isSubmitting} progress={progress} />
-        <GenerateStoryButton disabled={isSubmitting} />
+        <GenerateStoryButton disabled={isSubmitting || isGenerateButtonDisabled} />
       </form>
     </ScrollArea>
   );
