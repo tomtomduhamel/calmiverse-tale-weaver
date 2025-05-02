@@ -7,6 +7,7 @@ import ChildrenSelection from "../ChildrenSelection";
 import GenerateStoryButton from "./GenerateStoryButton";
 import StoryFormHeader from "./StoryFormHeader";
 import type { Child } from "@/types/child";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StoryFormContentProps {
   children: Child[];
@@ -37,9 +38,15 @@ export const StoryFormContent = ({
   onSubmit,
   onModeSwitch,
 }: StoryFormContentProps) => {
+  const isMobile = useIsMobile();
+  const scrollAreaHeight = isMobile ? "h-[calc(100vh-120px)]" : "h-[calc(100vh-150px)]";
+  
   return (
-    <ScrollArea className="h-[calc(100vh-150px)]">
-      <form onSubmit={onSubmit} className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl">
+    <ScrollArea className={scrollAreaHeight}>
+      <form 
+        onSubmit={onSubmit} 
+        className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl"
+      >
         <StoryFormHeader onModeSwitch={onModeSwitch} />
         <StoryError error={formError} />
         
@@ -51,7 +58,7 @@ export const StoryFormContent = ({
         />
 
         <div className="space-y-4">
-          <label className="text-secondary dark:text-white text-lg font-medium">
+          <label className="text-secondary dark:text-white text-base sm:text-lg font-medium">
             Je souhaite créer un moment de lecture qui va...
           </label>
           <StoryObjectives

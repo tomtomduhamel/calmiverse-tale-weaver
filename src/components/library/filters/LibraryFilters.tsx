@@ -2,6 +2,7 @@
 import React from 'react';
 import SearchBar from '../SearchBar';
 import StatusFilter from '../StatusFilter';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LibraryFiltersProps {
   searchTerm: string;
@@ -16,8 +17,10 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
   statusFilter,
   onStatusChange
 }) => {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+    <div className={`flex ${isMobile ? 'flex-col space-y-3' : 'sm:flex-row'} gap-4 items-start sm:items-center`}>
       <SearchBar value={searchTerm} onChange={onSearchChange} />
       <StatusFilter currentStatus={statusFilter} onStatusChange={onStatusChange} />
     </div>

@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Send } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,6 +11,7 @@ import ChatHeader from './ChatHeader';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
 import { useStoryChat } from '@/hooks/useStoryChat';
 import { useStoryGeneration } from '@/hooks/stories/useStoryGeneration';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StoryChatProps {
   onSwitchMode: () => void;
@@ -30,6 +31,7 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
   const { processUserMessage } = useStoryChat();
   const { toast } = useToast();
   const { generateStory } = useStoryGeneration();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const welcomeMessage: ChatMessageType = {
@@ -142,7 +144,10 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
     <div className="flex flex-col h-[80vh] max-w-3xl mx-auto bg-white/80 backdrop-blur-sm rounded-xl shadow-soft-lg border border-primary/20">
       <ChatHeader onSwitchMode={onSwitchMode} />
 
-      <ScrollArea className="flex-1 p-4 space-y-4" ref={scrollAreaRef}>
+      <ScrollArea 
+        className="flex-1 p-4 space-y-4" 
+        ref={scrollAreaRef}
+      >
         {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
         ))}
@@ -160,10 +165,14 @@ const StoryChat: React.FC<StoryChatProps> = ({ onSwitchMode, selectedChild }) =>
           />
           <Button 
             type="submit" 
-            className="bg-primary hover:bg-primary/90"
+            className={`${isMobile ? "w-12 px-0" : ""} bg-primary hover:bg-primary/90`}
             disabled={isGenerating || !inputValue.trim()}
           >
-            <MessageCircle className="h-5 w-5" />
+            {isMobile ? (
+              <Send className="h-5 w-5" />
+            ) : (
+              <MessageCircle className="h-5 w-5" />
+            )}
           </Button>
         </div>
       </form>

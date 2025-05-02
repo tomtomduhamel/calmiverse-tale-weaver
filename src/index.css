@@ -202,3 +202,52 @@ html::-webkit-scrollbar {
   transform: translateY(-2px);
 }
 
+/* Classes responsive pour les grilles et listes */
+.responsive-grid {
+  @apply grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+}
+
+.responsive-list {
+  @apply flex flex-col space-y-4;
+}
+
+/* Améliorations des formulaires pour mobile */
+.form-group {
+  @apply space-y-2 mb-4;
+}
+
+.form-group label {
+  @apply block text-sm font-medium;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+  @apply w-full rounded-md px-3 py-2;
+}
+
+/* Ajustements pour les boutons sur mobile */
+.mobile-action-button {
+  @apply fixed bottom-4 right-4 z-40 rounded-full shadow-lg;
+}
+
+/* Ajustements pour les espacements sur mobile */
+.mobile-container {
+  @apply px-4 py-6 sm:px-6 sm:py-8;
+}
+
+/* Layout fixes for mobile */
+.mobile-safe-area {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Ajustements du lecteur d'histoires pour mobile */
+.story-reader-mobile {
+  @apply px-4 py-6 max-h-[calc(100vh-120px)] overflow-y-auto;
+}
+
+/* Styles adaptatifs pour les cartes */
+.adaptive-card {
+  @apply p-4 sm:p-6 rounded-lg shadow-soft transition-all hover:shadow-soft-lg;
+}
