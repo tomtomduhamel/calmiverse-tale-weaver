@@ -30,11 +30,13 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
 
   // Fonction de validation du formulaire avec debugging amélioré
   const validateForm = (): { isValid: boolean; error: string | null } => {
-    console.log("validateForm - Données à valider:", {
+    console.log("validateForm - Données actuelles à valider:", {
       userId: user?.id,
       sessionExists: !!session,
       childrenIds: formData.childrenIds,
       objective: formData.objective,
+      childrenIdsLength: formData.childrenIds?.length || 0,
+      childrenIdsIsArray: Array.isArray(formData.childrenIds)
     });
     
     // Vérification de l'authentification
@@ -48,7 +50,10 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
 
     // Vérification de la sélection d'enfant avec debug détaillé
     if (!formData.childrenIds || !Array.isArray(formData.childrenIds)) {
-      console.error("Validation échouée: childrenIds n'est pas un tableau", { childrenIds: formData.childrenIds });
+      console.error("Validation échouée: childrenIds n'est pas un tableau", { 
+        childrenIds: formData.childrenIds,
+        type: typeof formData.childrenIds 
+      });
       return {
         isValid: false,
         error: "Veuillez sélectionner au moins un enfant pour créer une histoire"
@@ -56,7 +61,10 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     }
     
     if (formData.childrenIds.length === 0) {
-      console.error("Validation échouée: aucun enfant sélectionné", { childrenIds: formData.childrenIds });
+      console.error("Validation échouée: aucun enfant sélectionné", { 
+        childrenIds: formData.childrenIds,
+        length: formData.childrenIds.length 
+      });
       return {
         isValid: false,
         error: "Veuillez sélectionner au moins un enfant pour créer une histoire"
@@ -77,7 +85,11 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
   };
 
   const handleChildToggle = (childId: string) => {
-    console.log("Toggle enfant:", childId, "État actuel:", formData.childrenIds);
+    console.log("Toggle enfant - DÉBUT:", {
+      childId, 
+      "État actuel": formData.childrenIds,
+      "Est tableau?": Array.isArray(formData.childrenIds)
+    });
     
     // Vérifier que childId est une chaîne valide
     if (!childId || typeof childId !== 'string') {
@@ -86,16 +98,29 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     }
     
     setFormData((prev) => {
-      // Vérification que childrenIds est bien un tableau
-      const currentIds = Array.isArray(prev.childrenIds) ? prev.childrenIds : [];
+      // S'assurer que nous avons toujours un tableau valide
+      const currentIds = Array.isArray(prev.childrenIds) ? [...prev.childrenIds] : [];
       
+      // Vérifier si l'ID est déjà présent
       const isSelected = currentIds.includes(childId);
-      const childrenIds = isSelected
+      
+      // Créer un nouveau tableau avec ou sans l'ID
+      const updatedIds = isSelected
         ? currentIds.filter((id) => id !== childId)
         : [...currentIds, childId];
         
-      console.log("Nouveaux IDs d'enfant:", childrenIds);
-      return { ...prev, childrenIds };
+      console.log("Toggle enfant - APRÈS traitement:", {
+        "ID enfant": childId,
+        "État précédent": currentIds,
+        "Déjà sélectionné?": isSelected,
+        "Nouvel état": updatedIds
+      });
+      
+      // Retourner le nouvel état avec le tableau mis à jour
+      return { 
+        ...prev, 
+        childrenIds: updatedIds 
+      };
     });
     
     // Réinitialiser l'erreur si elle concerne la sélection d'enfants
@@ -123,7 +148,11 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
 
     try {
       setIsSubmitting(true);
-      console.log("Début de soumission du formulaire avec données:", formData);
+      console.log("Début de soumission du formulaire avec données:", {
+        childrenIds: formData.childrenIds,
+        objective: formData.objective,
+        childrenIdsLength: formData.childrenIds?.length || 0
+      });
       
       // Valider le formulaire avant de continuer
       const validation = validateForm();

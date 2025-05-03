@@ -23,12 +23,13 @@ const ChildrenSelection = ({
   onCreateChildClick,
   hasError = false,
 }: ChildrenSelectionProps) => {
-  // Log pour débogage à chaque changement de sélection
+  // Log détaillé pour le débogage de sélection d'enfants
   useEffect(() => {
     console.log("ChildrenSelection - État actuel:", {
       availableChildren: children.map(c => ({ id: c.id, name: c.name })),
       selectedIds: selectedChildrenIds,
-      hasError
+      hasError,
+      selectedCount: selectedChildrenIds.length
     });
   }, [children, selectedChildrenIds, hasError]);
 
@@ -59,6 +60,14 @@ const ChildrenSelection = ({
                       ? "bg-primary/10 hover:bg-primary/20" 
                       : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
                   )}
+                  onClick={() => onChildToggle(child.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      onChildToggle(child.id);
+                    }
+                  }}
                 >
                   <Checkbox
                     id={`child-${child.id}`}
@@ -67,7 +76,8 @@ const ChildrenSelection = ({
                       console.log(`Toggle checkbox pour enfant ${child.name}:`, {
                         childId: child.id,
                         currentlySelected: isSelected,
-                        willBecomme: !isSelected
+                        willBecome: !isSelected,
+                        currentSelectedIds: [...selectedChildrenIds]
                       });
                       onChildToggle(child.id);
                     }}
@@ -78,7 +88,7 @@ const ChildrenSelection = ({
                   <Label
                     htmlFor={`child-${child.id}`}
                     className={cn(
-                      "text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer",
+                      "text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer w-full",
                       isSelected ? "font-semibold text-primary" : ""
                     )}
                   >

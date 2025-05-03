@@ -24,6 +24,7 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
   const [formError, setFormError] = useState<string | null>(null);
+  const [formDebugInfo, setFormDebugInfo] = useState<any>({});
   
   // Utilisation du hook d'authentification
   const { user, authLoading, authChecked } = useStoryFormAuth(setFormError);
@@ -72,15 +73,28 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   
   // Journaliser l'état du formulaire pour débogage
   useEffect(() => {
-    console.log("État actuel du formulaire:", {
+    const debugInfo = {
       selectedChildrenIds: formData.childrenIds,
+      selectedChildrenCount: formData.childrenIds?.length || 0,
       selectedObjective: formData.objective,
       childrenCount: children?.length || 0,
       hasError: !!formError,
       errorMessage: formError,
       isSubmitting: isSubmitting || formIsSubmitting
-    });
-  }, [formData, formError, children, isSubmitting, formIsSubmitting]);
+    };
+    
+    console.log("État actuel du formulaire:", debugInfo);
+    setFormDebugInfo(debugInfo);
+    
+    // Effacer automatiquement l'erreur si des enfants sont sélectionnés
+    if (formError?.includes("sélectionner au moins un enfant") && 
+        formData.childrenIds && 
+        formData.childrenIds.length > 0) {
+      console.log("Effacement automatique de l'erreur car des enfants sont sélectionnés");
+      setFormError(null);
+      resetError();
+    }
+  }, [formData, formError, children, isSubmitting, formIsSubmitting, resetError]);
 
   // Vérifier si le bouton de génération doit être désactivé
   const isGenerateButtonDisabled = () => {
@@ -91,6 +105,7 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     console.log("État du bouton de génération:", { 
       disabled: result,
       noChildSelected,
+      childrenIds: formData.childrenIds,
       noObjectiveSelected,
       isSubmitting: isSubmitting || formIsSubmitting
     });
@@ -121,7 +136,8 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   const handleFormSubmission = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Tentative de soumission du formulaire", {
-      children: formData.childrenIds.length,
+      children: formData.childrenIds?.length || 0,
+      childrenIds: formData.childrenIds,
       objective: formData.objective
     });
     
@@ -131,9 +147,13 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     
     try {
       // Vérifier explicitement la présence d'enfants
-      if (!formData.childrenIds || formData.childrenIds.length === 0) {
+      if (!formData.childrenIds || !Array.isArray(formData.childrenIds) || formData.childrenIds.length === 0) {
         const errorMsg = "Veuillez sélectionner au moins un enfant pour créer une histoire";
-        console.error(errorMsg, { childrenIds: formData.childrenIds });
+        console.error(errorMsg, { 
+          childrenIds: formData.childrenIds, 
+          isArray: Array.isArray(formData.childrenIds),
+          length: formData.childrenIds?.length || 0
+        });
         setFormError(errorMsg);
         return;
       }
@@ -154,7 +174,11 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
         return;
       }
       
-      console.log("Validation réussie, soumission du formulaire", formData);
+      console.log("Validation réussie, soumission du formulaire", {
+        childrenIds: formData.childrenIds,
+        objective: formData.objective
+      });
+      
       // Soumettre le formulaire si la validation réussit
       await handleSubmit(e);
     } catch (error: any) {
@@ -165,6 +189,13 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto">
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-gray-100 dark:bg-gray-800 p-4 mb-4 rounded-lg text-xs">
+          <h3 className="font-bold mb-1">Informations de débogage (dev uniquement)</h3>
+          <pre>{JSON.stringify(formDebugInfo, null, 2)}</pre>
+        </div>
+      )}
+      
       {creationMode === "classic" ? (
         <>
           <StoryFormContent

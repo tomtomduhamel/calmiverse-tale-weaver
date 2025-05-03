@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Wand2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface GenerateStoryButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   disabled?: boolean;
@@ -10,15 +11,17 @@ interface GenerateStoryButtonProps extends React.ButtonHTMLAttributes<HTMLButton
 const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButtonProps) => {
   const [countdownActive, setCountdownActive] = useState(false);
   const [countdown, setCountdown] = useState(10);
+  const [buttonClicked, setButtonClicked] = useState(false);
   
   // Log pour déboguer l'état disabled du bouton
   useEffect(() => {
     console.log("GenerateStoryButton - État:", {
       disabled,
       countdownActive,
+      buttonClicked,
       countdown: countdownActive ? countdown : 'inactif'
     });
-  }, [disabled, countdownActive, countdown]);
+  }, [disabled, countdownActive, countdown, buttonClicked]);
 
   // Animation de countdown d'accessibilité lorsque le bouton est cliqué
   useEffect(() => {
@@ -36,10 +39,20 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
     return () => clearTimeout(timer);
   }, [countdownActive, countdown]);
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
+      console.log("Bouton de génération cliqué, désactivé =", disabled);
       setCountdownActive(true);
+      setButtonClicked(true);
+      
       // Le formulaire va être soumis via le type="submit" du bouton
+      setTimeout(() => {
+        setButtonClicked(false);
+      }, 500);
+    } else {
+      // Empêcher la soumission si désactivé
+      e.preventDefault();
+      console.log("Clic sur bouton désactivé, prévention de la soumission");
     }
   };
 
@@ -48,7 +61,12 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
       type="submit"
       onClick={handleClick}
       disabled={disabled}
-      className="w-full py-6 text-lg font-bold transition-all animate-fade-in"
+      className={cn(
+        "w-full py-6 text-lg font-bold transition-all animate-fade-in",
+        buttonClicked && !disabled ? "bg-primary/80" : "",
+        disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
+      )}
+      aria-disabled={disabled}
       {...props}
     >
       <Wand2 className="w-5 h-5 mr-2" />
