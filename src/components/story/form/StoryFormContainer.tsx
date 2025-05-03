@@ -8,7 +8,6 @@ import CreateChildDialog from "../CreateChildDialog";
 import StoryChat from "../chat/StoryChat";
 import { useChildFormLogic } from "../useChildFormLogic";
 import { StoryFormContent } from "./StoryFormContent";
-import { useStoryFormSubmission } from "./hooks/useStoryFormSubmission";
 import { useStoryProgress } from "./hooks/useStoryProgress";
 import { useStoryFormAuth } from "@/hooks/useStoryFormAuth";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -55,14 +54,8 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     setChildAge,
   } = useChildFormLogic(onCreateChild);
 
-  // Story submission hook
-  const { isSubmitting, handleSubmit: handleFormSubmit } = useStoryFormSubmission(
-    onSubmit,
-    onStoryCreated
-  );
-
   // Progress indicator
-  const { progress } = useStoryProgress(isSubmitting || formIsSubmitting);
+  const { progress } = useStoryProgress(formIsSubmitting);
 
   // Synchronize errors
   useEffect(() => {
@@ -81,34 +74,34 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
       childrenCount: children?.length || 0,
       hasError: !!formError,
       errorMessage: formError,
-      isSubmitting: isSubmitting || formIsSubmitting
+      isSubmitting: formIsSubmitting
     };
     
     console.log("Current form state:", debugInfo);
     setFormDebugInfo(debugInfo);
     
     // Clear error automatically if children are selected
-    if (formError?.includes("sélectionner au moins un enfant") && 
+    if (formError?.includes("select at least one child") && 
         formData.childrenIds && 
         formData.childrenIds.length > 0) {
       console.log("Automatically clearing error as children are selected");
       setFormError(null);
       resetError();
     }
-  }, [formData, formError, children, isSubmitting, formIsSubmitting, resetError]);
+  }, [formData, formError, children, formIsSubmitting, resetError]);
 
   // Check if generate button should be disabled
   const isGenerateButtonDisabled = () => {
     const noChildSelected = !formData.childrenIds || formData.childrenIds.length === 0;
     const noObjectiveSelected = !formData.objective;
-    const result = isSubmitting || formIsSubmitting || noChildSelected || noObjectiveSelected;
+    const result = formIsSubmitting || noChildSelected || noObjectiveSelected;
     
     console.log("Generate button state:", { 
       disabled: result,
       noChildSelected,
       childrenIds: formData.childrenIds,
       noObjectiveSelected,
-      isSubmitting: isSubmitting || formIsSubmitting
+      isSubmitting: formIsSubmitting
     });
     
     return result;
@@ -135,61 +128,6 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     return <LoadingStory />;
   }
 
-  // Form submission handler
-  const handleFormSubmission = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Attempting to submit form", {
-      children: formData.childrenIds?.length || 0,
-      childrenIds: formData.childrenIds,
-      objective: formData.objective
-    });
-    
-    // Reset errors before validation
-    resetError();
-    setFormError(null);
-    
-    try {
-      // Explicitly check for children
-      if (!formData.childrenIds || !Array.isArray(formData.childrenIds) || formData.childrenIds.length === 0) {
-        const errorMsg = "Please select at least one child to create a story";
-        console.error(errorMsg, { 
-          childrenIds: formData.childrenIds, 
-          isArray: Array.isArray(formData.childrenIds),
-          length: formData.childrenIds?.length || 0
-        });
-        setFormError(errorMsg);
-        return;
-      }
-      
-      // Explicitly check for objective
-      if (!formData.objective) {
-        const errorMsg = "Please select an objective for the story";
-        console.error(errorMsg, { objective: formData.objective });
-        setFormError(errorMsg);
-        return;
-      }
-      
-      // Complete form validation before submission
-      const validation = validateForm();
-      if (!validation.isValid) {
-        console.error("Complete validation error:", validation.error);
-        setFormError(validation.error);
-        return;
-      }
-      
-      console.log("Validation successful, submitting form", {
-        childrenIds: formData.childrenIds,
-        objective: formData.objective
-      });
-      
-      // Submit form if validation passes
-      await handleSubmit(e);
-    } catch (error: any) {
-      console.error("Error submitting form:", error);
-      setFormError(error.message || "An error occurred");
-    }
-  };
-
   return (
     <div className="w-full max-w-4xl mx-auto">
       {process.env.NODE_ENV === 'development' && (
@@ -214,10 +152,10 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
               { id: "relax", label: "Relax", value: "relax" },
               { id: "fun", label: "Have fun", value: "fun" },
             ]}
-            isSubmitting={isSubmitting || formIsSubmitting}
+            isSubmitting={formIsSubmitting}
             progress={progress}
             formError={formError}
-            onSubmit={handleFormSubmission}
+            onSubmit={handleSubmit}
             onModeSwitch={() => setCreationMode("chat")}
             isGenerateButtonDisabled={isGenerateButtonDisabled()}
           />

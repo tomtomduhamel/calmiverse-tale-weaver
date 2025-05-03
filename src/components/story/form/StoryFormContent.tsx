@@ -43,8 +43,8 @@ export const StoryFormContent = ({
   const isMobile = useIsMobile();
   const scrollAreaHeight = isMobile ? "h-[calc(100vh-120px)]" : "h-[calc(100vh-150px)]";
   
-  const hasChildrenError = formError && formError.includes("enfant");
-  const hasObjectiveError = formError && formError.includes("objectif");
+  const hasChildrenError = formError && formError.toLowerCase().includes("child");
+  const hasObjectiveError = formError && formError.toLowerCase().includes("objective");
   
   return (
     <ScrollArea className={scrollAreaHeight}>

@@ -25,7 +25,7 @@ export const useStoryFormAuth = (setFormError: (error: string | null) => void) =
         console.log("User not authenticated, displaying error");
         setFormError("User not authenticated");
         toast({
-          title: "Error",
+          title: "Authentication Required",
           description: "You must be logged in to create a story",
           variant: "destructive",
         });
@@ -34,7 +34,7 @@ export const useStoryFormAuth = (setFormError: (error: string | null) => void) =
         setFormError(null);
       }
     }
-  }, [user, authLoading, toast, setFormError]);
+  }, [user, authLoading, toast, setFormError, authChecked]);
 
   return {
     user,

@@ -23,9 +23,26 @@ export const useNotifications = (setError?: (error: string | null) => void) => {
     });
   };
 
+  const notifyInfo = (message: string) => {
+    toast({
+      title: "Information",
+      description: message,
+    });
+  };
+
+  const notifyWarning = (message: string) => {
+    toast({
+      title: "Warning",
+      description: message,
+      variant: "warning",
+    });
+  };
+
   return {
     toast,
     notifySuccess,
-    notifyError
+    notifyError,
+    notifyInfo,
+    notifyWarning
   };
 };
