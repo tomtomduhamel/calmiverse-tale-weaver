@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import type { StoryFormProps } from "../StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
-import { useStoryForm } from "@/hooks/stories/useStoryForm";
+import { useStoryForm } from "@/hooks/stories/storyForm";
 import LoadingStory from "@/components/LoadingStory";
 import CreateChildDialog from "../CreateChildDialog";
 import StoryChat from "../chat/StoryChat";
