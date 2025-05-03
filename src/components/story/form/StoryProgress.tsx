@@ -11,7 +11,7 @@ export const StoryProgress = ({ isSubmitting, progress }: StoryProgressProps) =>
   
   return (
     <div className="space-y-2">
-      <div className="text-sm text-muted-foreground">Préparation de votre histoire...</div>
+      <div className="text-sm text-muted-foreground">Preparing your story...</div>
       <Progress value={progress} className="h-2" />
     </div>
   );

@@ -8,8 +8,6 @@ import CreateChildDialog from "../CreateChildDialog";
 import StoryChat from "../chat/StoryChat";
 import { useChildFormLogic } from "../useChildFormLogic";
 import { StoryFormContent } from "./StoryFormContent";
-import { useNavigate } from "react-router-dom";
-import { StoryError } from "./StoryError";
 import { useStoryFormSubmission } from "./hooks/useStoryFormSubmission";
 import { useStoryProgress } from "./hooks/useStoryProgress";
 import { useStoryFormAuth } from "@/hooks/useStoryFormAuth";
@@ -26,12 +24,13 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   const [formError, setFormError] = useState<string | null>(null);
   const [formDebugInfo, setFormDebugInfo] = useState<any>({});
   
-  // Utilisation du hook d'authentification
+  // Authentication hook
   const { user, authLoading, authChecked } = useStoryFormAuth(setFormError);
   
-  // Utilisation du hook de notifications
+  // Notifications hook
   const { toast } = useNotifications(setFormError);
   
+  // Story form hook
   const { 
     formData, 
     isLoading, 
@@ -44,6 +43,7 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     validateForm
   } = useStoryForm(onStoryCreated, onSubmit);
   
+  // Child form logic
   const {
     showChildForm,
     setShowChildForm,
@@ -55,23 +55,24 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     setChildAge,
   } = useChildFormLogic(onCreateChild);
 
-  // Utiliser le hook useStoryFormSubmission avec la fonction de soumission appropriée
+  // Story submission hook
   const { isSubmitting, handleSubmit: handleFormSubmit } = useStoryFormSubmission(
     onSubmit,
     onStoryCreated
   );
 
+  // Progress indicator
   const { progress } = useStoryProgress(isSubmitting || formIsSubmitting);
 
-  // Synchroniser les erreurs
+  // Synchronize errors
   useEffect(() => {
     if (storyFormError) {
-      console.log("Erreur détectée dans StoryFormContainer:", storyFormError);
+      console.log("Error detected in StoryFormContainer:", storyFormError);
       setFormError(storyFormError);
     }
   }, [storyFormError]);
   
-  // Journaliser l'état du formulaire pour débogage
+  // Log form state for debugging
   useEffect(() => {
     const debugInfo = {
       selectedChildrenIds: formData.childrenIds,
@@ -83,26 +84,26 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
       isSubmitting: isSubmitting || formIsSubmitting
     };
     
-    console.log("État actuel du formulaire:", debugInfo);
+    console.log("Current form state:", debugInfo);
     setFormDebugInfo(debugInfo);
     
-    // Effacer automatiquement l'erreur si des enfants sont sélectionnés
+    // Clear error automatically if children are selected
     if (formError?.includes("sélectionner au moins un enfant") && 
         formData.childrenIds && 
         formData.childrenIds.length > 0) {
-      console.log("Effacement automatique de l'erreur car des enfants sont sélectionnés");
+      console.log("Automatically clearing error as children are selected");
       setFormError(null);
       resetError();
     }
   }, [formData, formError, children, isSubmitting, formIsSubmitting, resetError]);
 
-  // Vérifier si le bouton de génération doit être désactivé
+  // Check if generate button should be disabled
   const isGenerateButtonDisabled = () => {
     const noChildSelected = !formData.childrenIds || formData.childrenIds.length === 0;
     const noObjectiveSelected = !formData.objective;
     const result = isSubmitting || formIsSubmitting || noChildSelected || noObjectiveSelected;
     
-    console.log("État du bouton de génération:", { 
+    console.log("Generate button state:", { 
       disabled: result,
       noChildSelected,
       childrenIds: formData.childrenIds,
@@ -113,10 +114,11 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     return result;
   };
 
+  // Loading states
   if (authLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-primary">Vérification de l'authentification...</div>
+        <div className="text-primary">Verifying authentication...</div>
       </div>
     );
   }
@@ -124,7 +126,7 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   if (objectivesLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-primary">Chargement des objectifs...</div>
+        <div className="text-primary">Loading objectives...</div>
       </div>
     );
   }
@@ -133,22 +135,23 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     return <LoadingStory />;
   }
 
+  // Form submission handler
   const handleFormSubmission = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Tentative de soumission du formulaire", {
+    console.log("Attempting to submit form", {
       children: formData.childrenIds?.length || 0,
       childrenIds: formData.childrenIds,
       objective: formData.objective
     });
     
-    // Réinitialiser les erreurs avant validation
+    // Reset errors before validation
     resetError();
     setFormError(null);
     
     try {
-      // Vérifier explicitement la présence d'enfants
+      // Explicitly check for children
       if (!formData.childrenIds || !Array.isArray(formData.childrenIds) || formData.childrenIds.length === 0) {
-        const errorMsg = "Veuillez sélectionner au moins un enfant pour créer une histoire";
+        const errorMsg = "Please select at least one child to create a story";
         console.error(errorMsg, { 
           childrenIds: formData.childrenIds, 
           isArray: Array.isArray(formData.childrenIds),
@@ -158,32 +161,32 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
         return;
       }
       
-      // Vérifier explicitement la présence d'un objectif
+      // Explicitly check for objective
       if (!formData.objective) {
-        const errorMsg = "Veuillez sélectionner un objectif pour l'histoire";
+        const errorMsg = "Please select an objective for the story";
         console.error(errorMsg, { objective: formData.objective });
         setFormError(errorMsg);
         return;
       }
       
-      // Valider le formulaire complet avant soumission
+      // Complete form validation before submission
       const validation = validateForm();
       if (!validation.isValid) {
-        console.error("Erreur de validation complète:", validation.error);
+        console.error("Complete validation error:", validation.error);
         setFormError(validation.error);
         return;
       }
       
-      console.log("Validation réussie, soumission du formulaire", {
+      console.log("Validation successful, submitting form", {
         childrenIds: formData.childrenIds,
         objective: formData.objective
       });
       
-      // Soumettre le formulaire si la validation réussit
+      // Submit form if validation passes
       await handleSubmit(e);
     } catch (error: any) {
-      console.error("Erreur lors de la soumission du formulaire:", error);
-      setFormError(error.message || "Une erreur est survenue");
+      console.error("Error submitting form:", error);
+      setFormError(error.message || "An error occurred");
     }
   };
 
@@ -191,7 +194,7 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     <div className="w-full max-w-4xl mx-auto">
       {process.env.NODE_ENV === 'development' && (
         <div className="bg-gray-100 dark:bg-gray-800 p-4 mb-4 rounded-lg text-xs">
-          <h3 className="font-bold mb-1">Informations de débogage (dev uniquement)</h3>
+          <h3 className="font-bold mb-1">Debug Information (dev only)</h3>
           <pre>{JSON.stringify(formDebugInfo, null, 2)}</pre>
         </div>
       )}
@@ -206,10 +209,10 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
             objective={formData.objective}
             setObjective={setObjective}
             objectives={objectives || [
-              { id: "sleep", label: "Aider à s'endormir", value: "sleep" },
-              { id: "focus", label: "Se concentrer", value: "focus" },
-              { id: "relax", label: "Se détendre", value: "relax" },
-              { id: "fun", label: "S'amuser", value: "fun" },
+              { id: "sleep", label: "Help sleep", value: "sleep" },
+              { id: "focus", label: "Focus", value: "focus" },
+              { id: "relax", label: "Relax", value: "relax" },
+              { id: "fun", label: "Have fun", value: "fun" },
             ]}
             isSubmitting={isSubmitting || formIsSubmitting}
             progress={progress}

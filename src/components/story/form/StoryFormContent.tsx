@@ -70,7 +70,7 @@ export const StoryFormContent = ({
 
         <div className={`space-y-4 ${hasObjectiveError ? 'ring-2 ring-destructive/20 rounded-lg p-4' : ''}`}>
           <label className="text-secondary dark:text-white text-base sm:text-lg font-medium">
-            Je souhaite créer un moment de lecture qui va...
+            I want to create a reading moment that will...
           </label>
           <StoryObjectives
             objectives={objectives}

@@ -2,22 +2,14 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
-import { useNavigate } from "react-router-dom";
 
 export const useStoryFormAuth = (setFormError: (error: string | null) => void) => {
   const [authChecked, setAuthChecked] = useState(false);
   const { user, loading: authLoading } = useSupabaseAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   
-  // Check if user is authenticated and redirect to auth page if necessary
+  // Check authentication status when component loads
   useEffect(() => {
-    console.log("Checking authentication in useStoryFormAuth", { 
-      user: user?.id, 
-      authLoading,
-      authChecked
-    });
-    
     if (!authLoading) {
       setAuthChecked(true);
       

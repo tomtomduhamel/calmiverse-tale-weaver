@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 export const useStoryProgress = (isSubmitting: boolean) => {
   const [progress, setProgress] = useState(0);
 
-  // Simuler la progression pour une meilleure expérience utilisateur
+  // Simulate progress for a better user experience
   useEffect(() => {
     if (isSubmitting) {
       const interval = setInterval(() => {

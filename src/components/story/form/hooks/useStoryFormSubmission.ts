@@ -20,18 +20,18 @@ export const useStoryFormSubmission = (
       const storyId = await onSubmit(formData);
       
       if (!storyId) {
-        throw new Error("Aucun identifiant d'histoire n'a été retourné");
+        throw new Error("No story ID was returned");
       }
       
       console.log("Story created successfully with ID:", storyId);
       
       toast({
-        title: "Succès",
-        description: "Votre histoire est en cours de génération.",
+        title: "Success",
+        description: "Your story is being generated.",
       });
       
       if (onStoryCreated) {
-        // Ajouter un délai pour s'assurer que l'histoire a été complètement générée
+        // Add a delay to ensure the story has been completely generated
         await new Promise(resolve => setTimeout(resolve, 500));
         onStoryCreated(storyId);
       }
@@ -40,11 +40,11 @@ export const useStoryFormSubmission = (
     } catch (error: any) {
       console.error("Error submitting story form:", error);
       
-      const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue";
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
       setError(errorMessage);
       
       toast({
-        title: "Erreur",
+        title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
