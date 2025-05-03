@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Wand2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
 interface GenerateStoryButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -13,8 +13,8 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
   const [countdown, setCountdown] = useState(10);
   const [buttonClicked, setButtonClicked] = useState(false);
   
-  // Log pour déboguer l'état disabled du bouton
-  useEffect(() => {
+  // Log pour déboguer l'état disabled du bouton - utilisons useCallback pour éviter des rendus inutiles
+  const logButtonState = useCallback(() => {
     console.log("GenerateStoryButton - État:", {
       disabled,
       countdownActive,
@@ -22,6 +22,11 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
       countdown: countdownActive ? countdown : 'inactif'
     });
   }, [disabled, countdownActive, countdown, buttonClicked]);
+
+  // N'exécuter ce log qu'aux changements réels d'état
+  useEffect(() => {
+    logButtonState();
+  }, [disabled, countdownActive, countdown, buttonClicked, logButtonState]);
 
   // Animation de countdown d'accessibilité lorsque le bouton est cliqué
   useEffect(() => {

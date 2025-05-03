@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import type { StoryFormData } from "@/components/story/StoryFormTypes";
@@ -29,7 +29,7 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
   }, [user, session, loading]);
 
   // Fonction de validation du formulaire avec debugging amélioré
-  const validateForm = (): { isValid: boolean; error: string | null } => {
+  const validateForm = useCallback((): { isValid: boolean; error: string | null } => {
     console.log("validateForm - Données actuelles à valider:", {
       userId: user?.id,
       sessionExists: !!session,
@@ -82,9 +82,10 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
 
     console.log("Validation réussie, données valides:", { ...formData });
     return { isValid: true, error: null };
-  };
+  }, [formData, user, session]);
 
-  const handleChildToggle = (childId: string) => {
+  // Utilisation de useCallback pour éviter des rendus inutiles
+  const handleChildToggle = useCallback((childId: string) => {
     console.log("Toggle enfant - DÉBUT:", {
       childId, 
       "État actuel": formData.childrenIds,
@@ -127,9 +128,9 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     if (error && error.includes("Veuillez sélectionner au moins un enfant")) {
       setError(null);
     }
-  };
+  }, [formData.childrenIds, error]);
 
-  const setObjective = (objective: string) => {
+  const setObjective = useCallback((objective: string) => {
     console.log("Nouvel objectif sélectionné:", objective);
     setFormData((prev) => ({ ...prev, objective }));
     
@@ -137,7 +138,7 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     if (error && error.includes("Veuillez sélectionner un objectif")) {
       setError(null);
     }
-  };
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,7 +206,7 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     }
   };
 
-  const resetError = () => setError(null);
+  const resetError = useCallback(() => setError(null), []);
 
   return {
     formData,

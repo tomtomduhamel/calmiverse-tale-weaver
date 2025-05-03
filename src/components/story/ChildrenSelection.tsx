@@ -23,7 +23,7 @@ const ChildrenSelection = ({
   onCreateChildClick,
   hasError = false,
 }: ChildrenSelectionProps) => {
-  // Log détaillé pour le débogage de sélection d'enfants
+  // Log détaillé pour le débogage de sélection d'enfants - uniquement au changement des dépendances
   useEffect(() => {
     console.log("ChildrenSelection - État actuel:", {
       availableChildren: children.map(c => ({ id: c.id, name: c.name })),
@@ -72,18 +72,13 @@ const ChildrenSelection = ({
                   <Checkbox
                     id={`child-${child.id}`}
                     checked={isSelected}
-                    onCheckedChange={() => {
-                      console.log(`Toggle checkbox pour enfant ${child.name}:`, {
-                        childId: child.id,
-                        currentlySelected: isSelected,
-                        willBecome: !isSelected,
-                        currentSelectedIds: [...selectedChildrenIds]
-                      });
-                      onChildToggle(child.id);
-                    }}
+                    // Le problème est ici - la modification de cette fonction résout la boucle infinie
+                    // Nous supprimons l'appel à onCheckedChange et laissons le parent gérer l'événement
                     className={cn(
                       isSelected ? "border-primary" : ""
                     )}
+                    // Éviter la propagation pour empêcher les événements en double
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <Label
                     htmlFor={`child-${child.id}`}
