@@ -7,7 +7,7 @@ import type { StoryFormData } from "@/components/story/StoryFormTypes";
  */
 export const useStoryFormHandlers = (
   formData: StoryFormData,
-  setFormData: (formData: StoryFormData) => void,
+  setFormData: React.Dispatch<React.SetStateAction<StoryFormData>>,
   error: string | null,
   setError: (error: string | null) => void
 ) => {

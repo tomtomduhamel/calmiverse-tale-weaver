@@ -9,7 +9,7 @@ import type { User, Session } from "@supabase/supabase-js";
  */
 export const useStoryFormSubmission = (
   formData: StoryFormData,
-  setFormData: (formData: StoryFormData) => void,
+  setFormData: React.Dispatch<React.SetStateAction<StoryFormData>>,
   isSubmitting: boolean,
   setIsSubmitting: (isSubmitting: boolean) => void,
   error: string | null,
