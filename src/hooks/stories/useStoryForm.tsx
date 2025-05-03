@@ -28,18 +28,35 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
     }
   }, [user, session, loading]);
 
-  // Fonction de validation du formulaire
+  // Fonction de validation du formulaire avec debugging amélioré
   const validateForm = (): { isValid: boolean; error: string | null } => {
+    console.log("validateForm - Données à valider:", {
+      userId: user?.id,
+      sessionExists: !!session,
+      childrenIds: formData.childrenIds,
+      objective: formData.objective,
+    });
+    
     // Vérification de l'authentification
     if (!user || !session) {
+      console.error("Validation échouée: utilisateur non connecté", { user, session });
       return {
         isValid: false,
         error: "Vous devez être connecté pour créer une histoire"
       };
     }
 
-    // Vérification de la sélection d'enfant
-    if (!formData.childrenIds || formData.childrenIds.length === 0) {
+    // Vérification de la sélection d'enfant avec debug détaillé
+    if (!formData.childrenIds || !Array.isArray(formData.childrenIds)) {
+      console.error("Validation échouée: childrenIds n'est pas un tableau", { childrenIds: formData.childrenIds });
+      return {
+        isValid: false,
+        error: "Veuillez sélectionner au moins un enfant pour créer une histoire"
+      };
+    }
+    
+    if (formData.childrenIds.length === 0) {
+      console.error("Validation échouée: aucun enfant sélectionné", { childrenIds: formData.childrenIds });
       return {
         isValid: false,
         error: "Veuillez sélectionner au moins un enfant pour créer une histoire"
@@ -48,21 +65,35 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
 
     // Vérification de l'objectif
     if (!formData.objective) {
+      console.error("Validation échouée: aucun objectif sélectionné", { objective: formData.objective });
       return {
         isValid: false,
         error: "Veuillez sélectionner un objectif pour l'histoire"
       };
     }
 
+    console.log("Validation réussie, données valides:", { ...formData });
     return { isValid: true, error: null };
   };
 
   const handleChildToggle = (childId: string) => {
     console.log("Toggle enfant:", childId, "État actuel:", formData.childrenIds);
+    
+    // Vérifier que childId est une chaîne valide
+    if (!childId || typeof childId !== 'string') {
+      console.error("ChildId invalide:", childId);
+      return;
+    }
+    
     setFormData((prev) => {
-      const childrenIds = prev.childrenIds.includes(childId)
-        ? prev.childrenIds.filter((id) => id !== childId)
-        : [...prev.childrenIds, childId];
+      // Vérification que childrenIds est bien un tableau
+      const currentIds = Array.isArray(prev.childrenIds) ? prev.childrenIds : [];
+      
+      const isSelected = currentIds.includes(childId);
+      const childrenIds = isSelected
+        ? currentIds.filter((id) => id !== childId)
+        : [...currentIds, childId];
+        
       console.log("Nouveaux IDs d'enfant:", childrenIds);
       return { ...prev, childrenIds };
     });
@@ -85,22 +116,26 @@ export const useStoryForm = (onStoryCreated: Function, onSubmit: Function) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting) {
+      console.log("Soumission déjà en cours, ignorée");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
+      console.log("Début de soumission du formulaire avec données:", formData);
       
       // Valider le formulaire avant de continuer
       const validation = validateForm();
       if (!validation.isValid) {
         console.error("Erreur de validation:", validation.error);
         setError(validation.error);
-        throw new Error(validation.error);
+        throw new Error(validation.error || "Erreur de validation");
       }
       
       // Réinitialiser l'erreur si la validation a réussi
       setError(null);
-      console.log("Tentative de création d'histoire, données du formulaire:", formData);
+      console.log("Tentative de création d'histoire, données validées:", formData);
 
       // Appeler la fonction de création d'histoire
       const storyId = await onSubmit(formData);

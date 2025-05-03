@@ -1,30 +1,58 @@
 
-import React from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Wand2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
-interface GenerateStoryButtonProps {
+interface GenerateStoryButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   disabled?: boolean;
-  className?: string;
 }
 
-const GenerateStoryButton: React.FC<GenerateStoryButtonProps> = ({ 
-  disabled = false,
-  className
-}) => {
+const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButtonProps) => {
+  const [countdownActive, setCountdownActive] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+  
+  // Log pour déboguer l'état disabled du bouton
+  useEffect(() => {
+    console.log("GenerateStoryButton - État:", {
+      disabled,
+      countdownActive,
+      countdown: countdownActive ? countdown : 'inactif'
+    });
+  }, [disabled, countdownActive, countdown]);
+
+  // Animation de countdown d'accessibilité lorsque le bouton est cliqué
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    
+    if (countdownActive && countdown > 0) {
+      timer = setTimeout(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (countdown === 0) {
+      setCountdownActive(false);
+      setCountdown(10);
+    }
+    
+    return () => clearTimeout(timer);
+  }, [countdownActive, countdown]);
+
+  const handleClick = () => {
+    if (!disabled) {
+      setCountdownActive(true);
+      // Le formulaire va être soumis via le type="submit" du bouton
+    }
+  };
+
   return (
     <Button
       type="submit"
-      className={cn(
-        "w-full py-6 text-lg flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white",
-        disabled ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.01] transition-transform",
-        className
-      )}
+      onClick={handleClick}
       disabled={disabled}
+      className="w-full py-6 text-lg font-bold transition-all animate-fade-in"
+      {...props}
     >
-      <Sparkles className="w-5 h-5" />
-      Générer l'histoire
+      <Wand2 className="w-5 h-5 mr-2" />
+      {countdownActive ? `Génération en cours (${countdown}s)` : "Générer mon histoire"}
     </Button>
   );
 };

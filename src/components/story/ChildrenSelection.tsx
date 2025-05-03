@@ -6,6 +6,7 @@ import { UserPlus } from "lucide-react";
 import type { Child } from "@/types/child";
 import { calculateAge } from "@/utils/age";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 interface ChildrenSelectionProps {
   children: Child[];
@@ -22,6 +23,15 @@ const ChildrenSelection = ({
   onCreateChildClick,
   hasError = false,
 }: ChildrenSelectionProps) => {
+  // Log pour débogage à chaque changement de sélection
+  useEffect(() => {
+    console.log("ChildrenSelection - État actuel:", {
+      availableChildren: children.map(c => ({ id: c.id, name: c.name })),
+      selectedIds: selectedChildrenIds,
+      hasError
+    });
+  }, [children, selectedChildrenIds, hasError]);
+
   return (
     <div className="space-y-4">
       <Label className={cn(
@@ -37,24 +47,47 @@ const ChildrenSelection = ({
             "space-y-2",
             hasError ? "border-2 border-destructive/20 p-2 rounded-lg" : ""
           )}>
-            {children.map((child) => (
-              <div
-                key={child.id}
-                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 dark:hover:bg-muted-dark/50 transition-colors"
-              >
-                <Checkbox
-                  id={`child-${child.id}`}
-                  checked={selectedChildrenIds.includes(child.id)}
-                  onCheckedChange={() => onChildToggle(child.id)}
-                />
-                <Label
-                  htmlFor={`child-${child.id}`}
-                  className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            {children.map((child) => {
+              const isSelected = selectedChildrenIds.includes(child.id);
+              
+              return (
+                <div
+                  key={child.id}
+                  className={cn(
+                    "flex items-center space-x-3 p-3 rounded-lg transition-colors",
+                    isSelected 
+                      ? "bg-primary/10 hover:bg-primary/20" 
+                      : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
+                  )}
                 >
-                  {child.name} ({calculateAge(child.birthDate)} ans)
-                </Label>
-              </div>
-            ))}
+                  <Checkbox
+                    id={`child-${child.id}`}
+                    checked={isSelected}
+                    onCheckedChange={() => {
+                      console.log(`Toggle checkbox pour enfant ${child.name}:`, {
+                        childId: child.id,
+                        currentlySelected: isSelected,
+                        willBecomme: !isSelected
+                      });
+                      onChildToggle(child.id);
+                    }}
+                    className={cn(
+                      isSelected ? "border-primary" : ""
+                    )}
+                  />
+                  <Label
+                    htmlFor={`child-${child.id}`}
+                    className={cn(
+                      "text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer",
+                      isSelected ? "font-semibold text-primary" : ""
+                    )}
+                  >
+                    {child.name} ({calculateAge(child.birthDate)} ans)
+                    {isSelected && <span className="ml-2 text-xs text-primary">✓ Sélectionné</span>}
+                  </Label>
+                </div>
+              );
+            })}
           </div>
           <Button
             type="button"

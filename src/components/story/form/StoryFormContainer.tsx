@@ -65,13 +65,37 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   // Synchroniser les erreurs
   useEffect(() => {
     if (storyFormError) {
+      console.log("Erreur détectée dans StoryFormContainer:", storyFormError);
       setFormError(storyFormError);
     }
   }, [storyFormError]);
+  
+  // Journaliser l'état du formulaire pour débogage
+  useEffect(() => {
+    console.log("État actuel du formulaire:", {
+      selectedChildrenIds: formData.childrenIds,
+      selectedObjective: formData.objective,
+      childrenCount: children?.length || 0,
+      hasError: !!formError,
+      errorMessage: formError,
+      isSubmitting: isSubmitting || formIsSubmitting
+    });
+  }, [formData, formError, children, isSubmitting, formIsSubmitting]);
 
   // Vérifier si le bouton de génération doit être désactivé
   const isGenerateButtonDisabled = () => {
-    return isSubmitting || formIsSubmitting || !formData.childrenIds.length || !formData.objective;
+    const noChildSelected = !formData.childrenIds || formData.childrenIds.length === 0;
+    const noObjectiveSelected = !formData.objective;
+    const result = isSubmitting || formIsSubmitting || noChildSelected || noObjectiveSelected;
+    
+    console.log("État du bouton de génération:", { 
+      disabled: result,
+      noChildSelected,
+      noObjectiveSelected,
+      isSubmitting: isSubmitting || formIsSubmitting
+    });
+    
+    return result;
   };
 
   if (authLoading) {
@@ -96,19 +120,41 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
 
   const handleFormSubmission = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Tentative de soumission du formulaire", {
+      children: formData.childrenIds.length,
+      objective: formData.objective
+    });
     
     // Réinitialiser les erreurs avant validation
     resetError();
     setFormError(null);
     
     try {
-      // Valider le formulaire avant soumission
+      // Vérifier explicitement la présence d'enfants
+      if (!formData.childrenIds || formData.childrenIds.length === 0) {
+        const errorMsg = "Veuillez sélectionner au moins un enfant pour créer une histoire";
+        console.error(errorMsg, { childrenIds: formData.childrenIds });
+        setFormError(errorMsg);
+        return;
+      }
+      
+      // Vérifier explicitement la présence d'un objectif
+      if (!formData.objective) {
+        const errorMsg = "Veuillez sélectionner un objectif pour l'histoire";
+        console.error(errorMsg, { objective: formData.objective });
+        setFormError(errorMsg);
+        return;
+      }
+      
+      // Valider le formulaire complet avant soumission
       const validation = validateForm();
       if (!validation.isValid) {
+        console.error("Erreur de validation complète:", validation.error);
         setFormError(validation.error);
         return;
       }
       
+      console.log("Validation réussie, soumission du formulaire", formData);
       // Soumettre le formulaire si la validation réussit
       await handleSubmit(e);
     } catch (error: any) {
