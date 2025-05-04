@@ -9,6 +9,7 @@ const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
 >(({ className, ...props }, ref) => {
+  // We make sure to forward the ref properly and pass all props except those we handle
   return (
     <CheckboxPrimitive.Root
       ref={ref}

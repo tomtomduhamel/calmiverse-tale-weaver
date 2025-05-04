@@ -70,7 +70,7 @@ const ChildrenSelection = ({
                     id={`child-${child.id}`}
                     checked={isSelected}
                     className={isSelected ? "border-primary" : ""}
-                    readOnly
+                    onCheckedChange={() => {}} // Add a dummy handler to prevent React warning
                   />
                   <Label
                     htmlFor={`child-${child.id}`}
