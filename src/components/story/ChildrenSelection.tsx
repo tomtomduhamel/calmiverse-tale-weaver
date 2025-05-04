@@ -7,6 +7,7 @@ import type { Child } from "@/types/child";
 import { calculateAge } from "@/utils/age";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChildrenSelectionProps {
   children: Child[];
@@ -23,6 +24,8 @@ const ChildrenSelection = ({
   onCreateChildClick,
   hasError = false,
 }: ChildrenSelectionProps) => {
+  const isMobile = useIsMobile();
+  
   // Log détaillé pour le débogage de sélection d'enfants - uniquement au changement des dépendances
   useEffect(() => {
     console.log("ChildrenSelection - État actuel:", {
@@ -76,7 +79,6 @@ const ChildrenSelection = ({
                     // Since we can't use readOnly, we'll use the onClick to prevent propagation
                     // but we won't set onCheckedChange so the checkbox state is controlled only by the parent
                     onClick={(e) => e.stopPropagation()}
-                    // We're removing the readOnly prop since it's not supported
                   />
                   <Label
                     htmlFor={`child-${child.id}`}
@@ -86,7 +88,14 @@ const ChildrenSelection = ({
                     )}
                   >
                     {child.name} ({calculateAge(child.birthDate)} ans)
-                    {isSelected && <span className="ml-2 text-xs text-primary">✓ Sélectionné</span>}
+                    {isSelected && (
+                      <span className={cn(
+                        "ml-2 text-xs text-primary",
+                        isMobile ? "block mt-1" : "inline"
+                      )}>
+                        ✓ Sélectionné
+                      </span>
+                    )}
                   </Label>
                 </div>
               );
@@ -97,7 +106,7 @@ const ChildrenSelection = ({
             onClick={onCreateChildClick}
             variant="outline"
             className={cn(
-              "w-full flex items-center justify-center gap-2 py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors",
+              "w-full flex items-center justify-center gap-2 py-4 sm:py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors",
               hasError ? "border-destructive/50 hover:border-destructive" : ""
             )}
           >
@@ -111,7 +120,7 @@ const ChildrenSelection = ({
           onClick={onCreateChildClick}
           variant="outline"
           className={cn(
-            "w-full flex items-center justify-center gap-2 py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors",
+            "w-full flex items-center justify-center gap-2 py-4 sm:py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors",
             hasError ? "border-destructive/50 hover:border-destructive" : ""
           )}
         >

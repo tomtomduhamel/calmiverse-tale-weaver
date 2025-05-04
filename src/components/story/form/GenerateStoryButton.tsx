@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Wand2 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GenerateStoryButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   disabled?: boolean;
@@ -12,6 +13,7 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
   const [countdownActive, setCountdownActive] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const [buttonClicked, setButtonClicked] = useState(false);
+  const isMobile = useIsMobile();
   
   // Log pour déboguer l'état disabled du bouton - utilisons useCallback pour éviter des rendus inutiles
   const logButtonState = useCallback(() => {
@@ -67,9 +69,10 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
       onClick={handleClick}
       disabled={disabled}
       className={cn(
-        "w-full py-6 text-lg font-bold transition-all animate-fade-in",
+        "w-full py-4 sm:py-6 text-base sm:text-lg font-bold transition-all animate-fade-in shadow-lg",
         buttonClicked && !disabled ? "bg-primary/80" : "",
-        disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
+        disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90",
+        isMobile ? "rounded-xl" : ""
       )}
       aria-disabled={disabled}
       {...props}

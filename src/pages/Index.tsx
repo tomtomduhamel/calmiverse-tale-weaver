@@ -81,8 +81,8 @@ const Index = () => {
 
   // Rendu principal
   return (
-    <div className="h-screen w-full overflow-hidden">
-      <div className={`index-container max-w-7xl mx-auto p-2 sm:p-4 ${isMobile ? 'mb-24' : 'mb-20'}`}>
+    <div className="h-full w-full overflow-x-hidden">
+      <div className={`index-container max-w-7xl mx-auto p-2 sm:p-4 ${isMobile ? 'pb-28' : 'mb-20'}`}>
         {currentView === "home" && (
           <HomeView 
             onViewChange={setCurrentView} 

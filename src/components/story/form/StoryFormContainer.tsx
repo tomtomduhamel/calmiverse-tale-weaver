@@ -11,6 +11,7 @@ import { StoryFormContent } from "./StoryFormContent";
 import { useStoryProgress } from "./hooks/useStoryProgress";
 import { useStoryFormAuth } from "@/hooks/useStoryFormAuth";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const StoryFormContainer: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -22,6 +23,7 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
   const [formError, setFormError] = useState<string | null>(null);
   const [formDebugInfo, setFormDebugInfo] = useState<any>({});
+  const isMobile = useIsMobile();
   
   // Authentication hook
   const { user, authLoading, authChecked } = useStoryFormAuth(setFormError);
@@ -129,8 +131,9 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      {process.env.NODE_ENV === 'development' && (
+    <div className={`w-full max-w-4xl mx-auto ${isMobile ? 'h-full' : ''}`}>
+      {/* Masquer les informations de débogage en production */}
+      {process.env.NODE_ENV === 'development' && !isMobile && (
         <div className="bg-gray-100 dark:bg-gray-800 p-4 mb-4 rounded-lg text-xs">
           <h3 className="font-bold mb-1">Debug Information (dev only)</h3>
           <pre>{JSON.stringify(formDebugInfo, null, 2)}</pre>

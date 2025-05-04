@@ -59,13 +59,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden fixed bottom-4 right-4 z-50 bg-primary text-white shadow-lg rounded-full h-12 w-12 flex items-center justify-center">
+        <Button variant="ghost" size="icon" className="fixed bottom-6 right-6 z-50 bg-primary text-white shadow-lg rounded-full h-14 w-14 flex items-center justify-center">
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-[60vh] rounded-t-xl bg-white/95 backdrop-blur-sm">
+      <SheetContent side="bottom" className="h-[60vh] rounded-t-xl bg-white/95 backdrop-blur-sm pb-safe">
         <div className="w-16 h-1 bg-gray-300 rounded-full mx-auto mb-6 mt-2" />
-        <nav className="flex flex-col space-y-4 px-2">
+        <nav className="flex flex-col space-y-4 px-2 overflow-y-auto max-h-[calc(60vh-40px)]">
           {menuItems.map((item) => (
             <Button
               key={item.title}

@@ -70,9 +70,34 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    @apply overflow-x-hidden;
+    overflow-y: auto;
+  }
+  
   body {
-    @apply bg-background text-foreground transition-colors duration-300 min-h-screen overflow-y-auto;
+    @apply bg-background text-foreground transition-colors duration-300 overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100vh;
+    /* Adapter le comportement du défilement pour éviter les doubles barres */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Utiliser viewport height pour les conteneurs principaux */
+  .full-height {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Safe areas pour iOS */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }
 
@@ -82,7 +107,7 @@
   height: 4px;
 }
 
-/* Afficher les scrollbars par défaut */
+/* Afficher les scrollbars par défaut mais plus discrètement */
 .overflow-auto, 
 .overflow-y-auto, 
 .overflow-x-auto,
@@ -98,6 +123,7 @@ html {
 body::-webkit-scrollbar,
 html::-webkit-scrollbar {
   display: block;
+  width: 2px;
 }
 
 /* Style pour les conteneurs qui nécessitent absolument une scrollbar */
