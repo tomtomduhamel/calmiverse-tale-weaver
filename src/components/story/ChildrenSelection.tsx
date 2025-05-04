@@ -26,6 +26,7 @@ const ChildrenSelection = ({
 }: ChildrenSelectionProps) => {
   const isMobile = useIsMobile();
   
+  // Use useCallback to prevent unnecessary re-renders
   const handleChildClick = React.useCallback((childId: string) => {
     onChildToggle(childId);
   }, [onChildToggle]);
@@ -70,7 +71,10 @@ const ChildrenSelection = ({
                     id={`child-${child.id}`}
                     checked={isSelected}
                     className={isSelected ? "border-primary" : ""}
-                    onCheckedChange={() => {}} // Add a dummy handler to prevent React warning
+                    // Instead of changing the checked state directly through the checkbox,
+                    // we'll let the parent component handle that through the onClick handler above
+                    onClick={(e) => e.stopPropagation()}
+                    onCheckedChange={() => {}}
                   />
                   <Label
                     htmlFor={`child-${child.id}`}
@@ -124,4 +128,4 @@ const ChildrenSelection = ({
   );
 };
 
-export default ChildrenSelection;
+export default React.memo(ChildrenSelection);

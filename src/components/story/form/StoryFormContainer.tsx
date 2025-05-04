@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import type { StoryFormProps } from "../StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoryForm } from "@/hooks/stories/storyForm";
@@ -58,6 +58,29 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
 
   // Progress indicator
   const { progress } = useStoryProgress(formIsSubmitting);
+
+  // Memoize event handlers
+  const handleChildToggleMemoized = useCallback((childId: string) => {
+    handleChildToggle(childId);
+  }, [handleChildToggle]);
+  
+  const handleCreationModeSwitch = useCallback(() => {
+    setCreationMode(prevMode => 
+      prevMode === "classic" ? "chat" : "classic"
+    );
+  }, []);
+  
+  const showChildFormHandler = useCallback(() => {
+    setShowChildForm(true);
+  }, [setShowChildForm]);
+  
+  const handleObjectiveSelect = useCallback((objective: string) => {
+    setObjective(objective);
+  }, [setObjective]);
+  
+  const handleFormSubmit = useCallback(async (e: React.FormEvent) => {
+    await handleSubmit(e);
+  }, [handleSubmit]);
 
   // Synchronize errors
   useEffect(() => {
@@ -145,10 +168,10 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
           <StoryFormContent
             children={children}
             selectedChildrenIds={formData.childrenIds}
-            onChildToggle={handleChildToggle}
-            onCreateChildClick={() => setShowChildForm(true)}
+            onChildToggle={handleChildToggleMemoized}
+            onCreateChildClick={showChildFormHandler}
             objective={formData.objective}
-            setObjective={setObjective}
+            setObjective={handleObjectiveSelect}
             objectives={objectives || [
               { id: "sleep", label: "Help sleep", value: "sleep" },
               { id: "focus", label: "Focus", value: "focus" },
@@ -158,14 +181,14 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
             isSubmitting={formIsSubmitting}
             progress={progress}
             formError={formError}
-            onSubmit={handleSubmit}
-            onModeSwitch={() => setCreationMode("chat")}
+            onSubmit={handleFormSubmit}
+            onModeSwitch={handleCreationModeSwitch}
             isGenerateButtonDisabled={isGenerateButtonDisabled()}
           />
         </>
       ) : (
         <div className="animate-fade-in">
-          <StoryChat onSwitchMode={() => setCreationMode("classic")} />
+          <StoryChat onSwitchMode={handleCreationModeSwitch} />
         </div>
       )}
 

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { default as StoryObjectives } from "../StoryObjectives";
 import { StoryError } from "./StoryError";
@@ -28,7 +28,7 @@ interface StoryFormContentProps {
   isGenerateButtonDisabled?: boolean;
 }
 
-export const StoryFormContent = ({
+export const StoryFormContent = React.memo(({
   children,
   selectedChildrenIds,
   onChildToggle,
@@ -45,6 +45,24 @@ export const StoryFormContent = ({
 }: StoryFormContentProps) => {
   const isMobile = useIsMobile();
   
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleObjectiveSelect = useCallback((obj: string) => {
+    setObjective(obj);
+  }, [setObjective]);
+  
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(e);
+  }, [onSubmit]);
+  
+  const handleChildToggleCallback = useCallback((childId: string) => {
+    onChildToggle(childId);
+  }, [onChildToggle]);
+  
+  const handleCreateChildClick = useCallback(() => {
+    onCreateChildClick();
+  }, [onCreateChildClick]);
+  
   // Réduire la hauteur du ScrollArea pour s'assurer que le bouton est visible
   const scrollAreaHeight = isMobile ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-150px)]";
   
@@ -55,7 +73,7 @@ export const StoryFormContent = ({
     <div className="flex flex-col h-full w-full">
       <ScrollArea className={scrollAreaHeight}>
         <form 
-          onSubmit={onSubmit} 
+          onSubmit={handleSubmit} 
           className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl mb-20"
         >
           <StoryFormHeader onModeSwitch={onModeSwitch} />
@@ -68,8 +86,8 @@ export const StoryFormContent = ({
             <ChildrenSelection
               children={children}
               selectedChildrenIds={selectedChildrenIds}
-              onChildToggle={onChildToggle}
-              onCreateChildClick={onCreateChildClick}
+              onChildToggle={handleChildToggleCallback}
+              onCreateChildClick={handleCreateChildClick}
               hasError={hasChildrenError}
             />
           </div>
@@ -81,7 +99,7 @@ export const StoryFormContent = ({
             <StoryObjectives
               objectives={objectives}
               selectedObjective={objective}
-              onObjectiveSelect={setObjective}
+              onObjectiveSelect={handleObjectiveSelect}
               hasError={hasObjectiveError}
             />
           </div>
@@ -98,4 +116,6 @@ export const StoryFormContent = ({
       </div>
     </div>
   );
-};
+});
+
+StoryFormContent.displayName = "StoryFormContent";
