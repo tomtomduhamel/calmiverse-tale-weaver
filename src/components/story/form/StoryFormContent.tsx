@@ -53,15 +53,7 @@ export const StoryFormContent = React.memo(({
     onSubmit(e);
   }, [onSubmit]);
   
-  const handleChildToggleCallback = useCallback((childId: string) => {
-    onChildToggle(childId);
-  }, [onChildToggle]);
-  
-  const handleCreateChildClick = useCallback(() => {
-    onCreateChildClick();
-  }, [onCreateChildClick]);
-  
-  // Réduire la hauteur du ScrollArea pour s'assurer que le bouton est visible
+  // Reduce the height of the ScrollArea to ensure button visibility
   const scrollAreaHeight = isMobile ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-150px)]";
   
   const hasChildrenError = formError && formError.toLowerCase().includes("child");
@@ -84,8 +76,8 @@ export const StoryFormContent = React.memo(({
             <ChildrenSelection
               children={children}
               selectedChildrenIds={selectedChildrenIds}
-              onChildToggle={handleChildToggleCallback}
-              onCreateChildClick={handleCreateChildClick}
+              onChildToggle={onChildToggle}
+              onCreateChildClick={onCreateChildClick}
               hasError={hasChildrenError}
             />
           </div>
@@ -106,7 +98,7 @@ export const StoryFormContent = React.memo(({
         </form>
       </ScrollArea>
       
-      {/* Bouton de génération fixé en bas */}
+      {/* Fixed bottom generate button */}
       <div className="fixed bottom-20 sm:bottom-10 left-0 right-0 px-4 sm:px-8 z-10">
         <div className="max-w-[95%] sm:max-w-4xl mx-auto">
           <GenerateStoryButton disabled={isSubmitting || isGenerateButtonDisabled} />
@@ -114,6 +106,6 @@ export const StoryFormContent = React.memo(({
       </div>
     </div>
   );
-});
+}); 
 
 StoryFormContent.displayName = "StoryFormContent";

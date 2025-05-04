@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -28,8 +28,6 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
     } else if (countdown === 0) {
       setCountdownActive(false);
       setCountdown(10);
-      // Notification à l'utilisateur que la génération est terminée
-      console.log("Génération terminée, attente de la réponse du serveur...");
     }
     
     return () => clearTimeout(timer);
@@ -37,24 +35,22 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
-      console.log("Bouton de génération cliqué, début du processus");
       setCountdownActive(true);
       setButtonClicked(true);
       
-      // Le formulaire va être soumis via le type="submit" du bouton
+      // Reset button state after animation
       setTimeout(() => {
         setButtonClicked(false);
       }, 500);
 
-      // Montrer un toast pour informer l'utilisateur
+      // Show toast for user feedback
       toast({
         title: "Génération d'histoire",
         description: "Nous préparons votre histoire, cela peut prendre une minute...",
       });
     } else {
-      // Empêcher la soumission si désactivé
+      // Prevent submission if disabled
       e.preventDefault();
-      console.log("Clic sur bouton désactivé, prévention de la soumission");
     }
   };
 

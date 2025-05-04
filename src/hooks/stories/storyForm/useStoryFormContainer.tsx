@@ -88,12 +88,11 @@ export const useStoryFormContainer = (
   // Synchronize errors
   useEffect(() => {
     if (storyFormError) {
-      console.log("Error detected in StoryFormContainer:", storyFormError);
       setFormError(storyFormError);
     }
   }, [storyFormError]);
   
-  // Log form state for debugging
+  // Log form state for debugging - with proper dependency array to prevent infinite loops
   useEffect(() => {
     const debugInfo = {
       selectedChildrenIds: formData.childrenIds,
@@ -105,35 +104,23 @@ export const useStoryFormContainer = (
       isSubmitting: formIsSubmitting
     };
     
-    console.log("Current form state:", debugInfo);
     setFormDebugInfo(debugInfo);
     
-    // Clear error automatically if children are selected
+    // Clear error automatically if children are selected - ONLY if error is about child selection
     if (formError?.includes("select at least one child") && 
         formData.childrenIds && 
         formData.childrenIds.length > 0) {
-      console.log("Automatically clearing error as children are selected");
       setFormError(null);
       resetError();
     }
-  }, [formData, formError, children, formIsSubmitting, resetError]);
+  }, [formData.childrenIds, formData.objective, formError, children, formIsSubmitting, resetError]);
 
   // Check if generate button should be disabled
-  const isGenerateButtonDisabled = () => {
+  const isGenerateButtonDisabled = useCallback(() => {
     const noChildSelected = !formData.childrenIds || formData.childrenIds.length === 0;
     const noObjectiveSelected = !formData.objective;
-    const result = formIsSubmitting || noChildSelected || noObjectiveSelected;
-    
-    console.log("Generate button state:", { 
-      disabled: result,
-      noChildSelected,
-      childrenIds: formData.childrenIds,
-      noObjectiveSelected,
-      isSubmitting: formIsSubmitting
-    });
-    
-    return result;
-  };
+    return formIsSubmitting || noChildSelected || noObjectiveSelected;
+  }, [formData.childrenIds, formData.objective, formIsSubmitting]);
 
   return {
     // States

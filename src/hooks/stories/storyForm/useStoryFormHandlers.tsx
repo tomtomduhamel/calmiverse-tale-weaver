@@ -11,57 +11,43 @@ export const useStoryFormHandlers = (
   error: string | null,
   setError: (error: string | null) => void
 ) => {
-  // Utilisation de useCallback pour éviter des rendus inutiles
+  // Use useCallback to avoid unnecessary renders
   const handleChildToggle = useCallback((childId: string) => {
-    console.log("Toggle enfant - DÉBUT:", {
-      childId, 
-      "État actuel": formData.childrenIds,
-      "Est tableau?": Array.isArray(formData.childrenIds)
-    });
-    
-    // Vérifier que childId est une chaîne valide
+    // Verify that childId is valid
     if (!childId || typeof childId !== 'string') {
-      console.error("ChildId invalide:", childId);
+      console.error("Invalid childId:", childId);
       return;
     }
     
     setFormData((prev) => {
-      // S'assurer que nous avons toujours un tableau valide
+      // Ensure we always have a valid array
       const currentIds = Array.isArray(prev.childrenIds) ? [...prev.childrenIds] : [];
       
-      // Vérifier si l'ID est déjà présent
+      // Check if ID is already present
       const isSelected = currentIds.includes(childId);
       
-      // Créer un nouveau tableau avec ou sans l'ID
+      // Create new array with or without the ID
       const updatedIds = isSelected
         ? currentIds.filter((id) => id !== childId)
         : [...currentIds, childId];
-        
-      console.log("Toggle enfant - APRÈS traitement:", {
-        "ID enfant": childId,
-        "État précédent": currentIds,
-        "Déjà sélectionné?": isSelected,
-        "Nouvel état": updatedIds
-      });
       
-      // Retourner le nouvel état avec le tableau mis à jour
+      // Return new state with updated array
       return { 
         ...prev, 
         childrenIds: updatedIds 
       };
     });
     
-    // Réinitialiser l'erreur si elle concerne la sélection d'enfants
+    // Reset error if it concerns child selection
     if (error && error.toLowerCase().includes("enfant")) {
       setError(null);
     }
   }, [formData.childrenIds, error, setFormData, setError]);
 
   const setObjective = useCallback((objective: string) => {
-    console.log("Nouvel objectif sélectionné:", objective);
     setFormData((prev) => ({ ...prev, objective }));
     
-    // Réinitialiser l'erreur si elle concerne l'objectif
+    // Reset error if it concerns objective
     if (error && error.toLowerCase().includes("objectif")) {
       setError(null);
     }

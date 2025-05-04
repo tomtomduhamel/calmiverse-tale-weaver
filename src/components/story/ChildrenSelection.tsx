@@ -25,11 +25,6 @@ const ChildrenSelection = ({
   hasError = false,
 }: ChildrenSelectionProps) => {
   const isMobile = useIsMobile();
-  
-  // Use useCallback to prevent unnecessary re-renders
-  const handleChildClick = React.useCallback((childId: string) => {
-    onChildToggle(childId);
-  }, [onChildToggle]);
 
   return (
     <div className="space-y-4">
@@ -58,12 +53,13 @@ const ChildrenSelection = ({
                       ? "bg-primary/10 hover:bg-primary/20" 
                       : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
                   )}
-                  onClick={() => handleChildClick(child.id)}
+                  onClick={() => onChildToggle(child.id)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
-                      handleChildClick(child.id);
+                      e.preventDefault();
+                      onChildToggle(child.id);
                     }
                   }}
                 >
@@ -71,8 +67,6 @@ const ChildrenSelection = ({
                     id={`child-${child.id}`}
                     checked={isSelected}
                     className={isSelected ? "border-primary" : ""}
-                    // Important: Don't redefine state handling here
-                    onCheckedChange={() => {}} // Empty handler as parent div handles the real click
                   />
                   <Label
                     htmlFor={`child-${child.id}`}
