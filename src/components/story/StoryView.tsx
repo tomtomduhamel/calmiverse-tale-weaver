@@ -41,9 +41,14 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
 
   const handleViewChange = (newView: ViewType) => {
     // Convert ViewType to ViewMode if it matches any of the ViewMode values
-    if (newView === "create" || newView === "read" || newView === "library") {
-      setView(newView === "library" ? "list" : newView as ViewMode);
+    if (newView === "create") {
+      setView("create");
+    } else if (newView === "library") {
+      setView("list");
+    } else if (newView === "reader") {
+      setView("read");
     }
+    // Ignore other ViewType values that don't map to ViewMode
   };
 
   const handleSelectStory = (story: Story) => {
