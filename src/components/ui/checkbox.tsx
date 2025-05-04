@@ -10,10 +10,12 @@ const Checkbox = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
 >(({ className, onClick, ...props }, ref) => {
   // Handle onClick separately to prevent propagation issues
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     // If onClick is provided, call it with the event
     if (onClick) {
-      onClick(e);
+      // Cast the event to any to avoid the TypeScript error
+      // This is safe because we're just passing it through
+      onClick(e as any);
     }
   };
   
