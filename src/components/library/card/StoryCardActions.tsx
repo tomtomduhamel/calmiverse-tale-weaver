@@ -7,8 +7,8 @@ import { Loader2 } from "lucide-react";
 
 interface StoryCardActionsProps {
   story: Story;
-  onDelete?: (e: React.MouseEvent) => void;
-  onRetry?: (e: React.MouseEvent) => void;
+  onDelete?: () => void;
+  onRetry?: () => void;
   isRetrying?: boolean;
   isDeleting?: boolean;
 }
@@ -20,6 +20,16 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
   isRetrying = false,
   isDeleting = false
 }) => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete?.();
+  };
+
+  const handleRetry = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onRetry?.();
+  };
+
   return (
     <div className="flex space-x-1">
       <TooltipProvider>
@@ -27,7 +37,7 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={onRetry}
+                onClick={handleRetry}
                 disabled={isRetrying || isDeleting}
                 className={`p-1.5 rounded-full text-amber-600 hover:bg-amber-100 ${
                   isRetrying ? "cursor-not-allowed opacity-50" : ""
@@ -51,7 +61,7 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={onDelete}
+              onClick={handleDelete}
               disabled={isDeleting || isRetrying}
               className={`p-1.5 rounded-full text-red-600 hover:bg-red-100 ${
                 isDeleting ? "cursor-not-allowed opacity-50" : ""

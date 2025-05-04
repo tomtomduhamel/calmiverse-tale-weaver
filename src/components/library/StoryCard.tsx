@@ -12,8 +12,8 @@ import { Loader2 } from "lucide-react";
 interface StoryCardProps {
   story: Story;
   onClick?: () => void;
-  onDelete?: (e: React.MouseEvent) => void;
-  onRetry?: (e: React.MouseEvent) => void;
+  onDelete?: () => void;
+  onRetry?: () => void;
   isRetrying?: boolean;
   isDeleting?: boolean;
   isPending?: boolean;
@@ -40,17 +40,9 @@ const StoryCard: React.FC<StoryCardProps> = ({
     return formatDistanceToNow(date, { addSuffix: true, locale: fr });
   };
 
-  // Create handler functions that won't mutate during render
-  const handleClick = onClick ? () => onClick() : undefined;
-  
-  const handleDelete = onDelete ? (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onDelete(e);
-  } : undefined;
-  
-  const handleRetry = onRetry ? (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onRetry(e);
+  // Use the handlers directly now that they're properly typed
+  const handleClick = onClick ? (e: React.MouseEvent) => {
+    onClick();
   } : undefined;
 
   return (
@@ -80,8 +72,8 @@ const StoryCard: React.FC<StoryCardProps> = ({
         </span>
         <StoryCardActions 
           story={story} 
-          onDelete={handleDelete}
-          onRetry={handleRetry}
+          onDelete={onDelete}
+          onRetry={onRetry}
           isRetrying={isRetrying}
           isDeleting={isDeleting}
         />

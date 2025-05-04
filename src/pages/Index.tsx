@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import type { ViewType } from "@/types/views";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +25,7 @@ const Index = () => {
   const [pendingStoryId, setPendingStoryId] = useState<string | null>(null);
   
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild, loading: childrenLoading } = useSupabaseChildren();
-  const { stories, createStory, deleteStory } = useStories(children);
+  const { stories, createStory, deleteStory, retryFailedStory, isRetrying } = useStories(children);
   const { currentView, setCurrentView, showGuide } = useViewManagement();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useSupabaseAuth();
@@ -176,7 +175,9 @@ const Index = () => {
             stories={stories.stories}
             onSelectStory={handleSelectStory}
             onDeleteStory={deleteStory}
+            onRetryStory={retryFailedStory}
             onViewChange={setCurrentView}
+            isRetrying={isRetrying}
             pendingStoryId={pendingStoryId}
           />
         )}

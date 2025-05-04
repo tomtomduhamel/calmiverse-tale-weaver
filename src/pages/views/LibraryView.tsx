@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useCallback } from "react";
 import StoryLibrary from "@/components/StoryLibrary";
 import type { Story } from "@/types/story";
 import type { ViewType } from "@/types/views";
@@ -9,6 +9,8 @@ interface LibraryViewProps {
   onSelectStory: (story: Story) => void;
   onDeleteStory: (storyId: string) => void;
   onViewChange: (view: ViewType) => void;
+  onRetryStory?: (storyId: string) => void;
+  isRetrying?: boolean;
   pendingStoryId?: string | null;
 }
 
@@ -17,6 +19,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   onSelectStory,
   onDeleteStory,
   onViewChange,
+  onRetryStory,
+  isRetrying,
   pendingStoryId
 }) => {
   return (
@@ -25,7 +29,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
         stories={stories}
         onSelectStory={onSelectStory}
         onDeleteStory={onDeleteStory}
+        onRetryStory={onRetryStory}
         onViewChange={onViewChange}
+        isRetrying={isRetrying}
         pendingStoryId={pendingStoryId}
       />
     </div>

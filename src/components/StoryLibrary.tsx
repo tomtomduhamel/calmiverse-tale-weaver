@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
@@ -39,10 +38,8 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const storiesPerPage = 6;
 
-  const handleDelete = async (e: React.MouseEvent, storyId: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
+  // Modified to adapt between different function signatures
+  const handleDelete = async (storyId: string) => {
     try {
       console.log("Tentative de suppression de l'histoire:", storyId);
       setIsDeletingId(storyId);
@@ -73,10 +70,8 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
     }
   };
 
-  const handleRetry = async (e: React.MouseEvent, storyId: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
+  // Modified to adapt between different function signatures
+  const handleRetry = async (storyId: string) => {
     if (onRetryStory) {
       try {
         console.log("Tentative de relance de l'histoire:", storyId);
@@ -149,8 +144,9 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
                   variant="outline" 
                   size="sm" 
                   className="text-xs border-green-300 hover:bg-green-100 flex items-center"
-                  onClick={(e) => handleRetry(e, errorStories[0].id)}
+                  onClick={() => handleRetry(errorStories[0].id)}
                   disabled={isRetrying}
+                  type="button"
                 >
                   <RefreshCcw className="h-3 w-3 mr-1" />
                   Réessayer cette histoire
