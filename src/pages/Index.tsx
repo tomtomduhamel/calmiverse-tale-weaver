@@ -23,6 +23,7 @@ import {
 
 const Index = () => {
   const [isInitialized, setIsInitialized] = useState(false);
+  const [pendingStoryId, setPendingStoryId] = useState<string | null>(null);
   
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild, loading: childrenLoading } = useSupabaseChildren();
   const { stories, createStory, deleteStory } = useStories(children);
@@ -30,6 +31,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useSupabaseAuth();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   
   const {
     currentStory,
@@ -60,8 +62,68 @@ const Index = () => {
     }
   }, []);
 
+  // Effet pour vérifier le statut d'une histoire en attente
+  useEffect(() => {
+    if (!pendingStoryId || !stories.stories) return;
+    
+    const pendingStory = stories.stories.find(story => story.id === pendingStoryId);
+    
+    if (pendingStory) {
+      if (pendingStory.status === 'completed') {
+        console.log("Histoire complétée, affichage...");
+        setPendingStoryId(null);
+        handleStoryCreated(pendingStory);
+        
+        toast({
+          title: "Histoire prête",
+          description: "Votre histoire personnalisée est maintenant prête à être lue!",
+        });
+      } else if (pendingStory.status === 'error') {
+        console.log("Erreur dans la génération de l'histoire");
+        setPendingStoryId(null);
+        
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la génération de l'histoire",
+          variant: "destructive",
+        });
+      }
+    }
+    
+    // Rafraîchir la liste des histoires toutes les 5 secondes si une histoire est en attente
+    const interval = setInterval(() => {
+      if (pendingStoryId) {
+        console.log("Vérification du statut de l'histoire:", pendingStoryId);
+        stories.fetchStories();
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [pendingStoryId, stories.stories, handleStoryCreated, toast, stories.fetchStories]);
+
   const handleCreateChildFromStory = () => {
     setCurrentView("profiles");
+  };
+
+  // Gestion spécifique à la création d'histoire
+  const handleStorySubmitWrapper = async (formData: any) => {
+    try {
+      const storyId = await handleStorySubmit(formData);
+      if (storyId) {
+        console.log("Histoire en cours de création, ID:", storyId);
+        setPendingStoryId(storyId);
+        setCurrentView("library");
+        
+        toast({
+          title: "Histoire en cours de création",
+          description: "Nous préparons votre histoire, vous serez notifié(e) une fois terminée.",
+        });
+      }
+      return storyId;
+    } catch (error) {
+      console.error("Erreur de création d'histoire:", error);
+      throw error;
+    }
   };
 
   // État de chargement - afficher un loader simple mais fiable
@@ -82,7 +144,7 @@ const Index = () => {
   // Rendu principal
   return (
     <div className="h-full w-full overflow-x-hidden">
-      <div className={`index-container max-w-7xl mx-auto p-2 sm:p-4 ${isMobile ? 'pb-28' : 'mb-20'}`}>
+      <div className={`index-container max-w-7xl mx-auto p-2 sm:p-4 ${isMobile ? 'pb-32' : 'mb-20'}`}>
         {currentView === "home" && (
           <HomeView 
             onViewChange={setCurrentView} 
@@ -92,7 +154,7 @@ const Index = () => {
 
         {currentView === "create" && (
           <CreateStoryView
-            onSubmit={handleStorySubmit}
+            onSubmit={handleStorySubmitWrapper}
             children={children}
             onCreateChild={handleCreateChildFromStory}
             onStoryCreated={handleStoryCreated}
@@ -115,6 +177,7 @@ const Index = () => {
             onSelectStory={handleSelectStory}
             onDeleteStory={deleteStory}
             onViewChange={setCurrentView}
+            pendingStoryId={pendingStoryId}
           />
         )}
 

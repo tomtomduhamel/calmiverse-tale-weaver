@@ -2,13 +2,13 @@
 import React from "react";
 import StoryLibrary from "@/components/StoryLibrary";
 import type { Story } from "@/types/story";
-import type { ViewType } from "@/types/views";
 
 interface LibraryViewProps {
   stories: Story[];
   onSelectStory: (story: Story) => void;
   onDeleteStory: (storyId: string) => void;
-  onViewChange: (view: ViewType) => void;
+  onViewChange: (view: string) => void;
+  pendingStoryId?: string | null;
 }
 
 export const LibraryView: React.FC<LibraryViewProps> = ({
@@ -16,6 +16,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   onSelectStory,
   onDeleteStory,
   onViewChange,
+  pendingStoryId
 }) => {
   return (
     <div className="animate-fade-in">
@@ -24,6 +25,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
         onSelectStory={onSelectStory}
         onDeleteStory={onDeleteStory}
         onViewChange={onViewChange}
+        pendingStoryId={pendingStoryId}
       />
     </div>
   );

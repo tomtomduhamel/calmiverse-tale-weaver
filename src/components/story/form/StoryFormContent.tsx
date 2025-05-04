@@ -1,4 +1,4 @@
-
+import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { default as StoryObjectives } from "../StoryObjectives";
 import { StoryError } from "./StoryError";
@@ -8,6 +8,8 @@ import GenerateStoryButton from "./GenerateStoryButton";
 import StoryFormHeader from "./StoryFormHeader";
 import type { Child } from "@/types/child";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-react";
 
 interface StoryFormContentProps {
   children: Child[];

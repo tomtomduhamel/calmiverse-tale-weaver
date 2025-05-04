@@ -49,18 +49,25 @@ export const useStoryFormSubmission = (
       setError(null);
       console.log("Attempting to create story, validated data:", formData);
 
+      // Informer l'utilisateur que la création a commencé
+      toast({
+        title: "Création en cours",
+        description: "Nous préparons votre histoire, veuillez patienter...",
+      });
+
       // Call story creation function
       const storyId = await onSubmit(formData);
-      console.log("Story created successfully, ID:", storyId);
+      console.log("Story creation initiated successfully, ID:", storyId);
+      
+      // Informer l'utilisateur que l'histoire est en cours de génération
+      toast({
+        title: "Histoire en préparation",
+        description: "Votre histoire est en cours de génération, vous serez redirigé(e) lorsqu'elle sera prête.",
+      });
       
       if (storyId && onStoryCreated) {
         onStoryCreated(storyId);
       }
-      
-      toast({
-        title: "Story is being created",
-        description: "We are generating your story, this may take a few moments.",
-      });
       
       // Reset form data
       setFormData({
@@ -78,8 +85,8 @@ export const useStoryFormSubmission = (
       }
       
       toast({
-        title: "Error",
-        description: error?.message || "An error occurred while creating the story",
+        title: "Erreur",
+        description: error?.message || "Une erreur est survenue pendant la création de l'histoire",
         variant: "destructive",
       });
       throw error;

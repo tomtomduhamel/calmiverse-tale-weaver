@@ -2,278 +2,115 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+ 
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+ 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+ 
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
+ 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
+ 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
+ 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
+ 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: 222.2 84% 4.9%;
+ 
     --radius: 0.5rem;
-    --sidebar: 0 0% 100%;
-    --sidebar-foreground: 222.2 84% 4.9%;
-    --sidebar-muted: 210 40% 96.1%;
-    --sidebar-muted-foreground: 215.4 16.3% 46.9%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 221.2 83.2% 53.3%;
   }
-
+ 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
+ 
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
+ 
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
+ 
+    --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
+ 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
+ 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
+ 
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
+ 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
+ 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-    --sidebar: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-muted: 217.2 32.6% 17.5%;
-    --sidebar-muted-foreground: 215 20.2% 65.1%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 224.3 76.3% 48%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
-
+ 
 @layer base {
   * {
     @apply border-border;
   }
-  
-  html {
-    @apply overflow-x-hidden;
-    overflow-y: auto;
-  }
-  
   body {
-    @apply bg-background text-foreground transition-colors duration-300 overflow-x-hidden;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    min-height: 100vh;
-    /* Adapter le comportement du défilement pour éviter les doubles barres */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    @apply bg-background text-foreground;
   }
   
-  /* Utiliser viewport height pour les conteneurs principaux */
-  .full-height {
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
+  /* Pour éviter le double scrollbar sur mobile */
+  html, body {
+    @apply overflow-x-hidden;
+    height: 100%;
+    position: relative;
   }
   
-  /* Safe areas pour iOS */
+  /* Assurer que le contenu principal est scrollable en cas de besoin */
+  #root {
+    @apply overflow-y-auto overflow-x-hidden;
+    height: 100%;
+  }
+  
+  /* Pour que le contenu soit toujours visible sur mobile */
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-  }
-  
-  .pt-safe {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 16px);
   }
 }
 
-/* Modifier les règles de scrollbar pour les afficher quand nécessaire */
-::-webkit-scrollbar {
-  width: 4px;
+/* Styles pour la barre de progression de la génération d'histoire */
+.progress-bar {
+  position: relative;
+  width: 100%;
   height: 4px;
+  background-color: hsl(var(--secondary));
+  border-radius: 9999px;
+  overflow: hidden;
 }
 
-/* Afficher les scrollbars par défaut mais plus discrètement */
-.overflow-auto, 
-.overflow-y-auto, 
-.overflow-x-auto,
-body, 
-html {
-  scrollbar-width: thin;
-  -ms-overflow-style: auto;
-}
-
-.overflow-auto::-webkit-scrollbar,
-.overflow-y-auto::-webkit-scrollbar,
-.overflow-x-auto::-webkit-scrollbar,
-body::-webkit-scrollbar,
-html::-webkit-scrollbar {
-  display: block;
-  width: 2px;
-}
-
-/* Style pour les conteneurs qui nécessitent absolument une scrollbar */
-.show-scrollbar {
-  scrollbar-width: thin;
-}
-
-.show-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-  display: block;
-}
-
-.show-scrollbar::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-.show-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-secondary/20 rounded-full;
-}
-
-.prose {
-  @apply max-w-none;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  line-height: 1.75;
-}
-
-.prose p {
-  @apply mb-4;
-}
-
-/* Animations personnalisées */
-.hover-scale {
-  @apply transition-transform duration-200 hover:scale-105;
-}
-
-.floating {
-  @apply animate-float;
-}
-
-/* Effets de glassmorphisme */
-.glass {
-  @apply bg-white/80 dark:bg-muted-dark/80 backdrop-blur-sm;
-}
-
-/* Ombres douces */
-.shadow-soft {
-  @apply shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)];
-}
-
-.shadow-soft-lg {
-  @apply shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)];
-}
-
-/* Toast animations et styles */
-@keyframes slideIn {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOut {
-  from {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-}
-
-.success-toast {
-  animation: slideIn 0.3s ease forwards;
-}
-
-.success-toast[data-state="closed"] {
-  animation: slideOut 0.3s ease forwards;
-}
-
-/* Overlay pour le fond flouté */
-.toast-overlay {
-  backdrop-filter: blur(4px);
-  background-color: rgba(0, 0, 0, 0.2);
-}
-
-/* Styles spécifiques pour le toast de succès */
-.success-toast {
-  @apply bg-gradient-to-br from-white to-purple-50 dark:from-gray-900 dark:to-gray-800;
-  @apply border border-purple-100 dark:border-purple-900;
-  @apply shadow-lg rounded-xl;
-  @apply transform transition-all duration-300;
-}
-
-.success-toast:hover {
-  @apply shadow-xl;
-  transform: translateY(-2px);
-}
-
-/* Classes responsive pour les grilles et listes */
-.responsive-grid {
-  @apply grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
-}
-
-.responsive-list {
-  @apply flex flex-col space-y-4;
-}
-
-/* Améliorations des formulaires pour mobile */
-.form-group {
-  @apply space-y-2 mb-4;
-}
-
-.form-group label {
-  @apply block text-sm font-medium;
-}
-
-.form-group input, 
-.form-group select, 
-.form-group textarea {
-  @apply w-full rounded-md px-3 py-2;
-}
-
-/* Ajustements pour les boutons sur mobile */
-.mobile-action-button {
-  @apply fixed bottom-4 right-4 z-40 rounded-full shadow-lg;
-}
-
-/* Ajustements pour les espacements sur mobile */
-.mobile-container {
-  @apply px-4 py-6 sm:px-6 sm:py-8;
-}
-
-/* Layout fixes for mobile */
-.mobile-safe-area {
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-top: env(safe-area-inset-top);
-}
-
-/* Ajustements du lecteur d'histoires pour mobile */
-.story-reader-mobile {
-  @apply px-4 py-6 max-h-[calc(100vh-120px)] overflow-y-auto;
-}
-
-/* Styles adaptatifs pour les cartes */
-.adaptive-card {
-  @apply p-4 sm:p-6 rounded-lg shadow-soft transition-all hover:shadow-soft-lg;
+.progress-bar__indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: transform 0.2s;
+  transform-origin: left;
+  background-color: hsl(var(--primary));
 }

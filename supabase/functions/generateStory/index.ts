@@ -102,8 +102,8 @@ serve(async (req) => {
           success: true,
           storyData: {
             title,
-            story_text: storyText,
-            story_summary: summary,
+            content: storyText,
+            summary,
             preview
           }
         }),
