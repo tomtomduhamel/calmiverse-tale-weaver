@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import StoryForm from "../StoryForm";
 import StoryReader from "../StoryReader";
@@ -39,7 +39,8 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
     }
   }, [currentStory, view]);
 
-  const handleViewChange = (newView: ViewType) => {
+  // Use useCallback to prevent unnecessary re-renders
+  const handleViewChange = useCallback((newView: ViewType) => {
     // Convert ViewType to ViewMode if it matches any of the ViewMode values
     if (newView === "create") {
       setView("create");
@@ -49,19 +50,19 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
       setView("read");
     }
     // Ignore other ViewType values that don't map to ViewMode
-  };
+  }, []);
 
-  const handleSelectStory = (story: Story) => {
+  const handleSelectStory = useCallback((story: Story) => {
     setCurrentStory(story);
     setView("read");
-  };
+  }, [setCurrentStory]);
 
-  const handleBackToLibrary = () => {
+  const handleBackToLibrary = useCallback(() => {
     setView("list");
     setCurrentStory(null);
-  };
+  }, [setCurrentStory]);
 
-  const handleDeleteStory = async (storyId: string) => {
+  const handleDeleteStory = useCallback(async (storyId: string) => {
     try {
       await deleteStory(storyId);
       toast({
@@ -76,9 +77,9 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
         variant: "destructive",
       });
     }
-  };
+  }, [deleteStory, toast]);
 
-  const handleStoryCreated = async (storyId: string) => {
+  const handleStoryCreated = useCallback(async (storyId: string) => {
     console.log("Story created, ID:", storyId);
     setSelectedStoryId(storyId);
     
@@ -93,11 +94,11 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
     } else {
       setView("list");
     }
-  };
+  }, [stories, setCurrentStory]);
 
-  const handleRetryStory = async (storyId: string) => {
+  const handleRetryStory = useCallback(async (storyId: string) => {
     await retryFailedStory(storyId);
-  };
+  }, [retryFailedStory]);
 
   // Render different views based on the current state
   const renderView = () => {

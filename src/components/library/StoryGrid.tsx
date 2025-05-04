@@ -5,8 +5,8 @@ import StoryCard from "./StoryCard";
 
 interface StoryGridProps {
   stories: Story[];
-  onDelete?: (e: React.MouseEvent, storyId: string) => void;
-  onRetry?: (e: React.MouseEvent, storyId: string) => void;
+  onDelete?: (storyId: string) => void;
+  onRetry?: (storyId: string) => void;
   onCardClick?: (story: Story) => void;
   isRetrying?: boolean;
   isDeletingId?: string | null;
@@ -36,8 +36,8 @@ const StoryGrid: React.FC<StoryGridProps> = ({
         <StoryCard
           key={story.id}
           story={story}
-          onDelete={onDelete ? (e) => onDelete(e, story.id) : undefined}
-          onRetry={onRetry ? (e) => onRetry(e, story.id) : undefined}
+          onDelete={onDelete ? () => onDelete(story.id) : undefined}
+          onRetry={onRetry ? () => onRetry(story.id) : undefined}
           onClick={onCardClick ? () => onCardClick(story) : undefined}
           isRetrying={isRetrying && pendingStoryId === story.id}
           isDeleting={isDeletingId === story.id}

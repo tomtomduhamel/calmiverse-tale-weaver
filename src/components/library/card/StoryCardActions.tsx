@@ -33,6 +33,7 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
                   isRetrying ? "cursor-not-allowed opacity-50" : ""
                 }`}
                 aria-label="Réessayer cette histoire"
+                type="button"
               >
                 {isRetrying ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -56,6 +57,7 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
                 isDeleting ? "cursor-not-allowed opacity-50" : ""
               }`}
               aria-label="Supprimer l'histoire"
+              type="button"
             >
               {isDeleting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

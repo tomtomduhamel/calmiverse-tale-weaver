@@ -40,8 +40,21 @@ const StoryCard: React.FC<StoryCardProps> = ({
     return formatDistanceToNow(date, { addSuffix: true, locale: fr });
   };
 
+  // Create handler functions that won't mutate during render
+  const handleClick = onClick ? () => onClick() : undefined;
+  
+  const handleDelete = onDelete ? (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(e);
+  } : undefined;
+  
+  const handleRetry = onRetry ? (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onRetry(e);
+  } : undefined;
+
   return (
-    <Card className={cardStyles} onClick={onClick}>
+    <Card className={cardStyles} onClick={handleClick}>
       <CardContent className="pt-6 pb-2">
         <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
         <p className="text-sm text-gray-600 line-clamp-3 mb-3 h-[4.5rem]">
@@ -67,8 +80,8 @@ const StoryCard: React.FC<StoryCardProps> = ({
         </span>
         <StoryCardActions 
           story={story} 
-          onDelete={onDelete}
-          onRetry={onRetry}
+          onDelete={handleDelete}
+          onRetry={handleRetry}
           isRetrying={isRetrying}
           isDeleting={isDeleting}
         />
