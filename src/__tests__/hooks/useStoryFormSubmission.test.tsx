@@ -2,6 +2,7 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useStoryFormSubmission } from '@/hooks/stories/storyForm/useStoryFormSubmission';
+import { createMockUser, createMockSession } from '../helpers/test-utils';
 
 // Mock dependencies
 vi.mock('@/hooks/use-toast', () => ({
@@ -17,10 +18,6 @@ describe('useStoryFormSubmission', () => {
   const mockOnSubmit = vi.fn();
   const mockOnStoryCreated = vi.fn();
   const mockValidateForm = vi.fn();
-  
-  // Mock user and session
-  const mockUser = { id: 'user-123' };
-  const mockSession = { user: mockUser };
   
   // Sample form data
   const sampleFormData = {
@@ -38,6 +35,10 @@ describe('useStoryFormSubmission', () => {
   });
   
   it('should successfully submit the form when validation passes', async () => {
+    // Create proper mock User and Session objects
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
+    
     const { result } = renderHook(() => 
       useStoryFormSubmission(
         sampleFormData,
@@ -80,6 +81,10 @@ describe('useStoryFormSubmission', () => {
       isValid: false, 
       error: 'Validation error' 
     });
+    
+    // Create proper mock User and Session objects
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
     
     const { result } = renderHook(() => 
       useStoryFormSubmission(
@@ -124,6 +129,10 @@ describe('useStoryFormSubmission', () => {
     // Setup onSubmit to throw an error
     mockOnSubmit.mockRejectedValue(new Error('API error'));
     
+    // Create proper mock User and Session objects
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
+    
     const { result } = renderHook(() => 
       useStoryFormSubmission(
         sampleFormData,
@@ -165,6 +174,10 @@ describe('useStoryFormSubmission', () => {
   });
   
   it('should ignore submission if already submitting', async () => {
+    // Create proper mock User and Session objects
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
+    
     const { result } = renderHook(() => 
       useStoryFormSubmission(
         sampleFormData,

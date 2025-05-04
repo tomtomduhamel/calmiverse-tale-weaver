@@ -2,6 +2,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useStoryFormAuth } from '@/hooks/useStoryFormAuth';
+import { createMockUser } from '../helpers/test-utils';
 
 // Mock dependencies
 vi.mock('@/hooks/use-toast', () => ({
@@ -26,9 +27,9 @@ describe('useStoryFormAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
-    // Reset the mock implementation
+    // Reset the mock implementation with a proper User object
     (useSupabaseAuth as any).mockImplementation(() => ({
-      user: { id: 'user-123' },
+      user: createMockUser('user-123'),
       loading: false,
     }));
   });

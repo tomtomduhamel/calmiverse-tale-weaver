@@ -3,18 +3,18 @@ import { vi, describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useStoryFormValidation } from '@/hooks/stories/storyForm/useStoryFormValidation';
 import type { StoryFormData } from '@/components/story/StoryFormTypes';
+import { createMockUser, createMockSession } from '../helpers/test-utils';
 
 describe('useStoryFormValidation', () => {
-  // Mock user and session
-  const mockUser = { id: 'user-123' };
-  const mockSession = { user: mockUser };
-  
   it('should validate form correctly with valid data', () => {
     // Valid form data
     const formData: StoryFormData = {
       childrenIds: ['child-1', 'child-2'],
       objective: 'sleep',
     };
+    
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
     
     const { result } = renderHook(() => 
       useStoryFormValidation(formData, mockUser, mockSession)
@@ -48,6 +48,9 @@ describe('useStoryFormValidation', () => {
       objective: 'sleep',
     } as unknown as StoryFormData;
     
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
+    
     const { result } = renderHook(() => 
       useStoryFormValidation(formData, mockUser, mockSession)
     );
@@ -64,6 +67,9 @@ describe('useStoryFormValidation', () => {
       objective: 'sleep',
     };
     
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
+    
     const { result } = renderHook(() => 
       useStoryFormValidation(formData, mockUser, mockSession)
     );
@@ -79,6 +85,9 @@ describe('useStoryFormValidation', () => {
       childrenIds: ['child-1'],
       objective: '',
     };
+    
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
     
     const { result } = renderHook(() => 
       useStoryFormValidation(formData, mockUser, mockSession)
