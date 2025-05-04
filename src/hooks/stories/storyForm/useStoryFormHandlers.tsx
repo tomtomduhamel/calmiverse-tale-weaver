@@ -52,7 +52,7 @@ export const useStoryFormHandlers = (
     });
     
     // Réinitialiser l'erreur si elle concerne la sélection d'enfants
-    if (error && error.includes("Veuillez sélectionner au moins un enfant")) {
+    if (error && error.toLowerCase().includes("enfant")) {
       setError(null);
     }
   }, [formData.childrenIds, error, setFormData, setError]);
@@ -62,7 +62,7 @@ export const useStoryFormHandlers = (
     setFormData((prev) => ({ ...prev, objective }));
     
     // Réinitialiser l'erreur si elle concerne l'objectif
-    if (error && error.includes("Veuillez sélectionner un objectif")) {
+    if (error && error.toLowerCase().includes("objectif")) {
       setError(null);
     }
   }, [error, setFormData, setError]);

@@ -71,10 +71,8 @@ const ChildrenSelection = ({
                     id={`child-${child.id}`}
                     checked={isSelected}
                     className={isSelected ? "border-primary" : ""}
-                    // Instead of changing the checked state directly through the checkbox,
-                    // we'll let the parent component handle that through the onClick handler above
-                    onClick={(e) => e.stopPropagation()}
-                    onCheckedChange={() => {}}
+                    // Important: Don't redefine state handling here
+                    onCheckedChange={() => {}} // Empty handler as parent div handles the real click
                   />
                   <Label
                     htmlFor={`child-${child.id}`}

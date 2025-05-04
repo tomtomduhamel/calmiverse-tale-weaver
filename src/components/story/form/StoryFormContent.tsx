@@ -9,8 +9,6 @@ import GenerateStoryButton from "./GenerateStoryButton";
 import StoryFormHeader from "./StoryFormHeader";
 import type { Child } from "@/types/child";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
 
 interface StoryFormContentProps {
   children: Child[];
