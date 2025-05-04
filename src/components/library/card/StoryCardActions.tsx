@@ -20,15 +20,15 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
   isRetrying = false,
   isDeleting = false
 }) => {
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    onDelete?.();
-  };
+    if (onDelete) onDelete();
+  }, [onDelete]);
 
-  const handleRetry = (e: React.MouseEvent) => {
+  const handleRetry = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    onRetry?.();
-  };
+    if (onRetry) onRetry();
+  }, [onRetry]);
 
   return (
     <div className="flex space-x-1">
@@ -85,4 +85,4 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
   );
 };
 
-export default StoryCardActions;
+export default React.memo(StoryCardActions);

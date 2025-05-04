@@ -6,8 +6,8 @@ import { UserPlus } from "lucide-react";
 import type { Child } from "@/types/child";
 import { calculateAge } from "@/utils/age";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import React from "react";
 
 interface ChildrenSelectionProps {
   children: Child[];
@@ -26,15 +26,9 @@ const ChildrenSelection = ({
 }: ChildrenSelectionProps) => {
   const isMobile = useIsMobile();
   
-  // Log détaillé pour le débogage de sélection d'enfants - uniquement au changement des dépendances
-  useEffect(() => {
-    console.log("ChildrenSelection - État actuel:", {
-      availableChildren: children.map(c => ({ id: c.id, name: c.name })),
-      selectedIds: selectedChildrenIds,
-      hasError,
-      selectedCount: selectedChildrenIds.length
-    });
-  }, [children, selectedChildrenIds, hasError]);
+  const handleChildClick = React.useCallback((childId: string) => {
+    onChildToggle(childId);
+  }, [onChildToggle]);
 
   return (
     <div className="space-y-4">
@@ -63,12 +57,12 @@ const ChildrenSelection = ({
                       ? "bg-primary/10 hover:bg-primary/20" 
                       : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
                   )}
-                  onClick={() => onChildToggle(child.id)}
+                  onClick={() => handleChildClick(child.id)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
-                      onChildToggle(child.id);
+                      handleChildClick(child.id);
                     }
                   }}
                 >
@@ -76,9 +70,7 @@ const ChildrenSelection = ({
                     id={`child-${child.id}`}
                     checked={isSelected}
                     className={isSelected ? "border-primary" : ""}
-                    // Since we can't use readOnly, we'll use the onClick to prevent propagation
-                    // but we won't set onCheckedChange so the checkbox state is controlled only by the parent
-                    onClick={(e) => e.stopPropagation()}
+                    readOnly
                   />
                   <Label
                     htmlFor={`child-${child.id}`}

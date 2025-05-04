@@ -14,7 +14,7 @@ interface LibraryViewProps {
   pendingStoryId?: string | null;
 }
 
-export const LibraryView: React.FC<LibraryViewProps> = ({
+export const LibraryView: React.FC<LibraryViewProps> = React.memo(({
   stories,
   onSelectStory,
   onDeleteStory,
@@ -36,4 +36,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       />
     </div>
   );
-};
+});
+
+LibraryView.displayName = "LibraryView";

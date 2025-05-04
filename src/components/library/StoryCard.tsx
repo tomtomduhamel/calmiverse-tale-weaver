@@ -40,10 +40,9 @@ const StoryCard: React.FC<StoryCardProps> = ({
     return formatDistanceToNow(date, { addSuffix: true, locale: fr });
   };
 
-  // Use the handlers directly now that they're properly typed
-  const handleClick = onClick ? (e: React.MouseEvent) => {
-    onClick();
-  } : undefined;
+  const handleClick = React.useCallback((e: React.MouseEvent) => {
+    if (onClick) onClick();
+  }, [onClick]);
 
   return (
     <Card className={cardStyles} onClick={handleClick}>
@@ -82,4 +81,4 @@ const StoryCard: React.FC<StoryCardProps> = ({
   );
 };
 
-export default StoryCard;
+export default React.memo(StoryCard);
