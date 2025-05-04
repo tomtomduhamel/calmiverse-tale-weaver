@@ -73,9 +73,10 @@ const ChildrenSelection = ({
                     id={`child-${child.id}`}
                     checked={isSelected}
                     className={isSelected ? "border-primary" : ""}
-                    // Remove onChange handler and rely on parent div click
+                    // Since we can't use readOnly, we'll use the onClick to prevent propagation
+                    // but we won't set onCheckedChange so the checkbox state is controlled only by the parent
                     onClick={(e) => e.stopPropagation()}
-                    readOnly
+                    // We're removing the readOnly prop since it's not supported
                   />
                   <Label
                     htmlFor={`child-${child.id}`}
