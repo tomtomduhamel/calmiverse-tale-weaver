@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
+import type { ViewType } from "@/types/views";
 import LibraryHeader from "./library/LibraryHeader";
 import LibraryFilters from "./library/filters/LibraryFilters";
 import StoryGrid from "./library/StoryGrid";
@@ -16,8 +17,9 @@ interface StoryLibraryProps {
   onSelectStory: (story: Story) => void;
   onDeleteStory?: (storyId: string) => void;
   onRetryStory?: (storyId: string) => void;
-  onViewChange?: (view: "create") => void;
+  onViewChange?: (view: ViewType) => void;
   isRetrying?: boolean;
+  pendingStoryId?: string | null;
 }
 
 const StoryLibrary: React.FC<StoryLibraryProps> = ({ 
@@ -26,7 +28,8 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   onDeleteStory,
   onRetryStory,
   onViewChange,
-  isRetrying = false
+  isRetrying = false,
+  pendingStoryId
 }) => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
@@ -178,6 +181,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         onCardClick={onSelectStory}
         isRetrying={isRetrying}
         isDeletingId={isDeletingId}
+        pendingStoryId={pendingStoryId}
       />
 
       <Pagination

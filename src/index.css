@@ -73,6 +73,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-overflow-scrolling: touch;
   }
   
   /* Pour éviter le double scrollbar sur mobile */
@@ -80,12 +81,13 @@
     @apply overflow-x-hidden;
     height: 100%;
     position: relative;
+    overflow-y: visible;
   }
   
   /* Assurer que le contenu principal est scrollable en cas de besoin */
   #root {
-    @apply overflow-y-auto overflow-x-hidden;
-    height: 100%;
+    min-height: 100%;
+    position: relative;
   }
   
   /* Pour que le contenu soit toujours visible sur mobile */
