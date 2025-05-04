@@ -6,6 +6,7 @@ import StoryReader from "../StoryReader";
 import StoryLibrary from "../StoryLibrary";
 import LoadingStory from "../LoadingStory";
 import type { Story } from "@/types/story";
+import type { ViewType } from "@/types/views";
 import { useStories } from "@/hooks/useStories";
 
 export type ViewMode = "create" | "read" | "list";
@@ -38,8 +39,11 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
     }
   }, [currentStory, view]);
 
-  const handleViewChange = (newView: ViewMode) => {
-    setView(newView);
+  const handleViewChange = (newView: ViewType) => {
+    // Convert ViewType to ViewMode if it matches any of the ViewMode values
+    if (newView === "create" || newView === "read" || newView === "library") {
+      setView(newView === "library" ? "list" : newView as ViewMode);
+    }
   };
 
   const handleSelectStory = (story: Story) => {

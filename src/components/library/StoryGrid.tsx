@@ -36,8 +36,8 @@ const StoryGrid: React.FC<StoryGridProps> = ({
         <StoryCard
           key={story.id}
           story={story}
-          onDelete={onDelete}
-          onRetry={onRetry}
+          onDelete={onDelete ? (e) => onDelete(e, story.id) : undefined}
+          onRetry={onRetry ? (e) => onRetry(e, story.id) : undefined}
           onClick={onCardClick ? () => onCardClick(story) : undefined}
           isRetrying={isRetrying && pendingStoryId === story.id}
           isDeleting={isDeletingId === story.id}

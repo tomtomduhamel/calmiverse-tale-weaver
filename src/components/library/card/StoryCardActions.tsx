@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 
 interface StoryCardActionsProps {
   story: Story;
-  onDelete: (e: React.MouseEvent) => void;
+  onDelete?: (e: React.MouseEvent) => void;
   onRetry?: (e: React.MouseEvent) => void;
   isRetrying?: boolean;
   isDeleting?: boolean;

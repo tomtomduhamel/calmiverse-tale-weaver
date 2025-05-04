@@ -12,8 +12,8 @@ import { Loader2 } from "lucide-react";
 interface StoryCardProps {
   story: Story;
   onClick?: () => void;
-  onDelete?: (e: React.MouseEvent, storyId: string) => void;
-  onRetry?: (e: React.MouseEvent, storyId: string) => void;
+  onDelete?: (e: React.MouseEvent) => void;
+  onRetry?: (e: React.MouseEvent) => void;
   isRetrying?: boolean;
   isDeleting?: boolean;
   isPending?: boolean;
@@ -43,14 +43,15 @@ const StoryCard: React.FC<StoryCardProps> = ({
   return (
     <Card className={cardStyles} onClick={onClick}>
       <CardContent className="pt-6 pb-2">
-        <StoryCardTitle title={story.title} status={story.status} />
+        <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
         <p className="text-sm text-gray-600 line-clamp-3 mb-3 h-[4.5rem]">
           {story.preview}
         </p>
         <StoryCardTags 
           status={story.status} 
-          childrenIds={story.childrenIds} 
-          objectives={story.objectives}
+          objective={story.objective}
+          tags={story.tags}
+          error={story.error}
         />
       </CardContent>
       <CardFooter className="flex justify-between pt-2 pb-4">
