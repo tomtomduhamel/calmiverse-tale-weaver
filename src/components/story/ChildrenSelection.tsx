@@ -72,13 +72,10 @@ const ChildrenSelection = ({
                   <Checkbox
                     id={`child-${child.id}`}
                     checked={isSelected}
-                    // Le problème est ici - la modification de cette fonction résout la boucle infinie
-                    // Nous supprimons l'appel à onCheckedChange et laissons le parent gérer l'événement
-                    className={cn(
-                      isSelected ? "border-primary" : ""
-                    )}
-                    // Éviter la propagation pour empêcher les événements en double
+                    className={isSelected ? "border-primary" : ""}
+                    // Remove onChange handler and rely on parent div click
                     onClick={(e) => e.stopPropagation()}
+                    readOnly
                   />
                   <Label
                     htmlFor={`child-${child.id}`}
