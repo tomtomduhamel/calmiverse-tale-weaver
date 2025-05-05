@@ -42,7 +42,7 @@ export const useStoryFormHandlers = (
     if (error && error.toLowerCase().includes("enfant")) {
       setError(null);
     }
-  }, [formData.childrenIds, error, setFormData, setError]);
+  }, [error, setFormData, setError]);
 
   const setObjective = useCallback((objective: string) => {
     setFormData((prev) => ({ ...prev, objective }));

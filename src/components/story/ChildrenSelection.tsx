@@ -1,4 +1,5 @@
 
+import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -7,7 +8,6 @@ import type { Child } from "@/types/child";
 import { calculateAge } from "@/utils/age";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import React from "react";
 
 interface ChildrenSelectionProps {
   children: Child[];
@@ -17,7 +17,7 @@ interface ChildrenSelectionProps {
   hasError?: boolean;
 }
 
-const ChildrenSelection = ({
+const ChildrenSelection = React.memo(({
   children,
   selectedChildrenIds,
   onChildToggle,
@@ -25,6 +25,17 @@ const ChildrenSelection = ({
   hasError = false,
 }: ChildrenSelectionProps) => {
   const isMobile = useIsMobile();
+
+  const handleChildClick = useCallback((childId: string) => {
+    onChildToggle(childId);
+  }, [onChildToggle]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent, childId: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onChildToggle(childId);
+    }
+  }, [onChildToggle]);
 
   return (
     <div className="space-y-4">
@@ -53,20 +64,16 @@ const ChildrenSelection = ({
                       ? "bg-primary/10 hover:bg-primary/20" 
                       : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
                   )}
-                  onClick={() => onChildToggle(child.id)}
+                  onClick={() => handleChildClick(child.id)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onChildToggle(child.id);
-                    }
-                  }}
+                  onKeyDown={(e) => handleKeyDown(e, child.id)}
                 >
                   <Checkbox
                     id={`child-${child.id}`}
                     checked={isSelected}
                     className={isSelected ? "border-primary" : ""}
+                    onCheckedChange={() => {}} // Empty handler - parent div handles click
                   />
                   <Label
                     htmlFor={`child-${child.id}`}
@@ -118,6 +125,8 @@ const ChildrenSelection = ({
       )}
     </div>
   );
-};
+});
 
-export default React.memo(ChildrenSelection);
+ChildrenSelection.displayName = "ChildrenSelection";
+
+export default ChildrenSelection;

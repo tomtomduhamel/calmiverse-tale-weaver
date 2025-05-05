@@ -1,7 +1,7 @@
 
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +33,7 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
     return () => clearTimeout(timer);
   }, [countdownActive, countdown]);
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
       setCountdownActive(true);
       setButtonClicked(true);
@@ -52,7 +52,7 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
       // Prevent submission if disabled
       e.preventDefault();
     }
-  };
+  }, [disabled, toast]);
 
   return (
     <Button
@@ -83,4 +83,4 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
   );
 };
 
-export default GenerateStoryButton;
+export default React.memo(GenerateStoryButton);
