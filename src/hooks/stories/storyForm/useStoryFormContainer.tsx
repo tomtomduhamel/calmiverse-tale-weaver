@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoryForm } from "@/hooks/stories/storyForm";
 import { useChildFormLogic } from "@/components/story/useChildFormLogic";
@@ -29,7 +29,7 @@ export const useStoryFormContainer = (
   const isMobile = useIsMobile();
   
   // Authentication hook
-  const { user, authLoading, authChecked } = useStoryFormAuth(setFormError);
+  const { user, authLoading } = useStoryFormAuth(setFormError);
   
   // Notifications hook
   const { toast } = useNotifications(setFormError);
@@ -62,11 +62,7 @@ export const useStoryFormContainer = (
   // Progress indicator
   const { progress } = useStoryProgress(formIsSubmitting);
 
-  // Memoize event handlers
-  const handleChildToggleMemoized = useCallback((childId: string) => {
-    handleChildToggle(childId);
-  }, [handleChildToggle]);
-  
+  // Event handlers
   const handleCreationModeSwitch = useCallback(() => {
     setCreationMode(prevMode => 
       prevMode === "classic" ? "chat" : "classic"
@@ -81,18 +77,21 @@ export const useStoryFormContainer = (
     setObjective(objective);
   }, [setObjective]);
   
-  const handleFormSubmit = useCallback(async (e: React.FormEvent) => {
-    await handleSubmit(e);
+  const handleFormSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmit(e).catch(error => {
+      console.error("Error submitting form:", error);
+    });
   }, [handleSubmit]);
 
-  // Synchronize errors
+  // Synchronize errors - with proper dependency array
   useEffect(() => {
-    if (storyFormError) {
+    if (storyFormError && storyFormError !== formError) {
       setFormError(storyFormError);
     }
   }, [storyFormError]);
   
-  // Log form state for debugging - with proper dependency array to prevent infinite loops
+  // Update debug info in a separate effect with proper dependencies
   useEffect(() => {
     const debugInfo = {
       selectedChildrenIds: formData.childrenIds,
@@ -105,18 +104,25 @@ export const useStoryFormContainer = (
     };
     
     setFormDebugInfo(debugInfo);
-    
-    // Clear error automatically if children are selected - ONLY if error is about child selection
+  }, [
+    formData.childrenIds,
+    formData.objective,
+    formError,
+    children?.length,
+    formIsSubmitting
+  ]);
+  
+  // Clear error if children are selected - in separate effect with proper dependencies
+  useEffect(() => {
     if (formError?.includes("select at least one child") && 
         formData.childrenIds && 
         formData.childrenIds.length > 0) {
-      setFormError(null);
       resetError();
     }
-  }, [formData.childrenIds, formData.objective, formError, children, formIsSubmitting, resetError]);
+  }, [formData.childrenIds, formError, resetError]);
 
-  // Check if generate button should be disabled
-  const isGenerateButtonDisabled = useCallback(() => {
+  // Mémoriser la valeur pour éviter les recalculs
+  const isGenerateButtonDisabled = useMemo(() => {
     const noChildSelected = !formData.childrenIds || formData.childrenIds.length === 0;
     const noObjectiveSelected = !formData.objective;
     return formIsSubmitting || noChildSelected || noObjectiveSelected;
@@ -144,7 +150,7 @@ export const useStoryFormContainer = (
     isMobile,
     
     // Handlers
-    handleChildToggle: handleChildToggleMemoized,
+    handleChildToggle,
     handleCreationModeSwitch,
     showChildFormHandler,
     handleObjectiveSelect,
@@ -156,6 +162,6 @@ export const useStoryFormContainer = (
     resetChildForm,
     
     // Utilities
-    isGenerateButtonDisabled: isGenerateButtonDisabled()
+    isGenerateButtonDisabled
   };
 };

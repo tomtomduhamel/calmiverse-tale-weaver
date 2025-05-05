@@ -1,5 +1,5 @@
 
-import React, { useCallback } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -26,16 +26,17 @@ const ChildrenSelection = React.memo(({
 }: ChildrenSelectionProps) => {
   const isMobile = useIsMobile();
 
-  const handleChildClick = useCallback((childId: string) => {
+  // Simplifier la logique de gestion des événements
+  const handleChildClick = (childId: string) => {
     onChildToggle(childId);
-  }, [onChildToggle]);
+  };
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent, childId: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, childId: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onChildToggle(childId);
     }
-  }, [onChildToggle]);
+  };
 
   return (
     <div className="space-y-4">
@@ -72,8 +73,7 @@ const ChildrenSelection = React.memo(({
                   <Checkbox
                     id={`child-${child.id}`}
                     checked={isSelected}
-                    className={isSelected ? "border-primary" : ""}
-                    onCheckedChange={() => {}} // Empty handler - parent div handles click
+                    // Important: Ne pas utiliser onCheckedChange ici, car le clic sur le div parent gère déjà cet événement
                   />
                   <Label
                     htmlFor={`child-${child.id}`}

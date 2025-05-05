@@ -1,5 +1,5 @@
 
-import React, { useCallback } from "react";
+import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { default as StoryObjectives } from "../StoryObjectives";
 import { StoryError } from "./StoryError";
@@ -43,17 +43,7 @@ export const StoryFormContent = React.memo(({
 }: StoryFormContentProps) => {
   const isMobile = useIsMobile();
   
-  // Memoize handlers to prevent unnecessary re-renders
-  const handleObjectiveSelect = useCallback((obj: string) => {
-    setObjective(obj);
-  }, [setObjective]);
-  
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(e);
-  }, [onSubmit]);
-  
-  // Reduce the height of the ScrollArea to ensure button visibility
+  // Réduire la hauteur du ScrollArea pour assurer la visibilité du bouton
   const scrollAreaHeight = isMobile ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-150px)]";
   
   const hasChildrenError = formError && formError.toLowerCase().includes("child");
@@ -63,7 +53,7 @@ export const StoryFormContent = React.memo(({
     <div className="flex flex-col h-full w-full">
       <ScrollArea className={scrollAreaHeight}>
         <form 
-          onSubmit={handleSubmit} 
+          onSubmit={onSubmit} 
           className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl mb-20"
         >
           <StoryFormHeader onModeSwitch={onModeSwitch} />
@@ -89,7 +79,7 @@ export const StoryFormContent = React.memo(({
             <StoryObjectives
               objectives={objectives}
               selectedObjective={objective}
-              onObjectiveSelect={handleObjectiveSelect}
+              onObjectiveSelect={setObjective}
               hasError={hasObjectiveError}
             />
           </div>
@@ -101,7 +91,9 @@ export const StoryFormContent = React.memo(({
       {/* Fixed bottom generate button */}
       <div className="fixed bottom-20 sm:bottom-10 left-0 right-0 px-4 sm:px-8 z-10">
         <div className="max-w-[95%] sm:max-w-4xl mx-auto">
-          <GenerateStoryButton disabled={isSubmitting || isGenerateButtonDisabled} />
+          <GenerateStoryButton 
+            disabled={isSubmitting || isGenerateButtonDisabled} 
+          />
         </div>
       </div>
     </div>

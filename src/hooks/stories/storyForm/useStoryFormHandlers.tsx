@@ -11,49 +11,40 @@ export const useStoryFormHandlers = (
   error: string | null,
   setError: (error: string | null) => void
 ) => {
-  // Use useCallback to avoid unnecessary renders
+  // Simplifier la logique de mise à jour des enfants sélectionnés
   const handleChildToggle = useCallback((childId: string) => {
-    // Verify that childId is valid
-    if (!childId || typeof childId !== 'string') {
-      console.error("Invalid childId:", childId);
-      return;
-    }
+    // Vérification simple
+    if (!childId) return;
     
     setFormData((prev) => {
-      // Ensure we always have a valid array
-      const currentIds = Array.isArray(prev.childrenIds) ? [...prev.childrenIds] : [];
-      
-      // Check if ID is already present
+      const currentIds = prev.childrenIds || [];
       const isSelected = currentIds.includes(childId);
       
-      // Create new array with or without the ID
-      const updatedIds = isSelected
-        ? currentIds.filter((id) => id !== childId)
-        : [...currentIds, childId];
-      
-      // Return new state with updated array
       return { 
         ...prev, 
-        childrenIds: updatedIds 
+        childrenIds: isSelected
+          ? currentIds.filter(id => id !== childId)
+          : [...currentIds, childId]
       };
     });
     
-    // Reset error if it concerns child selection
+    // Réinitialisation de l'erreur si nécessaire
     if (error && error.toLowerCase().includes("enfant")) {
       setError(null);
     }
-  }, [error, setFormData, setError]);
+  }, [setFormData, setError, error]);
 
   const setObjective = useCallback((objective: string) => {
     setFormData((prev) => ({ ...prev, objective }));
     
-    // Reset error if it concerns objective
     if (error && error.toLowerCase().includes("objectif")) {
       setError(null);
     }
-  }, [error, setFormData, setError]);
+  }, [setFormData, setError, error]);
 
-  const resetError = useCallback(() => setError(null), [setError]);
+  const resetError = useCallback(() => {
+    setError(null);
+  }, [setError]);
 
   return {
     handleChildToggle,

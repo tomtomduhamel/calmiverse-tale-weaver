@@ -1,23 +1,24 @@
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useToast } from "@/hooks/use-toast";
 
 interface GenerateStoryButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   disabled?: boolean;
 }
 
-const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButtonProps) => {
+const GenerateStoryButton = React.memo(({ 
+  disabled = false, 
+  onClick,
+  ...props 
+}: GenerateStoryButtonProps) => {
   const [countdownActive, setCountdownActive] = useState(false);
   const [countdown, setCountdown] = useState(10);
-  const [buttonClicked, setButtonClicked] = useState(false);
   const isMobile = useIsMobile();
-  const { toast } = useToast();
   
-  // Animation de countdown d'accessibilité lorsque le bouton est cliqué
+  // Réinitialiser la logique du compte à rebours
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     
@@ -30,38 +31,32 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
       setCountdown(10);
     }
     
-    return () => clearTimeout(timer);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [countdownActive, countdown]);
 
-  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!disabled) {
+  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!disabled && !countdownActive) {
       setCountdownActive(true);
-      setButtonClicked(true);
       
-      // Reset button state after animation
-      setTimeout(() => {
-        setButtonClicked(false);
-      }, 500);
-
-      // Show toast for user feedback
-      toast({
-        title: "Génération d'histoire",
-        description: "Nous préparons votre histoire, cela peut prendre une minute...",
-      });
-    } else {
-      // Prevent submission if disabled
+      // Appeler le gestionnaire d'événements onClick fourni par le parent
+      if (onClick) {
+        onClick(e);
+      }
+    } else if (disabled) {
+      // Empêcher la soumission si désactivé
       e.preventDefault();
     }
-  }, [disabled, toast]);
+  };
 
   return (
     <Button
       type="submit"
-      onClick={handleClick}
+      onClick={handleButtonClick}
       disabled={disabled}
       className={cn(
         "w-full py-4 sm:py-6 text-base sm:text-lg font-bold transition-all animate-fade-in shadow-lg",
-        buttonClicked && !disabled ? "bg-primary/80" : "",
         disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90",
         isMobile ? "rounded-xl fixed bottom-20 left-0 right-0 mx-4 z-10" : ""
       )}
@@ -81,6 +76,8 @@ const GenerateStoryButton = ({ disabled = false, ...props }: GenerateStoryButton
       )}
     </Button>
   );
-};
+});
 
-export default React.memo(GenerateStoryButton);
+GenerateStoryButton.displayName = "GenerateStoryButton";
+
+export default GenerateStoryButton;
