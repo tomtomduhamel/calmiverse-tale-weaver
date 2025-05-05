@@ -1,5 +1,5 @@
 
-import React, { useCallback } from "react";
+import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { default as StoryObjectives } from "../StoryObjectives";
 import { StoryError } from "./StoryError";
@@ -26,6 +26,7 @@ interface StoryFormContentProps {
   isGenerateButtonDisabled?: boolean;
 }
 
+// Composant pour l'affichage du formulaire de création d'histoire optimisé
 export const StoryFormContent = React.memo(({
   children,
   selectedChildrenIds,
@@ -50,20 +51,13 @@ export const StoryFormContent = React.memo(({
   const hasChildrenError = formError && (formError.toLowerCase().includes('child') || formError.toLowerCase().includes('enfant'));
   const hasObjectiveError = formError && (formError.toLowerCase().includes('objective') || formError.toLowerCase().includes('objectif'));
   
-  // Handler stable pour la soumission du formulaire
-  const handleFormSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isGenerateButtonDisabled) {
-      onSubmit(e);
-    }
-  }, [onSubmit, isGenerateButtonDisabled]);
-  
   return (
     <div className="flex flex-col h-full w-full">
       <ScrollArea className={scrollAreaHeight}>
         <form 
-          onSubmit={handleFormSubmit} 
+          onSubmit={onSubmit}
           className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl mb-20"
+          data-testid="story-form"
         >
           <StoryFormHeader onModeSwitch={onModeSwitch} />
           
@@ -93,14 +87,15 @@ export const StoryFormContent = React.memo(({
             />
           </div>
 
-          <StoryProgress isSubmitting={isSubmitting} progress={progress} />
+          {isSubmitting && <StoryProgress progress={progress} />}
         </form>
       </ScrollArea>
       
       <div className="fixed bottom-20 sm:bottom-10 left-0 right-0 px-4 sm:px-8 z-10">
         <div className="max-w-[95%] sm:max-w-4xl mx-auto">
           <GenerateStoryButton 
-            disabled={isSubmitting || isGenerateButtonDisabled} 
+            disabled={isSubmitting || isGenerateButtonDisabled}
+            data-testid="generate-story-button-container"
           />
         </div>
       </div>

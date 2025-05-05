@@ -10,14 +10,20 @@ describe('useStoryFormHandlers', () => {
   
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
     
     // Configurer l'implémentation simulée pour setFormData
     mockSetFormData.mockImplementation((callback) => {
       if (typeof callback === 'function') {
-        return callback({ childrenIds: ['child-1'], objective: '' });
+        const prevData = { childrenIds: ['child-1'], objective: '' };
+        return callback(prevData);
       }
       return callback;
     });
+  });
+  
+  afterEach(() => {
+    vi.useRealTimers();
   });
   
   it('should toggle a child on/off correctly', () => {
@@ -61,6 +67,7 @@ describe('useStoryFormHandlers', () => {
     // Sélectionner un enfant
     act(() => {
       result.current.handleChildToggle('child-1');
+      vi.runAllTimers(); // Exécuter tous les timers pour traiter le setTimeout
     });
     
     expect(mockSetError).toHaveBeenCalledWith(null);
@@ -81,6 +88,7 @@ describe('useStoryFormHandlers', () => {
     // Sélectionner un enfant
     act(() => {
       result.current.handleChildToggle('child-1');
+      vi.runAllTimers(); // Exécuter tous les timers
     });
     
     expect(mockSetError).not.toHaveBeenCalled();
@@ -119,6 +127,7 @@ describe('useStoryFormHandlers', () => {
     // Définir un objectif
     act(() => {
       result.current.setObjective('sleep');
+      vi.runAllTimers(); // Exécuter tous les timers
     });
     
     expect(mockSetError).toHaveBeenCalledWith(null);
@@ -160,7 +169,6 @@ describe('useStoryFormHandlers', () => {
       result.current.handleChildToggle(null);
     });
     
-    // Ne devrait pas lancer d'erreur ni appeler setFormData
     expect(mockSetFormData).not.toHaveBeenCalled();
   });
 });

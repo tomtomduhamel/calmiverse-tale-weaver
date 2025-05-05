@@ -1,5 +1,5 @@
 
-import React, { useCallback } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,87 @@ interface ChildrenSelectionProps {
   hasError?: boolean;
 }
 
-// Composant optimisé pour éviter les rendus inutiles
+// Composant enfant isolé pour éviter les rendus inutiles
+const ChildItem = React.memo(({
+  child,
+  isSelected,
+  onToggle,
+  isMobile
+}: {
+  child: Child;
+  isSelected: boolean;
+  onToggle: () => void;
+  isMobile: boolean;
+}) => {
+  return (
+    <div
+      className={cn(
+        "flex items-center space-x-3 p-3 rounded-lg transition-colors",
+        isSelected 
+          ? "bg-primary/10 hover:bg-primary/20" 
+          : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
+      )}
+      onClick={onToggle}
+      data-testid={`child-item-${child.id}`}
+    >
+      <div className="flex-shrink-0">
+        <Checkbox
+          id={`child-${child.id}`}
+          checked={isSelected}
+          // Utiliser le changement d'état interne du checkbox pour éviter les boucles
+          onCheckedChange={onToggle}
+        />
+      </div>
+      <Label
+        htmlFor={`child-${child.id}`}
+        className={cn(
+          "text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer w-full",
+          isSelected ? "font-semibold text-primary" : ""
+        )}
+      >
+        {child.name} ({calculateAge(child.birthDate)} ans)
+        {isSelected && (
+          <span className={cn(
+            "ml-2 text-xs text-primary",
+            isMobile ? "block mt-1" : "inline"
+          )}>
+            ✓ Sélectionné
+          </span>
+        )}
+      </Label>
+    </div>
+  );
+});
+
+ChildItem.displayName = "ChildItem";
+
+// Composant isolé pour le bouton d'ajout d'enfant
+const AddChildButton = React.memo(({ 
+  onClick, 
+  hasError, 
+  childrenCount 
+}: {
+  onClick: () => void;
+  hasError: boolean;
+  childrenCount: number;
+}) => (
+  <Button
+    type="button"
+    onClick={onClick}
+    variant="outline"
+    className={cn(
+      "w-full flex items-center justify-center gap-2 py-4 sm:py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors",
+      hasError ? "border-destructive/50 hover:border-destructive" : ""
+    )}
+  >
+    <UserPlus className="w-5 h-5" />
+    {childrenCount > 0 ? "Ajouter un autre enfant" : "Créer un profil enfant"}
+  </Button>
+));
+
+AddChildButton.displayName = "AddChildButton";
+
+// Composant principal refactorisé
 const ChildrenSelection = React.memo(({
   children,
   selectedChildrenIds,
@@ -26,41 +106,6 @@ const ChildrenSelection = React.memo(({
   hasError = false,
 }: ChildrenSelectionProps) => {
   const isMobile = useIsMobile();
-
-  // Gestionnaire d'événements stable
-  const handleChildClick = useCallback((childId: string) => (e: React.MouseEvent) => {
-    e.stopPropagation(); // Empêcher la propagation pour éviter les déclenchements multiples
-    onChildToggle(childId);
-  }, [onChildToggle]);
-
-  const handleKeyDown = useCallback((childId: string) => (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onChildToggle(childId);
-    }
-  }, [onChildToggle]);
-
-  // Gestionnaire stable et sécurisé pour le changement de Checkbox
-  const handleCheckboxChange = useCallback((childId: string, checked: boolean) => {
-    // La valeur checked est ignorée car nous utilisons déjà selectedChildrenIds pour l'état
-    onChildToggle(childId);
-  }, [onChildToggle]);
-
-  // Isoler le rendu du bouton d'ajout d'enfant pour éviter les re-rendus
-  const AddChildButton = useCallback(() => (
-    <Button
-      type="button"
-      onClick={onCreateChildClick}
-      variant="outline"
-      className={cn(
-        "w-full flex items-center justify-center gap-2 py-4 sm:py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors",
-        hasError ? "border-destructive/50 hover:border-destructive" : ""
-      )}
-    >
-      <UserPlus className="w-5 h-5" />
-      {children.length > 0 ? "Ajouter un autre enfant" : "Créer un profil enfant"}
-    </Button>
-  ), [children.length, hasError, onCreateChildClick]);
 
   return (
     <div className="space-y-4">
@@ -80,49 +125,22 @@ const ChildrenSelection = React.memo(({
             const isSelected = selectedChildrenIds.includes(child.id);
             
             return (
-              <div
+              <ChildItem
                 key={child.id}
-                className={cn(
-                  "flex items-center space-x-3 p-3 rounded-lg transition-colors",
-                  isSelected 
-                    ? "bg-primary/10 hover:bg-primary/20" 
-                    : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
-                )}
-                onClick={handleChildClick(child.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={handleKeyDown(child.id)}
-              >
-                <div className="flex-shrink-0">
-                  <Checkbox
-                    id={`child-${child.id}`}
-                    checked={isSelected}
-                    onCheckedChange={() => handleCheckboxChange(child.id, !isSelected)}
-                  />
-                </div>
-                <Label
-                  htmlFor={`child-${child.id}`}
-                  className={cn(
-                    "text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer w-full",
-                    isSelected ? "font-semibold text-primary" : ""
-                  )}
-                >
-                  {child.name} ({calculateAge(child.birthDate)} ans)
-                  {isSelected && (
-                    <span className={cn(
-                      "ml-2 text-xs text-primary",
-                      isMobile ? "block mt-1" : "inline"
-                    )}>
-                      ✓ Sélectionné
-                    </span>
-                  )}
-                </Label>
-              </div>
+                child={child}
+                isSelected={isSelected}
+                onToggle={() => onChildToggle(child.id)}
+                isMobile={isMobile}
+              />
             );
           })}
         </div>
       )}
-      <AddChildButton />
+      <AddChildButton 
+        onClick={onCreateChildClick} 
+        hasError={hasError}
+        childrenCount={children.length}
+      />
     </div>
   );
 });

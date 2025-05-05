@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,22 +9,19 @@ interface GenerateStoryButtonProps extends React.ButtonHTMLAttributes<HTMLButton
   disabled?: boolean;
 }
 
-// Composant optimisé pour éviter les rendus excessifs
 const GenerateStoryButton = React.memo(({ 
   disabled = false, 
-  onClick,
   ...props 
 }: GenerateStoryButtonProps) => {
   const [countdownActive, setCountdownActive] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const isMobile = useIsMobile();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Effet isolé pour gérer le compte à rebours
+  // Effet isolé pour gérer le compte à rebours avec useRef pour éviter les fuites
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    
     if (countdownActive && countdown > 0) {
-      timer = setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         setCountdown((prev) => prev - 1);
       }, 1000);
     } else if (countdown === 0) {
@@ -32,26 +29,26 @@ const GenerateStoryButton = React.memo(({
       setCountdown(10);
     }
     
+    // Nettoyage du timer à chaque changement d'état ou démontage
     return () => {
-      if (timer) clearTimeout(timer);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [countdownActive, countdown]);
 
-  // Gestionnaire d'événements stabilisé avec useCallback
-  const handleButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!disabled && !countdownActive) {
-      e.preventDefault(); // Empêcher la soumission de formulaire par défaut
-      setCountdownActive(true);
-      
-      // Appeler le gestionnaire d'événements onClick fourni par le parent
-      if (onClick) {
-        onClick(e);
-      }
-    } else if (disabled) {
-      // Empêcher la soumission si désactivé
+  // Gestionnaire d'événements stable qui ne provoque pas de rendus excessifs
+  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled || countdownActive) {
       e.preventDefault();
+      return;
     }
-  }, [disabled, countdownActive, onClick]);
+    
+    setCountdownActive(true);
+    // Le onClick par défaut du bouton gère la soumission du formulaire
+    // sans créer de boucles de mise à jour
+  };
 
   return (
     <Button
@@ -64,6 +61,7 @@ const GenerateStoryButton = React.memo(({
         isMobile ? "rounded-xl fixed bottom-20 left-0 right-0 mx-4 z-10" : ""
       )}
       aria-disabled={disabled}
+      data-testid="generate-story-button"
       {...props}
     >
       {countdownActive ? (
