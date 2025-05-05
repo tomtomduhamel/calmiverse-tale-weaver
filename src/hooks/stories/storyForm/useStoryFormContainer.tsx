@@ -77,11 +77,14 @@ export const useStoryFormContainer = (
     setObjective(objective);
   }, [setObjective]);
   
-  const handleFormSubmit = useCallback((e: React.FormEvent) => {
+  // Update the handleFormSubmit to return a Promise<void>
+  const handleFormSubmit = useCallback(async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    handleSubmit(e).catch(error => {
+    try {
+      await handleSubmit(e);
+    } catch (error) {
       console.error("Error submitting form:", error);
-    });
+    }
   }, [handleSubmit]);
 
   // Synchronize errors - with proper dependency array
@@ -89,7 +92,7 @@ export const useStoryFormContainer = (
     if (storyFormError && storyFormError !== formError) {
       setFormError(storyFormError);
     }
-  }, [storyFormError]);
+  }, [storyFormError, formError]);
   
   // Update debug info in a separate effect with proper dependencies
   useEffect(() => {
