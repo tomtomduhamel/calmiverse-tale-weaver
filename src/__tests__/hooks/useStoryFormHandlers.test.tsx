@@ -1,5 +1,5 @@
 
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useStoryFormHandlers } from '@/hooks/stories/storyForm/useStoryFormHandlers';
 import type { StoryFormData } from '@/components/story/StoryFormTypes';
@@ -11,7 +11,7 @@ describe('useStoryFormHandlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
-    // Setup mock implementation for setFormData
+    // Configurer l'implémentation simulée pour setFormData
     mockSetFormData.mockImplementation((callback) => {
       if (typeof callback === 'function') {
         return callback({ childrenIds: ['child-1'], objective: '' });
@@ -21,7 +21,7 @@ describe('useStoryFormHandlers', () => {
   });
   
   it('should toggle a child on/off correctly', () => {
-    // Initial form data with one child already selected
+    // Données de formulaire initiales avec un enfant déjà sélectionné
     const formData: StoryFormData = {
       childrenIds: ['child-1'],
       objective: '',
@@ -31,14 +31,14 @@ describe('useStoryFormHandlers', () => {
       useStoryFormHandlers(formData, mockSetFormData, null, mockSetError)
     );
     
-    // Toggle an already selected child (should remove it)
+    // Désélectionner un enfant déjà sélectionné (devrait le supprimer)
     act(() => {
       result.current.handleChildToggle('child-1');
     });
     
     expect(mockSetFormData).toHaveBeenCalled();
     
-    // Toggle a new child (should add it)
+    // Sélectionner un nouvel enfant (devrait l'ajouter)
     act(() => {
       result.current.handleChildToggle('child-2');
     });
@@ -58,7 +58,7 @@ describe('useStoryFormHandlers', () => {
       useStoryFormHandlers(formData, mockSetFormData, error, mockSetError)
     );
     
-    // Toggle a child
+    // Sélectionner un enfant
     act(() => {
       result.current.handleChildToggle('child-1');
     });
@@ -78,7 +78,7 @@ describe('useStoryFormHandlers', () => {
       useStoryFormHandlers(formData, mockSetFormData, error, mockSetError)
     );
     
-    // Toggle a child
+    // Sélectionner un enfant
     act(() => {
       result.current.handleChildToggle('child-1');
     });
@@ -96,7 +96,7 @@ describe('useStoryFormHandlers', () => {
       useStoryFormHandlers(formData, mockSetFormData, null, mockSetError)
     );
     
-    // Set objective
+    // Définir un objectif
     act(() => {
       result.current.setObjective('sleep');
     });
@@ -116,7 +116,7 @@ describe('useStoryFormHandlers', () => {
       useStoryFormHandlers(formData, mockSetFormData, error, mockSetError)
     );
     
-    // Set objective
+    // Définir un objectif
     act(() => {
       result.current.setObjective('sleep');
     });
@@ -136,7 +136,7 @@ describe('useStoryFormHandlers', () => {
       useStoryFormHandlers(formData, mockSetFormData, error, mockSetError)
     );
     
-    // Reset error
+    // Réinitialiser l'erreur
     act(() => {
       result.current.resetError();
     });
@@ -154,13 +154,13 @@ describe('useStoryFormHandlers', () => {
       useStoryFormHandlers(formData, mockSetFormData, null, mockSetError)
     );
     
-    // Toggle with null/undefined childId
+    // Essayer avec un childId null/undefined
     act(() => {
-      // @ts-ignore: Testing invalid input
+      // @ts-ignore: Test d'entrée invalide
       result.current.handleChildToggle(null);
     });
     
-    // It shouldn't throw an error or call setFormData
+    // Ne devrait pas lancer d'erreur ni appeler setFormData
     expect(mockSetFormData).not.toHaveBeenCalled();
   });
 });

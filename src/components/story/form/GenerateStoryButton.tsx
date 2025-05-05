@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ interface GenerateStoryButtonProps extends React.ButtonHTMLAttributes<HTMLButton
   disabled?: boolean;
 }
 
+// Composant optimisé pour éviter les rendus excessifs
 const GenerateStoryButton = React.memo(({ 
   disabled = false, 
   onClick,
@@ -18,7 +19,7 @@ const GenerateStoryButton = React.memo(({
   const [countdown, setCountdown] = useState(10);
   const isMobile = useIsMobile();
   
-  // Réinitialiser la logique du compte à rebours
+  // Effet isolé pour gérer le compte à rebours
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     
@@ -36,8 +37,10 @@ const GenerateStoryButton = React.memo(({
     };
   }, [countdownActive, countdown]);
 
-  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  // Gestionnaire d'événements stabilisé avec useCallback
+  const handleButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled && !countdownActive) {
+      e.preventDefault(); // Empêcher la soumission de formulaire par défaut
       setCountdownActive(true);
       
       // Appeler le gestionnaire d'événements onClick fourni par le parent
@@ -48,7 +51,7 @@ const GenerateStoryButton = React.memo(({
       // Empêcher la soumission si désactivé
       e.preventDefault();
     }
-  };
+  }, [disabled, countdownActive, onClick]);
 
   return (
     <Button

@@ -11,7 +11,8 @@ import type { Child } from "@/types/child";
 import type { Story } from "@/types/story";
 
 /**
- * Custom hook containing all the logic for the StoryFormContainer component
+ * Hook principal contenant toute la logique pour le composant StoryFormContainer
+ * Refactorisé pour éviter les boucles de mise à jour d'état
  */
 export const useStoryFormContainer = (
   onSubmit: (formData: any) => Promise<string>,
@@ -19,22 +20,22 @@ export const useStoryFormContainer = (
   onCreateChild: (child: Omit<Child, "id">) => void,
   onStoryCreated: (story: Story) => void
 ) => {
-  // State management
+  // État local
   const [creationMode, setCreationMode] = useState<"classic" | "chat">("classic");
   const [formError, setFormError] = useState<string | null>(null);
   const [formDebugInfo, setFormDebugInfo] = useState<any>({});
   
-  // Hooks
+  // Hooks externes
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
   const isMobile = useIsMobile();
   
-  // Authentication hook
+  // Hook d'authentification
   const { user, authLoading } = useStoryFormAuth(setFormError);
   
-  // Notifications hook
-  const { toast } = useNotifications(setFormError);
+  // Hook de notifications
+  const { toast } = useNotifications();
   
-  // Story form hook
+  // Hook de formulaire principal
   const { 
     formData, 
     isLoading, 
@@ -47,7 +48,8 @@ export const useStoryFormContainer = (
     validateForm
   } = useStoryForm(onStoryCreated, onSubmit);
   
-  // Child form logic
+  // Logique du formulaire d'enfant
+  const childFormLogic = useChildFormLogic(onCreateChild);
   const {
     showChildForm,
     setShowChildForm,
@@ -57,12 +59,12 @@ export const useStoryFormContainer = (
     resetChildForm,
     setChildName,
     setChildAge,
-  } = useChildFormLogic(onCreateChild);
+  } = childFormLogic;
 
-  // Progress indicator
+  // Indicateur de progression
   const { progress } = useStoryProgress(formIsSubmitting);
 
-  // Event handlers
+  // Gestionnaires d'événements stabilisés
   const handleCreationModeSwitch = useCallback(() => {
     setCreationMode(prevMode => 
       prevMode === "classic" ? "chat" : "classic"
@@ -77,7 +79,7 @@ export const useStoryFormContainer = (
     setObjective(objective);
   }, [setObjective]);
   
-  // Update the handleFormSubmit to return a Promise<void>
+  // Gestionnaire de soumission de formulaire stabilisé
   const handleFormSubmit = useCallback(async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     try {
@@ -87,14 +89,14 @@ export const useStoryFormContainer = (
     }
   }, [handleSubmit]);
 
-  // Synchronize errors - with proper dependency array
+  // Synchronisation des erreurs - une seule fois par changement réel
   useEffect(() => {
     if (storyFormError && storyFormError !== formError) {
       setFormError(storyFormError);
     }
   }, [storyFormError, formError]);
   
-  // Update debug info in a separate effect with proper dependencies
+  // Mise à jour des informations de débogage dans un effet séparé
   useEffect(() => {
     const debugInfo = {
       selectedChildrenIds: formData.childrenIds,
@@ -115,16 +117,18 @@ export const useStoryFormContainer = (
     formIsSubmitting
   ]);
   
-  // Clear error if children are selected - in separate effect with proper dependencies
+  // Effacer les erreurs spécifiques quand les conditions sont remplies
   useEffect(() => {
-    if (formError?.includes("select at least one child") && 
-        formData.childrenIds && 
-        formData.childrenIds.length > 0) {
+    if (
+      formError?.includes("select at least one child") && 
+      formData.childrenIds && 
+      formData.childrenIds.length > 0
+    ) {
       resetError();
     }
   }, [formData.childrenIds, formError, resetError]);
 
-  // Mémoriser la valeur pour éviter les recalculs
+  // Calcul mémorisé de l'état du bouton
   const isGenerateButtonDisabled = useMemo(() => {
     const noChildSelected = !formData.childrenIds || formData.childrenIds.length === 0;
     const noObjectiveSelected = !formData.objective;
@@ -132,7 +136,7 @@ export const useStoryFormContainer = (
   }, [formData.childrenIds, formData.objective, formIsSubmitting]);
 
   return {
-    // States
+    // États
     creationMode,
     formError,
     formDebugInfo,
@@ -141,18 +145,18 @@ export const useStoryFormContainer = (
     childName,
     childAge,
     
-    // Loading states
+    // États de chargement
     authLoading,
     objectivesLoading,
     isLoading,
     formIsSubmitting,
     
-    // Data
+    // Données
     objectives,
     progress,
     isMobile,
     
-    // Handlers
+    // Gestionnaires
     handleChildToggle,
     handleCreationModeSwitch,
     showChildFormHandler,
@@ -164,7 +168,7 @@ export const useStoryFormContainer = (
     setChildAge,
     resetChildForm,
     
-    // Utilities
+    // Utilitaires
     isGenerateButtonDisabled
   };
 };

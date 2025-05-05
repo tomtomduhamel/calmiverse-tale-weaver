@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { default as StoryObjectives } from "../StoryObjectives";
 import { StoryError } from "./StoryError";
@@ -43,17 +43,26 @@ export const StoryFormContent = React.memo(({
 }: StoryFormContentProps) => {
   const isMobile = useIsMobile();
   
-  // Réduire la hauteur du ScrollArea pour assurer la visibilité du bouton
-  const scrollAreaHeight = isMobile ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-150px)]";
+  // Hauteur calculée pour éviter les problèmes de layout
+  const scrollAreaHeight = isMobile ? "h-[calc(100vh-250px)]" : "h-[calc(100vh-180px)]";
   
-  const hasChildrenError = formError && formError.toLowerCase().includes("child");
-  const hasObjectiveError = formError && formError.toLowerCase().includes("objective");
+  // Détection des erreurs ciblées
+  const hasChildrenError = formError && (formError.toLowerCase().includes('child') || formError.toLowerCase().includes('enfant'));
+  const hasObjectiveError = formError && (formError.toLowerCase().includes('objective') || formError.toLowerCase().includes('objectif'));
+  
+  // Handler stable pour la soumission du formulaire
+  const handleFormSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isGenerateButtonDisabled) {
+      onSubmit(e);
+    }
+  }, [onSubmit, isGenerateButtonDisabled]);
   
   return (
     <div className="flex flex-col h-full w-full">
       <ScrollArea className={scrollAreaHeight}>
         <form 
-          onSubmit={onSubmit} 
+          onSubmit={handleFormSubmit} 
           className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl mb-20"
         >
           <StoryFormHeader onModeSwitch={onModeSwitch} />
@@ -74,7 +83,7 @@ export const StoryFormContent = React.memo(({
 
           <div className={`space-y-4 ${hasObjectiveError ? 'ring-2 ring-destructive/20 rounded-lg p-4' : ''}`}>
             <label className="text-secondary dark:text-white text-base sm:text-lg font-medium">
-              I want to create a reading moment that will...
+              Je souhaite créer un moment de lecture qui va...
             </label>
             <StoryObjectives
               objectives={objectives}
@@ -88,7 +97,6 @@ export const StoryFormContent = React.memo(({
         </form>
       </ScrollArea>
       
-      {/* Fixed bottom generate button */}
       <div className="fixed bottom-20 sm:bottom-10 left-0 right-0 px-4 sm:px-8 z-10">
         <div className="max-w-[95%] sm:max-w-4xl mx-auto">
           <GenerateStoryButton 
