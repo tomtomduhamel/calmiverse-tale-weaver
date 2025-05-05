@@ -40,6 +40,12 @@ const ChildrenSelection = React.memo(({
     }
   }, [onChildToggle]);
 
+  // Gestionnaire stable et sécurisé pour le changement de Checkbox
+  const handleCheckboxChange = useCallback((childId: string, checked: boolean) => {
+    // La valeur checked est ignorée car nous utilisons déjà selectedChildrenIds pour l'état
+    onChildToggle(childId);
+  }, [onChildToggle]);
+
   // Isoler le rendu du bouton d'ajout d'enfant pour éviter les re-rendus
   const AddChildButton = useCallback(() => (
     <Button
@@ -91,8 +97,7 @@ const ChildrenSelection = React.memo(({
                   <Checkbox
                     id={`child-${child.id}`}
                     checked={isSelected}
-                    // Important: pas d'événements directs qui créeraient des boucles
-                    readOnly
+                    onCheckedChange={() => handleCheckboxChange(child.id, !isSelected)}
                   />
                 </div>
                 <Label

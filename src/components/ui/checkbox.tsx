@@ -5,6 +5,23 @@ import { Check } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// Utilitaire pour combiner plusieurs refs
+const useCombinedRefs = <T,>(
+  ...refs: Array<React.Ref<T> | null | undefined>
+): React.RefCallback<T> => {
+  return React.useCallback((element: T) => {
+    refs.forEach((ref) => {
+      if (!ref) return;
+      
+      if (typeof ref === 'function') {
+        ref(element);
+      } else {
+        (ref as React.MutableRefObject<T>).current = element;
+      }
+    });
+  }, [refs]);
+}
+
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
@@ -30,23 +47,7 @@ const Checkbox = React.forwardRef<
     </CheckboxPrimitive.Root>
   )
 })
-Checkbox.displayName = CheckboxPrimitive.Root.displayName
 
-// Utilitaire pour combiner plusieurs refs
-function useCombinedRefs<T>(
-  ...refs: Array<React.Ref<T> | null | undefined>
-): React.RefCallback<T> {
-  return React.useCallback((element: T) => {
-    refs.forEach((ref) => {
-      if (!ref) return;
-      
-      if (typeof ref === 'function') {
-        ref(element);
-      } else {
-        (ref as React.MutableRefObject<T>).current = element;
-      }
-    });
-  }, [refs]);
-}
+Checkbox.displayName = CheckboxPrimitive.Root.displayName
 
 export { Checkbox }
