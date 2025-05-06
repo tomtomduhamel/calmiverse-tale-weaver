@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { default as StoryObjectives } from "../StoryObjectives";
 import { StoryError } from "./StoryError";
 import { StoryProgress } from "./StoryProgress";
-import ChildrenSelection from "../ChildrenSelection";
+import SimpleChildSelector from "./SimpleChildSelector";
 import GenerateStoryButton from "./GenerateStoryButton";
 import StoryFormHeader from "./StoryFormHeader";
 import type { Child } from "@/types/child";
@@ -66,10 +66,10 @@ export const StoryFormContent = React.memo(({
           )}
           
           <div className={`space-y-4 ${hasChildrenError ? 'ring-2 ring-destructive/20 rounded-lg p-4' : ''}`}>
-            <ChildrenSelection
+            <SimpleChildSelector
               children={children}
               selectedChildrenIds={selectedChildrenIds}
-              onChildToggle={onChildToggle}
+              onChildSelect={onChildToggle}
               onCreateChildClick={onCreateChildClick}
               hasError={hasChildrenError}
             />

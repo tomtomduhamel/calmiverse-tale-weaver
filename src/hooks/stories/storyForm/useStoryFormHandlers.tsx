@@ -11,7 +11,14 @@ export const useStoryFormHandlers = (
   error: string | null,
   setError: (error: string | null) => void
 ) => {
-  // Gestionnaire de sélection d'enfant optimisé
+  // Fonction pour réinitialiser l'erreur de manière sécurisée
+  const resetError = useCallback(() => {
+    if (error) {
+      setError(null);
+    }
+  }, [error, setError]);
+
+  // Gestionnaire de sélection d'enfant simplifié
   const handleChildToggle = useCallback((childId: string) => {
     if (!childId) return;
     
@@ -30,26 +37,21 @@ export const useStoryFormHandlers = (
       };
     });
     
-    // Réinitialisation ciblée de l'erreur dans un callback séparé pour éviter les boucles
+    // Réinitialisation ciblée de l'erreur si nécessaire
     if (error && (error.toLowerCase().includes('enfant') || error.toLowerCase().includes('child'))) {
-      setTimeout(() => setError(null), 0);
+      resetError();
     }
-  }, [setFormData, setError, error]);
+  }, [setFormData, error, resetError]);
 
-  // Gestionnaire d'objectif optimisé
+  // Gestionnaire d'objectif simplifié
   const setObjective = useCallback((objective: string) => {
     setFormData(prev => ({ ...prev, objective }));
     
-    // Réinitialisation ciblée de l'erreur dans un callback séparé
+    // Réinitialisation ciblée de l'erreur si nécessaire
     if (error && (error.toLowerCase().includes('objectif') || error.toLowerCase().includes('objective'))) {
-      setTimeout(() => setError(null), 0);
+      resetError();
     }
-  }, [setFormData, setError, error]);
-
-  // Réinitialisation simple des erreurs
-  const resetError = useCallback(() => {
-    setError(null);
-  }, [setError]);
+  }, [setFormData, error, resetError]);
 
   return {
     handleChildToggle,

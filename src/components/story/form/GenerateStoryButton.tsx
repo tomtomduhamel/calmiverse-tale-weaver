@@ -9,10 +9,10 @@ interface GenerateStoryButtonProps extends React.ButtonHTMLAttributes<HTMLButton
   disabled?: boolean;
 }
 
-const GenerateStoryButton = React.memo(({ 
+const GenerateStoryButton = React.forwardRef<HTMLButtonElement, GenerateStoryButtonProps>(({ 
   disabled = false, 
   ...props 
-}: GenerateStoryButtonProps) => {
+}, ref) => {
   const [countdownActive, setCountdownActive] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const isMobile = useIsMobile();
@@ -38,29 +38,19 @@ const GenerateStoryButton = React.memo(({
     };
   }, [countdownActive, countdown]);
 
-  // Gestionnaire d'événements stable qui ne provoque pas de rendus excessifs
-  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (disabled || countdownActive) {
-      e.preventDefault();
-      return;
-    }
-    
-    setCountdownActive(true);
-    // Le onClick par défaut du bouton gère la soumission du formulaire
-    // sans créer de boucles de mise à jour
-  };
+  // Ne gérons pas l'événement onClick directement ici pour éviter les problèmes
+  // Le Form parent s'occupera de la soumission
 
   return (
     <Button
       type="submit"
-      onClick={handleButtonClick}
-      disabled={disabled}
+      ref={ref}
+      disabled={disabled || countdownActive}
       className={cn(
         "w-full py-4 sm:py-6 text-base sm:text-lg font-bold transition-all animate-fade-in shadow-lg",
-        disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90",
-        isMobile ? "rounded-xl fixed bottom-20 left-0 right-0 mx-4 z-10" : ""
+        disabled || countdownActive ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
       )}
-      aria-disabled={disabled}
+      aria-disabled={disabled || countdownActive}
       data-testid="generate-story-button"
       {...props}
     >
