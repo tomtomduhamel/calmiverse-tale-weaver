@@ -65,6 +65,8 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
     return <LoadingStory />;
   }
 
+  console.log("[StoryFormContainer] Rendering with formIsSubmitting:", formIsSubmitting, "isGenerateButtonDisabled:", isGenerateButtonDisabled);
+
   return (
     <div className={`w-full max-w-4xl mx-auto ${isMobile ? 'h-full' : ''}`}>
       {/* Debug information component */}

@@ -12,7 +12,6 @@ import type { Story } from "@/types/story";
 
 /**
  * Hook principal contenant toute la logique pour le composant StoryFormContainer
- * Refactorisé pour éviter les boucles de mise à jour d'état
  */
 export const useStoryFormContainer = (
   onSubmit: (formData: any) => Promise<string>,
@@ -82,21 +81,22 @@ export const useStoryFormContainer = (
   // Gestionnaire de soumission de formulaire stabilisé
   const handleFormSubmit = useCallback(async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    console.log("[useStoryFormContainer] handleFormSubmit appelé");
     try {
       await handleSubmit(e);
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("[useStoryFormContainer] Error submitting form:", error);
     }
   }, [handleSubmit]);
 
-  // Synchronisation des erreurs - une seule fois par changement réel
+  // Synchronisation des erreurs
   useEffect(() => {
     if (storyFormError && storyFormError !== formError) {
       setFormError(storyFormError);
     }
   }, [storyFormError, formError]);
   
-  // Mise à jour des informations de débogage dans un effet séparé
+  // Mise à jour des informations de débogage
   useEffect(() => {
     const debugInfo = {
       selectedChildrenIds: formData.childrenIds,
@@ -118,35 +118,21 @@ export const useStoryFormContainer = (
     formIsSubmitting
   ]);
   
-  // Effacer les erreurs spécifiques quand les conditions sont remplies
-  useEffect(() => {
-    if (
-      formError?.includes("select at least one child") && 
-      formData.childrenIds && 
-      formData.childrenIds.length > 0
-    ) {
-      resetError();
-    }
-  }, [formData.childrenIds, formError, resetError]);
-
-  // Calcul mémorisé de l'état du bouton - SIMPLIFIÉ ET CORRIGÉ 
+  // Calcul mémorisé de l'état du bouton
   const isGenerateButtonDisabled = useMemo(() => {
-    // Vérifications simples et directes pour éviter les bugs
     const hasNoChildren = !Array.isArray(formData.childrenIds) || formData.childrenIds.length === 0;
-    const hasNoObjective = !formData.objective || formData.objective === "";
-    const isCurrentlySubmitting = !!formIsSubmitting;
+    const hasNoObjective = !formData.objective || formData.objective.trim() === '';
     
-    // Log détaillé pour débogage
     console.log("[useStoryFormContainer] Calcul du bouton:", {
-      formIsSubmitting: isCurrentlySubmitting,
+      formIsSubmitting,
       hasNoChildren,
       hasNoObjective,
       childrenIds: formData.childrenIds,
       objective: formData.objective,
-      disabled: isCurrentlySubmitting || hasNoChildren || hasNoObjective
+      disabled: formIsSubmitting || hasNoChildren || hasNoObjective
     });
     
-    return isCurrentlySubmitting || hasNoChildren || hasNoObjective;
+    return formIsSubmitting || hasNoChildren || hasNoObjective;
   }, [formData.childrenIds, formData.objective, formIsSubmitting]);
 
   return {

@@ -9,6 +9,13 @@ const StoryForm: React.FC<StoryFormProps> = ({
   onCreateChild,
   onStoryCreated,
 }) => {
+  console.log("[StoryForm] Rendering with", {
+    childrenCount: children?.length || 0,
+    hasOnSubmit: !!onSubmit,
+    hasOnCreateChild: !!onCreateChild,
+    hasOnStoryCreated: !!onStoryCreated
+  });
+  
   return (
     <StoryFormContainer
       onSubmit={onSubmit}

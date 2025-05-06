@@ -51,6 +51,21 @@ export const StoryFormContent = React.memo(({
   const hasChildrenError = formError && (formError.toLowerCase().includes('child') || formError.toLowerCase().includes('enfant'));
   const hasObjectiveError = formError && (formError.toLowerCase().includes('objective') || formError.toLowerCase().includes('objectif'));
   
+  // Gestionnaire de soumission direct
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("[StoryFormContent] Formulaire soumis, appel de onSubmit");
+    onSubmit(e).catch(err => {
+      console.error("[StoryFormContent] Erreur lors de la soumission:", err);
+    });
+  };
+  
+  // Gestionnaire de clic sur le bouton
+  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    console.log("[StoryFormContent] Clic sur le bouton, soumission du formulaire");
+    // Le type submit du bouton devrait automatiquement soumettre le formulaire
+  };
+  
   // Pour le débogage
   console.log("[StoryFormContent] Render:", {
     selectedChildrenIds,
@@ -66,10 +81,7 @@ export const StoryFormContent = React.memo(({
     <div className="flex flex-col h-full w-full">
       <ScrollArea className={scrollAreaHeight}>
         <form 
-          onSubmit={(e) => {
-            console.log("[StoryFormContent] Formulaire soumis");
-            onSubmit(e);
-          }}
+          onSubmit={handleSubmit}
           className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl mb-20"
           data-testid="story-form"
         >
@@ -102,17 +114,16 @@ export const StoryFormContent = React.memo(({
           </div>
 
           {isSubmitting && <StoryProgress progress={progress} isSubmitting={isSubmitting} />}
+          
+          <div className="mt-6">
+            <GenerateStoryButton 
+              disabled={isGenerateButtonDisabled}
+              onClick={handleButtonClick}
+              data-testid="generate-story-button-container"
+            />
+          </div>
         </form>
       </ScrollArea>
-      
-      <div className="fixed bottom-20 sm:bottom-10 left-0 right-0 px-4 sm:px-8 z-10">
-        <div className="max-w-[95%] sm:max-w-4xl mx-auto">
-          <GenerateStoryButton 
-            disabled={isGenerateButtonDisabled}
-            data-testid="generate-story-button-container"
-          />
-        </div>
-      </div>
     </div>
   );
 }); 

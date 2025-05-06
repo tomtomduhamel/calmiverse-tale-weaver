@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,8 +9,9 @@ interface GenerateStoryButtonProps extends React.ButtonHTMLAttributes<HTMLButton
   disabled?: boolean;
 }
 
-const GenerateStoryButton = React.forwardRef<HTMLButtonElement, GenerateStoryButtonProps>(({ 
-  disabled = false, 
+const GenerateStoryButton = forwardRef<HTMLButtonElement, GenerateStoryButtonProps>(({ 
+  disabled = false,
+  onClick,
   ...props 
 }, ref) => {
   const [countdownActive, setCountdownActive] = useState(false);
@@ -51,6 +52,21 @@ const GenerateStoryButton = React.forwardRef<HTMLButtonElement, GenerateStoryBut
       : "hover:bg-primary/90"
   );
 
+  // Gestionnaire de clic personnalisé pour assurer que l'événement est correctement propagé
+  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    console.log("[GenerateStoryButton] Clic sur le bouton, disabled:", disabled, "countdownActive:", countdownActive);
+    if (!disabled && !countdownActive) {
+      if (onClick) {
+        console.log("[GenerateStoryButton] Exécution du gestionnaire onClick");
+        onClick(e);
+      } else {
+        console.log("[GenerateStoryButton] Aucun gestionnaire onClick défini");
+      }
+    } else {
+      console.log("[GenerateStoryButton] Bouton désactivé ou compte à rebours actif, clic ignoré");
+    }
+  };
+
   return (
     <Button
       type="submit"
@@ -59,13 +75,8 @@ const GenerateStoryButton = React.forwardRef<HTMLButtonElement, GenerateStoryBut
       className={buttonStyles}
       aria-disabled={disabled || countdownActive}
       data-testid="generate-story-button"
+      onClick={handleButtonClick}
       {...props}
-      onClick={(e) => {
-        console.log("[GenerateStoryButton] Clic sur le bouton, disabled:", disabled);
-        if (!disabled && !countdownActive && props.onClick) {
-          props.onClick(e);
-        }
-      }}
     >
       {countdownActive ? (
         <>

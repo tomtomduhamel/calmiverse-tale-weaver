@@ -24,6 +24,9 @@ export const useStoryFormSubmission = (
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log("Form submission triggered with event:", e.type);
+    
     if (isSubmitting) {
       console.log("Submission already in progress, ignoring");
       return;
