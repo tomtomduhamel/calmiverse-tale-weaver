@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
 import type { StoryFormData } from "@/components/story/StoryFormTypes";
@@ -20,12 +20,11 @@ export const useStoryManagement = (
     let pollingInterval: ReturnType<typeof setInterval>;
     
     if (isGenerating && currentStory?.id) {
-      console.log('Polling for story status:', currentStory.id);
+      console.log('[useStoryManagement] Polling for story status:', currentStory.id);
       
       pollingInterval = setInterval(() => {
         // Cette fonction sera implémentée plus tard pour vérifier le statut
-        // et mettre à jour l'histoire lorsqu'elle est disponible
-        console.log('Checking story status...');
+        console.log('[useStoryManagement] Checking story status...');
       }, 5000);
     }
     
@@ -34,13 +33,15 @@ export const useStoryManagement = (
     };
   }, [isGenerating, currentStory]);
 
-  const handleStorySubmit = async (formData: StoryFormData): Promise<string> => {
+  const handleStorySubmit = useCallback(async (formData: StoryFormData): Promise<string> => {
     try {
+      console.log('[useStoryManagement] Début de création avec:', formData);
+      
       setIsGenerating(true);
       setGenerationError(null);
       
       const storyId = await createStory(formData);
-      console.log("Histoire créée avec l'ID:", storyId);
+      console.log("[useStoryManagement] Histoire créée avec l'ID:", storyId);
       
       toast({
         title: "Histoire en cours de génération",
@@ -49,7 +50,7 @@ export const useStoryManagement = (
       
       return storyId;
     } catch (error: any) {
-      console.error("Erreur lors de la création de l'histoire:", error);
+      console.error("[useStoryManagement] Erreur lors de la création de l'histoire:", error);
       setGenerationError(error instanceof Error ? error.message : "Une erreur est survenue");
       
       toast({
@@ -59,9 +60,10 @@ export const useStoryManagement = (
       });
       throw error;
     }
-  };
+  }, [createStory, toast]);
 
-  const handleStoryCreated = (story: Story) => {
+  const handleStoryCreated = useCallback((story: Story) => {
+    console.log('[useStoryManagement] Histoire créée:', story);
     setCurrentStory(story);
     setIsGenerating(false);
     setCurrentView("reader");
@@ -70,14 +72,14 @@ export const useStoryManagement = (
       title: "Histoire créée",
       description: "Votre histoire est maintenant prête à être lue!",
     });
-  };
+  }, [setCurrentView, toast]);
 
-  const handleCloseReader = () => {
+  const handleCloseReader = useCallback(() => {
     setCurrentView("library");
     setCurrentStory(null);
-  };
+  }, [setCurrentView]);
 
-  const handleSelectStory = (story: Story) => {
+  const handleSelectStory = useCallback((story: Story) => {
     if (story.status === 'completed' || story.status === 'read') {
       setCurrentStory(story);
       setCurrentView("reader");
@@ -93,11 +95,11 @@ export const useStoryManagement = (
         variant: "destructive",
       });
     }
-  };
+  }, [setCurrentView, toast]);
 
-  const resetErrors = () => {
+  const resetErrors = useCallback(() => {
     setGenerationError(null);
-  };
+  }, []);
 
   return {
     currentStory,

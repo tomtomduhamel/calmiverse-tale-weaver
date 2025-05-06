@@ -15,20 +15,21 @@ export const useStoryCreation = () => {
     }
 
     try {
-      console.log('Creating story with data:', formData);
+      console.log('[useStoryCreation] Création avec données:', formData, 'pour utilisateur:', user.id);
       
-      const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
-      const childrenNames = selectedChildren.map(child => child.name);
-      
-      console.log('Selected children for story:', childrenNames);
+      // Validation explicite côté client pour éviter les appels réseau inutiles
+      if (!Array.isArray(formData.childrenIds) || formData.childrenIds.length === 0) {
+        throw new Error("Veuillez sélectionner au moins un enfant pour créer une histoire");
+      }
       
       if (!formData.objective) {
         throw new Error("L'objectif de l'histoire est obligatoire");
       }
       
-      if (childrenNames.length === 0) {
-        throw new Error("Veuillez sélectionner au moins un enfant pour créer une histoire");
-      }
+      const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
+      const childrenNames = selectedChildren.map(child => child.name);
+      
+      console.log('[useStoryCreation] Enfants sélectionnés:', childrenNames);
       
       // Insérer l'histoire avec le statut "en attente"
       const { data: story, error: insertError } = await supabase
@@ -50,11 +51,11 @@ export const useStoryCreation = () => {
         .single();
         
       if (insertError) {
-        console.error("Error inserting story:", insertError);
+        console.error("[useStoryCreation] Erreur d'insertion:", insertError);
         throw insertError;
       }
       
-      console.log("Story created successfully, calling edge function:", story);
+      console.log("[useStoryCreation] Histoire créée avec succès, appel de la fonction edge:", story);
       
       // Appeler la fonction edge pour générer l'histoire
       const { data: functionData, error: functionError } = await supabase.functions.invoke(
@@ -70,7 +71,7 @@ export const useStoryCreation = () => {
       
       if (functionError) {
         // Mettre à jour l'histoire avec le statut d'erreur
-        console.error("Error calling generateStory function:", functionError);
+        console.error("[useStoryCreation] Erreur lors de l'appel à la fonction de génération:", functionError);
         
         await supabase
           .from('stories')
@@ -84,18 +85,16 @@ export const useStoryCreation = () => {
         throw functionError;
       }
       
-      console.log("Generation started successfully:", functionData);
+      console.log("[useStoryCreation] Génération démarrée avec succès:", functionData);
       
       toast({
         title: "Génération en cours",
         description: "Nous commençons à générer votre histoire, merci de patienter...",
       });
       
-      return {
-        storyId: story.id
-      };
+      return story.id;
     } catch (error: any) {
-      console.error('Error during story creation:', error);
+      console.error('[useStoryCreation] Erreur pendant la création:', error);
       toast({
         title: "Erreur",
         description: error instanceof Error 
