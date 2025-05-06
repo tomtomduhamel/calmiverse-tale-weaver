@@ -18,6 +18,11 @@ const GenerateStoryButton = React.forwardRef<HTMLButtonElement, GenerateStoryBut
   const isMobile = useIsMobile();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
+  // Log pour déboguer l'état désactivé
+  useEffect(() => {
+    console.log("[GenerateStoryButton] État du bouton:", { disabled, countdownActive });
+  }, [disabled, countdownActive]);
+  
   // Effet isolé pour gérer le compte à rebours avec useRef pour éviter les fuites
   useEffect(() => {
     if (countdownActive && countdown > 0) {
@@ -38,18 +43,29 @@ const GenerateStoryButton = React.forwardRef<HTMLButtonElement, GenerateStoryBut
     };
   }, [countdownActive, countdown]);
 
+  // Simplification des classes pour éviter les problèmes de style
+  const buttonStyles = cn(
+    "w-full py-4 sm:py-6 text-base sm:text-lg font-bold transition-all animate-fade-in shadow-lg",
+    (disabled || countdownActive) 
+      ? "opacity-50 cursor-not-allowed" 
+      : "hover:bg-primary/90"
+  );
+
   return (
     <Button
       type="submit"
       ref={ref}
       disabled={disabled || countdownActive}
-      className={cn(
-        "w-full py-4 sm:py-6 text-base sm:text-lg font-bold transition-all animate-fade-in shadow-lg",
-        disabled || countdownActive ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
-      )}
+      className={buttonStyles}
       aria-disabled={disabled || countdownActive}
       data-testid="generate-story-button"
       {...props}
+      onClick={(e) => {
+        console.log("[GenerateStoryButton] Clic sur le bouton, disabled:", disabled);
+        if (!disabled && !countdownActive && props.onClick) {
+          props.onClick(e);
+        }
+      }}
     >
       {countdownActive ? (
         <>

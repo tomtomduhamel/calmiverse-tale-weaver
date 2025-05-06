@@ -52,18 +52,24 @@ export const StoryFormContent = React.memo(({
   const hasObjectiveError = formError && (formError.toLowerCase().includes('objective') || formError.toLowerCase().includes('objectif'));
   
   // Pour le débogage
-  console.log("StoryFormContent render:", {
+  console.log("[StoryFormContent] Render:", {
     selectedChildrenIds,
+    selectedChildCount: selectedChildrenIds?.length || 0,
     objective,
     isGenerateButtonDisabled,
-    isSubmitting
+    isSubmitting,
+    hasChildrenError,
+    hasObjectiveError
   });
   
   return (
     <div className="flex flex-col h-full w-full">
       <ScrollArea className={scrollAreaHeight}>
         <form 
-          onSubmit={onSubmit}
+          onSubmit={(e) => {
+            console.log("[StoryFormContent] Formulaire soumis");
+            onSubmit(e);
+          }}
           className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl mb-20"
           data-testid="story-form"
         >

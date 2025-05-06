@@ -16,7 +16,7 @@ export const useChildSelection = (
       return;
     }
     
-    console.log("handleChildSelect:", childId, "Current selection:", childrenIds);
+    console.log("[useChildSelection] Sélection enfant:", childId, "Sélection actuelle:", childrenIds);
     
     // On crée un nouvel array à chaque fois pour éviter les problèmes de référence
     const currentIds = Array.isArray(childrenIds) ? [...childrenIds] : [];
@@ -26,14 +26,14 @@ export const useChildSelection = (
       ? currentIds.filter(id => id !== childId)
       : [...currentIds, childId];
     
-    console.log("New selection will be:", newIds);
+    console.log("[useChildSelection] Nouvelle sélection:", newIds);
     
     onChange(newIds);
     
-    // Si une fonction resetError est fournie, on l'appelle de manière asynchrone
+    // Si une fonction resetError est fournie, on l'appelle après un court délai
     // pour éviter les boucles de mises à jour d'état
     if (resetError) {
-      setTimeout(() => resetError(), 0);
+      setTimeout(resetError, 0);
     }
   }, [childrenIds, onChange, resetError]);
 

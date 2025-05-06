@@ -14,6 +14,7 @@ export const useStoryFormHandlers = (
   // Fonction pour réinitialiser l'erreur de manière sécurisée
   const resetError = useCallback(() => {
     if (error) {
+      console.log("[useStoryFormHandlers] Réinitialisation des erreurs");
       setError(null);
     }
   }, [error, setError]);
@@ -21,11 +22,11 @@ export const useStoryFormHandlers = (
   // Gestionnaire de sélection d'enfant simplifié et robuste
   const handleChildToggle = useCallback((childId: string) => {
     if (!childId) {
-      console.warn("handleChildToggle appelé sans childId valide");
+      console.warn("[useStoryFormHandlers] handleChildToggle appelé sans childId valide");
       return;
     }
     
-    console.log("Toggle child:", childId, "Current selection:", formData.childrenIds);
+    console.log("[useStoryFormHandlers] Toggle child:", childId, "Current selection:", formData.childrenIds);
     
     setFormData(prev => {
       // Assurez-vous que childrenIds est un tableau valide
@@ -37,7 +38,7 @@ export const useStoryFormHandlers = (
         ? currentIds.filter(id => id !== childId)
         : [...currentIds, childId];
       
-      console.log("New selection will be:", newIds);
+      console.log("[useStoryFormHandlers] Nouvelle sélection:", newIds);
         
       return {
         ...prev,
@@ -45,21 +46,21 @@ export const useStoryFormHandlers = (
       };
     });
     
-    // Réinitialisation ciblée de l'erreur si nécessaire - utiliser setTimeout pour éviter les boucles
+    // Réinitialisation ciblée de l'erreur si nécessaire
     if (error && (error.toLowerCase().includes('enfant') || error.toLowerCase().includes('child'))) {
-      setTimeout(() => resetError(), 0);
+      setTimeout(resetError, 0);
     }
   }, [formData.childrenIds, setFormData, error, resetError]);
 
   // Gestionnaire d'objectif simplifié et robuste
   const setObjective = useCallback((objective: string) => {
-    console.log("Setting objective to:", objective);
+    console.log("[useStoryFormHandlers] Setting objective to:", objective);
     
     setFormData(prev => ({ ...prev, objective }));
     
-    // Réinitialisation ciblée de l'erreur si nécessaire - utiliser setTimeout pour éviter les boucles
+    // Réinitialisation ciblée de l'erreur si nécessaire
     if (error && (error.toLowerCase().includes('objectif') || error.toLowerCase().includes('objective'))) {
-      setTimeout(() => resetError(), 0);
+      setTimeout(resetError, 0);
     }
   }, [setFormData, error, resetError]);
 

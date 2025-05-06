@@ -4,7 +4,7 @@ import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import type { StoryFormData } from "@/components/story/StoryFormTypes";
 
 /**
- * Hook to manage the state of the story form
+ * Hook to manage the state of the story form with improved initialization
  */
 export const useStoryFormState = () => {
   // Initialiser explicitement avec des valeurs par défaut correctes
@@ -12,6 +12,7 @@ export const useStoryFormState = () => {
     childrenIds: [],
     objective: "",
   });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
@@ -21,14 +22,15 @@ export const useStoryFormState = () => {
   // Vérifier l'état de l'authentification au chargement du composant
   useEffect(() => {
     if (!loading) {
-      console.log("État d'authentification dans useStoryForm:", { 
+      console.log("État d'authentification dans useStoryFormState:", { 
         user: user?.id, 
         sessionExists: !!session,
-        loading
+        loading,
+        formData
       });
       setAuthChecked(true);
     }
-  }, [user, session, loading]);
+  }, [user, session, loading, formData]);
 
   return {
     formData,
