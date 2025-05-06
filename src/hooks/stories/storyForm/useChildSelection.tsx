@@ -11,21 +11,29 @@ export const useChildSelection = (
 ) => {
   // Gestionnaire optimisé pour la sélection d'un enfant
   const handleChildSelect = useCallback((childId: string) => {
-    if (!childId) return;
+    if (!childId) {
+      console.warn("handleChildSelect appelé sans childId valide");
+      return;
+    }
+    
+    console.log("handleChildSelect:", childId, "Current selection:", childrenIds);
     
     // On crée un nouvel array à chaque fois pour éviter les problèmes de référence
-    const currentIds = [...childrenIds];
+    const currentIds = Array.isArray(childrenIds) ? [...childrenIds] : [];
     const isSelected = currentIds.includes(childId);
     
     const newIds = isSelected
       ? currentIds.filter(id => id !== childId)
       : [...currentIds, childId];
     
+    console.log("New selection will be:", newIds);
+    
     onChange(newIds);
     
-    // Si une fonction resetError est fournie, on l'appelle
+    // Si une fonction resetError est fournie, on l'appelle de manière asynchrone
+    // pour éviter les boucles de mises à jour d'état
     if (resetError) {
-      resetError();
+      setTimeout(() => resetError(), 0);
     }
   }, [childrenIds, onChange, resetError]);
 

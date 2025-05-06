@@ -38,9 +38,6 @@ const GenerateStoryButton = React.forwardRef<HTMLButtonElement, GenerateStoryBut
     };
   }, [countdownActive, countdown]);
 
-  // Ne gérons pas l'événement onClick directement ici pour éviter les problèmes
-  // Le Form parent s'occupera de la soumission
-
   return (
     <Button
       type="submit"

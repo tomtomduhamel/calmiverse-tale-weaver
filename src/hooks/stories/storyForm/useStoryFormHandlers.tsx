@@ -18,18 +18,26 @@ export const useStoryFormHandlers = (
     }
   }, [error, setError]);
 
-  // Gestionnaire de sélection d'enfant simplifié
+  // Gestionnaire de sélection d'enfant simplifié et robuste
   const handleChildToggle = useCallback((childId: string) => {
-    if (!childId) return;
+    if (!childId) {
+      console.warn("handleChildToggle appelé sans childId valide");
+      return;
+    }
+    
+    console.log("Toggle child:", childId, "Current selection:", formData.childrenIds);
     
     setFormData(prev => {
-      const currentIds = [...(prev.childrenIds || [])];
+      // Assurez-vous que childrenIds est un tableau valide
+      const currentIds = Array.isArray(prev.childrenIds) ? [...prev.childrenIds] : [];
       const isSelected = currentIds.includes(childId);
       
       // Création d'un nouvel array pour éviter les problèmes de référence
       const newIds = isSelected
         ? currentIds.filter(id => id !== childId)
         : [...currentIds, childId];
+      
+      console.log("New selection will be:", newIds);
         
       return {
         ...prev,
@@ -37,19 +45,21 @@ export const useStoryFormHandlers = (
       };
     });
     
-    // Réinitialisation ciblée de l'erreur si nécessaire
+    // Réinitialisation ciblée de l'erreur si nécessaire - utiliser setTimeout pour éviter les boucles
     if (error && (error.toLowerCase().includes('enfant') || error.toLowerCase().includes('child'))) {
-      resetError();
+      setTimeout(() => resetError(), 0);
     }
-  }, [setFormData, error, resetError]);
+  }, [formData.childrenIds, setFormData, error, resetError]);
 
-  // Gestionnaire d'objectif simplifié
+  // Gestionnaire d'objectif simplifié et robuste
   const setObjective = useCallback((objective: string) => {
+    console.log("Setting objective to:", objective);
+    
     setFormData(prev => ({ ...prev, objective }));
     
-    // Réinitialisation ciblée de l'erreur si nécessaire
+    // Réinitialisation ciblée de l'erreur si nécessaire - utiliser setTimeout pour éviter les boucles
     if (error && (error.toLowerCase().includes('objectif') || error.toLowerCase().includes('objective'))) {
-      resetError();
+      setTimeout(() => resetError(), 0);
     }
   }, [setFormData, error, resetError]);
 

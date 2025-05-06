@@ -7,8 +7,9 @@ import type { StoryFormData } from "@/components/story/StoryFormTypes";
  * Hook to manage the state of the story form
  */
 export const useStoryFormState = () => {
+  // Initialiser explicitement avec des valeurs par défaut correctes
   const [formData, setFormData] = useState<StoryFormData>({
-    childrenIds: [] as string[],
+    childrenIds: [],
     objective: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -108,6 +108,7 @@ export const useStoryFormContainer = (
       isSubmitting: formIsSubmitting
     };
     
+    console.log("Form debug info updated:", debugInfo);
     setFormDebugInfo(debugInfo);
   }, [
     formData.childrenIds,
@@ -128,10 +129,20 @@ export const useStoryFormContainer = (
     }
   }, [formData.childrenIds, formError, resetError]);
 
-  // Calcul mémorisé de l'état du bouton
+  // Calcul mémorisé de l'état du bouton - CORRIGÉ
   const isGenerateButtonDisabled = useMemo(() => {
     const noChildSelected = !formData.childrenIds || formData.childrenIds.length === 0;
     const noObjectiveSelected = !formData.objective;
+    
+    // Ajout de logs pour déboguer le problème
+    console.log("Button disabled calculation:", {
+      formIsSubmitting,
+      noChildSelected,
+      noObjectiveSelected,
+      childrenIds: formData.childrenIds,
+      objective: formData.objective
+    });
+    
     return formIsSubmitting || noChildSelected || noObjectiveSelected;
   }, [formData.childrenIds, formData.objective, formIsSubmitting]);
 

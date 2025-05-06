@@ -51,6 +51,14 @@ export const StoryFormContent = React.memo(({
   const hasChildrenError = formError && (formError.toLowerCase().includes('child') || formError.toLowerCase().includes('enfant'));
   const hasObjectiveError = formError && (formError.toLowerCase().includes('objective') || formError.toLowerCase().includes('objectif'));
   
+  // Pour le débogage
+  console.log("StoryFormContent render:", {
+    selectedChildrenIds,
+    objective,
+    isGenerateButtonDisabled,
+    isSubmitting
+  });
+  
   return (
     <div className="flex flex-col h-full w-full">
       <ScrollArea className={scrollAreaHeight}>
@@ -94,7 +102,7 @@ export const StoryFormContent = React.memo(({
       <div className="fixed bottom-20 sm:bottom-10 left-0 right-0 px-4 sm:px-8 z-10">
         <div className="max-w-[95%] sm:max-w-4xl mx-auto">
           <GenerateStoryButton 
-            disabled={isSubmitting || isGenerateButtonDisabled}
+            disabled={isGenerateButtonDisabled}
             data-testid="generate-story-button-container"
           />
         </div>
