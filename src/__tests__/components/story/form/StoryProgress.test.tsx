@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { StoryProgress } from '@/components/story/form/StoryProgress';
 
 describe('StoryProgress', () => {
-  it('should not render when not submitting', () => {
+  it('should not render when isSubmitting is false', () => {
     const { container } = render(
       <StoryProgress isSubmitting={false} progress={50} />
     );

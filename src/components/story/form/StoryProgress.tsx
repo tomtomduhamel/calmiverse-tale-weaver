@@ -2,11 +2,11 @@
 import { Progress } from "@/components/ui/progress";
 
 interface StoryProgressProps {
-  isSubmitting: boolean;
   progress: number;
+  isSubmitting?: boolean;  // Making isSubmitting optional to maintain backward compatibility
 }
 
-export const StoryProgress = ({ isSubmitting, progress }: StoryProgressProps) => {
+export const StoryProgress = ({ progress, isSubmitting = true }: StoryProgressProps) => {
   if (!isSubmitting) return null;
   
   // Display different messages based on progress
@@ -29,3 +29,6 @@ export const StoryProgress = ({ isSubmitting, progress }: StoryProgressProps) =>
     </div>
   );
 };
+
+// Export the type for use in other components
+export type { StoryProgressProps };

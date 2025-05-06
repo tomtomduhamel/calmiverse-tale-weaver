@@ -87,7 +87,7 @@ export const StoryFormContent = React.memo(({
             />
           </div>
 
-          {isSubmitting && <StoryProgress progress={progress} />}
+          {isSubmitting && <StoryProgress progress={progress} isSubmitting={isSubmitting} />}
         </form>
       </ScrollArea>
       
