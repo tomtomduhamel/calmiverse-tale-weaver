@@ -8,7 +8,7 @@ import type { Child } from "@/types/child";
 interface CreateStoryViewProps {
   onSubmit: (formData: StoryFormData) => Promise<string>;
   children: Child[];
-  onCreateChild: (child: Omit<Child, "id">) => Promise<string>; // Modified to return Promise<string>
+  onCreateChild: (child: Omit<Child, "id">) => Promise<string>;
   onStoryCreated: (story: Story) => void;
 }
 

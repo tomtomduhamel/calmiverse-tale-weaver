@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import type { ViewType } from "@/types/views";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +13,7 @@ import { useViewManagement } from "@/hooks/useViewManagement";
 import { useStoryManagement } from "@/hooks/useStoryManagement";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileMenu from "@/components/MobileMenu";
+import type { Child } from "@/types/child";
 import {
   HomeView,
   CreateStoryView,
@@ -40,15 +42,15 @@ const Index = () => {
     handleSelectStory
   } = useStoryManagement(createStory, deleteStory, setCurrentView);
 
-  // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
+  // Redirect to login page if user is not logged in
   useEffect(() => {
     if (!authLoading && !user) {
-      console.log("Utilisateur non connecté, redirection vers /auth");
+      console.log("User not logged in, redirecting to /auth");
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
   
-  // Effet pour initialiser l'application
+  // Effect to initialize the application
   useEffect(() => {
     console.log("Index component mounted, initializing");
     
@@ -61,7 +63,7 @@ const Index = () => {
     }
   }, []);
 
-  // Effet pour vérifier le statut d'une histoire en attente
+  // Effect to check the status of a pending story
   useEffect(() => {
     if (!pendingStoryId || !stories.stories) return;
     
@@ -69,7 +71,7 @@ const Index = () => {
     
     if (pendingStory) {
       if (pendingStory.status === 'completed') {
-        console.log("Histoire complétée, affichage...");
+        console.log("Story completed, displaying...");
         setPendingStoryId(null);
         handleStoryCreated(pendingStory);
         
@@ -78,7 +80,7 @@ const Index = () => {
           description: "Votre histoire personnalisée est maintenant prête à être lue!",
         });
       } else if (pendingStory.status === 'error') {
-        console.log("Erreur dans la génération de l'histoire");
+        console.log("Error in story generation");
         setPendingStoryId(null);
         
         toast({
@@ -89,10 +91,10 @@ const Index = () => {
       }
     }
     
-    // Rafraîchir la liste des histoires toutes les 5 secondes si une histoire est en attente
+    // Refresh story list every 5 seconds if a story is pending
     const interval = setInterval(() => {
       if (pendingStoryId) {
-        console.log("Vérification du statut de l'histoire:", pendingStoryId);
+        console.log("Checking story status:", pendingStoryId);
         stories.fetchStories();
       }
     }, 5000);
@@ -100,16 +102,24 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [pendingStoryId, stories.stories, handleStoryCreated, toast, stories.fetchStories]);
 
-  const handleCreateChildFromStory = () => {
-    setCurrentView("profiles");
+  // Handler to create a child from the story creation view
+  const handleCreateChildFromStory = async (child: Omit<Child, "id">): Promise<string> => {
+    try {
+      const childId = await handleAddChild(child);
+      setCurrentView("create");
+      return childId;
+    } catch (error) {
+      console.error("Error creating child:", error);
+      throw error;
+    }
   };
 
-  // Gestion spécifique à la création d'histoire
+  // Specific handler for story submission
   const handleStorySubmitWrapper = async (formData: any) => {
     try {
       const storyId = await handleStorySubmit(formData);
       if (storyId) {
-        console.log("Histoire en cours de création, ID:", storyId);
+        console.log("Story being created, ID:", storyId);
         setPendingStoryId(storyId);
         setCurrentView("library");
         
@@ -120,27 +130,27 @@ const Index = () => {
       }
       return storyId;
     } catch (error) {
-      console.error("Erreur de création d'histoire:", error);
+      console.error("Story creation error:", error);
       throw error;
     }
   };
 
-  // État de chargement - afficher un loader simple mais fiable
+  // Loading state - display a simple but reliable loader
   if (authLoading || !isInitialized || stories.isLoading || childrenLoading) {
     return <SimpleLoader />;
   }
 
-  // Gestion des erreurs de chargement des données
+  // Error handling for data loading
   if (stories.error) {
     return <ErrorDisplay message={stories.error.message} onRetry={() => window.location.reload()} />;
   }
 
-  // Si l'utilisateur n'est pas connecté, ne pas afficher le contenu
+  // If user is not logged in, don't display content
   if (!user) {
     return <SimpleLoader />;
   }
 
-  // Rendu principal
+  // Main render
   return (
     <div className="h-full w-full overflow-x-hidden">
       <div className={`index-container max-w-7xl mx-auto p-2 sm:p-4 ${isMobile ? 'pb-32' : 'mb-20'}`}>
@@ -190,7 +200,7 @@ const Index = () => {
         )}
       </div>
       
-      {/* Menu de navigation mobile */}
+      {/* Mobile navigation menu */}
       <MobileMenu currentView={currentView} onViewChange={setCurrentView} />
     </div>
   );

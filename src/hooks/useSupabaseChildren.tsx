@@ -1,165 +1,170 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/lib/supabase';
-import type { Child } from "@/types/child";
-import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useToast } from '@/hooks/use-toast';
+import type { Child } from '@/types/child';
 
 export const useSupabaseChildren = () => {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [error, setError] = useState<Error | null>(null);
   const { user } = useSupabaseAuth();
+  const { toast } = useToast();
 
-  // Charger les enfants depuis Supabase
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    const loadChildren = async () => {
-      try {
-        setLoading(true);
-        
-        const { data, error } = await supabase
-          .from('children')
-          .select('*')
-          .eq('authorId', user.id)
-          .order('createdAt', { ascending: false });
-        
-        if (error) throw error;
-        
-        // Transformer les données pour correspondre au type Child
-        const loadedChildren = data.map(child => ({
-          id: child.id,
-          name: child.name,
-          birthDate: new Date(child.birthDate),
-          interests: child.interests || [],
-          gender: child.gender || 'unknown',
-          authorId: child.authorId,
-          createdAt: new Date(child.createdAt)
-        })) as Child[];
-        
-        setChildren(loadedChildren);
-      } catch (error) {
-        console.error("Erreur lors du chargement des enfants:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les profils des enfants",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadChildren();
-    
-    // Configurer une souscription en temps réel pour les mises à jour
-    const subscription = supabase
-      .channel('children_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'children',
-        filter: `authorId=eq.${user.id}`
-      }, loadChildren)
-      .subscribe();
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [user, toast]);
-
-  // Ajouter un enfant
-  const handleAddChild = useCallback(async (childData: Omit<Child, "id">) => {
-    if (!user) {
-      throw new Error("Utilisateur non connecté");
-    }
+  const fetchChildren = useCallback(async () => {
+    if (!user) return;
 
     try {
-      console.log("Tentative de création d'un enfant avec les données:", childData);
-      
-      // Préparer les données pour Supabase
-      const newChild = {
-        name: childData.name,
-        birthDate: childData.birthDate.toISOString(),
-        interests: childData.interests || [],
-        gender: childData.gender || 'unknown',
-        authorId: user.id,
-        createdAt: new Date().toISOString()
-      };
-      
+      setLoading(true);
       const { data, error } = await supabase
         .from('children')
-        .insert(newChild)
-        .select('id')
-        .single();
-      
+        .select('*')
+        .eq('authorid', user.id)
+        .order('name');
+
       if (error) throw error;
-      
-      console.log("Enfant créé avec succès, ID:", data.id);
-      return data.id;
-    } catch (error) {
-      console.error("Erreur lors de l'ajout de l'enfant:", error);
-      throw error;
-    }
-  }, [user]);
 
-  // Mettre à jour un enfant
-  const handleUpdateChild = useCallback(async (childId: string, updatedData: Partial<Child>) => {
-    if (!user) {
-      throw new Error("Utilisateur non connecté");
-    }
+      if (data) {
+        const formattedChildren = data.map(item => ({
+          ...item,
+          id: item.id,
+          authorId: item.authorid,
+          birthDate: new Date(item.birthdate),
+          createdAt: new Date(item.createdat),
+          interests: item.interests || [],
+          gender: item.gender || 'unknown'
+        }));
 
+        setChildren(formattedChildren);
+      }
+    } catch (err: any) {
+      setError(err);
+      console.error('Error fetching children:', err);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les profils d\'enfants',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [user, toast]);
+
+  const handleAddChild = useCallback(async (childData: Omit<Child, 'id'>): Promise<string> => {
     try {
-      // Préparer les données pour Supabase
-      const dataToUpdate: any = {};
-      
-      if (updatedData.name) dataToUpdate.name = updatedData.name;
-      if (updatedData.birthDate) dataToUpdate.birthDate = updatedData.birthDate.toISOString();
-      if (updatedData.interests) dataToUpdate.interests = updatedData.interests;
-      if (updatedData.gender) dataToUpdate.gender = updatedData.gender;
-      
-      const { error } = await supabase
+      if (!user) throw new Error('You must be logged in to add a child');
+
+      const { data, error } = await supabase
         .from('children')
-        .update(dataToUpdate)
-        .eq('id', childId)
-        .eq('authorId', user.id);
-      
+        .insert([{
+          name: childData.name,
+          birthdate: childData.birthDate,
+          authorid: user.id,
+          gender: childData.gender || 'unknown',
+          interests: childData.interests || [],
+          createdat: new Date()
+        }])
+        .select();
+
       if (error) throw error;
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour de l'enfant:", error);
-      throw error;
-    }
-  }, [user]);
 
-  // Supprimer un enfant
-  const handleDeleteChild = useCallback(async (childId: string) => {
-    if (!user) {
-      throw new Error("Utilisateur non connecté");
-    }
+      toast({
+        title: 'Succès',
+        description: `Profil de ${childData.name} créé avec succès`,
+      });
 
+      await fetchChildren();
+      
+      return data?.[0]?.id || '';
+    } catch (err: any) {
+      console.error('Error adding child:', err);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de créer le profil d\'enfant',
+        variant: 'destructive',
+      });
+      throw err;
+    }
+  }, [user, fetchChildren, toast]);
+
+  const handleUpdateChild = useCallback(async (childId: string, updates: Partial<Child>): Promise<string> => {
     try {
+      if (!user) throw new Error('You must be logged in to update a child');
+
+      const { data, error } = await supabase
+        .from('children')
+        .update({
+          name: updates.name,
+          birthdate: updates.birthDate,
+          gender: updates.gender,
+          interests: updates.interests,
+        })
+        .eq('id', childId)
+        .eq('authorid', user.id)
+        .select();
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: `Profil de ${updates.name} mis à jour avec succès`,
+      });
+
+      await fetchChildren();
+      return childId;
+    } catch (err: any) {
+      console.error('Error updating child:', err);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour le profil d\'enfant',
+        variant: 'destructive',
+      });
+      throw err;
+    }
+  }, [user, fetchChildren, toast]);
+
+  const handleDeleteChild = useCallback(async (childId: string): Promise<void> => {
+    try {
+      if (!user) throw new Error('You must be logged in to delete a child');
+
       const { error } = await supabase
         .from('children')
         .delete()
         .eq('id', childId)
-        .eq('authorId', user.id);
-      
+        .eq('authorid', user.id);
+
       if (error) throw error;
-    } catch (error) {
-      console.error("Erreur lors de la suppression de l'enfant:", error);
-      throw error;
+
+      toast({
+        title: 'Succès',
+        description: 'Profil d\'enfant supprimé avec succès',
+      });
+
+      await fetchChildren();
+    } catch (err: any) {
+      console.error('Error deleting child:', err);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer le profil d\'enfant',
+        variant: 'destructive',
+      });
     }
-  }, [user]);
+  }, [user, fetchChildren, toast]);
+
+  useEffect(() => {
+    fetchChildren();
+  }, [fetchChildren]);
 
   return {
     children,
     loading,
+    error,
+    fetchChildren,
     handleAddChild,
     handleUpdateChild,
     handleDeleteChild,
   };
 };
+
+export default useSupabaseChildren;

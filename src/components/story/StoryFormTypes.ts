@@ -1,4 +1,6 @@
+
 import type { Child } from "@/types/child";
+import type { Story } from "@/types/story";
 
 export interface StoryFormData {
   childrenIds: string[];
@@ -8,6 +10,6 @@ export interface StoryFormData {
 export interface StoryFormProps {
   onSubmit: (data: StoryFormData) => Promise<string>;
   children: Child[];
-  onCreateChild: (child: Omit<Child, "id">) => void;
-  onStoryCreated: (story: any) => void;
+  onCreateChild: (child: Omit<Child, "id">) => Promise<string>;
+  onStoryCreated: (story: Story) => void;
 }

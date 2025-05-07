@@ -8,15 +8,16 @@ import LoadingStory from "../LoadingStory";
 import type { Story } from "@/types/story";
 import type { ViewType } from "@/types/views";
 import { useStories } from "@/hooks/useStories";
+import type { Child } from "@/types/child";
 
 export type ViewMode = "create" | "read" | "list";
 
 interface StoryViewProps {
-  children?: any[];
-  onCreateChild?: (childData: any) => Promise<any>;
+  children?: Child[];
+  onCreateChild?: (childData: Omit<Child, "id">) => Promise<string>;
 }
 
-const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) => {
+const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = async () => "" }) => {
   const [view, setView] = useState<ViewMode>("list");
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -32,7 +33,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
     isRetrying,
   } = useStories(children);
 
-  // Effet pour changer de vue lorsqu'une nouvelle histoire est sélectionnée
+  // Effect to change view when a new story is selected
   useEffect(() => {
     if (currentStory && currentStory.status === 'completed' && view !== 'read') {
       setView('read');
@@ -79,15 +80,15 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
     }
   }, [deleteStory, toast]);
 
-  const handleStoryCreated = useCallback(async (storyId: string) => {
-    console.log("Story created, ID:", storyId);
-    setSelectedStoryId(storyId);
+  const handleStoryCreated = useCallback(async (story: Story) => {
+    console.log("Story created:", story);
+    setSelectedStoryId(story.id);
     
-    // Rafraîchir la liste des histoires pour inclure la nouvelle histoire
+    // Refresh the story list to include the new story
     await stories.fetchStories();
     
-    // Trouver la nouvelle histoire dans la liste
-    const newStory = stories.stories.find(s => s.id === storyId);
+    // Find the new story in the list
+    const newStory = stories.stories.find(s => s.id === story.id);
     if (newStory) {
       setCurrentStory(newStory);
       setView("read");
@@ -143,7 +144,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild }) =
   };
 
   // Helper function to get child name based on childrenIds
-  const getChildName = (childrenIds: string[], children: any[]): string | undefined => {
+  const getChildName = (childrenIds: string[], children: Child[]): string | undefined => {
     if (!childrenIds || childrenIds.length === 0 || !children || children.length === 0) {
       return undefined;
     }

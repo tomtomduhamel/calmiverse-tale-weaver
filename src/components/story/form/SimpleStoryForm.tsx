@@ -14,7 +14,7 @@ import { useDirectStoryForm } from "@/hooks/stories/useDirectStoryForm";
 
 interface SimpleStoryFormProps {
   children: Child[];
-  onCreateChild: (child: Omit<Child, "id">) => Promise<string>; // Modified to return Promise<string>
+  onCreateChild: (child: Omit<Child, "id">) => Promise<string>;
   onSubmit: (formData: { childrenIds: string[], objective: string }) => Promise<string>;
   onStoryCreated: (story: Story) => void;
   objectives: { id: string, label: string, value: string }[];
@@ -29,7 +29,7 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  // Hook principal pour la gestion du formulaire
+  // Main hook for form management
   const {
     selectedChildrenIds,
     selectedObjective,
@@ -44,40 +44,54 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
     isGenerateButtonDisabled
   } = useDirectStoryForm(onSubmit, children, onStoryCreated);
 
-  // Détection d'erreurs spécifiques
+  // Specific error detection
   const hasChildrenError = formError && formError.toLowerCase().includes('enfant');
   const hasObjectiveError = formError && formError.toLowerCase().includes('objectif');
   
-  // Gestionnaire pour l'ouverture du formulaire de création d'enfant
+  // State for child creation form
+  const [childName, setChildName] = React.useState("");
+  const [childAge, setChildAge] = React.useState("");
+  
+  // Handler for opening child creation form
   const handleCreateChildClick = () => {
     setShowChildForm(true);
   };
   
-  // Gestionnaire pour la soumission du formulaire d'enfant
+  // Handler for child form submission
   const handleChildFormSubmit = async (childName: string, childAge: string) => {
     try {
-      // Calcul de la date de naissance à partir de l'âge
+      // Calculate birth date from age
       const now = new Date();
       const birthYear = now.getFullYear() - parseInt(childAge);
       const birthDate = new Date(birthYear, now.getMonth(), now.getDate());
       
-      // Création de l'enfant
+      // Create child
       await onCreateChild({
         name: childName,
         birthDate,
         interests: [],
         gender: 'unknown',
-        authorId: ''  // Sera rempli par le backend
+        authorId: ''  // Will be filled by the backend
       });
       
-      // Fermeture du formulaire
+      // Close form
       setShowChildForm(false);
+      
+      // Reset form
+      setChildName("");
+      setChildAge("");
     } catch (error) {
-      console.error("Erreur lors de la création de l'enfant:", error);
+      console.error("Error creating child:", error);
     }
   };
   
-  // Si l'authentification est en cours, afficher un indicateur de chargement
+  // Reset child form
+  const resetChildForm = () => {
+    setChildName("");
+    setChildAge("");
+  };
+  
+  // If authentication is loading, show loading indicator
   if (authLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -87,7 +101,7 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
     );
   }
 
-  // Hauteur calculée pour éviter les problèmes de layout
+  // Calculated height to avoid layout issues
   const scrollAreaHeight = isMobile ? "h-[calc(100vh-250px)]" : "h-[calc(100vh-180px)]";
 
   return (
@@ -152,12 +166,12 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
       <CreateChildDialog
         open={showChildForm}
         onOpenChange={setShowChildForm}
-        childName=""
-        childAge=""
+        childName={childName}
+        childAge={childAge}
         onSubmit={handleChildFormSubmit}
-        onReset={() => {}}
-        onChildNameChange={() => {}}
-        onChildAgeChange={() => {}}
+        onReset={resetChildForm}
+        onChildNameChange={setChildName}
+        onChildAgeChange={setChildAge}
       />
     </div>
   );
