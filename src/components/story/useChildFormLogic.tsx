@@ -1,93 +1,65 @@
 
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useCallback } from "react";
 import type { Child } from "@/types/child";
-import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
-export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => void) => {
-  const [showChildForm, setShowChildForm] = useState(false);
-  const [childName, setChildName] = useState("");
-  const [childAge, setChildAge] = useState(1);
-  const [teddyName, setTeddyName] = useState("");
-  const [teddyDescription, setTeddyDescription] = useState("");
-  const [imaginaryWorld, setImaginaryWorld] = useState("");
-  const { toast } = useToast();
-  const { user } = useSupabaseAuth();
-
-  const handleChildFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!childName.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Le nom de l'enfant est requis",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!user) {
-      toast({
-        title: "Erreur",
-        description: "Vous devez être connecté pour effectuer cette action",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Calculer la date de naissance approximative basée sur l'âge
-    const today = new Date();
-    const birthDate = new Date(today.setFullYear(today.getFullYear() - childAge));
-
-    const newChildData = {
-      name: childName,
-      birthDate,
-      teddyName,
-      teddyDescription,
-      imaginaryWorld,
-      authorId: user.id,
-    };
-
+/**
+ * Hook encapsulating child creation form logic
+ */
+export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => Promise<string> | void) => {
+  // Show/hide form
+  const [showChildForm, setShowChildForm] = useState<boolean>(false);
+  
+  // Form values
+  const [childName, setChildName] = useState<string>("");
+  const [childAge, setChildAge] = useState<string>("1"); // Use string type to match form inputs
+  
+  // Form submission handler
+  const handleChildFormSubmit = useCallback(async (childName: string, childAge: string) => {
     try {
-      await onCreateChild(newChildData);
-      toast({
-        title: "Succès",
-        description: "L'enfant a été créé avec succès",
+      console.log("[useChildFormLogic] Creating child with name:", childName, "age:", childAge);
+      
+      // Calculate birth date from age
+      const now = new Date();
+      // Convert string to number for calculation
+      const birthYear = now.getFullYear() - parseInt(childAge);
+      const birthDate = new Date(birthYear, now.getMonth(), now.getDate());
+      
+      // Create child
+      await onCreateChild({
+        name: childName,
+        birthDate,
+        interests: [],
+        gender: 'unknown',
+        authorId: '' // Will be filled by backend
       });
-      resetChildForm();
+      
+      // Close form
       setShowChildForm(false);
+      
+      // Reset form
+      setChildName("");
+      setChildAge("1");
+      
     } catch (error) {
-      console.error("Erreur lors de la création de l'enfant:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la création de l'enfant",
-        variant: "destructive",
-      });
+      console.error("[useChildFormLogic] Error creating child:", error);
+      // Error handled by caller
     }
-  };
-
-  const resetChildForm = () => {
+  }, [onCreateChild]);
+  
+  // Reset form fields
+  const resetChildForm = useCallback(() => {
     setChildName("");
-    setChildAge(1);
-    setTeddyName("");
-    setTeddyDescription("");
-    setImaginaryWorld("");
-  };
-
+    setChildAge("1");
+  }, []);
+  
   return {
     showChildForm,
     setShowChildForm,
     childName,
-    childAge,
-    teddyName,
-    teddyDescription,
-    imaginaryWorld,
-    handleChildFormSubmit,
-    resetChildForm,
     setChildName,
+    childAge,
     setChildAge,
-    setTeddyName,
-    setTeddyDescription,
-    setImaginaryWorld,
+    handleChildFormSubmit,
+    resetChildForm
   };
 };

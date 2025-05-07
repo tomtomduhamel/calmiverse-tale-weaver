@@ -9,7 +9,7 @@ import type { Story } from '@/types/story';
  */
 export const useSimpleStoryFormHandlers = (
   selectedChildrenIds: string[],
-  setSelectedChildrenIds: (ids: string[]) => void,
+  setSelectedChildrenIds: (ids: string[] | ((prev: string[]) => string[])) => void,
   selectedObjective: string,
   setSelectedObjective: (objective: string) => void,
   formError: string | null,
@@ -28,7 +28,7 @@ export const useSimpleStoryFormHandlers = (
     
     console.log('[useSimpleStoryFormHandlers] Toggle child:', childId, 'Current selection:', selectedChildrenIds);
     
-    // Fix: Properly type the updater function to return string[]
+    // Fixed: Use the functional updater that returns a new array
     setSelectedChildrenIds((prev: string[]) => {
       const isSelected = prev.includes(childId);
       return isSelected 

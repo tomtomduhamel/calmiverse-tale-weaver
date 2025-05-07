@@ -47,7 +47,7 @@ export const useStoryFormContainer = (
     validateForm
   } = useStoryForm(onStoryCreated, onSubmit);
   
-  // Logique du formulaire d'enfant
+  // Logique du formulaire d'enfant avec les types mis à jour pour utiliser string pour childAge
   const childFormLogic = useChildFormLogic(onCreateChild);
   const {
     showChildForm,
