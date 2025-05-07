@@ -9,9 +9,9 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => P
   // Show/hide form
   const [showChildForm, setShowChildForm] = useState<boolean>(false);
   
-  // Form values
+  // Form values - Using string for age to match form inputs
   const [childName, setChildName] = useState<string>("");
-  const [childAge, setChildAge] = useState<string>("1"); // Use string type to match form inputs
+  const [childAge, setChildAge] = useState<string>("1"); 
   
   // Form submission handler
   const handleChildFormSubmit = useCallback(async (childName: string, childAge: string) => {

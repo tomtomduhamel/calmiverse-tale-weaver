@@ -1,53 +1,57 @@
 
 import { useState } from 'react';
-import { useSimpleStoryForm } from './storyForm/useSimpleStoryForm';
+import { useUnifiedStoryForm } from './useUnifiedStoryForm';
 import type { Child } from '@/types/child';
 import type { Story } from '@/types/story';
 
 /**
- * Hook that provides a simpler interface for the story form
- * It exposes all the necessary props for SimpleStoryForm component
+ * Hook qui fournit une interface simplifiée pour le formulaire d'histoire
+ * Il expose toutes les propriétés nécessaires pour le composant SimpleStoryForm
  */
 export const useDirectStoryForm = (
   onSubmit: (formData: { childrenIds: string[], objective: string }) => Promise<string>,
   children: Child[],
   onStoryCreated: (story: Story) => void
 ) => {
-  // Use the main form hook
+  // Utiliser notre nouveau hook unifié
   const {
     selectedChildrenIds,
     selectedObjective,
     formError,
     isSubmitting,
     authLoading,
-    isGenerateButtonDisabled,
+    showChildForm,
+    setShowChildForm,
     handleChildSelect,
     handleObjectiveSelect,
     handleFormSubmit,
-    childFormControls
-  } = useSimpleStoryForm(onSubmit, children, onStoryCreated);
-
-  // Destructure child form controls
-  const { showChildForm, setShowChildForm } = childFormControls;
+    isGenerateButtonDisabled
+  } = useUnifiedStoryForm(onSubmit, children, onStoryCreated);
 
   return {
-    // Form state
+    // État du formulaire
     selectedChildrenIds,
     selectedObjective,
     formError,
     isSubmitting,
     authLoading,
     
-    // Child form state
+    // État du formulaire enfant
     showChildForm,
     setShowChildForm,
     
-    // Handlers
+    // Gestionnaires
     handleChildSelect,
     handleObjectiveSelect,
     handleFormSubmit,
     
-    // Utilities
-    isGenerateButtonDisabled
+    // État du bouton
+    isGenerateButtonDisabled,
+    
+    // Structure pour la compatibilité
+    childFormControls: {
+      showChildForm, 
+      setShowChildForm
+    }
   };
 };

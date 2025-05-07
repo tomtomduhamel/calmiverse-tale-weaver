@@ -6,6 +6,7 @@ import type { Story } from '@/types/story';
 
 /**
  * Hook for managing the handlers of the simplified story form
+ * Note: Cette version corrigée assure une manipulation correcte des types
  */
 export const useSimpleStoryFormHandlers = (
   selectedChildrenIds: string[],
@@ -22,18 +23,21 @@ export const useSimpleStoryFormHandlers = (
 ) => {
   const { toast } = useToast();
 
-  // Child selection handler
+  // Child selection handler - fixed to ensure proper typing
   const handleChildSelect = useCallback((childId: string) => {
     if (!childId) return;
     
     console.log('[useSimpleStoryFormHandlers] Toggle child:', childId, 'Current selection:', selectedChildrenIds);
     
-    // Fixed: Use the functional updater that returns a new array
+    // Use the functional updater with explicit typing
     setSelectedChildrenIds((prev: string[]) => {
       const isSelected = prev.includes(childId);
-      return isSelected 
+      const newSelection = isSelected 
         ? prev.filter(id => id !== childId) 
         : [...prev, childId];
+      
+      console.log('[useSimpleStoryFormHandlers] New selection:', newSelection);
+      return newSelection;
     });
   }, [selectedChildrenIds, setSelectedChildrenIds]);
 
@@ -74,7 +78,12 @@ export const useSimpleStoryFormHandlers = (
         description: "Nous préparons votre histoire, veuillez patienter...",
       });
 
-      // Call the API
+      // Call the API with explicit logging
+      console.log('[useSimpleStoryFormHandlers] Submitting data:', {
+        childrenIds: selectedChildrenIds,
+        objective: selectedObjective
+      });
+      
       const storyId = await onSubmit({
         childrenIds: selectedChildrenIds,
         objective: selectedObjective

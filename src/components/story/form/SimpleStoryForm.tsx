@@ -10,7 +10,7 @@ import type { Story } from "@/types/story";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
-import { useDirectStoryForm } from "@/hooks/stories/useDirectStoryForm";
+import { useUnifiedStoryForm } from "@/hooks/stories/useUnifiedStoryForm";
 
 interface SimpleStoryFormProps {
   children: Child[];
@@ -29,7 +29,7 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  // Main hook for form management
+  // Utilisation du hook unifié pour la gestion du formulaire
   const {
     selectedChildrenIds,
     selectedObjective,
@@ -42,58 +42,58 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
     handleObjectiveSelect,
     handleFormSubmit,
     isGenerateButtonDisabled
-  } = useDirectStoryForm(onSubmit, children, onStoryCreated);
+  } = useUnifiedStoryForm(onSubmit, children, onStoryCreated);
 
-  // Specific error detection
+  // Détection des erreurs spécifiques
   const hasChildrenError = formError && formError.toLowerCase().includes('enfant');
   const hasObjectiveError = formError && formError.toLowerCase().includes('objectif');
   
-  // State for child creation form
+  // État pour le formulaire de création d'enfant
   const [childName, setChildName] = React.useState("");
-  const [childAge, setChildAge] = React.useState("1"); // Initialize as string "1" to match select options
+  const [childAge, setChildAge] = React.useState("1");
   
-  // Handler for opening child creation form
+  // Gestionnaire pour ouvrir le formulaire de création d'enfant
   const handleCreateChildClick = () => {
     setShowChildForm(true);
   };
   
-  // Handler for child form submission
+  // Gestionnaire pour la soumission du formulaire d'enfant
   const handleChildFormSubmit = async (childName: string, childAge: string) => {
     try {
       console.log("Creating child with name:", childName, "and age:", childAge);
       
-      // Calculate birth date from age
+      // Calculer la date de naissance à partir de l'âge
       const now = new Date();
       const birthYear = now.getFullYear() - parseInt(childAge);
       const birthDate = new Date(birthYear, now.getMonth(), now.getDate());
       
-      // Create child
+      // Créer l'enfant
       await onCreateChild({
         name: childName,
         birthDate,
         interests: [],
         gender: 'unknown',
-        authorId: ''  // Will be filled by the backend
+        authorId: ''  // Sera rempli par le backend
       });
       
-      // Close form
+      // Fermer le formulaire
       setShowChildForm(false);
       
-      // Reset form
+      // Réinitialiser le formulaire
       setChildName("");
-      setChildAge("1"); // Reset to default "1"
+      setChildAge("1");
     } catch (error) {
       console.error("Error creating child:", error);
     }
   };
   
-  // Reset child form
+  // Réinitialiser le formulaire d'enfant
   const resetChildForm = () => {
     setChildName("");
-    setChildAge("1"); // Reset to default "1"
+    setChildAge("1");
   };
   
-  // If authentication is loading, show loading indicator
+  // Si l'authentification est en cours, afficher un indicateur de chargement
   if (authLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -103,7 +103,7 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
     );
   }
 
-  // Calculated height to avoid layout issues
+  // Hauteur calculée pour éviter les problèmes de mise en page
   const scrollAreaHeight = isMobile ? "h-[calc(100vh-250px)]" : "h-[calc(100vh-180px)]";
 
   return (

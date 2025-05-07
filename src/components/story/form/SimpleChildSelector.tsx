@@ -17,6 +17,7 @@ interface SimpleChildSelectorProps {
 /**
  * Composant simplifié pour la sélection des enfants sans utiliser le Checkbox de Radix UI
  * pour éviter les problèmes de boucles infinies de rendu
+ * Version mise à jour avec la gestion optimisée des sélections et du débogage
  */
 const SimpleChildSelector: React.FC<SimpleChildSelectorProps> = ({
   children,
@@ -25,6 +26,21 @@ const SimpleChildSelector: React.FC<SimpleChildSelectorProps> = ({
   onCreateChildClick,
   hasError = false,
 }) => {
+  // Ajouter du débogage pour suivre les sélections
+  React.useEffect(() => {
+    console.log("[SimpleChildSelector] Rendering with selection:", selectedChildrenIds);
+    if (selectedChildrenIds.length > 0) {
+      console.log("[SimpleChildSelector] Selected children:", 
+        children.filter(child => selectedChildrenIds.includes(child.id)).map(c => c.name)
+      );
+    }
+  }, [selectedChildrenIds, children]);
+
+  const handleSelectChild = (childId: string) => {
+    console.log("[SimpleChildSelector] Child clicked:", childId);
+    onChildSelect(childId);
+  };
+
   return (
     <div className="space-y-4">
       <div className={cn(
@@ -46,7 +62,7 @@ const SimpleChildSelector: React.FC<SimpleChildSelectorProps> = ({
             return (
               <div
                 key={child.id}
-                onClick={() => onChildSelect(child.id)}
+                onClick={() => handleSelectChild(child.id)}
                 className={cn(
                   "flex items-center space-x-3 p-3 rounded-lg transition-colors cursor-pointer",
                   isSelected 
