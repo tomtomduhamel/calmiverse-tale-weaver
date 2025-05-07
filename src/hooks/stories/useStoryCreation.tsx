@@ -19,17 +19,30 @@ export const useStoryCreation = () => {
       
       // Validation explicite côté client pour éviter les appels réseau inutiles
       if (!Array.isArray(formData.childrenIds) || formData.childrenIds.length === 0) {
+        console.error("[useStoryCreation] Erreur de validation: childrenIds invalide", formData.childrenIds);
         throw new Error("Veuillez sélectionner au moins un enfant pour créer une histoire");
       }
       
       if (!formData.objective) {
+        console.error("[useStoryCreation] Erreur de validation: objectif manquant");
         throw new Error("L'objectif de l'histoire est obligatoire");
       }
       
-      const selectedChildren = children.filter(child => formData.childrenIds.includes(child.id));
+      // Récupérer les données complètes des enfants sélectionnés
+      const selectedChildren = children.filter(child => 
+        Array.isArray(formData.childrenIds) && formData.childrenIds.includes(child.id)
+      );
+      
+      // Vérifier qu'on a bien trouvé les enfants
+      if (selectedChildren.length === 0) {
+        console.error("[useStoryCreation] Aucun enfant trouvé malgré des IDs fournis:", 
+          { providedIds: formData.childrenIds, availableChildren: children.map(c => c.id) });
+        throw new Error("Impossible de trouver les enfants sélectionnés");
+      }
+      
       const childrenNames = selectedChildren.map(child => child.name);
       
-      console.log('[useStoryCreation] Enfants sélectionnés:', childrenNames);
+      console.log('[useStoryCreation] Enfants sélectionnés:', childrenNames, 'IDs:', formData.childrenIds);
       
       // Insérer l'histoire avec le statut "en attente"
       const { data: story, error: insertError } = await supabase

@@ -1,28 +1,25 @@
 
 import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSimplifiedStoryForm } from "@/hooks/stories/useSimplifiedStoryForm";
-import { default as StoryObjectives } from "../StoryObjectives";
 import { StoryError } from "./StoryError";
 import SimpleChildSelector from "./SimpleChildSelector";
 import CreateChildDialog from "../CreateChildDialog";
+import { default as StoryObjectives } from "../StoryObjectives";
 import type { Child } from "@/types/child";
 import type { Story } from "@/types/story";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
+import { useDirectStoryForm } from "@/hooks/stories/useDirectStoryForm";
 
 interface SimpleStoryFormProps {
   children: Child[];
-  onCreateChild: (child: Omit<Child, "id">) => void;
+  onCreateChild: (child: Omit<Child, "id">) => Promise<string>; // Modified to return Promise<string>
   onSubmit: (formData: { childrenIds: string[], objective: string }) => Promise<string>;
   onStoryCreated: (story: Story) => void;
   objectives: { id: string, label: string, value: string }[];
 }
 
-/**
- * Composant de formulaire de création d'histoire simplifié
- */
 const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
   children,
   onCreateChild,
@@ -32,19 +29,20 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  // Hook principal centralisé
+  // Hook principal pour la gestion du formulaire
   const {
     selectedChildrenIds,
     selectedObjective,
     formError,
     isSubmitting,
+    showChildForm,
+    setShowChildForm,
     authLoading,
-    isGenerateButtonDisabled,
     handleChildSelect,
     handleObjectiveSelect,
     handleFormSubmit,
-    childFormControls
-  } = useSimplifiedStoryForm(onSubmit, children, onStoryCreated);
+    isGenerateButtonDisabled
+  } = useDirectStoryForm(onSubmit, children, onStoryCreated);
 
   // Détection d'erreurs spécifiques
   const hasChildrenError = formError && formError.toLowerCase().includes('enfant');
@@ -52,7 +50,7 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
   
   // Gestionnaire pour l'ouverture du formulaire de création d'enfant
   const handleCreateChildClick = () => {
-    childFormControls.setShowChildForm(true);
+    setShowChildForm(true);
   };
   
   // Gestionnaire pour la soumission du formulaire d'enfant
@@ -73,7 +71,7 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
       });
       
       // Fermeture du formulaire
-      childFormControls.setShowChildForm(false);
+      setShowChildForm(false);
     } catch (error) {
       console.error("Erreur lors de la création de l'enfant:", error);
     }
@@ -152,8 +150,8 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
       </ScrollArea>
       
       <CreateChildDialog
-        open={childFormControls.showChildForm}
-        onOpenChange={childFormControls.setShowChildForm}
+        open={showChildForm}
+        onOpenChange={setShowChildForm}
         childName=""
         childAge=""
         onSubmit={handleChildFormSubmit}

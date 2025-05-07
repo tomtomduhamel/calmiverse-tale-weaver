@@ -40,6 +40,15 @@ export const useStoryManagement = (
       setIsGenerating(true);
       setGenerationError(null);
       
+      // Validation explicite pour éviter les erreurs inexpliquées
+      if (!formData.childrenIds || formData.childrenIds.length === 0) {
+        throw new Error("Veuillez sélectionner au moins un enfant pour créer une histoire");
+      }
+      
+      if (!formData.objective) {
+        throw new Error("L'objectif de l'histoire est obligatoire");
+      }
+      
       const storyId = await createStory(formData);
       console.log("[useStoryManagement] Histoire créée avec l'ID:", storyId);
       
