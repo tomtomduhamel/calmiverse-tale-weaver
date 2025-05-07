@@ -28,7 +28,8 @@ export const useSimpleStoryFormHandlers = (
     
     console.log('[useSimpleStoryFormHandlers] Toggle child:', childId, 'Current selection:', selectedChildrenIds);
     
-    setSelectedChildrenIds(prev => {
+    // Fix: Properly type the updater function to return string[]
+    setSelectedChildrenIds((prev: string[]) => {
       const isSelected = prev.includes(childId);
       return isSelected 
         ? prev.filter(id => id !== childId) 

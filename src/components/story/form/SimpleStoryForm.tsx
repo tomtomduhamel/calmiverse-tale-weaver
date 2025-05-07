@@ -50,7 +50,7 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
   
   // State for child creation form
   const [childName, setChildName] = React.useState("");
-  const [childAge, setChildAge] = React.useState("");
+  const [childAge, setChildAge] = React.useState("1"); // Initialize as string "1" to match select options
   
   // Handler for opening child creation form
   const handleCreateChildClick = () => {
@@ -60,6 +60,8 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
   // Handler for child form submission
   const handleChildFormSubmit = async (childName: string, childAge: string) => {
     try {
+      console.log("Creating child with name:", childName, "and age:", childAge);
+      
       // Calculate birth date from age
       const now = new Date();
       const birthYear = now.getFullYear() - parseInt(childAge);
@@ -79,7 +81,7 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
       
       // Reset form
       setChildName("");
-      setChildAge("");
+      setChildAge("1"); // Reset to default "1"
     } catch (error) {
       console.error("Error creating child:", error);
     }
@@ -88,7 +90,7 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
   // Reset child form
   const resetChildForm = () => {
     setChildName("");
-    setChildAge("");
+    setChildAge("1"); // Reset to default "1"
   };
   
   // If authentication is loading, show loading indicator

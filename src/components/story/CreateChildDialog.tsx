@@ -11,11 +11,11 @@ interface CreateChildDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   childName: string;
-  childAge: number;
-  onSubmit: (e: React.FormEvent) => void;
+  childAge: string; // Changed to string to match the form state
+  onSubmit: (childName: string, childAge: string) => Promise<void>; // Explicitly typed
   onReset: () => void;
   onChildNameChange: (value: string) => void;
-  onChildAgeChange: (value: number) => void;
+  onChildAgeChange: (value: string) => void; // Changed to string to match form state
 }
 
 const CreateChildDialog = ({
@@ -46,7 +46,8 @@ const CreateChildDialog = ({
     
     try {
       setIsSubmitting(true);
-      await onSubmit(e);
+      // Call the onSubmit function with childName and childAge
+      await onSubmit(childName, childAge);
       toast({
         title: "Succès",
         description: "L'enfant a été ajouté avec succès",
@@ -102,11 +103,11 @@ const CreateChildDialog = ({
               <select
                 id="childAge"
                 value={childAge}
-                onChange={(e) => onChildAgeChange(Number(e.target.value))}
+                onChange={(e) => onChildAgeChange(e.target.value)}
                 className="w-full p-2 rounded-md bg-white/50 dark:bg-muted-dark/50 border border-secondary/20 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               >
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((age) => (
-                  <option key={age} value={age}>
+                  <option key={age} value={age.toString()}>
                     {age} ans
                   </option>
                 ))}
