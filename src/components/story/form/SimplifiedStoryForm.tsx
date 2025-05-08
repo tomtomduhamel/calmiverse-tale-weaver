@@ -1,226 +1,147 @@
 
-import React, { useState, useCallback } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { StoryError } from "./StoryError";
-import EnhancedChildSelector from "./EnhancedChildSelector";
+import React, { useState } from "react";
+import { StoryFormProvider } from "@/contexts/StoryFormContext";
+import RobustStoryForm from "./RobustStoryForm";
 import CreateChildDialog from "../CreateChildDialog";
-import { default as StoryObjectives } from "../StoryObjectives";
-import StoryFormDebug from "./StoryFormDebug";
 import type { Child } from "@/types/child";
+import type { Objective } from "@/types/story";
 import type { Story } from "@/types/story";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
-import { Wand2, Loader2 } from "lucide-react";
-import { useSimpleStoryForm } from "@/hooks/stories/useSimpleStoryForm";
-import { useToast } from "@/hooks/use-toast";
 
 interface SimplifiedStoryFormProps {
+  onSubmit: (formData: { childrenIds: string[], objective: string }) => Promise<string>;
   children: Child[];
   onCreateChild: (child: Omit<Child, "id">) => Promise<string>;
-  onSubmit: (formData: { childrenIds: string[], objective: string }) => Promise<string>;
   onStoryCreated: (story: Story) => void;
-  objectives: { id: string, label: string, value: string }[];
+  objectives: Objective[];
 }
 
 /**
- * Formulaire d'histoire simplifié avec une architecture unifiée
- * et des fonctionnalités de débogage améliorées
+ * Formulaire d'histoire simplifié qui utilise le nouveau contexte centralisé
+ * Version robuste avec journalisation détaillée
  */
 const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
+  onSubmit,
   children,
   onCreateChild,
-  onSubmit,
   onStoryCreated,
-  objectives = []
+  objectives
 }) => {
-  const isMobile = useIsMobile();
-  const { toast } = useToast();
+  // État du formulaire d'enfant
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState("1");
+  const [showChildForm, setShowChildForm] = useState(false);
   
-  // Utilisation du hook simplifié pour la gestion du formulaire
-  const {
-    selectedChildrenIds,
-    selectedObjective,
-    formError,
-    isSubmitting,
-    showChildForm,
-    setShowChildForm,
-    authLoading,
-    handleChildSelect,
-    handleObjectiveSelect,
-    handleFormSubmit,
-    isGenerateButtonDisabled,
-    debugInfo
-  } = useSimpleStoryForm(onSubmit, children, onStoryCreated);
-
-  // Détection des erreurs spécifiques
-  const hasChildrenError = formError && formError.toLowerCase().includes('enfant');
-  const hasObjectiveError = formError && formError.toLowerCase().includes('objectif');
+  // Log de débogage pour vérifier les props
+  console.log("[SimplifiedStoryForm] Initialisation avec:", {
+    childrenCount: children?.length || 0,
+    objectivesCount: objectives?.length || 0,
+    hasOnSubmit: !!onSubmit,
+    hasOnCreateChild: !!onCreateChild,
+    hasOnStoryCreated: !!onStoryCreated
+  });
   
-  // État pour le formulaire de création d'enfant
-  const [childName, setChildName] = useState<string>("");
-  const [childAge, setChildAge] = useState<string>("1");
-  
-  // Forcer la validation du formulaire (pour le débogage)
-  const handleForceValidation = useCallback(() => {
-    console.log("[SimplifiedStoryForm] Validation forcée avec données:", {
-      selectedChildrenIds,
-      selectedObjective
+  // Vérification explicite des props
+  if (!onSubmit || !onCreateChild || !onStoryCreated) {
+    console.error("[SimplifiedStoryForm] Props manquantes:", {
+      onSubmit: !!onSubmit,
+      onCreateChild: !!onCreateChild,
+      onStoryCreated: !!onStoryCreated
     });
-    
-    if (!selectedChildrenIds || selectedChildrenIds.length === 0) {
-      toast({
-        title: "Validation forcée",
-        description: "Erreur: Aucun enfant sélectionné",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!selectedObjective) {
-      toast({
-        title: "Validation forcée",
-        description: "Erreur: Aucun objectif sélectionné",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    toast({
-      title: "Validation forcée",
-      description: "Le formulaire est valide!",
-    });
-  }, [selectedChildrenIds, selectedObjective, toast]);
-  
-  // Gestionnaire pour ouvrir le formulaire de création d'enfant
-  const handleCreateChildClick = useCallback(() => {
-    console.log("[SimplifiedStoryForm] Ouverture du formulaire de création d'enfant");
-    setShowChildForm(true);
-  }, [setShowChildForm]);
+  }
   
   // Gestionnaire pour la soumission du formulaire d'enfant
-  const handleChildFormSubmit = useCallback(async (childName: string, childAge: string) => {
+  const handleChildFormSubmit = async (name: string, age: string) => {
     try {
-      console.log("[SimplifiedStoryForm] Création d'un enfant:", childName, childAge);
+      console.log("[SimplifiedStoryForm] Création d'enfant avec nom:", name, "et âge:", age);
+      
+      if (!name.trim()) {
+        console.error("[SimplifiedStoryForm] Nom d'enfant vide");
+        return;
+      }
+      
+      if (!onCreateChild) {
+        console.error("[SimplifiedStoryForm] onCreateChild n'est pas défini");
+        return;
+      }
       
       // Calculer la date de naissance à partir de l'âge
       const now = new Date();
-      const birthYear = now.getFullYear() - parseInt(childAge);
+      const birthYear = now.getFullYear() - parseInt(age);
       const birthDate = new Date(birthYear, now.getMonth(), now.getDate());
       
       // Créer l'enfant
-      await onCreateChild({
-        name: childName,
-        birthDate,
+      const childId = await onCreateChild({
+        name: name,
+        birthDate: birthDate,
         interests: [],
         gender: 'unknown',
         authorId: ''  // Sera rempli par le backend
       });
       
+      console.log("[SimplifiedStoryForm] Enfant créé avec ID:", childId);
+      
       // Fermer le formulaire
       setShowChildForm(false);
-      
-      // Réinitialiser le formulaire
-      setChildName("");
-      setChildAge("1");
-      
-      // Notifier l'utilisateur
-      toast({
-        title: "Enfant créé",
-        description: `Le profil de ${childName} a été créé avec succès`
-      });
+      resetChildForm();
     } catch (error) {
-      console.error("[SimplifiedStoryForm] Erreur lors de la création de l'enfant:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de créer le profil d'enfant",
-        variant: "destructive"
-      });
+      console.error("[SimplifiedStoryForm] Erreur lors de la création d'enfant:", error);
     }
-  }, [onCreateChild, setShowChildForm, toast]);
+  };
   
   // Réinitialiser le formulaire d'enfant
-  const resetChildForm = useCallback(() => {
+  const resetChildForm = () => {
     setChildName("");
     setChildAge("1");
-  }, []);
+  };
   
-  // Si l'authentification est en cours, afficher un indicateur de chargement
-  if (authLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Chargement...</span>
-      </div>
-    );
-  }
-
-  // Hauteur calculée pour éviter les problèmes de mise en page
-  const scrollAreaHeight = isMobile ? "h-[calc(100vh-250px)]" : "h-[calc(100vh-180px)]";
-
+  // Gestionnaire pour ouvrir le formulaire de création d'enfant
+  const handleCreateChildClick = () => {
+    console.log("[SimplifiedStoryForm] Ouverture du formulaire de création d'enfant");
+    setShowChildForm(true);
+  };
+  
+  // Gestionnaire de soumission personnalisé pour ajouter des logs supplémentaires
+  const handleFormSubmitWithLogging = async (formData: { childrenIds: string[], objective: string }) => {
+    console.log("[SimplifiedStoryForm] Soumission du formulaire avec données:", formData);
+    
+    // Vérifications explicites
+    if (!formData.childrenIds || formData.childrenIds.length === 0) {
+      console.error("[SimplifiedStoryForm] Erreur: aucun enfant sélectionné");
+      throw new Error("Veuillez sélectionner au moins un enfant");
+    }
+    
+    if (!formData.objective) {
+      console.error("[SimplifiedStoryForm] Erreur: aucun objectif sélectionné");
+      throw new Error("Veuillez sélectionner un objectif");
+    }
+    
+    if (!onSubmit) {
+      console.error("[SimplifiedStoryForm] Erreur: onSubmit n'est pas défini");
+      throw new Error("Erreur de configuration du formulaire");
+    }
+    
+    // Appeler le gestionnaire de soumission
+    try {
+      const storyId = await onSubmit(formData);
+      console.log("[SimplifiedStoryForm] Histoire créée avec succès, ID:", storyId);
+      return storyId;
+    } catch (error: any) {
+      console.error("[SimplifiedStoryForm] Erreur lors de la création de l'histoire:", error);
+      throw error;
+    }
+  };
+  
   return (
-    <div className="flex flex-col h-full w-full">
-      <ScrollArea className={scrollAreaHeight}>
-        <form 
-          onSubmit={handleFormSubmit}
-          className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl mb-20"
-          data-testid="story-form"
-        >
-          <h2 className="text-2xl font-bold text-primary">Créer une histoire personnalisée</h2>
-          
-          {/* Composant de débogage - visible uniquement en développement */}
-          <StoryFormDebug 
-            debugInfo={debugInfo} 
-            onForceValidation={handleForceValidation}
-          />
-          
-          {formError && (
-            <StoryError error={formError} className="animate-pulse" />
-          )}
-          
-          <div className={`space-y-4 ${hasChildrenError ? 'ring-2 ring-destructive/20 rounded-lg p-4' : ''}`}>
-            <EnhancedChildSelector
-              children={children}
-              selectedChildrenIds={selectedChildrenIds}
-              onChildSelect={handleChildSelect}
-              onCreateChildClick={handleCreateChildClick}
-              hasError={hasChildrenError}
-            />
-          </div>
-
-          <div className={`space-y-4 ${hasObjectiveError ? 'ring-2 ring-destructive/20 rounded-lg p-4' : ''}`}>
-            <label className="text-secondary dark:text-white text-base sm:text-lg font-medium">
-              Je souhaite créer un moment de lecture qui va...
-            </label>
-            <StoryObjectives
-              objectives={objectives}
-              selectedObjective={selectedObjective}
-              onObjectiveSelect={handleObjectiveSelect}
-              hasError={hasObjectiveError}
-            />
-          </div>
-          
-          <div className="mt-6">
-            <Button
-              type="submit"
-              disabled={isGenerateButtonDisabled}
-              className="w-full py-4 sm:py-6 text-base sm:text-lg font-bold transition-all animate-fade-in shadow-lg"
-              data-testid="generate-story-button"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Génération en cours...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-5 h-5 mr-2" />
-                  Générer mon histoire
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </ScrollArea>
+    <StoryFormProvider 
+      onSubmit={handleFormSubmitWithLogging} 
+      availableChildren={children} 
+      onStoryCreated={onStoryCreated}
+    >
+      <RobustStoryForm 
+        children={children}
+        onCreateChildClick={handleCreateChildClick}
+        objectives={objectives}
+      />
       
       <CreateChildDialog
         open={showChildForm}
@@ -232,7 +153,7 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
         onChildNameChange={setChildName}
         onChildAgeChange={setChildAge}
       />
-    </div>
+    </StoryFormProvider>
   );
 };
 

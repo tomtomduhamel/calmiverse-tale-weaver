@@ -3,6 +3,7 @@ import React from "react";
 import type { StoryFormProps } from "./story/StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import SimplifiedStoryForm from "./story/form/SimplifiedStoryForm";
+import { Loader2 } from "lucide-react";
 
 const StoryForm: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -28,6 +29,18 @@ const StoryForm: React.FC<StoryFormProps> = ({
     hasOnStoryCreated: !!onStoryCreated,
     objectivesLoaded: objectives?.length || 0
   });
+  
+  // Afficher un indicateur de chargement pendant le chargement des objectifs
+  if (objectivesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+          <p className="text-muted-foreground">Chargement des objectifs...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <SimplifiedStoryForm
