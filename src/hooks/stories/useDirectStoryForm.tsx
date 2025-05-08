@@ -1,19 +1,19 @@
 
 import { useState } from 'react';
-import { useUnifiedStoryForm } from './useUnifiedStoryForm';
+import { useSimpleStoryForm } from './useSimpleStoryForm';
 import type { Child } from '@/types/child';
 import type { Story } from '@/types/story';
 
 /**
  * Hook qui fournit une interface simplifiée pour le formulaire d'histoire
- * Il expose toutes les propriétés nécessaires pour le composant SimpleStoryForm
+ * Adapté à la nouvelle architecture unifiée
  */
 export const useDirectStoryForm = (
   onSubmit: (formData: { childrenIds: string[], objective: string }) => Promise<string>,
   children: Child[],
   onStoryCreated: (story: Story) => void
 ) => {
-  // Utiliser notre nouveau hook unifié
+  // Utiliser notre nouveau hook simplifié
   const {
     selectedChildrenIds,
     selectedObjective,
@@ -25,8 +25,9 @@ export const useDirectStoryForm = (
     handleChildSelect,
     handleObjectiveSelect,
     handleFormSubmit,
-    isGenerateButtonDisabled
-  } = useUnifiedStoryForm(onSubmit, children, onStoryCreated);
+    isGenerateButtonDisabled,
+    debugInfo
+  } = useSimpleStoryForm(onSubmit, children, onStoryCreated);
 
   return {
     // État du formulaire
@@ -47,6 +48,9 @@ export const useDirectStoryForm = (
     
     // État du bouton
     isGenerateButtonDisabled,
+    
+    // Débogage
+    debugInfo,
     
     // Structure pour la compatibilité
     childFormControls: {

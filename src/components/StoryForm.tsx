@@ -2,7 +2,7 @@
 import React from "react";
 import type { StoryFormProps } from "./story/StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
-import SimpleStoryForm from "./story/form/SimpleStoryForm";
+import SimplifiedStoryForm from "./story/form/SimplifiedStoryForm";
 
 const StoryForm: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -21,7 +21,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
     { id: "fun", label: "S'amuser", value: "fun" },
   ];
   
-  console.log("[StoryForm] Rendering with", {
+  console.log("[StoryForm] Rendu avec", {
     childrenCount: children?.length || 0,
     hasOnSubmit: !!onSubmit,
     hasOnCreateChild: !!onCreateChild,
@@ -30,7 +30,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
   });
   
   return (
-    <SimpleStoryForm
+    <SimplifiedStoryForm
       onSubmit={onSubmit}
       children={children}
       onCreateChild={onCreateChild}
