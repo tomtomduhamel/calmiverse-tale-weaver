@@ -7,6 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
 import { cn } from "@/lib/utils";
 import type { Child } from "@/types/child";
+import { calculateAge } from "@/utils/age";
 
 interface RobustChildSelectorProps {
   children: Child[];
@@ -56,6 +57,7 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {children.map((child) => {
             const isSelected = selectedChildrenIds.includes(child.id);
+            const childAge = calculateAge(child.birthDate);
             
             return (
               <div
@@ -74,7 +76,7 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
                 <div>
                   <div className="font-medium">{child.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {child.age} ans
+                    {childAge} ans
                   </div>
                 </div>
               </div>

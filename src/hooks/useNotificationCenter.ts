@@ -1,13 +1,14 @@
 
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import type { ToastActionElement } from "@/components/ui/toast";
 
 export type NotificationType = "success" | "error" | "warning" | "info";
 
 interface NotificationOptions {
   duration?: number;
   preserveOnRouteChange?: boolean;
-  action?: React.ReactNode;
+  action?: ToastActionElement;
   className?: string;
 }
 
@@ -87,7 +88,7 @@ export const useNotificationCenter = () => {
       type: NotificationType,
       title: string,
       message: string,
-      action: React.ReactNode,
+      action: ToastActionElement,
       options?: NotificationOptions
     ) => {
       return notify(type, title, message, { ...options, action });
