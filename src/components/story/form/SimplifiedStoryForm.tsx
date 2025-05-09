@@ -28,7 +28,7 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
   });
 
   // Création d'une fonction wrapper pour garantir la compatibilité des types
-  const handleCreateChild = onCreateChild ? onCreateChild : () => {
+  const handleCreateChild = onCreateChild ? () => onCreateChild : () => {
     console.warn("No onCreateChild handler provided");
     return Promise.resolve("");
   };

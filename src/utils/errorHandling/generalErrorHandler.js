@@ -2,6 +2,7 @@
 /**
  * Gestionnaire d'erreur général pour l'application
  */
+import { errorManager } from './errorNotificationManager';
 
 /**
  * Traite les erreurs et crée des messages conviviaux pour l'utilisateur
@@ -13,7 +14,14 @@ export function handleGeneralError(error, showToast = true) {
     details: error?.details
   });
   
-  // Création d'un message d'erreur convivial
+  // Utiliser notre nouveau gestionnaire d'erreurs centralisé
+  if (showToast) {
+    const category = determineErrorCategory(error);
+    const config = errorManager.handleError(error, category);
+    return config.message;
+  }
+  
+  // Création d'un message d'erreur convivial (pour la rétrocompatibilité)
   let userMessage = "Une erreur est survenue";
   
   // Vérification des codes d'erreur communs
@@ -30,19 +38,33 @@ export function handleGeneralError(error, showToast = true) {
     userMessage = error.message;
   }
   
-  if (showToast) {
-    // Déclenchement d'un événement personnalisé pour le système de notification
-    const appEvent = new CustomEvent('app-notification', {
-      detail: {
-        type: 'error',
-        title: 'Erreur',
-        message: userMessage
-      }
-    });
-    document.dispatchEvent(appEvent);
+  return userMessage;
+}
+
+/**
+ * Détermine la catégorie d'une erreur
+ */
+function determineErrorCategory(error) {
+  if (!error) return 'unknown';
+  
+  if (isAuthError(error)) return 'auth';
+  if (isNetworkError(error)) return 'network';
+  if (isDatabaseError(error)) return 'database';
+  
+  // Analyse des messages pour catégoriser
+  const errorMessage = error.message || error.toString();
+  
+  if (errorMessage.toLowerCase().includes('valida')) {
+    return 'validation';
   }
   
-  return userMessage;
+  if (errorMessage.toLowerCase().includes('api') || 
+      errorMessage.toLowerCase().includes('rate') ||
+      errorMessage.toLowerCase().includes('limit')) {
+    return 'api';
+  }
+  
+  return 'unknown';
 }
 
 /**
@@ -57,7 +79,9 @@ export function isAuthError(error) {
   return errorCode.includes('auth/') || 
          errorMessage.includes('authentication') || 
          errorMessage.includes('auth') ||
-         errorMessage.includes('session');
+         errorMessage.includes('session') ||
+         errorMessage.includes('login') ||
+         errorMessage.includes('connexion');
 }
 
 /**
@@ -71,5 +95,29 @@ export function isDatabaseError(error) {
   
   return errorCode.includes('supabase') || 
          errorMessage.includes('database') ||
-         errorMessage.includes('query');
+         errorMessage.includes('query') ||
+         errorMessage.includes('db') ||
+         errorMessage.includes('postgres') ||
+         errorMessage.includes('sql');
+}
+
+/**
+ * Vérifie si une erreur est liée au réseau
+ */
+export function isNetworkError(error) {
+  if (!error) return false;
+  
+  const errorMessage = error.message || error.toString();
+  
+  return errorMessage?.includes('net::ERR_TIMED_OUT') ||
+         errorMessage?.includes('net::ERR_NAME_NOT_RESOLVED') ||
+         errorMessage?.includes('Network Error') ||
+         errorMessage?.includes('network request failed') ||
+         error.name === 'NetworkError' ||
+         error.name === 'AbortError' ||
+         errorMessage?.includes('connection') ||
+         errorMessage?.includes('connexion') ||
+         errorMessage?.includes('timeout') ||
+         errorMessage?.includes('délai') ||
+         errorMessage?.includes('réseau');
 }

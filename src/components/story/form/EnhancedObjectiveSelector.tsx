@@ -1,110 +1,67 @@
 
 import React from "react";
-import { useStoryForm } from "@/contexts/StoryFormContext";
+import { CheckCircle2 } from "lucide-react";
+import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
 import { cn } from "@/lib/utils";
 import type { Objective } from "@/types/story";
 
 interface EnhancedObjectiveSelectorProps {
   objectives: Objective[];
-  className?: string;
 }
 
 /**
- * Sélecteur d'objectif amélioré avec validation robuste
- * et feedback visuel renforcé
+ * Sélecteur d'objectifs amélioré avec états visuels optimisés
  */
 const EnhancedObjectiveSelector: React.FC<EnhancedObjectiveSelectorProps> = ({
   objectives,
-  className,
 }) => {
-  const { state, handleObjectiveSelect, updateDebugInfo } = useStoryForm();
-  const { selectedObjective, formError } = state;
-  
-  // Déterminer si une erreur concerne la sélection d'objectif
-  const hasError = formError && 
-    (formError.toLowerCase().includes('objectif') || 
-     formError.toLowerCase().includes('objective'));
-  
-  // Gestionnaire de sélection optimisé
-  const handleSelectObjective = (objective: string) => {
-    console.log("[EnhancedObjectiveSelector] Sélection objectif:", objective);
-    
-    if (!objective) {
-      console.error("[EnhancedObjectiveSelector] Tentative de sélection avec ID vide");
-      return;
-    }
-    
-    // Vérifier si l'objectif existe
-    const objectiveExists = objectives.some(obj => obj.value === objective);
-    if (!objectiveExists) {
-      console.error("[EnhancedObjectiveSelector] Tentative de sélection d'un objectif inexistant:", objective);
-      return;
-    }
-    
-    // Traçage de l'action
-    console.log("[EnhancedObjectiveSelector] Appel de handleObjectiveSelect avec:", objective);
-    updateDebugInfo({
-      objectiveSelection: {
-        selectedValue: objective,
-        timestamp: new Date().toISOString()
-      }
-    });
-    
-    handleObjectiveSelect(objective);
-  };
-  
-  return (
-    <div className={cn("space-y-4", className)}>
-      <div className={cn(
-        "text-secondary dark:text-white text-lg font-medium",
-        hasError ? "text-destructive" : ""
-      )}>
-        Quel est l'objectif de cette histoire ?
-        {hasError && <span className="ml-2 text-sm text-destructive">*</span>}
+  const { state, handleObjectiveSelect } = useStoryForm();
+  const { selectedObjective } = state;
+
+  if (!objectives || objectives.length === 0) {
+    return (
+      <div className="py-4 text-center">
+        <p className="text-muted-foreground">
+          Aucun objectif disponible pour le moment.
+        </p>
       </div>
-      
-      <div 
-        className={cn(
-          "grid grid-cols-1 sm:grid-cols-2 gap-3",
-          hasError ? "border-2 border-destructive/20 p-2 rounded-lg" : ""
-        )}
-      >
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="text-lg font-medium mb-2">Choisir un objectif</h2>
+      <p className="text-muted-foreground text-sm mb-4">
+        Sélectionnez l'objectif principal de l'histoire
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {objectives.map((objective) => {
           const isSelected = selectedObjective === objective.value;
           
           return (
             <div
               key={objective.id}
-              onClick={() => handleSelectObjective(objective.value)}
               className={cn(
-                "flex items-center p-4 rounded-lg cursor-pointer transition-all",
-                isSelected 
-                  ? "bg-primary/10 hover:bg-primary/20 ring-2 ring-primary" 
-                  : "hover:bg-muted/50 dark:hover:bg-muted-dark/50 border border-muted",
-                "transform transition-transform duration-150",
-                isSelected ? "scale-[1.02]" : ""
+                "p-4 border rounded-xl cursor-pointer transition-all",
+                isSelected
+                  ? "bg-primary/10 border-primary/30 shadow-sm"
+                  : "hover:bg-muted hover:border-muted-foreground/20"
               )}
-              data-testid={`objective-item-${objective.id}`}
-              role="radio"
-              aria-checked={isSelected}
-              tabIndex={0}
+              onClick={() => handleObjectiveSelect(objective.value)}
             >
-              <div className="flex-grow">
-                <div className={cn(
-                  "font-medium text-base leading-tight",
-                  isSelected ? "text-primary font-semibold" : ""
-                )}>
-                  {objective.label}
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  {isSelected ? (
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                  ) : (
+                    <div className="h-5 w-5 border border-muted-foreground/30 rounded-full" />
+                  )}
+                </div>
+                <div>
+                  <div className="font-medium">{objective.label}</div>
                 </div>
               </div>
-              
-              {isSelected && (
-                <div className="ml-auto w-5 h-5 rounded-full bg-primary flex items-center justify-center text-white">
-                  <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" strokeWidth="3" fill="none">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </div>
-              )}
             </div>
           );
         })}

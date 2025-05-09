@@ -1,54 +1,65 @@
 
 import { useToast } from "@/hooks/use-toast";
+import { useNotificationCenter } from "./useNotificationCenter";
 
-// Define a custom type that extends the available toast variants
-type ExtendedVariant = "default" | "destructive" | "warning";
-
+/**
+ * Hook de compatibilité pour permettre la transition vers le nouveau système de notification
+ * @deprecated Utiliser useNotificationCenter à la place
+ */
 export const useNotifications = (setError?: (error: string | null) => void) => {
   const { toast } = useToast();
+  const { 
+    notifySuccess, 
+    notifyError, 
+    notifyInfo, 
+    notifyWarning 
+  } = useNotificationCenter();
 
-  const notifySuccess = (message: string) => {
-    toast({
-      title: "Success",
-      description: message,
-    });
+  /**
+   * @deprecated Utiliser notifySuccess du useNotificationCenter à la place
+   */
+  const legacyNotifySuccess = (message: string) => {
+    notifySuccess("Succès", message);
   };
 
-  const notifyError = (message: string) => {
+  /**
+   * @deprecated Utiliser notifyError du useNotificationCenter à la place
+   */
+  const legacyNotifyError = (message: string) => {
     if (setError) {
       setError(message);
     }
     
-    toast({
-      title: "Error",
-      description: message,
-      variant: "destructive",
-    });
+    notifyError("Erreur", message);
   };
 
-  const notifyInfo = (message: string) => {
-    toast({
-      title: "Information",
-      description: message,
-    });
+  /**
+   * @deprecated Utiliser notifyInfo du useNotificationCenter à la place
+   */
+  const legacyNotifyInfo = (message: string) => {
+    notifyInfo("Information", message);
   };
 
-  const notifyWarning = (message: string) => {
-    // Use 'as any' to bypass the type checking for the variant
-    // Since we're adding a custom style for warning in the Toaster component
-    toast({
-      title: "Warning",
-      description: message,
-      variant: "destructive", // Changed to use a valid variant
-      className: "bg-amber-500 border-amber-600 text-white", // Add warning styling
-    });
+  /**
+   * @deprecated Utiliser notifyWarning du useNotificationCenter à la place
+   */
+  const legacyNotifyWarning = (message: string) => {
+    notifyWarning("Attention", message);
   };
 
   return {
     toast,
-    notifySuccess,
-    notifyError,
-    notifyInfo,
-    notifyWarning
+    notifySuccess: legacyNotifySuccess,
+    notifyError: legacyNotifyError,
+    notifyInfo: legacyNotifyInfo,
+    notifyWarning: legacyNotifyWarning,
+    
+    // Nouvelles méthodes recommandées
+    notifications: {
+      success: notifySuccess,
+      error: notifyError,
+      info: notifyInfo,
+      warning: notifyWarning
+    }
   };
 };
