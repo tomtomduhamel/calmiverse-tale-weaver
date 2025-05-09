@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useStoryForm } from "@/contexts/StoryFormContext";
+import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
 import StoryFormDebug from './StoryFormDebug';
 
 interface AdvancedDebugPanelProps {

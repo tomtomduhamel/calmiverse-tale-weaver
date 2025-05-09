@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useStoryForm } from "@/contexts/StoryFormContext";
+import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
 
 interface EnhancedSubmitButtonProps {
   className?: string;

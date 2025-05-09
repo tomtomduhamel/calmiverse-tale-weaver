@@ -6,7 +6,7 @@ import RobustChildSelector from "./RobustChildSelector";
 import EnhancedObjectiveSelector from "./EnhancedObjectiveSelector";
 import EnhancedSubmitButton from "./EnhancedSubmitButton";
 import AdvancedDebugPanel from "./AdvancedDebugPanel";
-import { useStoryForm } from "@/contexts/StoryFormContext";
+import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { Child } from "@/types/child";

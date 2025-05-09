@@ -1,7 +1,7 @@
 
 import React from "react";
 import type { StoryFormProps } from "../StoryFormTypes";
-import { StoryFormProvider } from "@/contexts/StoryFormContext";
+import { StoryFormProvider } from "@/contexts/story-form/StoryFormContext";
 import RobustStoryForm from "./RobustStoryForm";
 import type { Objective } from "@/types/story";
 
@@ -27,6 +27,12 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
     hasOnStoryCreated: !!onStoryCreated
   });
 
+  // Création d'une fonction wrapper pour garantir la compatibilité des types
+  const handleCreateChild = onCreateChild ? onCreateChild : () => {
+    console.warn("No onCreateChild handler provided");
+    return Promise.resolve("");
+  };
+
   return (
     <StoryFormProvider 
       onSubmit={onSubmit}
@@ -35,7 +41,7 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
     >
       <RobustStoryForm
         children={children || []}
-        onCreateChildClick={onCreateChild || (() => {})}
+        onCreateChildClick={handleCreateChild}
         objectives={objectives}
       />
     </StoryFormProvider>
