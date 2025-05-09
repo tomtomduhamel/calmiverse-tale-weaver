@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,9 +15,7 @@ interface SimpleChildSelectorProps {
 }
 
 /**
- * Composant simplifié pour la sélection des enfants sans utiliser le Checkbox de Radix UI
- * pour éviter les problèmes de boucles infinies de rendu
- * Version mise à jour avec la gestion optimisée des sélections et du débogage
+ * Composant simplifié pour la sélection des enfants avec débogage amélioré
  */
 const SimpleChildSelector: React.FC<SimpleChildSelectorProps> = ({
   children,
@@ -26,19 +24,45 @@ const SimpleChildSelector: React.FC<SimpleChildSelectorProps> = ({
   onCreateChildClick,
   hasError = false,
 }) => {
-  // Ajouter du débogage pour suivre les sélections
-  React.useEffect(() => {
-    console.log("[SimpleChildSelector] Rendering with selection:", selectedChildrenIds);
+  // Ajouter du débogage détaillé pour suivre les sélections
+  useEffect(() => {
+    console.log("[SimpleChildSelector] Rendu avec sélection:", {
+      selectedChildrenIds,
+      selectedCount: selectedChildrenIds.length,
+      hasError,
+      timestamp: new Date().toISOString()
+    });
+    
     if (selectedChildrenIds.length > 0) {
-      console.log("[SimpleChildSelector] Selected children:", 
-        children.filter(child => selectedChildrenIds.includes(child.id)).map(c => c.name)
-      );
+      const selectedNames = children
+        .filter(child => selectedChildrenIds.includes(child.id))
+        .map(c => c.name);
+      
+      console.log("[SimpleChildSelector] Enfants sélectionnés:", {
+        names: selectedNames,
+        ids: selectedChildrenIds
+      });
     }
-  }, [selectedChildrenIds, children]);
+  }, [selectedChildrenIds, children, hasError]);
 
   const handleSelectChild = (childId: string) => {
-    console.log("[SimpleChildSelector] Child clicked:", childId);
+    console.log("[SimpleChildSelector] Clic sur enfant:", {
+      childId,
+      isAlreadySelected: selectedChildrenIds.includes(childId),
+      currentSelection: selectedChildrenIds,
+      timestamp: new Date().toISOString()
+    });
+    
     onChildSelect(childId);
+    
+    // Vérification après délai court pour confirmation
+    setTimeout(() => {
+      console.log("[SimpleChildSelector] Vérification après sélection:", {
+        childId,
+        isNowSelected: selectedChildrenIds.includes(childId),
+        currentSelection: selectedChildrenIds
+      });
+    }, 100);
   };
 
   return (
@@ -70,6 +94,7 @@ const SimpleChildSelector: React.FC<SimpleChildSelectorProps> = ({
                     : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
                 )}
                 data-testid={`child-item-${child.id}`}
+                data-selected={isSelected ? "true" : "false"}
               >
                 <div className="flex-shrink-0">
                   <div 

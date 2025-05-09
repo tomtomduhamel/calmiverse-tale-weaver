@@ -15,7 +15,7 @@ interface RobustChildSelectorProps {
 }
 
 /**
- * Sélecteur d'enfants robuste avec gestion de l'état centralisée
+ * Sélecteur d'enfants robuste avec gestion de l'état centralisée et logs détaillés
  */
 const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
   children,
@@ -34,15 +34,18 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
     console.log("[RobustChildSelector] Rendu avec:", {
       enfantsDisponibles: children.length,
       enfantsSelectionnes: selectedChildrenIds.length,
+      enfantsSelectionnesIds: selectedChildrenIds,
       erreurSelection: hasChildSelectionError,
       erreur: formError,
-      isMobile
+      isMobile,
+      timestamp: new Date().toISOString()
     });
     
     updateDebugInfo({
       robustChildSelectorRendered: new Date().toISOString(),
       availableChildren: children.length,
       selectedChildren: selectedChildrenIds.length,
+      selectedChildrenIds: selectedChildrenIds,
       childSelectorError: hasChildSelectionError ? formError : null
     });
   }, [children, selectedChildrenIds, formError, hasChildSelectionError, isMobile, updateDebugInfo]);
@@ -56,9 +59,13 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
   // Gestionnaire de sélection d'enfant avec logs détaillés
   const handleChildClick = (childId: string) => {
     console.log("[RobustChildSelector] Clic sur l'enfant:", childId, {
-      estDejaSelectionne: selectedChildrenIds.includes(childId)
+      estDejaSelectionne: selectedChildrenIds.includes(childId),
+      selectionActuelle: selectedChildrenIds,
+      timestamp: new Date().toISOString()
     });
-    handleChildSelect(childId);
+    
+    const success = handleChildSelect(childId);
+    console.log(`[RobustChildSelector] Sélection ${success ? 'réussie' : 'échouée'} pour l'enfant:`, childId);
   };
 
   // Afficher un message quand aucun enfant n'est disponible
@@ -120,6 +127,7 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
                 )}
                 onClick={() => handleChildClick(child.id)}
                 data-testid={`child-selector-${child.id}`}
+                data-selected={isSelected ? "true" : "false"}
               >
                 <div className={cn(
                   "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",

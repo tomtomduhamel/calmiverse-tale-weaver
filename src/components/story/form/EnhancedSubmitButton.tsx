@@ -1,29 +1,47 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
 import { cn } from "@/lib/utils";
 
 /**
- * Bouton de soumission amélioré avec gestion d'état centralisée
+ * Bouton de soumission amélioré avec gestion d'état centralisée et logs détaillés
  */
 const EnhancedSubmitButton: React.FC = () => {
-  const { state, isGenerateButtonDisabled } = useStoryForm();
-  const { isSubmitting, selectedChildrenIds, selectedObjective } = state;
+  const { state, isGenerateButtonDisabled, validateForm } = useStoryForm();
+  const { isSubmitting, selectedChildrenIds, selectedObjective, formError } = state;
   
   // Déterminer l'état exact du bouton pour le débogage
   const noChildrenSelected = selectedChildrenIds.length === 0;
   const noObjectiveSelected = !selectedObjective;
   const isDisabled = isGenerateButtonDisabled;
   
-  console.log("[EnhancedSubmitButton] Rendu avec:", {
-    isSubmitting,
-    noChildrenSelected,
-    noObjectiveSelected,
-    isDisabled,
-    selectedChildrenCount: selectedChildrenIds.length
-  });
+  // Vérifier l'état au montage et à chaque changement significatif
+  useEffect(() => {
+    console.log("[EnhancedSubmitButton] État du bouton:", {
+      isSubmitting,
+      noChildrenSelected,
+      noObjectiveSelected,
+      isDisabled,
+      selectedChildrenCount: selectedChildrenIds.length,
+      selectedChildrenIds: selectedChildrenIds,
+      hasError: !!formError,
+      error: formError,
+      timestamp: new Date().toISOString()
+    });
+  }, [isSubmitting, noChildrenSelected, noObjectiveSelected, isDisabled, selectedChildrenIds, formError]);
+  
+  // Tester la validation à chaque rendu du bouton pour le débogage
+  useEffect(() => {
+    const validation = validateForm();
+    console.log("[EnhancedSubmitButton] Test de validation:", {
+      isValid: validation.isValid,
+      error: validation.error,
+      selectedChildrenIds: selectedChildrenIds,
+      timestamp: new Date().toISOString()
+    });
+  }, [validateForm, selectedChildrenIds]);
   
   return (
     <Button
@@ -35,6 +53,17 @@ const EnhancedSubmitButton: React.FC = () => {
       size="lg"
       disabled={isDisabled}
       data-testid="generate-story-button"
+      data-children-selected={selectedChildrenIds.length > 0 ? "true" : "false"}
+      data-objective-selected={selectedObjective ? "true" : "false"}
+      onClick={() => {
+        console.log("[EnhancedSubmitButton] Bouton cliqué avec état:", {
+          isDisabled,
+          noChildrenSelected,
+          noObjectiveSelected,
+          selectedChildrenIds: selectedChildrenIds,
+          timestamp: new Date().toISOString()
+        });
+      }}
     >
       {isSubmitting ? (
         <>

@@ -23,7 +23,7 @@ export const StoryFormProvider: React.FC<StoryFormProviderProps> = ({
   const { user, loading: authLoading } = useSupabaseAuth();
   const { notifyError, notifySuccess } = useNotificationCenter();
   
-  // Log state changes
+  // Log state changes with detailed information
   useEffect(() => {
     console.log("[StoryFormContext] État mis à jour:", {
       enfantsSelectionnes: state.selectedChildrenIds,
@@ -36,35 +36,45 @@ export const StoryFormProvider: React.FC<StoryFormProviderProps> = ({
     });
   }, [state, user]);
 
-  // Effacer les erreurs lorsque les champs changent - Mécanisme centralisé et robuste
+  // Mécanisme AMÉLIORÉ pour effacer les erreurs lorsque les champs changent
   useEffect(() => {
     if (state.formError) {
-      const erreurConcerneEnfants = state.formError.toLowerCase().includes('enfant');
-      const erreurConcerneObjectifs = state.formError.toLowerCase().includes('objectif');
+      const errorText = state.formError.toLowerCase();
+      const erreurConcerneEnfants = errorText.includes('enfant') || errorText.includes('child');
+      const erreurConcerneObjectifs = errorText.includes('objectif');
       
       // Vérifier si l'erreur doit être effacée en fonction de la sélection
       if ((erreurConcerneEnfants && state.selectedChildrenIds.length > 0) ||
           (erreurConcerneObjectifs && state.selectedObjective)) {
-        console.log("[StoryFormContext] Effacement automatique de l'erreur suite à une sélection valide", {
+        console.log("[StoryFormContext] EFFACEMENT AUTOMATIQUE de l'erreur suite à une sélection valide", {
           erreur: state.formError,
           erreurConcerneEnfants,
           erreurConcerneObjectifs,
-          enfantsSelectionnes: state.selectedChildrenIds.length > 0,
-          objectifSelectionne: !!state.selectedObjective
+          enfantsSelectionnes: state.selectedChildrenIds,
+          objectifSelectionne: state.selectedObjective,
+          timestamp: new Date().toISOString()
         });
-        dispatch({ type: "SET_ERROR", error: null });
+        
+        // Utiliser setTimeout pour garantir que l'effacement se produit après le rendu
+        setTimeout(() => {
+          dispatch({ type: "SET_ERROR", error: null });
+        }, 0);
       }
     }
   }, [state.selectedChildrenIds, state.selectedObjective, state.formError]);
   
-  // Gestion centralisée de la sélection d'enfant
+  // Gestion centralisée et améliorée de la sélection d'enfant
   const handleChildSelect = useCallback((childId: string) => {
-    console.log("[StoryFormContext] handleChildSelect appelé avec:", childId);
-    
     if (!childId) {
       console.error("[StoryFormContext] ID d'enfant invalide:", childId);
       return;
     }
+    
+    console.log("[StoryFormContext] handleChildSelect appelé avec:", {
+      childId,
+      selectionActuelle: state.selectedChildrenIds,
+      timestamp: new Date().toISOString()
+    });
     
     // Vérifier que l'enfant existe dans les enfants disponibles
     const childExists = availableChildren.some(child => child.id === childId);
@@ -73,26 +83,38 @@ export const StoryFormProvider: React.FC<StoryFormProviderProps> = ({
       return;
     }
     
+    // Déterminer si l'enfant est déjà sélectionné
+    const isAlreadySelected = state.selectedChildrenIds.includes(childId);
+    console.log(`[StoryFormContext] Enfant ${isAlreadySelected ? 'déjà sélectionné' : 'pas encore sélectionné'}: ${childId}`);
+    
+    // Mettre à jour la sélection
     dispatch({ type: "SELECT_CHILD", childId });
     
-    // Effacer explicitement les erreurs liées à la sélection d'enfant
+    // Forcer l'effacement immédiat des erreurs liées à la sélection d'enfant
     if (state.formError && state.formError.toLowerCase().includes('enfant')) {
-      console.log("[StoryFormContext] Effacement manuel de l'erreur liée à la sélection d'enfant");
+      console.log("[StoryFormContext] EFFACEMENT MANUEL IMMÉDIAT de l'erreur liée à la sélection d'enfant");
       dispatch({ type: "SET_ERROR", error: null });
     }
-  }, [availableChildren, state.formError]);
+    
+    return true;
+  }, [availableChildren, state.formError, state.selectedChildrenIds]);
   
-  // Gestion centralisée de la sélection d'objectif
+  // Gestion centralisée de la sélection d'objectif avec logs améliorés
   const handleObjectiveSelect = useCallback((objective: string) => {
-    console.log("[StoryFormContext] handleObjectiveSelect appelé avec:", objective);
+    console.log("[StoryFormContext] handleObjectiveSelect appelé avec:", {
+      objective,
+      objectifPrecedent: state.selectedObjective,
+      timestamp: new Date().toISOString()
+    });
+    
     dispatch({ type: "SELECT_OBJECTIVE", objective });
     
-    // Effacer explicitement les erreurs liées à la sélection d'objectif
+    // Effacer immédiatement les erreurs liées à la sélection d'objectif
     if (state.formError && state.formError.toLowerCase().includes('objectif')) {
-      console.log("[StoryFormContext] Effacement manuel de l'erreur liée à la sélection d'objectif");
+      console.log("[StoryFormContext] EFFACEMENT MANUEL IMMÉDIAT de l'erreur liée à la sélection d'objectif");
       dispatch({ type: "SET_ERROR", error: null });
     }
-  }, [state.formError]);
+  }, [state.formError, state.selectedObjective]);
   
   // Gestion du formulaire enfant
   const setShowChildForm = useCallback((show: boolean) => {
@@ -111,16 +133,25 @@ export const StoryFormProvider: React.FC<StoryFormProviderProps> = ({
     dispatch({ type: "UPDATE_DEBUG_INFO", info });
   }, []);
   
-  // Gestion centralisée des erreurs
+  // Gestion centralisée des erreurs avec notification améliorée
   const setError = useCallback((error: string | null) => {
-    console.log("[StoryFormContext] setError appelé avec:", error);
+    console.log("[StoryFormContext] setError appelé avec:", {
+      error,
+      stateActuel: {
+        enfantsSelectionnes: state.selectedChildrenIds,
+        nombreEnfantsSelectionnes: state.selectedChildrenIds.length,
+        objectifSelectionne: state.selectedObjective
+      },
+      timestamp: new Date().toISOString()
+    });
+    
     dispatch({ type: "SET_ERROR", error });
     
     // Notification d'erreur si nécessaire
     if (error) {
       notifyError("Erreur de validation", error);
     }
-  }, [notifyError]);
+  }, [notifyError, state.selectedChildrenIds, state.selectedObjective]);
   
   // Gestion de l'état de soumission
   const setIsSubmitting = useCallback((isSubmitting: boolean) => {
@@ -128,12 +159,14 @@ export const StoryFormProvider: React.FC<StoryFormProviderProps> = ({
     dispatch({ type: "SET_SUBMITTING", isSubmitting });
   }, []);
   
-  // Logique de validation centralisée et unifiée
+  // Logique de validation centralisée et améliorée
   const validateForm = useCallback(() => {
     console.log("[StoryFormContext] validateForm appelé", {
       nombreEnfantsSelectionnes: state.selectedChildrenIds.length,
+      selectedChildrenIds: state.selectedChildrenIds,
       objectifSelectionne: !!state.selectedObjective,
-      utilisateurConnecte: !!user
+      utilisateurConnecte: !!user,
+      timestamp: new Date().toISOString()
     });
     
     // Vérification de l'authentification
@@ -143,11 +176,13 @@ export const StoryFormProvider: React.FC<StoryFormProviderProps> = ({
       return { isValid: false, error: errorMsg };
     }
     
-    // Vérification de la sélection d'enfant avec vérification explicite
+    // Vérification de la sélection d'enfant avec vérification explicite et détaillée
     if (!state.selectedChildrenIds || state.selectedChildrenIds.length === 0) {
       const errorMsg = "Veuillez sélectionner au moins un enfant pour créer une histoire";
       console.error("[StoryFormContext] Validation échouée:", errorMsg, {
-        selectedChildrenIds: state.selectedChildrenIds
+        selectedChildrenIds: state.selectedChildrenIds,
+        isArray: Array.isArray(state.selectedChildrenIds),
+        length: state.selectedChildrenIds ? state.selectedChildrenIds.length : 0
       });
       return { isValid: false, error: errorMsg };
     }
@@ -159,14 +194,22 @@ export const StoryFormProvider: React.FC<StoryFormProviderProps> = ({
       return { isValid: false, error: errorMsg };
     }
     
-    console.log("[StoryFormContext] Validation réussie");
+    console.log("[StoryFormContext] Validation réussie avec données:", {
+      enfants: state.selectedChildrenIds,
+      objectif: state.selectedObjective
+    });
     return { isValid: true, error: null };
   }, [state.selectedChildrenIds, state.selectedObjective, user]);
   
-  // Gestionnaire de soumission du formulaire centralisé
+  // Gestionnaire de soumission du formulaire centralisé avec logs améliorés
   const handleFormSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[StoryFormContext] handleFormSubmit appelé");
+    console.log("[StoryFormContext] handleFormSubmit appelé", {
+      isSubmitting: state.isSubmitting,
+      selectedChildrenIds: state.selectedChildrenIds,
+      selectedObjective: state.selectedObjective,
+      timestamp: new Date().toISOString()
+    });
     
     if (state.isSubmitting) {
       console.log("[StoryFormContext] Soumission déjà en cours, annulation");
@@ -247,10 +290,19 @@ export const StoryFormProvider: React.FC<StoryFormProviderProps> = ({
     notifySuccess
   ]);
   
-  // Calcul de l'état du bouton
+  // Calcul de l'état du bouton avec logs explicites
   const isGenerateButtonDisabled = state.isSubmitting || 
     state.selectedChildrenIds.length === 0 || 
     !state.selectedObjective;
+    
+  useEffect(() => {
+    console.log("[StoryFormContext] État du bouton:", {
+      isDisabled: isGenerateButtonDisabled,
+      isSubmitting: state.isSubmitting,
+      childrenSelected: state.selectedChildrenIds.length > 0,
+      objectiveSelected: !!state.selectedObjective
+    });
+  }, [isGenerateButtonDisabled, state.isSubmitting, state.selectedChildrenIds, state.selectedObjective]);
 
   // Valeur du contexte
   const contextValue: StoryFormContextType = {
