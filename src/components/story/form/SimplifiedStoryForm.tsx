@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import type { StoryFormProps } from "../StoryFormTypes";
 import { StoryFormProvider } from "@/contexts/story-form/StoryFormContext";
 import RobustStoryForm from "./RobustStoryForm";
@@ -19,17 +19,20 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
   onStoryCreated,
   objectives
 }) => {
-  console.log("[SimplifiedStoryForm] Rendering with", {
-    childrenCount: children?.length || 0,
-    objectivesCount: objectives?.length || 0,
-    hasOnSubmit: !!onSubmit,
-    hasOnCreateChild: !!onCreateChild,
-    hasOnStoryCreated: !!onStoryCreated
-  });
+  // Journaliser l'initialisation du composant
+  useEffect(() => {
+    console.log("[SimplifiedStoryForm] Initialisation avec", {
+      childrenCount: children?.length || 0,
+      objectivesCount: objectives?.length || 0,
+      hasOnSubmit: !!onSubmit,
+      hasOnCreateChild: !!onCreateChild,
+      hasOnStoryCreated: !!onStoryCreated
+    });
+  }, [children, objectives, onSubmit, onCreateChild, onStoryCreated]);
 
   // Création d'une fonction wrapper pour garantir la compatibilité des types
   const handleCreateChild = onCreateChild ? () => onCreateChild : () => {
-    console.warn("No onCreateChild handler provided");
+    console.warn("[SimplifiedStoryForm] Aucun gestionnaire onCreateChild fourni");
     return Promise.resolve("");
   };
 
@@ -39,11 +42,13 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
       availableChildren={children || []}
       onStoryCreated={onStoryCreated}
     >
-      <RobustStoryForm
-        children={children || []}
-        onCreateChildClick={handleCreateChild}
-        objectives={objectives}
-      />
+      <div className="story-form-container" data-testid="simplified-story-form">
+        <RobustStoryForm
+          children={children || []}
+          onCreateChildClick={handleCreateChild}
+          objectives={objectives}
+        />
+      </div>
     </StoryFormProvider>
   );
 };

@@ -21,7 +21,7 @@ export type StoryFormAction =
   | { type: "RESET_FORM" }
   | { type: "UPDATE_DEBUG_INFO"; info: Record<string, any> };
 
-// Type pour le contexte
+// Type pour le contexte avec fonctions de validation exposées
 export interface StoryFormContextType {
   state: StoryFormState;
   handleChildSelect: (childId: string) => void;
@@ -33,6 +33,8 @@ export interface StoryFormContextType {
   user: any;
   authLoading: boolean;
   updateDebugInfo: (info: Record<string, any>) => void;
+  setError: (error: string | null) => void;
+  validateForm: () => { isValid: boolean; error: string | null };
 }
 
 // Props pour le provider

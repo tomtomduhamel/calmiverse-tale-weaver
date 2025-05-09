@@ -32,36 +32,54 @@ const RobustStoryForm: React.FC<RobustStoryFormProps> = ({
   const { 
     state, 
     handleFormSubmit, 
-    updateDebugInfo 
+    updateDebugInfo,
+    validateForm 
   } = useStoryForm();
-  const { formError } = state;
+  
+  const { formError, selectedChildrenIds, selectedObjective } = state;
   const isMobile = useIsMobile();
   
   // Journaliser les rendus pour débogage
   useEffect(() => {
-    console.log("[RobustStoryForm] Render with", {
+    console.log("[RobustStoryForm] Rendu avec", {
       childCount: children.length,
       objectiveCount: objectives.length,
-      hasError: !!formError
+      hasError: !!formError,
+      selectedChildrenCount: selectedChildrenIds.length,
+      selectedObjective,
     });
     
     updateDebugInfo({
       formComponentRender: new Date().toISOString(),
       availableChildrenCount: children.length,
-      availableObjectivesCount: objectives.length
+      availableObjectivesCount: objectives.length,
+      selectedChildrenCount: selectedChildrenIds.length,
+      hasSelectedObjective: !!selectedObjective
     });
-  }, [children, objectives, formError, updateDebugInfo]);
+  }, [
+    children, 
+    objectives, 
+    formError, 
+    selectedChildrenIds, 
+    selectedObjective,
+    updateDebugInfo
+  ]);
   
   // Force validation for debugging
   const handleForceValidation = () => {
     console.log("[RobustStoryForm] Force validation triggered");
     
+    const validationResult = validateForm();
+    console.log("[RobustStoryForm] Résultat de la validation forcée:", validationResult);
+    
     updateDebugInfo({
       forceValidationTimestamp: new Date().toISOString(),
       validationData: {
-        childrenSelected: state.selectedChildrenIds.length > 0,
-        objectiveSelected: !!state.selectedObjective,
-        hasFormError: !!state.formError
+        isValid: validationResult.isValid,
+        error: validationResult.error,
+        childrenSelected: selectedChildrenIds.length > 0,
+        objectiveSelected: !!selectedObjective,
+        hasFormError: !!formError
       }
     });
   };
@@ -89,7 +107,7 @@ const RobustStoryForm: React.FC<RobustStoryFormProps> = ({
           <AdvancedDebugPanel onForceValidation={handleForceValidation} />
           
           {formError && (
-            <StoryError error={formError} className="animate-pulse" />
+            <StoryError error={formError} className="mb-4 animate-pulse" />
           )}
           
           <RobustChildSelector 

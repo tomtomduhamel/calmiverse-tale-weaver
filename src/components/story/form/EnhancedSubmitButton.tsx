@@ -1,71 +1,50 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Wand2, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Loader2, Sparkles } from "lucide-react";
 import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
-
-interface EnhancedSubmitButtonProps {
-  className?: string;
-}
+import { cn } from "@/lib/utils";
 
 /**
- * Bouton de soumission amélioré avec feedback visuel renforcé
- * et contrôles d'accès au clavier
+ * Bouton de soumission amélioré avec gestion d'état centralisée
  */
-const EnhancedSubmitButton: React.FC<EnhancedSubmitButtonProps> = ({ className }) => {
+const EnhancedSubmitButton: React.FC = () => {
   const { state, isGenerateButtonDisabled } = useStoryForm();
-  const { isSubmitting } = state;
+  const { isSubmitting, selectedChildrenIds, selectedObjective } = state;
   
-  // Déterminer les raisons de désactivation du bouton
-  const getButtonHint = () => {
-    if (isSubmitting) {
-      return "Génération en cours...";
-    }
-    
-    if (state.selectedChildrenIds.length === 0 && !state.selectedObjective) {
-      return "Veuillez sélectionner au moins un enfant et un objectif";
-    }
-    
-    if (state.selectedChildrenIds.length === 0) {
-      return "Veuillez sélectionner au moins un enfant";
-    }
-    
-    if (!state.selectedObjective) {
-      return "Veuillez sélectionner un objectif";
-    }
-    
-    return "Créer une histoire";
-  };
+  // Déterminer l'état exact du bouton pour le débogage
+  const noChildrenSelected = selectedChildrenIds.length === 0;
+  const noObjectiveSelected = !selectedObjective;
+  const isDisabled = isGenerateButtonDisabled;
+  
+  console.log("[EnhancedSubmitButton] Rendu avec:", {
+    isSubmitting,
+    noChildrenSelected,
+    noObjectiveSelected,
+    isDisabled,
+    selectedChildrenCount: selectedChildrenIds.length
+  });
   
   return (
     <Button
       type="submit"
       className={cn(
-        "w-full text-white dark:text-white py-6 text-lg relative overflow-hidden group",
-        "transition-all duration-300",
-        isGenerateButtonDisabled ? "opacity-70" : "hover:scale-[1.02] active:scale-[0.98]",
-        className
+        "w-full sm:w-auto sm:px-8 relative overflow-hidden transition-all",
+        isDisabled ? "opacity-70" : "opacity-100"
       )}
-      disabled={isGenerateButtonDisabled}
-      aria-label={getButtonHint()}
+      size="lg"
+      disabled={isDisabled}
       data-testid="generate-story-button"
     >
       {isSubmitting ? (
         <>
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Génération en cours...
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Création en cours...
         </>
       ) : (
         <>
-          <Wand2 className={cn(
-            "mr-2 h-5 w-5",
-            "transition-transform duration-300 group-hover:rotate-12"
-          )} />
-          Créer une histoire
-          
-          {/* Animation de fond subtile */}
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-primary/0 via-primary/30 to-primary/0 opacity-0 group-hover:opacity-100 animate-shimmer"></div>
+          <Sparkles className="mr-2 h-4 w-4" />
+          Générer une histoire
         </>
       )}
     </Button>

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,13 +21,44 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
   children,
   onCreateChildClick,
 }) => {
-  const { state, handleChildSelect } = useStoryForm();
-  const { selectedChildrenIds } = state;
+  const { state, handleChildSelect, updateDebugInfo } = useStoryForm();
+  const { selectedChildrenIds, formError } = state;
   const isMobile = useIsMobile();
+  
+  // Déterminer si l'erreur concerne la sélection d'enfant
+  const hasChildSelectionError = formError && 
+    (formError.toLowerCase().includes('enfant') || formError.toLowerCase().includes('child'));
+  
+  // Journaliser chaque rendu pour faciliter le débogage
+  useEffect(() => {
+    console.log("[RobustChildSelector] Rendu avec:", {
+      enfantsDisponibles: children.length,
+      enfantsSelectionnes: selectedChildrenIds.length,
+      erreurSelection: hasChildSelectionError,
+      erreur: formError,
+      isMobile
+    });
+    
+    updateDebugInfo({
+      robustChildSelectorRendered: new Date().toISOString(),
+      availableChildren: children.length,
+      selectedChildren: selectedChildrenIds.length,
+      childSelectorError: hasChildSelectionError ? formError : null
+    });
+  }, [children, selectedChildrenIds, formError, hasChildSelectionError, isMobile, updateDebugInfo]);
 
   const handleCreateClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    console.log("[RobustChildSelector] Clic sur 'Créer un profil d'enfant'");
     onCreateChildClick();
+  };
+
+  // Gestionnaire de sélection d'enfant avec logs détaillés
+  const handleChildClick = (childId: string) => {
+    console.log("[RobustChildSelector] Clic sur l'enfant:", childId, {
+      estDejaSelectionne: selectedChildrenIds.includes(childId)
+    });
+    handleChildSelect(childId);
   };
 
   // Afficher un message quand aucun enfant n'est disponible
@@ -47,9 +78,26 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
   }
 
   return (
-    <div>
-      <h2 className="text-lg font-medium mb-2">Choisir un enfant</h2>
-      <p className="text-muted-foreground text-sm mb-4">
+    <div className={cn(
+      "space-y-4",
+      hasChildSelectionError ? "p-3 border border-destructive/50 rounded-lg bg-destructive/5" : ""
+    )}>
+      <div className={cn(
+        "flex justify-between items-center",
+        hasChildSelectionError ? "text-destructive" : ""
+      )}>
+        <h2 className="text-lg font-medium">Choisir un enfant</h2>
+        {hasChildSelectionError && (
+          <p className="text-sm text-destructive font-medium">
+            Sélection requise
+          </p>
+        )}
+      </div>
+      
+      <p className={cn(
+        "text-muted-foreground text-sm mb-4",
+        hasChildSelectionError ? "text-destructive/80" : ""
+      )}>
         Sélectionnez un ou plusieurs enfants pour personnaliser l'histoire
       </p>
 
@@ -66,15 +114,31 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
                   "p-3 border rounded-lg cursor-pointer transition-colors flex items-center gap-3",
                   isSelected
                     ? "bg-primary/10 border-primary/30"
-                    : "hover:bg-muted"
+                    : hasChildSelectionError 
+                      ? "border-destructive/30 hover:border-destructive hover:bg-destructive/10" 
+                      : "hover:bg-muted"
                 )}
-                onClick={() => handleChildSelect(child.id)}
+                onClick={() => handleChildClick(child.id)}
+                data-testid={`child-selector-${child.id}`}
               >
-                <div className="flex-shrink-0 w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                <div className={cn(
+                  "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
+                  isSelected 
+                    ? "bg-primary/20" 
+                    : hasChildSelectionError 
+                      ? "bg-destructive/10" 
+                      : "bg-primary/10"
+                )}>
                   {child.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div className="font-medium">{child.name}</div>
+                  <div className={cn(
+                    "font-medium",
+                    isSelected && "text-primary"
+                  )}>
+                    {child.name}
+                    {isSelected && <span className="ml-2 text-xs text-primary">✓</span>}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     {childAge} ans
                   </div>
@@ -89,7 +153,10 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
         <Button
           variant="outline"
           onClick={handleCreateClick}
-          className="w-full sm:w-auto"
+          className={cn(
+            "w-full sm:w-auto",
+            hasChildSelectionError && "border-destructive/40 text-destructive hover:bg-destructive/10"
+          )}
         >
           <PlusCircle className="w-4 h-4 mr-2" />
           Ajouter un nouvel enfant
