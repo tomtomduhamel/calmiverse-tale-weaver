@@ -1,7 +1,7 @@
 
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import type { ToastActionElement } from "@/components/ui/toast";
+import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
 export type NotificationType = "success" | "error" | "warning" | "info";
 
@@ -26,11 +26,16 @@ export const useNotificationCenter = () => {
       options?: NotificationOptions
     ) => {
       // Configuration de base de la notification
-      const notificationConfig = {
+      const notificationConfig: ToastProps & { 
+        title: string; 
+        description: string;
+        action?: ToastActionElement;
+        className?: string;
+      } = {
         title,
         description: message,
         // Pour error et warning, on utilise le variant destructive
-        variant: type === "error" || type === "warning" ? "destructive" : "default",
+        variant: type === "error" || type === "warning" ? "destructive" : "default" as const,
         duration: options?.duration || (type === "error" ? 6000 : 4000),
         className: options?.className,
         action: options?.action,
