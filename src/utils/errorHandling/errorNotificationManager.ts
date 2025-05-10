@@ -14,6 +14,7 @@ interface ErrorNotificationConfig {
 
 /**
  * Classe pour gérer les notifications d'erreur de manière centralisée
+ * avec une meilleure intégration avec le système de notification global
  */
 class ErrorNotificationManager {
   // Singleton instance
@@ -24,6 +25,9 @@ class ErrorNotificationManager {
   
   // Map des erreurs fréquentes avec leurs messages conviviaux
   private commonErrors: Map<string, ErrorNotificationConfig> = new Map();
+  
+  // Référence au système de notification central
+  private notifyFn: ((type: NotificationType, title: string, message: string, options?: any) => void) | null = null;
   
   private constructor() {
     this.initializeCommonErrors();
@@ -57,6 +61,21 @@ class ErrorNotificationManager {
       title: "Utilisateur introuvable",
       message: "Aucun compte n'est associé à cette adresse e-mail.",
       category: "auth",
+    });
+    
+    // Erreurs spécifiques à la création d'histoire
+    this.commonErrors.set("story/missing-children", {
+      type: "warning",
+      title: "Sélection requise",
+      message: "Veuillez sélectionner au moins un enfant pour créer une histoire.",
+      category: "validation",
+    });
+    
+    this.commonErrors.set("story/missing-objective", {
+      type: "warning",
+      title: "Objectif requis",
+      message: "Veuillez sélectionner un objectif pour l'histoire.",
+      category: "validation",
     });
     
     // Erreurs réseau
@@ -166,6 +185,29 @@ class ErrorNotificationManager {
     
     document.dispatchEvent(errorEvent);
     
+    // Si nous avons un système de notification configuré, l'utiliser directement
+    if (this.notifyFn && typeof this.notifyFn === 'function') {
+      try {
+        this.notifyFn(
+          config.type,
+          config.title,
+          config.message,
+          {
+            action: config.actionLabel ? {
+              label: config.actionLabel,
+              onClick: () => {
+                document.dispatchEvent(new CustomEvent('error-action', {
+                  detail: { category: config.category, action: config.actionLabel }
+                }));
+              }
+            } : undefined
+          }
+        );
+      } catch (notifyError) {
+        console.error("[ErrorManager] Error in notification system:", notifyError);
+      }
+    }
+    
     return config;
   }
   
@@ -173,11 +215,14 @@ class ErrorNotificationManager {
    * Intégration avec le système de notification centralisé
    */
   public initWithNotificationCenter(notifyFn: (type: NotificationType, title: string, message: string, options?: any) => void): void {
+    // Stocker la référence à la fonction de notification
+    this.notifyFn = notifyFn;
+    
     // Écouter les événements d'erreur de l'application
     document.addEventListener('app-error', ((event: CustomEvent) => {
       const { config } = event.detail;
       
-      if (config) {
+      if (config && notifyFn) {
         notifyFn(
           config.type, 
           config.title, 
@@ -186,7 +231,6 @@ class ErrorNotificationManager {
             action: config.actionLabel ? {
               label: config.actionLabel,
               onClick: () => {
-                // Créer un événement pour l'action d'erreur
                 document.dispatchEvent(new CustomEvent('error-action', {
                   detail: { category: config.category, action: config.actionLabel }
                 }));
@@ -198,6 +242,18 @@ class ErrorNotificationManager {
     }) as EventListener);
     
     console.log("[ErrorNotificationManager] Initialized with notification center");
+  }
+  
+  /**
+   * Méthode utilitaire pour créer une erreur de validation avec notification
+   */
+  public createValidationError(message: string, errorCode?: string): Error {
+    const error = new Error(message);
+    // @ts-ignore
+    error.code = errorCode || 'validation/form-error';
+    
+    this.handleError(error, 'validation');
+    return error;
   }
 }
 

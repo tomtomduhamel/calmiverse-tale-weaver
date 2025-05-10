@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
 import { cn } from "@/lib/utils";
+import { useNotificationCenter } from "@/hooks/useNotificationCenter";
 
 /**
- * Bouton de soumission amélioré avec gestion d'état centralisée et logs détaillés
+ * Bouton de soumission amélioré avec gestion d'état centralisée et système de notification
  */
 const EnhancedSubmitButton: React.FC = () => {
   const { state, isGenerateButtonDisabled, validateForm } = useStoryForm();
+  const { notifyWarning } = useNotificationCenter();
   const { isSubmitting, selectedChildrenIds, selectedObjective, formError } = state;
   
   // Déterminer l'état exact du bouton pour le débogage
@@ -43,6 +45,30 @@ const EnhancedSubmitButton: React.FC = () => {
     });
   }, [validateForm, selectedChildrenIds]);
   
+  const handleClick = () => {
+    console.log("[EnhancedSubmitButton] Bouton cliqué avec état:", {
+      isDisabled,
+      noChildrenSelected,
+      noObjectiveSelected,
+      selectedChildrenIds: selectedChildrenIds,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Afficher une alerte si le bouton est cliqué alors qu'il devrait être désactivé
+    // Cela permet de déboguer les problèmes où l'état du bouton n'est pas correctement mis à jour
+    if (noChildrenSelected) {
+      notifyWarning(
+        "Sélection requise", 
+        "Veuillez sélectionner au moins un enfant pour générer une histoire."
+      );
+    } else if (noObjectiveSelected) {
+      notifyWarning(
+        "Objectif requis", 
+        "Veuillez sélectionner un objectif pour l'histoire."
+      );
+    }
+  };
+  
   return (
     <Button
       type="submit"
@@ -55,15 +81,7 @@ const EnhancedSubmitButton: React.FC = () => {
       data-testid="generate-story-button"
       data-children-selected={selectedChildrenIds.length > 0 ? "true" : "false"}
       data-objective-selected={selectedObjective ? "true" : "false"}
-      onClick={() => {
-        console.log("[EnhancedSubmitButton] Bouton cliqué avec état:", {
-          isDisabled,
-          noChildrenSelected,
-          noObjectiveSelected,
-          selectedChildrenIds: selectedChildrenIds,
-          timestamp: new Date().toISOString()
-        });
-      }}
+      onClick={handleClick}
     >
       {isSubmitting ? (
         <>

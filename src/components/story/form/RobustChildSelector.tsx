@@ -1,175 +1,167 @@
 
 import React, { useEffect } from "react";
-import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
+import { UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Child } from "@/types/child";
 import { calculateAge } from "@/utils/age";
+import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
 
 interface RobustChildSelectorProps {
   children: Child[];
+  selectedChildrenIds: string[];
+  onChildSelect: (childId: string) => void;
   onCreateChildClick: () => void;
+  hasError?: boolean;
 }
 
 /**
- * Sélecteur d'enfants robuste avec gestion de l'état centralisée et logs détaillés
+ * Composant robuste pour la sélection des enfants avec débogage amélioré
  */
 const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
   children,
+  selectedChildrenIds,
+  onChildSelect,
   onCreateChildClick,
+  hasError = false,
 }) => {
-  const { state, handleChildSelect, updateDebugInfo } = useStoryForm();
-  const { selectedChildrenIds, formError } = state;
-  const isMobile = useIsMobile();
+  const { setError } = useStoryForm();
   
-  // Déterminer si l'erreur concerne la sélection d'enfant
-  const hasChildSelectionError = formError && 
-    (formError.toLowerCase().includes('enfant') || formError.toLowerCase().includes('child'));
-  
-  // Journaliser chaque rendu pour faciliter le débogage
+  // Ajouter du débogage détaillé pour suivre les sélections
   useEffect(() => {
-    console.log("[RobustChildSelector] Rendu avec:", {
-      enfantsDisponibles: children.length,
-      enfantsSelectionnes: selectedChildrenIds.length,
-      enfantsSelectionnesIds: selectedChildrenIds,
-      erreurSelection: hasChildSelectionError,
-      erreur: formError,
-      isMobile,
+    console.log("[RobustChildSelector] Rendu avec sélection:", {
+      selectedChildrenIds,
+      selectedCount: selectedChildrenIds.length,
+      hasError,
       timestamp: new Date().toISOString()
     });
     
-    updateDebugInfo({
-      robustChildSelectorRendered: new Date().toISOString(),
-      availableChildren: children.length,
-      selectedChildren: selectedChildrenIds.length,
-      selectedChildrenIds: selectedChildrenIds,
-      childSelectorError: hasChildSelectionError ? formError : null
-    });
-  }, [children, selectedChildrenIds, formError, hasChildSelectionError, isMobile, updateDebugInfo]);
+    if (selectedChildrenIds.length > 0) {
+      const selectedNames = children
+        .filter(child => selectedChildrenIds.includes(child.id))
+        .map(c => c.name);
+      
+      console.log("[RobustChildSelector] Enfants sélectionnés:", {
+        names: selectedNames,
+        ids: selectedChildrenIds
+      });
+      
+      // Effacer automatiquement les erreurs liées aux enfants
+      if (hasError) {
+        console.log("[RobustChildSelector] Tentative d'effacement automatique d'erreur");
+        // Utiliser setTimeout pour s'assurer que l'effacement se produit après le rendu
+        setTimeout(() => setError(null), 0);
+      }
+    }
+  }, [selectedChildrenIds, children, hasError, setError]);
 
-  const handleCreateClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log("[RobustChildSelector] Clic sur 'Créer un profil d'enfant'");
-    onCreateChildClick();
-  };
-
-  // Gestionnaire de sélection d'enfant avec logs détaillés
-  const handleChildClick = (childId: string) => {
-    console.log("[RobustChildSelector] Clic sur l'enfant:", childId, {
-      estDejaSelectionne: selectedChildrenIds.includes(childId),
-      selectionActuelle: selectedChildrenIds,
+  const handleSelectChild = (childId: string) => {
+    console.log("[RobustChildSelector] Clic sur enfant:", {
+      childId,
+      isAlreadySelected: selectedChildrenIds.includes(childId),
+      currentSelection: selectedChildrenIds,
       timestamp: new Date().toISOString()
     });
     
-    const success = handleChildSelect(childId);
-    console.log(`[RobustChildSelector] Sélection ${success ? 'réussie' : 'échouée'} pour l'enfant:`, childId);
+    // Correction de l'erreur TS1345: appeler onChildSelect sans vérifier sa valeur de retour
+    onChildSelect(childId);
+    
+    // Vérification après délai court pour confirmation
+    setTimeout(() => {
+      console.log("[RobustChildSelector] Vérification après sélection:", {
+        childId,
+        isNowSelected: selectedChildrenIds.includes(childId),
+        currentSelection: selectedChildrenIds
+      });
+    }, 100);
   };
-
-  // Afficher un message quand aucun enfant n'est disponible
-  if (!children || children.length === 0) {
-    return (
-      <div className="py-6 text-center">
-        <p className="text-muted-foreground mb-4">
-          Vous n'avez pas encore créé de profil d'enfant.
-          Créez-en un pour commencer à générer des histoires.
-        </p>
-        <Button onClick={handleCreateClick}>
-          <PlusCircle className="w-4 h-4 mr-2" />
-          Créer un profil d'enfant
-        </Button>
-      </div>
-    );
-  }
 
   return (
-    <div className={cn(
-      "space-y-4",
-      hasChildSelectionError ? "p-3 border border-destructive/50 rounded-lg bg-destructive/5" : ""
-    )}>
+    <div className="space-y-4">
       <div className={cn(
-        "flex justify-between items-center",
-        hasChildSelectionError ? "text-destructive" : ""
+        "text-secondary dark:text-white text-lg font-medium",
+        hasError ? "text-destructive" : ""
       )}>
-        <h2 className="text-lg font-medium">Choisir un enfant</h2>
-        {hasChildSelectionError && (
-          <p className="text-sm text-destructive font-medium">
-            Sélection requise
-          </p>
-        )}
+        Pour qui est cette histoire ?
+        {hasError && <span className="ml-2 text-sm text-destructive">*</span>}
       </div>
       
-      <p className={cn(
-        "text-muted-foreground text-sm mb-4",
-        hasChildSelectionError ? "text-destructive/80" : ""
-      )}>
-        Sélectionnez un ou plusieurs enfants pour personnaliser l'histoire
-      </p>
-
-      <ScrollArea className={isMobile ? "h-[180px]" : "h-auto max-h-[260px]"}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+      {children.length > 0 && (
+        <div className={cn(
+          "space-y-2",
+          hasError ? "border-2 border-destructive/20 p-2 rounded-lg" : ""
+        )}>
           {children.map((child) => {
             const isSelected = selectedChildrenIds.includes(child.id);
-            const childAge = calculateAge(child.birthDate);
             
             return (
               <div
                 key={child.id}
+                onClick={() => handleSelectChild(child.id)}
                 className={cn(
-                  "p-3 border rounded-lg cursor-pointer transition-colors flex items-center gap-3",
-                  isSelected
-                    ? "bg-primary/10 border-primary/30"
-                    : hasChildSelectionError 
-                      ? "border-destructive/30 hover:border-destructive hover:bg-destructive/10" 
-                      : "hover:bg-muted"
+                  "flex items-center space-x-3 p-3 rounded-lg transition-colors cursor-pointer",
+                  isSelected 
+                    ? "bg-primary/10 hover:bg-primary/20" 
+                    : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
                 )}
-                onClick={() => handleChildClick(child.id)}
-                data-testid={`child-selector-${child.id}`}
+                data-testid={`child-item-${child.id}`}
                 data-selected={isSelected ? "true" : "false"}
               >
-                <div className={cn(
-                  "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
-                  isSelected 
-                    ? "bg-primary/20" 
-                    : hasChildSelectionError 
-                      ? "bg-destructive/10" 
-                      : "bg-primary/10"
-                )}>
-                  {child.name.charAt(0).toUpperCase()}
+                <div className="flex-shrink-0">
+                  <div 
+                    className={cn(
+                      "w-5 h-5 rounded border flex items-center justify-center",
+                      isSelected 
+                        ? "bg-primary border-primary text-white" 
+                        : "border-gray-300 bg-white"
+                    )}
+                  >
+                    {isSelected && (
+                      <svg 
+                        viewBox="0 0 24 24" 
+                        width="16" 
+                        height="16" 
+                        stroke="currentColor" 
+                        strokeWidth="3" 
+                        fill="none" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <div className={cn(
-                    "font-medium",
-                    isSelected && "text-primary"
-                  )}>
-                    {child.name}
-                    {isSelected && <span className="ml-2 text-xs text-primary">✓</span>}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {childAge} ans
-                  </div>
+                
+                <div className={cn(
+                  "text-base font-medium leading-none",
+                  isSelected ? "font-semibold text-primary" : ""
+                )}>
+                  {child.name} ({calculateAge(child.birthDate)} ans)
+                  {isSelected && (
+                    <span className="ml-2 text-xs text-primary">
+                      ✓ Sélectionné
+                    </span>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
-      </ScrollArea>
-
-      <div className="mt-4">
-        <Button
-          variant="outline"
-          onClick={handleCreateClick}
-          className={cn(
-            "w-full sm:w-auto",
-            hasChildSelectionError && "border-destructive/40 text-destructive hover:bg-destructive/10"
-          )}
-        >
-          <PlusCircle className="w-4 h-4 mr-2" />
-          Ajouter un nouvel enfant
-        </Button>
-      </div>
+      )}
+      
+      <Button
+        type="button"
+        onClick={onCreateChildClick}
+        variant="outline"
+        className={cn(
+          "w-full flex items-center justify-center gap-2 py-4 sm:py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors",
+          hasError ? "border-destructive/50 hover:border-destructive" : ""
+        )}
+      >
+        <UserPlus className="w-5 h-5" />
+        {children.length > 0 ? "Ajouter un autre enfant" : "Créer un profil enfant"}
+      </Button>
     </div>
   );
 };
