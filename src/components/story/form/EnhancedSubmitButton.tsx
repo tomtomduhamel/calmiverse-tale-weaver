@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
@@ -14,6 +14,14 @@ const EnhancedSubmitButton: React.FC = () => {
   const { notifyWarning } = useNotificationCenter();
   const { isSubmitting, selectedChildrenIds, selectedObjective, formError } = state;
   
+  // Référence pour suivre les rendus
+  const renderCountRef = useRef(0);
+  const lastStateRef = useRef({ 
+    isSubmitting, 
+    childrenCount: selectedChildrenIds.length, 
+    hasObjective: !!selectedObjective 
+  });
+  
   // Déterminer l'état exact du bouton pour le débogage
   const noChildrenSelected = selectedChildrenIds.length === 0;
   const noObjectiveSelected = !selectedObjective;
@@ -21,7 +29,21 @@ const EnhancedSubmitButton: React.FC = () => {
   
   // Vérifier l'état au montage et à chaque changement significatif
   useEffect(() => {
-    console.log("[EnhancedSubmitButton] État du bouton:", {
+    renderCountRef.current++;
+    
+    // Vérifier les changements d'état
+    const currentState = { 
+      isSubmitting, 
+      childrenCount: selectedChildrenIds.length, 
+      hasObjective: !!selectedObjective 
+    };
+    
+    const stateChanged = 
+      currentState.isSubmitting !== lastStateRef.current.isSubmitting ||
+      currentState.childrenCount !== lastStateRef.current.childrenCount ||
+      currentState.hasObjective !== lastStateRef.current.hasObjective;
+    
+    console.log("[EnhancedSubmitButton] Rendu #", renderCountRef.current, {
       isSubmitting,
       noChildrenSelected,
       noObjectiveSelected,
@@ -30,9 +52,33 @@ const EnhancedSubmitButton: React.FC = () => {
       selectedChildrenIds: selectedChildrenIds,
       hasError: !!formError,
       error: formError,
+      stateChanged,
       timestamp: new Date().toISOString()
     });
-  }, [isSubmitting, noChildrenSelected, noObjectiveSelected, isDisabled, selectedChildrenIds, formError]);
+    
+    // Mettre à jour la référence d'état
+    lastStateRef.current = currentState;
+    
+    // Si le bouton devient actif, on log le changement
+    if (!isDisabled && lastStateRef.current.isDisabled) {
+      console.log("[EnhancedSubmitButton] Le bouton est devenu ACTIF", {
+        selectedChildrenIds,
+        objective: selectedObjective
+      });
+    }
+    
+    // Si le bouton devient inactif, on log le changement
+    if (isDisabled && !lastStateRef.current.isDisabled) {
+      console.log("[EnhancedSubmitButton] Le bouton est devenu INACTIF", {
+        raison: noChildrenSelected ? "pas d'enfants sélectionnés" : 
+               noObjectiveSelected ? "pas d'objectif sélectionné" : 
+               "soumission en cours"
+      });
+    }
+    
+    // Mettre à jour la référence d'état du bouton
+    lastStateRef.current.isDisabled = isDisabled;
+  }, [isSubmitting, noChildrenSelected, noObjectiveSelected, isDisabled, selectedChildrenIds, formError, selectedObjective]);
   
   // Tester la validation à chaque rendu du bouton pour le débogage
   useEffect(() => {
@@ -81,6 +127,7 @@ const EnhancedSubmitButton: React.FC = () => {
       data-testid="generate-story-button"
       data-children-selected={selectedChildrenIds.length > 0 ? "true" : "false"}
       data-objective-selected={selectedObjective ? "true" : "false"}
+      data-is-submitting={isSubmitting ? "true" : "false"}
       onClick={handleClick}
     >
       {isSubmitting ? (

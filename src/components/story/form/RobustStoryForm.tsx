@@ -33,7 +33,8 @@ const RobustStoryForm: React.FC<RobustStoryFormProps> = ({
     state, 
     handleFormSubmit, 
     updateDebugInfo,
-    validateForm 
+    validateForm,
+    handleChildSelect
   } = useStoryForm();
   
   const { formError, selectedChildrenIds, selectedObjective } = state;
@@ -47,6 +48,7 @@ const RobustStoryForm: React.FC<RobustStoryFormProps> = ({
       hasError: !!formError,
       selectedChildrenCount: selectedChildrenIds.length,
       selectedObjective,
+      timestamp: new Date().toISOString()
     });
     
     updateDebugInfo({
@@ -96,6 +98,7 @@ const RobustStoryForm: React.FC<RobustStoryFormProps> = ({
           onSubmit={handleFormSubmit}
           className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl mb-20"
           data-testid="story-form"
+          data-form-valid={selectedChildrenIds.length > 0 && !!selectedObjective ? "true" : "false"}
         >
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-primary">Créer une nouvelle histoire</h1>
@@ -112,7 +115,10 @@ const RobustStoryForm: React.FC<RobustStoryFormProps> = ({
           
           <RobustChildSelector 
             children={children}
+            selectedChildrenIds={selectedChildrenIds}
+            onChildSelect={handleChildSelect}
             onCreateChildClick={onCreateChildClick}
+            hasError={formError?.toLowerCase().includes('enfant') || formError?.toLowerCase().includes('child')}
           />
 
           <EnhancedObjectiveSelector objectives={objectives} />
