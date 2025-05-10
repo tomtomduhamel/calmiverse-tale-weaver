@@ -19,7 +19,8 @@ const EnhancedSubmitButton: React.FC = () => {
   const lastStateRef = useRef({ 
     isSubmitting, 
     childrenCount: selectedChildrenIds.length, 
-    hasObjective: !!selectedObjective 
+    hasObjective: !!selectedObjective,
+    isDisabled: isGenerateButtonDisabled
   });
   
   // Déterminer l'état exact du bouton pour le débogage
@@ -35,13 +36,15 @@ const EnhancedSubmitButton: React.FC = () => {
     const currentState = { 
       isSubmitting, 
       childrenCount: selectedChildrenIds.length, 
-      hasObjective: !!selectedObjective 
+      hasObjective: !!selectedObjective,
+      isDisabled
     };
     
     const stateChanged = 
       currentState.isSubmitting !== lastStateRef.current.isSubmitting ||
       currentState.childrenCount !== lastStateRef.current.childrenCount ||
-      currentState.hasObjective !== lastStateRef.current.hasObjective;
+      currentState.hasObjective !== lastStateRef.current.hasObjective ||
+      currentState.isDisabled !== lastStateRef.current.isDisabled;
     
     console.log("[EnhancedSubmitButton] Rendu #", renderCountRef.current, {
       isSubmitting,
@@ -75,9 +78,6 @@ const EnhancedSubmitButton: React.FC = () => {
                "soumission en cours"
       });
     }
-    
-    // Mettre à jour la référence d'état du bouton
-    lastStateRef.current.isDisabled = isDisabled;
   }, [isSubmitting, noChildrenSelected, noObjectiveSelected, isDisabled, selectedChildrenIds, formError, selectedObjective]);
   
   // Tester la validation à chaque rendu du bouton pour le débogage

@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StoryError } from "./StoryError";
-import RobustChildSelector from "./RobustChildSelector";
+import UnifiedChildSelector from "./UnifiedChildSelector";
 import EnhancedObjectiveSelector from "./EnhancedObjectiveSelector";
 import EnhancedSubmitButton from "./EnhancedSubmitButton";
 import AdvancedDebugPanel from "./AdvancedDebugPanel";
@@ -113,12 +113,13 @@ const RobustStoryForm: React.FC<RobustStoryFormProps> = ({
             <StoryError error={formError} className="mb-4 animate-pulse" />
           )}
           
-          <RobustChildSelector 
+          <UnifiedChildSelector 
             children={children}
             selectedChildrenIds={selectedChildrenIds}
             onChildSelect={handleChildSelect}
             onCreateChildClick={onCreateChildClick}
             hasError={formError?.toLowerCase().includes('enfant') || formError?.toLowerCase().includes('child')}
+            variant="enhanced"
           />
 
           <EnhancedObjectiveSelector objectives={objectives} />

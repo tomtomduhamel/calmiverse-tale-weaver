@@ -1,55 +1,87 @@
 
-import React, { useEffect } from "react";
-import type { StoryFormProps } from "../StoryFormTypes";
-import { StoryFormProvider } from "@/contexts/story-form/StoryFormContext";
-import RobustStoryForm from "./RobustStoryForm";
+import React from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { StoryError } from "./StoryError";
+import UnifiedChildSelector from "./UnifiedChildSelector";
+import EnhancedObjectiveSelector from "./EnhancedObjectiveSelector";
+import EnhancedSubmitButton from "./EnhancedSubmitButton";
+import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import type { Child } from "@/types/child";
 import type { Objective } from "@/types/story";
 
-interface SimplifiedStoryFormProps extends StoryFormProps {
+interface SimplifiedStoryFormProps {
+  children: Child[];
+  onCreateChild: () => void;
   objectives: Objective[];
+  className?: string;
+  onSubmit: (formData: { childrenIds: string[], objective: string }) => Promise<string>;
+  onStoryCreated: (story: any) => void;
 }
 
 /**
- * Formulaire d'histoire simplifié avec gestionnaire d'état centralisé
+ * Version simplifiée du formulaire d'histoire avec le sélecteur d'enfants unifié
  */
 const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
-  onSubmit,
   children,
   onCreateChild,
-  onStoryCreated,
-  objectives
+  objectives,
+  className,
+  onSubmit,
+  onStoryCreated
 }) => {
-  // Journaliser l'initialisation du composant
-  useEffect(() => {
-    console.log("[SimplifiedStoryForm] Initialisation avec", {
-      childrenCount: children?.length || 0,
-      objectivesCount: objectives?.length || 0,
-      hasOnSubmit: !!onSubmit,
-      hasOnCreateChild: !!onCreateChild,
-      hasOnStoryCreated: !!onStoryCreated
-    });
-  }, [children, objectives, onSubmit, onCreateChild, onStoryCreated]);
-
-  // Création d'une fonction wrapper pour garantir la compatibilité des types
-  const handleCreateChild = onCreateChild ? () => onCreateChild : () => {
-    console.warn("[SimplifiedStoryForm] Aucun gestionnaire onCreateChild fourni");
-    return Promise.resolve("");
-  };
-
+  const { 
+    state, 
+    handleFormSubmit, 
+    handleChildSelect
+  } = useStoryForm();
+  
+  const { formError, selectedChildrenIds, selectedObjective } = state;
+  const isMobile = useIsMobile();
+  
+  // Hauteur calculée pour éviter les problèmes de mise en page
+  const scrollAreaHeight = isMobile 
+    ? "h-[calc(100vh-250px)]" 
+    : "h-[calc(100vh-180px)]";
+  
   return (
-    <StoryFormProvider 
-      onSubmit={onSubmit}
-      availableChildren={children || []}
-      onStoryCreated={onStoryCreated}
-    >
-      <div className="story-form-container" data-testid="simplified-story-form">
-        <RobustStoryForm
-          children={children || []}
-          onCreateChildClick={handleCreateChild}
-          objectives={objectives}
-        />
-      </div>
-    </StoryFormProvider>
+    <div className={cn("flex flex-col h-full w-full", className)}>
+      <ScrollArea className={scrollAreaHeight}>
+        <form 
+          onSubmit={handleFormSubmit}
+          className="space-y-6 animate-fade-in bg-white dark:bg-muted-dark p-4 sm:p-8 rounded-xl shadow-soft-lg transition-all hover:shadow-xl mx-auto max-w-[95%] sm:max-w-4xl mb-20"
+          data-testid="story-form"
+          data-form-valid={selectedChildrenIds.length > 0 && !!selectedObjective ? "true" : "false"}
+        >
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-primary">Créer une nouvelle histoire</h1>
+            <p className="text-muted-foreground">
+              Personnalisez une histoire magique pour un moment de lecture unique
+            </p>
+          </div>
+          
+          {formError && (
+            <StoryError error={formError} className="mb-4" />
+          )}
+          
+          <UnifiedChildSelector 
+            children={children}
+            selectedChildrenIds={selectedChildrenIds}
+            onChildSelect={handleChildSelect}
+            onCreateChildClick={onCreateChild}
+            hasError={formError?.toLowerCase().includes('enfant') || formError?.toLowerCase().includes('child')}
+            variant="simple"
+          />
+
+          <EnhancedObjectiveSelector objectives={objectives} />
+          
+          <div className="mt-6">
+            <EnhancedSubmitButton />
+          </div>
+        </form>
+      </ScrollArea>
+    </div>
   );
 };
 

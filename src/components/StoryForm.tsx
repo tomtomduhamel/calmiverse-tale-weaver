@@ -5,6 +5,10 @@ import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import SimplifiedStoryForm from "./story/form/SimplifiedStoryForm";
 import { Loader2 } from "lucide-react";
 
+/**
+ * Composant principal pour le formulaire d'histoire
+ * Maintenant avec utilisation du sélecteur d'enfants unifié
+ */
 const StoryForm: React.FC<StoryFormProps> = ({
   onSubmit,
   children,
