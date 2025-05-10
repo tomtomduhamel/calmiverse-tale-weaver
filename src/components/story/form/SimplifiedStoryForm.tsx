@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StoryError } from "./StoryError";
 import UnifiedChildSelector from "./UnifiedChildSelector";
@@ -36,28 +36,33 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
   const { 
     state, 
     handleFormSubmit, 
-    handleChildSelect
+    handleChildSelect,
+    handleObjectiveSelect
   } = useStoryForm();
   
   const { formError, selectedChildrenIds, selectedObjective } = state;
   const isMobile = useIsMobile();
+  
+  // Effet de synchronisation et journalisation pour débogage
+  useEffect(() => {
+    console.log("[SimplifiedStoryForm] État du formulaire mis à jour:", { 
+      selectedChildrenIds, 
+      selectedChildrenCount: selectedChildrenIds?.length || 0,
+      selectedObjective, 
+      formError,
+      childrenAvailable: children.length
+    });
+  }, [selectedChildrenIds, selectedObjective, formError, children]);
   
   // Hauteur calculée pour éviter les problèmes de mise en page
   const scrollAreaHeight = isMobile 
     ? "h-[calc(100vh-250px)]" 
     : "h-[calc(100vh-180px)]";
   
+  // Fonction spécifique pour gérer le clic sur le bouton de création d'enfant
   const handleCreateChildClick = () => {
-    // Cette fonction ne prend pas de paramètres et sera passée à UnifiedChildSelector
     console.log("[SimplifiedStoryForm] Ouverture du formulaire de création d'enfant");
   };
-  
-  console.log("[SimplifiedStoryForm] Rendu avec state:", { 
-    formError, 
-    selectedChildrenIds, 
-    selectedObjective, 
-    childrenCount: children?.length || 0 
-  });
   
   return (
     <div className={cn("flex flex-col h-full w-full", className)}>
@@ -88,7 +93,12 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
             variant="simple"
           />
 
-          <EnhancedObjectiveSelector objectives={objectives} />
+          <EnhancedObjectiveSelector 
+            objectives={objectives} 
+            selectedObjective={selectedObjective}
+            onObjectiveSelect={handleObjectiveSelect}
+            hasError={formError?.toLowerCase().includes('objectif')}
+          />
           
           <div className="mt-6">
             <EnhancedSubmitButton />

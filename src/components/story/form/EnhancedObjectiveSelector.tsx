@@ -1,91 +1,92 @@
 
-import React, { useEffect } from "react";
-import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
+import React from "react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
 import type { Objective } from "@/types/story";
 
 interface EnhancedObjectiveSelectorProps {
   objectives: Objective[];
+  selectedObjective?: string;
+  onObjectiveSelect?: (objective: string) => void;
+  hasError?: boolean;
+  className?: string;
 }
 
 /**
- * Sélecteur d'objectifs amélioré avec gestion d'état centralisée
+ * Sélecteur d'objectifs amélioré avec validation directe du contexte
  */
-const EnhancedObjectiveSelector: React.FC<EnhancedObjectiveSelectorProps> = ({ 
-  objectives 
+const EnhancedObjectiveSelector: React.FC<EnhancedObjectiveSelectorProps> = ({
+  objectives,
+  selectedObjective: propSelectedObjective,
+  onObjectiveSelect: propOnObjectiveSelect,
+  hasError = false,
+  className
 }) => {
-  const { state, handleObjectiveSelect, updateDebugInfo } = useStoryForm();
-  const { selectedObjective, formError } = state;
+  // Accès au contexte pour la gestion d'état centralisée
+  const { state, handleObjectiveSelect: contextHandleObjectiveSelect } = useStoryForm();
   
-  // Déterminer si l'erreur concerne la sélection d'objectif
-  const hasObjectiveError = formError && 
-    (formError.toLowerCase().includes('objectif') || formError.toLowerCase().includes('objective'));
-  
-  // Journaliser les rendus pour débogage
-  useEffect(() => {
-    console.log("[EnhancedObjectiveSelector] Rendu avec:", {
-      objectifsDisponibles: objectives.length,
-      objectifSelectionne: selectedObjective,
-      erreurObjectif: hasObjectiveError,
-      erreur: formError
-    });
-    
-    updateDebugInfo({
-      objectiveSelectorRendered: new Date().toISOString(),
-      availableObjectives: objectives.length,
-      selectedObjective,
-      objectiveError: hasObjectiveError ? formError : null
-    });
-  }, [objectives, selectedObjective, formError, hasObjectiveError, updateDebugInfo]);
-  
-  // Gestionnaire de sélection d'objectif avec logs
-  const handleObjectiveClick = (objectiveId: string) => {
-    console.log("[EnhancedObjectiveSelector] Clic sur l'objectif:", objectiveId);
-    handleObjectiveSelect(objectiveId);
+  // Utiliser soit les props, soit le contexte (priorité au contexte)
+  const selectedObjective = state?.selectedObjective || propSelectedObjective;
+  const handleObjectiveSelect = (value: string) => {
+    console.log("[EnhancedObjectiveSelector] Sélection objectif:", value);
+    // Appeler les deux gestionnaires si disponibles
+    contextHandleObjectiveSelect(value);
+    if (propOnObjectiveSelect) propOnObjectiveSelect(value);
   };
-  
+
   return (
-    <div className={cn(
-      "space-y-4",
-      hasObjectiveError ? "p-3 border border-destructive/50 rounded-lg bg-destructive/5" : ""
-    )}>
-      <div className={cn(
-        "flex justify-between items-center",
-        hasObjectiveError ? "text-destructive" : ""
-      )}>
-        <h2 className="text-lg font-medium">
-          Je souhaite créer un moment de lecture qui va...
-        </h2>
-        {hasObjectiveError && (
-          <p className="text-sm text-destructive font-medium">
-            Sélection requise
-          </p>
+    <div className={cn("space-y-4", className)} data-testid="objective-selector">
+      <div
+        className={cn(
+          "text-secondary dark:text-white text-lg font-medium",
+          hasError ? "text-destructive" : ""
         )}
+      >
+        Je souhaite créer un moment de lecture qui va...
+        {hasError && <span className="ml-2 text-sm text-destructive">*</span>}
       </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {objectives.map((objective) => {
-          const isSelected = selectedObjective === objective.value;
-          
-          return (
-            <div
-              key={objective.id}
-              onClick={() => handleObjectiveClick(objective.value)}
+
+      <RadioGroup
+        value={selectedObjective}
+        onValueChange={handleObjectiveSelect}
+        className={cn(
+          "grid grid-cols-1 sm:grid-cols-2 gap-3",
+          hasError ? "border-2 border-destructive/20 p-3 rounded-lg" : ""
+        )}
+        data-has-error={hasError ? "true" : "false"}
+      >
+        {objectives.map((objective) => (
+          <div
+            key={objective.id}
+            className={cn(
+              "flex items-center space-x-3 p-3 rounded-lg border border-muted hover:bg-muted/30 dark:hover:bg-muted-dark/30 transition-colors cursor-pointer",
+              selectedObjective === objective.value
+                ? "bg-primary/5 border-primary/30 ring-1 ring-primary/20"
+                : "bg-white dark:bg-muted-dark"
+            )}
+            onClick={() => handleObjectiveSelect(objective.value)}
+            data-testid={`objective-item-${objective.id}`}
+            data-selected={selectedObjective === objective.value ? "true" : "false"}
+          >
+            <RadioGroupItem
+              value={objective.value}
+              id={`objective-${objective.id}`}
+              className="data-[state=checked]:border-primary"
+            />
+            <Label
+              htmlFor={`objective-${objective.id}`}
               className={cn(
-                "p-4 border rounded-lg cursor-pointer transition-all text-center",
-                isSelected 
-                  ? "bg-primary/10 border-primary/30 ring-2 ring-primary/20" 
-                  : hasObjectiveError
-                    ? "border-destructive/30 hover:border-destructive hover:bg-destructive/10"
-                    : "hover:bg-muted hover:border-primary/20"
+                "text-base font-medium cursor-pointer",
+                selectedObjective === objective.value && "font-semibold text-primary"
               )}
-              data-testid={`objective-${objective.id}`}
             >
-              <div className="font-medium">{objective.label}</div>
-            </div>
-          );
-        })}
-      </div>
+              {objective.label}
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
     </div>
   );
 };

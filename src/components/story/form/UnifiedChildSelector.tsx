@@ -35,17 +35,18 @@ const UnifiedChildSelector: React.FC<UnifiedChildSelectorProps> = ({
     [children]
   );
 
-  // Ajouter du débogage détaillé pour suivre les sélections
+  // Journalisation détaillée pour le débogage à chaque rendu et changement d'état
   useEffect(() => {
-    console.log("[UnifiedChildSelector] Rendu avec sélection:", {
-      selectedChildrenIds,
-      selectedCount: selectedChildrenIds.length,
+    console.log("[UnifiedChildSelector] Rendu avec", {
+      selectedChildrenIds: JSON.stringify(selectedChildrenIds),
+      selectedCount: selectedChildrenIds?.length || 0,
       hasError,
       variant,
       timestamp: new Date().toISOString()
     });
     
-    if (selectedChildrenIds?.length > 0) {
+    // Vérifier la validité des sélections actuelles
+    if (selectedChildrenIds && selectedChildrenIds.length > 0) {
       const selectedNames = children
         .filter(child => selectedChildrenIds.includes(child.id))
         .map(c => c.name);
@@ -55,15 +56,13 @@ const UnifiedChildSelector: React.FC<UnifiedChildSelectorProps> = ({
         ids: selectedChildrenIds
       });
       
-      // Effacer automatiquement les erreurs liées aux enfants
+      // Effacer automatiquement les erreurs si nous avons des enfants sélectionnés
       if (hasError) {
-        console.log("[UnifiedChildSelector] Tentative d'effacement automatique d'erreur");
-        setTimeout(() => setError(null), 0);
+        console.log("[UnifiedChildSelector] Effacement d'erreur - enfants sélectionnés");
+        setError(null);
       }
-    }
-    
-    // Vérification de la cohérence des sélections
-    if (selectedChildrenIds && selectedChildrenIds.length > 0) {
+      
+      // Vérifier la cohérence des sélections
       const invalidSelections = selectedChildrenIds.filter(
         id => !availableChildrenIds.includes(id)
       );
@@ -74,6 +73,7 @@ const UnifiedChildSelector: React.FC<UnifiedChildSelectorProps> = ({
     }
   }, [selectedChildrenIds, children, hasError, variant, availableChildrenIds, setError]);
 
+  // Gestionnaire de sélection amélioré avec journalisation
   const handleSelectChild = (childId: string) => {
     if (!childId) {
       console.error("[UnifiedChildSelector] Tentative de sélection avec ID vide");
@@ -84,24 +84,24 @@ const UnifiedChildSelector: React.FC<UnifiedChildSelectorProps> = ({
       childId,
       isAlreadySelected: selectedChildrenIds?.includes(childId),
       currentSelection: selectedChildrenIds,
-      timestamp: new Date().toISOString()
     });
     
-    // Vérifier si l'enfant existe dans la liste
+    // Vérification de l'existence de l'enfant
     const childExists = children.some(child => child.id === childId);
     if (!childExists) {
-      console.error("[UnifiedChildSelector] Tentative de sélection d'un enfant inexistant:", childId);
+      console.error("[UnifiedChildSelector] Enfant non trouvé:", childId);
       return;
     }
     
+    // Appel du gestionnaire avec journalisation
     onChildSelect(childId);
     
-    // Vérification après délai court pour confirmation
+    // Vérification de l'état après la sélection (pour déboguer)
     setTimeout(() => {
-      console.log("[UnifiedChildSelector] Vérification après sélection:", {
+      console.log("[UnifiedChildSelector] État après sélection:", {
         childId,
+        newSelectedIds: selectedChildrenIds,
         isNowSelected: selectedChildrenIds?.includes(childId),
-        currentSelection: selectedChildrenIds
       });
     }, 100);
   };
@@ -116,7 +116,7 @@ const UnifiedChildSelector: React.FC<UnifiedChildSelectorProps> = ({
         {hasError && <span className="ml-2 text-sm text-destructive">*</span>}
       </div>
       
-      {children.length > 0 && (
+      {children.length > 0 ? (
         <div className={cn(
           "space-y-2",
           hasError ? "border-2 border-destructive/20 p-2 rounded-lg" : ""
@@ -153,6 +153,7 @@ const UnifiedChildSelector: React.FC<UnifiedChildSelectorProps> = ({
                 className={containerClass}
                 data-testid={`child-item-${child.id}`}
                 data-selected={isSelected ? "true" : "false"}
+                data-child-id={child.id}
               >
                 <div className="flex-shrink-0">
                   <div className={checkboxClass}>
@@ -177,21 +178,19 @@ const UnifiedChildSelector: React.FC<UnifiedChildSelectorProps> = ({
                   {child.name} ({calculateAge(child.birthDate)} ans)
                 </div>
                 
-                {/* Badge de sélection - uniquement pour la variante enhanced ou dans tous les cas si sélectionné */}
+                {/* Badge de sélection - visible si sélectionné */}
                 {isSelected && (
-                  variant === "enhanced" ? (
-                    <div className="ml-auto text-xs font-medium text-primary bg-primary/5 px-2 py-1 rounded-full">
-                      ✓ Sélectionné
-                    </div>
-                  ) : (
-                    <span className="ml-2 text-xs text-primary">
-                      ✓ Sélectionné
-                    </span>
-                  )
+                  <div className="ml-auto text-xs font-medium text-primary bg-primary/5 px-2 py-1 rounded-full">
+                    ✓ Sélectionné
+                  </div>
                 )}
               </div>
             );
           })}
+        </div>
+      ) : (
+        <div className="p-4 text-center bg-muted/20 rounded-lg">
+          <p className="text-muted-foreground">Aucun profil enfant disponible.</p>
         </div>
       )}
       

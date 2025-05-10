@@ -52,6 +52,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
       onSubmit={onSubmit}
       availableChildren={children || []}
       onStoryCreated={onStoryCreated}
+      key="story-form-provider"
     >
       <SimplifiedStoryForm
         onSubmit={onSubmit}

@@ -11,7 +11,7 @@ export const initialState: StoryFormState = {
   debugInfo: {},
 };
 
-// Reducer pour la gestion d'état avec logs améliorés
+// Reducer pour la gestion d'état avec journalisation améliorée
 export function storyFormReducer(state: StoryFormState, action: StoryFormAction): StoryFormState {
   console.log("[StoryFormReducer] Action reçue:", action.type, action);
 
@@ -38,11 +38,13 @@ export function storyFormReducer(state: StoryFormState, action: StoryFormAction)
       let updatedError = state.formError;
       if (selectedChildrenIds.length > 0 && 
           state.formError && 
-          state.formError.toLowerCase().includes('enfant')) {
+          (state.formError.toLowerCase().includes('enfant') || 
+           state.formError.toLowerCase().includes('child'))) {
         console.log("[StoryFormReducer] Effacement automatique de l'erreur suite à la sélection d'un enfant");
         updatedError = null;
       }
 
+      // Retourner le nouvel état avec l'erreur potentiellement mise à jour
       return { 
         ...state, 
         selectedChildrenIds,
@@ -81,6 +83,18 @@ export function storyFormReducer(state: StoryFormState, action: StoryFormAction)
         nouvelleErreur: action.error,
         timestamp: new Date().toISOString()
       });
+      
+      // Vérifier si l'erreur doit être automatiquement effacée
+      if (action.error && action.error.toLowerCase().includes('enfant') && state.selectedChildrenIds.length > 0) {
+        console.log("[StoryFormReducer] L'erreur ne sera pas définie car les enfants sont déjà sélectionnés");
+        return state; // Ne pas définir l'erreur
+      }
+      
+      if (action.error && action.error.toLowerCase().includes('objectif') && state.selectedObjective) {
+        console.log("[StoryFormReducer] L'erreur ne sera pas définie car un objectif est déjà sélectionné");
+        return state; // Ne pas définir l'erreur
+      }
+      
       return { ...state, formError: action.error };
       
     case "TOGGLE_CHILD_FORM":
