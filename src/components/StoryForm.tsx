@@ -4,6 +4,7 @@ import type { StoryFormProps } from "./story/StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import SimplifiedStoryForm from "./story/form/SimplifiedStoryForm";
 import { Loader2 } from "lucide-react";
+import { StoryFormProvider } from "@/contexts/story-form/StoryFormContext";
 
 /**
  * Composant principal pour le formulaire d'histoire
@@ -47,13 +48,19 @@ const StoryForm: React.FC<StoryFormProps> = ({
   }
   
   return (
-    <SimplifiedStoryForm
+    <StoryFormProvider 
       onSubmit={onSubmit}
-      children={children}
-      onCreateChild={onCreateChild}
+      availableChildren={children || []}
       onStoryCreated={onStoryCreated}
-      objectives={objectives || defaultObjectives}
-    />
+    >
+      <SimplifiedStoryForm
+        onSubmit={onSubmit}
+        children={children}
+        onCreateChild={onCreateChild}
+        onStoryCreated={onStoryCreated}
+        objectives={objectives || defaultObjectives}
+      />
+    </StoryFormProvider>
   );
 };
 

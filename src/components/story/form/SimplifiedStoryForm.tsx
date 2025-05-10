@@ -32,6 +32,7 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
   onSubmit,
   onStoryCreated
 }) => {
+  // Utilisation du hook useStoryForm qui est maintenant accessible grâce au Provider
   const { 
     state, 
     handleFormSubmit, 
@@ -50,6 +51,13 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
     // Cette fonction ne prend pas de paramètres et sera passée à UnifiedChildSelector
     console.log("[SimplifiedStoryForm] Ouverture du formulaire de création d'enfant");
   };
+  
+  console.log("[SimplifiedStoryForm] Rendu avec state:", { 
+    formError, 
+    selectedChildrenIds, 
+    selectedObjective, 
+    childrenCount: children?.length || 0 
+  });
   
   return (
     <div className={cn("flex flex-col h-full w-full", className)}>
