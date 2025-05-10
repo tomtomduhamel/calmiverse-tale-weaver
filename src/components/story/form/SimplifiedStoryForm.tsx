@@ -10,13 +10,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { Child } from "@/types/child";
 import type { Objective } from "@/types/story";
+import type { StoryFormData } from "../StoryFormTypes";
 
 interface SimplifiedStoryFormProps {
   children: Child[];
-  onCreateChild: () => void;
+  onCreateChild: (child: Omit<Child, "id">) => Promise<string>;
   objectives: Objective[];
   className?: string;
-  onSubmit: (formData: { childrenIds: string[], objective: string }) => Promise<string>;
+  onSubmit: (formData: StoryFormData) => Promise<string>;
   onStoryCreated: (story: any) => void;
 }
 
@@ -45,6 +46,11 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
     ? "h-[calc(100vh-250px)]" 
     : "h-[calc(100vh-180px)]";
   
+  const handleCreateChildClick = () => {
+    // Cette fonction ne prend pas de paramètres et sera passée à UnifiedChildSelector
+    console.log("[SimplifiedStoryForm] Ouverture du formulaire de création d'enfant");
+  };
+  
   return (
     <div className={cn("flex flex-col h-full w-full", className)}>
       <ScrollArea className={scrollAreaHeight}>
@@ -69,7 +75,7 @@ const SimplifiedStoryForm: React.FC<SimplifiedStoryFormProps> = ({
             children={children}
             selectedChildrenIds={selectedChildrenIds}
             onChildSelect={handleChildSelect}
-            onCreateChildClick={onCreateChild}
+            onCreateChildClick={handleCreateChildClick}
             hasError={formError?.toLowerCase().includes('enfant') || formError?.toLowerCase().includes('child')}
             variant="simple"
           />
