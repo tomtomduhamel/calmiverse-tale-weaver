@@ -1,14 +1,13 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { StoryFormProps } from "./story/StoryFormTypes";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
-import SimplifiedStoryForm from "./story/form/SimplifiedStoryForm";
 import { Loader2 } from "lucide-react";
-import { StoryFormProvider } from "@/contexts/story-form/StoryFormContext";
+import DirectStoryForm from "./story/form/DirectStoryForm";
 
 /**
  * Composant principal pour le formulaire d'histoire
- * Maintenant avec utilisation du sélecteur d'enfants unifié
+ * Version simplifiée avec gestion d'état directe pour éviter les problèmes de synchronisation
  */
 const StoryForm: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -18,6 +17,12 @@ const StoryForm: React.FC<StoryFormProps> = ({
 }) => {
   // Charger les objectifs pour les histoires
   const { objectives, isLoading: objectivesLoading } = useStoryObjectives();
+  
+  // État local du formulaire
+  const [selectedChildrenIds, setSelectedChildrenIds] = useState<string[]>([]);
+  const [selectedObjective, setSelectedObjective] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   
   // Objectifs par défaut si le chargement échoue
   const defaultObjectives = [
@@ -32,8 +37,22 @@ const StoryForm: React.FC<StoryFormProps> = ({
     hasOnSubmit: !!onSubmit,
     hasOnCreateChild: !!onCreateChild,
     hasOnStoryCreated: !!onStoryCreated,
+    selectedChildrenIds,
+    selectedObjective,
+    formError,
     objectivesLoaded: objectives?.length || 0
   });
+
+  // Réinitialiser l'erreur quand la sélection change
+  useEffect(() => {
+    if (formError) {
+      if ((formError.toLowerCase().includes('enfant') && selectedChildrenIds.length > 0) ||
+          (formError.toLowerCase().includes('objectif') && selectedObjective)) {
+        console.log("[StoryForm] Effacement d'erreur suite à modification de sélection");
+        setFormError(null);
+      }
+    }
+  }, [selectedChildrenIds, selectedObjective, formError]);
   
   // Afficher un indicateur de chargement pendant le chargement des objectifs
   if (objectivesLoading) {
@@ -47,21 +66,118 @@ const StoryForm: React.FC<StoryFormProps> = ({
     );
   }
   
+  // Gérer la sélection d'un enfant
+  const handleChildSelect = (childId: string) => {
+    console.log("[StoryForm] Sélection d'enfant:", childId, "État actuel:", selectedChildrenIds);
+    
+    setSelectedChildrenIds(prev => {
+      const isAlreadySelected = prev.includes(childId);
+      const newSelection = isAlreadySelected 
+        ? prev.filter(id => id !== childId) 
+        : [...prev, childId];
+        
+      console.log("[StoryForm] Nouvelle sélection:", newSelection);
+      return newSelection;
+    });
+  };
+  
+  // Gérer la sélection d'un objectif
+  const handleObjectiveSelect = (objective: string) => {
+    console.log("[StoryForm] Sélection d'objectif:", objective);
+    setSelectedObjective(objective);
+  };
+  
+  // Valider le formulaire
+  const validateForm = () => {
+    console.log("[StoryForm] Validation du formulaire:", {
+      selectedChildrenIds, 
+      selectedObjective
+    });
+    
+    if (!selectedChildrenIds || selectedChildrenIds.length === 0) {
+      return { isValid: false, error: "Veuillez sélectionner au moins un enfant pour créer une histoire" };
+    }
+    
+    if (!selectedObjective) {
+      return { isValid: false, error: "Veuillez sélectionner un objectif pour l'histoire" };
+    }
+    
+    return { isValid: true, error: null };
+  };
+  
+  // Gérer la soumission du formulaire
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("[StoryForm] Soumission du formulaire");
+    
+    if (isSubmitting) {
+      console.log("[StoryForm] Soumission déjà en cours");
+      return;
+    }
+    
+    // Valider le formulaire
+    const validation = validateForm();
+    if (!validation.isValid) {
+      setFormError(validation.error);
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      setFormError(null);
+      
+      console.log("[StoryForm] Appel de onSubmit avec:", {
+        childrenIds: selectedChildrenIds,
+        objective: selectedObjective
+      });
+      
+      const storyId = await onSubmit({
+        childrenIds: selectedChildrenIds,
+        objective: selectedObjective
+      });
+      
+      console.log("[StoryForm] Histoire créée avec succès, ID:", storyId);
+      
+      // Appeler le callback de succès
+      if (storyId && onStoryCreated) {
+        onStoryCreated({
+          id: storyId,
+          title: "Histoire en cours de génération",
+          preview: "Génération en cours...",
+          childrenIds: selectedChildrenIds,
+          createdAt: new Date(),
+          status: 'pending',
+          story_text: "",
+          story_summary: "",
+          objective: selectedObjective
+        });
+      }
+      
+      // Réinitialiser le formulaire
+      setSelectedChildrenIds([]);
+      setSelectedObjective("");
+      
+    } catch (error: any) {
+      console.error("[StoryForm] Erreur pendant la création:", error);
+      setFormError(error?.message || "Une erreur est survenue lors de la création de l'histoire");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
   return (
-    <StoryFormProvider 
-      onSubmit={onSubmit}
-      availableChildren={children || []}
-      onStoryCreated={onStoryCreated}
-      key="story-form-provider"
-    >
-      <SimplifiedStoryForm
-        onSubmit={onSubmit}
-        children={children}
-        onCreateChild={onCreateChild}
-        onStoryCreated={onStoryCreated}
-        objectives={objectives || defaultObjectives}
-      />
-    </StoryFormProvider>
+    <DirectStoryForm
+      children={children}
+      onCreateChild={onCreateChild}
+      objectives={objectives || defaultObjectives}
+      selectedChildrenIds={selectedChildrenIds}
+      selectedObjective={selectedObjective}
+      isSubmitting={isSubmitting}
+      formError={formError}
+      onChildSelect={handleChildSelect}
+      onObjectiveSelect={handleObjectiveSelect}
+      onSubmit={handleFormSubmit}
+    />
   );
 };
 
