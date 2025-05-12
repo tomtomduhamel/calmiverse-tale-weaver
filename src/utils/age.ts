@@ -1,23 +1,20 @@
-export const calculateAge = (birthDate: Date): number => {
+
+/**
+ * Calcule l'âge en années à partir d'une date de naissance
+ * @param birthDate Date de naissance (string ou Date)
+ * @returns Âge en années
+ */
+export function calculateAge(birthDate: string | Date): number {
+  const birth = new Date(birthDate);
   const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
   
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  // Si l'anniversaire n'est pas encore passé cette année
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
   
   return age;
-};
-
-export const formatAge = (age: number): string => {
-  return `${age} an${age > 1 ? 's' : ''}`;
-};
-
-export const isValidBirthDate = (date: Date): boolean => {
-  const today = new Date();
-  const minDate = new Date();
-  minDate.setFullYear(today.getFullYear() - 12);
-  
-  return date <= today && date >= minDate;
-};
+}
