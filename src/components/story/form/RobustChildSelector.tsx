@@ -1,11 +1,10 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Child } from "@/types/child";
 import { calculateAge } from "@/utils/age";
-import { useStoryForm } from "@/contexts/story-form/StoryFormContext";
 
 interface RobustChildSelectorProps {
   children: Child[];
@@ -16,7 +15,7 @@ interface RobustChildSelectorProps {
 }
 
 /**
- * Composant robuste pour la sélection des enfants avec débogage amélioré
+ * Sélecteur d'enfants robuste avec mécanismes de suivi d'état et de récupération
  */
 const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
   children,
@@ -25,55 +24,48 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
   onCreateChildClick,
   hasError = false,
 }) => {
-  const { setError } = useStoryForm();
+  // Référence pour suivre l'état entre les rendus
+  const selectionRef = useRef<Record<string, boolean>>({});
+  const renderCountRef = useRef(0);
   
-  // Ajouter du débogage détaillé pour suivre les sélections
+  // Maintenir une copie de l'état courant dans la référence
   useEffect(() => {
-    console.log("[RobustChildSelector] Rendu avec sélection:", {
-      selectedChildrenIds,
-      selectedCount: selectedChildrenIds.length,
+    renderCountRef.current++;
+    const selectionMap: Record<string, boolean> = {};
+    
+    selectedChildrenIds.forEach(id => {
+      selectionMap[id] = true;
+    });
+    
+    selectionRef.current = selectionMap;
+    
+    console.log("[RobustChildSelector] Rendu #" + renderCountRef.current, {
+      selectedIds: selectedChildrenIds,
+      selectionMap,
       hasError,
       timestamp: new Date().toISOString()
     });
-    
-    if (selectedChildrenIds.length > 0) {
-      const selectedNames = children
-        .filter(child => selectedChildrenIds.includes(child.id))
-        .map(c => c.name);
-      
-      console.log("[RobustChildSelector] Enfants sélectionnés:", {
-        names: selectedNames,
-        ids: selectedChildrenIds
-      });
-      
-      // Effacer automatiquement les erreurs liées aux enfants
-      if (hasError) {
-        console.log("[RobustChildSelector] Tentative d'effacement automatique d'erreur");
-        // Utiliser setTimeout pour s'assurer que l'effacement se produit après le rendu
-        setTimeout(() => setError(null), 0);
-      }
-    }
-  }, [selectedChildrenIds, children, hasError, setError]);
+  }, [selectedChildrenIds, hasError]);
 
-  const handleSelectChild = (childId: string) => {
-    console.log("[RobustChildSelector] Clic sur enfant:", {
-      childId,
-      isAlreadySelected: selectedChildrenIds.includes(childId),
-      currentSelection: selectedChildrenIds,
-      timestamp: new Date().toISOString()
+  // Gestionnaire de clic avec synchronisation d'état garantie
+  const handleChildClick = (childId: string) => {
+    console.log("[RobustChildSelector] Clic sur enfant:", childId, {
+      isCurrentlySelected: selectionRef.current[childId] || false,
+      selectedIds: selectedChildrenIds
     });
     
-    // Correction de l'erreur TS1345: appeler onChildSelect sans vérifier sa valeur de retour
+    // Appeler la fonction de sélection
     onChildSelect(childId);
     
-    // Vérification après délai court pour confirmation
+    // Faire le suivi dans la référence locale
     setTimeout(() => {
+      // Vérification après délai court pour confirmation
       console.log("[RobustChildSelector] Vérification après sélection:", {
         childId,
-        isNowSelected: selectedChildrenIds.includes(childId),
-        currentSelection: selectedChildrenIds
+        isNowSelectedInState: selectedChildrenIds.includes(childId),
+        stateNow: selectedChildrenIds
       });
-    }, 100);
+    }, 0);
   };
 
   return (
@@ -97,7 +89,7 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
             return (
               <div
                 key={child.id}
-                onClick={() => handleSelectChild(child.id)}
+                onClick={() => handleChildClick(child.id)}
                 className={cn(
                   "flex items-center space-x-3 p-3 rounded-lg transition-colors cursor-pointer",
                   isSelected 
@@ -106,6 +98,7 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
                 )}
                 data-testid={`child-item-${child.id}`}
                 data-selected={isSelected ? "true" : "false"}
+                data-child-id={child.id}
               >
                 <div className="flex-shrink-0">
                   <div 

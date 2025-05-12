@@ -1,6 +1,6 @@
 
 import React, { useCallback } from "react";
-import DirectStoryFormWrapper from "@/components/story/DirectStoryFormWrapper";
+import RobustDirectStoryFormWrapper from "@/components/story/RobustDirectStoryFormWrapper";
 import type { Story } from "@/types/story";
 import type { Child } from "@/types/child";
 
@@ -12,7 +12,8 @@ interface CreateStoryViewProps {
 }
 
 /**
- * Vue de création d'histoire avec formulaire direct simplifié
+ * Vue de création d'histoire avec formulaire robuste 
+ * pour une gestion d'état fiable et traçable
  */
 export const CreateStoryView: React.FC<CreateStoryViewProps> = ({
   onSubmit,
@@ -24,12 +25,18 @@ export const CreateStoryView: React.FC<CreateStoryViewProps> = ({
     childrenCount: children?.length || 0,
     onSubmitDefined: !!onSubmit,
     onCreateChildDefined: !!onCreateChild,
-    onStoryCreatedDefined: !!onStoryCreated
+    onStoryCreatedDefined: !!onStoryCreated,
+    timestamp: new Date().toISOString()
   });
   
-  // Fonction de soumission renforcée
+  // Fonction de soumission avec journalisation complète
   const handleSubmit = useCallback(async (formData: { childrenIds: string[]; objective: string }) => {
-    console.log('[CreateStoryView] handleSubmit appelé avec:', formData);
+    console.log('[CreateStoryView] handleSubmit appelé avec:', {
+      childrenIds: formData.childrenIds,
+      childrenCount: formData.childrenIds?.length || 0,
+      objective: formData.objective,
+      timestamp: new Date().toISOString()
+    });
     
     // Validation explicite côté parent
     if (!formData.childrenIds || formData.childrenIds.length === 0) {
@@ -74,13 +81,18 @@ export const CreateStoryView: React.FC<CreateStoryViewProps> = ({
   
   // Gestion de l'histoire créée
   const handleStoryCreated = useCallback((story: Story) => {
-    console.log('[CreateStoryView] handleStoryCreated appelé avec:', story);
+    console.log('[CreateStoryView] handleStoryCreated appelé avec:', {
+      storyId: story.id,
+      childrenIds: story.childrenIds,
+      objective: story.objective,
+      timestamp: new Date().toISOString()
+    });
     onStoryCreated(story);
   }, [onStoryCreated]);
   
   return (
     <div className="w-full max-w-4xl mx-auto animate-fade-in">
-      <DirectStoryFormWrapper
+      <RobustDirectStoryFormWrapper
         onSubmit={handleSubmit}
         children={children}
         onCreateChild={handleCreateChild}
