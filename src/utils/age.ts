@@ -18,3 +18,21 @@ export function calculateAge(birthDate: string | Date): number {
   
   return age;
 }
+
+/**
+ * Formate l'âge pour l'affichage en fonction de l'âge en années
+ * @param age Âge en années
+ * @returns Âge formaté pour l'affichage (ex: "3 ans" ou "18 mois" pour les jeunes enfants)
+ */
+export function formatAge(age: number): string {
+  if (age < 0) return "Âge invalide";
+  
+  // Pour les bébés et très jeunes enfants, afficher en mois jusqu'à 3 ans
+  if (age < 3) {
+    const months = Math.round(age * 12);
+    return `${months} ${months <= 1 ? 'mois' : 'mois'}`;
+  }
+  
+  // Pour les enfants plus âgés, afficher en années
+  return `${age} ${age <= 1 ? 'an' : 'ans'}`;
+}
