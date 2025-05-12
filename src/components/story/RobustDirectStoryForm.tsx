@@ -36,7 +36,8 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
     selectedChildrenIds, 
     handleChildSelect, 
     getSelectedIds,
-    selectedIdsRef 
+    selectedIdsRef,
+    forceInitialSelection
   } = useRobustChildSelection([]);
   
   const [selectedObjective, setSelectedObjective] = useState<string>("");
@@ -52,12 +53,54 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
-  // Référence pour suivre les soumissions
+  // Référence pour suivre les soumissions et l'état des sélections
   const submissionAttemptRef = useRef(0);
+  const domCheckTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const formInitializedRef = useRef(false);
   
-  // Journalisation détaillée
+  // Force la sélection initiale et la synchronisation DOM au montage
   useEffect(() => {
-    console.log("[RobustDirectStoryForm] Rendu avec:", {
+    console.log("[RobustDirectStoryForm] Montage du composant, initialisation...");
+    
+    // Attendre que le DOM soit prêt
+    const initTimer = setTimeout(() => {
+      // Force l'analyse du DOM au démarrage
+      forceInitialSelection();
+      formInitializedRef.current = true;
+      
+      console.log("[RobustDirectStoryForm] Formulaire initialisé, sélections récupérées");
+    }, 300);
+    
+    // Mettre en place la détection continue des incohérences DOM
+    domCheckTimerRef.current = setInterval(() => {
+      // Vérifier si l'état visuel (DOM) correspond à l'état interne
+      const selectedDomElements = document.querySelectorAll('[data-selected="true"]');
+      const domIds = Array.from(selectedDomElements)
+        .map(el => el.getAttribute('data-child-id'))
+        .filter(Boolean) as string[];
+      
+      // Compter les enfants visuellement sélectionnés dans le DOM
+      const domSelectedCount = domIds.length;
+      
+      // Si aucun enfant n'est sélectionné dans le state mais qu'il y en a dans le DOM
+      if (selectedChildrenIds.length === 0 && domSelectedCount > 0) {
+        console.log("[RobustDirectStoryForm] Détection d'incohérence DOM/State:", {
+          selectedChildrenIds,
+          domSelectedCount,
+          domIds
+        });
+      }
+    }, 1000);
+    
+    return () => {
+      clearTimeout(initTimer);
+      if (domCheckTimerRef.current) clearInterval(domCheckTimerRef.current);
+    };
+  }, [forceInitialSelection, selectedChildrenIds]);
+  
+  // Journalisation détaillée de l'état du formulaire
+  useEffect(() => {
+    console.log("[RobustDirectStoryForm] État du formulaire mis à jour:", {
       selectedChildrenIds,
       selectedObjective,
       formError,
@@ -66,18 +109,39 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
     });
   }, [selectedChildrenIds, selectedObjective, formError, isSubmitting]);
   
-  // Validation avec journalisation avancée
+  // Validation avec journalisation avancée et récupération DOM
   const validateForm = useCallback(() => {
+    // Force la récupération des sélections DOM au moment de la validation
+    const selectedDomElements = document.querySelectorAll('[data-selected="true"]');
+    const domIds = Array.from(selectedDomElements)
+      .map(el => el.getAttribute('data-child-id'))
+      .filter(Boolean) as string[];
+    
+    // Fusion des sources d'IDs pour maximiser la fiabilité
+    let actualSelectedIds = [...selectedIdsRef.current];
+    
+    // Si l'état interne est vide mais que le DOM a des sélections, utiliser le DOM comme source de vérité
+    if (actualSelectedIds.length === 0 && domIds.length > 0) {
+      console.log("[RobustDirectStoryForm] Récupération d'état depuis le DOM pendant validation", domIds);
+      actualSelectedIds = [...domIds];
+      
+      // Mettre à jour l'état interne avec les sélections DOM
+      handleChildSelect(domIds[0]);
+    }
+    
     console.log("[RobustDirectStoryForm] Validation du formulaire:", {
-      enfants: selectedChildrenIds,
+      enfants: actualSelectedIds,
       enfantsRef: selectedIdsRef.current,
+      enfantsDom: domIds,
       objectif: selectedObjective,
       tentative: submissionAttemptRef.current,
       timestamp: new Date().toISOString()
     });
     
-    // Vérification des enfants avec double contrôle
-    if (!selectedChildrenIds || selectedChildrenIds.length === 0) {
+    // Vérification des enfants avec priorité sur les sélections DOM
+    const effectiveChildrenIds = actualSelectedIds.length > 0 ? actualSelectedIds : domIds;
+    
+    if (!effectiveChildrenIds || effectiveChildrenIds.length === 0) {
       console.error("[RobustDirectStoryForm] Validation échouée: aucun enfant sélectionné");
       return { isValid: false, error: "Veuillez sélectionner au moins un enfant pour créer une histoire" };
     }
@@ -88,8 +152,8 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
       return { isValid: false, error: "Veuillez sélectionner un objectif pour l'histoire" };
     }
     
-    return { isValid: true, error: null };
-  }, [selectedChildrenIds, selectedIdsRef, selectedObjective]);
+    return { isValid: true, error: null, effectiveChildrenIds };
+  }, [selectedIdsRef, selectedObjective, handleChildSelect]);
   
   // Gestionnaire d'objectif
   const handleObjectiveChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -103,7 +167,7 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
     }
   }, [formError]);
   
-  // Soumission sécurisée avec journalisation détaillée
+  // Soumission sécurisée avec journalisation détaillée et capture DOM
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -124,11 +188,19 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
     }
     
     try {
-      // Dernière vérification pour s'assurer de la cohérence des sélections
-      const finalSelectedIds = getSelectedIds();
-      console.log("[RobustDirectStoryForm] IDs finaux pour soumission:", finalSelectedIds);
+      // Analyse du DOM pour trouver les enfants sélectionnés visuellement
+      const selectedDomElements = document.querySelectorAll('[data-selected="true"]');
+      const domSelectedIds = Array.from(selectedDomElements)
+        .map(el => el.getAttribute('data-child-id'))
+        .filter(Boolean) as string[];
       
-      // Validation avec journalisation détaillée
+      console.log("[RobustDirectStoryForm] Éléments DOM sélectionnés:", {
+        count: selectedDomElements.length,
+        ids: domSelectedIds
+      });
+      
+      // Dernière vérification pour s'assurer de la cohérence des sélections
+      // avec priorité sur les sélections DOM si l'état interne est vide
       const validation = validateForm();
       if (!validation.isValid) {
         setFormError(validation.error);
@@ -139,6 +211,18 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
         });
         return;
       }
+      
+      // Utiliser les IDs effectifs identifiés par validateForm
+      const finalSelectedIds = validation.effectiveChildrenIds || 
+                              (selectedChildrenIds.length > 0 ? selectedChildrenIds : domSelectedIds);
+      
+      if (!finalSelectedIds || finalSelectedIds.length === 0) {
+        console.error("[RobustDirectStoryForm] Erreur critique: aucun enfant sélectionné après validation");
+        setFormError("Veuillez sélectionner au moins un enfant pour créer une histoire");
+        return;
+      }
+      
+      console.log("[RobustDirectStoryForm] IDs finaux pour soumission:", finalSelectedIds);
       
       // Début de la soumission
       setIsSubmitting(true);
@@ -207,10 +291,9 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
     selectedObjective,
     isSubmitting,
     validateForm,
-    getSelectedIds,
+    toast,
     onSubmit,
-    onStoryCreated,
-    toast
+    onStoryCreated
   ]);
   
   // Gestion de la création d'enfant
@@ -264,7 +347,7 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
   // Calculer si le bouton doit être désactivé
   const isGenerateButtonDisabled = 
     isSubmitting || 
-    selectedChildrenIds.length === 0 || 
+    (selectedChildrenIds.length === 0 && document.querySelectorAll('[data-selected="true"]').length === 0) || 
     !selectedObjective;
   
   return (
@@ -358,6 +441,9 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
                 {JSON.stringify({
                   selectedChildrenIds,
                   selectedIdsRef: selectedIdsRef.current,
+                  domSelectedCount: document.querySelectorAll('[data-selected="true"]').length,
+                  domSelectedIds: Array.from(document.querySelectorAll('[data-selected="true"]'))
+                    .map(el => el.getAttribute('data-child-id')),
                   selectedObjective,
                   formError,
                   isSubmitting,

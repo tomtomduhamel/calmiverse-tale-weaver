@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
   // Référence pour suivre l'état entre les rendus
   const selectionRef = useRef<Record<string, boolean>>({});
   const renderCountRef = useRef(0);
+  const [domSyncedOnce, setDomSyncedOnce] = useState(false);
   
   // Maintenir une copie de l'état courant dans la référence
   useEffect(() => {
@@ -46,6 +47,46 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
       timestamp: new Date().toISOString()
     });
   }, [selectedChildrenIds, hasError]);
+  
+  // Synchronisation DOM-State pour garantir la cohérence
+  useEffect(() => {
+    // Attendre que le DOM soit stable
+    const syncTimer = setTimeout(() => {
+      // Pour chaque enfant, vérifier si son état visuel correspond à son état interne
+      children.forEach(child => {
+        const isSelectedInState = selectedChildrenIds.includes(child.id);
+        
+        // Trouver l'élément DOM correspondant
+        const domElement = document.querySelector(`[data-child-id="${child.id}"]`);
+        
+        if (domElement) {
+          const isSelectedInDom = domElement.getAttribute('data-selected') === 'true';
+          
+          // Synchroniser le DOM avec l'état si nécessaire
+          if (isSelectedInState !== isSelectedInDom) {
+            console.log(`[RobustChildSelector] Incohérence DOM/State pour l'enfant ${child.id}:`, {
+              enfant: child.name,
+              estSelectionneEtat: isSelectedInState,
+              estSelectionneDOM: isSelectedInDom
+            });
+            
+            // Mise à jour de l'attribut DOM
+            domElement.setAttribute('data-selected', isSelectedInState ? 'true' : 'false');
+            
+            // Si c'est sélectionné dans le DOM mais pas dans l'état, forcer la sélection
+            if (isSelectedInDom && !isSelectedInState) {
+              console.log(`[RobustChildSelector] Forçage de la sélection de ${child.id} dans l'état`);
+              onChildSelect(child.id);
+            }
+          }
+        }
+      });
+      
+      setDomSyncedOnce(true);
+    }, 200);
+    
+    return () => clearTimeout(syncTimer);
+  }, [children, selectedChildrenIds, onChildSelect]);
 
   // Gestionnaire de clic avec synchronisation d'état garantie
   const handleChildClick = (childId: string) => {
@@ -59,6 +100,14 @@ const RobustChildSelector: React.FC<RobustChildSelectorProps> = ({
     
     // Faire le suivi dans la référence locale
     setTimeout(() => {
+      // Mise à jour immédiate de l'attribut DOM pour l'UX
+      const domElement = document.querySelector(`[data-child-id="${childId}"]`);
+      if (domElement) {
+        // Toggle l'attribut data-selected dans le DOM
+        const currentSelected = domElement.getAttribute('data-selected') === 'true';
+        domElement.setAttribute('data-selected', (!currentSelected).toString());
+      }
+      
       // Vérification après délai court pour confirmation
       console.log("[RobustChildSelector] Vérification après sélection:", {
         childId,
