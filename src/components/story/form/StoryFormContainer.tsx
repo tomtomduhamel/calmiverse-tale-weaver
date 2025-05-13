@@ -1,12 +1,10 @@
+
 import React from "react";
 import type { StoryFormProps } from "../StoryFormTypes";
-import { useStoryFormContainer } from "@/hooks/stories/storyForm/useStoryFormContainer";
+import UnifiedStoryCreator from "@/components/story/UnifiedStoryCreator";
 import LoadingStory from "@/components/LoadingStory";
-import CreateChildDialog from "../CreateChildDialog";
-import StoryChat from "../chat/StoryChat";
-import { StoryFormContent } from "./StoryFormContent";
-import StoryFormDebugInfo from "./StoryFormDebugInfo";
-import StoryFormLoading from "./StoryFormLoading";
+import { useStoryObjectives } from "@/hooks/useStoryObjectives";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 const StoryFormContainer: React.FC<StoryFormProps> = ({
   onSubmit,
@@ -14,99 +12,33 @@ const StoryFormContainer: React.FC<StoryFormProps> = ({
   onCreateChild,
   onStoryCreated,
 }) => {
-  const {
-    // States
-    creationMode,
-    formError,
-    formDebugInfo,
-    formData,
-    showChildForm,
-    childName,
-    childAge,
-    
-    // Loading states
-    authLoading,
-    objectivesLoading,
-    isLoading,
-    formIsSubmitting,
-    
-    // Data
-    objectives,
-    progress,
-    isMobile,
-    
-    // Handlers
-    handleChildToggle,
-    handleCreationModeSwitch,
-    showChildFormHandler,
-    handleObjectiveSelect,
-    handleFormSubmit,
-    handleChildFormSubmit,
-    setShowChildForm,
-    setChildName,
-    setChildAge,
-    resetChildForm,
-    
-    // Utilities
-    isGenerateButtonDisabled
-  } = useStoryFormContainer(onSubmit, children, onCreateChild, onStoryCreated);
+  // Vérification minimale d'authentification et de chargement
+  const { user, loading: authLoading } = useSupabaseAuth();
+  const { isLoading: objectivesLoading } = useStoryObjectives();
 
-  // Loading states
+  // États de chargement
   if (authLoading) {
-    return <StoryFormLoading loadingType="auth" />;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-muted-foreground">Vérification de l'authentification...</p>
+        </div>
+      </div>
+    );
   }
 
   if (objectivesLoading) {
-    return <StoryFormLoading loadingType="objectives" />;
-  }
-
-  if (isLoading) {
     return <LoadingStory />;
   }
 
-  console.log("[StoryFormContainer] Rendering with formIsSubmitting:", formIsSubmitting, "isGenerateButtonDisabled:", isGenerateButtonDisabled);
-
+  // Utiliser directement notre nouveau composant unifié
   return (
-    <div className={`w-full max-w-4xl mx-auto ${isMobile ? 'h-full' : ''}`}>
-      {/* Debug information component */}
-      <StoryFormDebugInfo formDebugInfo={formDebugInfo} isMobile={isMobile} />
-      
-      {creationMode === "classic" ? (
-        <StoryFormContent
-          children={children}
-          selectedChildrenIds={formData.childrenIds}
-          onChildToggle={handleChildToggle}
-          onCreateChildClick={showChildFormHandler}
-          objective={formData.objective}
-          setObjective={handleObjectiveSelect}
-          objectives={objectives || [
-            { id: "sleep", label: "Help sleep", value: "sleep" },
-            { id: "focus", label: "Focus", value: "focus" },
-            { id: "relax", label: "Relax", value: "relax" },
-            { id: "fun", label: "Have fun", value: "fun" },
-          ]}
-          isSubmitting={formIsSubmitting}
-          progress={progress}
-          formError={formError}
-          onSubmit={handleFormSubmit}
-          onModeSwitch={handleCreationModeSwitch}
-          isGenerateButtonDisabled={isGenerateButtonDisabled}
-        />
-      ) : (
-        <div className="animate-fade-in">
-          <StoryChat onSwitchMode={handleCreationModeSwitch} />
-        </div>
-      )}
-
-      <CreateChildDialog
-        open={showChildForm}
-        onOpenChange={setShowChildForm}
-        childName={childName}
-        childAge={childAge}
-        onSubmit={handleChildFormSubmit}
-        onReset={resetChildForm}
-        onChildNameChange={setChildName}
-        onChildAgeChange={setChildAge}
+    <div className="w-full max-w-4xl mx-auto">
+      <UnifiedStoryCreator
+        onSubmit={onSubmit}
+        children={children}
+        onCreateChild={onCreateChild}
+        onStoryCreated={onStoryCreated}
       />
     </div>
   );

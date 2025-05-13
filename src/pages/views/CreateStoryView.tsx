@@ -7,12 +7,12 @@ import type { Child } from "@/types/child";
 interface CreateStoryViewProps {
   onSubmit: (formData: { childrenIds: string[]; objective: string }) => Promise<string>;
   children: Child[];
-  onCreateChild: (child: Omit<Child, "id">) => Promise<string>;
+  onCreateChild: (child: Omit<Child, "id">) => Promise<void | string>;
   onStoryCreated: (story: Story) => void;
 }
 
 /**
- * Vue de création d'histoire simplifiée
+ * Vue de création d'histoire simplifiée avec validation renforcée
  */
 export const CreateStoryView: React.FC<CreateStoryViewProps> = ({
   onSubmit,
@@ -28,7 +28,7 @@ export const CreateStoryView: React.FC<CreateStoryViewProps> = ({
     timestamp: new Date().toISOString()
   });
   
-  // Fonction de soumission avec journalisation complète
+  // Fonction de soumission robuste
   const handleSubmit = useCallback(async (formData: { childrenIds: string[]; objective: string }) => {
     console.log('[CreateStoryView] handleSubmit appelé avec:', {
       childrenIds: formData.childrenIds,
@@ -37,7 +37,7 @@ export const CreateStoryView: React.FC<CreateStoryViewProps> = ({
       timestamp: new Date().toISOString()
     });
     
-    // Validation explicite côté parent
+    // Double vérification de sécurité
     if (!formData.childrenIds || formData.childrenIds.length === 0) {
       console.error('[CreateStoryView] Erreur: childrenIds manquants ou vides');
       throw new Error("Veuillez sélectionner au moins un enfant pour créer une histoire");
@@ -65,13 +65,13 @@ export const CreateStoryView: React.FC<CreateStoryViewProps> = ({
   }, [onSubmit]);
   
   // Fonction de création d'enfant sécurisée
-  const handleCreateChild = useCallback(async (childData: Omit<Child, "id">) => {
+  const handleCreateChild = useCallback(async (childData: Omit<Child, "id">): Promise<string> => {
     console.log('[CreateStoryView] handleCreateChild appelé avec:', childData);
     
     try {
-      const childId = await onCreateChild(childData);
+      const childId = await onCreateChild(childData) as string;
       console.log('[CreateStoryView] Enfant créé avec ID:', childId);
-      return childId;
+      return childId || '';
     } catch (error: any) {
       console.error('[CreateStoryView] Erreur lors de la création d\'enfant:', error);
       throw error;
