@@ -1,6 +1,6 @@
 
 import React, { useCallback } from "react";
-import RobustDirectStoryFormWrapper from "@/components/story/RobustDirectStoryFormWrapper";
+import DirectStoryCreator from "@/components/story/DirectStoryCreator";
 import type { Story } from "@/types/story";
 import type { Child } from "@/types/child";
 
@@ -12,8 +12,7 @@ interface CreateStoryViewProps {
 }
 
 /**
- * Vue de création d'histoire avec formulaire robuste 
- * pour une gestion d'état fiable et traçable
+ * Vue de création d'histoire simplifiée
  */
 export const CreateStoryView: React.FC<CreateStoryViewProps> = ({
   onSubmit,
@@ -92,7 +91,7 @@ export const CreateStoryView: React.FC<CreateStoryViewProps> = ({
   
   return (
     <div className="w-full max-w-4xl mx-auto animate-fade-in">
-      <RobustDirectStoryFormWrapper
+      <DirectStoryCreator
         onSubmit={handleSubmit}
         children={children}
         onCreateChild={handleCreateChild}
@@ -101,3 +100,5 @@ export const CreateStoryView: React.FC<CreateStoryViewProps> = ({
     </div>
   );
 };
+
+export default CreateStoryView;
