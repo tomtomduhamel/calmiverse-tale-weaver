@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StoryError } from "./StoryError";
@@ -57,8 +56,8 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
     setShowChildForm(true);
   };
   
-  // Gestionnaire pour la soumission du formulaire d'enfant
-  const handleChildFormSubmit = async (childName: string, childAge: string) => {
+  // Gestionnaire pour la soumission du formulaire d'enfant (signature modifiée)
+  const handleChildFormSubmit = async () => {
     try {
       console.log("Creating child with name:", childName, "and age:", childAge);
       

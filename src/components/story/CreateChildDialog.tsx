@@ -34,6 +34,7 @@ const CreateChildDialog: React.FC<CreateChildDialogProps> = ({
 }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Appeler onSubmit sans arguments - les valeurs sont déjà accessibles via les props
     onSubmit();
   };
   

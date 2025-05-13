@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -301,7 +300,8 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
     setShowChildForm(true);
   }, []);
   
-  const handleAddChild = useCallback(async (childName: string, childAge: string) => {
+  // Fonction modifiée pour s'adapter à la nouvelle signature
+  const handleAddChild = useCallback(async () => {
     try {
       if (!childName || !childAge) {
         throw new Error("Le nom et l'âge de l'enfant sont requis");
