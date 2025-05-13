@@ -47,18 +47,52 @@ export const useStoryFormContainer = (
     validateForm
   } = useStoryForm(onStoryCreated, onSubmit);
   
-  // Logique du formulaire d'enfant avec les types mis à jour pour utiliser string pour childAge
-  const childFormLogic = useChildFormLogic(onCreateChild);
+  // Logique du formulaire d'enfant mise à jour pour utiliser les valeurs du state interne
   const {
     showChildForm,
     setShowChildForm,
     childName,
     childAge,
-    handleChildFormSubmit,
-    resetChildForm,
     setChildName,
     setChildAge,
-  } = childFormLogic;
+    resetChildForm,
+  } = useChildFormLogic(onCreateChild);
+
+  // Mise à jour de la signature pour correspondre à celle attendue par CreateChildDialog (sans paramètres)
+  const handleChildFormSubmit = useCallback(async () => {
+    try {
+      console.log("[useStoryFormContainer] handleChildFormSubmit called with:", childName, childAge);
+      
+      if (!childName || !childAge) {
+        throw new Error("Le nom et l'âge de l'enfant sont requis");
+      }
+      
+      // Calculer la date de naissance à partir de l'âge
+      const now = new Date();
+      const birthYear = now.getFullYear() - parseInt(childAge);
+      const birthDate = new Date(birthYear, now.getMonth(), now.getDate());
+      
+      // Appeler la fonction de création d'enfant fournie par le parent
+      await onCreateChild({
+        name: childName,
+        birthDate,
+        gender: 'unknown',
+        authorId: user?.id || '',
+        interests: []
+      });
+      
+      setShowChildForm(false);
+      resetChildForm();
+      
+    } catch (error) {
+      console.error("[useStoryFormContainer] Error creating child:", error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la création de l'enfant",
+        variant: "destructive",
+      });
+    }
+  }, [childName, childAge, onCreateChild, resetChildForm, setShowChildForm, toast, user?.id]);
 
   // Indicateur de progression
   const { progress } = useStoryProgress(formIsSubmitting);
