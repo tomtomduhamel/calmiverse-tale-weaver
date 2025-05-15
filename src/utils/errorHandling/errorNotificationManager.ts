@@ -190,20 +190,22 @@ class ErrorNotificationManager {
     // Si nous avons un système de notification configuré, l'utiliser directement
     if (this.notifyFn && typeof this.notifyFn === 'function') {
       try {
+        const actionOptions = config.actionLabel ? {
+          action: {
+            label: config.actionLabel,
+            onClick: () => {
+              document.dispatchEvent(new CustomEvent('error-action', {
+                detail: { category: config.category, action: config.actionLabel }
+              }));
+            }
+          }
+        } : undefined;
+        
         this.notifyFn(
           config.type,
           config.title,
           config.message,
-          {
-            action: config.actionLabel ? {
-              label: config.actionLabel,
-              onClick: () => {
-                document.dispatchEvent(new CustomEvent('error-action', {
-                  detail: { category: config.category, action: config.actionLabel }
-                }));
-              }
-            } : undefined
-          }
+          actionOptions
         );
       } catch (notifyError) {
         console.error("[ErrorManager] Error in notification system:", notifyError);
@@ -225,20 +227,22 @@ class ErrorNotificationManager {
       const { config } = event.detail;
       
       if (config && notifyFn) {
+        const actionOptions = config.actionLabel ? {
+          action: {
+            label: config.actionLabel,
+            onClick: () => {
+              document.dispatchEvent(new CustomEvent('error-action', {
+                detail: { category: config.category, action: config.actionLabel }
+              }));
+            }
+          }
+        } : undefined;
+        
         notifyFn(
           config.type, 
           config.title, 
           config.message,
-          { 
-            action: config.actionLabel ? {
-              label: config.actionLabel,
-              onClick: () => {
-                document.dispatchEvent(new CustomEvent('error-action', {
-                  detail: { category: config.category, action: config.actionLabel }
-                }));
-              }
-            } : undefined
-          }
+          actionOptions
         );
       }
     }) as EventListener);

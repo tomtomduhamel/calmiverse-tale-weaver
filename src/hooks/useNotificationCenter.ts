@@ -35,12 +35,15 @@ export const useNotificationCenter = () => {
         break;
     }
     
-    // Création de l'élément d'action si nécessaire
-    const actionElement = options?.action ? React.createElement(
-      ToastAction,
-      { onClick: options.action.onClick },
-      options.action.label
-    ) : undefined;
+    // Action pour le toast - si une action est fournie, on crée un composant ToastAction
+    let actionElement = undefined;
+    if (options?.action) {
+      actionElement = (
+        <ToastAction altText={options.action.label} onClick={options.action.onClick}>
+          {options.action.label}
+        </ToastAction>
+      );
+    }
     
     toast({
       title,
