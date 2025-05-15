@@ -4,11 +4,17 @@ import { Link } from 'react-router-dom';
 import HomeHero from '@/components/home/HomeHero';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
+import type { ViewType } from '@/types/views';
 
-const HomeView = () => {
+interface HomeViewProps {
+  onViewChange: (view: ViewType) => void;
+  showGuide?: boolean;
+}
+
+const HomeView: React.FC<HomeViewProps> = ({ onViewChange, showGuide }) => {
   return (
     <div className="px-4 py-8">
-      <HomeHero />
+      <HomeHero onViewChange={onViewChange} />
       
       <div className="max-w-5xl mx-auto mt-10 flex flex-col items-center">
         <div className="grid gap-8 w-full max-w-4xl">
