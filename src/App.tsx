@@ -23,6 +23,7 @@ import ThemeProvider from './providers/ThemeProvider';
 import { useSupabaseAuth } from './contexts/SupabaseAuthContext';
 import { checkAuthState } from './integrations/supabase/client';
 import SharedStory from './pages/SharedStory';
+import MinimalStoryPage from './pages/MinimalStoryPage';
 
 function PublicRoute() {
   return <Shell />;
@@ -80,6 +81,7 @@ function App() {
               <Route path="/profiles" element={<KidsProfile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/story/:storyId" element={<PublicStory />} />
+              <Route path="/create-story-simple" element={<MinimalStoryPage />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />
