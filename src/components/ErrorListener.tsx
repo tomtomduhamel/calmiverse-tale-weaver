@@ -45,26 +45,6 @@ export function ErrorListener() {
     // S'abonner aux événements d'erreur spécifiques
     document.addEventListener('story-form-error', handleStoryFormError as EventListener);
     
-    // Fonction pour émettre un événement d'erreur de test au démarrage pour vérifier le système
-    const emitTestError = () => {
-      console.log("[ErrorListener] 🧪 Émission d'une erreur de test pour vérifier le système");
-      const testEvent = new CustomEvent('story-form-error', {
-        detail: {
-          type: 'test',
-          message: 'Test du système de notification',
-          source: 'ErrorListener',
-          timestamp: new Date().toISOString()
-        }
-      });
-      
-      // Pour éviter d'afficher une notification à l'utilisateur, on n'émet pas l'événement
-      // mais on simule le traitement pour le débogage
-      handleStoryFormError(testEvent);
-    };
-    
-    // Décommenter pour tester le système
-    // setTimeout(emitTestError, 1000);
-    
     // Nettoyer lors du démontage
     return () => {
       document.removeEventListener('story-form-error', handleStoryFormError as EventListener);

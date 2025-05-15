@@ -1,7 +1,9 @@
 
 import { useCallback } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { NotificationType, NotificationOptions } from '@/types/notification';
+import { ToastAction } from '@/components/ui/toast';
+import React from 'react';
 
 /**
  * Hook qui centralise et uniformise les notifications dans l'application
@@ -33,13 +35,20 @@ export const useNotificationCenter = () => {
         break;
     }
     
+    // Création de l'élément d'action si nécessaire
+    const actionElement = options?.action ? React.createElement(
+      ToastAction,
+      { onClick: options.action.onClick },
+      options.action.label
+    ) : undefined;
+    
     toast({
       title,
       description,
       variant: type === 'error' ? 'destructive' : 'default',
       className: type !== 'error' ? (options?.className || className) : undefined,
       duration: options?.duration || (type === 'error' ? 7000 : 5000),
-      action: options?.action,
+      action: actionElement,
     });
   }, [toast]);
   

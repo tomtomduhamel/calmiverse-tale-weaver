@@ -1,5 +1,7 @@
 
 import { NotificationType, NotificationOptions } from "@/types/notification";
+import { ToastAction } from "@/components/ui/toast";
+import React from "react";
 
 type ErrorCategory = "auth" | "network" | "validation" | "api" | "database" | "unknown";
 
