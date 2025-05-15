@@ -1,5 +1,5 @@
 
-import { NotificationType } from "@/hooks/useNotificationCenter";
+import { NotificationType, NotificationOptions } from "@/types/notification";
 
 type ErrorCategory = "auth" | "network" | "validation" | "api" | "database" | "unknown";
 
@@ -27,7 +27,7 @@ class ErrorNotificationManager {
   private commonErrors: Map<string, ErrorNotificationConfig> = new Map();
   
   // Référence au système de notification central
-  private notifyFn: ((type: NotificationType, title: string, message: string, options?: any) => void) | null = null;
+  private notifyFn: ((type: NotificationType, title: string, message: string, options?: NotificationOptions) => void) | null = null;
   
   private constructor() {
     this.initializeCommonErrors();
@@ -214,7 +214,7 @@ class ErrorNotificationManager {
   /**
    * Intégration avec le système de notification centralisé
    */
-  public initWithNotificationCenter(notifyFn: (type: NotificationType, title: string, message: string, options?: any) => void): void {
+  public initWithNotificationCenter(notifyFn: (type: NotificationType, title: string, message: string, options?: NotificationOptions) => void): void {
     // Stocker la référence à la fonction de notification
     this.notifyFn = notifyFn;
     

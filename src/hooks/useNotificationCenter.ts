@@ -1,6 +1,7 @@
 
 import { useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { NotificationType, NotificationOptions } from '@/types/notification';
 
 /**
  * Hook qui centralise et uniformise les notifications dans l'application
@@ -9,56 +10,61 @@ import { useToast } from '@/components/ui/use-toast';
 export const useNotificationCenter = () => {
   const { toast } = useToast();
   
-  // Notification de succès avec style cohérent
-  const notifySuccess = useCallback((title: string, description: string) => {
-    console.log(`[Notification] Succès: ${title} - ${description}`);
+  // Fonction générique pour notifier
+  const notify = useCallback((type: NotificationType, title: string, description: string, options?: NotificationOptions) => {
+    console.log(`[Notification] ${type}: ${title} - ${description}`);
+    
+    let className = '';
+    
+    // Applique des styles spécifiques selon le type
+    switch (type) {
+      case 'success':
+        className = 'bg-green-50 border-green-300 text-green-800';
+        break;
+      case 'warning':
+        className = 'bg-amber-50 border-amber-300 text-amber-800';
+        break;
+      case 'error':
+        // Pas besoin de classe personnalisée, utilise le variant destructive
+        break;
+      case 'info':
+      default:
+        className = 'bg-blue-50 border-blue-300 text-blue-800';
+        break;
+    }
     
     toast({
       title,
       description,
-      variant: 'default',
-      duration: 5000
+      variant: type === 'error' ? 'destructive' : 'default',
+      className: type !== 'error' ? (options?.className || className) : undefined,
+      duration: options?.duration || (type === 'error' ? 7000 : 5000),
+      action: options?.action,
     });
   }, [toast]);
+  
+  // Notification de succès avec style cohérent
+  const notifySuccess = useCallback((title: string, description: string, options?: NotificationOptions) => {
+    notify('success', title, description, options);
+  }, [notify]);
   
   // Notification d'erreur avec style cohérent
-  const notifyError = useCallback((title: string, description: string) => {
-    console.log(`[Notification] Erreur: ${title} - ${description}`);
-    
-    toast({
-      title,
-      description,
-      variant: 'destructive',
-      duration: 7000
-    });
-  }, [toast]);
+  const notifyError = useCallback((title: string, description: string, options?: NotificationOptions) => {
+    notify('error', title, description, options);
+  }, [notify]);
   
   // Notification d'information avec style cohérent
-  const notifyInfo = useCallback((title: string, description: string) => {
-    console.log(`[Notification] Info: ${title} - ${description}`);
-    
-    toast({
-      title,
-      description,
-      variant: 'default',
-      duration: 4000
-    });
-  }, [toast]);
+  const notifyInfo = useCallback((title: string, description: string, options?: NotificationOptions) => {
+    notify('info', title, description, options);
+  }, [notify]);
   
   // Notification d'avertissement avec style cohérent
-  const notifyWarning = useCallback((title: string, description: string) => {
-    console.log(`[Notification] Avertissement: ${title} - ${description}`);
-    
-    toast({
-      title,
-      description,
-      variant: 'default',
-      className: 'bg-amber-50 border-amber-300 text-amber-800',
-      duration: 6000
-    });
-  }, [toast]);
+  const notifyWarning = useCallback((title: string, description: string, options?: NotificationOptions) => {
+    notify('warning', title, description, options);
+  }, [notify]);
   
   return {
+    notify,
     notifySuccess,
     notifyError,
     notifyInfo,
