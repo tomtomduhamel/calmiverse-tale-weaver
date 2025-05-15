@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { HomeHero } from '@/components/home/HomeHero';
+import HomeHero from '@/components/home/HomeHero';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 
