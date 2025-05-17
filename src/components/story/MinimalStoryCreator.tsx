@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, Sparkles, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useStoryGeneration } from "@/hooks/stories/useStoryGeneration";
 import type { Child } from "@/types/child";
 import type { Objective } from "@/types/story";
 
@@ -13,6 +14,7 @@ import type { Objective } from "@/types/story";
  */
 const MinimalStoryCreator: React.FC = () => {
   const navigate = useNavigate();
+  const { generateStory } = useStoryGeneration();
   
   // État local indépendant
   const [children, setChildren] = useState<Child[]>([]);
@@ -114,9 +116,8 @@ const MinimalStoryCreator: React.FC = () => {
       }
       
       // Récupérer les noms des enfants pour les stocker avec l'histoire
-      const childrenNames = children
-        .filter(child => selectedChildrenIds.includes(child.id))
-        .map(child => child.name);
+      const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
+      const childrenNames = selectedChildren.map(child => child.name);
       
       // Créer une nouvelle histoire avec le statut "pending"
       const { data: storyData, error: storyError } = await supabase
@@ -139,11 +140,19 @@ const MinimalStoryCreator: React.FC = () => {
         
       if (storyError) throw storyError;
       
-      // Appeler la fonction Supabase Edge pour générer l'histoire (en arrière-plan)
+      // Appeler la fonction Supabase Edge pour générer l'histoire en passant tous les paramètres nécessaires
       try {
-        const { error: funcError } = await supabase.functions.invoke("generateStory", {
-          body: { storyId: storyData.id }
+        console.log("Appel de la fonction generateStory avec:", {
+          storyId: storyData.id,
+          objective: selectedObjective,
+          childrenNames: childrenNames
         });
+        
+        const { error: funcError } = await generateStory(
+          storyData.id,
+          selectedObjective,
+          childrenNames
+        );
         
         if (funcError) {
           console.warn("La fonction de génération a rencontré une erreur:", funcError);

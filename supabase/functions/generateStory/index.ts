@@ -27,13 +27,47 @@ serve(async (req) => {
     
     console.log("Requête reçue pour la génération d'histoire:", requestBody);
     
-    const { storyId, objective, childrenNames } = requestBody;
+    let { storyId, objective, childrenNames } = requestBody;
 
-    // Validation des données d'entrée
+    // Initialiser le client Supabase
+    const supabase = initializeSupabase();
+    
+    // Vérifier si l'histoire existe
+    await checkStoryExists(supabase, storyId);
+    
+    // Si les paramètres objective ou childrenNames sont manquants, les récupérer depuis la base de données
+    if (!objective || !childrenNames || childrenNames.length === 0) {
+      console.log("Paramètres manquants, récupération depuis la base de données...");
+      
+      const { data: storyData, error: storyError } = await supabase
+        .from("stories")
+        .select("objective, childrennames")
+        .eq("id", storyId)
+        .single();
+      
+      if (storyError) {
+        console.error("Erreur lors de la récupération des données de l'histoire:", storyError);
+        throw new Error("Impossible de récupérer les données de l'histoire");
+      }
+      
+      objective = storyData.objective || objective;
+      childrenNames = storyData.childrennames || childrenNames;
+      
+      console.log("Données récupérées depuis la base de données:", { objective, childrenNames });
+    }
+
+    // Validation des données d'entrée avec les données potentiellement récupérées
     try {
       validateInput(storyId, objective, childrenNames);
     } catch (validationError) {
       console.error("Validation échouée:", validationError.message);
+      
+      // Mettre à jour le statut d'erreur de l'histoire
+      await updateStoryInDb(supabase, storyId, {
+        status: 'error',
+        error: validationError.message || 'Erreur de validation des données'
+      });
+      
       return new Response(
         JSON.stringify({
           error: true,
@@ -47,12 +81,6 @@ serve(async (req) => {
     }
 
     console.log(`Génération d'histoire pour: ID=${storyId}, objectif=${objective}, enfants=${childrenNames.join(', ')}`);
-    
-    // Initialiser le client Supabase et obtenir la clé API OpenAI
-    const supabase = initializeSupabase();
-    
-    // Vérifier si l'histoire existe
-    await checkStoryExists(supabase, storyId);
     
     // Mettre à jour le statut à "pending" avant de commencer
     await updateStoryInDb(supabase, storyId, {

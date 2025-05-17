@@ -7,8 +7,8 @@ export const useStoryGeneration = () => {
 
   const generateStory = useCallback(async (
     storyId: string,
-    objective: string, 
-    childrenNames: string[]
+    objective?: string, 
+    childrenNames?: string[]
   ) => {
     console.log("Génération d'histoire: ", { storyId, objective, childrenNames });
     return await callCloudFunctionWithRetry(
