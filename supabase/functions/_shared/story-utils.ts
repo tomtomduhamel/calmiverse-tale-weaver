@@ -46,6 +46,34 @@ export const validateInput = (storyId: string, objective: string, childrenNames:
   }
 };
 
+// Fonction pour récupérer les données complètes d'une histoire depuis la base de données
+export const fetchStoryDataFromDb = async (supabase: any, storyId: string) => {
+  try {
+    console.log(`Récupération des données complètes pour l'histoire ${storyId}`);
+    
+    const { data, error } = await supabase
+      .from('stories')
+      .select('*')
+      .eq('id', storyId)
+      .single();
+      
+    if (error) {
+      console.error('Erreur lors de la récupération des données de l\'histoire:', error);
+      throw new Error(`Erreur lors de la récupération des données: ${error.message}`);
+    }
+    
+    if (!data) {
+      throw new Error(`Aucune donnée trouvée pour l'histoire avec l'ID ${storyId}`);
+    }
+    
+    console.log(`Données récupérées avec succès pour l'histoire ${storyId}`);
+    return data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données de l\'histoire:', error);
+    throw new Error(`Erreur lors de la récupération des données de l'histoire: ${error.message || 'Erreur inconnue'}`);
+  }
+};
+
 // Génération de l'histoire avec OpenAI en utilisant fetch directement
 export const generateStoryText = async (apiKey: string, objective: string, childrenNames: string[], isRetry = false) => {
   console.log(`Génération du texte de l'histoire avec l'objectif: ${objective} pour: ${childrenNames.join(', ')}`);

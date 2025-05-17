@@ -9,7 +9,8 @@ import {
   generateSummary,
   generateTitle,
   updateStoryInDb,
-  checkStoryExists
+  checkStoryExists,
+  fetchStoryDataFromDb
 } from "../_shared/story-utils.ts";
 
 serve(async (req) => {
@@ -27,36 +28,62 @@ serve(async (req) => {
     
     console.log("Requête reçue pour la génération d'histoire:", requestBody);
     
-    let { storyId, objective, childrenNames } = requestBody;
+    // Extraire le storyId qui est obligatoire
+    const { storyId } = requestBody;
+    if (!storyId) {
+      throw new Error("ID d'histoire manquant dans la requête");
+    }
+    
+    // Extraire les paramètres optionnels
+    let { objective, childrenNames } = requestBody;
 
     // Initialiser le client Supabase
     const supabase = initializeSupabase();
     
-    // Vérifier si l'histoire existe
-    await checkStoryExists(supabase, storyId);
+    // Vérifier si l'histoire existe et récupérer ses données de base
+    const storyData = await checkStoryExists(supabase, storyId);
     
     // Si les paramètres objective ou childrenNames sont manquants, les récupérer depuis la base de données
     if (!objective || !childrenNames || childrenNames.length === 0) {
       console.log("Paramètres manquants, récupération depuis la base de données...");
       
-      const { data: storyData, error: storyError } = await supabase
-        .from("stories")
-        .select("objective, childrennames")
-        .eq("id", storyId)
-        .single();
+      const storyDetails = await fetchStoryDataFromDb(supabase, storyId);
       
-      if (storyError) {
-        console.error("Erreur lors de la récupération des données de l'histoire:", storyError);
-        throw new Error("Impossible de récupérer les données de l'histoire");
+      objective = objective || storyDetails.objective;
+      childrenNames = childrenNames || storyDetails.childrennames;
+      
+      console.log("Données récupérées depuis la base de données:", { 
+        objective, 
+        childrenNames,
+        status: storyDetails.status
+      });
+      
+      // Si l'histoire a déjà été complétée, retourner les données existantes
+      if (storyDetails.status === 'completed') {
+        console.log(`L'histoire ${storyId} est déjà complétée, retour des données existantes`);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "Histoire déjà générée",
+            storyData: {
+              title: storyDetails.title,
+              content: storyDetails.content,
+              summary: storyDetails.summary,
+              preview: storyDetails.preview,
+              status: 'completed'
+            }
+          }),
+          {
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
       }
-      
-      objective = storyData.objective || objective;
-      childrenNames = storyData.childrennames || childrenNames;
-      
-      console.log("Données récupérées depuis la base de données:", { objective, childrenNames });
     }
 
-    // Validation des données d'entrée avec les données potentiellement récupérées
+    // Validation des données d'entrée avec les données récupérées
     try {
       validateInput(storyId, objective, childrenNames);
     } catch (validationError) {
@@ -143,7 +170,7 @@ serve(async (req) => {
         }
       );
     } catch (error) {
-      console.error("Erreur lors de la génération:", error);
+      console.error("Erreur lors de la génération:", error.message, error.stack);
       
       // Mettre à jour le statut d'erreur de l'histoire
       await updateStoryInDb(supabase, storyId, {
@@ -154,7 +181,7 @@ serve(async (req) => {
       throw error;
     }
   } catch (error: any) {
-    console.error("Erreur globale:", error);
+    console.error("Erreur globale:", error.message, error.stack);
 
     return new Response(
       JSON.stringify({
