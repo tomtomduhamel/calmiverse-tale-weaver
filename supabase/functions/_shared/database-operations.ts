@@ -1,5 +1,6 @@
 
-import { SupabaseClient } from "@supabase/supabase-js";
+// Remplacer l'import Node.js standard par un import compatible avec Deno
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.38.5";
 
 // Récupérer les données d'histoire depuis la base de données
 export const fetchStoryDataFromDb = async (supabase: SupabaseClient, storyId: string) => {
