@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
@@ -12,52 +11,60 @@ export const useSupabaseChildren = () => {
   const { user } = useSupabaseAuth();
 
   // Charger les enfants depuis Supabase
+  const loadChildren = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      console.log("[useSupabaseChildren] Chargement des enfants pour l'utilisateur:", user.id);
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('children')
+        .select('*')
+        .eq('authorid', user.id)
+        .order('createdat', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Transformer les données pour correspondre au type Child
+      const loadedChildren = data.map(child => ({
+        id: child.id,
+        name: child.name,
+        birthDate: new Date(child.birthdate),
+        interests: child.interests || [],
+        gender: child.gender || 'unknown',
+        authorId: child.authorid,
+        teddyName: child.teddyname || '',
+        teddyDescription: child.teddydescription || '',
+        teddyPhotos: child.teddyphotos || [],
+        imaginaryWorld: child.imaginaryworld || '',
+        createdAt: new Date(child.createdat)
+      })) as Child[];
+      
+      console.log("[useSupabaseChildren] Enfants chargés:", loadedChildren.length, loadedChildren);
+      setChildren(loadedChildren);
+    } catch (error: any) {
+      console.error("[useSupabaseChildren] Erreur lors du chargement des enfants:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les profils des enfants",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [user, toast]);
+  
+  // Effet pour le chargement initial et la configuration des abonnements en temps réel
   useEffect(() => {
     if (!user) {
       setLoading(false);
       return;
     }
 
-    const loadChildren = async () => {
-      try {
-        setLoading(true);
-        
-        const { data, error } = await supabase
-          .from('children')
-          .select('*')
-          .eq('authorid', user.id)
-          .order('createdat', { ascending: false });
-        
-        if (error) throw error;
-        
-        // Transformer les données pour correspondre au type Child
-        const loadedChildren = data.map(child => ({
-          id: child.id,
-          name: child.name,
-          birthDate: new Date(child.birthdate),
-          interests: child.interests || [],
-          gender: child.gender || 'unknown',
-          authorId: child.authorid,
-          teddyName: child.teddyname,
-          teddyDescription: child.teddydescription,
-          teddyPhotos: child.teddyphotos || [],
-          imaginaryWorld: child.imaginaryworld,
-          createdAt: new Date(child.createdat)
-        })) as Child[];
-        
-        setChildren(loadedChildren);
-      } catch (error: any) {
-        console.error("Erreur lors du chargement des enfants:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les profils des enfants",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     loadChildren();
     
     // Configurer une souscription en temps réel pour les mises à jour
@@ -69,14 +76,18 @@ export const useSupabaseChildren = () => {
         table: 'children',
         filter: `authorid=eq.${user.id}`
       }, (payload) => {
+        console.log("[useSupabaseChildren] Changement détecté dans la table children:", payload);
         loadChildren();
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[useSupabaseChildren] Statut de l'abonnement realtime:", status);
+      });
     
     return () => {
+      console.log("[useSupabaseChildren] Nettoyage - suppression du canal realtime");
       supabase.removeChannel(channel);
     };
-  }, [user, toast]);
+  }, [user, loadChildren]);
 
   const handleAddChild = useCallback(async (childData: Omit<Child, "id">) => {
     if (!user) {
@@ -84,7 +95,7 @@ export const useSupabaseChildren = () => {
     }
 
     try {
-      console.log("Tentative de création d'un enfant avec les données:", childData);
+      console.log("[useSupabaseChildren] Tentative de création d'un enfant avec les données:", childData);
       
       // Mapper les données avec les noms de colonnes corrects (en minuscule)
       const { data, error } = await supabase
@@ -105,14 +116,34 @@ export const useSupabaseChildren = () => {
         .single();
         
       if (error) {
-        console.error("Erreur Supabase lors de l'ajout:", error);
+        console.error("[useSupabaseChildren] Erreur Supabase lors de l'ajout:", error);
         throw error;
       }
       
-      console.log("Enfant créé avec succès, ID:", data.id);
+      console.log("[useSupabaseChildren] Enfant créé avec succès, ID:", data.id, "Données:", data);
+      
+      // Actualiser immédiatement l'état local pour une réponse instantanée de l'UI
+      // en transformant les données reçues de Supabase au format Child
+      const newChild: Child = {
+        id: data.id,
+        name: data.name,
+        birthDate: new Date(data.birthdate),
+        interests: data.interests || [],
+        gender: data.gender || 'unknown',
+        authorId: data.authorid,
+        teddyName: data.teddyname || '',
+        teddyDescription: data.teddydescription || '',
+        teddyPhotos: data.teddyphotos || [],
+        imaginaryWorld: data.imaginaryworld || '',
+        createdAt: new Date(data.createdat)
+      };
+      
+      // Mettre à jour l'état local pour une réponse immédiate
+      setChildren(prevChildren => [newChild, ...prevChildren]);
+      
       return data.id;
     } catch (error: any) {
-      console.error("Erreur lors de l'ajout de l'enfant:", error);
+      console.error("[useSupabaseChildren] Erreur lors de l'ajout de l'enfant:", error);
       throw error;
     }
   }, [user]);
@@ -187,7 +218,8 @@ export const useSupabaseChildren = () => {
     handleAddChild,
     handleUpdateChild,
     handleDeleteChild,
-    loading
+    loading,
+    refreshChildren: loadChildren // Exposer la fonction de rafraîchissement
   };
 };
 

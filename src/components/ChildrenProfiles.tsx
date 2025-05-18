@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Child } from "@/types/child";
 import ProfileHeader from "./children/ProfileHeader";
@@ -9,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ChildrenProfilesProps {
   children: Child[];
-  onAddChild: (child: Omit<Child, "id">) => void;
+  onAddChild: (child: Omit<Child, "id">) => Promise<string>;
   onUpdateChild: (childId: string, updatedChild: Partial<Child>) => void;
   onDeleteChild: (childId: string) => void;
   onCreateStory?: () => void;
@@ -29,8 +30,14 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
   const [newTeddyDescription, setNewTeddyDescription] = useState("");
   const [newImaginaryWorld, setNewImaginaryWorld] = useState("");
   const [editingChild, setEditingChild] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useSupabaseAuth();
+  
+  // Log de débogage pour surveiller la liste des enfants
+  useEffect(() => {
+    console.log("[ChildrenProfiles] Rendu avec enfants:", children);
+  }, [children]);
 
   const resetForm = () => {
     setNewChildName("");
@@ -88,7 +95,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
   };
 
   // Updated handleSubmit to accept a Child object instead of a form event
-  const handleSubmit = (childData: Child) => {
+  const handleSubmit = async (childData: Child) => {
     if (!childData.name.trim()) {
       toast({
         title: "Erreur",
@@ -107,34 +114,51 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
       return;
     }
 
-    // Prepare the data without changing its type
-    const submissionData = {
-      name: childData.name,
-      birthDate: childData.birthDate,
-      teddyName: childData.teddyName || "",
-      teddyDescription: childData.teddyDescription || "",
-      imaginaryWorld: childData.imaginaryWorld || "",
-      authorId: user.id,
-      teddyPhotos: [],
-    };
+    try {
+      setIsSubmitting(true);
+      console.log("[ChildrenProfiles] Soumission du formulaire pour l'enfant:", childData);
 
-    if (editingChild) {
-      const currentChild = children.find((c) => c.id === editingChild);
-      if (currentChild) {
-        onUpdateChild(editingChild, submissionData);
+      // Prepare the data without changing its type
+      const submissionData = {
+        name: childData.name,
+        birthDate: childData.birthDate,
+        teddyName: childData.teddyName || "",
+        teddyDescription: childData.teddyDescription || "",
+        imaginaryWorld: childData.imaginaryWorld || "",
+        authorId: user.id,
+        teddyPhotos: childData.teddyPhotos || [],
+      };
+
+      if (editingChild) {
+        console.log("[ChildrenProfiles] Mode d'édition - mise à jour de l'enfant:", editingChild);
+        const currentChild = children.find((c) => c.id === editingChild);
+        if (currentChild) {
+          await onUpdateChild(editingChild, submissionData);
+        }
+        toast({
+          title: "Succès",
+          description: "Le profil a été mis à jour avec succès",
+        });
+      } else {
+        console.log("[ChildrenProfiles] Mode d'ajout - création d'un nouveau profil d'enfant");
+        const newChildId = await onAddChild(submissionData);
+        console.log("[ChildrenProfiles] Nouveau profil d'enfant créé avec ID:", newChildId);
+        toast({
+          title: "Succès",
+          description: "Le profil a été ajouté avec succès",
+        });
       }
+    } catch (error) {
+      console.error("[ChildrenProfiles] Erreur lors de la soumission du formulaire:", error);
       toast({
-        title: "Succès",
-        description: "Le profil a été mis à jour avec succès",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'enregistrement du profil",
+        variant: "destructive",
       });
-    } else {
-      onAddChild(submissionData);
-      toast({
-        title: "Succès",
-        description: "Le profil a été ajouté avec succès",
-      });
+    } finally {
+      setIsSubmitting(false);
+      resetForm();
     }
-    resetForm();
   };
 
   const handleEdit = (child: Child) => {
@@ -174,6 +198,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
         onImaginaryWorldChange={setNewImaginaryWorld}
         onPhotoUploaded={(photo) => editingChild && handlePhotoUploaded(editingChild, photo)}
         onPhotoDeleted={(path) => editingChild && handlePhotoDeleted(editingChild, path)}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

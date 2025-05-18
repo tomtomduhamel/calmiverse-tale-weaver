@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Child } from "@/types/child";
 
 /**
@@ -11,11 +11,16 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => P
   
   // Form values - Using string for age to match form inputs
   const [childName, setChildName] = useState<string>("");
-  const [childAge, setChildAge] = useState<string>("1"); 
+  const [childAge, setChildAge] = useState<string>("1");
+  
+  // État pour suivre si une soumission est en cours
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [lastSubmittedId, setLastSubmittedId] = useState<string | null>(null);
   
   // Form submission handler
   const handleChildFormSubmit = useCallback(async (childName: string, childAge: string) => {
     try {
+      setIsSubmitting(true);
       console.log("[useChildFormLogic] Creating child with name:", childName, "age:", childAge);
       
       // Calculate birth date from age
@@ -25,7 +30,7 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => P
       const birthDate = new Date(birthYear, now.getMonth(), now.getDate());
       
       // Create child with required fields for Supabase
-      await onCreateChild({
+      const childId = await onCreateChild({
         name: childName,
         birthDate,
         interests: [],
@@ -37,6 +42,9 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => P
         teddyPhotos: []
       });
       
+      console.log("[useChildFormLogic] Child created successfully, ID:", childId);
+      setLastSubmittedId(childId as string);
+      
       // Close form
       setShowChildForm(false);
       
@@ -44,9 +52,14 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => P
       setChildName("");
       setChildAge("1");
       
+      return childId;
+      
     } catch (error) {
       console.error("[useChildFormLogic] Error creating child:", error);
       // Error handled by caller
+      throw error;
+    } finally {
+      setIsSubmitting(false);
     }
   }, [onCreateChild]);
   
@@ -64,6 +77,8 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => P
     childAge,
     setChildAge,
     handleChildFormSubmit,
-    resetChildForm
+    resetChildForm,
+    isSubmitting,
+    lastSubmittedId
   };
 };

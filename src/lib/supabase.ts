@@ -13,9 +13,32 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Options pour le client Supabase avec realtime activé
+const supabaseOptions = {
+  realtime: {
+    // Options pour la fonctionnalité Realtime
+    params: {
+      eventsPerSecond: 10
+    }
+  },
+  db: {
+    schema: 'public',
+  },
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    // Nombre de tentatives de reconnexion
+    fetch: (url: string, options: any) => fetch(url, { ...options, retry: 3 }),
+  }
+};
+
 export const supabase = createClient(
   supabaseUrl || 'https://exemple.supabase.co', 
-  supabaseAnonKey || 'exemple-clé-publique'
+  supabaseAnonKey || 'exemple-clé-publique',
+  supabaseOptions
 );
 
 // Types pour les tables Supabase
