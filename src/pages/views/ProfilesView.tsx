@@ -6,7 +6,7 @@ import type { Child } from "@/types/child";
 
 interface ProfilesViewProps {
   children: Child[];
-  onAddChild: (child: Omit<Child, "id">) => void;
+  onAddChild: (child: Omit<Child, "id">) => Promise<string>; // Mise à jour pour prendre une Promise<string>
   onUpdateChild: (childId: string, updatedChild: Partial<Child>) => void;
   onDeleteChild: (childId: string) => void;
   onCreateStory?: () => void;

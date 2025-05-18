@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Loader2 } from "lucide-react";
 import { DatePickerWithInput } from "@/components/ui/date-picker/DatePickerWithInput";
 import SupabaseTeddyPhotoUpload from "./SupabaseTeddyPhotoUpload";
 import TeddyPhotoGallery from "./TeddyPhotoGallery";
@@ -30,6 +30,7 @@ interface ChildFormProps {
   onImaginaryWorldChange?: (value: string) => void;
   onPhotoUploaded?: (photo: { url: string; path: string; uploadedAt: Date }) => void;
   onPhotoDeleted?: (path: string) => void;
+  isSubmitting?: boolean; // Ajout de la prop isSubmitting
 }
 
 const ChildForm: React.FC<ChildFormProps> = ({
@@ -52,6 +53,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
   onImaginaryWorldChange,
   onPhotoUploaded,
   onPhotoDeleted,
+  isSubmitting = false, // Valeur par défaut
 }) => {
   // État local si les gestionnaires de changement ne sont pas fournis
   const [localChildName, setLocalChildName] = React.useState(initialValues?.name || childName);
@@ -88,6 +90,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
           value={onChildNameChange ? childName : localChildName}
           onChange={(e) => onChildNameChange ? onChildNameChange(e.target.value) : setLocalChildName(e.target.value)}
           placeholder="Entrez le nom"
+          disabled={isSubmitting}
         />
       </div>
 
@@ -96,6 +99,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
         <DatePickerWithInput
           value={onBirthDateChange ? birthDate : localBirthDate}
           onChange={(date) => onBirthDateChange ? onBirthDateChange(date) : setLocalBirthDate(date)}
+          disabled={isSubmitting}
         />
       </div>
 
@@ -106,6 +110,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
           value={onTeddyNameChange ? teddyName : localTeddyName}
           onChange={(e) => onTeddyNameChange ? onTeddyNameChange(e.target.value) : setLocalTeddyName(e.target.value)}
           placeholder="Entrez le nom du doudou"
+          disabled={isSubmitting}
         />
       </div>
 
@@ -116,6 +121,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
           value={onTeddyDescriptionChange ? teddyDescription : localTeddyDescription}
           onChange={(e) => onTeddyDescriptionChange ? onTeddyDescriptionChange(e.target.value) : setLocalTeddyDescription(e.target.value)}
           placeholder="Décrivez le doudou"
+          disabled={isSubmitting}
         />
       </div>
 
@@ -141,13 +147,27 @@ const ChildForm: React.FC<ChildFormProps> = ({
           value={onImaginaryWorldChange ? imaginaryWorld : localImaginaryWorld}
           onChange={(e) => onImaginaryWorldChange ? onImaginaryWorldChange(e.target.value) : setLocalImaginaryWorld(e.target.value)}
           placeholder="Décrivez son monde imaginaire"
+          disabled={isSubmitting}
         />
       </div>
 
       <div className="flex gap-2">
-        <Button type="submit" className="flex-1 bg-accent hover:bg-accent/90">
-          <Plus className="h-4 w-4 mr-2" />
-          {isEditing ? "Mettre à jour" : "Ajouter un profil"}
+        <Button 
+          type="submit" 
+          className="flex-1 bg-accent hover:bg-accent/90"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <span>{isEditing ? "Mise à jour..." : "Ajout en cours..."}</span>
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4 mr-2" />
+              <span>{isEditing ? "Mettre à jour" : "Ajouter un profil"}</span>
+            </>
+          )}
         </Button>
 
         {(onCancel || onReset) && (
@@ -156,6 +176,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
             variant="outline"
             className="flex-1"
             onClick={onCancel || onReset}
+            disabled={isSubmitting}
           >
             <X className="h-4 w-4 mr-2" />
             Annuler

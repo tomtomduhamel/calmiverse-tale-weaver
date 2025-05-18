@@ -86,4 +86,22 @@ export const handleSupabaseError = (error: Error, message: string = 'Une erreur 
   };
 };
 
+// Fonction utilitaire pour vérifier la configuration Realtime
+export const checkRealtimeConfig = async () => {
+  try {
+    const channel = supabase.channel('healthcheck');
+    const status = await channel.subscribe((status) => {
+      console.log('Statut de la connexion Realtime:', status);
+    });
+    
+    // Nettoyage après vérification
+    setTimeout(() => supabase.removeChannel(channel), 5000);
+    
+    return { status, working: status === 'SUBSCRIBED' };
+  } catch (error) {
+    console.error('Erreur lors de la vérification Realtime:', error);
+    return { status: 'ERROR', working: false, error };
+  }
+};
+
 export default supabase;

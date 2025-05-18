@@ -23,6 +23,7 @@ interface ProfileFormWrapperProps {
   onImaginaryWorldChange: (value: string) => void;
   onPhotoUploaded: (photo: { url: string; path: string; uploadedAt: Date }) => void;
   onPhotoDeleted: (path: string) => void;
+  isSubmitting?: boolean; // Ajout de la prop isSubmitting
 }
 
 const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
@@ -44,6 +45,7 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
   onImaginaryWorldChange,
   onPhotoUploaded,
   onPhotoDeleted,
+  isSubmitting = false, // Valeur par défaut
 }) => {
   if (!showForm) return null;
 
@@ -72,6 +74,7 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
         onImaginaryWorldChange={onImaginaryWorldChange}
         onPhotoUploaded={onPhotoUploaded}
         onPhotoDeleted={onPhotoDeleted}
+        isSubmitting={isSubmitting} // Transmet l'état de soumission au formulaire enfant
       />
     </Card>
   );
