@@ -16,8 +16,12 @@ export type Database = {
           createdat: string
           gender: string | null
           id: string
+          imaginaryworld: string | null
           interests: string[] | null
           name: string
+          teddydescription: string | null
+          teddyname: string | null
+          teddyphotos: Json | null
         }
         Insert: {
           authorid: string
@@ -25,8 +29,12 @@ export type Database = {
           createdat?: string
           gender?: string | null
           id?: string
+          imaginaryworld?: string | null
           interests?: string[] | null
           name: string
+          teddydescription?: string | null
+          teddyname?: string | null
+          teddyphotos?: Json | null
         }
         Update: {
           authorid?: string
@@ -34,8 +42,12 @@ export type Database = {
           createdat?: string
           gender?: string | null
           id?: string
+          imaginaryworld?: string | null
           interests?: string[] | null
           name?: string
+          teddydescription?: string | null
+          teddyname?: string | null
+          teddyphotos?: Json | null
         }
         Relationships: []
       }

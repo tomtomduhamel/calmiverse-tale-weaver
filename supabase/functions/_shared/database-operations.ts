@@ -1,83 +1,71 @@
 
-// Fonction pour récupérer les données complètes d'une histoire depuis la base de données
-export const fetchStoryDataFromDb = async (supabase: any, storyId: string) => {
-  try {
-    console.log(`Récupération des données complètes pour l'histoire ${storyId}`);
+import { SupabaseClient } from "@supabase/supabase-js";
+
+// Récupérer les données d'histoire depuis la base de données
+export const fetchStoryDataFromDb = async (supabase: SupabaseClient, storyId: string) => {
+  const { data, error } = await supabase
+    .from('stories')
+    .select('*')
+    .eq('id', storyId)
+    .single();
+  
+  if (error) {
+    throw new Error(`Erreur lors de la récupération des données d'histoire: ${error.message}`);
+  }
+  
+  if (!data) {
+    throw new Error(`Histoire avec ID ${storyId} introuvable`);
+  }
+  
+  return data;
+};
+
+// Vérifier si une histoire existe déjà
+export const checkStoryExists = async (supabase: SupabaseClient, storyId: string) => {
+  const { data, error } = await supabase
+    .from('stories')
+    .select('id')
+    .eq('id', storyId)
+    .single();
     
-    const { data, error } = await supabase
-      .from('stories')
-      .select('*')
-      .eq('id', storyId)
-      .single();
-      
-    if (error) {
-      console.error('Erreur lors de la récupération des données de l\'histoire:', error);
-      throw new Error(`Erreur lors de la récupération des données: ${error.message}`);
-    }
+  if (error && error.code !== 'PGRST116') { // PGRST116 est le code pour 'aucune ligne trouvée'
+    throw new Error(`Erreur lors de la vérification de l'existence de l'histoire: ${error.message}`);
+  }
+  
+  return !!data;
+};
+
+// Mettre à jour une histoire dans la base de données
+export const updateStoryInDb = async (
+  supabase: SupabaseClient, 
+  storyId: string, 
+  updates: Record<string, any>
+) => {
+  const { error } = await supabase
+    .from('stories')
+    .update(updates)
+    .eq('id', storyId);
     
-    if (!data) {
-      throw new Error(`Aucune donnée trouvée pour l'histoire avec l'ID ${storyId}`);
-    }
-    
-    console.log(`Données récupérées avec succès pour l'histoire ${storyId}`);
-    return data;
-  } catch (error) {
-    console.error('Erreur lors de la récupération des données de l\'histoire:', error);
-    throw new Error(`Erreur lors de la récupération des données de l'histoire: ${error.message || 'Erreur inconnue'}`);
+  if (error) {
+    throw new Error(`Erreur lors de la mise à jour de l'histoire: ${error.message}`);
   }
 };
 
-// Vérification de l'existence d'une histoire dans la base de données
-export const checkStoryExists = async (supabase: any, storyId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('stories')
-      .select('id, status')
-      .eq('id', storyId)
-      .single();
-      
-    if (error) {
-      console.error('Erreur lors de la vérification de l\'existence de l\'histoire:', error);
-      throw error;
-    }
-    
-    if (!data) {
-      throw new Error(`L'histoire avec l'ID ${storyId} n'existe pas`);
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Erreur lors de la vérification de l\'existence de l\'histoire:', error);
-    throw new Error(`Erreur lors de la vérification de l'histoire: ${error.message}`);
+// Récupérer les données d'un enfant depuis la base de données
+export const fetchChildDataFromDb = async (supabase: SupabaseClient, childId: string) => {
+  const { data, error } = await supabase
+    .from('children')
+    .select('*')
+    .eq('id', childId)
+    .single();
+  
+  if (error) {
+    throw new Error(`Erreur lors de la récupération des données de l'enfant: ${error.message}`);
   }
-};
-
-// Mise à jour de l'histoire dans la base de données
-export const updateStoryInDb = async (supabase: any, storyId: string, storyData: any) => {
-  try {
-    console.log(`Mise à jour de l'histoire ${storyId} dans la base de données...`);
-    
-    const { error } = await supabase
-      .from('stories')
-      .update({
-        title: storyData.title,
-        content: storyData.content,
-        summary: storyData.summary,
-        preview: storyData.preview,
-        status: storyData.status,
-        error: storyData.error,
-        updatedat: new Date().toISOString()
-      })
-      .eq('id', storyId);
-
-    if (error) {
-      console.error('Erreur lors de la mise à jour de l\'histoire dans la base de données:', error);
-      throw error;
-    }
-    
-    console.log(`Histoire ${storyId} mise à jour avec succès`);
-  } catch (error) {
-    console.error('Erreur lors de la mise à jour de l\'histoire:', error);
-    throw new Error(`Erreur lors de la mise à jour de l'histoire dans la base de données: ${error.message}`);
+  
+  if (!data) {
+    throw new Error(`Enfant avec ID ${childId} introuvable`);
   }
+  
+  return data;
 };

@@ -1,169 +1,193 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { useToast } from '@/hooks/use-toast';
-import type { Child } from '@/types/child';
+import type { Child } from "@/types/child";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 export const useSupabaseChildren = () => {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { user } = useSupabaseAuth();
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
 
-  const fetchChildren = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('children')
-        .select('*')
-        .eq('authorid', user.id)
-        .order('name');
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedChildren = data.map(item => ({
-          ...item,
-          id: item.id,
-          authorId: item.authorid,
-          birthDate: new Date(item.birthdate),
-          createdAt: new Date(item.createdat),
-          interests: item.interests || [],
-          gender: item.gender || 'unknown'
-        }));
-
-        setChildren(formattedChildren);
-      }
-    } catch (err: any) {
-      setError(err);
-      console.error('Error fetching children:', err);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les profils d\'enfants',
-        variant: 'destructive',
-      });
-    } finally {
+  // Charger les enfants depuis Supabase
+  useEffect(() => {
+    if (!user) {
       setLoading(false);
+      return;
     }
+
+    const loadChildren = async () => {
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from('children')
+          .select('*')
+          .eq('authorid', user.id)
+          .order('createdat', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Transformer les données pour correspondre au type Child
+        const loadedChildren = data.map(child => ({
+          id: child.id,
+          name: child.name,
+          birthDate: new Date(child.birthdate),
+          interests: child.interests || [],
+          gender: child.gender || 'unknown',
+          authorId: child.authorid,
+          teddyName: child.teddyname,
+          teddyDescription: child.teddydescription,
+          teddyPhotos: child.teddyphotos || [],
+          imaginaryWorld: child.imaginaryworld,
+          createdAt: new Date(child.createdat)
+        })) as Child[];
+        
+        setChildren(loadedChildren);
+      } catch (error: any) {
+        console.error("Erreur lors du chargement des enfants:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les profils des enfants",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadChildren();
+    
+    // Configurer une souscription en temps réel pour les mises à jour
+    const channel = supabase
+      .channel('children_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'children',
+        filter: `authorid=eq.${user.id}`
+      }, (payload) => {
+        loadChildren();
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, toast]);
 
-  const handleAddChild = useCallback(async (childData: Omit<Child, 'id'>): Promise<string> => {
+  const handleAddChild = useCallback(async (childData: Omit<Child, "id">) => {
+    if (!user) {
+      throw new Error("Utilisateur non connecté");
+    }
+
     try {
-      if (!user) throw new Error('You must be logged in to add a child');
-
-      const { data, error } = await supabase
-        .from('children')
-        .insert([{
-          name: childData.name,
-          birthdate: childData.birthDate,
-          authorid: user.id,
-          gender: childData.gender || 'unknown',
-          interests: childData.interests || [],
-          createdat: new Date()
-        }])
-        .select();
-
-      if (error) throw error;
-
-      toast({
-        title: 'Succès',
-        description: `Profil de ${childData.name} créé avec succès`,
-      });
-
-      await fetchChildren();
+      console.log("Tentative de création d'un enfant avec les données:", childData);
       
-      return data?.[0]?.id || '';
-    } catch (err: any) {
-      console.error('Error adding child:', err);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de créer le profil d\'enfant',
-        variant: 'destructive',
-      });
-      throw err;
-    }
-  }, [user, fetchChildren, toast]);
-
-  const handleUpdateChild = useCallback(async (childId: string, updates: Partial<Child>): Promise<string> => {
-    try {
-      if (!user) throw new Error('You must be logged in to update a child');
-
+      // Mapper les données avec les noms de colonnes corrects (en minuscule)
       const { data, error } = await supabase
         .from('children')
-        .update({
-          name: updates.name,
-          birthdate: updates.birthDate,
-          gender: updates.gender,
-          interests: updates.interests,
+        .insert({
+          name: childData.name,
+          birthdate: childData.birthDate.toISOString(),
+          interests: childData.interests || [],
+          gender: childData.gender || 'unknown',
+          authorid: user.id,
+          teddyname: childData.teddyName || '',
+          teddydescription: childData.teddyDescription || '',
+          teddyphotos: childData.teddyPhotos || [],
+          imaginaryworld: childData.imaginaryWorld || '',
+          createdat: new Date().toISOString()
         })
-        .eq('id', childId)
-        .eq('authorid', user.id)
-        .select();
-
-      if (error) throw error;
-
-      toast({
-        title: 'Succès',
-        description: `Profil de ${updates.name} mis à jour avec succès`,
-      });
-
-      await fetchChildren();
-      return childId;
-    } catch (err: any) {
-      console.error('Error updating child:', err);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de mettre à jour le profil d\'enfant',
-        variant: 'destructive',
-      });
-      throw err;
+        .select()
+        .single();
+        
+      if (error) {
+        console.error("Erreur Supabase lors de l'ajout:", error);
+        throw error;
+      }
+      
+      console.log("Enfant créé avec succès, ID:", data.id);
+      return data.id;
+    } catch (error: any) {
+      console.error("Erreur lors de l'ajout de l'enfant:", error);
+      throw error;
     }
-  }, [user, fetchChildren, toast]);
+  }, [user]);
 
-  const handleDeleteChild = useCallback(async (childId: string): Promise<void> => {
+  const handleUpdateChild = useCallback(async (childId: string, updatedData: Partial<Child>) => {
+    if (!user) {
+      throw new Error("Utilisateur non connecté");
+    }
+
     try {
-      if (!user) throw new Error('You must be logged in to delete a child');
+      // Transformer les données pour correspondre au schéma Supabase
+      const supabaseData: Record<string, any> = {};
+      
+      if (updatedData.name !== undefined) supabaseData.name = updatedData.name;
+      if (updatedData.birthDate !== undefined) supabaseData.birthdate = updatedData.birthDate.toISOString();
+      if (updatedData.interests !== undefined) supabaseData.interests = updatedData.interests;
+      if (updatedData.gender !== undefined) supabaseData.gender = updatedData.gender;
+      if (updatedData.teddyName !== undefined) supabaseData.teddyname = updatedData.teddyName;
+      if (updatedData.teddyDescription !== undefined) supabaseData.teddydescription = updatedData.teddyDescription;
+      if (updatedData.teddyPhotos !== undefined) supabaseData.teddyphotos = updatedData.teddyPhotos;
+      if (updatedData.imaginaryWorld !== undefined) supabaseData.imaginaryworld = updatedData.imaginaryWorld;
+      
+      console.log("Mise à jour des données enfant:", childId, supabaseData);
+      
+      const { error } = await supabase
+        .from('children')
+        .update(supabaseData)
+        .eq('id', childId)
+        .eq('authorid', user.id);
+        
+      if (error) throw error;
+      
+      // Mettre à jour l'état local pour une réponse immédiate de l'UI
+      setChildren(prevChildren => 
+        prevChildren.map(child => 
+          child.id === childId 
+            ? { ...child, ...updatedData } 
+            : child
+        )
+      );
+      
+    } catch (error: any) {
+      console.error("Erreur lors de la mise à jour de l'enfant:", error);
+      throw error;
+    }
+  }, [user]);
 
+  const handleDeleteChild = useCallback(async (childId: string) => {
+    if (!user) {
+      throw new Error("Utilisateur non connecté");
+    }
+
+    try {
       const { error } = await supabase
         .from('children')
         .delete()
         .eq('id', childId)
         .eq('authorid', user.id);
-
+        
       if (error) throw error;
-
-      toast({
-        title: 'Succès',
-        description: 'Profil d\'enfant supprimé avec succès',
-      });
-
-      await fetchChildren();
-    } catch (err: any) {
-      console.error('Error deleting child:', err);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de supprimer le profil d\'enfant',
-        variant: 'destructive',
-      });
+      
+      // Mettre à jour l'état local
+      setChildren(prevChildren => prevChildren.filter(child => child.id !== childId));
+    } catch (error: any) {
+      console.error("Erreur lors de la suppression de l'enfant:", error);
+      throw error;
     }
-  }, [user, fetchChildren, toast]);
-
-  useEffect(() => {
-    fetchChildren();
-  }, [fetchChildren]);
+  }, [user]);
 
   return {
     children,
-    loading,
-    error,
-    fetchChildren,
     handleAddChild,
     handleUpdateChild,
     handleDeleteChild,
+    loading
   };
 };
 

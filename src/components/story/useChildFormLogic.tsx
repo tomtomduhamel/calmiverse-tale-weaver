@@ -24,13 +24,17 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => P
       const birthYear = now.getFullYear() - parseInt(childAge);
       const birthDate = new Date(birthYear, now.getMonth(), now.getDate());
       
-      // Create child
+      // Create child with required fields for Supabase
       await onCreateChild({
         name: childName,
         birthDate,
         interests: [],
         gender: 'unknown',
-        authorId: '' // Will be filled by backend
+        authorId: '', // Will be filled by backend
+        teddyName: '', // Ajout des champs obligatoires pour la cohérence
+        teddyDescription: '',
+        imaginaryWorld: '',
+        teddyPhotos: []
       });
       
       // Close form
