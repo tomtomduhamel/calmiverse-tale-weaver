@@ -24,8 +24,7 @@ export const ProfilesView: React.FC<ProfilesViewProps> = ({
   
   return (
     <div className="animate-fade-in">
-      {/* Adjust ScrollArea height for mobile to prevent double scrollbars */}
-      <ScrollArea className={`${isMobile ? 'h-[calc(100vh-140px)]' : 'h-[calc(100vh-100px)]'} w-full`}>
+      <ScrollArea className={`${isMobile ? 'h-[calc(100vh-140px)]' : 'h-[calc(100vh-100px)]'} w-full px-1`}>
         <ChildrenProfiles
           children={children}
           onAddChild={onAddChild}

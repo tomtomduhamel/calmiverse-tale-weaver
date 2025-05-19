@@ -14,7 +14,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ children, onEdit, onDelete })
   const isMobile = useIsMobile();
   
   return (
-    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+    <div className="grid gap-4 grid-cols-1">
       {children.map((child) => (
         <ChildCard
           key={child.id}
