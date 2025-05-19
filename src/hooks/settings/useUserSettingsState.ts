@@ -4,7 +4,6 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UserSettings } from '@/types/user-settings';
-import { UserSettingsState } from './types';
 
 export const useUserSettingsState = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -41,16 +40,11 @@ export const useUserSettingsState = () => {
           .from('users')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
         
-        if (error) {
-          // Si l'erreur est "No rows found", ce n'est pas une erreur fatale
-          if (error.code === 'PGRST116') {
-            console.log('Aucun profil trouvé, utilisation des paramètres par défaut');
-            // Nous continuerons avec les valeurs par défaut et les sauvegarderons plus tard
-          } else {
-            throw error;
-          }
+        if (error && error.code !== 'PGRST116') {
+          console.error('Erreur lors du chargement des paramètres:', error);
+          throw error;
         }
         
         if (data) {

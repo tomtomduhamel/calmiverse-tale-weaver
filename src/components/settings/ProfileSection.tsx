@@ -23,6 +23,7 @@ import { User, Clock, Save } from 'lucide-react';
 import { UserSettings } from '@/types/user-settings';
 import { useToast } from '@/hooks/use-toast';
 
+// Schéma de validation amélioré
 const userFormSchema = z.object({
   firstName: z.string().min(1, "Le prénom est requis"),
   lastName: z.string().min(1, "Le nom est requis"),
@@ -46,21 +47,38 @@ export const ProfileSection = ({ userSettings, onSubmit }: ProfileSectionProps) 
 
   // Mettre à jour le formulaire lorsque userSettings change
   useEffect(() => {
-    userForm.reset({
-      firstName: userSettings.firstName,
-      lastName: userSettings.lastName,
-      ...userSettings
-    });
+    if (userSettings) {
+      userForm.reset({
+        firstName: userSettings.firstName || '',
+        lastName: userSettings.lastName || '',
+        ...userSettings
+      });
+    }
   }, [userSettings, userForm]);
 
   const handleSubmit = async (data: UserSettings) => {
     try {
       console.log('Soumission du formulaire avec données:', data);
+      
+      // Vérifier que les valeurs ne sont pas vides
+      if (!data.firstName.trim() || !data.lastName.trim()) {
+        toast({
+          title: "Validation",
+          description: "Le prénom et le nom sont requis",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       await onSubmit({
-        firstName: data.firstName,
-        lastName: data.lastName
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim()
       });
-      userForm.reset(data);
+      
+      toast({
+        title: "Succès",
+        description: "Vos paramètres ont été mis à jour",
+      });
     } catch (error) {
       console.error('Erreur lors de la soumission du formulaire:', error);
       toast({

@@ -3,6 +3,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UserSettings } from '@/types/user-settings';
+import { errorManager } from '@/utils/errorHandling/errorNotificationManager';
 
 export const useUpdateUserSettings = (
   setUserSettings: React.Dispatch<React.SetStateAction<UserSettings>>,
@@ -13,13 +14,14 @@ export const useUpdateUserSettings = (
 
   const updateUserSettings = async (newSettings: Partial<UserSettings>): Promise<void> => {
     if (!user) {
-      console.error('Tentative de mise à jour sans utilisateur connecté');
+      const error = new Error('Tentative de mise à jour sans utilisateur connecté');
+      console.error(error);
       toast({
-        title: "Erreur",
+        title: "Erreur d'authentification",
         description: "Vous devez être connecté pour modifier vos paramètres",
         variant: "destructive",
       });
-      return;
+      throw error;
     }
     
     try {
@@ -27,11 +29,20 @@ export const useUpdateUserSettings = (
       console.log('Mise à jour des paramètres pour:', user.id);
       console.log('Nouvelles valeurs:', newSettings);
       
+      // Validation des données
+      if (newSettings.firstName !== undefined && !newSettings.firstName.trim()) {
+        throw new Error('Le prénom ne peut pas être vide');
+      }
+      
+      if (newSettings.lastName !== undefined && !newSettings.lastName.trim()) {
+        throw new Error('Le nom ne peut pas être vide');
+      }
+      
       // Mappage des propriétés UserSettings vers la structure de la table Supabase
       const supabaseData: Record<string, any> = {};
       
-      if (newSettings.firstName !== undefined) supabaseData.firstname = newSettings.firstName;
-      if (newSettings.lastName !== undefined) supabaseData.lastname = newSettings.lastName;
+      if (newSettings.firstName !== undefined) supabaseData.firstname = newSettings.firstName.trim();
+      if (newSettings.lastName !== undefined) supabaseData.lastname = newSettings.lastName.trim();
       if (newSettings.language !== undefined) supabaseData.language = newSettings.language;
       if (newSettings.timezone !== undefined) supabaseData.timezone = newSettings.timezone;
       
@@ -50,11 +61,12 @@ export const useUpdateUserSettings = (
         .from('users')
         .select('id')
         .eq('id', user.id)
-        .maybeSingle();
+        .single();
       
-      if (checkError) {
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 signifie simplement "pas de résultat", ce n'est pas une vraie erreur
         console.error('Erreur lors de la vérification du profil:', checkError);
-        throw new Error('Impossible de vérifier votre profil');
+        throw new Error('Impossible de vérifier votre profil: ' + checkError.message);
       }
       
       let error;
@@ -76,15 +88,15 @@ export const useUpdateUserSettings = (
           .insert({
             ...supabaseData,
             id: user.id,
-            email: user.email
+            email: user.email || ''
           });
           
         error = result.error;
       }
       
       if (error) {
-        console.error('Erreur lors de la sauvegarde:', error);
-        throw new Error('Impossible de sauvegarder vos paramètres');
+        console.error('Erreur détaillée lors de la sauvegarde:', error);
+        throw new Error('Erreur lors de la sauvegarde des données: ' + error.message);
       }
       
       // Mettre à jour l'état local avec les nouvelles valeurs
@@ -97,11 +109,19 @@ export const useUpdateUserSettings = (
       });
     } catch (error) {
       console.error('Erreur détaillée lors de la mise à jour:', error);
+      
+      // Utiliser le gestionnaire d'erreur centralisé
+      if (error instanceof Error) {
+        errorManager.handleError(error, 'database');
+      }
+      
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Impossible de mettre à jour vos paramètres",
         variant: "destructive",
       });
+      
+      throw error;
     } finally {
       setIsLoading(false);
     }
