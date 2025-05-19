@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Utiliser les variables d'environnement pour les clés Supabase
@@ -90,14 +89,23 @@ export const handleSupabaseError = (error: Error, message: string = 'Une erreur 
 export const checkRealtimeConfig = async () => {
   try {
     const channel = supabase.channel('healthcheck');
-    const status = await channel.subscribe((status: string) => {
+    let channelStatus = 'UNKNOWN';
+    
+    // Subscribe retourne le canal, pas le statut directement
+    const subscribedChannel = await channel.subscribe((status: string) => {
       console.log('Statut de la connexion Realtime:', status);
+      channelStatus = status;
     });
     
     // Nettoyage après vérification
     setTimeout(() => supabase.removeChannel(channel), 5000);
     
-    return { status, working: status === 'SUBSCRIBED' };
+    // Vérification basée sur l'état du canal stocké dans la variable locale
+    return { 
+      status: channelStatus, 
+      working: channelStatus === 'SUBSCRIBED',
+      channel: subscribedChannel
+    };
   } catch (error) {
     console.error('Erreur lors de la vérification Realtime:', error);
     return { status: 'ERROR', working: false, error };
