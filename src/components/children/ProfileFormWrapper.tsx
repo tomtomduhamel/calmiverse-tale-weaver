@@ -3,6 +3,8 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import ChildForm from "./ChildForm";
 import type { Child } from "@/types/child";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface ProfileFormWrapperProps {
   showForm: boolean;
@@ -14,7 +16,7 @@ interface ProfileFormWrapperProps {
   editingChild: string | null;
   childId?: string;
   teddyPhotos?: Child["teddyPhotos"];
-  onSubmit: (child: Child) => void; // This expects a Child object
+  onSubmit: (child: Child) => void;
   onReset: () => void;
   onChildNameChange: (value: string) => void;
   onBirthDateChange: (value: Date) => void;
@@ -23,7 +25,7 @@ interface ProfileFormWrapperProps {
   onImaginaryWorldChange: (value: string) => void;
   onPhotoUploaded: (photo: { url: string; path: string; uploadedAt: Date }) => void;
   onPhotoDeleted: (path: string) => void;
-  isSubmitting?: boolean; // Ajout de la prop isSubmitting
+  isSubmitting?: boolean;
 }
 
 const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
@@ -45,8 +47,10 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
   onImaginaryWorldChange,
   onPhotoUploaded,
   onPhotoDeleted,
-  isSubmitting = false, // Valeur par défaut
+  isSubmitting = false,
 }) => {
+  const isMobile = useIsMobile();
+  
   if (!showForm) return null;
 
   // Create a wrapper function to transform the event to a Child object
@@ -55,7 +59,10 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
   };
 
   return (
-    <Card className="p-6 bg-white/80 backdrop-blur-sm mt-6">
+    <Card className={cn(
+      "bg-white/80 backdrop-blur-sm mt-6",
+      isMobile ? "p-4" : "p-6"
+    )}>
       <ChildForm
         childName={childName}
         birthDate={birthDate}
@@ -74,7 +81,7 @@ const ProfileFormWrapper: React.FC<ProfileFormWrapperProps> = ({
         onImaginaryWorldChange={onImaginaryWorldChange}
         onPhotoUploaded={onPhotoUploaded}
         onPhotoDeleted={onPhotoDeleted}
-        isSubmitting={isSubmitting} // Transmet l'état de soumission au formulaire enfant
+        isSubmitting={isSubmitting}
       />
     </Card>
   );

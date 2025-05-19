@@ -1,85 +1,59 @@
 
 import React from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Menu, Home, Library, Users, Settings } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
+import { 
+  Home, 
+  Library, 
+  Users, 
+  Settings,
+  PenSquare
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
-
-type ViewType = "home" | "library" | "profiles" | "settings" | "create" | "reader";
+import type { ViewType } from "@/types/views";
 
 interface MobileMenuProps {
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
 }
 
-const menuItems = [
-  { icon: Home, title: "Accueil", view: "home" as ViewType },
-  { icon: Library, title: "Bibliothèque", view: "library" as ViewType },
-  { icon: Users, title: "L'univers des enfants", view: "profiles" as ViewType },
-  { icon: Settings, title: "Paramètres", view: "settings" as ViewType },
-];
-
 const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) => {
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = React.useState(false);
-  const isMobile = useIsMobile();
+  
+  // Items for the bottom navigation
+  const menuItems = [
+    { icon: Home, title: "Accueil", view: "home" as ViewType, path: "/" },
+    { icon: Library, title: "Bibliothèque", view: "library" as ViewType, path: "/app" },
+    { icon: PenSquare, title: "Créer", view: "create" as ViewType, path: "/create" },
+    { icon: Users, title: "Profils", view: "profiles" as ViewType, path: "/profiles" },
+    { icon: Settings, title: "Paramètres", view: "settings" as ViewType, path: "/settings" }
+  ];
 
-  // Si on n'est pas sur mobile, ne pas rendre le menu
-  if (!isMobile) {
-    return null;
-  }
-
-  // Utilisons try/catch pour gérer le cas où useSidebar n'est pas dans un provider
-  let sidebarContext;
-  try {
-    sidebarContext = useSidebar();
-  } catch (e) {
-    console.warn("useSidebar n'est pas disponible, utilisation du comportement par défaut");
-    // Continuons sans sidebar context
-  }
-
-  const handleNavigation = (view: ViewType) => {
+  const handleNavigation = (view: ViewType, path: string) => {
     onViewChange(view);
-    if (sidebarContext) {
-      sidebarContext.setOpenMobile(false);
-      sidebarContext.setOpen(false);
-    }
-    setIsOpen(false);
-    if (view === "home") {
-      navigate("/");
-    } else if (view === "profiles") {
-      navigate("/profiles");
-    } else if (view === "settings") {
-      navigate("/settings");
-    }
+    navigate(path);
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="fixed bottom-6 right-6 z-50 bg-primary text-white shadow-lg rounded-full h-14 w-14 flex items-center justify-center">
-          <Menu className="h-6 w-6" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="bottom" className="h-[60vh] rounded-t-xl bg-white/95 backdrop-blur-sm pb-safe">
-        <div className="w-16 h-1 bg-gray-300 rounded-full mx-auto mb-6 mt-2" />
-        <nav className="flex flex-col space-y-4 px-2 overflow-y-auto max-h-[calc(60vh-40px)]">
-          {menuItems.map((item) => (
-            <Button
-              key={item.title}
-              variant={currentView === item.view ? "default" : "ghost"}
-              className="flex items-center justify-start gap-3 w-full h-14 text-lg"
-              onClick={() => handleNavigation(item.view)}
-            >
-              <item.icon className="h-6 w-6" />
-              {item.title}
-            </Button>
-          ))}
-        </nav>
-      </SheetContent>
-    </Sheet>
+    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-background shadow-lg border-t border-border rounded-t-xl z-50">
+      <div className="flex items-center justify-around h-16 px-2 pb-safe">
+        {menuItems.map((item) => (
+          <button
+            key={item.title}
+            onClick={() => handleNavigation(item.view, item.path)}
+            className={cn(
+              "flex flex-col items-center justify-center w-full p-1 rounded-md transition-colors",
+              currentView === item.view
+                ? "text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            aria-label={item.title}
+          >
+            <item.icon className="h-5 w-5" />
+            <span className="text-xs mt-1">{item.title}</span>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 };
 

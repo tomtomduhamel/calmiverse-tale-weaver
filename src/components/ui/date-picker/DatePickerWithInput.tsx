@@ -15,7 +15,7 @@ export interface DatePickerWithInputProps {
   value: Date;
   onChange: (date: Date) => void;
   className?: string;
-  disabled?: boolean; // Added the disabled prop
+  disabled?: boolean;
 }
 
 type DateView = "year" | "month" | "day";
@@ -96,7 +96,7 @@ export function DatePickerWithInput({ value, onChange, className, disabled = fal
           />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 max-w-[95vw]" align="start">
         <div className="space-y-4 p-3">
           {currentView !== "year" && (
             <Button

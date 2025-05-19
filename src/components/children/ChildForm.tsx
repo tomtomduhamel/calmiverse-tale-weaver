@@ -9,6 +9,8 @@ import { DatePickerWithInput } from "@/components/ui/date-picker/DatePickerWithI
 import SupabaseTeddyPhotoUpload from "./SupabaseTeddyPhotoUpload";
 import TeddyPhotoGallery from "./TeddyPhotoGallery";
 import type { Child } from "@/types/child";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface ChildFormProps {
   childName?: string;
@@ -30,7 +32,7 @@ interface ChildFormProps {
   onImaginaryWorldChange?: (value: string) => void;
   onPhotoUploaded?: (photo: { url: string; path: string; uploadedAt: Date }) => void;
   onPhotoDeleted?: (path: string) => void;
-  isSubmitting?: boolean; // Ajout de la prop isSubmitting
+  isSubmitting?: boolean;
 }
 
 const ChildForm: React.FC<ChildFormProps> = ({
@@ -53,8 +55,10 @@ const ChildForm: React.FC<ChildFormProps> = ({
   onImaginaryWorldChange,
   onPhotoUploaded,
   onPhotoDeleted,
-  isSubmitting = false, // Valeur par défaut
+  isSubmitting = false,
 }) => {
+  const isMobile = useIsMobile();
+  
   // État local si les gestionnaires de changement ne sont pas fournis
   const [localChildName, setLocalChildName] = React.useState(initialValues?.name || childName);
   const [localBirthDate, setLocalBirthDate] = React.useState(initialValues?.birthDate || birthDate);
@@ -81,9 +85,12 @@ const ChildForm: React.FC<ChildFormProps> = ({
     onSubmit(childData as Child);
   };
 
+  const fieldSpacing = isMobile ? "space-y-4" : "space-y-6";
+  const labelSpacing = isMobile ? "space-y-1" : "space-y-2";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+    <form onSubmit={handleSubmit} className={fieldSpacing}>
+      <div className={labelSpacing}>
         <Label htmlFor="childName">Nom de l'enfant</Label>
         <Input
           id="childName"
@@ -91,19 +98,21 @@ const ChildForm: React.FC<ChildFormProps> = ({
           onChange={(e) => onChildNameChange ? onChildNameChange(e.target.value) : setLocalChildName(e.target.value)}
           placeholder="Entrez le nom"
           disabled={isSubmitting}
+          className={cn(isMobile && "h-12 text-base")}
         />
       </div>
 
-      <div className="space-y-2">
+      <div className={labelSpacing}>
         <Label htmlFor="birthDate">Date de naissance</Label>
         <DatePickerWithInput
           value={onBirthDateChange ? birthDate : localBirthDate}
           onChange={(date) => onBirthDateChange ? onBirthDateChange(date) : setLocalBirthDate(date)}
           disabled={isSubmitting}
+          className={cn(isMobile && "h-12 text-base")}
         />
       </div>
 
-      <div className="space-y-2">
+      <div className={labelSpacing}>
         <Label htmlFor="teddyName">Nom du doudou</Label>
         <Input
           id="teddyName"
@@ -111,10 +120,11 @@ const ChildForm: React.FC<ChildFormProps> = ({
           onChange={(e) => onTeddyNameChange ? onTeddyNameChange(e.target.value) : setLocalTeddyName(e.target.value)}
           placeholder="Entrez le nom du doudou"
           disabled={isSubmitting}
+          className={cn(isMobile && "h-12 text-base")}
         />
       </div>
 
-      <div className="space-y-2">
+      <div className={labelSpacing}>
         <Label htmlFor="teddyDescription">Description du doudou</Label>
         <Textarea
           id="teddyDescription"
@@ -122,11 +132,12 @@ const ChildForm: React.FC<ChildFormProps> = ({
           onChange={(e) => onTeddyDescriptionChange ? onTeddyDescriptionChange(e.target.value) : setLocalTeddyDescription(e.target.value)}
           placeholder="Décrivez le doudou"
           disabled={isSubmitting}
+          className={cn(isMobile && "min-h-[100px] text-base")}
         />
       </div>
 
       {isEditing && childId && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Label>Photos du doudou</Label>
           <TeddyPhotoGallery
             photos={teddyPhotos || []}
@@ -140,7 +151,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className={labelSpacing}>
         <Label htmlFor="imaginaryWorld">Son monde imaginaire</Label>
         <Textarea
           id="imaginaryWorld"
@@ -148,13 +159,17 @@ const ChildForm: React.FC<ChildFormProps> = ({
           onChange={(e) => onImaginaryWorldChange ? onImaginaryWorldChange(e.target.value) : setLocalImaginaryWorld(e.target.value)}
           placeholder="Décrivez son monde imaginaire"
           disabled={isSubmitting}
+          className={cn(isMobile && "min-h-[100px] text-base")}
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className={cn("flex gap-2", isMobile && "flex-col")}>
         <Button 
           type="submit" 
-          className="flex-1 bg-accent hover:bg-accent/90"
+          className={cn(
+            "bg-accent hover:bg-accent/90",
+            isMobile ? "w-full py-6 text-base" : "flex-1"
+          )}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -174,7 +189,9 @@ const ChildForm: React.FC<ChildFormProps> = ({
           <Button
             type="button"
             variant="outline"
-            className="flex-1"
+            className={cn(
+              isMobile ? "w-full py-5 text-base" : "flex-1"
+            )}
             onClick={onCancel || onReset}
             disabled={isSubmitting}
           >
