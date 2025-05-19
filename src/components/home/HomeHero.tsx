@@ -4,6 +4,7 @@ import { BookOpen, Users, Library, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ViewType } from "@/types/views";
+import { Link } from "react-router-dom";
 
 interface HomeHeroProps {
   onViewChange: (view: ViewType) => void;
@@ -48,7 +49,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
 
         {/* Cartes avec hauteur réduite */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          {/* Créer une histoire */}
+          {/* Mode simple - Création d'histoire */}
           <Card className="border border-primary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
             <CardContent className="p-4 flex flex-col h-full">
               <div className="mb-3 p-2 bg-primary/20 w-12 h-12 rounded-xl flex items-center justify-center">
@@ -56,14 +57,15 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
               </div>
               <h3 className="text-lg font-semibold mb-1 text-primary-dark">Créer une histoire</h3>
               <p className="text-muted-foreground text-xs mb-3 flex-grow">
-                Générez des histoires uniques adaptées aux besoins spécifiques de votre enfant
+                Générez facilement des histoires uniques avec notre mode simple et robuste
               </p>
-              <Button 
-                onClick={() => handleViewChange("create")}
-                className="w-full bg-primary hover:bg-primary-dark text-primary-foreground"
-              >
-                Commencer
-              </Button>
+              <Link to="/create-story-simple" className="w-full">
+                <Button 
+                  className="w-full bg-primary hover:bg-primary-dark text-primary-foreground"
+                >
+                  Commencer
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 

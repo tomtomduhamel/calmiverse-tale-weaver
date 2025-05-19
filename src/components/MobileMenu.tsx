@@ -23,14 +23,19 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   const menuItems = [
     { icon: Home, title: "Accueil", view: "home" as ViewType, path: "/" },
     { icon: Library, title: "Bibliothèque", view: "library" as ViewType, path: "/app" },
-    { icon: PenSquare, title: "Créer", view: "create" as ViewType, path: "/create" },
+    { icon: PenSquare, title: "Créer", view: "create" as ViewType, path: "/create-story-simple" },
     { icon: Users, title: "Profils", view: "profiles" as ViewType, path: "/profiles" },
     { icon: Settings, title: "Paramètres", view: "settings" as ViewType, path: "/settings" }
   ];
 
   const handleNavigation = (view: ViewType, path: string) => {
-    onViewChange(view);
-    navigate(path);
+    // Pour le bouton "Créer", on navigue directement vers la page de création simplifiée
+    if (view === "create" && path === "/create-story-simple") {
+      navigate(path);
+    } else {
+      onViewChange(view);
+      navigate(path);
+    }
   };
 
   return (
