@@ -90,7 +90,7 @@ export const handleSupabaseError = (error: Error, message: string = 'Une erreur 
 export const checkRealtimeConfig = async () => {
   try {
     const channel = supabase.channel('healthcheck');
-    const status = await channel.subscribe((status) => {
+    const status = await channel.subscribe((status: string) => {
       console.log('Statut de la connexion Realtime:', status);
     });
     

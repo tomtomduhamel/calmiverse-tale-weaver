@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,15 +11,16 @@ import { YearView } from "./YearView";
 import { MonthView } from "./MonthView";
 import { DayView } from "./DayView";
 
-interface DatePickerWithInputProps {
+export interface DatePickerWithInputProps {
   value: Date;
   onChange: (date: Date) => void;
   className?: string;
+  disabled?: boolean; // Added the disabled prop
 }
 
 type DateView = "year" | "month" | "day";
 
-export function DatePickerWithInput({ value, onChange, className }: DatePickerWithInputProps) {
+export function DatePickerWithInput({ value, onChange, className, disabled = false }: DatePickerWithInputProps) {
   const [open, setOpen] = useState(false);
   const [currentView, setCurrentView] = useState<DateView>("year");
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -71,15 +73,17 @@ export function DatePickerWithInput({ value, onChange, className }: DatePickerWi
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={disabled ? false : open} onOpenChange={disabled ? undefined : setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           className={cn(
             "w-full justify-start text-left font-normal",
             !value && "text-muted-foreground",
+            disabled && "opacity-50 cursor-not-allowed",
             className
           )}
+          disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           <Input
@@ -88,6 +92,7 @@ export function DatePickerWithInput({ value, onChange, className }: DatePickerWi
             placeholder="JJ MMMM AAAA"
             className="border-0 p-0 focus-visible:ring-0"
             onClick={(e) => e.stopPropagation()}
+            disabled={disabled}
           />
         </Button>
       </PopoverTrigger>
