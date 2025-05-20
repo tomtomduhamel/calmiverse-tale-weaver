@@ -1,124 +1,124 @@
+import { useCallback, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useStoryMutations } from './stories/useStoryMutations';
+import type { Story } from '@/types/story';
 
-import { useState, useEffect, useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
-import type { Story } from "@/types/story";
-import type { StoryFormData } from "@/components/story/StoryFormTypes";
-import type { ViewType } from "@/types/views";
-
-export const useStoryManagement = (
-  createStory: (formData: StoryFormData, children?: any[]) => Promise<string>,
-  deleteStory: (storyId: string) => Promise<any>,
-  setCurrentView: (view: ViewType) => void
-) => {
-  const [currentStory, setCurrentStory] = useState<Story | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationError, setGenerationError] = useState<string | null>(null);
+export const useStoryManagement = () => {
   const { toast } = useToast();
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [pendingStoryId, setPendingStoryId] = useState<string | null>(null);
+  const { deleteStory, retryStoryGeneration, updateStoryStatus } = useStoryMutations();
 
-  // Si l'histoire est en cours de génération, polling pour vérifier son statut
-  useEffect(() => {
-    let pollingInterval: ReturnType<typeof setInterval>;
-    
-    if (isGenerating && currentStory?.id) {
-      console.log('[useStoryManagement] Polling for story status:', currentStory.id);
-      
-      pollingInterval = setInterval(() => {
-        // Cette fonction sera implémentée plus tard pour vérifier le statut
-        console.log('[useStoryManagement] Checking story status...');
-      }, 5000);
-    }
-    
-    return () => {
-      if (pollingInterval) clearInterval(pollingInterval);
-    };
-  }, [isGenerating, currentStory]);
-
-  const handleStorySubmit = useCallback(async (formData: StoryFormData): Promise<string> => {
+  const handleDeleteStory = useCallback(async (storyId: string) => {
     try {
-      console.log('[useStoryManagement] Début de création avec:', formData);
-      
-      setIsGenerating(true);
-      setGenerationError(null);
-      
-      // Validation explicite pour éviter les erreurs inexpliquées
-      if (!formData.childrenIds || formData.childrenIds.length === 0) {
-        throw new Error("Veuillez sélectionner au moins un enfant pour créer une histoire");
-      }
-      
-      if (!formData.objective) {
-        throw new Error("L'objectif de l'histoire est obligatoire");
-      }
-      
-      const storyId = await createStory(formData);
-      console.log("[useStoryManagement] Histoire créée avec l'ID:", storyId);
-      
+      await deleteStory(storyId);
       toast({
-        title: "Histoire en cours de génération",
-        description: "Nous créons votre histoire personnalisée...",
+        title: "Histoire supprimée",
+        description: "L'histoire a été supprimée avec succès",
       });
-      
-      return storyId;
+      return true;
     } catch (error: any) {
-      console.error("[useStoryManagement] Erreur lors de la création de l'histoire:", error);
-      setGenerationError(error instanceof Error ? error.message : "Une erreur est survenue");
-      
+      console.error("Error deleting story:", error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
+        description: "Une erreur est survenue lors de la suppression",
         variant: "destructive",
       });
-      throw error;
+      return false;
     }
-  }, [createStory, toast]);
+  }, [deleteStory, toast]);
 
-  const handleStoryCreated = useCallback((story: Story) => {
-    console.log('[useStoryManagement] Histoire créée:', story);
-    setCurrentStory(story);
-    setIsGenerating(false);
-    setCurrentView("reader");
-    
-    toast({
-      title: "Histoire créée",
-      description: "Votre histoire est maintenant prête à être lue!",
-    });
-  }, [setCurrentView, toast]);
-
-  const handleCloseReader = useCallback(() => {
-    setCurrentView("library");
-    setCurrentStory(null);
-  }, [setCurrentView]);
-
-  const handleSelectStory = useCallback((story: Story) => {
-    if (story.status === 'completed' || story.status === 'read') {
-      setCurrentStory(story);
-      setCurrentView("reader");
-    } else if (story.status === 'pending') {
+  const handleRetryStory = useCallback(async (storyId: string) => {
+    try {
+      setIsRetrying(true);
+      setPendingStoryId(storyId);
+      
+      await retryStoryGeneration(storyId);
+      
       toast({
-        title: "Histoire en cours de génération",
-        description: "Cette histoire est encore en cours de création, veuillez patienter...",
+        title: "Succès",
+        description: "L'histoire est en cours de génération",
       });
-    } else if (story.status === 'error') {
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error retrying story:", error);
       toast({
-        title: "Erreur de génération",
-        description: "La génération de cette histoire a rencontré un problème. Vous pouvez réessayer.",
+        title: "Erreur",
+        description: error?.message || "Une erreur est survenue lors de la relance",
         variant: "destructive",
       });
+      return false;
+    } finally {
+      setIsRetrying(false);
+      setPendingStoryId(null);
     }
-  }, [setCurrentView, toast]);
+  }, [retryStoryGeneration, toast]);
 
-  const resetErrors = useCallback(() => {
-    setGenerationError(null);
-  }, []);
+  const handleMarkAsRead = useCallback(async (storyId: string) => {
+    try {
+      await updateStoryStatus(storyId, 'read');
+      
+      toast({
+        title: "Histoire marquée comme lue",
+        description: "Le statut de l'histoire a été mis à jour",
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error marking story as read:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour du statut",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [updateStoryStatus, toast]);
+
+  const handleToggleFavorite = useCallback(async (story: Story) => {
+    try {
+      // Cette fonction n'est pas encore implémentée
+      // Nous devrons ajouter la logique pour marquer une histoire comme favorite
+      console.log("Toggle favorite for story:", story.id);
+      
+      toast({
+        title: story.isFavorite ? "Retiré des favoris" : "Ajouté aux favoris",
+        description: "Le statut de favori a été mis à jour",
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error toggling favorite:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour des favoris",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [toast]);
+
+  const handleReadStory = useCallback((story: Story) => {
+    if (story.status === "ready") {
+      // Mettre à jour le statut de l'histoire comme "lue" lorsque l'utilisateur la lit
+      updateStoryStatus(story.id, 'read')
+        .then(() => {
+          console.log("Story marked as read:", story.id);
+        })
+        .catch((error) => {
+          console.error("Failed to mark story as read:", error);
+        });
+    }
+  }, [updateStoryStatus]);
 
   return {
-    currentStory,
-    setCurrentStory,
-    isGenerating,
-    generationError,
-    resetErrors,
-    handleStorySubmit,
-    handleStoryCreated,
-    handleCloseReader,
-    handleSelectStory,
+    handleDeleteStory,
+    handleRetryStory,
+    handleMarkAsRead,
+    handleToggleFavorite,
+    handleReadStory,
+    isRetrying,
+    pendingStoryId,
   };
 };

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import type { ViewType } from "@/types/views";
 import { useToast } from "@/hooks/use-toast";
@@ -70,7 +69,7 @@ const Index = () => {
     const pendingStory = stories.stories.find(story => story.id === pendingStoryId);
     
     if (pendingStory) {
-      if (pendingStory.status === 'completed') {
+      if (pendingStory.status === "ready") {
         console.log("Story completed, displaying...");
         setPendingStoryId(null);
         handleStoryCreated(pendingStory);
