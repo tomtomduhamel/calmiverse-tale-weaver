@@ -29,12 +29,19 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   ];
 
   const handleNavigation = (view: ViewType, path: string) => {
-    // Pour le bouton "Créer", on navigue directement vers la page de création simplifiée
-    if (view === "create" && path === "/create-story-simple") {
-      navigate(path);
-    } else {
+    // Pour la page d'accueil et la bibliothèque, on peut changer la vue directement si on est déjà sur /app ou /
+    if ((path === "/" || path === "/app") && (window.location.pathname === "/" || window.location.pathname === "/app")) {
       onViewChange(view);
+    } else {
+      // Dans les autres cas, on navigue vers la page correspondante
       navigate(path);
+      
+      // On met à jour la vue si nécessaire (pour la cohérence de l'interface)
+      if (path === "/") {
+        onViewChange("home");
+      } else if (path === "/app") {
+        onViewChange("library");
+      }
     }
   };
 
