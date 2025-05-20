@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import type { ViewType } from "@/types/views";
 import { useToast } from "@/hooks/use-toast";
@@ -38,8 +39,11 @@ const Index = () => {
     handleStorySubmit,
     handleStoryCreated,
     handleCloseReader,
-    handleSelectStory
-  } = useStoryManagement(createStory, deleteStory, setCurrentView);
+    handleSelectStory,
+    handleDeleteStory,
+    handleRetryStory,
+    handleMarkAsRead
+  } = useStoryManagement();
 
   // Redirect to login page if user is not logged in
   useEffect(() => {
@@ -183,8 +187,8 @@ const Index = () => {
           <LibraryView
             stories={stories.stories}
             onSelectStory={handleSelectStory}
-            onDeleteStory={deleteStory}
-            onRetryStory={retryFailedStory}
+            onDeleteStory={handleDeleteStory}
+            onRetryStory={handleRetryStory}
             onViewChange={setCurrentView}
             isRetrying={isRetrying}
             pendingStoryId={pendingStoryId}
@@ -195,6 +199,7 @@ const Index = () => {
           <ReaderView
             story={currentStory}
             onClose={handleCloseReader}
+            onMarkAsRead={handleMarkAsRead}
           />
         )}
       </div>

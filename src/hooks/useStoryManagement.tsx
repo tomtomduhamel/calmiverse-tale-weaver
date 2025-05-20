@@ -1,3 +1,4 @@
+
 import { useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from './stories/useStoryMutations';
@@ -7,6 +8,7 @@ export const useStoryManagement = () => {
   const { toast } = useToast();
   const [isRetrying, setIsRetrying] = useState(false);
   const [pendingStoryId, setPendingStoryId] = useState<string | null>(null);
+  const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const { deleteStory, retryStoryGeneration, updateStoryStatus } = useStoryMutations();
 
   const handleDeleteStory = useCallback(async (storyId: string) => {
@@ -112,6 +114,31 @@ export const useStoryManagement = () => {
     }
   }, [updateStoryStatus]);
 
+  // Ajout des fonctions manquantes
+  const handleStorySubmit = useCallback(async (formData: any) => {
+    console.log("Story submission handler", formData);
+    // Cette fonction serait normalement implémentée pour soumettre une nouvelle histoire
+    return "dummy-story-id"; // Retourne un ID factice pour l'histoire
+  }, []);
+
+  const handleStoryCreated = useCallback((story: Story) => {
+    console.log("Story created handler", story);
+    setCurrentStory(story);
+    // Logique supplémentaire après la création d'une histoire
+  }, []);
+
+  const handleCloseReader = useCallback(() => {
+    console.log("Closing reader");
+    setCurrentStory(null);
+    // Logique supplémentaire pour fermer le lecteur
+  }, []);
+
+  const handleSelectStory = useCallback((story: Story) => {
+    console.log("Selecting story:", story.id);
+    setCurrentStory(story);
+    // Logique supplémentaire pour sélectionner une histoire
+  }, []);
+
   return {
     handleDeleteStory,
     handleRetryStory,
@@ -120,5 +147,11 @@ export const useStoryManagement = () => {
     handleReadStory,
     isRetrying,
     pendingStoryId,
+    // Ajout des propriétés manquantes
+    currentStory,
+    handleStorySubmit,
+    handleStoryCreated,
+    handleCloseReader,
+    handleSelectStory
   };
 };

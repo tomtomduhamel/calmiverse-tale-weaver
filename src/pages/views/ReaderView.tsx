@@ -6,7 +6,7 @@ import type { Story } from "@/types/story";
 interface ReaderViewProps {
   story: Story;
   onClose: () => void;
-  onMarkAsRead?: (storyId: string) => void;
+  onMarkAsRead?: (storyId: string) => Promise<boolean>;
 }
 
 export const ReaderView: React.FC<ReaderViewProps> = ({ story, onClose, onMarkAsRead }) => {
