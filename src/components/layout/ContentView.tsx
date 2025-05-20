@@ -21,8 +21,8 @@ interface ContentViewProps {
   isRetrying: boolean;
   onViewChange: (view: ViewType) => void;
   onAddChild: (child: Omit<Child, "id">) => Promise<string>;
-  onUpdateChild: (child: Child) => Promise<boolean>;
-  onDeleteChild: (childId: string) => Promise<boolean>;
+  onUpdateChild: (childId: string, updatedChild: Partial<Child>) => Promise<void>;
+  onDeleteChild: (childId: string) => Promise<void>;
   onSubmitStory: (formData: any) => Promise<string>;
   onCreateChildFromStory: (child: Omit<Child, "id">) => Promise<string>;
   onStoryCreated: (story: Story) => void;

@@ -11,8 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface ChildrenProfilesProps {
   children: Child[];
   onAddChild: (child: Omit<Child, "id">) => Promise<string>;
-  onUpdateChild: (childId: string, updatedChild: Partial<Child>) => void;
-  onDeleteChild: (childId: string) => void;
+  onUpdateChild: (childId: string, updatedChild: Partial<Child>) => Promise<void>;
+  onDeleteChild: (childId: string) => Promise<void>;
   onCreateStory?: () => void;
 }
 
@@ -131,10 +131,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
 
       if (editingChild) {
         console.log("[ChildrenProfiles] Mode d'édition - mise à jour de l'enfant:", editingChild);
-        const currentChild = children.find((c) => c.id === editingChild);
-        if (currentChild) {
-          await onUpdateChild(editingChild, submissionData);
-        }
+        await onUpdateChild(editingChild, submissionData);
         toast({
           title: "Succès",
           description: "Le profil a été mis à jour avec succès",

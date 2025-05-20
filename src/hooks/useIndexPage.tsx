@@ -108,7 +108,7 @@ export const useIndexPage = () => {
   };
 
   // Specific handler for story submission
-  const handleStorySubmitWrapper = async (formData: any) => {
+  const handleStorySubmitWrapper = async (formData: any): Promise<string> => {
     try {
       const storyId = await handleStorySubmit(formData);
       if (storyId) {

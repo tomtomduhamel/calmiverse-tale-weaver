@@ -8,8 +8,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 interface ProfilesViewProps {
   children: Child[];
   onAddChild: (child: Omit<Child, "id">) => Promise<string>;
-  onUpdateChild: (childId: string, updatedChild: Partial<Child>) => void;
-  onDeleteChild: (childId: string) => void;
+  onUpdateChild: (childId: string, updatedChild: Partial<Child>) => Promise<void>;
+  onDeleteChild: (childId: string) => Promise<void>;
   onCreateStory?: () => void;
 }
 
