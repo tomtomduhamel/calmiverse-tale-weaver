@@ -26,8 +26,9 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
 }) => {
   const formattedDate = story.createdAt ? format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr }) : "";
   
-  // Fonction pour formater l'état de lecture
-  const showMarkAsReadButton = story.status === "completed" && onMarkAsRead;
+  // Fonction pour déterminer si le bouton "Marquer comme lu" devrait être affiché
+  // Montrer seulement pour les histoires prêtes à lire (pas pour celles déjà lues)
+  const showMarkAsReadButton = story.status === "ready" && onMarkAsRead;
 
   return (
     <div className="flex justify-between items-center mb-6">

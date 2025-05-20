@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface StatusFilterProps {
-  currentStatus: 'all' | 'pending' | 'completed' | 'read' | 'error';
-  onStatusChange: (status: 'all' | 'pending' | 'completed' | 'read' | 'error') => void;
+  currentStatus: 'all' | 'pending' | 'ready' | 'read' | 'error';
+  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error') => void;
 }
 
 const StatusFilter: React.FC<StatusFilterProps> = ({ currentStatus, onStatusChange }) => {
-  const statuses: { value: 'all' | 'pending' | 'completed' | 'read' | 'error', label: string }[] = [
+  const statuses: { value: 'all' | 'pending' | 'ready' | 'read' | 'error', label: string }[] = [
     { value: 'all', label: 'Toutes' },
     { value: 'pending', label: 'En cours' },
-    { value: 'completed', label: 'Terminées' },
+    { value: 'ready', label: 'Prêtes à lire' },
     { value: 'read', label: 'Lues' },
     { value: 'error', label: 'En erreur' }
   ];

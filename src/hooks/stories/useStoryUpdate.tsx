@@ -8,7 +8,7 @@ export const useStoryUpdate = () => {
   const { toast } = useToast();
   const { user } = useSupabaseAuth();
 
-  const updateStoryStatus = useCallback(async (storyId: string, status: 'pending' | 'completed' | 'read' | 'error', errorDetails?: string) => {
+  const updateStoryStatus = useCallback(async (storyId: string, status: 'pending' | 'ready' | 'read' | 'error', errorDetails?: string) => {
     if (!user) {
       throw new Error("Utilisateur non connecté");
     }

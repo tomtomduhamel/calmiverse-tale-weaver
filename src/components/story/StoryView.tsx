@@ -37,7 +37,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
 
   // Effect to change view when a new story is selected
   useEffect(() => {
-    if (currentStory && currentStory.status === 'completed' && view !== 'read') {
+    if (currentStory && (currentStory.status === 'ready' || currentStory.status === 'read') && view !== 'read') {
       setView('read');
     }
   }, [currentStory, view]);

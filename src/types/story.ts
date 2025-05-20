@@ -8,7 +8,7 @@ export interface Story {
   childrenIds: string[];
   childrenNames?: string[];
   createdAt: Date;
-  status: 'pending' | 'completed' | 'read' | 'error';
+  status: 'pending' | 'ready' | 'read' | 'error';
   story_text: string;
   story_summary: string;
   authorId?: string;

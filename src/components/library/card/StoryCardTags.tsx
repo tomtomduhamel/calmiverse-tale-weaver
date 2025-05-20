@@ -22,7 +22,7 @@ const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags = [], objective, sta
     switch (status) {
       case 'pending':
         return 'bg-yellow-200 text-yellow-800';
-      case 'completed':
+      case 'ready':
         return 'bg-green-200 text-green-800';
       case 'read':
         return 'bg-blue-200 text-blue-800';
@@ -36,9 +36,9 @@ const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags = [], objective, sta
   const getStatusText = (status: Story['status']) => {
     switch (status) {
       case 'pending':
-        return 'En cours';
-      case 'completed':
-        return 'Prêt pour la lecture';
+        return 'En cours de génération';
+      case 'ready':
+        return 'Prêt à lire';
       case 'read':
         return 'Lu';
       case 'error':
