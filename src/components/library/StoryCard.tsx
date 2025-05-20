@@ -7,7 +7,7 @@ import StoryCardTags from "./card/StoryCardTags";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Loader2 } from "lucide-react";
+import { Loader2, BookCheck } from "lucide-react";
 
 interface StoryCardProps {
   story: Story;
@@ -33,7 +33,9 @@ const StoryCard: React.FC<StoryCardProps> = ({
     onClick ? "cursor-pointer" : "",
     story.status === "error" ? "border-red-200 bg-red-50" : "",
     story.status === "pending" || isPending ? "border-amber-200 bg-amber-50" : "",
-    story.isFavorite && story.status !== "error" ? "border-amber-200" : "",
+    story.status === "read" ? "border-green-200 bg-green-50" : "",
+    story.isFavorite && story.status !== "error" && story.status !== "read" ? "border-amber-200" : "",
+    story.isFavorite && story.status === "read" ? "border-green-200" : "",
   ].join(" ");
 
   const getTimeAgo = (date: Date) => {
@@ -51,8 +53,16 @@ const StoryCard: React.FC<StoryCardProps> = ({
         <p className="text-sm text-gray-600 line-clamp-3 mb-3 h-[4.5rem]">
           {story.preview}
         </p>
+        
+        {story.status === "read" && (
+          <div className="flex items-center text-green-600 text-xs mb-2">
+            <BookCheck className="h-4 w-4 mr-1" />
+            <span>Lu</span>
+          </div>
+        )}
+        
         <StoryCardTags 
-          status={story.status} 
+          status={story.status}
           objective={story.objective}
           tags={story.tags}
           error={story.error}

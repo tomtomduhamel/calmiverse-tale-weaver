@@ -6,12 +6,17 @@ import type { Story } from "@/types/story";
 interface ReaderViewProps {
   story: Story;
   onClose: () => void;
+  onMarkAsRead?: (storyId: string) => void;
 }
 
-export const ReaderView: React.FC<ReaderViewProps> = ({ story, onClose }) => {
+export const ReaderView: React.FC<ReaderViewProps> = ({ story, onClose, onMarkAsRead }) => {
   return (
     <div className="animate-fade-in">
-      <StoryReader story={story} onClose={onClose} />
+      <StoryReader 
+        story={story} 
+        onClose={onClose} 
+        onMarkAsRead={onMarkAsRead}
+      />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import type { Story } from "@/types/story";
 import type { ViewType } from "@/types/views";
 import { useStories } from "@/hooks/useStories";
 import type { Child } from "@/types/child";
+import { useStoryUpdate } from "@/hooks/stories/useStoryUpdate";
 
 export type ViewMode = "create" | "read" | "list";
 
@@ -21,6 +22,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
   const [view, setView] = useState<ViewMode>("list");
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { updateStoryStatus } = useStoryUpdate();
 
   const {
     stories,
@@ -80,6 +82,35 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
     }
   }, [deleteStory, toast]);
 
+  const handleMarkAsRead = useCallback(async (storyId: string) => {
+    try {
+      await updateStoryStatus(storyId, "read");
+      
+      // Mettre à jour l'histoire actuelle si c'est celle qui vient d'être marquée comme lue
+      if (currentStory && currentStory.id === storyId) {
+        setCurrentStory({
+          ...currentStory,
+          status: "read"
+        });
+      }
+      
+      // Rafraîchir la liste pour mettre à jour le statut dans la bibliothèque
+      await stories.fetchStories();
+      
+      toast({
+        title: "Histoire marquée comme lue",
+        description: "Le statut de l'histoire a été mis à jour",
+      });
+    } catch (error) {
+      console.error("Error marking story as read:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour du statut",
+        variant: "destructive",
+      });
+    }
+  }, [updateStoryStatus, currentStory, stories, toast, setCurrentStory]);
+
   const handleStoryCreated = useCallback(async (story: Story) => {
     console.log("Story created:", story);
     setSelectedStoryId(story.id);
@@ -124,6 +155,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
             onClose={handleBackToLibrary}
             onBack={handleBackToLibrary}
             childName={getChildName(currentStory.childrenIds, children)}
+            onMarkAsRead={handleMarkAsRead}
           />
         ) : (
           <div>Histoire non trouvée</div>

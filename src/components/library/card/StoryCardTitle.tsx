@@ -1,7 +1,8 @@
 
 import React from "react";
-import { Star } from "lucide-react";
+import { Star, BookCheck } from "lucide-react";
 import type { Story } from "@/types/story";
+import { Badge } from "@/components/ui/badge";
 
 interface StoryCardTitleProps {
   title: string;
@@ -15,12 +16,20 @@ const StoryCardTitle: React.FC<StoryCardTitleProps> = ({ title, isFavorite = fal
       <h3 className={`text-lg font-semibold truncate ${status === 'error' ? 'text-red-600' : ''}`}>
         {title || "Nouvelle histoire"}
       </h3>
-      {isFavorite && (
-        <Star
-          className="h-5 w-5 text-amber-400 fill-amber-400 flex-shrink-0 ml-2"
-          aria-label="Favori"
-        />
-      )}
+      <div className="flex items-center gap-1">
+        {status === 'read' && (
+          <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+            <BookCheck className="h-3 w-3 mr-1" />
+            Lu
+          </Badge>
+        )}
+        {isFavorite && (
+          <Star
+            className="h-5 w-5 text-amber-400 fill-amber-400 flex-shrink-0"
+            aria-label="Favori"
+          />
+        )}
+      </div>
     </div>
   );
 };

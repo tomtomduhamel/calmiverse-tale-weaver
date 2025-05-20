@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/card";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Story } from "@/types/story";
@@ -16,10 +16,18 @@ interface StoryReaderProps {
   onClose?: () => void;
   onBack?: () => void;
   onToggleFavorite?: (storyId: string) => void;
+  onMarkAsRead?: (storyId: string) => void;
   childName?: string;
 }
 
-const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onBack, onToggleFavorite, childName }) => {
+const StoryReader: React.FC<StoryReaderProps> = ({ 
+  story, 
+  onClose, 
+  onBack, 
+  onToggleFavorite, 
+  onMarkAsRead,
+  childName 
+}) => {
   const [fontSize, setFontSize] = useState(16);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -78,6 +86,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({ story, onClose, onBack, onTog
             readingTime={readingTime}
             setShowSummary={setShowSummary}
             onToggleFavorite={onToggleFavorite}
+            onMarkAsRead={onMarkAsRead}
           />
 
           <StoryContent
