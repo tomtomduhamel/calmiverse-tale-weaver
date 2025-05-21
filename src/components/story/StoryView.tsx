@@ -82,7 +82,8 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
     }
   }, [deleteStory, toast]);
 
-  const handleMarkAsRead = useCallback(async (storyId: string) => {
+  // Fixed: Modified to return a boolean Promise
+  const handleMarkAsRead = useCallback(async (storyId: string): Promise<boolean> => {
     try {
       await updateStoryStatus(storyId, "read");
       
@@ -101,6 +102,8 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
         title: "Histoire marquée comme lue",
         description: "Le statut de l'histoire a été mis à jour",
       });
+      
+      return true; // Return true to indicate success
     } catch (error) {
       console.error("Error marking story as read:", error);
       toast({
@@ -108,6 +111,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
         description: "Une erreur est survenue lors de la mise à jour du statut",
         variant: "destructive",
       });
+      return false; // Return false to indicate failure
     }
   }, [updateStoryStatus, currentStory, stories, toast, setCurrentStory]);
 
