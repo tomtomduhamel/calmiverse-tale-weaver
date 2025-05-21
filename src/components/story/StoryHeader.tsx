@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Info, Clock, Heart, BookCheck } from "lucide-react";
+import { Info, Clock, Heart } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -13,7 +13,6 @@ interface StoryHeaderProps {
   readingTime: string;
   setShowSummary: (show: boolean) => void;
   onToggleFavorite?: (storyId: string) => void;
-  onMarkAsRead?: (storyId: string) => Promise<boolean>;
   isDarkMode?: boolean;
 }
 
@@ -23,15 +22,10 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
   readingTime,
   setShowSummary,
   onToggleFavorite,
-  onMarkAsRead,
   isDarkMode = false,
 }) => {
   const formattedDate = story.createdAt ? format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr }) : "";
   
-  // Fonction pour déterminer si le bouton "Marquer comme lu" devrait être affiché
-  // Montrer seulement pour les histoires prêtes à lire (pas pour celles déjà lues)
-  const showMarkAsReadButton = story.status === "ready" && onMarkAsRead;
-
   return (
     <div className="flex justify-between items-center mb-6">
       <div>
@@ -49,7 +43,7 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
       </div>
       <div className="flex gap-2">
         <Button
-          variant={isDarkMode ? "outline" : "outline"}
+          variant="outline"
           size="icon"
           onClick={() => setShowSummary(true)}
           className={`relative group transition-transform hover:scale-105 ${
@@ -58,20 +52,6 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
         >
           <Info className="h-5 w-5" />
         </Button>
-        
-        {showMarkAsReadButton && (
-          <Button 
-            variant={isDarkMode ? "outline" : "outline"}
-            onClick={() => onMarkAsRead(story.id)}
-            className={`transition-transform hover:scale-105 flex items-center gap-2 ${
-              isDarkMode ? "text-white border-gray-600 hover:bg-gray-700" : ""
-            }`}
-            disabled={story.status === "read"}
-          >
-            <BookCheck className="h-5 w-5" />
-            {story.status === "read" ? "Déjà lu" : "Marquer comme lu"}
-          </Button>
-        )}
         
         {onToggleFavorite && (
           <Button

@@ -11,6 +11,7 @@ import { StoryContent } from "./story/StoryContent";
 import { ReadingGuide } from "./story/ReadingGuide";
 import ReactMarkdown from 'react-markdown';
 import { ScrollArea } from "./ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -33,17 +34,31 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [showReadingGuide, setShowReadingGuide] = useState(false);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    if (story && story.status === 'ready' && onMarkAsRead) {
-      onMarkAsRead(story.id).catch(err => {
-        console.error("[StoryReader] ERROR: Échec du marquage comme lu:", err);
-      });
+  // Handle le marquage comme lu uniquement lors d'une action utilisateur explicite,
+  // pas automatiquement à l'ouverture
+  const handleMarkAsRead = async () => {
+    if (story && onMarkAsRead) {
+      const success = await onMarkAsRead(story.id);
+      if (success) {
+        toast({
+          title: "Histoire marquée comme lue",
+          description: "Le statut de l'histoire a été mis à jour"
+        });
+      }
     }
-  }, [story, onMarkAsRead]);
+  };
 
   // Use onBack if provided, otherwise fallback to onClose
-  const handleBack = onBack || onClose || (() => {});
+  const handleBack = () => {
+    console.log("[StoryReader] DEBUG: Bouton Fermer cliqué");
+    if (onBack) {
+      onBack();
+    } else if (onClose) {
+      onClose();
+    }
+  };
 
   if (!story) {
     return (
@@ -63,7 +78,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
       className={`fixed inset-0 min-h-screen transition-colors duration-300 z-50
         ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
     >
-      <div className="max-w-3xl mx-auto px-4">
+      <div className="max-w-3xl mx-auto px-4 flex flex-col h-screen">
         <div className="flex justify-between items-center py-4 sticky top-0 z-10" 
              style={{ backgroundColor: isDarkMode ? '#1a1a1a' : 'white' }}>
           <ReaderControls
@@ -75,17 +90,19 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             title={story.title}
             story={story}
             setShowReadingGuide={setShowReadingGuide}
+            onMarkAsRead={handleMarkAsRead}
+            isRead={story.status === "read"}
           />
           <Button 
             variant={isDarkMode ? "outline" : "ghost"} 
             onClick={handleBack}
-            className={`transition-transform hover:scale-105 ${isDarkMode ? "text-white border-white hover:bg-gray-800" : ""}`}
+            className={`transition-transform hover:scale-105 ${isDarkMode ? "text-white border-gray-600 hover:bg-gray-800" : ""}`}
           >
             Fermer
           </Button>
         </div>
 
-        <ScrollArea className="h-[calc(100vh-80px)] overflow-y-auto pr-4">
+        <ScrollArea className="flex-1 pr-4">
           <Card className={`p-6 transition-all duration-300 mb-6 ${isDarkMode ? "bg-gray-800" : "bg-white"} animate-fade-in`}>
             <StoryHeader
               story={story}
@@ -93,7 +110,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
               readingTime={readingTime}
               setShowSummary={setShowSummary}
               onToggleFavorite={onToggleFavorite}
-              onMarkAsRead={onMarkAsRead}
               isDarkMode={isDarkMode}
             />
 

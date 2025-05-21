@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { TextToSpeech } from "./TextToSpeech";
 import { ShareStoryDialog } from "./ShareStoryDialog";
-import { BookOpen, Share2 } from "lucide-react";
+import { BookOpen, Share2, BookCheck } from "lucide-react";
 
 interface ReaderControlsProps {
   fontSize: number;
@@ -14,6 +14,8 @@ interface ReaderControlsProps {
   title: string;
   story: any;
   setShowReadingGuide: (show: boolean) => void;
+  onMarkAsRead?: () => void;
+  isRead?: boolean;
 }
 
 export const ReaderControls: React.FC<ReaderControlsProps> = ({
@@ -25,6 +27,8 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   title,
   story,
   setShowReadingGuide,
+  onMarkAsRead,
+  isRead = false,
 }) => {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
   
@@ -44,7 +48,7 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
     : "";
 
   return (
-    <div className="space-x-2">
+    <div className="space-x-2 flex items-center flex-wrap gap-2">
       <Button
         variant="outline"
         onClick={handleDecreaseFontSize}
@@ -67,6 +71,22 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
         {isDarkMode ? "☀️" : "🌙"}
       </Button>
       <TextToSpeech text={story.story_text} isDarkMode={isDarkMode} />
+      
+      {/* Bouton Marquer comme lu - toujours visible avec indication de statut */}
+      {onMarkAsRead && (
+        <Button 
+          variant={isDarkMode ? "outline" : "outline"}
+          onClick={onMarkAsRead}
+          className={`transition-transform hover:scale-105 flex items-center gap-2 ${
+            isDarkMode ? "text-white border-gray-600 hover:bg-gray-700" : ""
+          } ${isRead ? "bg-green-100 dark:bg-green-900/30" : ""}`}
+          disabled={isRead}
+        >
+          <BookCheck className={`h-4 w-4 ${isRead ? "text-green-600 dark:text-green-400" : ""}`} />
+          {isRead ? "Lu" : "Marquer comme lu"}
+        </Button>
+      )}
+      
       <Button
         variant="outline"
         onClick={() => setShowShareDialog(true)}

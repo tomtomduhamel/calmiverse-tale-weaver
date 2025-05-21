@@ -60,6 +60,8 @@ export const useStoryManagement = () => {
   const handleMarkAsRead = useCallback(async (storyId: string) => {
     try {
       await updateStoryStatus(storyId, 'read');
+      // Retourne true pour indiquer le succès mais ne montre plus de toast
+      // La notification est désormais gérée dans StoryReader
       return true;
     } catch (error: any) {
       console.error("Error marking story as read:", error);
@@ -94,24 +96,15 @@ export const useStoryManagement = () => {
     }
   }, [toast]);
 
-  // Fonction simplifiée pour ouvrir directement le lecteur d'histoire, sans notifications
+  // Fonction simplifiée pour ouvrir directement le lecteur d'histoire
   const openStoryReader = useCallback((story: Story) => {
     console.log("[useStoryManagement] DEBUG: Ouverture directe du lecteur pour l'histoire:", story.id);
     
-    // D'abord définir l'histoire courante
+    // D'abord définir l'histoire courante sans notification
     setCurrentStory(story);
     
-    // Laisser le temps au state de l'histoire d'être mis à jour
-    setTimeout(() => {
-      if (story.status === "ready") {
-        updateStoryStatus(story.id, 'read').catch(err => {
-          console.error("Erreur lors du marquage de l'histoire comme lue:", err);
-        });
-      }
-    }, 100);
-    
     return true;
-  }, [updateStoryStatus]);
+  }, []);
 
   // Version simplifiée de la fonction de sélection d'histoire
   const handleSelectStory = useCallback((story: Story) => {

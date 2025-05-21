@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import StoryReader from "@/components/StoryReader";
 import type { Story } from "@/types/story";
+import { useViewManagement } from "@/hooks/useViewManagement";
 
 interface ReaderViewProps {
   story: Story;
@@ -10,6 +11,15 @@ interface ReaderViewProps {
 }
 
 export const ReaderView: React.FC<ReaderViewProps> = ({ story, onClose, onMarkAsRead }) => {
+  const { setCurrentView } = useViewManagement();
+
+  // Force le retour à la vue de la bibliothèque lors de la fermeture
+  const handleClose = () => {
+    console.log("[ReaderView] DEBUG: Fermeture du lecteur et retour à la bibliothèque");
+    onClose();
+    setCurrentView("library");
+  };
+
   useEffect(() => {
     // Désactiver le scroll du corps quand le reader est ouvert
     document.body.style.overflow = 'hidden';
@@ -24,7 +34,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({ story, onClose, onMarkAs
     <div>
       <StoryReader 
         story={story} 
-        onClose={onClose} 
+        onClose={handleClose} 
         onMarkAsRead={onMarkAsRead}
       />
     </div>

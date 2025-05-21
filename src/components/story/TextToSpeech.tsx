@@ -24,7 +24,7 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({ text, isDarkMode = f
     }
   };
   
-  // Style pour le bouton en fonction du mode sombre
+  // Style amélioré pour le bouton en fonction du mode sombre
   const buttonStyle = isDarkMode 
     ? "border-gray-600 text-white hover:bg-gray-700" 
     : "";
