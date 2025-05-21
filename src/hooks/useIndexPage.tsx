@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -151,18 +152,6 @@ export const useIndexPage = () => {
         console.error("[useIndexPage] ERROR: Erreur lors du marquage de l'histoire comme lue:", error);
       });
     }
-    
-    // Notification utilisateur
-    toast({
-      title: "Ouverture de l'histoire",
-      description: `"${story.title}" est maintenant affichée.`,
-    });
-    
-    // Vérifier l'état après les changements
-    setTimeout(() => {
-      console.log("[useIndexPage] DEBUG APRÈS CHANGEMENT: currentView =", currentView);
-      console.log("[useIndexPage] DEBUG APRÈS CHANGEMENT: currentStory =", currentStory?.id);
-    }, 100);
   };
 
   // Loading state check
