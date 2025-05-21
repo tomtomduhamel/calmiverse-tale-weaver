@@ -82,7 +82,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
     }
   }, [deleteStory, toast]);
 
-  // Fixed: Modified to return a boolean Promise
+  // Fonction correctement typée pour retourner une Promise<boolean>
   const handleMarkAsRead = useCallback(async (storyId: string): Promise<boolean> => {
     try {
       await updateStoryStatus(storyId, "read");
@@ -103,7 +103,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
         description: "Le statut de l'histoire a été mis à jour",
       });
       
-      return true; // Return true to indicate success
+      return true; // Retourne true pour indiquer le succès
     } catch (error) {
       console.error("Error marking story as read:", error);
       toast({
@@ -111,7 +111,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
         description: "Une erreur est survenue lors de la mise à jour du statut",
         variant: "destructive",
       });
-      return false; // Return false to indicate failure
+      return false; // Retourne false pour indiquer l'échec
     }
   }, [updateStoryStatus, currentStory, stories, toast, setCurrentStory]);
 
