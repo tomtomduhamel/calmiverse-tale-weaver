@@ -23,11 +23,16 @@ export const LibraryView: React.FC<LibraryViewProps> = React.memo(({
   isRetrying,
   pendingStoryId
 }) => {
+  const handleSelectStory = useCallback((story: Story) => {
+    console.log("LibraryView: Story selected:", story.id);
+    onSelectStory(story);
+  }, [onSelectStory]);
+  
   return (
     <div className="animate-fade-in">
       <StoryLibrary
         stories={stories}
-        onSelectStory={onSelectStory}
+        onSelectStory={handleSelectStory}
         onDeleteStory={onDeleteStory}
         onRetryStory={onRetryStory}
         onViewChange={onViewChange}

@@ -30,7 +30,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
 }) => {
   const cardStyles = [
     "transition-all duration-300 hover:shadow-md",
-    onClick ? "cursor-pointer" : "",
+    onClick && (story.status === "ready" || story.status === "read") ? "cursor-pointer" : "",
     story.status === "error" ? "border-red-200 bg-red-50" : "",
     story.status === "pending" || isPending ? "border-amber-200 bg-amber-50" : "",
     story.status === "read" ? "border-green-200 bg-green-50" : "",
@@ -43,8 +43,14 @@ const StoryCard: React.FC<StoryCardProps> = ({
   };
 
   const handleClick = React.useCallback((e: React.MouseEvent) => {
-    if (onClick) onClick();
-  }, [onClick]);
+    e.stopPropagation();
+    if (onClick && (story.status === "ready" || story.status === "read")) {
+      console.log("StoryCard: Card clicked for story:", story.id, "with status:", story.status);
+      onClick();
+    } else {
+      console.log("StoryCard: Card is not clickable or story is not ready:", story.status);
+    }
+  }, [onClick, story]);
 
   return (
     <Card className={cardStyles} onClick={handleClick}>

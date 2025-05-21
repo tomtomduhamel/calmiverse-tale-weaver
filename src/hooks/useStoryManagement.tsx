@@ -134,10 +134,35 @@ export const useStoryManagement = () => {
   }, []);
 
   const handleSelectStory = useCallback((story: Story) => {
-    console.log("Selecting story:", story.id);
-    setCurrentStory(story);
-    // Logique supplémentaire pour sélectionner une histoire
-  }, []);
+    console.log("Selecting story:", story.id, "with status:", story.status);
+    
+    if (story.status === "ready" || story.status === "read") {
+      console.log("Story is ready or read, setting as current story");
+      setCurrentStory(story);
+      
+      // Si l'histoire n'est pas encore marquée comme lue, la marquer
+      if (story.status === "ready") {
+        updateStoryStatus(story.id, 'read')
+          .then(() => {
+            console.log("Story marked as read:", story.id);
+          })
+          .catch((error) => {
+            console.error("Failed to mark story as read:", error);
+          });
+      }
+    } else {
+      console.log("Story is not ready yet:", story.status);
+      toast({
+        title: "Histoire non disponible",
+        description: story.status === "pending" 
+          ? "Cette histoire est encore en cours de génération." 
+          : "Cette histoire n'est pas disponible pour la lecture.",
+        variant: "destructive"
+      });
+    }
+    
+    return story.status === "ready" || story.status === "read";
+  }, [setCurrentStory, updateStoryStatus, toast]);
 
   return {
     handleDeleteStory,

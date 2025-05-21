@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -125,6 +124,19 @@ export const useIndexPage = () => {
     } catch (error) {
       console.error("Story creation error:", error);
       throw error;
+    }
+  };
+
+  // Modified handleSelectStory to change the view to reader
+  const handleSelectStory = async (story: Story) => {
+    console.log("Index: Selecting story:", story.id, "with status:", story.status);
+    
+    const isStorySelectable = handleStoryCreated(story);
+    console.log("Story is selectable:", isStorySelectable);
+    
+    if (story.status === "ready" || story.status === "read") {
+      console.log("Setting view to reader");
+      setCurrentView("reader");
     }
   };
 

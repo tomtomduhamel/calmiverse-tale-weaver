@@ -30,6 +30,13 @@ const StoryGrid: React.FC<StoryGridProps> = ({
     );
   }
 
+  const handleCardClick = (story: Story) => {
+    console.log("StoryGrid: Card clicked for story:", story.id);
+    if (onCardClick) {
+      onCardClick(story);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
       {stories.map((story) => (
@@ -38,7 +45,7 @@ const StoryGrid: React.FC<StoryGridProps> = ({
           story={story}
           onDelete={onDelete ? () => onDelete(story.id) : undefined}
           onRetry={onRetry ? () => onRetry(story.id) : undefined}
-          onClick={onCardClick ? () => onCardClick(story) : undefined}
+          onClick={() => handleCardClick(story)}
           isRetrying={isRetrying && pendingStoryId === story.id}
           isDeleting={isDeletingId === story.id}
           isPending={pendingStoryId === story.id}
