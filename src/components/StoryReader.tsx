@@ -10,6 +10,7 @@ import { StoryHeader } from "./story/StoryHeader";
 import { StoryContent } from "./story/StoryContent";
 import { ReadingGuide } from "./story/ReadingGuide";
 import ReactMarkdown from 'react-markdown';
+import { ScrollArea } from "./ui/scroll-area";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -34,11 +35,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const [showReadingGuide, setShowReadingGuide] = useState(false);
 
   useEffect(() => {
-    console.log("[StoryReader] DEBUG: Histoire reçue dans le Reader:", story);
-    
-    // Marquer automatiquement l'histoire comme lue si nécessaire
     if (story && story.status === 'ready' && onMarkAsRead) {
-      console.log("[StoryReader] DEBUG: Marquage automatique de l'histoire comme lue:", story.id);
       onMarkAsRead(story.id).catch(err => {
         console.error("[StoryReader] ERROR: Échec du marquage comme lu:", err);
       });
@@ -49,7 +46,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const handleBack = onBack || onClose || (() => {});
 
   if (!story) {
-    console.error("[StoryReader] ERROR: Aucune histoire fournie!");
     return (
       <div className="min-h-screen p-4 flex items-center justify-center bg-background">
         <Card className="p-6 text-center animate-fade-in">
@@ -60,16 +56,16 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     );
   }
 
-  console.log("[StoryReader] INFO: Calcul du temps de lecture");
   const readingTime = calculateReadingTime(story.story_text);
 
   return (
     <div 
-      className={`fixed inset-0 min-h-screen p-4 transition-colors duration-300 overflow-y-auto z-50
+      className={`fixed inset-0 min-h-screen transition-colors duration-300 z-50
         ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
     >
-      <div className="max-w-3xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+      <div className="max-w-3xl mx-auto px-4">
+        <div className="flex justify-between items-center py-4 sticky top-0 z-10" 
+             style={{ backgroundColor: isDarkMode ? '#1a1a1a' : 'white' }}>
           <ReaderControls
             fontSize={fontSize}
             setFontSize={setFontSize}
@@ -81,30 +77,33 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             setShowReadingGuide={setShowReadingGuide}
           />
           <Button 
-            variant="ghost" 
+            variant={isDarkMode ? "outline" : "ghost"} 
             onClick={handleBack}
-            className="transition-transform hover:scale-105"
+            className={`transition-transform hover:scale-105 ${isDarkMode ? "text-white border-white hover:bg-gray-800" : ""}`}
           >
             Fermer
           </Button>
         </div>
 
-        <Card className={`p-6 transition-all duration-300 ${isDarkMode ? "bg-gray-800" : "bg-white"} animate-fade-in`}>
-          <StoryHeader
-            story={story}
-            childName={childName}
-            readingTime={readingTime}
-            setShowSummary={setShowSummary}
-            onToggleFavorite={onToggleFavorite}
-            onMarkAsRead={onMarkAsRead}
-          />
+        <ScrollArea className="h-[calc(100vh-80px)] overflow-y-auto pr-4">
+          <Card className={`p-6 transition-all duration-300 mb-6 ${isDarkMode ? "bg-gray-800" : "bg-white"} animate-fade-in`}>
+            <StoryHeader
+              story={story}
+              childName={childName}
+              readingTime={readingTime}
+              setShowSummary={setShowSummary}
+              onToggleFavorite={onToggleFavorite}
+              onMarkAsRead={onMarkAsRead}
+              isDarkMode={isDarkMode}
+            />
 
-          <StoryContent
-            story={story}
-            fontSize={fontSize}
-            isDarkMode={isDarkMode}
-          />
-        </Card>
+            <StoryContent
+              story={story}
+              fontSize={fontSize}
+              isDarkMode={isDarkMode}
+            />
+          </Card>
+        </ScrollArea>
 
         <Dialog open={showSummary} onOpenChange={setShowSummary}>
           <DialogContent className="sm:max-w-[500px] animate-fade-in">

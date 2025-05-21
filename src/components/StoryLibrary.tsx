@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
@@ -85,19 +84,11 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
     }
   }, [onRetryStory]);
 
-  // Transmission directe sans validation de statut
+  // Transmission directe sans validation de statut et sans toast
   const handleStorySelect = useCallback((story: Story) => {
-    console.log("[StoryLibrary] DEBUG: Transmission directe de la sélection d'histoire:", story.id, "avec statut:", story.status);
-    
-    // Notification de l'action
-    toast({
-      title: "Ouverture de l'histoire",
-      description: `"${story.title}" est en cours d'ouverture...`,
-    });
-    
-    // Appel direct sans condition
+    console.log("[StoryLibrary] DEBUG: Transmission directe de la sélection d'histoire:", story.id);
     onSelectStory(story);
-  }, [onSelectStory, toast]);
+  }, [onSelectStory]);
 
   // Filtrage et tri des histoires
   const filteredStories = stories

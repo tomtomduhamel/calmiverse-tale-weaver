@@ -1,3 +1,4 @@
+
 import { useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from './stories/useStoryMutations';
@@ -59,12 +60,6 @@ export const useStoryManagement = () => {
   const handleMarkAsRead = useCallback(async (storyId: string) => {
     try {
       await updateStoryStatus(storyId, 'read');
-      
-      toast({
-        title: "Histoire marquée comme lue",
-        description: "Le statut de l'histoire a été mis à jour",
-      });
-      
       return true;
     } catch (error: any) {
       console.error("Error marking story as read:", error);
@@ -80,7 +75,6 @@ export const useStoryManagement = () => {
   const handleToggleFavorite = useCallback(async (story: Story) => {
     try {
       // Cette fonction n'est pas encore implémentée
-      // Nous devrons ajouter la logique pour marquer une histoire comme favorite
       console.log("Toggle favorite for story:", story.id);
       
       toast({
@@ -100,23 +94,15 @@ export const useStoryManagement = () => {
     }
   }, [toast]);
 
-  // Fonction simplifiée et directe pour ouvrir le lecteur d'histoire
+  // Fonction simplifiée pour ouvrir directement le lecteur d'histoire, sans notifications
   const openStoryReader = useCallback((story: Story) => {
     console.log("[useStoryManagement] DEBUG: Ouverture directe du lecteur pour l'histoire:", story.id);
-    
-    // Notification
-    toast({
-      title: "Ouverture de l'histoire",
-      description: "Chargement du lecteur en cours...",
-    });
     
     // D'abord définir l'histoire courante
     setCurrentStory(story);
     
     // Laisser le temps au state de l'histoire d'être mis à jour
     setTimeout(() => {
-      // En utilisant le callback form pour garantir que nous avons la dernière valeur
-      console.log("[useStoryManagement] DEBUG: Actualisation du statut de lecture si nécessaire");
       if (story.status === "ready") {
         updateStoryStatus(story.id, 'read').catch(err => {
           console.error("Erreur lors du marquage de l'histoire comme lue:", err);
@@ -125,21 +111,18 @@ export const useStoryManagement = () => {
     }, 100);
     
     return true;
-  }, [updateStoryStatus, toast]);
+  }, [updateStoryStatus]);
 
-  // Version simplifiée et directe de la fonction de sélection d'histoire
+  // Version simplifiée de la fonction de sélection d'histoire
   const handleSelectStory = useCallback((story: Story) => {
-    console.log("[useStoryManagement] DEBUG: Sélection d'histoire directe:", story.id, "status:", story.status);
-    
-    // Ouvrir directement le lecteur quelle que soit l'histoire
+    console.log("[useStoryManagement] DEBUG: Sélection d'histoire directe:", story.id);
     return openStoryReader(story);
   }, [openStoryReader]);
 
-  // Ajout des fonctions existantes
+  // Gestion du formulaire de création d'histoire
   const handleStorySubmit = useCallback(async (formData: any) => {
     console.log("Story submission handler", formData);
-    // Cette fonction serait normalement implémentée pour soumettre une nouvelle histoire
-    return "dummy-story-id"; // Retourne un ID factice pour l'histoire
+    return "dummy-story-id";
   }, []);
 
   const handleStoryCreated = useCallback((story: Story) => {
@@ -161,12 +144,10 @@ export const useStoryManagement = () => {
     handleToggleFavorite,
     isRetrying,
     pendingStoryId,
-    // Ajout des fonctions
     handleStorySubmit,
     handleStoryCreated,
     handleCloseReader,
     handleSelectStory,
-    // Nouvelle fonction directe
     openStoryReader
   };
 };

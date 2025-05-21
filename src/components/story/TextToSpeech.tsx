@@ -1,80 +1,42 @@
+
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Volume2, VolumeX } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from '@/components/ui/button';
+import { Volume2, VolumeX } from 'lucide-react';
 
 interface TextToSpeechProps {
   text: string;
+  isDarkMode?: boolean;
 }
 
-export const TextToSpeech: React.FC<TextToSpeechProps> = ({ text }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const { toast } = useToast();
-
-  const handleSpeak = () => {
-    // Version simplifiée utilisant l'API Web Speech
-    try {
+export const TextToSpeech: React.FC<TextToSpeechProps> = ({ text, isDarkMode = false }) => {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  
+  const handleTextToSpeech = () => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'fr-FR';
-      
-      utterance.onend = () => {
-        setIsPlaying(false);
-      };
-
-      utterance.onerror = () => {
-        setIsPlaying(false);
-        toast({
-          title: "Erreur",
-          description: "Impossible de lire le texte pour le moment.",
-          variant: "destructive",
-        });
-      };
-
-      setIsPlaying(true);
+      utterance.onend = () => setIsSpeaking(false);
       window.speechSynthesis.speak(utterance);
-    } catch (error) {
-      console.error('Error in text-to-speech:', error);
-      toast({
-        title: "Erreur",
-        description: "Le service de synthèse vocale n'est pas disponible.",
-        variant: "destructive",
-      });
-      setIsPlaying(false);
+      setIsSpeaking(true);
     }
   };
-
-  const handleStop = () => {
-    window.speechSynthesis.cancel();
-    setIsPlaying(false);
-  };
-
+  
+  // Style pour le bouton en fonction du mode sombre
+  const buttonStyle = isDarkMode 
+    ? "border-gray-600 text-white hover:bg-gray-700" 
+    : "";
+  
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={isPlaying ? handleStop : handleSpeak}
-            className="transition-all hover:scale-105"
-          >
-            {isPlaying ? (
-              <VolumeX className="h-4 w-4" />
-            ) : (
-              <Volume2 className="h-4 w-4" />
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{isPlaying ? "Arrêter la lecture" : "Lire à voix haute"}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Button
+      variant="outline"
+      onClick={handleTextToSpeech}
+      className={`w-10 h-10 transition-transform hover:scale-105 ${buttonStyle}`}
+      title={isSpeaking ? "Arrêter la lecture" : "Lire à haute voix"}
+    >
+      {isSpeaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+    </Button>
   );
 };

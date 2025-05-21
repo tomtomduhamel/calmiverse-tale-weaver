@@ -10,18 +10,18 @@ interface ReaderViewProps {
 }
 
 export const ReaderView: React.FC<ReaderViewProps> = ({ story, onClose, onMarkAsRead }) => {
-  // Ajouter un log pour confirmer que ReaderView est bien monté
   useEffect(() => {
-    console.log("[ReaderView] DEBUG: Histoire reçue dans ReaderView:", story.id, "status:", story.status);
-    console.log("[ReaderView] DEBUG: Contenu de l'histoire:", {
-      title: story.title,
-      hasContent: !!story.story_text,
-      contentLength: story.story_text?.length || 0
-    });
-  }, [story]);
+    // Désactiver le scroll du corps quand le reader est ouvert
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      // Réactiver le scroll quand le reader est fermé
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <StoryReader 
         story={story} 
         onClose={onClose} 

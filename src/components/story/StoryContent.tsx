@@ -1,6 +1,7 @@
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import type { Story } from "@/types/story";
+import type { Story } from '@/types/story';
 
 interface StoryContentProps {
   story: Story;
@@ -8,55 +9,42 @@ interface StoryContentProps {
   isDarkMode: boolean;
 }
 
-export const StoryContent: React.FC<StoryContentProps> = ({
-  story,
+export const StoryContent: React.FC<StoryContentProps> = ({ 
+  story, 
   fontSize,
-  isDarkMode,
+  isDarkMode 
 }) => {
-  const getObjectiveText = (objective: Story['objective']) => {
-    if (!objective) return "Objectif non défini";
-    
-    if (typeof objective === 'object' && objective.value) {
-      return objective.value;
-    }
-    
-    if (typeof objective === 'string') {
-      return objective;
-    }
-
-    return "Objectif non défini";
-  };
-
+  const textColor = isDarkMode ? 'text-white' : 'text-gray-900';
+  
   return (
-    <>
-      <div className="mb-6 bg-secondary/10 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-2">Objectif de l'histoire</h3>
-        <ReactMarkdown className="text-muted-foreground">{getObjectiveText(story.objective)}</ReactMarkdown>
-      </div>
-
-      <div
-        style={{ fontSize: `${fontSize}px` }}
-        className="prose prose-sm md:prose-base lg:prose-lg max-w-none dark:prose-invert animate-fade-in"
+    <div 
+      className={`prose max-w-none ${textColor}`}
+      style={{ 
+        fontSize: `${fontSize}px`,
+        lineHeight: 1.6
+      }}
+    >
+      <ReactMarkdown
+        components={{
+          h1: ({ node, ...props }) => <h1 className={`text-2xl font-bold mt-8 mb-4 ${textColor}`} {...props} />,
+          h2: ({ node, ...props }) => <h2 className={`text-xl font-bold mt-6 mb-3 ${textColor}`} {...props} />,
+          p: ({ node, ...props }) => <p className={`my-4 ${textColor}`} {...props} />,
+          strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
+          em: ({ node, ...props }) => <em className="italic" {...props} />,
+          ul: ({ node, ...props }) => <ul className="list-disc ml-6 my-4" {...props} />,
+          ol: ({ node, ...props }) => <ol className="list-decimal ml-6 my-4" {...props} />,
+          li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+          a: ({ node, ...props }) => <a className="text-blue-500 hover:underline" {...props} />,
+          blockquote: ({ node, ...props }) => (
+            <blockquote 
+              className={`border-l-4 ${isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'} pl-4 py-2 my-4 italic`} 
+              {...props} 
+            />
+          ),
+        }}
       >
-        <ReactMarkdown
-          components={{
-            h1: ({ node, ...props }) => <h1 className="text-3xl font-bold mb-4" {...props} />,
-            h2: ({ node, ...props }) => <h2 className="text-2xl font-bold mb-3" {...props} />,
-            h3: ({ node, ...props }) => <h3 className="text-xl font-bold mb-2" {...props} />,
-            p: ({ node, ...props }) => <p className="mb-4 leading-relaxed" {...props} />,
-            ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-4" {...props} />,
-            ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-4" {...props} />,
-            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-            blockquote: ({ node, ...props }) => (
-              <blockquote className="border-l-4 border-secondary pl-4 italic my-4" {...props} />
-            ),
-            em: ({ node, ...props }) => <em className="italic" {...props} />,
-            strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
-          }}
-        >
-          {story.story_text}
-        </ReactMarkdown>
-      </div>
-    </>
+        {story.story_text}
+      </ReactMarkdown>
+    </div>
   );
 };
