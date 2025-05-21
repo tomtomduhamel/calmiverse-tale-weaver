@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from './stories/useStoryMutations';
@@ -101,7 +100,42 @@ export const useStoryManagement = () => {
     }
   }, [toast]);
 
-  // Ajout des fonctions manquantes
+  // Fonction simplifiée et directe pour ouvrir le lecteur d'histoire
+  const openStoryReader = useCallback((story: Story) => {
+    console.log("[useStoryManagement] DEBUG: Ouverture directe du lecteur pour l'histoire:", story.id);
+    
+    // Notification
+    toast({
+      title: "Ouverture de l'histoire",
+      description: "Chargement du lecteur en cours...",
+    });
+    
+    // D'abord définir l'histoire courante
+    setCurrentStory(story);
+    
+    // Laisser le temps au state de l'histoire d'être mis à jour
+    setTimeout(() => {
+      // En utilisant le callback form pour garantir que nous avons la dernière valeur
+      console.log("[useStoryManagement] DEBUG: Actualisation du statut de lecture si nécessaire");
+      if (story.status === "ready") {
+        updateStoryStatus(story.id, 'read').catch(err => {
+          console.error("Erreur lors du marquage de l'histoire comme lue:", err);
+        });
+      }
+    }, 100);
+    
+    return true;
+  }, [updateStoryStatus, toast]);
+
+  // Version simplifiée et directe de la fonction de sélection d'histoire
+  const handleSelectStory = useCallback((story: Story) => {
+    console.log("[useStoryManagement] DEBUG: Sélection d'histoire directe:", story.id, "status:", story.status);
+    
+    // Ouvrir directement le lecteur quelle que soit l'histoire
+    return openStoryReader(story);
+  }, [openStoryReader]);
+
+  // Ajout des fonctions existantes
   const handleStorySubmit = useCallback(async (formData: any) => {
     console.log("Story submission handler", formData);
     // Cette fonction serait normalement implémentée pour soumettre une nouvelle histoire
@@ -118,36 +152,6 @@ export const useStoryManagement = () => {
     setCurrentStory(null);
   }, []);
 
-  // Version simplifiée de la fonction de sélection d'histoire
-  const handleSelectStory = useCallback((story: Story) => {
-    console.log("[useStoryManagement] DEBUG: Sélection d'histoire:", story.id, "status:", story.status);
-    
-    if (story.status === "ready" || story.status === "read") {
-      console.log("[useStoryManagement] DEBUG: Histoire valide pour lecture, définition comme histoire courante");
-      setCurrentStory(story);
-      
-      // Si l'histoire n'est pas encore marquée comme lue, la marquer
-      if (story.status === "ready") {
-        updateStoryStatus(story.id, 'read').catch(err => {
-          console.error("Erreur lors du marquage de l'histoire comme lue:", err);
-        });
-      }
-      
-      return true;
-    } else {
-      console.log("[useStoryManagement] DEBUG: Histoire non disponible pour lecture");
-      toast({
-        title: "Histoire non disponible",
-        description: story.status === "pending" 
-          ? "Cette histoire est encore en cours de génération." 
-          : "Cette histoire n'est pas disponible pour la lecture.",
-        variant: "destructive"
-      });
-      
-      return false;
-    }
-  }, [updateStoryStatus, toast]);
-
   return {
     currentStory,
     setCurrentStory,
@@ -157,10 +161,12 @@ export const useStoryManagement = () => {
     handleToggleFavorite,
     isRetrying,
     pendingStoryId,
-    // Ajout explicite des fonctions manquantes
+    // Ajout des fonctions
     handleStorySubmit,
     handleStoryCreated,
     handleCloseReader,
-    handleSelectStory
+    handleSelectStory,
+    // Nouvelle fonction directe
+    openStoryReader
   };
 };

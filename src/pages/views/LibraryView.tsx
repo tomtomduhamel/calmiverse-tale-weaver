@@ -23,11 +23,10 @@ export const LibraryView: React.FC<LibraryViewProps> = React.memo(({
   isRetrying,
   pendingStoryId
 }) => {
-  // Méthode simplifiée pour gérer la sélection d'histoire
+  // Transmission directe sans logique conditionnelle
   const handleSelectStory = useCallback((story: Story) => {
-    console.log("[LibraryView] DEBUG: Histoire sélectionnée:", story.id, "statut:", story.status);
-    
-    // Nous transmettons directement l'histoire sélectionnée au composant parent
+    console.log("[LibraryView] DEBUG: Transmission directe de la sélection d'histoire:", story.id);
+    // Transmission immédiate au parent
     onSelectStory(story);
   }, [onSelectStory]);
   

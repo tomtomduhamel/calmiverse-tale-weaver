@@ -23,7 +23,7 @@ export const useIndexPage = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   
-  // Extraction explicite de toutes les fonctions nécessaires de useStoryManagement
+  // Extraction des fonctions de useStoryManagement
   const {
     currentStory,
     setCurrentStory,
@@ -32,7 +32,8 @@ export const useIndexPage = () => {
     handleCloseReader,
     handleDeleteStory,
     handleRetryStory,
-    handleMarkAsRead
+    handleMarkAsRead,
+    openStoryReader
   } = useStoryManagement();
 
   // Redirect to login page if user is not logged in
@@ -128,38 +129,20 @@ export const useIndexPage = () => {
     }
   };
 
-  // Version simplifiée et plus robuste pour la sélection d'histoire
+  // Nouvelle version simplifiée pour la sélection d'histoire
+  // Force directement le changement de vue et définit l'histoire courante
   const handleSelectStory = (story: Story) => {
-    console.log("[useIndexPage] DEBUG: Tentative de sélection d'histoire:", story.id, "status:", story.status);
+    console.log("[useIndexPage] DEBUG: NOUVELLE FONCTION - Sélection directe d'histoire:", story.id, "status:", story.status);
     
-    // On effectue les validations de base
-    const isReadable = story.status === "ready" || story.status === "read";
-    
-    if (!isReadable) {
-      console.log("[useIndexPage] DEBUG: Histoire non lisible, statut:", story.status);
-      toast({
-        title: "Histoire non disponible",
-        description: story.status === "pending" 
-          ? "Cette histoire est encore en cours de génération." 
-          : "Cette histoire n'est pas disponible pour la lecture.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Logs de diagnostic
-    console.log("[useIndexPage] DEBUG: Histoire jugée lisible, passage au lecteur");
-    console.log("[useIndexPage] DEBUG: currentView avant:", currentView);
-    console.log("[useIndexPage] DEBUG: currentStory avant:", currentStory?.id);
-    
-    // Définir l'histoire comme courante
+    // Forcer le changement d'histoire et de vue immédiatement
     setCurrentStory(story);
+    console.log("[useIndexPage] DEBUG: Histoire courante définie:", story.id);
     
-    // Forcer le changement de vue vers le lecteur
+    // Forcer le changement de vue vers le lecteur sans conditions
     setTimeout(() => {
-      console.log("[useIndexPage] DEBUG: Changement forcé de la vue vers 'reader'");
+      console.log("[useIndexPage] DEBUG: FORÇAGE du changement de vue vers 'reader'");
       setCurrentView("reader");
-    }, 0);
+    }, 50);
     
     // Si l'histoire est prête (non lue), la marquer comme lue
     if (story.status === "ready") {
@@ -175,10 +158,10 @@ export const useIndexPage = () => {
       description: `"${story.title}" est maintenant affichée.`,
     });
     
-    // Logs de diagnostic après les changements
+    // Vérifier l'état après les changements
     setTimeout(() => {
-      console.log("[useIndexPage] DEBUG: currentView après:", currentView);
-      console.log("[useIndexPage] DEBUG: currentStory après:", currentStory?.id);
+      console.log("[useIndexPage] DEBUG APRÈS CHANGEMENT: currentView =", currentView);
+      console.log("[useIndexPage] DEBUG APRÈS CHANGEMENT: currentStory =", currentStory?.id);
     }, 100);
   };
 
@@ -201,8 +184,8 @@ export const useIndexPage = () => {
     
     // Actions
     setCurrentView,
-    handleCreateChildFromStory: handleAddChild, // Simplifié pour éviter des problèmes
-    handleStorySubmitWrapper: handleStorySubmit, // Simplifié pour éviter des problèmes
+    handleCreateChildFromStory,
+    handleStorySubmitWrapper,
     handleAddChild,
     handleUpdateChild,
     handleDeleteChild,
@@ -212,6 +195,6 @@ export const useIndexPage = () => {
     handleMarkAsRead,
     handleStoryCreated,
     handleCloseReader,
-    setCurrentStory, // Ajout explicite de setCurrentStory dans l'objet retourné
+    setCurrentStory,
   };
 };

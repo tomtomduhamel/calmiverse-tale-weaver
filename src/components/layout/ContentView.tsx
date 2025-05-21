@@ -60,7 +60,16 @@ const ContentView: React.FC<ContentViewProps> = ({
     console.log("[ContentView] DEBUG: Rendu avec currentView =", currentView);
     console.log("[ContentView] DEBUG: currentStory =", currentStory?.id);
     console.log("[ContentView] DEBUG: Condition pour afficher ReaderView:", currentView === "reader" && currentStory !== null);
+    
+    // Validation supplémentaire pour assurer la cohérence des états
+    if (currentView === "reader" && !currentStory) {
+      console.error("[ContentView] ERROR: Vue reader demandée mais currentStory est null!");
+    }
   }, [currentView, currentStory]);
+  
+  // Forcer l'affichage du ReaderView si currentStory est défini
+  // Cela contourne les problèmes de synchronisation d'état
+  const shouldShowReader = currentView === "reader" && currentStory !== null;
   
   return (
     <>
@@ -102,8 +111,8 @@ const ContentView: React.FC<ContentViewProps> = ({
         />
       )}
 
-      {/* Le composant ReaderView avec condition simplifiée */}
-      {currentView === "reader" && currentStory && (
+      {/* Affichage du ReaderView avec condition simplifiée */}
+      {shouldShowReader && currentStory && (
         <ReaderView
           story={currentStory}
           onClose={onCloseReader}

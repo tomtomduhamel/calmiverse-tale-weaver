@@ -16,7 +16,7 @@ interface StoryReaderProps {
   onClose?: () => void;
   onBack?: () => void;
   onToggleFavorite?: (storyId: string) => void;
-  onMarkAsRead?: (storyId: string) => void;
+  onMarkAsRead?: (storyId: string) => Promise<boolean>;
   childName?: string;
 }
 
@@ -34,13 +34,22 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const [showReadingGuide, setShowReadingGuide] = useState(false);
 
   useEffect(() => {
-    console.log("Histoire reçue dans le Reader:", story);
-  }, [story]);
+    console.log("[StoryReader] DEBUG: Histoire reçue dans le Reader:", story);
+    
+    // Marquer automatiquement l'histoire comme lue si nécessaire
+    if (story && story.status === 'ready' && onMarkAsRead) {
+      console.log("[StoryReader] DEBUG: Marquage automatique de l'histoire comme lue:", story.id);
+      onMarkAsRead(story.id).catch(err => {
+        console.error("[StoryReader] ERROR: Échec du marquage comme lu:", err);
+      });
+    }
+  }, [story, onMarkAsRead]);
 
   // Use onBack if provided, otherwise fallback to onClose
   const handleBack = onBack || onClose || (() => {});
 
   if (!story) {
+    console.error("[StoryReader] ERROR: Aucune histoire fournie!");
     return (
       <div className="min-h-screen p-4 flex items-center justify-center bg-background">
         <Card className="p-6 text-center animate-fade-in">
@@ -51,11 +60,12 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     );
   }
 
+  console.log("[StoryReader] INFO: Calcul du temps de lecture");
   const readingTime = calculateReadingTime(story.story_text);
 
   return (
     <div 
-      className={`fixed inset-0 min-h-screen p-4 transition-colors duration-300 overflow-y-auto
+      className={`fixed inset-0 min-h-screen p-4 transition-colors duration-300 overflow-y-auto z-50
         ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
     >
       <div className="max-w-3xl mx-auto">
