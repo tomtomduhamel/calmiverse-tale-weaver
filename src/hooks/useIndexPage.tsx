@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +23,6 @@ export const useIndexPage = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   
-  // Extraction des fonctions de useStoryManagement
   const {
     currentStory,
     setCurrentStory,
@@ -37,7 +35,6 @@ export const useIndexPage = () => {
     openStoryReader
   } = useStoryManagement();
 
-  // Redirect to login page if user is not logged in
   useEffect(() => {
     if (!authLoading && !user) {
       console.log("User not logged in, redirecting to /auth");
@@ -45,7 +42,6 @@ export const useIndexPage = () => {
     }
   }, [user, authLoading, navigate]);
   
-  // Effect to initialize the application
   useEffect(() => {
     console.log("[useIndexPage] DEBUG: Index component mounted, initializing");
     
@@ -58,7 +54,6 @@ export const useIndexPage = () => {
     }
   }, []);
 
-  // Effect to check the status of a pending story
   useEffect(() => {
     if (!pendingStoryId || !stories.stories) return;
     
@@ -86,7 +81,6 @@ export const useIndexPage = () => {
       }
     }
     
-    // Refresh story list every 5 seconds if a story is pending
     const interval = setInterval(() => {
       if (pendingStoryId) {
         console.log("Checking story status:", pendingStoryId);
@@ -97,7 +91,6 @@ export const useIndexPage = () => {
     return () => clearInterval(interval);
   }, [pendingStoryId, stories.stories, handleStoryCreated, toast, stories.fetchStories]);
 
-  // Handler to create a child from the story creation view
   const handleCreateChildFromStory = async (child: Omit<Child, "id">): Promise<string> => {
     try {
       const childId = await handleAddChild(child);
@@ -109,7 +102,6 @@ export const useIndexPage = () => {
     }
   };
 
-  // Specific handler for story submission
   const handleStorySubmitWrapper = async (formData: any): Promise<string> => {
     try {
       const storyId = await handleStorySubmit(formData);
@@ -130,22 +122,17 @@ export const useIndexPage = () => {
     }
   };
 
-  // Nouvelle version simplifiée pour la sélection d'histoire
-  // Force directement le changement de vue et définit l'histoire courante
   const handleSelectStory = (story: Story) => {
     console.log("[useIndexPage] DEBUG: NOUVELLE FONCTION - Sélection directe d'histoire:", story.id, "status:", story.status);
     
-    // Forcer le changement d'histoire et de vue immédiatement
     setCurrentStory(story);
     console.log("[useIndexPage] DEBUG: Histoire courante définie:", story.id);
     
-    // Forcer le changement de vue vers le lecteur sans conditions
     setTimeout(() => {
       console.log("[useIndexPage] DEBUG: FORÇAGE du changement de vue vers 'reader'");
       setCurrentView("reader");
     }, 50);
     
-    // Si l'histoire est prête (non lue), la marquer comme lue
     if (story.status === "ready") {
       console.log("[useIndexPage] DEBUG: Marquage de l'histoire comme lue");
       handleMarkAsRead(story.id).catch(error => {
@@ -154,11 +141,9 @@ export const useIndexPage = () => {
     }
   };
 
-  // Loading state check
   const isLoading = authLoading || !isInitialized || stories.isLoading || childrenLoading;
 
   return {
-    // State
     isInitialized,
     pendingStoryId,
     currentView,
@@ -171,7 +156,6 @@ export const useIndexPage = () => {
     children,
     isRetrying,
     
-    // Actions
     setCurrentView,
     handleCreateChildFromStory,
     handleStorySubmitWrapper,
