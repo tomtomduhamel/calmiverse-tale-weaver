@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -28,7 +29,7 @@ export const useIndexPage = () => {
     handleStorySubmit,
     handleStoryCreated,
     handleCloseReader,
-    handleSelectStory,
+    handleSelectStory: storyManagementSelectStory,
     handleDeleteStory,
     handleRetryStory,
     handleMarkAsRead
@@ -127,17 +128,22 @@ export const useIndexPage = () => {
     }
   };
 
-  // Modified handleSelectStory to change the view to reader
+  // Enhanced handleSelectStory that combines functionalities
   const handleSelectStory = async (story: Story) => {
     console.log("Index: Selecting story:", story.id, "with status:", story.status);
     
-    const isStorySelectable = handleStoryCreated(story);
+    // First use the story management function to handle story state
+    const isStorySelectable = storyManagementSelectStory(story);
+    
     console.log("Story is selectable:", isStorySelectable);
     
+    // Then handle view changes if the story is selectable
     if (story.status === "ready" || story.status === "read") {
       console.log("Setting view to reader");
       setCurrentView("reader");
     }
+    
+    return isStorySelectable;
   };
 
   // Loading state check
