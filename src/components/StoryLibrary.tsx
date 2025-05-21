@@ -42,7 +42,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   // Modified to adapt between different function signatures
   const handleDelete = async (storyId: string) => {
     try {
-      console.log("Tentative de suppression de l'histoire:", storyId);
+      console.log("[StoryLibrary] Tentative de suppression de l'histoire:", storyId);
       setIsDeletingId(storyId);
       
       if (onDeleteStory) {
@@ -75,7 +75,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   const handleRetry = async (storyId: string) => {
     if (onRetryStory) {
       try {
-        console.log("Tentative de relance de l'histoire:", storyId);
+        console.log("[StoryLibrary] Tentative de relance de l'histoire:", storyId);
         await onRetryStory(storyId);
       } catch (error) {
         console.error("Erreur lors de la relance:", error);
@@ -83,26 +83,15 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
     }
   };
 
-  // Gestionnaire de sélection d'histoire avec meilleure traçabilité
+  // Version ultra-simplifiée de la gestion des clics pour éviter tout problème
   const handleStorySelect = (story: Story) => {
-    console.log("StoryLibrary: Histoire sélectionnée:", story.id, "status:", story.status);
+    console.log("[StoryLibrary] Sélection d'histoire:", story.id, "avec statut:", story.status);
     
-    // On vérifie si l'histoire est cliquable avant de propager l'événement
-    if (story.status === "ready" || story.status === "read") {
-      console.log("StoryLibrary: L'histoire est prête ou déjà lue, on peut la sélectionner");
-      onSelectStory(story);
-    } else {
-      console.log("StoryLibrary: L'histoire n'est pas encore disponible, status:", story.status);
-      toast({
-        title: "Histoire non disponible",
-        description: story.status === "pending" 
-          ? "Cette histoire est encore en cours de génération." 
-          : "Cette histoire n'est pas disponible pour la lecture.",
-        variant: "destructive"
-      });
-    }
+    // Pas de filtrage ici - on délègue entièrement la décision au hook de niveau supérieur
+    onSelectStory(story);
   };
 
+  // Filtrage et tri des histoires
   const filteredStories = stories
     .filter(story => {
       const matchesSearch = (story.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||

@@ -24,7 +24,8 @@ export const LibraryView: React.FC<LibraryViewProps> = React.memo(({
   pendingStoryId
 }) => {
   const handleSelectStory = useCallback((story: Story) => {
-    console.log("LibraryView: Story selected:", story.id, "with status:", story.status);
+    console.log("[LibraryView] Histoire sélectionnée:", story.id, "avec statut:", story.status);
+    // Appel direct de la fonction de sélection sans logique supplémentaire
     onSelectStory(story);
   }, [onSelectStory]);
   

@@ -28,12 +28,12 @@ const StoryCard: React.FC<StoryCardProps> = ({
   isDeleting = false,
   isPending = false,
 }) => {
-  // Calcul explicite de si cette histoire est cliquable
-  const isClickable = onClick && (story.status === "ready" || story.status === "read");
+  // Une histoire est cliquable uniquement si elle est prête ou déjà lue
+  const isClickable = story.status === "ready" || story.status === "read";
   
   const cardStyles = [
     "transition-all duration-300 hover:shadow-md relative",
-    isClickable ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01]" : "",
+    isClickable ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01] bg-green-50/30" : "",
     story.status === "error" ? "border-red-200 bg-red-50" : "",
     story.status === "pending" || isPending ? "border-amber-200 bg-amber-50" : "",
     story.status === "read" ? "border-green-200 bg-green-50" : "",
@@ -45,24 +45,26 @@ const StoryCard: React.FC<StoryCardProps> = ({
     return formatDistanceToNow(date, { addSuffix: true, locale: fr });
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCardClick = () => {
+    console.log("[StoryCard] Clic sur carte:", story.id, "status:", story.status, "isClickable:", isClickable);
     
-    if (!isClickable) {
-      console.log("StoryCard: Card is not clickable, story status:", story.status);
-      return;
+    // Action uniquement si l'histoire est cliquable et qu'un gestionnaire de clic existe
+    if (isClickable && onClick) {
+      console.log("[StoryCard] Histoire cliquable, appel du gestionnaire onClick");
+      onClick();
+    } else if (!isClickable) {
+      console.log("[StoryCard] Histoire non cliquable - clic ignoré");
+    } else if (!onClick) {
+      console.log("[StoryCard] Aucun gestionnaire onClick fourni");
     }
-    
-    console.log("StoryCard: Card clicked for story:", story.id, "with status:", story.status);
-    onClick();
   };
 
   return (
-    <Card className={cardStyles} onClick={handleClick}>
-      {/* Indicateur visuel si l'histoire est cliquable */}
+    <Card className={cardStyles} onClick={handleCardClick}>
+      {/* Indicateur visuel très visible si l'histoire est cliquable */}
       {isClickable && (
         <div className="absolute top-2 right-2 text-green-600 animate-pulse">
-          <BookOpenCheck size={16} className="opacity-70" />
+          <BookOpenCheck size={20} className="opacity-90" />
         </div>
       )}
       

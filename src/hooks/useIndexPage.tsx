@@ -26,10 +26,10 @@ export const useIndexPage = () => {
   
   const {
     currentStory,
+    setCurrentStory,
     handleStorySubmit,
     handleStoryCreated,
     handleCloseReader,
-    handleSelectStory: storyManagementHandleStory,
     handleDeleteStory,
     handleRetryStory,
     handleMarkAsRead
@@ -128,13 +128,35 @@ export const useIndexPage = () => {
     }
   };
 
-  // Version améliorée de handleSelectStory qui gère tout le processus de sélection d'histoire
-  const handleSelectStory = (story: Story): boolean => {
-    console.log("DÉBUT SÉLECTION HISTOIRE:", story.id, "status:", story.status);
+  // Fonction unique et simplifiée pour la sélection d'histoire
+  const handleSelectStory = (story: Story): void => {
+    console.log("[useIndexPage] Tentative de sélection d'histoire:", story.id, "status:", story.status);
     
-    // Vérifier si l'histoire est sélectionnable (prête ou déjà lue)
-    if (story.status !== "ready" && story.status !== "read") {
-      console.log("Histoire non sélectionnable, status:", story.status);
+    if (story.status === "ready" || story.status === "read") {
+      console.log("[useIndexPage] Histoire valide (ready/read), affichage du lecteur");
+      
+      // Définir l'histoire comme courante
+      setCurrentStory(story);
+      
+      // Changer immédiatement la vue
+      console.log("[useIndexPage] Changement de vue vers 'reader'");
+      setCurrentView("reader");
+      
+      // Si l'histoire est prête (non lue), la marquer comme lue
+      if (story.status === "ready") {
+        console.log("[useIndexPage] Marquage de l'histoire comme lue");
+        handleMarkAsRead(story.id).catch(error => {
+          console.error("Erreur lors du marquage de l'histoire comme lue:", error);
+        });
+      }
+      
+      // Notification visuelle pour confirmation
+      toast({
+        title: "Lecture de l'histoire",
+        description: `Ouverture de "${story.title}"`,
+      });
+    } else {
+      console.log("[useIndexPage] Histoire non disponible, status:", story.status);
       toast({
         title: "Histoire non disponible",
         description: story.status === "pending" 
@@ -142,26 +164,7 @@ export const useIndexPage = () => {
           : "Cette histoire n'est pas disponible pour la lecture.",
         variant: "destructive"
       });
-      return false;
     }
-    
-    // Définir l'histoire comme courante via le hook de gestion d'histoires
-    console.log("Histoire sélectionnable, on la définit comme courante");
-    storyManagementHandleStory(story);
-    
-    // Si nous sommes arrivés ici, l'histoire est prête à être lue, changeons la vue
-    console.log("Changement de vue vers reader");
-    setCurrentView("reader");
-    
-    // Si l'histoire est prête (non lue), la marquer comme lue
-    if (story.status === "ready") {
-      console.log("Marquer l'histoire comme lue");
-      handleMarkAsRead(story.id).catch(error => {
-        console.error("Erreur lors du marquage de l'histoire comme lue:", error);
-      });
-    }
-    
-    return true;
   };
 
   // Loading state check
