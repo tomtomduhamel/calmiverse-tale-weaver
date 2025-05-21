@@ -9,7 +9,7 @@ interface LibraryViewProps {
   onSelectStory: (story: Story) => void;
   onDeleteStory: (storyId: string) => void;
   onViewChange: (view: ViewType) => void;
-  onRetryStory?: (storyId: string) => void;
+  onRetryStory?: (storyId: string) => Promise<boolean>;
   isRetrying?: boolean;
   pendingStoryId?: string | null;
 }
@@ -24,7 +24,7 @@ export const LibraryView: React.FC<LibraryViewProps> = React.memo(({
   pendingStoryId
 }) => {
   const handleSelectStory = useCallback((story: Story) => {
-    console.log("LibraryView: Story selected:", story.id);
+    console.log("LibraryView: Story selected:", story.id, "with status:", story.status);
     onSelectStory(story);
   }, [onSelectStory]);
   

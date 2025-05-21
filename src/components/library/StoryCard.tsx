@@ -7,7 +7,7 @@ import StoryCardTags from "./card/StoryCardTags";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Loader2, BookCheck } from "lucide-react";
+import { Loader2, BookCheck, BookOpenCheck } from "lucide-react";
 
 interface StoryCardProps {
   story: Story;
@@ -28,9 +28,12 @@ const StoryCard: React.FC<StoryCardProps> = ({
   isDeleting = false,
   isPending = false,
 }) => {
+  // Calcul explicite de si cette histoire est cliquable
+  const isClickable = onClick && (story.status === "ready" || story.status === "read");
+  
   const cardStyles = [
-    "transition-all duration-300 hover:shadow-md",
-    onClick && (story.status === "ready" || story.status === "read") ? "cursor-pointer" : "",
+    "transition-all duration-300 hover:shadow-md relative",
+    isClickable ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01]" : "",
     story.status === "error" ? "border-red-200 bg-red-50" : "",
     story.status === "pending" || isPending ? "border-amber-200 bg-amber-50" : "",
     story.status === "read" ? "border-green-200 bg-green-50" : "",
@@ -42,18 +45,27 @@ const StoryCard: React.FC<StoryCardProps> = ({
     return formatDistanceToNow(date, { addSuffix: true, locale: fr });
   };
 
-  const handleClick = React.useCallback((e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onClick && (story.status === "ready" || story.status === "read")) {
-      console.log("StoryCard: Card clicked for story:", story.id, "with status:", story.status);
-      onClick();
-    } else {
-      console.log("StoryCard: Card is not clickable or story is not ready:", story.status);
+    
+    if (!isClickable) {
+      console.log("StoryCard: Card is not clickable, story status:", story.status);
+      return;
     }
-  }, [onClick, story]);
+    
+    console.log("StoryCard: Card clicked for story:", story.id, "with status:", story.status);
+    onClick();
+  };
 
   return (
     <Card className={cardStyles} onClick={handleClick}>
+      {/* Indicateur visuel si l'histoire est cliquable */}
+      {isClickable && (
+        <div className="absolute top-2 right-2 text-green-600 animate-pulse">
+          <BookOpenCheck size={16} className="opacity-70" />
+        </div>
+      )}
+      
       <CardContent className="pt-6 pb-2">
         <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
         <p className="text-sm text-gray-600 line-clamp-3 mb-3 h-[4.5rem]">

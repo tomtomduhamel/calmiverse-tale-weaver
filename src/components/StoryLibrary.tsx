@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
@@ -79,6 +80,26 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
       } catch (error) {
         console.error("Erreur lors de la relance:", error);
       }
+    }
+  };
+
+  // Gestionnaire de sélection d'histoire avec meilleure traçabilité
+  const handleStorySelect = (story: Story) => {
+    console.log("StoryLibrary: Histoire sélectionnée:", story.id, "status:", story.status);
+    
+    // On vérifie si l'histoire est cliquable avant de propager l'événement
+    if (story.status === "ready" || story.status === "read") {
+      console.log("StoryLibrary: L'histoire est prête ou déjà lue, on peut la sélectionner");
+      onSelectStory(story);
+    } else {
+      console.log("StoryLibrary: L'histoire n'est pas encore disponible, status:", story.status);
+      toast({
+        title: "Histoire non disponible",
+        description: story.status === "pending" 
+          ? "Cette histoire est encore en cours de génération." 
+          : "Cette histoire n'est pas disponible pour la lecture.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -174,7 +195,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         )}
         onDelete={handleDelete}
         onRetry={handleRetry}
-        onCardClick={onSelectStory}
+        onCardClick={handleStorySelect}
         isRetrying={isRetrying}
         isDeletingId={isDeletingId}
         pendingStoryId={pendingStoryId}

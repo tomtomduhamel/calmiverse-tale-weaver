@@ -31,9 +31,11 @@ const StoryGrid: React.FC<StoryGridProps> = ({
   }
 
   const handleCardClick = (story: Story) => {
-    console.log("StoryGrid: Card clicked for story:", story.id);
+    console.log("StoryGrid: Card clicked for story:", story.id, "with status:", story.status);
     if (onCardClick) {
       onCardClick(story);
+    } else {
+      console.warn("StoryGrid: No onCardClick handler provided");
     }
   };
 

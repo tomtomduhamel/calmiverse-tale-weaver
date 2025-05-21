@@ -29,7 +29,7 @@ export const useIndexPage = () => {
     handleStorySubmit,
     handleStoryCreated,
     handleCloseReader,
-    handleSelectStory: storyManagementSelectStory,
+    handleSelectStory: storyManagementHandleStory,
     handleDeleteStory,
     handleRetryStory,
     handleMarkAsRead
@@ -128,22 +128,40 @@ export const useIndexPage = () => {
     }
   };
 
-  // Enhanced handleSelectStory that combines functionalities
-  const handleSelectStory = async (story: Story) => {
-    console.log("Index: Selecting story:", story.id, "with status:", story.status);
+  // Version améliorée de handleSelectStory qui gère tout le processus de sélection d'histoire
+  const handleSelectStory = (story: Story): boolean => {
+    console.log("DÉBUT SÉLECTION HISTOIRE:", story.id, "status:", story.status);
     
-    // First use the story management function to handle story state
-    const isStorySelectable = storyManagementSelectStory(story);
-    
-    console.log("Story is selectable:", isStorySelectable);
-    
-    // Then handle view changes if the story is selectable
-    if (story.status === "ready" || story.status === "read") {
-      console.log("Setting view to reader");
-      setCurrentView("reader");
+    // Vérifier si l'histoire est sélectionnable (prête ou déjà lue)
+    if (story.status !== "ready" && story.status !== "read") {
+      console.log("Histoire non sélectionnable, status:", story.status);
+      toast({
+        title: "Histoire non disponible",
+        description: story.status === "pending" 
+          ? "Cette histoire est encore en cours de génération." 
+          : "Cette histoire n'est pas disponible pour la lecture.",
+        variant: "destructive"
+      });
+      return false;
     }
     
-    return isStorySelectable;
+    // Définir l'histoire comme courante via le hook de gestion d'histoires
+    console.log("Histoire sélectionnable, on la définit comme courante");
+    storyManagementHandleStory(story);
+    
+    // Si nous sommes arrivés ici, l'histoire est prête à être lue, changeons la vue
+    console.log("Changement de vue vers reader");
+    setCurrentView("reader");
+    
+    // Si l'histoire est prête (non lue), la marquer comme lue
+    if (story.status === "ready") {
+      console.log("Marquer l'histoire comme lue");
+      handleMarkAsRead(story.id).catch(error => {
+        console.error("Erreur lors du marquage de l'histoire comme lue:", error);
+      });
+    }
+    
+    return true;
   };
 
   // Loading state check
