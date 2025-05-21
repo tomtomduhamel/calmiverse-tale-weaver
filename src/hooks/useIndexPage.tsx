@@ -24,9 +24,10 @@ export const useIndexPage = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   
+  // Nous nous assurons d'extraire setCurrentStory du hook useStoryManagement
   const {
     currentStory,
-    setCurrentStory,
+    setCurrentStory, // Assurez-vous que cette ligne est présente
     handleStorySubmit,
     handleStoryCreated,
     handleCloseReader,
@@ -128,35 +129,33 @@ export const useIndexPage = () => {
     }
   };
 
-  // Fonction unique et simplifiée pour la sélection d'histoire
+  // Fonction ultra-simplifiée pour la sélection d'histoire
   const handleSelectStory = (story: Story): void => {
-    console.log("[useIndexPage] Tentative de sélection d'histoire:", story.id, "status:", story.status);
+    console.log("[useIndexPage] CLICK: Tentative de sélection d'histoire:", story.id, "status:", story.status);
     
     if (story.status === "ready" || story.status === "read") {
-      console.log("[useIndexPage] Histoire valide (ready/read), affichage du lecteur");
+      console.log("[useIndexPage] VALIDE: Histoire prête pour lecture, changement de vue");
       
       // Définir l'histoire comme courante
       setCurrentStory(story);
       
-      // Changer immédiatement la vue
-      console.log("[useIndexPage] Changement de vue vers 'reader'");
+      // Changer immédiatement la vue vers le lecteur
       setCurrentView("reader");
+      
+      // Notifier l'utilisateur
+      toast({
+        title: "Ouverture de l'histoire",
+        description: `"${story.title}" est maintenant affichée.`,
+      });
       
       // Si l'histoire est prête (non lue), la marquer comme lue
       if (story.status === "ready") {
-        console.log("[useIndexPage] Marquage de l'histoire comme lue");
         handleMarkAsRead(story.id).catch(error => {
           console.error("Erreur lors du marquage de l'histoire comme lue:", error);
         });
       }
-      
-      // Notification visuelle pour confirmation
-      toast({
-        title: "Lecture de l'histoire",
-        description: `Ouverture de "${story.title}"`,
-      });
     } else {
-      console.log("[useIndexPage] Histoire non disponible, status:", story.status);
+      console.log("[useIndexPage] REFUSÉ: Histoire non disponible pour lecture");
       toast({
         title: "Histoire non disponible",
         description: story.status === "pending" 
@@ -197,5 +196,6 @@ export const useIndexPage = () => {
     handleMarkAsRead,
     handleStoryCreated,
     handleCloseReader,
+    setCurrentStory, // Ajout explicite de setCurrentStory dans l'objet retourné
   };
 };

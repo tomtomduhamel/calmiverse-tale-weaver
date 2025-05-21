@@ -33,7 +33,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
   
   const cardStyles = [
     "transition-all duration-300 hover:shadow-md relative",
-    isClickable ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01] bg-green-50/30" : "",
+    isClickable ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01] bg-green-50/30 border-green-300" : "",
     story.status === "error" ? "border-red-200 bg-red-50" : "",
     story.status === "pending" || isPending ? "border-amber-200 bg-amber-50" : "",
     story.status === "read" ? "border-green-200 bg-green-50" : "",
@@ -87,6 +87,15 @@ const StoryCard: React.FC<StoryCardProps> = ({
           tags={story.tags}
           error={story.error}
         />
+        
+        {/* Indicateur visuel très clair pour les histoires cliquables */}
+        {isClickable && (
+          <div className="flex items-center justify-center mt-3 text-green-600 text-sm">
+            <span className="animate-bounce-short px-3 py-1 bg-green-100 rounded-full border border-green-300 shadow-sm">
+              Cliquez pour lire
+            </span>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex justify-between pt-2 pb-4">
         <span className="text-xs text-gray-500">

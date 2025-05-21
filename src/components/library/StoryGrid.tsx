@@ -33,12 +33,12 @@ const StoryGrid: React.FC<StoryGridProps> = ({
   const handleCardClick = (story: Story) => {
     console.log("[StoryGrid] Carte cliquée pour histoire:", story.id, "status:", story.status);
     
-    // Ne propager le clic que si l'histoire est prête ou déjà lue
-    if ((story.status === "ready" || story.status === "read") && onCardClick) {
-      console.log("[StoryGrid] L'histoire est cliquable, propagation du clic");
+    // Nous simplifions la logique - toujours propager le clic s'il y a un gestionnaire
+    if (onCardClick) {
+      console.log("[StoryGrid] Propagation du clic au niveau supérieur");
       onCardClick(story);
     } else {
-      console.log("[StoryGrid] L'histoire n'est pas cliquable ou gestionnaire non fourni");
+      console.log("[StoryGrid] Gestionnaire de clic non fourni");
     }
   };
 

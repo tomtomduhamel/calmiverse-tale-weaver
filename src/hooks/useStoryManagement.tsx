@@ -162,9 +162,11 @@ export const useStoryManagement = () => {
     }
     
     return story.status === "ready" || story.status === "read";
-  }, [setCurrentStory, updateStoryStatus, toast]);
+  }, [updateStoryStatus, toast]);
 
   return {
+    currentStory,
+    setCurrentStory,
     handleDeleteStory,
     handleRetryStory,
     handleMarkAsRead,
@@ -173,7 +175,6 @@ export const useStoryManagement = () => {
     isRetrying,
     pendingStoryId,
     // Ajout des propriétés manquantes
-    currentStory,
     handleStorySubmit,
     handleStoryCreated,
     handleCloseReader,
