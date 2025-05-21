@@ -46,16 +46,16 @@ const StoryCard: React.FC<StoryCardProps> = ({
   };
 
   const handleCardClick = () => {
-    console.log("[StoryCard] Clic sur carte:", story.id, "status:", story.status, "isClickable:", isClickable);
+    console.log("[StoryCard] DEBUG: Clic sur carte:", story.id, "status:", story.status, "isClickable:", isClickable);
     
     // Action uniquement si l'histoire est cliquable et qu'un gestionnaire de clic existe
     if (isClickable && onClick) {
-      console.log("[StoryCard] Histoire cliquable, appel du gestionnaire onClick");
+      console.log("[StoryCard] DEBUG: Histoire cliquable, appel du gestionnaire onClick");
       onClick();
     } else if (!isClickable) {
-      console.log("[StoryCard] Histoire non cliquable - clic ignoré");
+      console.log("[StoryCard] DEBUG: Histoire non cliquable - clic ignoré");
     } else if (!onClick) {
-      console.log("[StoryCard] Aucun gestionnaire onClick fourni");
+      console.log("[StoryCard] DEBUG: Aucun gestionnaire onClick fourni");
     }
   };
 
@@ -63,8 +63,8 @@ const StoryCard: React.FC<StoryCardProps> = ({
     <Card className={cardStyles} onClick={handleCardClick}>
       {/* Indicateur visuel très visible si l'histoire est cliquable */}
       {isClickable && (
-        <div className="absolute top-2 right-2 text-green-600 animate-pulse">
-          <BookOpenCheck size={20} className="opacity-90" />
+        <div className="absolute top-2 right-2 text-green-600">
+          <BookOpenCheck size={20} className="animate-bounce" />
         </div>
       )}
       
@@ -91,7 +91,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
         {/* Indicateur visuel très clair pour les histoires cliquables */}
         {isClickable && (
           <div className="flex items-center justify-center mt-3 text-green-600 text-sm">
-            <span className="animate-bounce-short px-3 py-1 bg-green-100 rounded-full border border-green-300 shadow-sm">
+            <span className="animate-pulse px-3 py-1 bg-green-100 rounded-full border border-green-300 shadow-sm font-medium">
               Cliquez pour lire
             </span>
           </div>

@@ -30,15 +30,16 @@ const StoryGrid: React.FC<StoryGridProps> = ({
     );
   }
 
+  // Méthode simplifiée pour gérer les clics sur les cartes
   const handleCardClick = (story: Story) => {
-    console.log("[StoryGrid] Carte cliquée pour histoire:", story.id, "status:", story.status);
+    console.log("[StoryGrid] DEBUG: Clic sur histoire:", story.id, "status:", story.status);
     
-    // Nous simplifions la logique - toujours propager le clic s'il y a un gestionnaire
+    // Nous passons simplement l'histoire au gestionnaire de niveau supérieur
     if (onCardClick) {
-      console.log("[StoryGrid] Propagation du clic au niveau supérieur");
+      console.log("[StoryGrid] DEBUG: Propagation du clic vers le composant parent");
       onCardClick(story);
     } else {
-      console.log("[StoryGrid] Gestionnaire de clic non fourni");
+      console.log("[StoryGrid] DEBUG: Aucun gestionnaire onCardClick fourni");
     }
   };
 

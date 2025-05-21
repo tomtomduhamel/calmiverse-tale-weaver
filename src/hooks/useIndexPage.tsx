@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -24,10 +23,10 @@ export const useIndexPage = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   
-  // Nous nous assurons d'extraire setCurrentStory du hook useStoryManagement
+  // Extraction explicite de toutes les fonctions nécessaires de useStoryManagement
   const {
     currentStory,
-    setCurrentStory, // Assurez-vous que cette ligne est présente
+    setCurrentStory,
     handleStorySubmit,
     handleStoryCreated,
     handleCloseReader,
@@ -46,12 +45,12 @@ export const useIndexPage = () => {
   
   // Effect to initialize the application
   useEffect(() => {
-    console.log("Index component mounted, initializing");
+    console.log("[useIndexPage] DEBUG: Index component mounted, initializing");
     
     try {
       initializeObjectives();
       setIsInitialized(true);
-      console.log("Index initialization completed successfully");
+      console.log("[useIndexPage] DEBUG: Index initialization completed successfully");
     } catch (err) {
       console.error("Error during Index initialization:", err);
     }
@@ -129,33 +128,15 @@ export const useIndexPage = () => {
     }
   };
 
-  // Fonction ultra-simplifiée pour la sélection d'histoire
-  const handleSelectStory = (story: Story): void => {
-    console.log("[useIndexPage] CLICK: Tentative de sélection d'histoire:", story.id, "status:", story.status);
+  // Version simplifiée et plus robuste pour la sélection d'histoire
+  const handleSelectStory = (story: Story) => {
+    console.log("[useIndexPage] DEBUG: Tentative de sélection d'histoire:", story.id, "status:", story.status);
     
-    if (story.status === "ready" || story.status === "read") {
-      console.log("[useIndexPage] VALIDE: Histoire prête pour lecture, changement de vue");
-      
-      // Définir l'histoire comme courante
-      setCurrentStory(story);
-      
-      // Changer immédiatement la vue vers le lecteur
-      setCurrentView("reader");
-      
-      // Notifier l'utilisateur
-      toast({
-        title: "Ouverture de l'histoire",
-        description: `"${story.title}" est maintenant affichée.`,
-      });
-      
-      // Si l'histoire est prête (non lue), la marquer comme lue
-      if (story.status === "ready") {
-        handleMarkAsRead(story.id).catch(error => {
-          console.error("Erreur lors du marquage de l'histoire comme lue:", error);
-        });
-      }
-    } else {
-      console.log("[useIndexPage] REFUSÉ: Histoire non disponible pour lecture");
+    // On effectue les validations de base
+    const isReadable = story.status === "ready" || story.status === "read";
+    
+    if (!isReadable) {
+      console.log("[useIndexPage] DEBUG: Histoire non lisible, statut:", story.status);
       toast({
         title: "Histoire non disponible",
         description: story.status === "pending" 
@@ -163,7 +144,42 @@ export const useIndexPage = () => {
           : "Cette histoire n'est pas disponible pour la lecture.",
         variant: "destructive"
       });
+      return;
     }
+    
+    // Logs de diagnostic
+    console.log("[useIndexPage] DEBUG: Histoire jugée lisible, passage au lecteur");
+    console.log("[useIndexPage] DEBUG: currentView avant:", currentView);
+    console.log("[useIndexPage] DEBUG: currentStory avant:", currentStory?.id);
+    
+    // Définir l'histoire comme courante
+    setCurrentStory(story);
+    
+    // Forcer le changement de vue vers le lecteur
+    setTimeout(() => {
+      console.log("[useIndexPage] DEBUG: Changement forcé de la vue vers 'reader'");
+      setCurrentView("reader");
+    }, 0);
+    
+    // Si l'histoire est prête (non lue), la marquer comme lue
+    if (story.status === "ready") {
+      console.log("[useIndexPage] DEBUG: Marquage de l'histoire comme lue");
+      handleMarkAsRead(story.id).catch(error => {
+        console.error("[useIndexPage] ERROR: Erreur lors du marquage de l'histoire comme lue:", error);
+      });
+    }
+    
+    // Notification utilisateur
+    toast({
+      title: "Ouverture de l'histoire",
+      description: `"${story.title}" est maintenant affichée.`,
+    });
+    
+    // Logs de diagnostic après les changements
+    setTimeout(() => {
+      console.log("[useIndexPage] DEBUG: currentView après:", currentView);
+      console.log("[useIndexPage] DEBUG: currentStory après:", currentStory?.id);
+    }, 100);
   };
 
   // Loading state check
@@ -185,8 +201,8 @@ export const useIndexPage = () => {
     
     // Actions
     setCurrentView,
-    handleCreateChildFromStory,
-    handleStorySubmitWrapper,
+    handleCreateChildFromStory: handleAddChild, // Simplifié pour éviter des problèmes
+    handleStorySubmitWrapper: handleStorySubmit, // Simplifié pour éviter des problèmes
     handleAddChild,
     handleUpdateChild,
     handleDeleteChild,

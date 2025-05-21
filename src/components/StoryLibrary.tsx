@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
 import type { ViewType } from "@/types/views";
@@ -39,10 +38,10 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const storiesPerPage = 6;
 
-  // Modified to adapt between different function signatures
-  const handleDelete = async (storyId: string) => {
+  // Gestion de la suppression avec logs de débogage
+  const handleDelete = useCallback(async (storyId: string) => {
     try {
-      console.log("[StoryLibrary] Tentative de suppression de l'histoire:", storyId);
+      console.log("[StoryLibrary] DEBUG: Tentative de suppression de l'histoire:", storyId);
       setIsDeletingId(storyId);
       
       if (onDeleteStory) {
@@ -52,7 +51,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
           description: "L'histoire a été supprimée avec succès",
         });
       } else {
-        console.error("Fonction onDeleteStory non définie");
+        console.error("[StoryLibrary] ERROR: Fonction onDeleteStory non définie");
         toast({
           title: "Erreur",
           description: "Impossible de supprimer l'histoire: fonction non disponible",
@@ -60,7 +59,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         });
       }
     } catch (error: any) {
-      console.error("Erreur lors de la suppression:", error);
+      console.error("[StoryLibrary] ERROR: Erreur lors de la suppression:", error);
       toast({
         title: "Erreur",
         description: error?.message || "Une erreur est survenue lors de la suppression",
@@ -69,27 +68,30 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
     } finally {
       setIsDeletingId(null);
     }
-  };
+  }, [onDeleteStory, toast]);
 
-  // Modified to adapt between different function signatures
-  const handleRetry = async (storyId: string) => {
+  // Gestion de la relance avec logs de débogage
+  const handleRetry = useCallback(async (storyId: string) => {
     if (onRetryStory) {
       try {
-        console.log("[StoryLibrary] Tentative de relance de l'histoire:", storyId);
+        console.log("[StoryLibrary] DEBUG: Tentative de relance de l'histoire:", storyId);
         await onRetryStory(storyId);
       } catch (error) {
-        console.error("Erreur lors de la relance:", error);
+        console.error("[StoryLibrary] ERROR: Erreur lors de la relance:", error);
       }
+    } else {
+      console.log("[StoryLibrary] DEBUG: Fonction onRetryStory non définie");
     }
-  };
+  }, [onRetryStory]);
 
-  // Version ultra-simplifiée de la gestion des clics pour éviter tout problème
-  const handleStorySelect = (story: Story) => {
-    console.log("[StoryLibrary] Sélection d'histoire:", story.id, "avec statut:", story.status);
+  // Version extrêmement simplifiée de la gestion des clics sur les histoires
+  const handleStorySelect = useCallback((story: Story) => {
+    console.log("[StoryLibrary] DEBUG: Sélection d'histoire:", story.id, "avec statut:", story.status);
+    console.log("[StoryLibrary] DEBUG: Appel direct de onSelectStory sans logique conditionnelle");
     
-    // Pas de filtrage ici - on délègue entièrement la décision au hook de niveau supérieur
+    // Appel direct de la fonction parent sans conditions
     onSelectStory(story);
-  };
+  }, [onSelectStory]);
 
   // Filtrage et tri des histoires
   const filteredStories = stories

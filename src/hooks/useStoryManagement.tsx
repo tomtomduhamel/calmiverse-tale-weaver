@@ -101,19 +101,6 @@ export const useStoryManagement = () => {
     }
   }, [toast]);
 
-  const handleReadStory = useCallback((story: Story) => {
-    if (story.status === "ready") {
-      // Mettre à jour le statut de l'histoire comme "lue" lorsque l'utilisateur la lit
-      updateStoryStatus(story.id, 'read')
-        .then(() => {
-          console.log("Story marked as read:", story.id);
-        })
-        .catch((error) => {
-          console.error("Failed to mark story as read:", error);
-        });
-    }
-  }, [updateStoryStatus]);
-
   // Ajout des fonctions manquantes
   const handleStorySubmit = useCallback(async (formData: any) => {
     console.log("Story submission handler", formData);
@@ -122,36 +109,33 @@ export const useStoryManagement = () => {
   }, []);
 
   const handleStoryCreated = useCallback((story: Story) => {
-    console.log("Story created handler", story);
+    console.log("[useStoryManagement] DEBUG: Story created:", story);
     setCurrentStory(story);
-    // Logique supplémentaire après la création d'une histoire
   }, []);
 
   const handleCloseReader = useCallback(() => {
-    console.log("Closing reader");
+    console.log("[useStoryManagement] DEBUG: Fermeture du lecteur");
     setCurrentStory(null);
-    // Logique supplémentaire pour fermer le lecteur
   }, []);
 
+  // Version simplifiée de la fonction de sélection d'histoire
   const handleSelectStory = useCallback((story: Story) => {
-    console.log("Selecting story:", story.id, "with status:", story.status);
+    console.log("[useStoryManagement] DEBUG: Sélection d'histoire:", story.id, "status:", story.status);
     
     if (story.status === "ready" || story.status === "read") {
-      console.log("Story is ready or read, setting as current story");
+      console.log("[useStoryManagement] DEBUG: Histoire valide pour lecture, définition comme histoire courante");
       setCurrentStory(story);
       
       // Si l'histoire n'est pas encore marquée comme lue, la marquer
       if (story.status === "ready") {
-        updateStoryStatus(story.id, 'read')
-          .then(() => {
-            console.log("Story marked as read:", story.id);
-          })
-          .catch((error) => {
-            console.error("Failed to mark story as read:", error);
-          });
+        updateStoryStatus(story.id, 'read').catch(err => {
+          console.error("Erreur lors du marquage de l'histoire comme lue:", err);
+        });
       }
+      
+      return true;
     } else {
-      console.log("Story is not ready yet:", story.status);
+      console.log("[useStoryManagement] DEBUG: Histoire non disponible pour lecture");
       toast({
         title: "Histoire non disponible",
         description: story.status === "pending" 
@@ -159,9 +143,9 @@ export const useStoryManagement = () => {
           : "Cette histoire n'est pas disponible pour la lecture.",
         variant: "destructive"
       });
+      
+      return false;
     }
-    
-    return story.status === "ready" || story.status === "read";
   }, [updateStoryStatus, toast]);
 
   return {
@@ -171,10 +155,9 @@ export const useStoryManagement = () => {
     handleRetryStory,
     handleMarkAsRead,
     handleToggleFavorite,
-    handleReadStory,
     isRetrying,
     pendingStoryId,
-    // Ajout des propriétés manquantes
+    // Ajout explicite des fonctions manquantes
     handleStorySubmit,
     handleStoryCreated,
     handleCloseReader,

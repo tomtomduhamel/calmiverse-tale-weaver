@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   HomeView,
   CreateStoryView,
@@ -54,6 +54,14 @@ const ContentView: React.FC<ContentViewProps> = ({
   onCloseReader,
   onMarkAsRead
 }) => {
+  
+  // Log pour le débogage du rendu conditionnel
+  useEffect(() => {
+    console.log("[ContentView] DEBUG: Rendu avec currentView =", currentView);
+    console.log("[ContentView] DEBUG: currentStory =", currentStory?.id);
+    console.log("[ContentView] DEBUG: Condition pour afficher ReaderView:", currentView === "reader" && currentStory !== null);
+  }, [currentView, currentStory]);
+  
   return (
     <>
       {currentView === "home" && (
@@ -94,6 +102,7 @@ const ContentView: React.FC<ContentViewProps> = ({
         />
       )}
 
+      {/* Le composant ReaderView avec condition simplifiée */}
       {currentView === "reader" && currentStory && (
         <ReaderView
           story={currentStory}

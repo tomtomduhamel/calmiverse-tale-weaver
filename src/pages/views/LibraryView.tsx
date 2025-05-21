@@ -23,9 +23,11 @@ export const LibraryView: React.FC<LibraryViewProps> = React.memo(({
   isRetrying,
   pendingStoryId
 }) => {
+  // Méthode simplifiée pour gérer la sélection d'histoire
   const handleSelectStory = useCallback((story: Story) => {
-    console.log("[LibraryView] Histoire sélectionnée:", story.id, "avec statut:", story.status);
-    // Appel direct sans logique supplémentaire pour éviter les filtres inutiles
+    console.log("[LibraryView] DEBUG: Histoire sélectionnée:", story.id, "statut:", story.status);
+    
+    // Nous transmettons directement l'histoire sélectionnée au composant parent
     onSelectStory(story);
   }, [onSelectStory]);
   
