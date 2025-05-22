@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Volume2, VolumeX, Disc, AlertCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBackgroundSound } from '@/hooks/story/useBackgroundSound';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface BackgroundSoundButtonProps {
   soundId?: string | null;
@@ -87,7 +88,7 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
               <AlertCircle className="h-4 w-4 text-red-500" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">
+          <TooltipContent side="bottom" className="z-[100]">
             <div className="text-xs text-red-500">Erreur de fond sonore</div>
             <div className="text-xs opacity-70">{error}</div>
           </TooltipContent>
@@ -111,7 +112,7 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
               <Disc className="h-4 w-4 animate-spin" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">
+          <TooltipContent side="bottom" className="z-[100]">
             <div className="text-xs">Chargement du fond sonore...</div>
           </TooltipContent>
         </Tooltip>
@@ -124,32 +125,49 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
     return null;
   }
 
+  // Utiliser un Popover pour l'information détaillée et un Tooltip simple pour l'action
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant={isDarkMode ? "outline" : "ghost"}
-            size="icon"
-            onClick={togglePlay}
-            className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} ${isPlaying ? "bg-green-100 dark:bg-green-900" : ""} transition-all`}
-            aria-label={isPlaying ? "Mettre en pause le fond sonore" : "Jouer le fond sonore"}
-          >
-            {isPlaying ? (
-              <Volume2 className="h-4 w-4" />
-            ) : (
-              <VolumeX className="h-4 w-4" />
-            )}
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={isDarkMode ? "outline" : "ghost"}
+                size="icon"
+                onClick={togglePlay}
+                className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} ${isPlaying ? "bg-green-100 dark:bg-green-900" : ""} transition-all`}
+                aria-label={isPlaying ? "Mettre en pause le fond sonore" : "Jouer le fond sonore"}
+              >
+                {isPlaying ? (
+                  <Volume2 className="h-4 w-4" />
+                ) : (
+                  <VolumeX className="h-4 w-4" />
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent 
+              className="p-2 w-auto min-w-[180px]" 
+              side="bottom" 
+              align="center"
+              sideOffset={5}
+            >
+              <div>
+                <div className="font-medium">
+                  {isPlaying ? "Mettre en pause le fond sonore" : "Jouer le fond sonore"}
+                </div>
+                {soundDetails && (
+                  <>
+                    <div className="text-xs opacity-70 mt-1">{soundDetails.title}</div>
+                    {objectiveText && <div className="text-xs opacity-70 italic">{objectiveText}</div>}
+                  </>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         </TooltipTrigger>
-        <TooltipContent side="bottom">
+        <TooltipContent side="bottom" className="z-[100]">
           {isPlaying ? "Mettre en pause le fond sonore" : "Jouer le fond sonore"}
-          {soundDetails && (
-            <>
-              <div className="text-xs opacity-70">{soundDetails.title}</div>
-              {objectiveText && <div className="text-xs opacity-70 italic">{objectiveText}</div>}
-            </>
-          )}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
