@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -148,8 +147,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     };
   }, []);
 
-  // Handle le marquage comme lu uniquement lors d'une action utilisateur explicite,
-  // pas automatiquement à l'ouverture
+  // Handle le marquage comme lu uniquement lors d'une action utilisateur explicite
   const handleMarkAsRead = async () => {
     if (story && onMarkAsRead) {
       const success = await onMarkAsRead(story.id);
@@ -177,17 +175,22 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     }
   };
 
-  // Désactiver le défilement du corps quand le reader est ouvert
+  // Log pour débogage
   useEffect(() => {
+    console.log("[StoryReader] DEBUG: Lecteur d'histoire affiché pour:", story?.id);
+    
+    // Désactiver le scroll du corps quand le reader est ouvert
     document.body.style.overflow = 'hidden';
+    
     return () => {
+      console.log("[StoryReader] DEBUG: Lecteur d'histoire fermé");
       document.body.style.overflow = '';
     };
-  }, []);
+  }, [story?.id]);
 
   if (!story) {
     return (
-      <div className="min-h-screen p-4 flex items-center justify-center bg-background">
+      <div className="fixed inset-0 z-50 min-h-screen p-4 flex items-center justify-center bg-background">
         <Card className="p-6 text-center animate-fade-in">
           <p className="mb-4">Aucune histoire à afficher</p>
           <Button onClick={handleBack}>Retour</Button>
@@ -200,11 +203,10 @@ const StoryReader: React.FC<StoryReaderProps> = ({
 
   return (
     <div 
-      className={`fixed inset-0 min-h-screen transition-colors duration-300 z-50
+      className={`fixed inset-0 z-50 flex flex-col min-h-screen transition-colors duration-300
         ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
-      style={{ paddingBottom: isMobile ? '4rem' : '0' }} // Ajout d'espace pour le menu mobile
     >
-      <div className="max-w-3xl mx-auto px-4 flex flex-col h-screen" style={{ paddingBottom: isMobile ? '4rem' : '0' }}>
+      <div className="flex-1 max-w-3xl mx-auto px-4 flex flex-col h-full" style={{ paddingBottom: isMobile ? '0' : '0' }}>
         <div className="flex justify-between items-center py-4 sticky top-0 z-10" 
              style={{ backgroundColor: isDarkMode ? '#1a1a1a' : 'white' }}>
           <ReaderControls
@@ -219,7 +221,18 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             onMarkAsRead={handleMarkAsRead}
             isRead={story.status === "read"}
             isAutoScrolling={isAutoScrolling}
-            onToggleAutoScroll={toggleAutoScroll}
+            onToggleAutoScroll={autoScrollEnabled ? () => {
+              if (isAutoScrolling) {
+                if (scrollIntervalRef.current) {
+                  clearInterval(scrollIntervalRef.current);
+                  scrollIntervalRef.current = null;
+                }
+                setIsAutoScrolling(false);
+              } else {
+                // Code simplifié pour le remplacement
+                setIsAutoScrolling(true);
+              }
+            } : undefined}
             autoScrollEnabled={autoScrollEnabled}
           />
           <Button 
@@ -234,7 +247,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         <ScrollArea 
           ref={scrollAreaRef} 
           className="flex-1 pr-4"
-          onClick={autoScrollEnabled ? handleContentClick : undefined}
         >
           <Card className={`p-6 transition-all duration-300 mb-6 ${isDarkMode ? "bg-gray-800" : "bg-white"} animate-fade-in`}>
             <StoryHeader
@@ -258,7 +270,18 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         {autoScrollEnabled && (
           <AutoScrollIndicator
             isAutoScrolling={isAutoScrolling}
-            onToggle={toggleAutoScroll}
+            onToggle={() => {
+              if (isAutoScrolling) {
+                if (scrollIntervalRef.current) {
+                  clearInterval(scrollIntervalRef.current);
+                  scrollIntervalRef.current = null;
+                }
+                setIsAutoScrolling(false);
+              } else {
+                // Code simplifié pour le remplacement
+                setIsAutoScrolling(true);
+              }
+            }}
             isDarkMode={isDarkMode}
           />
         )}

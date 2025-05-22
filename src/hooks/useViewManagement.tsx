@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { ViewType } from '@/types/views';
 
@@ -28,12 +28,21 @@ export const useViewManagement = () => {
     const searchParams = new URLSearchParams(location.search);
     const viewParam = searchParams.get('view') as ViewType | null;
     
-    if (location.pathname === "/") {
-      if (viewParam && ["create", "profiles", "library", "reader"].includes(viewParam)) {
-        setCurrentViewState(viewParam as ViewType);
-      } else {
-        setCurrentViewState("home");
-      }
+    console.log("[useViewManagement] DEBUG: Vue synchronisée avec l'URL", { 
+      path: location.pathname, 
+      search: location.search, 
+      viewParam, 
+      currentView: viewParam || (location.pathname === "/" ? "home" : 
+                                location.pathname === "/settings" ? "settings" : 
+                                location.pathname === "/profiles" ? "profiles" :
+                                location.pathname === "/create-story-simple" ? "create" : 
+                                location.pathname === "/app" ? "library" : "home")
+    });
+
+    if (viewParam === "reader") {
+      setCurrentViewState("reader");
+    } else if (location.pathname === "/") {
+      setCurrentViewState("home");
     } else if (location.pathname === "/settings") {
       setCurrentViewState("settings");
     } else if (location.pathname === "/profiles") {
@@ -47,23 +56,13 @@ export const useViewManagement = () => {
     // Vérifier si le guide doit être affiché
     const hideGuide = localStorage.getItem('calmi-hide-guide') === 'true';
     setShowGuide(!hideGuide);
-    
-    console.log("[useViewManagement] DEBUG: Vue synchronisée avec l'URL", { 
-      path: location.pathname, 
-      search: location.search, 
-      viewParam, 
-      currentView: viewParam || (location.pathname === "/" ? "home" : 
-                               location.pathname === "/settings" ? "settings" : 
-                               location.pathname === "/profiles" ? "profiles" :
-                               location.pathname === "/create-story-simple" ? "create" : 
-                               location.pathname === "/app" ? "library" : "home")
-    });
-    
   }, [location]);
 
   // Fonction pour changer de vue avec synchronisation de l'URL
-  const setCurrentView = (view: ViewType) => {
+  const setCurrentView = useCallback((view: ViewType) => {
     console.log("[useViewManagement] DEBUG: Changement de vue vers", view);
+    
+    // Toujours mettre à jour l'état local immédiatement
     setCurrentViewState(view);
 
     // Navigation basée sur la vue
@@ -75,23 +74,24 @@ export const useViewManagement = () => {
       navigate("/profiles");
     } else if (view === "library") {
       navigate("/app");
+    } else if (view === "settings") {
+      navigate("/settings");
     } else if (view === "reader") {
       // Pour la vue reader, nous ajoutons un paramètre à l'URL actuelle
       // au lieu de naviguer vers une nouvelle page
-      const currentPath = location.pathname === "/" ? "/" : location.pathname;
+      const currentPath = location.pathname;
       
-      if (currentPath === "/") {
+      // Préserver le chemin actuel et ajouter le paramètre view
+      if (currentPath === "/app") {
+        navigate("/app?view=reader");
+      } else if (currentPath === "/") {
         navigate("/?view=reader");
       } else {
-        // Préserver le chemin actuel et ajouter le paramètre view
-        const url = new URL(window.location.href);
-        url.searchParams.set('view', 'reader');
-        navigate(url.pathname + url.search);
+        // Cas particulier: Si nous sommes déjà sur une autre page, il faut revenir à /app
+        navigate("/app?view=reader");
       }
-    } else if (view === "settings") {
-      navigate("/settings");
     }
-  };
+  }, [navigate, location.pathname]);
 
   return {
     currentView,

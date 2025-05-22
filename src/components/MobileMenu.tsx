@@ -30,6 +30,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   ];
 
   const handleNavigation = (view: ViewType, path: string) => {
+    // Si nous sommes en mode lecteur, on doit d'abord revenir à la bibliothèque
+    if (currentView === "reader" && view !== "reader") {
+      console.log("[MobileMenu] DEBUG: Navigation depuis le lecteur vers", view);
+      onViewChange(view);
+      navigate(path);
+      return;
+    }
+    
     // Pour la page d'accueil et la bibliothèque, on peut changer la vue directement si on est déjà sur /app ou /
     if ((path === "/" || path === "/app") && (location.pathname === "/" || location.pathname === "/app")) {
       onViewChange(view);
@@ -72,7 +80,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
             onClick={() => handleNavigation(item.view, item.path)}
             className={cn(
               "flex flex-col items-center justify-center w-full p-1 rounded-md transition-colors",
-              (currentView === item.view || (location.pathname === item.path))
+              currentView === item.view
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground"
             )}

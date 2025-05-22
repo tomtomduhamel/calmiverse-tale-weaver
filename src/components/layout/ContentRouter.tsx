@@ -114,22 +114,25 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
     )
   };
   
-  // Cas spécial pour le lecteur d'histoire
+  // Condition pour afficher le lecteur d'histoire 
   const shouldShowReader = currentView === "reader" && currentStory !== null;
   
+  // Rendu prioritaire du lecteur en mode plein écran
+  if (shouldShowReader && currentStory) {
+    return (
+      <ReaderView
+        story={currentStory}
+        onClose={onCloseReader}
+        onMarkAsRead={onMarkAsRead}
+      />
+    );
+  }
+  
+  // Affichage normal si le lecteur n'est pas actif
   return (
     <div className={isMobile ? "pb-16" : ""}>
       {/* Afficher la vue sélectionnée */}
       {viewComponents[currentView as keyof typeof viewComponents]}
-      
-      {/* Affichage du ReaderView en overlay si nécessaire */}
-      {shouldShowReader && currentStory && (
-        <ReaderView
-          story={currentStory}
-          onClose={onCloseReader}
-          onMarkAsRead={onMarkAsRead}
-        />
-      )}
     </div>
   );
 };

@@ -26,14 +26,19 @@ export const ReaderView: React.FC<ReaderViewProps> = ({ story, onClose, onMarkAs
     // Désactiver le scroll du corps quand le reader est ouvert
     document.body.style.overflow = 'hidden';
     
+    // Log pour débogage
+    console.log("[ReaderView] DEBUG: ReaderView affiché avec l'histoire:", story.id);
+    
     return () => {
       // Réactiver le scroll quand le reader est fermé
       document.body.style.overflow = '';
+      console.log("[ReaderView] DEBUG: ReaderView démonté");
     };
-  }, []);
+  }, [story.id]);
 
+  // Le lecteur d'histoire doit occuper tout l'écran et être au-dessus des autres éléments
   return (
-    <div className={`${isMobile ? "pb-16" : ""}`}>
+    <div className="fixed inset-0 z-50 bg-background">
       <StoryReader 
         story={story} 
         onClose={handleClose} 
