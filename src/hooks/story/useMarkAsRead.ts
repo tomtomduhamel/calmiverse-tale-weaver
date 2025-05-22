@@ -33,7 +33,7 @@ export const useMarkAsRead = ({ story, onMarkAsRead, setStory }: UseMarkAsReadPr
           // Pas besoin de mettre à jour le state ici car on l'a déjà fait de manière optimiste
         } else {
           // En cas d'échec, restaurer l'état précédent
-          setStory({ ...story, status: story.status === "read" ? "read" : "ready" });
+          setStory({ ...story, status: story.status });
           
           toast({
             title: "Erreur",
