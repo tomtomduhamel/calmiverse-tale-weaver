@@ -12,6 +12,7 @@ import {
   checkStoryExists,
   fetchStoryDataFromDb
 } from "../_shared/story-utils.ts";
+import { selectSoundForObjective } from "./sound-utils.ts";
 
 serve(async (req) => {
   // Gérer les requêtes CORS preflight
@@ -141,40 +142,7 @@ serve(async (req) => {
       const preview = storyText.substring(0, 200) + "...";
       
       // Recherche d'un fond sonore adapté à l'objectif de l'histoire
-      let sound_id = null;
-      try {
-        console.log(`🔍 Recherche d'un fond sonore adapté pour l'objectif: ${objective}`);
-        
-        // Récupérer un son correspondant à l'objectif
-        const { data: sounds, error: soundError } = await supabase
-          .from('sound_backgrounds')
-          .select('id, title, file_path')
-          .eq('objective', objective);
-        
-        if (soundError) {
-          console.error("❌ Erreur lors de la recherche de sons:", soundError);
-        } else if (sounds && sounds.length > 0) {
-          // Vérifier que chaque son a un fichier valide
-          const validSounds = sounds.filter(sound => sound.file_path);
-          
-          if (validSounds.length > 0) {
-            // Choisir un son aléatoirement parmi ceux valides
-            const randomIndex = Math.floor(Math.random() * validSounds.length);
-            sound_id = validSounds[randomIndex].id;
-            console.log(`✅ Fond sonore sélectionné pour l'histoire: 
-              ID: ${sound_id}, 
-              Titre: ${validSounds[randomIndex].title}, 
-              Fichier: ${validSounds[randomIndex].file_path}`
-            );
-          } else {
-            console.log(`⚠️ Aucun son avec fichier valide trouvé pour l'objectif: ${objective}`);
-          }
-        } else {
-          console.log(`⚠️ Aucun fond sonore trouvé pour l'objectif: ${objective}`);
-        }
-      } catch (soundError) {
-        console.error("❌ Erreur lors de la sélection du son:", soundError);
-      }
+      let sound_id = await selectSoundForObjective(supabase, objective);
       
       // Mettre à jour l'histoire dans la base de données
       await updateStoryInDb(supabase, storyId, {
