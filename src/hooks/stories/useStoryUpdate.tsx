@@ -2,13 +2,21 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { useToast } from "@/hooks/use-toast";
 
+/**
+ * Hook pour gérer les mises à jour des histoires
+ */
 export const useStoryUpdate = () => {
-  const { toast } = useToast();
   const { user } = useSupabaseAuth();
 
-  const updateStoryStatus = useCallback(async (storyId: string, status: 'pending' | 'ready' | 'read' | 'error', errorDetails?: string) => {
+  /**
+   * Mettre à jour le statut d'une histoire
+   */
+  const updateStoryStatus = useCallback(async (
+    storyId: string, 
+    status: 'pending' | 'completed' | 'read' | 'error', 
+    errorDetails?: string
+  ) => {
     if (!user) {
       throw new Error("Utilisateur non connecté");
     }
@@ -24,8 +32,6 @@ export const useStoryUpdate = () => {
       // Add error details if provided
       if (status === 'error' && errorDetails) {
         updateData.error = errorDetails;
-      } else if (status !== 'error') {
-        updateData.error = null;
       }
       
       const { error } = await supabase
@@ -33,20 +39,17 @@ export const useStoryUpdate = () => {
         .update(updateData)
         .eq('id', storyId)
         .eq('authorid', user.id);
-      
+        
       if (error) throw error;
       
-      console.log('✅ Story status updated successfully:', {
-        id: storyId,
-        newStatus: status
-      });
-    } catch (error) {
+      console.log('✅ Story status updated successfully');
+    } catch (error: any) {
       console.error('❌ Error updating story status:', error);
       throw error;
     }
   }, [user]);
 
   return {
-    updateStoryStatus,
+    updateStoryStatus
   };
 };
