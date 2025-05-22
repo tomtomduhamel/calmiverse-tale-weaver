@@ -18,7 +18,7 @@ export const StoryContent: React.FC<StoryContentProps> = ({
   
   return (
     <div 
-      className={`prose max-w-none ${textColor}`}
+      className={`prose max-w-none ${textColor} transition-all`}
       style={{ 
         fontSize: `${fontSize}px`,
         lineHeight: 1.6
