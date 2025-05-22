@@ -14,13 +14,16 @@ export const useMarkAsRead = ({ story, onMarkAsRead, setStory }: UseMarkAsReadPr
   const { toast } = useToast();
 
   const handleMarkAsRead = useCallback(async () => {
-    if (story && onMarkAsRead && story.status !== "read") {
+    if (story && onMarkAsRead) {
       try {
         // Optimistic UI update - mettre à jour l'interface avant la confirmation serveur
         setIsUpdatingReadStatus(true);
         
+        // Sauvegarde du statut original
+        const originalStatus = story.status;
+        
         // Mise à jour optimiste du state local
-        setStory({ ...story, status: "read" });
+        setStory({ ...story, status: "read" as Story["status"] });
         
         // Appel API pour mettre à jour le statut côté serveur
         const success = await onMarkAsRead(story.id);
@@ -33,7 +36,7 @@ export const useMarkAsRead = ({ story, onMarkAsRead, setStory }: UseMarkAsReadPr
           // Pas besoin de mettre à jour le state ici car on l'a déjà fait de manière optimiste
         } else {
           // En cas d'échec, restaurer l'état précédent
-          setStory({ ...story, status: story.status });
+          setStory({ ...story, status: originalStatus });
           
           toast({
             title: "Erreur",
