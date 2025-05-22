@@ -61,6 +61,8 @@ export const useUpdateUserSettings = (
         supabaseData.auto_scroll_enabled = newSettings.readingPreferences.autoScrollEnabled;
       if (newSettings.readingPreferences?.readingSpeed !== undefined)
         supabaseData.reading_speed = newSettings.readingPreferences.readingSpeed;
+      if (newSettings.readingPreferences?.backgroundMusicEnabled !== undefined)
+        supabaseData.background_music_enabled = newSettings.readingPreferences.backgroundMusicEnabled;
       
       // Vérifier si l'utilisateur existe déjà dans la table
       const { data: existingUser, error: checkError } = await supabase

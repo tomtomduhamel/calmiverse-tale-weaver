@@ -18,7 +18,7 @@ export const useBackgroundSound = ({ soundId, autoPlay = false }: BackgroundSoun
   const { userSettings } = useUserSettings();
 
   // Vérifier si la lecture de musique est activée dans les préférences
-  const musicEnabled = userSettings?.background_music_enabled ?? true;
+  const musicEnabled = userSettings?.readingPreferences?.backgroundMusicEnabled ?? true;
 
   // Charger les détails du son
   useEffect(() => {

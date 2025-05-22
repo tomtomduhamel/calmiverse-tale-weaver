@@ -14,6 +14,7 @@ export interface UserSettings {
   readingPreferences: {
     autoScrollEnabled: boolean;
     readingSpeed: number; // mots par minute
+    backgroundMusicEnabled: boolean;
   };
 }
 

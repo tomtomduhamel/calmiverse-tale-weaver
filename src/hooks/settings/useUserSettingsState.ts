@@ -22,6 +22,7 @@ export const useUserSettingsState = () => {
     readingPreferences: {
       autoScrollEnabled: false,
       readingSpeed: 125,
+      backgroundMusicEnabled: true,
     }
   });
   
@@ -69,6 +70,7 @@ export const useUserSettingsState = () => {
             readingPreferences: {
               autoScrollEnabled: data.auto_scroll_enabled ?? false,
               readingSpeed: data.reading_speed ?? 125,
+              backgroundMusicEnabled: data.background_music_enabled ?? true,
             }
           });
         } else {

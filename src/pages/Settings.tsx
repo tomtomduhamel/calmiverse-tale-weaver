@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { SettingsIcon, AlertCircle } from 'lucide-react';
 import { ProfileSection } from '@/components/settings/ProfileSection';
@@ -171,8 +170,9 @@ const Settings = () => {
       <AccountInfoSection user={user} />
 
       <ReadingPreferencesSection
-        readingPreferences={userSettings.readingPreferences}
-        onPreferenceChange={handleReadingPreferenceChange}
+        userSettings={userSettings}
+        isLoading={isSubmitting}
+        onUpdateSettings={updateUserSettings}
       />
 
       <KindleSection kindleEmail={kindleSettings.kindleEmail} />
