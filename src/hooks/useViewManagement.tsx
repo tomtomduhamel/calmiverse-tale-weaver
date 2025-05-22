@@ -11,6 +11,10 @@ export const useViewManagement = () => {
   const location = useLocation();
   const [currentView, setCurrentViewState] = useState<ViewType>(() => {
     // Initialiser la vue en fonction de l'URL actuelle
+    const searchParams = new URLSearchParams(location.search);
+    const viewParam = searchParams.get('view') as ViewType | null;
+    
+    if (viewParam === "reader") return "reader";
     if (location.pathname === "/settings") return "settings";
     if (location.pathname === "/profiles") return "profiles";
     if (location.pathname === "/create-story-simple") return "create";
@@ -44,6 +48,17 @@ export const useViewManagement = () => {
     const hideGuide = localStorage.getItem('calmi-hide-guide') === 'true';
     setShowGuide(!hideGuide);
     
+    console.log("[useViewManagement] DEBUG: Vue synchronisée avec l'URL", { 
+      path: location.pathname, 
+      search: location.search, 
+      viewParam, 
+      currentView: viewParam || (location.pathname === "/" ? "home" : 
+                               location.pathname === "/settings" ? "settings" : 
+                               location.pathname === "/profiles" ? "profiles" :
+                               location.pathname === "/create-story-simple" ? "create" : 
+                               location.pathname === "/app" ? "library" : "home")
+    });
+    
   }, [location]);
 
   // Fonction pour changer de vue avec synchronisation de l'URL
@@ -61,7 +76,18 @@ export const useViewManagement = () => {
     } else if (view === "library") {
       navigate("/app");
     } else if (view === "reader") {
-      navigate("/?view=reader");
+      // Pour la vue reader, nous ajoutons un paramètre à l'URL actuelle
+      // au lieu de naviguer vers une nouvelle page
+      const currentPath = location.pathname === "/" ? "/" : location.pathname;
+      
+      if (currentPath === "/") {
+        navigate("/?view=reader");
+      } else {
+        // Préserver le chemin actuel et ajouter le paramètre view
+        const url = new URL(window.location.href);
+        url.searchParams.set('view', 'reader');
+        navigate(url.pathname + url.search);
+      }
     } else if (view === "settings") {
       navigate("/settings");
     }

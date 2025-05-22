@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   HomeView,
   CreateStoryView,
@@ -10,6 +10,7 @@ import {
 import type { ViewType } from "@/types/views";
 import type { Story } from "@/types/story";
 import type { Child } from "@/types/child";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ViewHandlers {
   onViewChange: (view: ViewType) => void;
@@ -60,9 +61,10 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
   onCloseReader,
   onMarkAsRead
 }) => {
+  const isMobile = useIsMobile();
   
   // Validation pour débogage
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("[ContentRouter] DEBUG: Rendu avec currentView =", currentView);
     console.log("[ContentRouter] DEBUG: currentStory =", currentStory?.id);
     
@@ -116,7 +118,7 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
   const shouldShowReader = currentView === "reader" && currentStory !== null;
   
   return (
-    <>
+    <div className={isMobile ? "pb-16" : ""}>
       {/* Afficher la vue sélectionnée */}
       {viewComponents[currentView as keyof typeof viewComponents]}
       
@@ -128,7 +130,7 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
           onMarkAsRead={onMarkAsRead}
         />
       )}
-    </>
+    </div>
   );
 };
 

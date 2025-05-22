@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Pause } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AutoScrollIndicatorProps {
   isAutoScrolling: boolean;
@@ -14,9 +15,15 @@ export const AutoScrollIndicator: React.FC<AutoScrollIndicatorProps> = ({
   onToggle,
   isDarkMode
 }) => {
+  const isMobile = useIsMobile();
+  
+  // Calculer la position bottom en fonction de la présence du menu mobile
+  const bottomPosition = isMobile ? '5rem' : '2rem';
+  
   return (
     <div 
-      className={`fixed bottom-8 right-8 z-50 transition-opacity duration-300 opacity-70 hover:opacity-100`}
+      className={`fixed right-8 z-55 transition-opacity duration-300 opacity-70 hover:opacity-100`}
+      style={{ bottom: bottomPosition }}
     >
       <Button
         size="lg"

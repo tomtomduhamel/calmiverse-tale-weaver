@@ -14,6 +14,7 @@ import ReactMarkdown from 'react-markdown';
 import { ScrollArea } from "./ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useUserSettings } from "@/hooks/settings/useUserSettings";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -39,6 +40,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const { toast } = useToast();
   const { userSettings } = useUserSettings();
+  const isMobile = useIsMobile();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollIntervalRef = useRef<number | null>(null);
   const scrollStartTimeRef = useRef<number | null>(null);
@@ -164,7 +166,10 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const handleBack = () => {
     console.log("[StoryReader] DEBUG: Bouton Fermer cliqué");
     // S'assurer d'arrêter le défilement automatique lors de la fermeture
-    stopAutoScroll();
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+    }
     if (onBack) {
       onBack();
     } else if (onClose) {
@@ -197,8 +202,9 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     <div 
       className={`fixed inset-0 min-h-screen transition-colors duration-300 z-50
         ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
+      style={{ paddingBottom: isMobile ? '4rem' : '0' }} // Ajout d'espace pour le menu mobile
     >
-      <div className="max-w-3xl mx-auto px-4 flex flex-col h-screen">
+      <div className="max-w-3xl mx-auto px-4 flex flex-col h-screen" style={{ paddingBottom: isMobile ? '4rem' : '0' }}>
         <div className="flex justify-between items-center py-4 sticky top-0 z-10" 
              style={{ backgroundColor: isDarkMode ? '#1a1a1a' : 'white' }}>
           <ReaderControls

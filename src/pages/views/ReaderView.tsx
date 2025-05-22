@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import StoryReader from "@/components/StoryReader";
 import type { Story } from "@/types/story";
 import { useViewManagement } from "@/hooks/useViewManagement";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ReaderViewProps {
   story: Story;
@@ -12,6 +13,7 @@ interface ReaderViewProps {
 
 export const ReaderView: React.FC<ReaderViewProps> = ({ story, onClose, onMarkAsRead }) => {
   const { setCurrentView } = useViewManagement();
+  const isMobile = useIsMobile();
 
   // Force le retour à la vue de la bibliothèque lors de la fermeture
   const handleClose = () => {
@@ -31,7 +33,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({ story, onClose, onMarkAs
   }, []);
 
   return (
-    <div>
+    <div className={`${isMobile ? "pb-16" : ""}`}>
       <StoryReader 
         story={story} 
         onClose={handleClose} 

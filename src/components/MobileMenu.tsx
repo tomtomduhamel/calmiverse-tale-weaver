@@ -64,7 +64,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   }, [location.pathname, currentView, onViewChange]);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-background shadow-lg border-t border-border rounded-t-xl z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-background shadow-lg border-t border-border rounded-t-xl z-60">
       <div className="flex items-center justify-around h-16 px-2 pb-safe">
         {menuItems.map((item) => (
           <button
