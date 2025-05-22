@@ -66,6 +66,7 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
       {/* Bouton de fond sonore */}
       <BackgroundSoundButton
         soundId={story.sound_id}
+        storyObjective={story.objective}
         isDarkMode={isDarkMode}
       />
       

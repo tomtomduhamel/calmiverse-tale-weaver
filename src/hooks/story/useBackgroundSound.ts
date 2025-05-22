@@ -6,10 +6,15 @@ import { useUserSettings } from '@/hooks/settings/useUserSettings';
 
 interface BackgroundSoundProps {
   soundId?: string | null;
+  storyObjective?: string | null;
   autoPlay?: boolean;
 }
 
-export const useBackgroundSound = ({ soundId, autoPlay = false }: BackgroundSoundProps) => {
+export const useBackgroundSound = ({ 
+  soundId, 
+  storyObjective,
+  autoPlay = false 
+}: BackgroundSoundProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [soundDetails, setSoundDetails] = useState<any>(null);
@@ -23,7 +28,38 @@ export const useBackgroundSound = ({ soundId, autoPlay = false }: BackgroundSoun
   // Charger les détails du son
   useEffect(() => {
     const loadSoundDetails = async () => {
-      if (!soundId || !musicEnabled) return;
+      if (!musicEnabled) return;
+      
+      // Si nous n'avons pas de soundId mais un objectif, essayons de trouver un son adapté
+      let soundToLoad = soundId;
+      
+      if (!soundToLoad && storyObjective) {
+        try {
+          setIsLoading(true);
+          // Rechercher un son correspondant à l'objectif
+          const { data: matchingSounds, error: matchingError } = await supabase
+            .from('sound_backgrounds')
+            .select('id')
+            .eq('objective', storyObjective)
+            .order('created_at', { ascending: false });
+            
+          if (matchingError) {
+            console.error("Erreur lors de la recherche de sons par objectif:", matchingError);
+          } else if (matchingSounds && matchingSounds.length > 0) {
+            // Choisir un son aléatoire parmi ceux qui correspondent
+            const randomIndex = Math.floor(Math.random() * matchingSounds.length);
+            soundToLoad = matchingSounds[randomIndex].id;
+            console.log(`Son automatiquement sélectionné pour l'objectif ${storyObjective}:`, soundToLoad);
+          }
+        } catch (e) {
+          console.error("Erreur lors de la sélection du son par objectif:", e);
+        }
+      }
+      
+      if (!soundToLoad) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -31,7 +67,7 @@ export const useBackgroundSound = ({ soundId, autoPlay = false }: BackgroundSoun
         const { data, error } = await supabase
           .from('sound_backgrounds')
           .select('*')
-          .eq('id', soundId)
+          .eq('id', soundToLoad)
           .single();
           
         if (error) throw error;
@@ -84,7 +120,7 @@ export const useBackgroundSound = ({ soundId, autoPlay = false }: BackgroundSoun
         audioRef.current = null;
       }
     };
-  }, [soundId, autoPlay, musicEnabled, toast]);
+  }, [soundId, storyObjective, autoPlay, musicEnabled, toast]);
 
   // Méthode pour basculer la lecture
   const togglePlay = useCallback(() => {

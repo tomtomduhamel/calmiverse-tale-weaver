@@ -140,17 +140,43 @@ serve(async (req) => {
       // Créer un extrait (preview) à partir du début de l'histoire
       const preview = storyText.substring(0, 200) + "...";
       
+      // Recherche d'un fond sonore adapté à l'objectif de l'histoire
+      let sound_id = null;
+      try {
+        console.log(`Recherche d'un fond sonore adapté pour l'objectif: ${objective}`);
+        
+        // Récupérer un son correspondant à l'objectif
+        const { data: sounds, error: soundError } = await supabase
+          .from('sound_backgrounds')
+          .select('id')
+          .eq('objective', objective);
+        
+        if (soundError) {
+          console.error("Erreur lors de la recherche de sons:", soundError);
+        } else if (sounds && sounds.length > 0) {
+          // Choisir un son aléatoirement
+          const randomIndex = Math.floor(Math.random() * sounds.length);
+          sound_id = sounds[randomIndex].id;
+          console.log(`Fond sonore sélectionné pour l'histoire: ${sound_id}`);
+        } else {
+          console.log(`Aucun fond sonore trouvé pour l'objectif: ${objective}`);
+        }
+      } catch (soundError) {
+        console.error("Erreur lors de la sélection du son:", soundError);
+      }
+      
       // Mettre à jour l'histoire dans la base de données
       await updateStoryInDb(supabase, storyId, {
         title,
         content: storyText,
         summary,
         preview,
+        sound_id, // Associer le son sélectionné à l'histoire
         status: 'completed',
         error: null
       });
 
-      console.log(`Histoire générée avec succès: ID=${storyId}, titre=${title}`);
+      console.log(`Histoire générée avec succès: ID=${storyId}, titre=${title}, son=${sound_id}`);
       
       return new Response(
         JSON.stringify({
@@ -159,7 +185,8 @@ serve(async (req) => {
             title,
             content: storyText,
             summary,
-            preview
+            preview,
+            sound_id
           }
         }),
         {

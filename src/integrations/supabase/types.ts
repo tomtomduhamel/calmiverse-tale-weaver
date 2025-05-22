@@ -58,7 +58,7 @@ export type Database = {
           duration: number
           file_path: string
           id: string
-          mood: string
+          objective: string
           title: string
         }
         Insert: {
@@ -67,7 +67,7 @@ export type Database = {
           duration: number
           file_path: string
           id?: string
-          mood: string
+          objective: string
           title: string
         }
         Update: {
@@ -76,7 +76,7 @@ export type Database = {
           duration?: number
           file_path?: string
           id?: string
-          mood?: string
+          objective?: string
           title?: string
         }
         Relationships: []

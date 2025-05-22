@@ -7,12 +7,14 @@ import { useBackgroundSound } from '@/hooks/story/useBackgroundSound';
 
 interface BackgroundSoundButtonProps {
   soundId?: string | null;
+  storyObjective?: string | null;
   isDarkMode?: boolean;
   autoPlay?: boolean;
 }
 
 export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
   soundId,
+  storyObjective,
   isDarkMode = false,
   autoPlay = false
 }) => {
@@ -24,12 +26,34 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
     musicEnabled
   } = useBackgroundSound({ 
     soundId, 
+    storyObjective,
     autoPlay 
   });
 
-  // Si la musique est désactivée ou pas de son disponible, ne rien afficher
-  if (!musicEnabled || !soundId) {
+  // Si la musique est désactivée, ne rien afficher
+  if (!musicEnabled) {
     return null;
+  }
+
+  // Adapter le texte du tooltip en fonction de l'objectif
+  let objectiveText = '';
+  if (soundDetails?.objective) {
+    switch (soundDetails.objective) {
+      case 'sleep':
+        objectiveText = 'Fond sonore pour s\'endormir';
+        break;
+      case 'focus':
+        objectiveText = 'Fond sonore pour la concentration';
+        break;
+      case 'relax':
+        objectiveText = 'Fond sonore pour la relaxation';
+        break;
+      case 'fun':
+        objectiveText = 'Fond sonore pour s\'amuser';
+        break;
+      default:
+        objectiveText = '';
+    }
   }
 
   return (
@@ -40,7 +64,7 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
             variant={isDarkMode ? "outline" : "ghost"}
             size="icon"
             onClick={togglePlay}
-            disabled={isLoading || !soundDetails}
+            disabled={isLoading}
             className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} ${isPlaying ? "bg-green-100 dark:bg-green-900" : ""} transition-all`}
             aria-label={isPlaying ? "Mettre en pause le fond sonore" : "Jouer le fond sonore"}
           >
@@ -55,7 +79,12 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
         </TooltipTrigger>
         <TooltipContent side="bottom">
           {isPlaying ? "Mettre en pause le fond sonore" : "Jouer le fond sonore"}
-          {soundDetails && <div className="text-xs opacity-70">{soundDetails.title}</div>}
+          {soundDetails && (
+            <>
+              <div className="text-xs opacity-70">{soundDetails.title}</div>
+              {objectiveText && <div className="text-xs opacity-70 italic">{objectiveText}</div>}
+            </>
+          )}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
