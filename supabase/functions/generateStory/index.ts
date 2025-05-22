@@ -143,26 +143,37 @@ serve(async (req) => {
       // Recherche d'un fond sonore adapté à l'objectif de l'histoire
       let sound_id = null;
       try {
-        console.log(`Recherche d'un fond sonore adapté pour l'objectif: ${objective}`);
+        console.log(`🔍 Recherche d'un fond sonore adapté pour l'objectif: ${objective}`);
         
         // Récupérer un son correspondant à l'objectif
         const { data: sounds, error: soundError } = await supabase
           .from('sound_backgrounds')
-          .select('id')
+          .select('id, title, file_path')
           .eq('objective', objective);
         
         if (soundError) {
-          console.error("Erreur lors de la recherche de sons:", soundError);
+          console.error("❌ Erreur lors de la recherche de sons:", soundError);
         } else if (sounds && sounds.length > 0) {
-          // Choisir un son aléatoirement
-          const randomIndex = Math.floor(Math.random() * sounds.length);
-          sound_id = sounds[randomIndex].id;
-          console.log(`Fond sonore sélectionné pour l'histoire: ${sound_id}`);
+          // Vérifier que chaque son a un fichier valide
+          const validSounds = sounds.filter(sound => sound.file_path);
+          
+          if (validSounds.length > 0) {
+            // Choisir un son aléatoirement parmi ceux valides
+            const randomIndex = Math.floor(Math.random() * validSounds.length);
+            sound_id = validSounds[randomIndex].id;
+            console.log(`✅ Fond sonore sélectionné pour l'histoire: 
+              ID: ${sound_id}, 
+              Titre: ${validSounds[randomIndex].title}, 
+              Fichier: ${validSounds[randomIndex].file_path}`
+            );
+          } else {
+            console.log(`⚠️ Aucun son avec fichier valide trouvé pour l'objectif: ${objective}`);
+          }
         } else {
-          console.log(`Aucun fond sonore trouvé pour l'objectif: ${objective}`);
+          console.log(`⚠️ Aucun fond sonore trouvé pour l'objectif: ${objective}`);
         }
       } catch (soundError) {
-        console.error("Erreur lors de la sélection du son:", soundError);
+        console.error("❌ Erreur lors de la sélection du son:", soundError);
       }
       
       // Mettre à jour l'histoire dans la base de données
@@ -176,7 +187,7 @@ serve(async (req) => {
         error: null
       });
 
-      console.log(`Histoire générée avec succès: ID=${storyId}, titre=${title}, son=${sound_id}`);
+      console.log(`✅ Histoire générée avec succès: ID=${storyId}, titre=${title}, son=${sound_id}`);
       
       return new Response(
         JSON.stringify({
@@ -197,7 +208,7 @@ serve(async (req) => {
         }
       );
     } catch (error) {
-      console.error("Erreur lors de la génération:", error.message, error.stack);
+      console.error("❌ Erreur lors de la génération:", error.message, error.stack);
       
       // Mettre à jour le statut d'erreur de l'histoire
       await updateStoryInDb(supabase, storyId, {
@@ -208,7 +219,7 @@ serve(async (req) => {
       throw error;
     }
   } catch (error: any) {
-    console.error("Erreur globale:", error.message, error.stack);
+    console.error("❌ Erreur globale:", error.message, error.stack);
 
     return new Response(
       JSON.stringify({
