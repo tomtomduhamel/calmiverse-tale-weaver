@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -15,6 +15,26 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
   readingPreferences, 
   onPreferenceChange 
 }) => {
+  // État local pour suivre la valeur du slider pendant que l'utilisateur le fait glisser
+  const [localReadingSpeed, setLocalReadingSpeed] = useState(readingPreferences.readingSpeed);
+  
+  // Mettre à jour la valeur locale lorsque les props changent
+  useEffect(() => {
+    setLocalReadingSpeed(readingPreferences.readingSpeed);
+  }, [readingPreferences.readingSpeed]);
+  
+  // Gestionnaire pour les changements de valeur du slider pendant le glissement
+  const handleSliderChange = (value: number[]) => {
+    setLocalReadingSpeed(value[0]);
+  };
+  
+  // Gestionnaire pour la fin du glissement - enregistre la valeur finale
+  const handleSliderCommit = async () => {
+    if (localReadingSpeed !== readingPreferences.readingSpeed) {
+      await onPreferenceChange('readingSpeed', localReadingSpeed);
+    }
+  };
+  
   return (
     <Card>
       <CardHeader>
@@ -41,16 +61,17 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium">Vitesse de lecture</label>
             <span className="text-sm text-muted-foreground">
-              {readingPreferences.readingSpeed} mots par minute
+              {localReadingSpeed} mots par minute
             </span>
           </div>
           <Slider
-            value={[readingPreferences.readingSpeed]}
+            value={[localReadingSpeed]}
             min={75}
             max={200}
             step={5}
             disabled={!readingPreferences.autoScrollEnabled}
-            onValueChange={(value) => onPreferenceChange('readingSpeed', value[0])}
+            onValueChange={handleSliderChange}
+            onValueCommit={handleSliderCommit}
           />
           <p className="text-xs text-muted-foreground mt-1">
             Ajustez la vitesse à laquelle le texte défile automatiquement.
