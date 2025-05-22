@@ -133,6 +133,7 @@ export type Database = {
       }
       users: {
         Row: {
+          auto_scroll_enabled: boolean | null
           created_at: string
           email: string
           email_notifications: boolean | null
@@ -141,11 +142,13 @@ export type Database = {
           inapp_notifications: boolean | null
           language: string | null
           lastname: string | null
+          reading_speed: number | null
           story_notifications: boolean | null
           system_notifications: boolean | null
           timezone: string | null
         }
         Insert: {
+          auto_scroll_enabled?: boolean | null
           created_at?: string
           email: string
           email_notifications?: boolean | null
@@ -154,11 +157,13 @@ export type Database = {
           inapp_notifications?: boolean | null
           language?: string | null
           lastname?: string | null
+          reading_speed?: number | null
           story_notifications?: boolean | null
           system_notifications?: boolean | null
           timezone?: string | null
         }
         Update: {
+          auto_scroll_enabled?: boolean | null
           created_at?: string
           email?: string
           email_notifications?: boolean | null
@@ -167,6 +172,7 @@ export type Database = {
           inapp_notifications?: boolean | null
           language?: string | null
           lastname?: string | null
+          reading_speed?: number | null
           story_notifications?: boolean | null
           system_notifications?: boolean | null
           timezone?: string | null

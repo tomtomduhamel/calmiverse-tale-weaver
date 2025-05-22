@@ -56,6 +56,12 @@ export const useUpdateUserSettings = (
       if (newSettings.notifications?.system !== undefined) 
         supabaseData.system_notifications = newSettings.notifications.system;
       
+      // Mappage des préférences de lecture
+      if (newSettings.readingPreferences?.autoScrollEnabled !== undefined)
+        supabaseData.auto_scroll_enabled = newSettings.readingPreferences.autoScrollEnabled;
+      if (newSettings.readingPreferences?.readingSpeed !== undefined)
+        supabaseData.reading_speed = newSettings.readingPreferences.readingSpeed;
+      
       // Vérifier si l'utilisateur existe déjà dans la table
       const { data: existingUser, error: checkError } = await supabase
         .from('users')

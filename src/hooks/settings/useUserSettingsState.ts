@@ -19,6 +19,10 @@ export const useUserSettingsState = () => {
       stories: true,
       system: true,
     },
+    readingPreferences: {
+      autoScrollEnabled: false,
+      readingSpeed: 125,
+    }
   });
   
   const { toast } = useToast();
@@ -62,6 +66,10 @@ export const useUserSettingsState = () => {
               stories: data.story_notifications ?? true,
               system: data.system_notifications ?? true,
             },
+            readingPreferences: {
+              autoScrollEnabled: data.auto_scroll_enabled ?? false,
+              readingSpeed: data.reading_speed ?? 125,
+            }
           });
         } else {
           console.log('Aucun document utilisateur trouvé, utilisation des valeurs par défaut');

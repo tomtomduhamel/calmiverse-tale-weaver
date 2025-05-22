@@ -11,6 +11,10 @@ export interface UserSettings {
     stories: boolean;
     system: boolean;
   };
+  readingPreferences: {
+    autoScrollEnabled: boolean;
+    readingSpeed: number; // mots par minute
+  };
 }
 
 export interface SecuritySettings {

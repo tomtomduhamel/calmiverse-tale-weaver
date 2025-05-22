@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,9 +9,11 @@ import { ReaderControls } from "./story/ReaderControls";
 import { StoryHeader } from "./story/StoryHeader";
 import { StoryContent } from "./story/StoryContent";
 import { ReadingGuide } from "./story/ReadingGuide";
+import { AutoScrollIndicator } from "./story/AutoScrollIndicator";
 import ReactMarkdown from 'react-markdown';
 import { ScrollArea } from "./ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useUserSettings } from "@/hooks/settings/useUserSettings";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -34,7 +36,115 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [showReadingGuide, setShowReadingGuide] = useState(false);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const { toast } = useToast();
+  const { userSettings } = useUserSettings();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollIntervalRef = useRef<number | null>(null);
+  const scrollStartTimeRef = useRef<number | null>(null);
+  
+  // Calcul des métriques pour le défilement automatique
+  const wordCount = story?.story_text?.trim().split(/\s+/).length || 0;
+  const readingSpeed = userSettings?.readingPreferences?.readingSpeed || 125;
+  const autoScrollEnabled = userSettings?.readingPreferences?.autoScrollEnabled || false;
+  
+  // Functions pour gérer le défilement automatique
+  const startAutoScroll = useCallback(() => {
+    if (!scrollAreaRef.current || scrollIntervalRef.current) return;
+    
+    // Obtenir l'élément viewport de ScrollArea à partir de la référence
+    const viewportEl = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+    if (!viewportEl) return;
+
+    const contentHeight = viewportEl.scrollHeight;
+    const viewportHeight = viewportEl.clientHeight;
+    const scrollDistance = contentHeight - viewportHeight;
+    
+    // Si déjà en bas, ne pas démarrer
+    if (viewportEl.scrollTop >= scrollDistance) return;
+
+    const totalMinutesToRead = wordCount / readingSpeed;
+    const totalMsToRead = totalMinutesToRead * 60 * 1000; // Convertir en millisecondes
+    
+    // Enregistrer le temps de départ et la position de défilement actuelle
+    scrollStartTimeRef.current = Date.now();
+    const startScrollTop = viewportEl.scrollTop;
+    
+    // Mettre à jour l'état pour afficher l'indicateur
+    setIsAutoScrolling(true);
+    
+    // Démarrer le défilement à intervalles réguliers
+    scrollIntervalRef.current = window.setInterval(() => {
+      if (!viewportEl) return;
+      
+      const elapsedMs = Date.now() - (scrollStartTimeRef.current || 0);
+      const scrollProgress = Math.min(elapsedMs / totalMsToRead, 1);
+      const newScrollTop = startScrollTop + (scrollDistance - startScrollTop) * scrollProgress;
+      
+      // Si on atteint la fin, arrêter le défilement automatique
+      if (scrollProgress >= 1) {
+        stopAutoScroll();
+        return;
+      }
+      
+      viewportEl.scrollTop = newScrollTop;
+    }, 16); // ~60fps
+    
+  }, [wordCount, readingSpeed]);
+  
+  const stopAutoScroll = useCallback(() => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+      scrollStartTimeRef.current = null;
+    }
+    setIsAutoScrolling(false);
+  }, []);
+  
+  const toggleAutoScroll = useCallback(() => {
+    if (isAutoScrolling) {
+      stopAutoScroll();
+    } else {
+      startAutoScroll();
+    }
+  }, [isAutoScrolling, startAutoScroll, stopAutoScroll]);
+
+  // Gérer le clic sur le contenu pour arrêter/démarrer le défilement
+  const handleContentClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // Ignorer les clics sur les boutons et éléments interactifs
+    if (
+      e.target instanceof HTMLButtonElement ||
+      e.target instanceof HTMLAnchorElement ||
+      (e.target as HTMLElement).closest('button') ||
+      (e.target as HTMLElement).closest('a')
+    ) {
+      return;
+    }
+    
+    // Basculer l'état du défilement automatique
+    toggleAutoScroll();
+  }, [toggleAutoScroll]);
+  
+  // Démarrer le défilement automatique si l'option est activée
+  useEffect(() => {
+    if (autoScrollEnabled && !isAutoScrolling && story) {
+      // Attendre un peu pour permettre au contenu de se charger complètement
+      const timer = setTimeout(() => {
+        startAutoScroll();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [autoScrollEnabled, story, isAutoScrolling, startAutoScroll]);
+  
+  // Nettoyer l'intervalle lors du démontage du composant
+  useEffect(() => {
+    return () => {
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Handle le marquage comme lu uniquement lors d'une action utilisateur explicite,
   // pas automatiquement à l'ouverture
@@ -53,12 +163,22 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   // Use onBack if provided, otherwise fallback to onClose
   const handleBack = () => {
     console.log("[StoryReader] DEBUG: Bouton Fermer cliqué");
+    // S'assurer d'arrêter le défilement automatique lors de la fermeture
+    stopAutoScroll();
     if (onBack) {
       onBack();
     } else if (onClose) {
       onClose();
     }
   };
+
+  // Désactiver le défilement du corps quand le reader est ouvert
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   if (!story) {
     return (
@@ -92,6 +212,9 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             setShowReadingGuide={setShowReadingGuide}
             onMarkAsRead={handleMarkAsRead}
             isRead={story.status === "read"}
+            isAutoScrolling={isAutoScrolling}
+            onToggleAutoScroll={toggleAutoScroll}
+            autoScrollEnabled={autoScrollEnabled}
           />
           <Button 
             variant={isDarkMode ? "outline" : "ghost"} 
@@ -102,7 +225,11 @@ const StoryReader: React.FC<StoryReaderProps> = ({
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 pr-4">
+        <ScrollArea 
+          ref={scrollAreaRef} 
+          className="flex-1 pr-4"
+          onClick={autoScrollEnabled ? handleContentClick : undefined}
+        >
           <Card className={`p-6 transition-all duration-300 mb-6 ${isDarkMode ? "bg-gray-800" : "bg-white"} animate-fade-in`}>
             <StoryHeader
               story={story}
@@ -120,6 +247,15 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             />
           </Card>
         </ScrollArea>
+
+        {/* Indicateur flottant pour le défilement automatique */}
+        {autoScrollEnabled && (
+          <AutoScrollIndicator
+            isAutoScrolling={isAutoScrolling}
+            onToggle={toggleAutoScroll}
+            isDarkMode={isDarkMode}
+          />
+        )}
 
         <Dialog open={showSummary} onOpenChange={setShowSummary}>
           <DialogContent className="sm:max-w-[500px] animate-fade-in">

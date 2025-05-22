@@ -7,6 +7,7 @@ import { KindleSection } from '@/components/settings/KindleSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
 import { SecuritySection } from '@/components/settings/SecuritySection';
 import { AccountManagementSection } from '@/components/settings/AccountManagementSection';
+import { ReadingPreferencesSection } from '@/components/settings/ReadingPreferencesSection';
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
 import { useKindleSettings } from '@/hooks/useKindleSettings';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -63,6 +64,29 @@ const Settings = () => {
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour vos préférences de notifications",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReadingPreferenceChange = async (key: keyof UserSettings['readingPreferences'], value: any): Promise<void> => {
+    setFormError(null);
+    try {
+      setIsSubmitting(true);
+      await updateUserSettings({
+        readingPreferences: {
+          ...userSettings.readingPreferences,
+          [key]: value,
+        },
+      });
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour des préférences de lecture:", error);
+      setFormError("Impossible de mettre à jour vos préférences de lecture");
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour vos préférences de lecture",
         variant: "destructive",
       });
     } finally {
@@ -145,6 +169,11 @@ const Settings = () => {
       />
 
       <AccountInfoSection user={user} />
+
+      <ReadingPreferencesSection
+        readingPreferences={userSettings.readingPreferences}
+        onPreferenceChange={handleReadingPreferenceChange}
+      />
 
       <KindleSection kindleEmail={kindleSettings.kindleEmail} />
 

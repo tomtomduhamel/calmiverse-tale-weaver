@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { TextToSpeech } from "./TextToSpeech";
 import { ShareStoryDialog } from "./ShareStoryDialog";
-import { BookOpen, Share2, BookCheck } from "lucide-react";
+import { BookOpen, Share2, BookCheck, ArrowDown, Pause } from "lucide-react";
 
 interface ReaderControlsProps {
   fontSize: number;
@@ -16,6 +16,9 @@ interface ReaderControlsProps {
   setShowReadingGuide: (show: boolean) => void;
   onMarkAsRead?: () => void;
   isRead?: boolean;
+  isAutoScrolling?: boolean;
+  onToggleAutoScroll?: () => void;
+  autoScrollEnabled?: boolean;
 }
 
 export const ReaderControls: React.FC<ReaderControlsProps> = ({
@@ -29,6 +32,9 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   setShowReadingGuide,
   onMarkAsRead,
   isRead = false,
+  isAutoScrolling = false,
+  onToggleAutoScroll,
+  autoScrollEnabled = false,
 }) => {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
   
@@ -71,6 +77,24 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
         {isDarkMode ? "☀️" : "🌙"}
       </Button>
       <TextToSpeech text={story.story_text} isDarkMode={isDarkMode} />
+      
+      {/* Bouton de défilement automatique */}
+      {autoScrollEnabled && onToggleAutoScroll && (
+        <Button
+          variant="outline"
+          onClick={onToggleAutoScroll}
+          className={`transition-transform hover:scale-105 flex items-center gap-2 ${
+            isDarkMode ? "text-white border-gray-600 hover:bg-gray-700" : ""
+          } ${isAutoScrolling ? "bg-primary/10" : ""}`}
+          title={isAutoScrolling ? "Pause défilement" : "Défilement automatique"}
+        >
+          {isAutoScrolling 
+            ? <Pause className="h-4 w-4" /> 
+            : <ArrowDown className="h-4 w-4" />
+          }
+          {isAutoScrolling ? "Pause" : "Défiler"}
+        </Button>
+      )}
       
       {/* Bouton Marquer comme lu - toujours visible avec indication de statut */}
       {onMarkAsRead && (
