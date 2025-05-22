@@ -155,3 +155,5 @@ export const useSoundPlayer = ({
     error: error
   };
 };
+
+export default useSoundPlayer;

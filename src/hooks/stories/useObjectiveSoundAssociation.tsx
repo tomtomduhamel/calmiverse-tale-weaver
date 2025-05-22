@@ -22,3 +22,5 @@ export const useObjectiveSoundAssociation = () => {
     getSoundObjectiveStats
   };
 };
+
+export default useObjectiveSoundAssociation;

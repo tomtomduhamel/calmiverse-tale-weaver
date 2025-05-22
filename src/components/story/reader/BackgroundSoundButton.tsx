@@ -173,3 +173,5 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
     </TooltipProvider>
   );
 };
+
+export default BackgroundSoundButton;

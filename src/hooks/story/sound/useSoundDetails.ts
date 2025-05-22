@@ -121,3 +121,5 @@ export const useSoundDetails = (soundId?: string | null, storyObjective?: string
     error,
   };
 };
+
+export default useSoundDetails;

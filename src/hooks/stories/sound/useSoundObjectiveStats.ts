@@ -1,89 +1,78 @@
 
+/**
+ * Hook pour obtenir des statistiques sur les sons associés aux objectifs
+ */
 import { useCallback } from "react";
 import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Hook pour gérer les statistiques et la récupération des sons par objectif
- */
 export const useSoundObjectiveStats = () => {
   /**
-   * Obtient tous les sons disponibles pour un objectif spécifique
-   * @param objective Objectif ('sleep', 'focus', 'relax', 'fun')
-   * @returns Tableau des sons correspondant à l'objectif
+   * Récupère les sons disponibles pour chaque objectif
+   * @returns Objet avec les sons pour chaque objectif
    */
-  const getSoundsByObjective = useCallback(async (objective: string) => {
+  const getSoundsByObjective = useCallback(async () => {
     try {
-      console.log(`🔍 Recherche des sons pour l'objectif: ${objective}`);
+      console.log("🔄 Récupération des statistiques de sons par objectif");
       
       const { data, error } = await supabase
         .from('sound_backgrounds')
-        .select('*')
-        .eq('objective', objective)
-        .order('title');
-      
+        .select('id, title, file_path, objective')
+        .order('created_at', { ascending: false });
+        
       if (error) {
-        console.error(`❌ Erreur lors de la récupération des sons pour l'objectif ${objective}:`, error);
+        console.error("❌ Erreur lors de la récupération des sons:", error);
         throw error;
       }
       
-      if (!data || data.length === 0) {
-        console.log(`⚠️ Aucun son trouvé pour l'objectif: ${objective}`);
-        return [];
-      }
+      // Organiser les sons par objectif
+      const soundsByObjective: Record<string, any[]> = {};
       
-      // Filtrer pour ne garder que les sons avec un fichier valide
-      const validSounds = data.filter(sound => sound.file_path);
+      data?.forEach(sound => {
+        if (sound.objective) {
+          if (!soundsByObjective[sound.objective]) {
+            soundsByObjective[sound.objective] = [];
+          }
+          soundsByObjective[sound.objective].push(sound);
+        }
+      });
       
-      console.log(`✅ ${validSounds.length} sons valides trouvés pour l'objectif: ${objective}`);
-      return validSounds;
+      console.log("✅ Sons récupérés par objectif:", Object.keys(soundsByObjective).map(key => 
+        `${key}: ${soundsByObjective[key].length} sons`
+      ));
+      
+      return soundsByObjective;
     } catch (error: any) {
-      console.error(`❌ Erreur lors de la récupération des sons pour l'objectif ${objective}:`, error);
-      return [];
-    }
-  }, []);
-  
-  /**
-   * Obtient les statistiques sur le nombre de sons par objectif
-   * @returns Objet avec les comptages par objectif
-   */
-  const getSoundObjectiveStats = useCallback(async () => {
-    try {
-      console.log("🔍 Récupération des statistiques de sons par objectif");
-      
-      const { data, error } = await supabase
-        .from('sound_backgrounds')
-        .select('objective, file_path');
-      
-      if (error) {
-        console.error("❌ Erreur lors de la récupération des statistiques:", error);
-        throw error;
-      }
-      
-      const stats = {
-        sleep: 0,
-        focus: 0,
-        relax: 0,
-        fun: 0
-      };
-      
-      if (data) {
-        // Ne compter que les sons avec un fichier valide
-        data
-          .filter(item => item.file_path)
-          .forEach(item => {
-            if (item.objective in stats) {
-              stats[item.objective as keyof typeof stats]++;
-            }
-          });
-      }
-      
-      console.log("✅ Statistiques de sons par objectif:", stats);
-      return stats;
-    } catch (error: any) {
-      console.error("❌ Erreur lors de la récupération des statistiques de sons:", error);
-      return { sleep: 0, focus: 0, relax: 0, fun: 0 };
+      console.error("❌ Erreur lors de la récupération des sons par objectif:", error);
+      return {};
     }
   }, []);
 
+  /**
+   * Récupère des statistiques globales sur les sons par objectif
+   * @returns Objet avec des statistiques pour chaque objectif
+   */
+  const getSoundObjectiveStats = useCallback(async () => {
+    try {
+      console.log("🔄 Récupération des statistiques globales de sons");
+      
+      const soundsByObjective = await getSoundsByObjective();
+      
+      const stats = Object.keys(soundsByObjective).map(objective => ({
+        objective,
+        count: soundsByObjective[objective].length,
+        validSoundsCount: soundsByObjective[objective].filter(s => s.file_path).length
+      }));
+      
+      console.log("✅ Statistiques globales des sons:", stats);
+      
+      return stats;
+    } catch (error: any) {
+      console.error("❌ Erreur lors du calcul des statistiques:", error);
+      return [];
+    }
+  }, [getSoundsByObjective]);
+
   return { getSoundsByObjective, getSoundObjectiveStats };
 };
+
+export default useSoundObjectiveStats;

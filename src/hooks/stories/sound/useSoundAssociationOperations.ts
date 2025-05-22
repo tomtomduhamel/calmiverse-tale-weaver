@@ -58,3 +58,5 @@ export const useSoundAssociationOperations = (
 
   return { autoAssociateSoundToStory };
 };
+
+export default useSoundAssociationOperations;
