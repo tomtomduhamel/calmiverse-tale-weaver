@@ -20,6 +20,7 @@ interface ReaderControlsProps {
   onToggleAutoScroll?: () => void;
   autoScrollEnabled?: boolean;
   isUpdatingReadStatus?: boolean;
+  isManuallyPaused?: boolean;
 }
 
 export const ReaderControls: React.FC<ReaderControlsProps> = ({
@@ -37,6 +38,7 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   onToggleAutoScroll,
   autoScrollEnabled = false,
   isUpdatingReadStatus = false,
+  isManuallyPaused = false,
 }) => {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
   
@@ -80,21 +82,23 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
       </Button>
       <TextToSpeech text={story.story_text} isDarkMode={isDarkMode} />
       
-      {/* Bouton de défilement automatique - modifié pour fonctionner en toggle on/off */}
+      {/* Bouton de défilement automatique - avec retour visuel pour l'état de pause manuelle */}
       {autoScrollEnabled && onToggleAutoScroll && (
         <Button
           variant="outline"
           onClick={onToggleAutoScroll}
           className={`transition-transform hover:scale-105 flex items-center gap-2 ${
             isDarkMode ? "text-white border-gray-600 hover:bg-gray-700" : ""
-          } ${isAutoScrolling ? "bg-primary/20 border-primary/50" : ""}`}
-          title={isAutoScrolling ? "Arrêter défilement" : "Défilement automatique"}
+          } ${isAutoScrolling ? "bg-primary/20 border-primary/50" : ""} ${
+            isManuallyPaused ? "bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-800" : ""
+          }`}
+          title={isAutoScrolling ? "Arrêter défilement" : isManuallyPaused ? "Reprendre défilement" : "Défilement automatique"}
         >
           {isAutoScrolling 
             ? <Pause className="h-4 w-4" /> 
             : <ArrowDown className="h-4 w-4" />
           }
-          {isAutoScrolling ? "Arrêter" : "Défiler"}
+          {isAutoScrolling ? "Arrêter" : isManuallyPaused ? "Reprendre" : "Défiler"}
         </Button>
       )}
       

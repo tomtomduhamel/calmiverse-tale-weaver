@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowDown, Pause } from 'lucide-react';
+import { Pause } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AutoScrollIndicatorProps {

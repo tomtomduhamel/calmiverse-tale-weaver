@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -40,6 +41,9 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const [showReadingGuide, setShowReadingGuide] = useState(false);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [isUpdatingReadStatus, setIsUpdatingReadStatus] = useState(false);
+  // Nouvel état pour suivre les pauses manuelles
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
+  
   const { toast } = useToast();
   const { userSettings } = useUserSettings();
   const isMobile = useIsMobile();
@@ -86,6 +90,9 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     setIsAutoScrolling(true);
     isScrollPausedRef.current = false;
     
+    // Si on démarre le défilement, désactiver l'état de pause manuelle
+    setIsManuallyPaused(false);
+    
     // Démarrer le défilement à intervalles réguliers
     scrollIntervalRef.current = window.setInterval(() => {
       if (!viewportEl || isScrollPausedRef.current) return;
@@ -123,27 +130,30 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   
   // Fonction pour reprendre le défilement (bouton flottant)
   const handleResumeScroll = useCallback(() => {
-    if (scrollIntervalRef.current) {
+    if (scrollIntervalRef.current && !isManuallyPaused) {
       isScrollPausedRef.current = false;
     }
-  }, []);
+  }, [isManuallyPaused]);
   
-  // Fonction pour le bouton toggle (bouton supérieur) - Modifiée pour fonctionner en toggle on/off
+  // Fonction pour le bouton toggle (bouton supérieur) - Modifiée pour suivre les pauses manuelles
   const toggleAutoScroll = useCallback(() => {
     if (isAutoScrolling) {
-      // Si le défilement est actif, l'arrêter complètement
+      // Si le défilement est actif, l'arrêter complètement et marquer comme pause manuelle
       stopAutoScroll();
+      setIsManuallyPaused(true);
+      console.log("Défilement arrêté manuellement");
     } else {
-      // Si le défilement est arrêté, le démarrer
+      // Si le défilement est arrêté, le démarrer et réinitialiser l'état de pause manuelle
       startAutoScroll();
+      setIsManuallyPaused(false);
+      console.log("Défilement démarré manuellement");
     }
   }, [isAutoScrolling, startAutoScroll, stopAutoScroll]);
-
-  // Gérer le clic sur le contenu pour arrêter/démarrer le défilement - Retiré pour éviter la confusion
   
-  // Démarrer le défilement automatique si l'option est activée
+  // Démarrer le défilement automatique si l'option est activée et qu'il n'a pas été arrêté manuellement
   useEffect(() => {
-    if (autoScrollEnabled && !isAutoScrolling && story) {
+    if (autoScrollEnabled && !isAutoScrolling && story && !isManuallyPaused) {
+      console.log("Tentative de démarrage auto-scroll, isManuallyPaused:", isManuallyPaused);
       // Attendre un peu pour permettre au contenu de se charger complètement
       const timer = setTimeout(() => {
         startAutoScroll();
@@ -151,13 +161,14 @@ const StoryReader: React.FC<StoryReaderProps> = ({
       
       return () => clearTimeout(timer);
     }
-  }, [autoScrollEnabled, story, isAutoScrolling, startAutoScroll]);
+  }, [autoScrollEnabled, story, isAutoScrolling, isManuallyPaused, startAutoScroll]);
   
   // Nettoyer l'intervalle lors du démontage du composant
   useEffect(() => {
     return () => {
       if (scrollIntervalRef.current) {
         clearInterval(scrollIntervalRef.current);
+        scrollIntervalRef.current = null;
       }
     };
   }, []);
@@ -278,6 +289,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             onToggleAutoScroll={autoScrollEnabled ? toggleAutoScroll : undefined}
             autoScrollEnabled={autoScrollEnabled}
             isUpdatingReadStatus={isUpdatingReadStatus}
+            isManuallyPaused={isManuallyPaused}
           />
           <Button 
             variant={isDarkMode ? "outline" : "ghost"} 
@@ -311,7 +323,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         </ScrollArea>
 
         {/* Indicateur flottant pour le défilement automatique */}
-        {autoScrollEnabled && isAutoScrolling && (
+        {autoScrollEnabled && isAutoScrolling && !isManuallyPaused && (
           <AutoScrollIndicator
             isAutoScrolling={isAutoScrolling}
             onPauseScroll={handlePauseScroll}
