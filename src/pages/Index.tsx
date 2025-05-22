@@ -27,11 +27,34 @@ const Index = () => {
     return <LoadingErrorHandler isLoading={true} error={null} children={null} />;
   }
 
+  // Mappage explicite des props pour ContentView selon l'interface ContentViewProps
+  const contentViewProps = {
+    currentView: indexPageProps.currentView,
+    showGuide: indexPageProps.showGuide,
+    stories: stories.stories || [],
+    children: indexPageProps.children || [],
+    currentStory: indexPageProps.currentStory || null,
+    pendingStoryId: indexPageProps.pendingStoryId,
+    isRetrying: indexPageProps.isRetrying,
+    onViewChange: indexPageProps.setCurrentView,
+    onAddChild: indexPageProps.handleAddChild,
+    onUpdateChild: indexPageProps.handleUpdateChild,
+    onDeleteChild: indexPageProps.handleDeleteChild,
+    onSubmitStory: indexPageProps.handleStorySubmitWrapper,
+    onCreateChildFromStory: indexPageProps.handleCreateChildFromStory,
+    onStoryCreated: indexPageProps.handleStoryCreated,
+    onSelectStory: indexPageProps.handleSelectStory,
+    onDeleteStory: indexPageProps.handleDeleteStory,
+    onRetryStory: indexPageProps.handleRetryStory,
+    onCloseReader: indexPageProps.handleCloseReader,
+    onMarkAsRead: indexPageProps.handleMarkAsRead,
+  };
+
   return (
     <div className="h-full w-full overflow-x-hidden">
       <LoadingErrorHandler isLoading={isLoading} error={error}>
         <div className={`index-container max-w-7xl mx-auto p-2 sm:p-4 ${isMobile ? 'pb-32' : 'mb-20'}`}>
-          <ContentView {...indexPageProps} />
+          <ContentView {...contentViewProps} />
         </div>
         
         {/* Menu de navigation pour mobile */}
