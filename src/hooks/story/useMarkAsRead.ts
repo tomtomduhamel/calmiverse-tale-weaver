@@ -1,0 +1,66 @@
+
+import { useState, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import type { Story } from "@/types/story";
+
+interface UseMarkAsReadProps {
+  story: Story | null;
+  onMarkAsRead?: (storyId: string) => Promise<boolean>;
+  setStory: (story: Story | null) => void;
+}
+
+export const useMarkAsRead = ({ story, onMarkAsRead, setStory }: UseMarkAsReadProps) => {
+  const [isUpdatingReadStatus, setIsUpdatingReadStatus] = useState(false);
+  const { toast } = useToast();
+
+  const handleMarkAsRead = useCallback(async () => {
+    if (story && onMarkAsRead && story.status !== "read") {
+      try {
+        // Optimistic UI update - mettre à jour l'interface avant la confirmation serveur
+        setIsUpdatingReadStatus(true);
+        
+        // Mise à jour optimiste du state local
+        setStory({ ...story, status: "read" });
+        
+        // Appel API pour mettre à jour le statut côté serveur
+        const success = await onMarkAsRead(story.id);
+        
+        if (success) {
+          toast({
+            title: "Histoire marquée comme lue",
+            description: "Le statut de l'histoire a été mis à jour"
+          });
+          // Pas besoin de mettre à jour le state ici car on l'a déjà fait de manière optimiste
+        } else {
+          // En cas d'échec, restaurer l'état précédent
+          setStory({ ...story, status: story.status !== "read" ? story.status : "ready" });
+          
+          toast({
+            title: "Erreur",
+            description: "Impossible de marquer l'histoire comme lue",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error marking story as read:", error);
+        // Restaurer l'état en cas d'erreur
+        if (story) {
+          setStory({ ...story });
+        }
+        
+        toast({
+          title: "Erreur",
+          description: "Une erreur s'est produite lors de la mise à jour",
+          variant: "destructive"
+        });
+      } finally {
+        setIsUpdatingReadStatus(false);
+      }
+    }
+  }, [story, onMarkAsRead, setStory, toast]);
+
+  return {
+    isUpdatingReadStatus,
+    handleMarkAsRead
+  };
+};
