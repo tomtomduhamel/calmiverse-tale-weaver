@@ -1,15 +1,18 @@
 
-import { useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { ViewType } from '@/types/views';
 
+/**
+ * Hook spécialisé pour gérer la navigation entre les différentes vues de l'application
+ */
 export const useViewManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentView, setCurrentViewState] = useState<ViewType>("home");
   const [showGuide, setShowGuide] = useState<boolean>(false);
 
-  // Déterminer la vue actuelle basée sur l'URL au chargement
+  // Synchroniser la vue avec l'URL au chargement et lors des changements d'URL
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const viewParam = searchParams.get('view') as ViewType | null;
@@ -30,12 +33,12 @@ export const useViewManagement = () => {
     
   }, [location]);
 
+  // Fonction pour changer de vue avec synchronisation de l'URL
   const setCurrentView = (view: ViewType) => {
-    // Log pour le débogage
     console.log("[useViewManagement] DEBUG: Changement de vue vers", view);
     setCurrentViewState(view);
 
-    // Navigation logique basée sur la vue
+    // Navigation basée sur la vue
     if (view === "home") {
       navigate("/");
     } else if (view === "create") {
