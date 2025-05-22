@@ -30,21 +30,17 @@ export const AutoScrollIndicator: React.FC<AutoScrollIndicatorProps> = ({
       <Button
         size="lg"
         variant={isDarkMode ? "outline" : "secondary"}
-        onPointerDown={onPauseScroll}
-        onPointerUp={onResumeScroll}
+        onPointerDown={onPauseScroll}  // Maintenir appuyé pour pauser
+        onPointerUp={onResumeScroll}   // Relâcher pour reprendre
         onPointerLeave={onResumeScroll}
         className={`rounded-full p-3 shadow-lg active:scale-95 transition-transform ${
           isDarkMode 
             ? "bg-gray-800 text-white border-gray-600 hover:bg-gray-700 active:bg-gray-600"
             : "bg-primary/10 hover:bg-primary/20 active:bg-primary/30"
         }`}
-        aria-label={isAutoScrolling ? "Maintenir pour pauser le défilement" : "Défilement automatique"}
+        aria-label="Maintenir pour pauser le défilement"
       >
-        {isAutoScrolling ? (
-          <Pause className={`h-6 w-6 ${isDarkMode ? "text-white" : "text-primary"}`} />
-        ) : (
-          <ArrowDown className={`h-6 w-6 ${isDarkMode ? "text-white" : "text-primary"}`} />
-        )}
+        <Pause className={`h-6 w-6 ${isDarkMode ? "text-white" : "text-primary"}`} />
       </Button>
     </div>
   );
