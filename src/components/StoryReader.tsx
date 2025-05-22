@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -43,6 +44,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollIntervalRef = useRef<number | null>(null);
   const scrollStartTimeRef = useRef<number | null>(null);
+  const isScrollPausedRef = useRef<boolean>(false);
   
   // Calcul des métriques pour le défilement automatique
   const wordCount = story?.story_text?.trim().split(/\s+/).length || 0;
@@ -73,10 +75,11 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     
     // Mettre à jour l'état pour afficher l'indicateur
     setIsAutoScrolling(true);
+    isScrollPausedRef.current = false;
     
     // Démarrer le défilement à intervalles réguliers
     scrollIntervalRef.current = window.setInterval(() => {
-      if (!viewportEl) return;
+      if (!viewportEl || isScrollPausedRef.current) return;
       
       const elapsedMs = Date.now() - (scrollStartTimeRef.current || 0);
       const scrollProgress = Math.min(elapsedMs / totalMsToRead, 1);
@@ -98,8 +101,24 @@ const StoryReader: React.FC<StoryReaderProps> = ({
       clearInterval(scrollIntervalRef.current);
       scrollIntervalRef.current = null;
       scrollStartTimeRef.current = null;
+      isScrollPausedRef.current = false;
     }
     setIsAutoScrolling(false);
+  }, []);
+  
+  // Nouvelles fonctions pour pause/reprise du défilement
+  const handlePauseScroll = useCallback(() => {
+    console.log("[StoryReader] DEBUG: Pause du défilement automatique");
+    if (scrollIntervalRef.current) {
+      isScrollPausedRef.current = true;
+    }
+  }, []);
+  
+  const handleResumeScroll = useCallback(() => {
+    console.log("[StoryReader] DEBUG: Reprise du défilement automatique");
+    if (scrollIntervalRef.current) {
+      isScrollPausedRef.current = false;
+    }
   }, []);
   
   const toggleAutoScroll = useCallback(() => {
@@ -221,18 +240,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             onMarkAsRead={handleMarkAsRead}
             isRead={story.status === "read"}
             isAutoScrolling={isAutoScrolling}
-            onToggleAutoScroll={autoScrollEnabled ? () => {
-              if (isAutoScrolling) {
-                if (scrollIntervalRef.current) {
-                  clearInterval(scrollIntervalRef.current);
-                  scrollIntervalRef.current = null;
-                }
-                setIsAutoScrolling(false);
-              } else {
-                // Code simplifié pour le remplacement
-                setIsAutoScrolling(true);
-              }
-            } : undefined}
+            onToggleAutoScroll={autoScrollEnabled ? toggleAutoScroll : undefined}
             autoScrollEnabled={autoScrollEnabled}
           />
           <Button 
@@ -267,21 +275,11 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         </ScrollArea>
 
         {/* Indicateur flottant pour le défilement automatique */}
-        {autoScrollEnabled && (
+        {autoScrollEnabled && isAutoScrolling && (
           <AutoScrollIndicator
             isAutoScrolling={isAutoScrolling}
-            onToggle={() => {
-              if (isAutoScrolling) {
-                if (scrollIntervalRef.current) {
-                  clearInterval(scrollIntervalRef.current);
-                  scrollIntervalRef.current = null;
-                }
-                setIsAutoScrolling(false);
-              } else {
-                // Code simplifié pour le remplacement
-                setIsAutoScrolling(true);
-              }
-            }}
+            onPauseScroll={handlePauseScroll}
+            onResumeScroll={handleResumeScroll}
             isDarkMode={isDarkMode}
           />
         )}

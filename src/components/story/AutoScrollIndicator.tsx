@@ -6,13 +6,15 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AutoScrollIndicatorProps {
   isAutoScrolling: boolean;
-  onToggle: () => void;
+  onPauseScroll: () => void;
+  onResumeScroll: () => void;
   isDarkMode: boolean;
 }
 
 export const AutoScrollIndicator: React.FC<AutoScrollIndicatorProps> = ({
   isAutoScrolling,
-  onToggle,
+  onPauseScroll,
+  onResumeScroll,
   isDarkMode
 }) => {
   const isMobile = useIsMobile();
@@ -28,12 +30,15 @@ export const AutoScrollIndicator: React.FC<AutoScrollIndicatorProps> = ({
       <Button
         size="lg"
         variant={isDarkMode ? "outline" : "secondary"}
-        onClick={onToggle}
-        className={`rounded-full p-3 shadow-lg ${
+        onPointerDown={onPauseScroll}
+        onPointerUp={onResumeScroll}
+        onPointerLeave={onResumeScroll}
+        className={`rounded-full p-3 shadow-lg active:scale-95 transition-transform ${
           isDarkMode 
-            ? "bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
-            : "bg-primary/10 hover:bg-primary/20"
+            ? "bg-gray-800 text-white border-gray-600 hover:bg-gray-700 active:bg-gray-600"
+            : "bg-primary/10 hover:bg-primary/20 active:bg-primary/30"
         }`}
+        aria-label={isAutoScrolling ? "Maintenir pour pauser le défilement" : "Défilement automatique"}
       >
         {isAutoScrolling ? (
           <Pause className={`h-6 w-6 ${isDarkMode ? "text-white" : "text-primary"}`} />

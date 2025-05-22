@@ -78,7 +78,7 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
       </Button>
       <TextToSpeech text={story.story_text} isDarkMode={isDarkMode} />
       
-      {/* Bouton de défilement automatique */}
+      {/* Bouton de défilement automatique - pour activer/désactiver la fonctionnalité */}
       {autoScrollEnabled && onToggleAutoScroll && (
         <Button
           variant="outline"
@@ -86,13 +86,13 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
           className={`transition-transform hover:scale-105 flex items-center gap-2 ${
             isDarkMode ? "text-white border-gray-600 hover:bg-gray-700" : ""
           } ${isAutoScrolling ? "bg-primary/10" : ""}`}
-          title={isAutoScrolling ? "Pause défilement" : "Défilement automatique"}
+          title={isAutoScrolling ? "Arrêter défilement" : "Défilement automatique"}
         >
           {isAutoScrolling 
             ? <Pause className="h-4 w-4" /> 
             : <ArrowDown className="h-4 w-4" />
           }
-          {isAutoScrolling ? "Pause" : "Défiler"}
+          {isAutoScrolling ? "Arrêter" : "Défiler"}
         </Button>
       )}
       
