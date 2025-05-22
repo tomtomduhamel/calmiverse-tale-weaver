@@ -7,6 +7,7 @@ import { ThemeToggle } from "./reader/ThemeToggle";
 import { AutoScrollControl } from "./reader/AutoScrollControl";
 import { MarkAsReadButton } from "./reader/MarkAsReadButton";
 import { UtilityButtons } from "./reader/UtilityButtons";
+import { BackgroundSoundButton } from "./reader/BackgroundSoundButton";
 
 interface ReaderControlsProps {
   fontSize: number;
@@ -60,6 +61,12 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
       <ThemeToggle 
         isDarkMode={isDarkMode} 
         setIsDarkMode={setIsDarkMode} 
+      />
+      
+      {/* Bouton de fond sonore */}
+      <BackgroundSoundButton
+        soundId={story.sound_id}
+        isDarkMode={isDarkMode}
       />
       
       {/* Bouton de lecture à haute voix */}

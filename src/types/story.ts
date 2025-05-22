@@ -36,6 +36,7 @@ export interface Story {
   tags?: string[];
   isFavorite?: boolean;
   updatedAt?: Date;
+  sound_id?: string | null;
 }
 
 export interface Objective {

@@ -51,6 +51,36 @@ export type Database = {
         }
         Relationships: []
       }
+      sound_backgrounds: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration: number
+          file_path: string
+          id: string
+          mood: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration: number
+          file_path: string
+          id?: string
+          mood: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration?: number
+          file_path?: string
+          id?: string
+          mood?: string
+          title?: string
+        }
+        Relationships: []
+      }
       stories: {
         Row: {
           authorid: string
@@ -63,6 +93,7 @@ export type Database = {
           objective: string | null
           preview: string | null
           sharing: Json | null
+          sound_id: string | null
           status: string | null
           summary: string | null
           title: string
@@ -79,6 +110,7 @@ export type Database = {
           objective?: string | null
           preview?: string | null
           sharing?: Json | null
+          sound_id?: string | null
           status?: string | null
           summary?: string | null
           title: string
@@ -95,12 +127,21 @@ export type Database = {
           objective?: string | null
           preview?: string | null
           sharing?: Json | null
+          sound_id?: string | null
           status?: string | null
           summary?: string | null
           title?: string
           updatedat?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stories_sound_id_fkey"
+            columns: ["sound_id"]
+            isOneToOne: false
+            referencedRelation: "sound_backgrounds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       story_access_logs: {
         Row: {
@@ -134,6 +175,7 @@ export type Database = {
       users: {
         Row: {
           auto_scroll_enabled: boolean | null
+          background_music_enabled: boolean | null
           created_at: string
           email: string
           email_notifications: boolean | null
@@ -149,6 +191,7 @@ export type Database = {
         }
         Insert: {
           auto_scroll_enabled?: boolean | null
+          background_music_enabled?: boolean | null
           created_at?: string
           email: string
           email_notifications?: boolean | null
@@ -164,6 +207,7 @@ export type Database = {
         }
         Update: {
           auto_scroll_enabled?: boolean | null
+          background_music_enabled?: boolean | null
           created_at?: string
           email?: string
           email_notifications?: boolean | null

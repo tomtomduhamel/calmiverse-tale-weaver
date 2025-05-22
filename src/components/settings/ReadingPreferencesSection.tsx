@@ -1,81 +1,121 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Book, ArrowDown } from 'lucide-react';
-import { UserSettings } from '@/types/user-settings';
+import { UserSettings } from "@/types/user-settings";
 
 interface ReadingPreferencesSectionProps {
-  readingPreferences: UserSettings['readingPreferences'];
-  onPreferenceChange: (key: keyof UserSettings['readingPreferences'], value: any) => Promise<void>;
+  userSettings: UserSettings;
+  isLoading: boolean;
+  onUpdateSettings: (newSettings: Partial<UserSettings>) => Promise<void>;
 }
 
-export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps> = ({ 
-  readingPreferences, 
-  onPreferenceChange 
+export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps> = ({
+  userSettings,
+  isLoading,
+  onUpdateSettings
 }) => {
-  // État local pour suivre la valeur du slider pendant que l'utilisateur le fait glisser
-  const [localReadingSpeed, setLocalReadingSpeed] = useState(readingPreferences.readingSpeed);
-  
-  // Mettre à jour la valeur locale lorsque les props changent
-  useEffect(() => {
-    setLocalReadingSpeed(readingPreferences.readingSpeed);
-  }, [readingPreferences.readingSpeed]);
-  
-  // Gestionnaire pour les changements de valeur du slider pendant le glissement
-  const handleSliderChange = (value: number[]) => {
-    setLocalReadingSpeed(value[0]);
+  // Gérer le changement du défilement automatique
+  const handleAutoScrollChange = async (checked: boolean) => {
+    await onUpdateSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        autoScrollEnabled: checked
+      }
+    });
   };
-  
-  // Gestionnaire pour la fin du glissement - enregistre la valeur finale
-  const handleSliderCommit = async () => {
-    if (localReadingSpeed !== readingPreferences.readingSpeed) {
-      await onPreferenceChange('readingSpeed', localReadingSpeed);
-    }
+
+  // Gérer le changement de la vitesse de lecture
+  const handleReadingSpeedChange = async (value: number[]) => {
+    await onUpdateSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        readingSpeed: value[0]
+      }
+    });
   };
-  
+
+  // Gérer le changement de la musique de fond
+  const handleBackgroundMusicChange = async (checked: boolean) => {
+    await onUpdateSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        backgroundMusicEnabled: checked
+      }
+    });
+  };
+
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Book className="h-5 w-5" />
-          Préférences de lecture
-        </CardTitle>
+        <CardTitle>Préférences de lecture</CardTitle>
+        <CardDescription>
+          Configurez vos préférences pour la lecture des histoires
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <label className="text-sm font-medium">Défilement automatique</label>
-            <p className="text-sm text-muted-foreground">
-              Activer le défilement automatique pendant la lecture
-            </p>
-          </div>
-          <Switch
-            checked={readingPreferences.autoScrollEnabled}
-            onCheckedChange={(checked) => onPreferenceChange('autoScrollEnabled', checked)}
-          />
-        </div>
-        
-        <div className="space-y-2">
+        {/* Option Défilement automatique */}
+        <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Vitesse de lecture</label>
-            <span className="text-sm text-muted-foreground">
-              {localReadingSpeed} mots par minute
+            <Label htmlFor="auto-scroll" className="text-base font-medium">
+              Défilement automatique
+            </Label>
+            <Switch
+              id="auto-scroll"
+              checked={userSettings.readingPreferences?.autoScrollEnabled || false}
+              onCheckedChange={handleAutoScrollChange}
+              disabled={isLoading}
+            />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Activer le défilement automatique lors de la lecture des histoires
+          </div>
+        </div>
+
+        {/* Option Musique de fond */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="background-music" className="text-base font-medium">
+              Musique de fond
+            </Label>
+            <Switch
+              id="background-music"
+              checked={userSettings.readingPreferences?.backgroundMusicEnabled || false}
+              onCheckedChange={handleBackgroundMusicChange}
+              disabled={isLoading}
+            />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Activer la musique de fond lors de la lecture des histoires
+          </div>
+        </div>
+
+        {/* Contrôle de la vitesse de lecture */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="reading-speed" className="text-base font-medium">
+              Vitesse de lecture
+            </Label>
+            <span className="text-sm font-medium">
+              {userSettings.readingPreferences?.readingSpeed || 125} mots/minute
             </span>
           </div>
           <Slider
-            value={[localReadingSpeed]}
-            min={75}
-            max={200}
+            id="reading-speed"
+            defaultValue={[userSettings.readingPreferences?.readingSpeed || 125]}
+            min={50}
+            max={300}
             step={5}
-            disabled={!readingPreferences.autoScrollEnabled}
-            onValueChange={handleSliderChange}
-            onValueCommit={handleSliderCommit}
+            onValueChange={handleReadingSpeedChange}
+            disabled={isLoading}
           />
-          <p className="text-xs text-muted-foreground mt-1">
-            Ajustez la vitesse à laquelle le texte défile automatiquement.
-          </p>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Lent</span>
+            <span>Normal</span>
+            <span>Rapide</span>
+          </div>
         </div>
       </CardContent>
     </Card>
