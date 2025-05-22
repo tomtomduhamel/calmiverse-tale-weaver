@@ -9,7 +9,14 @@ import type { ViewType } from '@/types/views';
 export const useViewManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [currentView, setCurrentViewState] = useState<ViewType>("home");
+  const [currentView, setCurrentViewState] = useState<ViewType>(() => {
+    // Initialiser la vue en fonction de l'URL actuelle
+    if (location.pathname === "/settings") return "settings";
+    if (location.pathname === "/profiles") return "profiles";
+    if (location.pathname === "/create-story-simple") return "create";
+    if (location.pathname === "/app") return "library";
+    return "home";
+  });
   const [showGuide, setShowGuide] = useState<boolean>(false);
 
   // Synchroniser la vue avec l'URL au chargement et lors des changements d'URL
@@ -25,6 +32,12 @@ export const useViewManagement = () => {
       }
     } else if (location.pathname === "/settings") {
       setCurrentViewState("settings");
+    } else if (location.pathname === "/profiles") {
+      setCurrentViewState("profiles");
+    } else if (location.pathname === "/create-story-simple") {
+      setCurrentViewState("create");
+    } else if (location.pathname === "/app") {
+      setCurrentViewState("library");
     }
     
     // Vérifier si le guide doit être affiché
@@ -42,11 +55,11 @@ export const useViewManagement = () => {
     if (view === "home") {
       navigate("/");
     } else if (view === "create") {
-      navigate("/?view=create");
+      navigate("/create-story-simple");
     } else if (view === "profiles") {
-      navigate("/?view=profiles");
+      navigate("/profiles");
     } else if (view === "library") {
-      navigate("/?view=library");
+      navigate("/app");
     } else if (view === "reader") {
       navigate("/?view=reader");
     } else if (view === "settings") {

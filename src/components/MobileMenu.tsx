@@ -8,7 +8,7 @@ import {
   PenSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import type { ViewType } from "@/types/views";
 
 interface MobileMenuProps {
@@ -18,6 +18,7 @@ interface MobileMenuProps {
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Items for the bottom navigation
   const menuItems = [
@@ -30,7 +31,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
 
   const handleNavigation = (view: ViewType, path: string) => {
     // Pour la page d'accueil et la bibliothèque, on peut changer la vue directement si on est déjà sur /app ou /
-    if ((path === "/" || path === "/app") && (window.location.pathname === "/" || window.location.pathname === "/app")) {
+    if ((path === "/" || path === "/app") && (location.pathname === "/" || location.pathname === "/app")) {
       onViewChange(view);
     } else {
       // Dans les autres cas, on navigue vers la page correspondante
@@ -41,9 +42,26 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
         onViewChange("home");
       } else if (path === "/app") {
         onViewChange("library");
+      } else if (path === "/settings") {
+        onViewChange("settings");
+      } else if (path === "/profiles") {
+        onViewChange("profiles");
+      } else if (path === "/create-story-simple") {
+        onViewChange("create");
       }
     }
   };
+
+  // Déterminer la vue active en fonction du chemin actuel si la vue n'est pas déjà correctement définie
+  React.useEffect(() => {
+    if (location.pathname === "/settings" && currentView !== "settings") {
+      onViewChange("settings");
+    } else if (location.pathname === "/profiles" && currentView !== "profiles") {
+      onViewChange("profiles");
+    } else if (location.pathname === "/create-story-simple" && currentView !== "create") {
+      onViewChange("create");
+    }
+  }, [location.pathname, currentView, onViewChange]);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-background shadow-lg border-t border-border rounded-t-xl z-50">
@@ -54,7 +72,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
             onClick={() => handleNavigation(item.view, item.path)}
             className={cn(
               "flex flex-col items-center justify-center w-full p-1 rounded-md transition-colors",
-              currentView === item.view
+              (currentView === item.view || (location.pathname === item.path))
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground"
             )}
