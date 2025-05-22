@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,18 +25,21 @@ interface StoryReaderProps {
 }
 
 const StoryReader: React.FC<StoryReaderProps> = ({ 
-  story, 
+  story: initialStory, 
   onClose, 
   onBack, 
   onToggleFavorite, 
   onMarkAsRead,
   childName 
 }) => {
+  // Utiliser une copie locale de l'histoire pour pouvoir la mettre à jour
+  const [story, setStory] = useState<Story | null>(initialStory);
   const [fontSize, setFontSize] = useState(16);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [showReadingGuide, setShowReadingGuide] = useState(false);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+  const [isUpdatingReadStatus, setIsUpdatingReadStatus] = useState(false);
   const { toast } = useToast();
   const { userSettings } = useUserSettings();
   const isMobile = useIsMobile();
@@ -46,6 +48,13 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const scrollStartTimeRef = useRef<number | null>(null);
   const isScrollPausedRef = useRef<boolean>(false);
   
+  // Mettre à jour l'état local quand initialStory change
+  useEffect(() => {
+    if (initialStory) {
+      setStory(initialStory);
+    }
+  }, [initialStory]);
+
   // Calcul des métriques pour le défilement automatique
   const wordCount = story?.story_text?.trim().split(/\s+/).length || 0;
   const readingSpeed = userSettings?.readingPreferences?.readingSpeed || 125;
@@ -53,6 +62,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   
   // Functions pour gérer le défilement automatique
   const startAutoScroll = useCallback(() => {
+    // ... keep existing code (démarrage du défilement automatique)
     if (!scrollAreaRef.current || scrollIntervalRef.current) return;
     
     // Obtenir l'élément viewport de ScrollArea à partir de la référence
@@ -93,7 +103,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
       
       viewportEl.scrollTop = newScrollTop;
     }, 16); // ~60fps
-    
   }, [wordCount, readingSpeed]);
   
   const stopAutoScroll = useCallback(() => {
@@ -108,14 +117,12 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   
   // Nouvelles fonctions pour pause/reprise du défilement
   const handlePauseScroll = useCallback(() => {
-    console.log("[StoryReader] DEBUG: Pause du défilement automatique");
     if (scrollIntervalRef.current) {
       isScrollPausedRef.current = true;
     }
   }, []);
   
   const handleResumeScroll = useCallback(() => {
-    console.log("[StoryReader] DEBUG: Reprise du défilement automatique");
     if (scrollIntervalRef.current) {
       isScrollPausedRef.current = false;
     }
@@ -131,6 +138,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
 
   // Gérer le clic sur le contenu pour arrêter/démarrer le défilement
   const handleContentClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // ... keep existing code (gestion du clic sur le contenu)
     // Ignorer les clics sur les boutons et éléments interactifs
     if (
       e.target instanceof HTMLButtonElement ||
@@ -147,6 +155,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   
   // Démarrer le défilement automatique si l'option est activée
   useEffect(() => {
+    // ... keep existing code (démarrage automatique du défilement)
     if (autoScrollEnabled && !isAutoScrolling && story) {
       // Attendre un peu pour permettre au contenu de se charger complètement
       const timer = setTimeout(() => {
@@ -166,21 +175,61 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     };
   }, []);
 
-  // Handle le marquage comme lu uniquement lors d'une action utilisateur explicite
+  // Handle le marquage comme lu avec mise à jour de l'état local
   const handleMarkAsRead = async () => {
-    if (story && onMarkAsRead) {
-      const success = await onMarkAsRead(story.id);
-      if (success) {
-        toast({
-          title: "Histoire marquée comme lue",
-          description: "Le statut de l'histoire a été mis à jour"
+    if (story && onMarkAsRead && story.status !== "read") {
+      try {
+        // Optimistic UI update - mettre à jour l'interface avant la confirmation serveur
+        setIsUpdatingReadStatus(true);
+        
+        // Mise à jour optimiste du state local
+        setStory(prevStory => {
+          if (!prevStory) return null;
+          return { ...prevStory, status: "read" };
         });
+        
+        // Appel API pour mettre à jour le statut côté serveur
+        const success = await onMarkAsRead(story.id);
+        
+        if (success) {
+          toast({
+            title: "Histoire marquée comme lue",
+            description: "Le statut de l'histoire a été mis à jour"
+          });
+          // Pas besoin de mettre à jour le state ici car on l'a déjà fait de manière optimiste
+        } else {
+          // En cas d'échec, restaurer l'état précédent
+          setStory(prevStory => {
+            if (!prevStory) return null;
+            // Restaurer le statut précédent
+            return { ...prevStory, status: prevStory.status !== "read" ? prevStory.status : "ready" };
+          });
+          
+          toast({
+            title: "Erreur",
+            description: "Impossible de marquer l'histoire comme lue",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error marking story as read:", error);
+        // Restaurer l'état en cas d'erreur
+        setStory(initialStory);
+        
+        toast({
+          title: "Erreur",
+          description: "Une erreur s'est produite lors de la mise à jour",
+          variant: "destructive"
+        });
+      } finally {
+        setIsUpdatingReadStatus(false);
       }
     }
   };
 
   // Use onBack if provided, otherwise fallback to onClose
   const handleBack = () => {
+    // ... keep existing code (gestion du bouton retour)
     console.log("[StoryReader] DEBUG: Bouton Fermer cliqué");
     // S'assurer d'arrêter le défilement automatique lors de la fermeture
     if (scrollIntervalRef.current) {
@@ -196,6 +245,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
 
   // Log pour débogage
   useEffect(() => {
+    // ... keep existing code (logs de débogage)
     console.log("[StoryReader] DEBUG: Lecteur d'histoire affiché pour:", story?.id);
     
     // Désactiver le scroll du corps quand le reader est ouvert
@@ -242,6 +292,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             isAutoScrolling={isAutoScrolling}
             onToggleAutoScroll={autoScrollEnabled ? toggleAutoScroll : undefined}
             autoScrollEnabled={autoScrollEnabled}
+            isUpdatingReadStatus={isUpdatingReadStatus}
           />
           <Button 
             variant={isDarkMode ? "outline" : "ghost"} 

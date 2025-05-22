@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { TextToSpeech } from "./TextToSpeech";
 import { ShareStoryDialog } from "./ShareStoryDialog";
-import { BookOpen, Share2, BookCheck, ArrowDown, Pause } from "lucide-react";
+import { BookOpen, Share2, BookCheck, ArrowDown, Pause, Loader2 } from "lucide-react";
 
 interface ReaderControlsProps {
   fontSize: number;
@@ -19,6 +19,7 @@ interface ReaderControlsProps {
   isAutoScrolling?: boolean;
   onToggleAutoScroll?: () => void;
   autoScrollEnabled?: boolean;
+  isUpdatingReadStatus?: boolean;
 }
 
 export const ReaderControls: React.FC<ReaderControlsProps> = ({
@@ -35,6 +36,7 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   isAutoScrolling = false,
   onToggleAutoScroll,
   autoScrollEnabled = false,
+  isUpdatingReadStatus = false,
 }) => {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
   
@@ -96,7 +98,7 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
         </Button>
       )}
       
-      {/* Bouton Marquer comme lu - toujours visible avec indication de statut */}
+      {/* Bouton Marquer comme lu - amélioré avec état de chargement et persistance d'état */}
       {onMarkAsRead && (
         <Button 
           variant={isDarkMode ? "outline" : "outline"}
@@ -104,10 +106,14 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
           className={`transition-transform hover:scale-105 flex items-center gap-2 ${
             isDarkMode ? "text-white border-gray-600 hover:bg-gray-700" : ""
           } ${isRead ? "bg-green-100 dark:bg-green-900/30" : ""}`}
-          disabled={isRead}
+          disabled={isRead || isUpdatingReadStatus}
         >
-          <BookCheck className={`h-4 w-4 ${isRead ? "text-green-600 dark:text-green-400" : ""}`} />
-          {isRead ? "Lu" : "Marquer comme lu"}
+          {isUpdatingReadStatus ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <BookCheck className={`h-4 w-4 ${isRead ? "text-green-600 dark:text-green-400" : ""}`} />
+          )}
+          {isUpdatingReadStatus ? "En cours..." : isRead ? "Lu" : "Marquer comme lu"}
         </Button>
       )}
       

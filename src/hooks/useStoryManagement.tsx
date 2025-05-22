@@ -59,9 +59,18 @@ export const useStoryManagement = () => {
 
   const handleMarkAsRead = useCallback(async (storyId: string) => {
     try {
+      console.log("[useStoryManagement] DEBUG: Marquage histoire comme lue:", storyId);
       await updateStoryStatus(storyId, 'read');
-      // Retourne true pour indiquer le succès mais ne montre plus de toast
-      // La notification est désormais gérée dans StoryReader
+      
+      // Mise à jour de l'histoire courante si c'est celle qui est marquée comme lue
+      if (currentStory && currentStory.id === storyId) {
+        setCurrentStory(prevStory => {
+          if (!prevStory) return null;
+          return { ...prevStory, status: 'read' };
+        });
+      }
+      
+      // Ne pas montrer de toast ici, le feedback est géré dans StoryReader
       return true;
     } catch (error: any) {
       console.error("Error marking story as read:", error);
@@ -72,7 +81,7 @@ export const useStoryManagement = () => {
       });
       return false;
     }
-  }, [updateStoryStatus, toast]);
+  }, [updateStoryStatus, currentStory, toast]);
 
   const handleToggleFavorite = useCallback(async (story: Story) => {
     try {
