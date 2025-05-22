@@ -7,7 +7,7 @@ import StoryCardTags from "./card/StoryCardTags";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Loader2, BookCheck, BookOpenCheck } from "lucide-react";
+import { Loader2, BookCheck } from "lucide-react";
 
 interface StoryCardProps {
   story: Story;
@@ -66,16 +66,8 @@ const StoryCard: React.FC<StoryCardProps> = ({
 
   return (
     <Card className={cardStyles} onClick={handleCardClick}>
-      {/* Indicateur visuel très visible pour montrer que toutes les cartes sont cliquables */}
-      <div className="absolute top-2 right-2 text-green-600">
-        <BookOpenCheck size={20} className="animate-pulse" />
-      </div>
-      
       <CardContent className="pt-6 pb-2">
         <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
-        <p className="text-sm text-gray-600 line-clamp-3 mb-3 h-[4.5rem]">
-          {story.preview}
-        </p>
         
         {story.status === "read" && (
           <div className="flex items-center text-green-600 text-xs mb-2">
@@ -90,13 +82,6 @@ const StoryCard: React.FC<StoryCardProps> = ({
           tags={story.tags}
           error={story.error}
         />
-        
-        {/* Indicateur pour montrer que toutes les histoires sont cliquables */}
-        <div className="flex items-center justify-center mt-3 text-green-600 text-sm">
-          <span className="animate-pulse px-3 py-1 bg-green-100 rounded-full border border-green-300 shadow-sm font-medium">
-            Cliquez pour consulter
-          </span>
-        </div>
       </CardContent>
       <CardFooter className="flex justify-between pt-2 pb-4">
         <span className="text-xs text-gray-500">
