@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { 
@@ -70,10 +70,12 @@ export const StorySettingsDialog: React.FC<StorySettingsDialogProps> = ({
   const [isRegenerating, setIsRegenerating] = useState(false);
   const { toast } = useToast();
   
-  // Extraire les paramètres de l'histoire
-  const initialSettings = extractSettingsFromStory(story);
+  // Utiliser useMemo pour éviter les re-rendus infinis
+  const initialSettings = useMemo(() => {
+    return extractSettingsFromStory(story);
+  }, [story.id, extractSettingsFromStory]); // Dépendre seulement de l'ID de l'histoire
   
-  // Configuration du formulaire avec les valeurs initiales
+  // Configuration du formulaire avec les valeurs initiales mémorisées
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
