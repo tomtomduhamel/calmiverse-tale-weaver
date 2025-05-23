@@ -11,13 +11,13 @@ interface UseAutoScrollProps {
 type ScrollStatus = 'idle' | 'running' | 'paused';
 
 export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) => {
-  // État simplifié avec une enum claire
+  // État du défilement
   const [scrollStatus, setScrollStatus] = useState<ScrollStatus>('idle');
   
-  // Gestion de l'état manuel (utilisé pour les reprises automatiques)
+  // État de pause manuelle 
   const [isManuallyPaused, setIsManuallyPaused] = useState(false);
   
-  // Références pour gérer le défilement
+  // Références pour le défilement
   const animationFrameRef = useRef<number | null>(null);
   const scrollStartTimeRef = useRef<number | null>(null);
   const scrollStartPositionRef = useRef<number>(0);
@@ -29,10 +29,10 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
   const autoScrollEnabled = userSettings?.readingPreferences?.backgroundMusicEnabled !== false && 
                             userSettings?.readingPreferences?.autoScrollEnabled !== false;
   
-  // Constantes de configuration du défilement
-  const SCROLL_SPEED_FACTOR = 0.08; // pixels par mot
+  // Constante de vitesse
+  const SCROLL_SPEED_FACTOR = 0.08;
   
-  // Fonction pour obtenir l'élément viewport
+  // Obtenir l'élément viewport
   const getViewportElement = useCallback(() => {
     if (!scrollAreaRef.current) return null;
     
@@ -45,26 +45,28 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     return viewportEl;
   }, [scrollAreaRef]);
   
-  // Calcule la vitesse de défilement en pixels/seconde
+  // Calculer la vitesse de défilement
   const calculateScrollSpeed = useCallback(() => {
-    // Convertir la vitesse de mots/minute en pixels/seconde
     const wordsPerSecond = readingSpeed / 60;
-    const pixelsPerSecond = wordsPerSecond * SCROLL_SPEED_FACTOR * 100; // Ajustement pour une vitesse plus naturelle
+    const pixelsPerSecond = wordsPerSecond * SCROLL_SPEED_FACTOR * 100;
     
-    return Math.max(10, Math.min(200, pixelsPerSecond)); // Limites de vitesse pour éviter les extrêmes
+    return Math.max(10, Math.min(200, pixelsPerSecond));
   }, [readingSpeed]);
   
-  // Démarrer le défilement automatique
+  // Démarrer le défilement
   const startAutoScroll = useCallback(() => {
     const viewportEl = getViewportElement();
-    if (!viewportEl || scrollStatus === 'running') return;
+    if (!viewportEl) return;
     
-    // Récupérer les dimensions actuelles
+    // Si déjà en cours de défilement, ne rien faire
+    if (scrollStatus === 'running') return;
+    
+    // Récupérer les dimensions
     const contentHeight = viewportEl.scrollHeight;
     const viewportHeight = viewportEl.clientHeight;
     const maxScrollPosition = contentHeight - viewportHeight;
     
-    // Si on est déjà en bas, ne pas démarrer
+    // Si déjà en bas, ne pas démarrer
     if (viewportEl.scrollTop >= maxScrollPosition - 10) {
       console.log("Auto-scroll: Already at the bottom, not starting");
       return;
@@ -75,21 +77,21 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     lastScrollTimeRef.current = Date.now();
     scrollStartPositionRef.current = viewportEl.scrollTop;
     
-    // Activer le comportement de défilement fluide
+    // Activer le défilement fluide
     viewportEl.style.scrollBehavior = 'smooth';
     
-    // Mettre à jour l'état de défilement
+    // Mettre à jour l'état
     setScrollStatus('running');
     setIsManuallyPaused(false);
     
-    // Calculer la vitesse de défilement
+    // Calculer la vitesse
     const pixelsPerSecond = calculateScrollSpeed();
     console.log(`Auto-scroll: Starting with speed ${pixelsPerSecond.toFixed(2)} pixels/second`);
     
-    // Fonction de défilement basée sur le temps
+    // Fonction de défilement
     const performScroll = (timestamp: number) => {
       const viewportEl = getViewportElement();
-      if (!viewportEl || scrollStatus !== 'running') {
+      if (!viewportEl) {
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
           animationFrameRef.current = null;
@@ -97,12 +99,21 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
         return;
       }
       
-      // Calculer le temps écoulé depuis la dernière mise à jour
+      // Vérifier si on est toujours en mode défilement
+      if (scrollStatus !== 'running') {
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+        return;
+      }
+      
+      // Calculer le temps écoulé
       const currentTime = Date.now();
       const lastScrollTime = lastScrollTimeRef.current || currentTime;
       const timeElapsedSinceLastScroll = currentTime - lastScrollTime;
       
-      // Mettre à jour la position de défilement
+      // Mettre à jour la position
       const pixelsToScroll = (pixelsPerSecond * timeElapsedSinceLastScroll) / 1000;
       const newScrollTop = Math.min(
         viewportEl.scrollTop + pixelsToScroll,
@@ -129,7 +140,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     
   }, [getViewportElement, calculateScrollSpeed, scrollStatus]);
   
-  // Arrêter complètement le défilement
+  // Arrêter le défilement
   const stopAutoScroll = useCallback(() => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -140,7 +151,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     scrollStartTimeRef.current = null;
     lastScrollTimeRef.current = null;
     
-    // Restaurer le comportement de défilement normal
+    // Restaurer le comportement normal
     const viewportEl = getViewportElement();
     if (viewportEl) {
       viewportEl.style.scrollBehavior = '';
@@ -150,10 +161,10 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     setScrollStatus('idle');
   }, [getViewportElement]);
   
-  // Mettre en pause le défilement
+  // Mettre en pause
   const pauseAutoScroll = useCallback(() => {
     if (scrollStatus === 'running') {
-      // Annuler l'animation en cours
+      // Annuler l'animation
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -165,13 +176,13 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     }
   }, [scrollStatus]);
   
-  // Reprendre le défilement après une pause
+  // Reprendre après pause
   const resumeAutoScroll = useCallback(() => {
     if (scrollStatus === 'paused') {
       const viewportEl = getViewportElement();
       if (!viewportEl) return;
       
-      // Mettre à jour les références pour la reprise
+      // Mettre à jour les références
       scrollStartTimeRef.current = Date.now();
       lastScrollTimeRef.current = Date.now();
       scrollStartPositionRef.current = viewportEl.scrollTop;
@@ -180,46 +191,46 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
       setScrollStatus('running');
       console.log("Auto-scroll: Resumed");
       
-      // Redémarrer avec les nouveaux paramètres
+      // Redémarrer
       startAutoScroll();
     }
   }, [scrollStatus, getViewportElement, startAutoScroll]);
   
-  // Fonction pour gérer la pause temporaire (bouton flottant)
+  // Gérer la pause temporaire
   const handlePauseScroll = useCallback(() => {
     if (scrollStatus === 'running') {
       pauseAutoScroll();
     }
   }, [scrollStatus, pauseAutoScroll]);
   
-  // Fonction pour reprendre le défilement (bouton flottant)
+  // Reprendre le défilement
   const handleResumeScroll = useCallback(() => {
     if (scrollStatus === 'paused' && !isManuallyPaused) {
       resumeAutoScroll();
     }
   }, [scrollStatus, isManuallyPaused, resumeAutoScroll]);
   
-  // Fonction pour le bouton toggle (bouton supérieur)
+  // Fonction pour le bouton toggle
   const toggleAutoScroll = useCallback(() => {
     if (scrollStatus === 'idle') {
-      // Démarrer le défilement
+      // Démarrer
       startAutoScroll();
       setIsManuallyPaused(false);
       console.log("Auto-scroll: Started manually");
     } else if (scrollStatus === 'running') {
-      // Arrêter le défilement et marquer comme pause manuelle
+      // Arrêter et marquer comme pause manuelle
       stopAutoScroll();
       setIsManuallyPaused(true);
       console.log("Auto-scroll: Stopped manually");
     } else if (scrollStatus === 'paused') {
-      // Si en pause, reprendre ou arrêter selon l'état de pause manuelle
+      // Gérer la reprise selon l'état de pause
       if (isManuallyPaused) {
-        // Si c'était une pause manuelle, on redémarre
+        // Redémarrer après pause manuelle
         setIsManuallyPaused(false);
         startAutoScroll();
         console.log("Auto-scroll: Restarted after manual pause");
       } else {
-        // Sinon on arrête complètement
+        // Arrêter complètement
         stopAutoScroll();
         setIsManuallyPaused(false);
         console.log("Auto-scroll: Stopped from pause state");
@@ -227,12 +238,11 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     }
   }, [scrollStatus, isManuallyPaused, startAutoScroll, stopAutoScroll]);
   
-  // Démarrer automatiquement le défilement si activé dans les préférences
-  // et que le défilement n'a pas été arrêté manuellement
+  // Démarrer automatiquement si activé
   useEffect(() => {
     if (autoScrollEnabled && scrollStatus === 'idle' && !isManuallyPaused) {
       console.log("Auto-scroll: Auto-enabling from preferences");
-      // Attendre un peu pour permettre au contenu de se charger complètement
+      // Attendre un peu pour charger le contenu
       const timer = setTimeout(() => {
         startAutoScroll();
       }, 1500);
@@ -241,7 +251,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     }
   }, [autoScrollEnabled, scrollStatus, isManuallyPaused, startAutoScroll]);
   
-  // Nettoyer les animations lors du démontage
+  // Nettoyer les animations
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) {
