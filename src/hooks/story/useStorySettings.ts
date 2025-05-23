@@ -29,11 +29,11 @@ export const useStorySettings = () => {
         const potentialCharacters = storyText.match(characterRegex) || [];
         
         // Compter les occurrences de chaque nom
-        const characterOccurrences = potentialCharacters.reduce((acc: Record<string, number>, name: string) => {
-          if (!acc[name]) acc[name] = 0;
-          acc[name]++;
-          return acc;
-        }, {});
+        const characterOccurrences: Record<string, number> = {};
+        potentialCharacters.forEach(name => {
+          if (!characterOccurrences[name]) characterOccurrences[name] = 0;
+          characterOccurrences[name]++;
+        });
         
         // Filtrer pour ne garder que les noms qui apparaissent plusieurs fois (probablement des personnages)
         const characters = Object.entries(characterOccurrences)

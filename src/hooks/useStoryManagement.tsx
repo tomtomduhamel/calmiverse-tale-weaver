@@ -113,13 +113,13 @@ export const useStoryManagement = () => {
       console.log("[useStoryManagement] DEBUG: Demande de régénération d'histoire avec paramètres:", settings);
       
       // Mettre à jour le statut de l'histoire dans la base de données
-      await updateStoryStatus(storyId, 'regenerating');
+      await updateStoryStatus(storyId, 'regenerating' as any);
       
       // Si c'est l'histoire courante, mettre à jour son statut localement
       if (currentStory && currentStory.id === storyId) {
         setCurrentStory(prevStory => {
           if (!prevStory) return null;
-          return { ...prevStory, status: 'regenerating', settings };
+          return { ...prevStory, status: 'regenerating' as any, settings };
         });
       }
       
@@ -142,7 +142,7 @@ export const useStoryManagement = () => {
       
       // En cas d'erreur, remettre l'histoire à son statut précédent
       if (currentStory && currentStory.id === storyId) {
-        await updateStoryStatus(storyId, currentStory.status);
+        await updateStoryStatus(storyId, currentStory.status as any);
       }
       
       return false;

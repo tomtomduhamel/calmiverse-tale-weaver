@@ -1,4 +1,3 @@
-
 import { 
   corsHeaders, 
   initializeOpenAI, 
@@ -7,7 +6,7 @@ import {
   fetchStoryDataFromDb,
   updateStoryInDb
 } from "../_shared/story-utils.ts";
-import { selectSoundForObjective } from "../generateStory/sound-utils.ts";
+import { selectSoundForObjective } from "./sound-utils.ts";
 
 export { corsHeaders };
 
