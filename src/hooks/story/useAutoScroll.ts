@@ -1,51 +1,31 @@
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useUserSettings } from "@/hooks/settings/useUserSettings";
+import { useAutoScrollState } from "./useAutoScrollState";
+import { useScrollDomUtils } from "./scrollDomUtils";
+import { calculateScrollSpeed, calculateScrollMetrics, calculateTargetPosition } from "./scrollCalculations";
 
 interface UseAutoScrollProps {
   wordCount: number;
   scrollAreaRef: React.RefObject<HTMLDivElement>;
 }
 
-type ScrollStatus = 'idle' | 'running' | 'paused';
-
 export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) => {
-  const [scrollStatus, setScrollStatus] = useState<ScrollStatus>('idle');
-  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
-  
-  // Références pour le défilement
-  const animationFrameRef = useRef<number | null>(null);
-  const scrollStatusRef = useRef<ScrollStatus>('idle');
-  
-  // Mettre à jour la référence quand l'état change
-  useEffect(() => {
-    scrollStatusRef.current = scrollStatus;
-  }, [scrollStatus]);
+  const {
+    scrollStatus,
+    setScrollStatus,
+    isManuallyPaused,
+    setIsManuallyPaused,
+    animationFrameRef,
+    scrollStatusRef
+  } = useAutoScrollState();
+
+  const { getViewportElement, scrollToPosition } = useScrollDomUtils(scrollAreaRef);
   
   // Récupération des paramètres utilisateur
   const { userSettings } = useUserSettings();
   const readingSpeed = userSettings?.readingPreferences?.readingSpeed || 125;
   const autoScrollEnabled = userSettings?.readingPreferences?.autoScrollEnabled !== false;
-  
-  // Obtenir l'élément viewport
-  const getViewportElement = useCallback(() => {
-    if (!scrollAreaRef.current) return null;
-    
-    const viewportEl = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
-    if (!viewportEl) {
-      console.warn("Viewport element not found for auto-scroll");
-      return null;
-    }
-    
-    return viewportEl;
-  }, [scrollAreaRef]);
-  
-  // Calculer la vitesse de défilement en pixels par seconde
-  const calculateScrollSpeed = useCallback(() => {
-    const wordsPerSecond = readingSpeed / 60;
-    const pixelsPerSecond = wordsPerSecond * 2; // 2 pixels par mot
-    return Math.max(10, Math.min(100, pixelsPerSecond));
-  }, [readingSpeed]);
   
   // Démarrer le défilement
   const startAutoScroll = useCallback(() => {
@@ -54,11 +34,9 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     
     if (scrollStatusRef.current === 'running') return;
     
-    const contentHeight = viewportEl.scrollHeight;
-    const viewportHeight = viewportEl.clientHeight;
-    const maxScrollPosition = contentHeight - viewportHeight;
+    const { maxScrollPosition, isAtBottom } = calculateScrollMetrics(viewportEl);
     
-    if (viewportEl.scrollTop >= maxScrollPosition - 10) {
+    if (isAtBottom) {
       console.log("Auto-scroll: Already at the bottom, not starting");
       return;
     }
@@ -66,7 +44,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     setScrollStatus('running');
     setIsManuallyPaused(false);
     
-    const pixelsPerSecond = calculateScrollSpeed();
+    const pixelsPerSecond = calculateScrollSpeed(readingSpeed);
     const startTime = Date.now();
     const startPosition = viewportEl.scrollTop;
     
@@ -91,28 +69,23 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
         return;
       }
       
-      const currentTime = Date.now();
-      const elapsed = (currentTime - startTime) / 1000; // en secondes
-      const targetPosition = startPosition + (pixelsPerSecond * elapsed);
-      
-      const contentHeight = viewportEl.scrollHeight;
-      const viewportHeight = viewportEl.clientHeight;
-      const maxScrollPosition = contentHeight - viewportHeight;
+      const targetPosition = calculateTargetPosition(startPosition, pixelsPerSecond, startTime);
+      const { maxScrollPosition } = calculateScrollMetrics(viewportEl);
       
       if (targetPosition >= maxScrollPosition) {
-        viewportEl.scrollTop = maxScrollPosition;
+        scrollToPosition(maxScrollPosition);
         console.log("Auto-scroll: Reached the end");
         setScrollStatus('idle');
         return;
       }
       
-      viewportEl.scrollTop = targetPosition;
+      scrollToPosition(targetPosition);
       animationFrameRef.current = requestAnimationFrame(performScroll);
     };
     
     animationFrameRef.current = requestAnimationFrame(performScroll);
     
-  }, [getViewportElement, calculateScrollSpeed]);
+  }, [getViewportElement, readingSpeed, scrollStatusRef, setScrollStatus, setIsManuallyPaused, animationFrameRef, scrollToPosition]);
   
   // Arrêter le défilement
   const stopAutoScroll = useCallback(() => {
@@ -123,7 +96,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     
     setScrollStatus('idle');
     console.log("Auto-scroll: Stopped");
-  }, []);
+  }, [animationFrameRef, setScrollStatus]);
   
   // Mettre en pause
   const pauseAutoScroll = useCallback(() => {
@@ -136,7 +109,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
       setScrollStatus('paused');
       console.log("Auto-scroll: Paused");
     }
-  }, []);
+  }, [scrollStatusRef, animationFrameRef, setScrollStatus]);
   
   // Reprendre après pause
   const resumeAutoScroll = useCallback(() => {
@@ -145,7 +118,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
       console.log("Auto-scroll: Resumed");
       startAutoScroll();
     }
-  }, [startAutoScroll]);
+  }, [scrollStatusRef, setScrollStatus, startAutoScroll]);
   
   // Fonction pour le bouton toggle
   const toggleAutoScroll = useCallback(() => {
@@ -166,7 +139,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
         console.log("Auto-scroll: Stopped from pause state");
       }
     }
-  }, [isManuallyPaused, startAutoScroll, stopAutoScroll]);
+  }, [isManuallyPaused, startAutoScroll, stopAutoScroll, scrollStatusRef, setIsManuallyPaused]);
   
   // Démarrer automatiquement si activé
   useEffect(() => {
@@ -179,15 +152,6 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
       return () => clearTimeout(timer);
     }
   }, [autoScrollEnabled, scrollStatus, isManuallyPaused, startAutoScroll]);
-  
-  // Nettoyer les animations
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
   
   return {
     isAutoScrolling: scrollStatus === 'running',
