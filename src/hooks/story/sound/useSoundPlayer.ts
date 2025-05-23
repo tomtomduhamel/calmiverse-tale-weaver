@@ -25,66 +25,110 @@ export const useSoundPlayer = ({
   // Charger et configurer l'audio lorsque les détails du son sont disponibles
   useEffect(() => {
     const setupAudio = async () => {
+      console.log("🔄 Configuration audio - musicEnabled:", musicEnabled, "soundDetails:", soundDetails?.file_path);
+      
       // Si la musique est désactivée ou pas de détails de son, ne rien faire
       if (!musicEnabled || !soundDetails || !soundDetails.file_path) {
+        console.log("🔄 Nettoyage audio - conditions non remplies");
         if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current.src = '';
+          setIsPlaying(false);
         }
         return;
       }
 
       try {
+        setError(null);
+        
         // Précharger l'audio
         console.log(`🔄 Préchargement du fichier audio: ${soundDetails.file_path}`);
+        
+        // Obtenir l'URL publique du fichier
         const { data: publicUrl } = supabase.storage
           .from('story_sounds')
           .getPublicUrl(soundDetails.file_path);
           
         if (!publicUrl || !publicUrl.publicUrl) {
-          console.error(`❌ Impossible d'obtenir l'URL publique pour: ${soundDetails.file_path}`);
-          setError(`URL inaccessible: ${soundDetails.file_path}`);
+          const errorMsg = `Impossible d'obtenir l'URL publique pour: ${soundDetails.file_path}`;
+          console.error(`❌ ${errorMsg}`);
+          setError(errorMsg);
           return;
         }
         
         console.log(`✅ URL audio obtenue: ${publicUrl.publicUrl}`);
         
-        // Créer l'élément audio si nécessaire
+        // Créer ou réutiliser l'élément audio
         if (!audioRef.current) {
-          audioRef.current = new Audio(publicUrl.publicUrl);
+          console.log("🔄 Création d'un nouvel élément audio");
+          audioRef.current = new Audio();
           audioRef.current.loop = true;  // Lecture en boucle
-          audioRef.current.volume = 0.5; // Volume à 50%
+          audioRef.current.volume = 0.3; // Volume à 30% pour être moins intrusif
+          audioRef.current.crossOrigin = "anonymous"; // Pour éviter les problèmes CORS
           
           // Ajouter des écouteurs d'événements pour le débogage
+          audioRef.current.addEventListener('loadstart', () => {
+            console.log('🔄 Début du chargement audio');
+          });
+          
+          audioRef.current.addEventListener('canplay', () => {
+            console.log('✅ Audio prêt à être lu');
+          });
+          
           audioRef.current.addEventListener('canplaythrough', () => {
-            console.log('✅ Audio prêt à être lu entièrement sans mise en mémoire tampon.');
+            console.log('✅ Audio prêt à être lu entièrement sans mise en mémoire tampon');
           });
           
           audioRef.current.addEventListener('error', (e) => {
-            const error = e.currentTarget as HTMLAudioElement;
-            console.error('❌ Erreur de lecture audio:', error.error);
-            setError(`Erreur de lecture: ${error.error ? error.error.message : 'Erreur inconnue'}`);
+            const audioElement = e.currentTarget as HTMLAudioElement;
+            const errorMsg = audioElement.error ? 
+              `Erreur audio ${audioElement.error.code}: ${audioElement.error.message}` : 
+              'Erreur audio inconnue';
+            console.error('❌ Erreur de lecture audio:', errorMsg);
+            setError(errorMsg);
+            setIsPlaying(false);
           });
-        } else {
+          
+          audioRef.current.addEventListener('ended', () => {
+            console.log('🔄 Lecture audio terminée');
+            setIsPlaying(false);
+          });
+          
+          audioRef.current.addEventListener('pause', () => {
+            console.log('⏸️ Audio mis en pause');
+            setIsPlaying(false);
+          });
+          
+          audioRef.current.addEventListener('play', () => {
+            console.log('▶️ Audio en cours de lecture');
+            setIsPlaying(true);
+          });
+        }
+        
+        // Définir la source audio
+        if (audioRef.current.src !== publicUrl.publicUrl) {
+          console.log("🔄 Mise à jour de la source audio");
           audioRef.current.src = publicUrl.publicUrl;
+          
+          // Précharger le fichier
+          audioRef.current.load();
         }
         
         // Démarrer la lecture automatiquement si requis
-        if (autoPlay) {
+        if (autoPlay && audioRef.current.readyState >= 2) { // HAVE_CURRENT_DATA
           console.log('🔄 Tentative de lecture automatique...');
-          audioRef.current.play()
-            .then(() => {
-              console.log('✅ Lecture automatique démarrée');
-              setIsPlaying(true);
-            })
-            .catch(err => {
-              console.error('❌ Erreur de lecture automatique:', err);
-              setError(`Erreur lecture auto: ${err.message}`);
-            });
+          try {
+            await audioRef.current.play();
+            console.log('✅ Lecture automatique démarrée');
+            setIsPlaying(true);
+          } catch (playError) {
+            console.error('❌ Erreur de lecture automatique:', playError);
+            setError(`Lecture auto impossible: ${playError instanceof Error ? playError.message : String(playError)}`);
+          }
         }
       } catch (error: any) {
         console.error('❌ Erreur de configuration audio:', error);
-        setError(`Erreur de configuration: ${error.message || 'Erreur inconnue'}`);
+        setError(`Configuration échouée: ${error.message || 'Erreur inconnue'}`);
       }
     };
 
@@ -96,36 +140,48 @@ export const useSoundPlayer = ({
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
-        audioRef.current = null;
+        setIsPlaying(false);
       }
     };
   }, [soundDetails, autoPlay, musicEnabled]);
 
   // Méthode pour basculer la lecture
-  const togglePlay = useCallback(() => {
-    if (!audioRef.current || !musicEnabled) return;
+  const togglePlay = useCallback(async () => {
+    if (!audioRef.current || !musicEnabled) {
+      console.log("❌ Impossible de basculer la lecture - audio non disponible ou musique désactivée");
+      return;
+    }
     
     console.log(`🔄 Bascule de lecture - État actuel: ${isPlaying ? 'En lecture' : 'En pause'}`);
     
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-      console.log('⏸️ Lecture mise en pause');
-    } else {
-      audioRef.current.play()
-        .then(() => {
-          setIsPlaying(true);
-          console.log('▶️ Lecture démarrée');
-        })
-        .catch(err => {
-          console.error('❌ Erreur de lecture:', err);
-          setError(`Erreur de lecture: ${err.message}`);
-          toast({
-            title: 'Erreur',
-            description: 'Impossible de lire le fond sonore',
-            variant: 'destructive',
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+        console.log('⏸️ Lecture mise en pause');
+      } else {
+        // Vérifier si l'audio est prêt avant de jouer
+        if (audioRef.current.readyState < 2) {
+          console.log('🔄 Audio pas encore prêt, attente...');
+          await new Promise((resolve) => {
+            const onCanPlay = () => {
+              audioRef.current?.removeEventListener('canplay', onCanPlay);
+              resolve(void 0);
+            };
+            audioRef.current?.addEventListener('canplay', onCanPlay);
           });
-        });
+        }
+        
+        await audioRef.current.play();
+        console.log('▶️ Lecture démarrée');
+      }
+    } catch (err: any) {
+      console.error('❌ Erreur de lecture/pause:', err);
+      setError(`Erreur de lecture: ${err.message || 'Erreur inconnue'}`);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de lire le fond sonore',
+        variant: 'destructive',
+      });
     }
   }, [isPlaying, musicEnabled, toast]);
 

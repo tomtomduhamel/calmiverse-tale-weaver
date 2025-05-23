@@ -1,25 +1,39 @@
 
-import React from 'react';
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { TextToSpeech } from "./TextToSpeech";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { 
+  Minus, 
+  Plus, 
+  Moon, 
+  Sun, 
+  Share2, 
+  BookOpen, 
+  Play, 
+  Pause,
+  Volume2
+} from "lucide-react";
+import type { Story } from "@/types/story";
+import { ShareStoryDialog } from "./ShareStoryDialog";
+import { useState } from "react";
 import { FontControls } from "./reader/FontControls";
 import { ThemeToggle } from "./reader/ThemeToggle";
-import { AutoScrollControl } from "./reader/AutoScrollControl";
-import { MarkAsReadButton } from "./reader/MarkAsReadButton";
 import { UtilityButtons } from "./reader/UtilityButtons";
-import { BackgroundSoundButton } from "./reader/BackgroundSoundButton";
+import { MarkAsReadButton } from "./reader/MarkAsReadButton";
+import { AutoScrollControl } from "./reader/AutoScrollControl";
+import BackgroundSoundButton from "./reader/BackgroundSoundButton";
 
 interface ReaderControlsProps {
   fontSize: number;
   setFontSize: (size: number) => void;
   isDarkMode: boolean;
-  setIsDarkMode: (isDark: boolean) => void;
+  setIsDarkMode: (dark: boolean) => void;
   storyId: string;
   title: string;
-  story: any;
+  story: Story;
   setShowReadingGuide: (show: boolean) => void;
-  onMarkAsRead?: () => void;
-  isRead?: boolean;
+  onMarkAsRead: (storyId: string) => Promise<boolean>;
+  isRead: boolean;
   isAutoScrolling?: boolean;
   onToggleAutoScroll?: () => void;
   autoScrollEnabled?: boolean;
@@ -37,69 +51,72 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   story,
   setShowReadingGuide,
   onMarkAsRead,
-  isRead = false,
-  isAutoScrolling = false,
+  isRead,
+  isAutoScrolling,
   onToggleAutoScroll,
-  autoScrollEnabled = false,
-  isUpdatingReadStatus = false,
-  isManuallyPaused = false,
+  autoScrollEnabled,
+  isUpdatingReadStatus,
+  isManuallyPaused
 }) => {
-  const buttonStyle = isDarkMode 
-    ? "border-gray-600 text-white hover:bg-gray-700" 
-    : "";
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   return (
-    <div className="space-x-2 flex items-center flex-wrap gap-2">
-      {/* Contrôles de la taille de police */}
-      <FontControls 
-        fontSize={fontSize} 
-        setFontSize={setFontSize}
-        isDarkMode={isDarkMode} 
-      />
-      
-      {/* Bascule du thème clair/sombre */}
-      <ThemeToggle 
-        isDarkMode={isDarkMode} 
-        setIsDarkMode={setIsDarkMode} 
-      />
-      
-      {/* Bouton de fond sonore */}
-      <BackgroundSoundButton
-        soundId={story.sound_id}
-        storyObjective={story.objective}
-        isDarkMode={isDarkMode}
-      />
-      
-      {/* Bouton de lecture à haute voix */}
-      <TextToSpeech text={story.story_text} isDarkMode={isDarkMode} />
-      
-      {/* Bouton de défilement automatique */}
-      {autoScrollEnabled && onToggleAutoScroll && (
-        <AutoScrollControl
-          isAutoScrolling={isAutoScrolling}
-          isManuallyPaused={isManuallyPaused}
-          onToggleAutoScroll={onToggleAutoScroll}
+    <TooltipProvider>
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Contrôles de police */}
+        <FontControls 
+          fontSize={fontSize}
+          setFontSize={setFontSize}
           isDarkMode={isDarkMode}
         />
-      )}
-      
-      {/* Bouton Marquer comme lu */}
-      {onMarkAsRead && (
-        <MarkAsReadButton
+        
+        {/* Toggle thème */}
+        <ThemeToggle 
+          isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
+        />
+        
+        {/* Fond sonore */}
+        <BackgroundSoundButton 
+          soundId={story.sound_id}
+          storyObjective={typeof story.objective === 'string' ? story.objective : story.objective?.value}
+          isDarkMode={isDarkMode}
+          autoPlay={false}
+        />
+        
+        {/* Contrôle de défilement automatique */}
+        {autoScrollEnabled && (
+          <AutoScrollControl
+            isAutoScrolling={isAutoScrolling || false}
+            onToggleAutoScroll={onToggleAutoScroll}
+            isDarkMode={isDarkMode}
+            isManuallyPaused={isManuallyPaused}
+          />
+        )}
+        
+        {/* Boutons utilitaires */}
+        <UtilityButtons 
+          setShowReadingGuide={setShowReadingGuide}
+          setShowShareDialog={setShowShareDialog}
+          isDarkMode={isDarkMode}
+        />
+        
+        {/* Bouton marquer comme lu */}
+        <MarkAsReadButton 
+          storyId={storyId}
           onMarkAsRead={onMarkAsRead}
           isRead={isRead}
-          isUpdatingReadStatus={isUpdatingReadStatus}
           isDarkMode={isDarkMode}
+          isUpdating={isUpdatingReadStatus}
         />
-      )}
-      
-      {/* Boutons utilitaires (partage et guide) */}
-      <UtilityButtons
-        storyId={storyId}
-        title={title}
-        setShowReadingGuide={setShowReadingGuide}
-        isDarkMode={isDarkMode}
-      />
-    </div>
+        
+        {/* Dialog de partage */}
+        <ShareStoryDialog 
+          story={story}
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+        />
+      </div>
+    </TooltipProvider>
   );
 };
