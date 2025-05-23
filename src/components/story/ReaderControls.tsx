@@ -14,7 +14,6 @@ import {
   Volume2
 } from "lucide-react";
 import type { Story } from "@/types/story";
-import { ShareStoryDialog } from "./ShareStoryDialog";
 import { useState } from "react";
 import { FontControls } from "./reader/FontControls";
 import { ThemeToggle } from "./reader/ThemeToggle";
@@ -58,8 +57,6 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   isUpdatingReadStatus,
   isManuallyPaused
 }) => {
-  const [showShareDialog, setShowShareDialog] = useState(false);
-
   return (
     <TooltipProvider>
       <div className="flex items-center gap-2 flex-wrap">
@@ -97,8 +94,9 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
         {/* Boutons utilitaires */}
         <UtilityButtons 
           setShowReadingGuide={setShowReadingGuide}
-          setShowShareDialog={setShowShareDialog}
           isDarkMode={isDarkMode}
+          storyId={storyId}
+          title={title}
         />
         
         {/* Bouton marquer comme lu */}
@@ -107,14 +105,7 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
           onMarkAsRead={onMarkAsRead}
           isRead={isRead}
           isDarkMode={isDarkMode}
-          isUpdating={isUpdatingReadStatus}
-        />
-        
-        {/* Dialog de partage */}
-        <ShareStoryDialog 
-          story={story}
-          open={showShareDialog}
-          onOpenChange={setShowShareDialog}
+          isUpdatingReadStatus={isUpdatingReadStatus || false}
         />
       </div>
     </TooltipProvider>

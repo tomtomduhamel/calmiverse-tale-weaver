@@ -13,7 +13,7 @@ export const useMarkAsRead = ({ story, onMarkAsRead, setStory }: UseMarkAsReadPr
   const [isUpdatingReadStatus, setIsUpdatingReadStatus] = useState(false);
   const { toast } = useToast();
 
-  const handleMarkAsRead = useCallback(async () => {
+  const handleMarkAsRead = useCallback(async (storyId: string): Promise<boolean> => {
     if (story && onMarkAsRead) {
       try {
         // Optimistic UI update - mettre à jour l'interface avant la confirmation serveur
@@ -26,14 +26,14 @@ export const useMarkAsRead = ({ story, onMarkAsRead, setStory }: UseMarkAsReadPr
         setStory({ ...story, status: "read" as Story["status"] });
         
         // Appel API pour mettre à jour le statut côté serveur
-        const success = await onMarkAsRead(story.id);
+        const success = await onMarkAsRead(storyId);
         
         if (success) {
           toast({
             title: "Histoire marquée comme lue",
             description: "Le statut de l'histoire a été mis à jour"
           });
-          // Pas besoin de mettre à jour le state ici car on l'a déjà fait de manière optimiste
+          return true;
         } else {
           // En cas d'échec, restaurer l'état précédent
           setStory({ ...story, status: originalStatus });
@@ -43,6 +43,7 @@ export const useMarkAsRead = ({ story, onMarkAsRead, setStory }: UseMarkAsReadPr
             description: "Impossible de marquer l'histoire comme lue",
             variant: "destructive"
           });
+          return false;
         }
       } catch (error) {
         console.error("Error marking story as read:", error);
@@ -56,10 +57,12 @@ export const useMarkAsRead = ({ story, onMarkAsRead, setStory }: UseMarkAsReadPr
           description: "Une erreur s'est produite lors de la mise à jour",
           variant: "destructive"
         });
+        return false;
       } finally {
         setIsUpdatingReadStatus(false);
       }
     }
+    return false;
   }, [story, onMarkAsRead, setStory, toast]);
 
   return {

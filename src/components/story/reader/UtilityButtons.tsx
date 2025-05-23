@@ -5,17 +5,17 @@ import { Share2, BookOpen } from "lucide-react";
 import { ShareStoryDialog } from "../ShareStoryDialog";
 
 interface UtilityButtonsProps {
-  storyId: string;
-  title: string;
   setShowReadingGuide: (show: boolean) => void;
   isDarkMode: boolean;
+  storyId: string;
+  title: string;
 }
 
 export const UtilityButtons: React.FC<UtilityButtonsProps> = ({
-  storyId,
-  title,
   setShowReadingGuide,
-  isDarkMode
+  isDarkMode,
+  storyId,
+  title
 }) => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   
