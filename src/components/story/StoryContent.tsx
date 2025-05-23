@@ -16,9 +16,32 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 }) => {
   const textColor = isDarkMode ? 'text-white' : 'text-gray-900';
   
+  // Si l'histoire est en cours de régénération, afficher un indicateur
+  if (story.status === 'regenerating') {
+    return (
+      <div className={`prose max-w-none ${textColor} transition-all animate-pulse`} 
+           style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+          <h3 className="text-lg font-medium">Régénération de l'histoire en cours...</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Nous actualisons l'histoire avec les nouveaux paramètres.
+          </p>
+        </div>
+        
+        {/* Afficher le texte existant mais avec une opacité réduite */}
+        <div className="opacity-30">
+          <ReactMarkdown>
+            {story.story_text}
+          </ReactMarkdown>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div 
-      className={`prose max-w-none ${textColor} transition-all`}
+      className={`prose max-w-none ${textColor} transition-all duration-700`}
       style={{ 
         fontSize: `${fontSize}px`,
         lineHeight: 1.6

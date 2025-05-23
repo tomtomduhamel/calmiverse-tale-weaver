@@ -8,7 +8,7 @@ export interface Story {
   childrenIds: string[];
   childrenNames?: string[];
   createdAt: Date;
-  status: 'pending' | 'ready' | 'read' | 'error';
+  status: 'pending' | 'ready' | 'read' | 'error' | 'regenerating';
   story_text: string;
   story_summary: string;
   authorId?: string;
@@ -37,10 +37,29 @@ export interface Story {
   isFavorite?: boolean;
   updatedAt?: Date;
   sound_id?: string | null;
+  settings?: StorySettings;
 }
 
 export interface Objective {
   id: string;
   label: string;
   value: string;
+}
+
+export interface StoryCharacter {
+  name: string;
+  description: string;
+}
+
+export interface StoryLocation {
+  name: string;
+  description: string;
+}
+
+export interface StorySettings {
+  characters: StoryCharacter[];
+  locations: StoryLocation[];
+  atmosphere: string;
+  theme: string;
+  additionalNotes?: string;
 }

@@ -1,6 +1,7 @@
 
 import { useCallback } from 'react';
 import { useCloudFunctionUtils } from './useCloudFunctionUtils';
+import { StorySettings } from '@/types/story';
 
 export const useStoryGeneration = () => {
   const { callCloudFunctionWithRetry } = useCloudFunctionUtils();
@@ -17,7 +18,19 @@ export const useStoryGeneration = () => {
     );
   }, [callCloudFunctionWithRetry]);
 
+  const regenerateStory = useCallback(async (
+    storyId: string,
+    settings: StorySettings
+  ) => {
+    console.log("Régénération d'histoire avec paramètres: ", { storyId, settings });
+    return await callCloudFunctionWithRetry(
+      'regenerateStory',
+      { storyId, settings }
+    );
+  }, [callCloudFunctionWithRetry]);
+
   return {
-    generateStory
+    generateStory,
+    regenerateStory
   };
 };

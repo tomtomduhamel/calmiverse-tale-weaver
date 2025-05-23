@@ -2,7 +2,8 @@
 import { useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from './stories/useStoryMutations';
-import type { Story } from '@/types/story';
+import { useStoryGeneration } from './stories/useStoryGeneration';
+import type { Story, StorySettings } from '@/types/story';
 
 export const useStoryManagement = () => {
   const { toast } = useToast();
@@ -10,6 +11,7 @@ export const useStoryManagement = () => {
   const [pendingStoryId, setPendingStoryId] = useState<string | null>(null);
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const { deleteStory, retryStoryGeneration, updateStoryStatus } = useStoryMutations();
+  const { regenerateStory } = useStoryGeneration();
 
   const handleDeleteStory = useCallback(async (storyId: string) => {
     try {
@@ -105,6 +107,48 @@ export const useStoryManagement = () => {
     }
   }, [toast]);
 
+  // Fonction pour régénérer une histoire avec des paramètres personnalisés
+  const handleRegenerateStory = useCallback(async (storyId: string, settings: StorySettings) => {
+    try {
+      console.log("[useStoryManagement] DEBUG: Demande de régénération d'histoire avec paramètres:", settings);
+      
+      // Mettre à jour le statut de l'histoire dans la base de données
+      await updateStoryStatus(storyId, 'regenerating');
+      
+      // Si c'est l'histoire courante, mettre à jour son statut localement
+      if (currentStory && currentStory.id === storyId) {
+        setCurrentStory(prevStory => {
+          if (!prevStory) return null;
+          return { ...prevStory, status: 'regenerating', settings };
+        });
+      }
+      
+      // Lancer la régénération via la fonction serverless
+      await regenerateStory(storyId, settings);
+      
+      toast({
+        title: "Régénération lancée",
+        description: "L'histoire est en cours de régénération avec les nouveaux paramètres",
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error regenerating story:", error);
+      toast({
+        title: "Erreur",
+        description: error?.message || "Une erreur est survenue lors de la régénération",
+        variant: "destructive",
+      });
+      
+      // En cas d'erreur, remettre l'histoire à son statut précédent
+      if (currentStory && currentStory.id === storyId) {
+        await updateStoryStatus(storyId, currentStory.status);
+      }
+      
+      return false;
+    }
+  }, [updateStoryStatus, currentStory, regenerateStory, toast]);
+
   // Fonction simplifiée pour ouvrir directement le lecteur d'histoire
   const openStoryReader = useCallback((story: Story) => {
     console.log("[useStoryManagement] DEBUG: Ouverture directe du lecteur pour l'histoire:", story.id);
@@ -144,6 +188,7 @@ export const useStoryManagement = () => {
     handleRetryStory,
     handleMarkAsRead,
     handleToggleFavorite,
+    handleRegenerateStory,
     isRetrying,
     pendingStoryId,
     handleStorySubmit,
