@@ -34,6 +34,7 @@ interface ReaderControlsProps {
   onMarkAsRead: (storyId: string) => Promise<boolean>;
   isRead: boolean;
   isAutoScrolling?: boolean;
+  isPaused?: boolean;
   onToggleAutoScroll?: () => void;
   autoScrollEnabled?: boolean;
   isUpdatingReadStatus?: boolean;
@@ -52,6 +53,7 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   onMarkAsRead,
   isRead,
   isAutoScrolling,
+  isPaused,
   onToggleAutoScroll,
   autoScrollEnabled,
   isUpdatingReadStatus,
@@ -85,9 +87,10 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
         {autoScrollEnabled && (
           <AutoScrollControl
             isAutoScrolling={isAutoScrolling || false}
-            onToggleAutoScroll={onToggleAutoScroll}
+            isPaused={isPaused || false}
+            isManuallyPaused={isManuallyPaused || false}
+            onToggleAutoScroll={onToggleAutoScroll || (() => {})}
             isDarkMode={isDarkMode}
-            isManuallyPaused={isManuallyPaused}
           />
         )}
         

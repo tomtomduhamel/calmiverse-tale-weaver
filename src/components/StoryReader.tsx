@@ -48,6 +48,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   // Utiliser le hook pour la gestion du défilement automatique
   const { 
     isAutoScrolling,
+    isPaused,
     isManuallyPaused,
     autoScrollEnabled,
     toggleAutoScroll,
@@ -121,7 +122,8 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             onMarkAsRead={handleMarkAsRead}
             isRead={story.status === "read"}
             isAutoScrolling={isAutoScrolling}
-            onToggleAutoScroll={autoScrollEnabled ? toggleAutoScroll : undefined}
+            isPaused={isPaused}
+            onToggleAutoScroll={toggleAutoScroll}
             autoScrollEnabled={autoScrollEnabled}
             isUpdatingReadStatus={isUpdatingReadStatus}
             isManuallyPaused={isManuallyPaused}
@@ -158,14 +160,13 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         </ScrollArea>
 
         {/* Indicateur flottant pour le défilement automatique */}
-        {autoScrollEnabled && isAutoScrolling && !isManuallyPaused && (
-          <AutoScrollIndicator
-            isAutoScrolling={isAutoScrolling}
-            onPauseScroll={handlePauseScroll}
-            onResumeScroll={handleResumeScroll}
-            isDarkMode={isDarkMode}
-          />
-        )}
+        <AutoScrollIndicator
+          isAutoScrolling={isAutoScrolling}
+          isPaused={isPaused}
+          onPauseScroll={handlePauseScroll}
+          onResumeScroll={handleResumeScroll}
+          isDarkMode={isDarkMode}
+        />
 
         <StorySummaryDialog 
           story={story}

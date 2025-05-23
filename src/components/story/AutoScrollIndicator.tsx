@@ -1,12 +1,13 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Pause } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AutoScrollIndicatorProps {
   isAutoScrolling: boolean;
+  isPaused: boolean;
   onPauseScroll: () => void;
   onResumeScroll: () => void;
   isDarkMode: boolean;
@@ -14,6 +15,7 @@ interface AutoScrollIndicatorProps {
 
 export const AutoScrollIndicator: React.FC<AutoScrollIndicatorProps> = ({
   isAutoScrolling,
+  isPaused,
   onPauseScroll,
   onResumeScroll,
   isDarkMode
@@ -23,9 +25,14 @@ export const AutoScrollIndicator: React.FC<AutoScrollIndicatorProps> = ({
   // Calculer la position bottom en fonction de la présence du menu mobile
   const bottomPosition = isMobile ? '5rem' : '2rem';
   
+  // Si l'auto-scroll n'est pas actif ou est déjà en pause, ne pas afficher l'indicateur
+  if (!isAutoScrolling || isPaused) {
+    return null;
+  }
+  
   return (
     <div 
-      className={`fixed right-8 z-50 transition-opacity duration-300 opacity-70 hover:opacity-100`}
+      className={`fixed right-8 z-50 transition-all duration-300 opacity-70 hover:opacity-100 animate-fade-in`}
       style={{ bottom: bottomPosition }}
     >
       <TooltipProvider>
