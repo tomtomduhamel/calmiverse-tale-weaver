@@ -7,7 +7,7 @@ import { TestTube, Zap, CheckCircle, XCircle } from "lucide-react";
 import { useConnectionTest } from "@/hooks/stories/useConnectionTest";
 
 export const ConnectionTestPanel: React.FC = () => {
-  const { testConnection, testGenerateStoryDirect, isTestingtConnection, lastTestResult } = useConnectionTest();
+  const { testConnection, testGenerateStoryDirect, isTesting, lastTestResult } = useConnectionTest();
 
   return (
     <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-900/20">
@@ -21,7 +21,7 @@ export const ConnectionTestPanel: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Button 
             onClick={testConnection}
-            disabled={isTestingtConnection}
+            disabled={isTesting}
             className="w-full"
             variant="outline"
           >
@@ -31,7 +31,7 @@ export const ConnectionTestPanel: React.FC = () => {
           
           <Button 
             onClick={testGenerateStoryDirect}
-            disabled={isTestingtConnection}
+            disabled={isTesting}
             className="w-full"
             variant="outline"
           >
