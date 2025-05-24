@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { RefreshCw, AlertTriangle, CheckCircle, Clock, Bug } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
+import ConnectionTestPanel from "./ConnectionTestPanel";
 import type { Story } from "@/types/story";
 
 interface DiagnosticInfo {
