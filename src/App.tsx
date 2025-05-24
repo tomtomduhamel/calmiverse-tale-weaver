@@ -1,3 +1,4 @@
+
 import React, { Suspense, useEffect, useState } from 'react';
 import {
   BrowserRouter as Router,
@@ -75,6 +76,7 @@ function App() {
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/test-connection" element={<TestConnection />} />
               <Route path="/shared-story" element={<SharedStory />} />
+              <Route path="/diagnostic" element={<DiagnosticConnection />} />
             </Route>
 
             <Route element={<PrivateRoute />}>
@@ -87,7 +89,6 @@ function App() {
             </Route>
             
             <Route path="*" element={<NotFound />} />
-            <Route path="/diagnostic" element={<DiagnosticConnection />} />
           </Routes>
         </Router>
         <Toaster />
