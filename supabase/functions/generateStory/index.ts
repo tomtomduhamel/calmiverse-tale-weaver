@@ -5,41 +5,67 @@ import {
   handleOptionsRequest,
   parseRequestBody,
   generateStoryContent,
-  validateAndPrepareData,
-  returnExistingStory
 } from "./utils.ts";
 
 serve(async (req) => {
+  console.log(`🔥 [generateStory] ${req.method} ${req.url} à ${new Date().toISOString()}`);
+  console.log(`📡 [generateStory] Headers:`, Object.fromEntries(req.headers.entries()));
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('✅ [generateStory] Réponse OPTIONS/CORS');
     return handleOptionsRequest();
   }
 
+  if (req.method !== 'POST') {
+    console.error(`❌ [generateStory] Méthode non autorisée: ${req.method}`);
+    return new Response(
+      JSON.stringify({ error: 'Méthode non autorisée' }),
+      { 
+        status: 405, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
   try {
-    // Parse request body and extract required parameters
+    console.log('📥 [generateStory] Lecture du corps de la requête...');
     const requestBody = await parseRequestBody(req);
-    console.log("Requête reçue pour la génération d'histoire:", requestBody);
+    console.log("📋 [generateStory] Corps de la requête:", JSON.stringify(requestBody, null, 2));
     
     // Extract the storyId which is mandatory
-    const { storyId } = requestBody;
+    const { storyId, objective, childrenNames } = requestBody;
+    
     if (!storyId) {
+      console.error('❌ [generateStory] storyId manquant');
       throw new Error("ID d'histoire manquant dans la requête");
     }
     
-    // Extract optional parameters
-    let { objective, childrenNames } = requestBody;
+    console.log(`🎯 [generateStory] Traitement pour histoire ID: ${storyId}`);
+    console.log(`🎯 [generateStory] Objectif: ${objective}`);
+    console.log(`🎯 [generateStory] Enfants: ${childrenNames?.join(', ')}`);
     
     // Process the story generation request
-    return await generateStoryContent(storyId, objective, childrenNames);
+    const result = await generateStoryContent(storyId, objective, childrenNames);
+    
+    console.log('✅ [generateStory] Génération terminée avec succès');
+    return result;
+    
   } catch (error: any) {
-    console.error("❌ Erreur globale:", error.message, error.stack);
+    console.error("💥 [generateStory] ERREUR GLOBALE:", error.message);
+    console.error("📋 [generateStory] Stack trace:", error.stack);
+
+    const errorResponse = {
+      error: true,
+      message: error.message || "Une erreur est survenue lors de la génération de l'histoire",
+      details: error.stack ? error.stack.split("\n").slice(0, 3).join(" → ") : "Pas de détails",
+      timestamp: new Date().toISOString()
+    };
+
+    console.error("📤 [generateStory] Réponse d'erreur:", JSON.stringify(errorResponse, null, 2));
 
     return new Response(
-      JSON.stringify({
-        error: true,
-        message: error.message || "Une erreur est survenue lors de la génération de l'histoire",
-        details: error.stack ? error.stack.split("\n").slice(0, 3).join(" → ") : "Pas de détails"
-      }),
+      JSON.stringify(errorResponse),
       {
         status: 500,
         headers: {
