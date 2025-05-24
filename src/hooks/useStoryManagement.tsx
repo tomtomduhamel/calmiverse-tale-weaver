@@ -1,8 +1,8 @@
-
 import { useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryMutations } from './stories/useStoryMutations';
 import { useStoryGeneration } from './stories/useStoryGeneration';
+import { useStoryRecovery } from './stories/monitoring/useStoryRecovery';
 import type { Story, StorySettings } from '@/types/story';
 
 export const useStoryManagement = () => {
@@ -12,6 +12,7 @@ export const useStoryManagement = () => {
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const { deleteStory, retryStoryGeneration, updateStoryStatus } = useStoryMutations();
   const { regenerateStory } = useStoryGeneration();
+  const { recoverStuckStory } = useStoryRecovery();
 
   const handleDeleteStory = useCallback(async (storyId: string) => {
     try {
@@ -37,14 +38,18 @@ export const useStoryManagement = () => {
       setIsRetrying(true);
       setPendingStoryId(storyId);
       
-      await retryStoryGeneration(storyId);
+      // Utiliser le nouveau système de récupération
+      const story = { id: storyId, title: "Histoire en récupération" } as Story;
+      const success = await recoverStuckStory(story);
       
-      toast({
-        title: "Succès",
-        description: "L'histoire est en cours de génération",
-      });
+      if (success) {
+        toast({
+          title: "Succès",
+          description: "L'histoire est en cours de génération avec surveillance améliorée",
+        });
+      }
       
-      return true;
+      return success;
     } catch (error: any) {
       console.error("Error retrying story:", error);
       toast({
@@ -57,14 +62,13 @@ export const useStoryManagement = () => {
       setIsRetrying(false);
       setPendingStoryId(null);
     }
-  }, [retryStoryGeneration, toast]);
+  }, [recoverStuckStory, toast]);
 
-  const handleMarkAsRead = useCallback(async (storyId: string) => {
+  const handleMarkAsRead = useCallback(async (storyId: string): Promise<boolean> => {
     try {
       console.log("[useStoryManagement] DEBUG: Marquage histoire comme lue:", storyId);
       await updateStoryStatus(storyId, 'read');
       
-      // Mise à jour de l'histoire courante si c'est celle qui est marquée comme lue
       if (currentStory && currentStory.id === storyId) {
         setCurrentStory(prevStory => {
           if (!prevStory) return null;
@@ -72,7 +76,6 @@ export const useStoryManagement = () => {
         });
       }
       
-      // Ne pas montrer de toast ici, le feedback est géré dans StoryReader
       return true;
     } catch (error: any) {
       console.error("Error marking story as read:", error);
@@ -87,7 +90,6 @@ export const useStoryManagement = () => {
 
   const handleToggleFavorite = useCallback(async (story: Story) => {
     try {
-      // Cette fonction n'est pas encore implémentée
       console.log("Toggle favorite for story:", story.id);
       
       toast({
@@ -107,15 +109,12 @@ export const useStoryManagement = () => {
     }
   }, [toast]);
 
-  // Fonction pour régénérer une histoire avec des paramètres personnalisés
   const handleRegenerateStory = useCallback(async (storyId: string, settings: StorySettings) => {
     try {
       console.log("[useStoryManagement] DEBUG: Demande de régénération d'histoire avec paramètres:", settings);
       
-      // Mettre à jour le statut de l'histoire dans la base de données
       await updateStoryStatus(storyId, 'regenerating' as any);
       
-      // Si c'est l'histoire courante, mettre à jour son statut localement
       if (currentStory && currentStory.id === storyId) {
         setCurrentStory(prevStory => {
           if (!prevStory) return null;
@@ -123,7 +122,6 @@ export const useStoryManagement = () => {
         });
       }
       
-      // Lancer la régénération via la fonction serverless
       await regenerateStory(storyId, settings);
       
       toast({
@@ -140,7 +138,6 @@ export const useStoryManagement = () => {
         variant: "destructive",
       });
       
-      // En cas d'erreur, remettre l'histoire à son statut précédent
       if (currentStory && currentStory.id === storyId) {
         await updateStoryStatus(storyId, currentStory.status as any);
       }
@@ -149,23 +146,17 @@ export const useStoryManagement = () => {
     }
   }, [updateStoryStatus, currentStory, regenerateStory, toast]);
 
-  // Fonction simplifiée pour ouvrir directement le lecteur d'histoire
   const openStoryReader = useCallback((story: Story) => {
     console.log("[useStoryManagement] DEBUG: Ouverture directe du lecteur pour l'histoire:", story.id);
-    
-    // D'abord définir l'histoire courante sans notification
     setCurrentStory(story);
-    
     return true;
   }, []);
 
-  // Version simplifiée de la fonction de sélection d'histoire
   const handleSelectStory = useCallback((story: Story) => {
     console.log("[useStoryManagement] DEBUG: Sélection d'histoire directe:", story.id);
     return openStoryReader(story);
   }, [openStoryReader]);
 
-  // Gestion du formulaire de création d'histoire
   const handleStorySubmit = useCallback(async (formData: any) => {
     console.log("Story submission handler", formData);
     return "dummy-story-id";

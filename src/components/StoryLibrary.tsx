@@ -4,6 +4,7 @@ import type { Story } from "@/types/story";
 import type { ViewType } from "@/types/views";
 import { useToast } from "@/hooks/use-toast";
 import LibraryContainer from "./library/LibraryContainer";
+import StoryRecoveryManager from "./story/StoryRecoveryManager";
 
 interface StoryLibraryProps {
   stories: Story[];
@@ -13,6 +14,7 @@ interface StoryLibraryProps {
   onViewChange?: (view: ViewType) => void;
   isRetrying?: boolean;
   pendingStoryId?: string | null;
+  onForceRefresh?: () => void;
 }
 
 const StoryLibrary: React.FC<StoryLibraryProps> = ({ 
@@ -22,7 +24,8 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   onRetryStory,
   onViewChange,
   isRetrying = false,
-  pendingStoryId
+  pendingStoryId,
+  onForceRefresh
 }) => {
   const { toast } = useToast();
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
@@ -73,17 +76,33 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
     }
   }, [onRetryStory]);
 
+  const handleRecoveryComplete = useCallback(() => {
+    console.log("[StoryLibrary] Récupération terminée, rafraîchissement des données");
+    if (onForceRefresh) {
+      onForceRefresh();
+    }
+  }, [onForceRefresh]);
+
   return (
-    <LibraryContainer
-      stories={stories}
-      onSelectStory={onSelectStory}
-      onDeleteStory={handleDelete}
-      onRetryStory={handleRetry}
-      onViewChange={onViewChange}
-      isRetrying={isRetrying}
-      isDeletingId={isDeletingId}
-      pendingStoryId={pendingStoryId}
-    />
+    <div className="space-y-4">
+      {/* Gestionnaire de récupération des histoires bloquées */}
+      <StoryRecoveryManager 
+        stories={stories}
+        onRecoveryComplete={handleRecoveryComplete}
+      />
+      
+      {/* Conteneur principal de la bibliothèque */}
+      <LibraryContainer
+        stories={stories}
+        onSelectStory={onSelectStory}
+        onDeleteStory={handleDelete}
+        onRetryStory={handleRetry}
+        onViewChange={onViewChange}
+        isRetrying={isRetrying}
+        isDeletingId={isDeletingId}
+        pendingStoryId={pendingStoryId}
+      />
+    </div>
   );
 };
 

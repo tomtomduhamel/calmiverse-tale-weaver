@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useStoryTimeoutMonitor } from "./useStoryTimeoutMonitor";
 import type { Story } from "@/types/story";
 
 interface UsePendingStoryMonitorProps {
@@ -11,6 +12,7 @@ interface UsePendingStoryMonitorProps {
 
 /**
  * Hook spécialisé pour surveiller l'état des histoires en cours de génération
+ * Maintenant avec surveillance des timeouts et récupération automatique
  */
 export const usePendingStoryMonitor = ({ 
   stories, 
@@ -18,7 +20,14 @@ export const usePendingStoryMonitor = ({
   onStoryCompleted 
 }: UsePendingStoryMonitorProps) => {
   const [pendingStoryId, setPendingStoryId] = useState<string | null>(null);
+  const [lastCheck, setLastCheck] = useState<Date>(new Date());
   const { toast } = useToast();
+
+  // Intégrer la surveillance des timeouts
+  useStoryTimeoutMonitor({ 
+    stories: stories || [], 
+    timeoutMinutes: 10 // 10 minutes au lieu de 5 pour éviter les faux positifs
+  });
 
   useEffect(() => {
     if (!pendingStoryId || !stories) return;
@@ -26,8 +35,10 @@ export const usePendingStoryMonitor = ({
     const pendingStory = stories.find(story => story.id === pendingStoryId);
     
     if (pendingStory) {
-      if (pendingStory.status === "ready") {
-        console.log("Story completed, displaying...");
+      console.log(`[PendingMonitor] Vérification de l'histoire: ${pendingStoryId}, statut: ${pendingStory.status}`);
+      
+      if (pendingStory.status === "ready" || pendingStory.status === "read") {
+        console.log("Histoire complétée, affichage...");
         setPendingStoryId(null);
         onStoryCompleted(pendingStory);
         
@@ -36,29 +47,47 @@ export const usePendingStoryMonitor = ({
           description: "Votre histoire personnalisée est maintenant prête à être lue!",
         });
       } else if (pendingStory.status === 'error') {
-        console.log("Error in story generation");
+        console.log("Erreur détectée dans la génération d'histoire");
         setPendingStoryId(null);
         
         toast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la génération de l'histoire",
+          title: "Erreur de génération",
+          description: `Une erreur est survenue: ${pendingStory.error || "Erreur inconnue"}`,
           variant: "destructive",
         });
       }
     }
     
+    // Surveillance plus fréquente et intelligente
     const interval = setInterval(() => {
       if (pendingStoryId) {
-        console.log("Checking story status:", pendingStoryId);
+        console.log(`[PendingMonitor] Vérification périodique de l'histoire: ${pendingStoryId}`);
+        setLastCheck(new Date());
         fetchStories();
       }
-    }, 5000);
+    }, 3000); // Toutes les 3 secondes au lieu de 5
     
     return () => clearInterval(interval);
   }, [pendingStoryId, stories, onStoryCompleted, toast, fetchStories]);
 
+  // Fonction pour démarrer la surveillance d'une nouvelle histoire
+  const startMonitoring = (storyId: string) => {
+    console.log(`[PendingMonitor] Démarrage de la surveillance pour: ${storyId}`);
+    setPendingStoryId(storyId);
+    setLastCheck(new Date());
+  };
+
+  // Fonction pour arrêter la surveillance
+  const stopMonitoring = () => {
+    console.log("[PendingMonitor] Arrêt de la surveillance");
+    setPendingStoryId(null);
+  };
+
   return {
     pendingStoryId,
-    setPendingStoryId
+    setPendingStoryId: startMonitoring,
+    stopMonitoring,
+    lastCheck,
+    isMonitoring: !!pendingStoryId
   };
 };
