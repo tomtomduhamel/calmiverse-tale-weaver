@@ -126,7 +126,7 @@ export const useConnectionTest = () => {
   return {
     testConnection,
     testGenerateStoryDirect,
-    isTestingtConnection: isTestingtConnection,
+    isTesting,
     lastTestResult
   };
 };
