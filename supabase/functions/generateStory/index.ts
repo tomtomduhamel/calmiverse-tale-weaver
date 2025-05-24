@@ -8,19 +8,22 @@ import {
 } from "./utils.ts";
 
 serve(async (req) => {
-  console.log(`🔥 [generateStory] ${req.method} ${req.url} à ${new Date().toISOString()}`);
-  console.log(`📡 [generateStory] Headers:`, Object.fromEntries(req.headers.entries()));
+  const requestId = crypto.randomUUID().slice(0, 8);
+  console.log(`🔥 [generateStory-${requestId}] NOUVELLE REQUÊTE ${req.method} ${req.url}`);
+  console.log(`⏰ [generateStory-${requestId}] Timestamp: ${new Date().toISOString()}`);
+  console.log(`📡 [generateStory-${requestId}] Origin: ${req.headers.get('origin')}`);
+  console.log(`🔧 [generateStory-${requestId}] User-Agent: ${req.headers.get('user-agent')}`);
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('✅ [generateStory] Réponse OPTIONS/CORS');
+    console.log(`✅ [generateStory-${requestId}] Réponse CORS OPTIONS`);
     return handleOptionsRequest();
   }
 
   if (req.method !== 'POST') {
-    console.error(`❌ [generateStory] Méthode non autorisée: ${req.method}`);
+    console.error(`❌ [generateStory-${requestId}] Méthode non autorisée: ${req.method}`);
     return new Response(
-      JSON.stringify({ error: 'Méthode non autorisée' }),
+      JSON.stringify({ error: 'Méthode non autorisée', requestId }),
       { 
         status: 405, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -28,41 +31,43 @@ serve(async (req) => {
     );
   }
 
+  console.log(`🎯 [generateStory-${requestId}] REQUÊTE POST REÇUE - SUCCÈS!`);
+  console.log(`📋 [generateStory-${requestId}] Headers complets:`, Object.fromEntries(req.headers.entries()));
+
   try {
-    console.log('📥 [generateStory] Lecture du corps de la requête...');
+    console.log(`📥 [generateStory-${requestId}] Lecture du corps de la requête...`);
     const requestBody = await parseRequestBody(req);
-    console.log("📋 [generateStory] Corps de la requête:", JSON.stringify(requestBody, null, 2));
+    console.log(`📋 [generateStory-${requestId}] Corps reçu:`, JSON.stringify(requestBody, null, 2));
     
-    // Extract the storyId which is mandatory
     const { storyId, objective, childrenNames } = requestBody;
     
     if (!storyId) {
-      console.error('❌ [generateStory] storyId manquant');
+      console.error(`❌ [generateStory-${requestId}] storyId manquant`);
       throw new Error("ID d'histoire manquant dans la requête");
     }
     
-    console.log(`🎯 [generateStory] Traitement pour histoire ID: ${storyId}`);
-    console.log(`🎯 [generateStory] Objectif: ${objective}`);
-    console.log(`🎯 [generateStory] Enfants: ${childrenNames?.join(', ')}`);
+    console.log(`🎯 [generateStory-${requestId}] Traitement histoire ID: ${storyId}`);
+    console.log(`🎯 [generateStory-${requestId}] Objectif: ${objective}`);
+    console.log(`🎯 [generateStory-${requestId}] Enfants: ${childrenNames?.join(', ')}`);
     
-    // Process the story generation request
+    // Traitement de la génération
     const result = await generateStoryContent(storyId, objective, childrenNames);
     
-    console.log('✅ [generateStory] Génération terminée avec succès');
+    console.log(`✅ [generateStory-${requestId}] Génération terminée avec succès`);
     return result;
     
   } catch (error: any) {
-    console.error("💥 [generateStory] ERREUR GLOBALE:", error.message);
-    console.error("📋 [generateStory] Stack trace:", error.stack);
+    console.error(`💥 [generateStory-${requestId}] ERREUR GLOBALE:`, error.message);
+    console.error(`📋 [generateStory-${requestId}] Stack trace:`, error.stack);
 
     const errorResponse = {
       error: true,
       message: error.message || "Une erreur est survenue lors de la génération de l'histoire",
-      details: error.stack ? error.stack.split("\n").slice(0, 3).join(" → ") : "Pas de détails",
+      requestId,
       timestamp: new Date().toISOString()
     };
 
-    console.error("📤 [generateStory] Réponse d'erreur:", JSON.stringify(errorResponse, null, 2));
+    console.error(`📤 [generateStory-${requestId}] Réponse d'erreur:`, JSON.stringify(errorResponse, null, 2));
 
     return new Response(
       JSON.stringify(errorResponse),

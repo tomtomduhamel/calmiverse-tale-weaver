@@ -1,8 +1,10 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, RotateCcw, Clock, RefreshCw } from "lucide-react";
+import { AlertTriangle, RotateCcw, Clock, RefreshCw, Trash2, Wrench } from "lucide-react";
 import { useStoryRecovery } from "@/hooks/stories/monitoring/useStoryRecovery";
+import { useStoryCleanup } from "@/hooks/stories/useStoryCleanup";
 import { useToast } from "@/hooks/use-toast";
 import StoryGenerationDiagnostic from "./StoryGenerationDiagnostic";
 import type { Story } from "@/types/story";
@@ -13,82 +15,60 @@ interface StoryRecoveryManagerProps {
 }
 
 /**
- * Composant pour gérer la récupération des histoires bloquées ou échouées
- * Maintenant avec diagnostic intégré
+ * Composant de récupération radical avec nettoyage automatique
  */
 export const StoryRecoveryManager: React.FC<StoryRecoveryManagerProps> = ({
   stories,
   onRecoveryComplete
 }) => {
-  const { recoverStuckStory, recoverAllFailedStories } = useStoryRecovery();
+  const { recoverStuckStory } = useStoryRecovery();
+  const { cleanupZombieStories, forceRecoverStory } = useStoryCleanup();
   const { toast } = useToast();
 
   const pendingStories = stories.filter(s => s.status === 'pending');
   const errorStories = stories.filter(s => s.status === 'error');
   
-  // Identifier les histoires "zombies" (pending depuis plus de 5 minutes pour un diagnostic plus rapide)
-  const stuckStories = pendingStories.filter(s => {
+  // Histoires zombie (plus de 2 minutes pour diagnostic rapide)
+  const zombieStories = pendingStories.filter(s => {
     const timeDiff = Date.now() - new Date(s.createdAt).getTime();
-    return timeDiff > 5 * 60 * 1000; // Plus de 5 minutes
+    return timeDiff > 2 * 60 * 1000; // Plus de 2 minutes
   });
 
-  const handleRecoverStory = async (story: Story) => {
-    console.log(`[StoryRecoveryManager] Récupération de l'histoire: ${story.id}`);
-    const success = await recoverStuckStory(story);
+  const handleCleanupAll = async () => {
+    console.log('[StoryRecoveryManager] Nettoyage complet demandé');
+    try {
+      const result = await cleanupZombieStories();
+      
+      if (onRecoveryComplete) {
+        onRecoveryComplete();
+      }
+      
+      toast({
+        title: "Nettoyage terminé",
+        description: `${result.cleaned} histoires zombie nettoyées`,
+      });
+    } catch (error) {
+      console.error('[StoryRecoveryManager] Erreur nettoyage:', error);
+    }
+  };
+
+  const handleForceRecover = async (story: Story) => {
+    console.log(`[StoryRecoveryManager] Récupération forcée: ${story.id}`);
+    const success = await forceRecoverStory(story.id);
     if (success && onRecoveryComplete) {
       onRecoveryComplete();
     }
   };
 
-  const handleRecoverAll = async () => {
-    console.log(`[StoryRecoveryManager] Récupération de toutes les histoires problématiques`);
-    await recoverAllFailedStories([...stuckStories, ...errorStories]);
-    if (onRecoveryComplete) {
-      onRecoveryComplete();
-    }
-  };
-
-  // Fonction pour nettoyer les histoires "zombies"
-  const handleCleanupZombies = async () => {
-    if (stuckStories.length === 0) {
-      toast({
-        title: "Aucun nettoyage nécessaire",
-        description: "Aucune histoire bloquée détectée.",
-      });
-      return;
-    }
-
-    console.log(`[StoryRecoveryManager] Nettoyage de ${stuckStories.length} histoires zombies`);
-    
-    for (const story of stuckStories) {
-      try {
-        await recoverStuckStory(story);
-      } catch (error) {
-        console.error(`Erreur lors du nettoyage de l'histoire ${story.id}:`, error);
-      }
-    }
-
-    toast({
-      title: "Nettoyage terminé",
-      description: `${stuckStories.length} histoires bloquées ont été relancées.`,
-    });
-
-    if (onRecoveryComplete) {
-      onRecoveryComplete();
-    }
-  };
-
-  // Afficher toujours le diagnostic en cas de problème
-  const hasProblems = stuckStories.length > 0 || errorStories.length > 0;
+  const hasProblems = zombieStories.length > 0 || errorStories.length > 0;
 
   if (!hasProblems) {
-    // Afficher un indicateur de santé du système
     return (
       <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
             <RefreshCw className="h-4 w-4" />
-            <span className="text-sm font-medium">Génération d'histoires opérationnelle</span>
+            <span className="text-sm font-medium">Système de génération opérationnel</span>
           </div>
         </CardContent>
       </Card>
@@ -97,44 +77,44 @@ export const StoryRecoveryManager: React.FC<StoryRecoveryManagerProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Composant de diagnostic intégré */}
+      {/* Diagnostic système intégré */}
       <StoryGenerationDiagnostic 
         stories={stories} 
         onRecoveryComplete={onRecoveryComplete}
       />
       
-      {/* Interface de récupération existante */}
-      <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20">
+      {/* Nettoyage radical */}
+      <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
-            <AlertTriangle className="h-5 w-5" />
-            Récupération des Histoires ({stuckStories.length + errorStories.length})
+          <CardTitle className="flex items-center gap-2 text-red-800 dark:text-red-200">
+            <Wrench className="h-5 w-5" />
+            Récupération Radicale ({zombieStories.length + errorStories.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {stuckStories.length > 0 && (
+          {zombieStories.length > 0 && (
             <div>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
+              <p className="text-sm text-red-700 dark:text-red-300 mb-2">
                 <Clock className="h-4 w-4 inline mr-1" />
-                {stuckStories.length} histoire(s) bloquée(s) en génération
+                {zombieStories.length} histoire(s) zombie détectée(s)
               </p>
               <div className="space-y-2">
-                {stuckStories.slice(0, 2).map(story => (
+                {zombieStories.slice(0, 3).map(story => (
                   <div key={story.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border">
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium truncate block">{story.title}</span>
-                      <span className="text-xs text-yellow-600 dark:text-yellow-400 truncate block">
-                        Créée il y a {Math.round((Date.now() - new Date(story.createdAt).getTime()) / (1000 * 60))} minutes
+                      <span className="text-xs text-red-600 dark:text-red-400 truncate block">
+                        Bloquée depuis {Math.round((Date.now() - new Date(story.createdAt).getTime()) / (1000 * 60))} min
                       </span>
                     </div>
                     <Button
                       size="sm"
-                      variant="outline"
-                      onClick={() => handleRecoverStory(story)}
+                      variant="destructive"
+                      onClick={() => handleForceRecover(story)}
                       className="ml-2"
                     >
                       <RotateCcw className="h-4 w-4 mr-1" />
-                      Relancer
+                      Forcer
                     </Button>
                   </div>
                 ))}
@@ -162,11 +142,11 @@ export const StoryRecoveryManager: React.FC<StoryRecoveryManagerProps> = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleRecoverStory(story)}
+                      onClick={() => handleForceRecover(story)}
                       className="ml-2"
                     >
                       <RotateCcw className="h-4 w-4 mr-1" />
-                      Réessayer
+                      Retry
                     </Button>
                   </div>
                 ))}
@@ -175,16 +155,14 @@ export const StoryRecoveryManager: React.FC<StoryRecoveryManagerProps> = ({
           )}
 
           <div className="pt-2 border-t space-y-2">
-            {(stuckStories.length > 1 || errorStories.length > 1) && (
-              <Button 
-                onClick={handleRecoverAll}
-                className="w-full"
-                variant="default"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Récupérer toutes les histoires ({stuckStories.length + errorStories.length})
-              </Button>
-            )}
+            <Button 
+              onClick={handleCleanupAll}
+              className="w-full"
+              variant="destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Nettoyage Radical ({zombieStories.length + errorStories.length})
+            </Button>
           </div>
         </CardContent>
       </Card>
