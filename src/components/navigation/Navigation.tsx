@@ -30,7 +30,7 @@ const Navigation = () => {
   const navItems = [
     { icon: Home, label: 'Accueil', path: '/' },
     { icon: BookOpen, label: 'Histoires', path: '/app' },
-    { icon: Users, label: 'Profils', path: '/profiles' },
+    { icon: Users, label: 'Profils', path: '/children' },
     { icon: Settings, label: 'Paramètres', path: '/settings' },
   ];
 

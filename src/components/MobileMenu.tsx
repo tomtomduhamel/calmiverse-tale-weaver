@@ -25,7 +25,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
     { icon: Home, title: "Accueil", view: "home" as ViewType, path: "/" },
     { icon: Library, title: "Bibliothèque", view: "library" as ViewType, path: "/app" },
     { icon: PenSquare, title: "Créer", view: "create" as ViewType, path: "/create-story-simple" },
-    { icon: Users, title: "Profils", view: "profiles" as ViewType, path: "/profiles" },
+    { icon: Users, title: "Profils", view: "profiles" as ViewType, path: "/children" },
     { icon: Settings, title: "Paramètres", view: "settings" as ViewType, path: "/settings" }
   ];
 
@@ -52,7 +52,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
         onViewChange("library");
       } else if (path === "/settings") {
         onViewChange("settings");
-      } else if (path === "/profiles") {
+      } else if (path === "/children") {
         onViewChange("profiles");
       } else if (path === "/create-story-simple") {
         onViewChange("create");
@@ -64,7 +64,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   React.useEffect(() => {
     if (location.pathname === "/settings" && currentView !== "settings") {
       onViewChange("settings");
-    } else if (location.pathname === "/profiles" && currentView !== "profiles") {
+    } else if (location.pathname === "/children" && currentView !== "profiles") {
       onViewChange("profiles");
     } else if (location.pathname === "/create-story-simple" && currentView !== "create") {
       onViewChange("create");

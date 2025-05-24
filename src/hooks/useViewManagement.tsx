@@ -16,7 +16,7 @@ export const useViewManagement = () => {
     
     if (viewParam === "reader") return "reader";
     if (location.pathname === "/settings") return "settings";
-    if (location.pathname === "/profiles") return "profiles";
+    if (location.pathname === "/children") return "profiles";
     if (location.pathname === "/create-story-simple") return "create";
     if (location.pathname === "/app") return "library";
     return "home";
@@ -34,7 +34,7 @@ export const useViewManagement = () => {
       viewParam, 
       currentView: viewParam || (location.pathname === "/" ? "home" : 
                                 location.pathname === "/settings" ? "settings" : 
-                                location.pathname === "/profiles" ? "profiles" :
+                                location.pathname === "/children" ? "profiles" :
                                 location.pathname === "/create-story-simple" ? "create" : 
                                 location.pathname === "/app" ? "library" : "home")
     });
@@ -45,7 +45,7 @@ export const useViewManagement = () => {
       setCurrentViewState("home");
     } else if (location.pathname === "/settings") {
       setCurrentViewState("settings");
-    } else if (location.pathname === "/profiles") {
+    } else if (location.pathname === "/children") {
       setCurrentViewState("profiles");
     } else if (location.pathname === "/create-story-simple") {
       setCurrentViewState("create");
@@ -71,7 +71,7 @@ export const useViewManagement = () => {
     } else if (view === "create") {
       navigate("/create-story-simple");
     } else if (view === "profiles") {
-      navigate("/profiles");
+      navigate("/children");
     } else if (view === "library") {
       navigate("/app");
     } else if (view === "settings") {

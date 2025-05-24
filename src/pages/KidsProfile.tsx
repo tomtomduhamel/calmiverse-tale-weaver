@@ -24,6 +24,17 @@ const KidsProfile = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Vérifier si profileId existe
+    if (!profileId) {
+      toast({
+        title: "Profil introuvable",
+        description: "Aucun identifiant de profil fourni",
+        variant: "destructive"
+      });
+      navigate('/children');
+      return;
+    }
+
     if (!loading && children.length > 0) {
       const foundChild = children.find(c => c.id === profileId);
       if (foundChild) {
@@ -34,8 +45,16 @@ const KidsProfile = () => {
           description: "Le profil demandé n'existe pas ou vous n'avez pas les permissions nécessaires",
           variant: "destructive"
         });
-        navigate('/');
+        navigate('/children');
       }
+    } else if (!loading && children.length === 0) {
+      // Aucun enfant trouvé pour cet utilisateur
+      toast({
+        title: "Aucun profil",
+        description: "Vous n'avez pas encore créé de profil d'enfant",
+        variant: "destructive"
+      });
+      navigate('/children');
     }
   }, [children, loading, profileId, navigate, toast]);
 
@@ -43,6 +62,7 @@ const KidsProfile = () => {
     try {
       // Make sure to pass both arguments to handleUpdateChild
       await handleUpdateChild(updatedChild.id, updatedChild);
+      setChild(updatedChild); // Met à jour l'état local
       setIsEditing(false);
       toast({
         title: "Profil mis à jour",
@@ -59,11 +79,11 @@ const KidsProfile = () => {
   };
 
   const handleBack = () => {
-    navigate('/');
+    navigate('/children');
   };
 
   const handleCreateStory = () => {
-    navigate('/?view=create');
+    navigate('/create-story-simple');
   };
 
   if (loading || !child) {
@@ -75,7 +95,7 @@ const KidsProfile = () => {
       <div className="flex items-center mb-6">
         <Button variant="ghost" onClick={handleBack} className="mr-2">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Retour
+          Retour aux profils
         </Button>
         <h1 className="text-3xl font-bold">{isEditing ? 'Modifier le profil' : 'Profil de ' + child.name}</h1>
       </div>
