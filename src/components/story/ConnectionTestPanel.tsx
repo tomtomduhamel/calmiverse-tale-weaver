@@ -14,13 +14,13 @@ export const ConnectionTestPanel: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-200">
           <Wrench className="h-5 w-5" />
-          ✅ Test de Connexion - CORRIGÉ Phase 3
+          ✅ Test de Connexion - NOM CORRIGÉ
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded border border-green-300">
           <div className="text-sm text-green-800 dark:text-green-200">
-            🔧 <strong>Correction appliquée:</strong> Nom de fonction "generate-story" → "generateStory"
+            🔧 <strong>Correction appliquée:</strong> Tous les appels utilisent maintenant "generateStory" (nom cohérent)
           </div>
         </div>
 
@@ -41,7 +41,7 @@ export const ConnectionTestPanel: React.FC = () => {
             className="w-full bg-green-600 hover:bg-green-700 text-white"
           >
             <Zap className="h-4 w-4 mr-2" />
-            Test generateStory CORRIGÉ
+            Test generateStory FINAL
           </Button>
         </div>
 
@@ -63,19 +63,19 @@ export const ConnectionTestPanel: React.FC = () => {
             
             {lastTestResult.success ? (
               <div className="text-sm text-green-700 dark:text-green-300">
-                ✅ Connexion fonctionnelle - Les appels POST atteignent la fonction avec le nom corrigé
+                ✅ Connexion fonctionnelle - Les appels POST atteignent generateStory avec le nom correct
               </div>
             ) : (
               <div className="text-sm text-red-700 dark:text-red-300">
-                ❌ {lastTestResult.error || "Connexion bloquée"}
+                ❌ {lastTestResult.error || "Connexion encore bloquée"}
               </div>
             )}
           </div>
         )}
 
         <div className="text-xs text-green-600 dark:text-green-300 p-2 bg-green-100 dark:bg-green-900/30 rounded">
-          <strong>Phase 3 - Correction Appliquée:</strong> Le nom de fonction incohérent a été corrigé. 
-          Tous les appels utilisent maintenant "generateStory" au lieu de "generate-story".
+          <strong>Correction Finale:</strong> Le nom de fonction est maintenant cohérent partout. 
+          Si les tests échouent encore, le problème est ailleurs (réseau/CORS/déploiement).
         </div>
       </CardContent>
     </Card>

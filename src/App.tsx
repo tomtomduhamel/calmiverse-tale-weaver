@@ -1,4 +1,3 @@
-
 import React, { Suspense, useEffect, useState } from 'react';
 import {
   BrowserRouter as Router,
@@ -25,6 +24,7 @@ import { checkAuthState } from './integrations/supabase/client';
 import SharedStory from './pages/SharedStory';
 import MinimalStoryPage from './pages/MinimalStoryPage';
 import ChildrenListPage from './pages/ChildrenListPage';
+import DiagnosticConnection from './pages/DiagnosticConnection';
 
 function PublicRoute() {
   return <Shell />;
@@ -87,6 +87,7 @@ function App() {
             </Route>
             
             <Route path="*" element={<NotFound />} />
+            <Route path="/diagnostic" element={<DiagnosticConnection />} />
           </Routes>
         </Router>
         <Toaster />
