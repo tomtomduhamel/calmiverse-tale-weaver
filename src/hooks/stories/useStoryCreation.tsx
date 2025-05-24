@@ -54,9 +54,11 @@ export const useStoryCreation = () => {
         
       if (insertError) throw insertError;
       
-      // Appeler la fonction edge pour générer l'histoire
+      console.log('Story created with ID:', story.id, 'Now calling generateStory function...');
+      
+      // Appeler la fonction edge CORRIGÉE avec le bon nom
       const { data: functionData, error: functionError } = await supabase.functions.invoke(
-        'generate-story',
+        'generateStory',  // CORRECTION: Utiliser 'generateStory' au lieu de 'generate-story'
         {
           body: {
             storyId: story.id,
@@ -67,18 +69,20 @@ export const useStoryCreation = () => {
       );
       
       if (functionError) {
+        console.error('Function error:', functionError);
         // Mettre à jour l'histoire avec le statut d'erreur
         await supabase
           .from('stories')
           .update({
             status: 'error',
-            error: functionError.message
+            error: functionError.message || 'Erreur lors de l\'appel à la fonction generateStory'
           })
           .eq('id', story.id);
           
         throw functionError;
       }
       
+      console.log('Function called successfully:', functionData);
       return story.id;
     } catch (error: any) {
       console.error('❌ Error during story creation:', error);

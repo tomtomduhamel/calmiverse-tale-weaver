@@ -35,25 +35,28 @@ export const useStoryCloudFunctions = () => {
         
       if (updateError) throw updateError;
       
-      // Appeler la fonction edge pour réessayer
+      // Appeler la fonction edge corrigée avec le bon nom
       const { data, error } = await supabase.functions.invoke('retry-story', {
         body: { storyId }
       });
       
       if (error) {
+        console.error('Error calling retry-story function:', error);
         // Mettre à jour le statut à "error"
         await supabase
           .from('stories')
           .update({
             status: 'error',
             updatedat: new Date().toISOString(),
-            error: error.message
+            error: error.message || 'Erreur lors de la relance'
           })
           .eq('id', storyId)
           .eq('authorid', user.id);
         
         throw error;
       }
+      
+      console.log('Retry function called successfully:', data);
       
       toast({
         title: "Nouvelle tentative",
