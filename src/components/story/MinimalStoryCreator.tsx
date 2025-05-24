@@ -36,9 +36,7 @@ const MinimalStoryCreator: React.FC = () => {
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-primary">Créer une histoire</h1>
-          <p className="text-muted-foreground">
-            Version minimaliste pour contourner les problèmes techniques
-          </p>
+          
         </div>
         
         <StatusMessages error={error} successMessage={successMessage} />
