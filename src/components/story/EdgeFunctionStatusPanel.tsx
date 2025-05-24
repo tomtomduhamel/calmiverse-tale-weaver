@@ -17,6 +17,10 @@ interface FunctionStatus {
   lastResponse?: any;
 }
 
+// Configuration Supabase hardcodée
+const SUPABASE_URL = "https://ioeihnoxvtpxtqhxklpw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro";
+
 export const EdgeFunctionStatusPanel: React.FC = () => {
   const [isChecking, setIsChecking] = useState(false);
   const [functionStatuses, setFunctionStatuses] = useState<FunctionStatus[]>([]);
@@ -37,10 +41,10 @@ export const EdgeFunctionStatusPanel: React.FC = () => {
       try {
         // Test CORS (OPTIONS)
         const corsStartTime = Date.now();
-        const corsResponse = await fetch(`${supabase.supabaseUrl}/functions/v1/${functionName}`, {
+        const corsResponse = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
           method: 'OPTIONS',
           headers: {
-            'apikey': supabase.supabaseKey,
+            'apikey': SUPABASE_ANON_KEY,
             'Origin': window.location.origin
           },
           signal: AbortSignal.timeout(5000)
@@ -54,10 +58,10 @@ export const EdgeFunctionStatusPanel: React.FC = () => {
         
         try {
           const session = await supabase.auth.getSession();
-          accessResponse = await fetch(`${supabase.supabaseUrl}/functions/v1/${functionName}`, {
+          accessResponse = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
             method: 'POST',
             headers: {
-              'apikey': supabase.supabaseKey,
+              'apikey': SUPABASE_ANON_KEY,
               'Authorization': `Bearer ${session.data.session?.access_token}`,
               'Content-Type': 'application/json'
             },

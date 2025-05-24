@@ -15,6 +15,10 @@ interface DiagnosticResult {
   error?: string;
 }
 
+// Configuration Supabase hardcodée
+const SUPABASE_URL = "https://ioeihnoxvtpxtqhxklpw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro";
+
 export const NetworkDiagnosticPanel: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<DiagnosticResult[]>([]);
@@ -85,10 +89,10 @@ export const NetworkDiagnosticPanel: React.FC = () => {
     try {
       console.log('🔍 [DIAGNOSTIC] Test 3 - OPTIONS vers generateStory');
       const startTime = Date.now();
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/generateStory`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/generateStory`, {
         method: 'OPTIONS',
         headers: {
-          'apikey': supabase.supabaseKey,
+          'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json'
         },
@@ -119,10 +123,10 @@ export const NetworkDiagnosticPanel: React.FC = () => {
       const startTime = Date.now();
       const session = await supabase.auth.getSession();
       
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/generateStory`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/generateStory`, {
         method: 'POST',
         headers: {
-          'apikey': supabase.supabaseKey,
+          'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${session.data.session?.access_token}`,
           'Content-Type': 'application/json',
           'x-client-info': 'calmiverse-web'
