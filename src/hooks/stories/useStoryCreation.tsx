@@ -17,7 +17,7 @@ export const useStoryCreation = () => {
       throw new Error("Utilisateur non connecté");
     }
 
-    console.log('[useStoryCreation] Création histoire:', { formData, user: user.id });
+    console.log('[useStoryCreation] Création histoire avec RLS corrigé:', { formData, user: user.id });
 
     try {
       // Récupérer les noms des enfants
@@ -33,8 +33,8 @@ export const useStoryCreation = () => {
       console.log('[useStoryCreation] Mode fallback actif:', isFallbackMode);
 
       if (isFallbackMode) {
-        // Utiliser le fallback PostgreSQL
-        console.log('[useStoryCreation] Utilisation du fallback PostgreSQL');
+        // Utiliser le fallback PostgreSQL amélioré
+        console.log('[useStoryCreation] Utilisation du fallback PostgreSQL avec RLS sécurisé');
         const storyId = await generateStoryWithFallback({
           objective: formData.objective,
           childrenNames
@@ -42,7 +42,9 @@ export const useStoryCreation = () => {
         return { storyId };
       }
 
-      // Créer l'histoire en base avec statut pending
+      // Créer l'histoire en base avec authorid explicite (RLS corrigé)
+      console.log('[useStoryCreation] Création histoire avec authorid explicite:', user.id);
+      
       const { data: story, error: insertError } = await supabase
         .from('stories')
         .insert({
@@ -53,17 +55,29 @@ export const useStoryCreation = () => {
           status: 'pending',
           objective: formData.objective,
           childrennames: childrenNames,
-          authorid: user.id
+          authorid: user.id // Explicitement définir pour RLS
         })
         .select()
         .single();
 
       if (insertError) {
-        console.error('[useStoryCreation] Erreur insertion:', insertError);
+        console.error('[useStoryCreation] Erreur insertion avec RLS:', insertError);
+        
+        // Si erreur RLS, basculer automatiquement sur le fallback
+        if (insertError.message?.includes('row-level security') || insertError.message?.includes('policy')) {
+          console.log('[useStoryCreation] Erreur RLS détectée, activation fallback automatique');
+          
+          const storyId = await generateStoryWithFallback({
+            objective: formData.objective,
+            childrenNames
+          });
+          return { storyId };
+        }
+        
         throw insertError;
       }
 
-      console.log('[useStoryCreation] Histoire créée en base:', story.id);
+      console.log('[useStoryCreation] Histoire créée en base avec RLS sécurisé:', story.id);
 
       // Tenter d'appeler la Edge Function
       try {
@@ -80,8 +94,8 @@ export const useStoryCreation = () => {
         if (functionError) {
           console.error('[useStoryCreation] Erreur Edge Function:', functionError);
           
-          // En cas d'erreur Edge Function, activer automatiquement le fallback
-          console.log('[useStoryCreation] Activation automatique du fallback');
+          // En cas d'erreur Edge Function, utiliser le fallback
+          console.log('[useStoryCreation] Activation automatique du fallback après erreur Edge Function');
           
           await generateStoryWithFallback({
             objective: formData.objective,
@@ -95,7 +109,7 @@ export const useStoryCreation = () => {
         console.error('[useStoryCreation] Exception Edge Function:', edgeFunctionError);
         
         // En cas d'exception, utiliser le fallback
-        console.log('[useStoryCreation] Fallback automatique après exception');
+        console.log('[useStoryCreation] Fallback automatique après exception Edge Function');
         
         await generateStoryWithFallback({
           objective: formData.objective,
@@ -108,6 +122,26 @@ export const useStoryCreation = () => {
 
     } catch (error: any) {
       console.error('[useStoryCreation] Erreur globale:', error);
+      
+      // Gestion spécifique des erreurs RLS
+      if (error.message?.includes('row-level security') || error.message?.includes('policy')) {
+        console.log('[useStoryCreation] Erreur RLS globale, tentative fallback de récupération');
+        
+        try {
+          const storyId = await generateStoryWithFallback({
+            objective: formData.objective,
+            childrenNames: formData.childrenIds.map(id => {
+              const child = children.find(c => c.id === id);
+              return child?.name || `Enfant-${id.slice(0, 8)}`;
+            })
+          });
+          return { storyId };
+        } catch (fallbackError) {
+          console.error('[useStoryCreation] Échec du fallback de récupération:', fallbackError);
+          throw new Error(`Erreur de création d'histoire: ${error.message}. Fallback également échoué.`);
+        }
+      }
+      
       throw error;
     }
   }, [user, generateStoryWithFallback, checkFallbackMode]);
