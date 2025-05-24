@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
+import type { AuthFlowType } from '@supabase/supabase-js';
 
 // Configuration Supabase sécurisée
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -38,7 +39,7 @@ const supabaseOptions = {
     detectSessionInUrl: true,
     storage: localStorage,
     storageKey: 'calmi-auth-token',
-    flowType: 'pkce' // Utilise PKCE pour une meilleure sécurité
+    flowType: 'pkce' as AuthFlowType // Utilise le type correct avec assertion
   },
   global: {
     headers: {
