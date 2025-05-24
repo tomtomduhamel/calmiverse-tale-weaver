@@ -48,7 +48,10 @@ export const useSupabaseStories = () => {
     
     try {
       console.log('🚀 Starting enhanced story creation process...', { formData, currentUser: user.id });
-      const storyId = await createStory(formData, children);
+      const result = await createStory(formData, children);
+      
+      // Extraire l'ID de l'histoire du résultat
+      const storyId = result.storyId;
       
       // Démarrer la surveillance automatique
       pendingMonitor.setPendingStoryId(storyId);
