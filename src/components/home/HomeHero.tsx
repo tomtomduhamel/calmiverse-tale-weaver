@@ -1,24 +1,21 @@
-
 import React from "react";
 import { BookOpen, Users, Library, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ViewType } from "@/types/views";
 import { Link } from "react-router-dom";
-
 interface HomeHeroProps {
   onViewChange: (view: ViewType) => void;
 }
-
-const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
+const HomeHero: React.FC<HomeHeroProps> = ({
+  onViewChange
+}) => {
   const handleViewChange = (view: ViewType) => {
     if (typeof onViewChange === 'function') {
       onViewChange(view);
     }
   };
-  
-  return (
-    <div className="min-h-[calc(100vh-4rem)] relative flex flex-col justify-center overflow-hidden animate-fade-in">
+  return <div className="min-h-[calc(100vh-4rem)] relative flex flex-col justify-center overflow-hidden animate-fade-in">
       {/* Arrière-plan avec gradient */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-hero"></div>
@@ -56,13 +53,9 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
                 <BookOpen className="h-5 w-5 text-primary-dark" />
               </div>
               <h3 className="text-lg font-semibold mb-1 text-primary-dark">Créer une histoire</h3>
-              <p className="text-muted-foreground text-xs mb-3 flex-grow">
-                Générez facilement des histoires uniques avec notre mode simple et robuste
-              </p>
+              <p className="text-muted-foreground text-xs mb-3 flex-grow">Générez facilement des histoires uniques pour vos enfants</p>
               <Link to="/create-story-simple" className="w-full">
-                <Button 
-                  className="w-full bg-primary hover:bg-primary-dark text-primary-foreground"
-                >
+                <Button className="w-full bg-primary hover:bg-primary-dark text-primary-foreground">
                   Commencer
                 </Button>
               </Link>
@@ -79,10 +72,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
               <p className="text-muted-foreground text-xs mb-3 flex-grow">
                 Gérez les profils et préférences de vos enfants pour une expérience personnalisée
               </p>
-              <Button 
-                onClick={() => handleViewChange("profiles")}
-                className="w-full bg-secondary hover:bg-secondary-dark text-secondary-foreground"
-              >
+              <Button onClick={() => handleViewChange("profiles")} className="w-full bg-secondary hover:bg-secondary-dark text-secondary-foreground">
                 Explorer
               </Button>
             </CardContent>
@@ -98,10 +88,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
               <p className="text-muted-foreground text-xs mb-3 flex-grow">
                 Retrouvez toutes vos histoires et accédez à du contenu inspirant pour vos enfants
               </p>
-              <Button 
-                onClick={() => handleViewChange("library")}
-                className="w-full bg-accent hover:bg-accent-dark text-accent-foreground"
-              >
+              <Button onClick={() => handleViewChange("library")} className="w-full bg-accent hover:bg-accent-dark text-accent-foreground">
                 Consulter
               </Button>
             </CardContent>
@@ -115,8 +102,6 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange }) => {
           </p>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default HomeHero;
