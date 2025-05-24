@@ -3,21 +3,27 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TestTube, Zap, CheckCircle, XCircle } from "lucide-react";
+import { TestTube, Zap, CheckCircle, XCircle, Wrench } from "lucide-react";
 import { useConnectionTest } from "@/hooks/stories/useConnectionTest";
 
 export const ConnectionTestPanel: React.FC = () => {
   const { testConnection, testGenerateStoryDirect, isTesting, lastTestResult } = useConnectionTest();
 
   return (
-    <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-900/20">
+    <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-purple-800 dark:text-purple-200">
-          <TestTube className="h-5 w-5" />
-          Test de Connexion Radical - Phase 2
+        <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-200">
+          <Wrench className="h-5 w-5" />
+          ✅ Test de Connexion - CORRIGÉ Phase 3
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded border border-green-300">
+          <div className="text-sm text-green-800 dark:text-green-200">
+            🔧 <strong>Correction appliquée:</strong> Nom de fonction "generate-story" → "generateStory"
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Button 
             onClick={testConnection}
@@ -32,11 +38,10 @@ export const ConnectionTestPanel: React.FC = () => {
           <Button 
             onClick={testGenerateStoryDirect}
             disabled={isTesting}
-            className="w-full"
-            variant="outline"
+            className="w-full bg-green-600 hover:bg-green-700 text-white"
           >
             <Zap className="h-4 w-4 mr-2" />
-            Test generateStory Direct
+            Test generateStory CORRIGÉ
           </Button>
         </div>
 
@@ -58,7 +63,7 @@ export const ConnectionTestPanel: React.FC = () => {
             
             {lastTestResult.success ? (
               <div className="text-sm text-green-700 dark:text-green-300">
-                ✅ Connexion fonctionnelle - Les appels POST atteignent la fonction
+                ✅ Connexion fonctionnelle - Les appels POST atteignent la fonction avec le nom corrigé
               </div>
             ) : (
               <div className="text-sm text-red-700 dark:text-red-300">
@@ -68,8 +73,9 @@ export const ConnectionTestPanel: React.FC = () => {
           </div>
         )}
 
-        <div className="text-xs text-purple-600 dark:text-purple-300 p-2 bg-purple-100 dark:bg-purple-900/30 rounded">
-          <strong>Diagnostic Phase 2:</strong> Ce test va révéler si le problème vient des appels edge functions en général ou spécifiquement de generateStory
+        <div className="text-xs text-green-600 dark:text-green-300 p-2 bg-green-100 dark:bg-green-900/30 rounded">
+          <strong>Phase 3 - Correction Appliquée:</strong> Le nom de fonction incohérent a été corrigé. 
+          Tous les appels utilisent maintenant "generateStory" au lieu de "generate-story".
         </div>
       </CardContent>
     </Card>

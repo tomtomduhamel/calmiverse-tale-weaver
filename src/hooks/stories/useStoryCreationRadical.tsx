@@ -6,13 +6,14 @@ import { useToast } from '@/hooks/use-toast';
 
 /**
  * Version radicalement simplifiée pour identifier le problème de génération
+ * CORRIGÉE: Utilise maintenant le nom correct "generateStory"
  */
 export const useStoryCreationRadical = () => {
   const { user } = useSupabaseAuth();
   const { toast } = useToast();
 
   const createStoryRadical = useCallback(async (formData: { childrenIds: string[], objective: string }, children: any[] = []) => {
-    console.log('🚀 [RADICAL] PHASE 2 - Création d\'histoire ultra-simplifiée');
+    console.log('🚀 [RADICAL] PHASE 3 - AVEC CORRECTION DU NOM DE FONCTION');
     console.log('📋 [RADICAL] FormData reçu:', JSON.stringify(formData, null, 2));
     
     if (!user) {
@@ -43,10 +44,10 @@ export const useStoryCreationRadical = () => {
       const { data: story, error: insertError } = await supabase
         .from('stories')
         .insert({
-          title: `Histoire Test Radical - ${childrenNames.join(' et ')}`,
+          title: `Histoire Test Radical Corrigé - ${childrenNames.join(' et ')}`,
           content: '',
           summary: '',
-          preview: 'Test radical en cours...',
+          preview: 'Test radical avec correction du nom...',
           status: 'pending',
           childrenids: formData.childrenIds,
           childrennames: childrenNames,
@@ -76,8 +77,8 @@ export const useStoryCreationRadical = () => {
       
       console.log('✅ [RADICAL] Session validée');
       
-      // ÉTAPE 3: Appel DIRECT et SIMPLE à generateStory
-      console.log('📞 [RADICAL] ÉTAPE 3 - Appel DIRECT generateStory');
+      // ÉTAPE 3: Appel DIRECT et SIMPLE à generateStory - AVEC NOM CORRIGÉ
+      console.log('📞 [RADICAL] ÉTAPE 3 - Appel DIRECT generateStory AVEC NOM CORRIGÉ');
       
       const payload = {
         storyId: story.id,
@@ -86,20 +87,20 @@ export const useStoryCreationRadical = () => {
       };
       
       console.log('📤 [RADICAL] Payload final:', JSON.stringify(payload, null, 2));
-      console.log('🎯 [RADICAL] APPEL FUNCTION INVOKE - MAINTENANT');
+      console.log('🎯 [RADICAL] APPEL FUNCTION INVOKE avec nom corrigé "generateStory" - MAINTENANT');
       
       const startTime = Date.now();
       
-      // Appel ULTRA DIRECT - sans timeout, sans complexité
+      // CORRECTION CRITIQUE: Utilisation du nom correct "generateStory"
       const { data: functionData, error: functionError } = await supabase.functions.invoke('generateStory', {
         body: payload
       });
       
       const endTime = Date.now();
-      console.log(`⏱️ [RADICAL] Appel terminé en ${endTime - startTime}ms`);
+      console.log(`⏱️ [RADICAL] Appel terminé en ${endTime - startTime}ms avec nom corrigé`);
       
       if (functionError) {
-        console.error('❌ [RADICAL] ERREUR generateStory:', functionError);
+        console.error('❌ [RADICAL] ERREUR generateStory (mais avec nom corrigé):', functionError);
         console.error('📋 [RADICAL] Détails complets:', JSON.stringify(functionError, null, 2));
         
         // Marquer comme échoué
@@ -107,20 +108,20 @@ export const useStoryCreationRadical = () => {
           .from('stories')
           .update({
             status: 'error',
-            error: `RADICAL ERROR: ${functionError.message || JSON.stringify(functionError)}`,
+            error: `RADICAL ERROR AVEC NOM CORRIGÉ: ${functionError.message || JSON.stringify(functionError)}`,
             updatedat: new Date().toISOString()
           })
           .eq('id', story.id);
           
-        throw new Error(`FONCTION INACCESSIBLE: ${functionError.message || 'Erreur inconnue'}`);
+        throw new Error(`FONCTION INACCESSIBLE (nom corrigé utilisé): ${functionError.message || 'Erreur inconnue'}`);
       }
       
-      console.log('✅ [RADICAL] generateStory ACCESSIBLE!');
+      console.log('✅ [RADICAL] generateStory ACCESSIBLE avec nom corrigé!');
       console.log('📋 [RADICAL] Réponse:', functionData);
       
       toast({
-        title: "🎉 RADICAL - Génération lancée!",
-        description: `Histoire ${story.id} en cours de génération`,
+        title: "🎉 RADICAL CORRIGÉ - Génération lancée!",
+        description: `Histoire ${story.id} en cours avec nom fonction corrigé`,
       });
       
       return story.id;
@@ -130,7 +131,7 @@ export const useStoryCreationRadical = () => {
       console.error('📋 [RADICAL] Stack:', error.stack);
       
       toast({
-        title: "❌ RADICAL - Échec",
+        title: "❌ RADICAL - Échec (mais nom corrigé)",
         description: error.message || "Erreur système",
         variant: "destructive"
       });

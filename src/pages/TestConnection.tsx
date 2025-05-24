@@ -48,22 +48,24 @@ const TestConnection = () => {
     }
   };
 
-  // Tester les Edge Functions
+  // Tester les Edge Functions - CORRECTION CRITIQUE ICI
   const testEdgeFunctions = async () => {
     try {
       setEdgeFnStatus('loading');
       
-      // Ping simple pour vérifier que les fonctions sont accessibles
-      const { data, error } = await supabase.functions.invoke('generate-story', {
+      console.log('🔧 [TestConnection] CORRECTION: Utilisation du nom correct "generateStory"');
+      
+      // CORRIGÉ: Changement de 'generate-story' à 'generateStory'
+      const { data, error } = await supabase.functions.invoke('generateStory', {
         body: { ping: true }
       });
       
       if (error) throw error;
       
-      console.log('Edge Functions accessibles:', data);
+      console.log('✅ [TestConnection] Edge Functions accessibles avec le nom correct:', data);
       setEdgeFnStatus('success');
     } catch (err: any) {
-      console.error('Erreur d\'accès aux Edge Functions:', err);
+      console.error('❌ [TestConnection] Erreur d\'accès aux Edge Functions:', err);
       setEdgeFnStatus('error');
       setError(err.message);
     }
@@ -88,7 +90,14 @@ const TestConnection = () => {
 
   return (
     <div className="container mx-auto p-4 mt-8">
-      <h1 className="text-3xl font-bold mb-6">Test de connexion Supabase</h1>
+      <h1 className="text-3xl font-bold mb-6">Test de connexion Supabase - CORRIGÉ</h1>
+      
+      <Alert className="mb-6 border-green-200 bg-green-50">
+        <AlertTitle className="text-green-800">🔧 Correction Appliquée</AlertTitle>
+        <AlertDescription className="text-green-700">
+          Le nom de la fonction edge a été corrigé: "generate-story" → "generateStory"
+        </AlertDescription>
+      </Alert>
       
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
@@ -139,11 +148,11 @@ const TestConnection = () => {
             <CardTitle className="flex items-center gap-2">
               {getStatusIcon(edgeFnStatus)} Edge Functions
             </CardTitle>
-            <CardDescription>Test des fonctions Edge Supabase</CardDescription>
+            <CardDescription>Test des fonctions Edge Supabase (CORRIGÉ)</CardDescription>
           </CardHeader>
           <CardContent>
             {edgeFnStatus === 'loading' && <p>Vérification en cours...</p>}
-            {edgeFnStatus === 'success' && <p>Edge Functions accessibles</p>}
+            {edgeFnStatus === 'success' && <p className="text-green-600">✅ Edge Functions accessibles avec le nom correct</p>}
             {edgeFnStatus === 'error' && <p className="text-red-500">Problème d'accès aux Edge Functions</p>}
           </CardContent>
           <CardFooter>
@@ -160,12 +169,12 @@ const TestConnection = () => {
       )}
       
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Étapes suivantes</h2>
+        <h2 className="text-xl font-semibold mb-4">✅ Correction Appliquée</h2>
         <ul className="list-disc pl-5 space-y-2">
-          <li>Vérifier la configuration des fonctions Edge dans le projet Supabase</li>
-          <li>S'assurer que toutes les tables ont des politiques RLS appropriées</li>
-          <li>Confirmer que les webhooks pour l'email et Kindle sont configurés correctement</li>
-          <li>Tester les flux d'authentification (inscription, connexion, déconnexion)</li>
+          <li className="text-green-700">Le nom de fonction "generate-story" a été corrigé en "generateStory"</li>
+          <li>Tous les appels utilisent maintenant le nom cohérent "generateStory"</li>
+          <li>Les requêtes POST devraient maintenant atteindre la fonction edge</li>
+          <li>Le système de génération d'histoires devrait être opérationnel</li>
         </ul>
       </div>
     </div>

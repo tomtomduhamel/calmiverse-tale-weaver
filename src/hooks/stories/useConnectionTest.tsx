@@ -74,7 +74,7 @@ export const useConnectionTest = () => {
 
   const testGenerateStoryDirect = useCallback(async () => {
     setIsTesting(true);
-    console.log('🎯 [ConnectionTest] TEST DIRECT generateStory');
+    console.log('🎯 [ConnectionTest] TEST DIRECT generateStory - AVEC NOM CORRIGÉ');
     
     try {
       const payload = {
@@ -84,9 +84,10 @@ export const useConnectionTest = () => {
         childrenNames: ['TestChild']
       };
       
-      console.log('📤 [ConnectionTest] Appel DIRECT generateStory avec:', payload);
+      console.log('📤 [ConnectionTest] Appel DIRECT generateStory (nom corrigé) avec:', payload);
       
       const startTime = Date.now();
+      // CORRECTION CRITIQUE: S'assurer qu'on utilise bien 'generateStory' et non 'generate-story'
       const { data, error } = await supabase.functions.invoke('generateStory', {
         body: payload
       });
@@ -100,16 +101,18 @@ export const useConnectionTest = () => {
       }
       
       console.log('✅ [ConnectionTest] generateStory réponse:', data);
+      setLastTestResult({ success: true, data, duration: endTime - startTime });
       
       toast({
-        title: "Test generateStory réussi",
-        description: `Fonction accessible en ${endTime - startTime}ms`,
+        title: "✅ Test generateStory réussi",
+        description: `Fonction accessible en ${endTime - startTime}ms avec le nom corrigé`,
       });
       
       return { success: true, data };
       
     } catch (error: any) {
       console.error('💥 [ConnectionTest] Erreur test generateStory:', error);
+      setLastTestResult({ success: false, error: error.message });
       
       toast({
         title: "Test generateStory échoué",
