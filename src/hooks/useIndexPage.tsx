@@ -1,3 +1,4 @@
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useStories } from "@/hooks/useStories";
 import { useStoryManagement } from "@/hooks/useStoryManagement";
@@ -34,6 +35,16 @@ export const useIndexPage = () => {
     handleDeleteChild, 
     handleCreateChildFromStory 
   } = useChildManagement(setCurrentView);
+  
+  // Debug: Log détaillé des enfants dans useIndexPage
+  console.log('[useIndexPage] État des enfants:', {
+    children: children,
+    childrenCount: children?.length || 0,
+    childrenLoading,
+    childrenData: children?.map(c => ({ id: c.id, name: c.name })) || [],
+    user: user?.id,
+    timestamp: new Date().toISOString()
+  });
   
   const { 
     stories, 
@@ -87,7 +98,7 @@ export const useIndexPage = () => {
     isMobile,
     user,
     stories,
-    children,
+    children: children || [], // S'assurer que children est toujours un tableau défini
     isRetrying,
     
     // Actions

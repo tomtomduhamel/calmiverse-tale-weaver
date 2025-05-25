@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,13 +28,28 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
   const { createStoryWithN8n, isGenerating } = useN8nStoryCreation();
   const { objectives } = useStoryObjectives();
 
-  // Debug: Afficher les informations sur les enfants reçus
-  console.log('[N8nStoryCreator] Props children reçues:', {
+  // Debug: Afficher les informations détaillées sur les enfants reçus
+  useEffect(() => {
+    console.log('[N8nStoryCreator] useEffect - Props children mises à jour:', {
+      children: children,
+      childrenCount: children?.length || 0,
+      childrenArray: Array.isArray(children),
+      childrenData: children?.map(c => ({ id: c.id, name: c.name, authorId: c.authorId })) || [],
+      selectedChildrenIds,
+      selectedObjective,
+      timestamp: new Date().toISOString()
+    });
+  }, [children, selectedChildrenIds, selectedObjective]);
+
+  // Debug initial au rendu
+  console.log('[N8nStoryCreator] Rendu avec props:', {
+    childrenReceived: !!children,
+    childrenType: typeof children,
+    childrenIsArray: Array.isArray(children),
     childrenCount: children?.length || 0,
-    children: children?.map(c => ({ id: c.id, name: c.name })) || [],
-    childrenArray: children,
-    selectedChildrenIds,
-    selectedObjective
+    childrenData: children?.map(c => ({ id: c.id, name: c.name })) || [],
+    onStoryCreatedDefined: !!onStoryCreated,
+    timestamp: new Date().toISOString()
   });
 
   const defaultObjectives = [
@@ -47,7 +62,18 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
   const objectivesToUse = objectives || defaultObjectives;
 
   const handleChildSelect = (childId: string) => {
-    console.log('[N8nStoryCreator] Sélection enfant:', childId);
+    if (!childId) {
+      console.error("[N8nStoryCreator] Tentative de sélection avec ID vide");
+      return;
+    }
+    
+    console.log('[N8nStoryCreator] Sélection enfant:', {
+      childId,
+      isAlreadySelected: selectedChildrenIds?.includes(childId),
+      currentSelection: selectedChildrenIds,
+      availableChildren: children?.map(c => c.id) || []
+    });
+    
     setSelectedChildrenIds(prev => 
       prev.includes(childId) 
         ? prev.filter(id => id !== childId)
@@ -59,18 +85,27 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
     e.preventDefault();
 
     if (!webhookUrl) {
+      console.error("[N8nStoryCreator] URL webhook manquante");
       return;
     }
 
     if (selectedChildrenIds.length === 0) {
+      console.error("[N8nStoryCreator] Aucun enfant sélectionné");
       return;
     }
 
     if (!selectedObjective) {
+      console.error("[N8nStoryCreator] Aucun objectif sélectionné");
       return;
     }
 
     try {
+      console.log("[N8nStoryCreator] Soumission avec:", {
+        selectedChildrenIds,
+        selectedObjective,
+        childrenData: children?.filter(c => selectedChildrenIds.includes(c.id)) || []
+      });
+
       const result = await createStoryWithN8n({
         childrenIds: selectedChildrenIds,
         objective: selectedObjective,
@@ -90,6 +125,9 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
   };
 
   const isFormValid = webhookUrl && selectedChildrenIds.length > 0 && selectedObjective;
+
+  // Vérification de l'état des enfants pour affichage conditionnel
+  const hasChildren = children && Array.isArray(children) && children.length > 0;
 
   return (
     <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
@@ -121,7 +159,7 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
           {/* Sélection des enfants */}
           <div className="space-y-2">
             <Label>Enfants sélectionnés</Label>
-            {children && children.length > 0 ? (
+            {hasChildren ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {children.map((child) => (
                   <div
@@ -144,7 +182,11 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="flex items-center justify-between">
-                  <span>Aucun profil d'enfant disponible. Créez d'abord un profil pour pouvoir générer une histoire.</span>
+                  <span>
+                    Aucun profil d'enfant disponible. 
+                    {children ? ` (Reçu: ${children.length} enfants)` : ' (Aucune donnée reçue)'}
+                    Créez d'abord un profil pour pouvoir générer une histoire.
+                  </span>
                   <Link to="/children">
                     <Button variant="outline" size="sm" className="ml-2">
                       <UserPlus className="h-4 w-4 mr-1" />
@@ -182,7 +224,7 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
           {/* Bouton de soumission */}
           <Button 
             type="submit" 
-            disabled={!isFormValid || isGenerating || !children || children.length === 0}
+            disabled={!isFormValid || isGenerating || !hasChildren}
             className="w-full bg-blue-600 hover:bg-blue-700"
           >
             {isGenerating ? (
@@ -223,6 +265,22 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Debug info - à retirer en production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded border text-xs">
+            <strong>🐛 Debug Info:</strong>
+            <pre className="mt-1 overflow-auto">
+              {JSON.stringify({
+                childrenReceived: !!children,
+                childrenCount: children?.length || 0,
+                selectedCount: selectedChildrenIds.length,
+                hasChildren,
+                isFormValid
+              }, null, 2)}
+            </pre>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

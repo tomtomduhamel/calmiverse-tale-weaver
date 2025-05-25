@@ -67,11 +67,16 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
   useEffect(() => {
     console.log("[ContentRouter] DEBUG: Rendu avec currentView =", currentView);
     console.log("[ContentRouter] DEBUG: currentStory =", currentStory?.id);
+    console.log("[ContentRouter] DEBUG: children transmis =", {
+      children: children,
+      childrenCount: children?.length || 0,
+      childrenIds: children?.map(c => c.id) || []
+    });
     
     if (currentView === "reader" && !currentStory) {
       console.error("[ContentRouter] ERROR: Vue reader demandée mais currentStory est null!");
     }
-  }, [currentView, currentStory]);
+  }, [currentView, currentStory, children]);
   
   // Mapping des vues à des composants
   const viewComponents = {
@@ -79,6 +84,7 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
       <HomeView 
         onViewChange={onViewChange} 
         showGuide={showGuide} 
+        children={children}
       />
     ),
     
