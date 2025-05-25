@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Webhook, ExternalLink, Loader2 } from "lucide-react";
+import { Webhook, ExternalLink, Loader2, AlertCircle, UserPlus } from "lucide-react";
 import { useN8nStoryCreation } from "@/hooks/stories/useN8nStoryCreation";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from "react-router-dom";
 import type { Child } from "@/types/child";
 
 interface N8nStoryCreatorProps {
@@ -26,6 +28,14 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
   const { createStoryWithN8n, isGenerating } = useN8nStoryCreation();
   const { objectives } = useStoryObjectives();
 
+  // Debug: Afficher les informations sur les enfants
+  console.log('[N8nStoryCreator] État actuel:', {
+    childrenCount: children?.length || 0,
+    children: children?.map(c => ({ id: c.id, name: c.name })) || [],
+    selectedChildrenIds,
+    selectedObjective
+  });
+
   const defaultObjectives = [
     { id: "sleep", label: "Aider à s'endormir", value: "sleep" },
     { id: "focus", label: "Se concentrer", value: "focus" },
@@ -36,6 +46,7 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
   const objectivesToUse = objectives || defaultObjectives;
 
   const handleChildSelect = (childId: string) => {
+    console.log('[N8nStoryCreator] Sélection enfant:', childId);
     setSelectedChildrenIds(prev => 
       prev.includes(childId) 
         ? prev.filter(id => id !== childId)
@@ -109,21 +120,39 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
           {/* Sélection des enfants */}
           <div className="space-y-2">
             <Label>Enfants sélectionnés</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {children.map((child) => (
-                <div
-                  key={child.id}
-                  onClick={() => handleChildSelect(child.id)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedChildrenIds.includes(child.id)
-                      ? 'border-blue-500 bg-blue-100 dark:bg-blue-900/50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <span className="font-medium">{child.name}</span>
-                </div>
-              ))}
-            </div>
+            {children && children.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {children.map((child) => (
+                  <div
+                    key={child.id}
+                    onClick={() => handleChildSelect(child.id)}
+                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                      selectedChildrenIds.includes(child.id)
+                        ? 'border-blue-500 bg-blue-100 dark:bg-blue-900/50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="font-medium">{child.name}</span>
+                    {selectedChildrenIds.includes(child.id) && (
+                      <span className="ml-2 text-xs text-blue-600">✓</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span>Aucun profil d'enfant disponible. Créez d'abord un profil pour pouvoir générer une histoire.</span>
+                  <Link to="/children">
+                    <Button variant="outline" size="sm" className="ml-2">
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Créer un profil
+                    </Button>
+                  </Link>
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           {/* Sélection de l'objectif */}
@@ -141,6 +170,9 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
                   }`}
                 >
                   <span className="text-sm font-medium">{objective.label}</span>
+                  {selectedObjective === objective.value && (
+                    <span className="ml-2 text-xs text-blue-600">✓</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -149,7 +181,7 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
           {/* Bouton de soumission */}
           <Button 
             type="submit" 
-            disabled={!isFormValid || isGenerating}
+            disabled={!isFormValid || isGenerating || !children || children.length === 0}
             className="w-full bg-blue-600 hover:bg-blue-700"
           >
             {isGenerating ? (

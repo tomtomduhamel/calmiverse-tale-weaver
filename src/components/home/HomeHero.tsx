@@ -7,10 +7,11 @@ import type { ViewType } from "@/types/views";
 import { Link, useNavigate } from "react-router-dom";
 import N8nStoryCreator from "@/components/story/N8nStoryCreator";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import type { Child } from "@/types/child";
 
 interface HomeHeroProps {
   onViewChange: (view: ViewType) => void;
-  children?: any[];
+  children?: Child[];
 }
 
 const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
@@ -20,6 +21,13 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
   const handleLibraryClick = () => {
     onViewChange("library");
   };
+
+  // Debug: Afficher les informations sur les enfants
+  console.log('[HomeHero] Enfants reçus:', {
+    childrenCount: children?.length || 0,
+    children: children?.map(c => ({ id: c.id, name: c.name })) || [],
+    user: user?.id
+  });
 
   return (
     <div className="min-h-[calc(100vh-4rem)] relative flex flex-col justify-center overflow-hidden animate-fade-in">
@@ -108,7 +116,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
         {user && (
           <div className="mt-8">
             <N8nStoryCreator 
-              children={children} 
+              children={children || []} 
               onStoryCreated={(storyId) => {
                 console.log('Histoire n8n créée:', storyId);
                 // Optionnel: rediriger vers la bibliothèque
