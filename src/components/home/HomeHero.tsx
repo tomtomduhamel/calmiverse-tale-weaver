@@ -22,11 +22,12 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
     onViewChange("library");
   };
 
-  // Debug: Afficher les informations sur les enfants
-  console.log('[HomeHero] Enfants reçus:', {
+  // Debug: Afficher les informations sur les enfants dans HomeHero
+  console.log('[HomeHero] Enfants reçus dans HomeHero:', {
     childrenCount: children?.length || 0,
     children: children?.map(c => ({ id: c.id, name: c.name })) || [],
-    user: user?.id
+    user: user?.id,
+    childrenArray: children
   });
 
   return (
@@ -116,7 +117,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
         {user && (
           <div className="mt-8">
             <N8nStoryCreator 
-              children={children || []} 
+              children={children} 
               onStoryCreated={(storyId) => {
                 console.log('Histoire n8n créée:', storyId);
                 // Optionnel: rediriger vers la bibliothèque

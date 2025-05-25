@@ -11,15 +11,19 @@ interface HomeViewProps {
 }
 
 const HomeView: React.FC<HomeViewProps> = ({ onViewChange, showGuide, children }) => {
-  // Debug: Vérifier la transmission des enfants
-  console.log('[HomeView] Enfants reçus:', {
+  // Debug: Vérifier la transmission des enfants dans HomeView
+  console.log('[HomeView] Props reçues:', {
     childrenCount: children?.length || 0,
-    children: children?.map(c => ({ id: c.id, name: c.name })) || []
+    children: children?.map(c => ({ id: c.id, name: c.name })) || [],
+    showGuide
   });
 
   return (
     <div className="px-4 py-8">
-      <HomeHero onViewChange={onViewChange} children={children || []} />
+      <HomeHero 
+        onViewChange={onViewChange} 
+        children={children || []} 
+      />
     </div>
   );
 };

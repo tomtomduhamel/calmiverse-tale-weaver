@@ -15,8 +15,16 @@ const Index = () => {
     isLoading,
     stories,
     user,
-    isMobile
+    isMobile,
+    children
   } = indexPageProps;
+
+  // Debug: Afficher les informations sur les enfants au niveau Index
+  console.log('[Index] Enfants disponibles:', {
+    childrenCount: children?.length || 0,
+    children: children?.map(c => ({ id: c.id, name: c.name })) || [],
+    user: user?.id
+  });
 
   // Gérer l'état de chargement et d'erreur
   const error = stories.error;
@@ -32,7 +40,7 @@ const Index = () => {
     currentView: indexPageProps.currentView,
     showGuide: indexPageProps.showGuide,
     stories: stories.stories || [],
-    children: indexPageProps.children || [],
+    children: children || [], // S'assurer que children est toujours un tableau
     currentStory: indexPageProps.currentStory || null,
     pendingStoryId: indexPageProps.pendingStoryId,
     isRetrying: indexPageProps.isRetrying,

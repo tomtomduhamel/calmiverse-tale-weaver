@@ -28,10 +28,11 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
   const { createStoryWithN8n, isGenerating } = useN8nStoryCreation();
   const { objectives } = useStoryObjectives();
 
-  // Debug: Afficher les informations sur les enfants
-  console.log('[N8nStoryCreator] État actuel:', {
+  // Debug: Afficher les informations sur les enfants reçus
+  console.log('[N8nStoryCreator] Props children reçues:', {
     childrenCount: children?.length || 0,
     children: children?.map(c => ({ id: c.id, name: c.name })) || [],
+    childrenArray: children,
     selectedChildrenIds,
     selectedObjective
   });
