@@ -1,4 +1,3 @@
-
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useStories } from "@/hooks/useStories";
 import { useStoryManagement } from "@/hooks/useStoryManagement";
@@ -19,17 +18,21 @@ export const useIndexPage = () => {
   const { isInitialized } = useAppInitialization();
   
   // Hooks de gestion des vues et de l'affichage
-  const { currentView, setCurrentView, showGuide } = useViewManagement();
+  const { 
+    currentView, 
+    setCurrentView, 
+    showGuide 
+  } = useViewManagement();
   const isMobile = useIsMobile();
   
   // Hooks de gestion des enfants et des histoires
   const { 
-    children,
-    childrenLoading,
-    handleAddChild,
-    handleUpdateChild,
-    handleDeleteChild,
-    handleCreateChildFromStory
+    children, 
+    childrenLoading, 
+    handleAddChild, 
+    handleUpdateChild, 
+    handleDeleteChild, 
+    handleCreateChildFromStory 
   } = useChildManagement(setCurrentView);
   
   const { 
@@ -38,7 +41,7 @@ export const useIndexPage = () => {
     setCurrentStory, 
     deleteStory, 
     retryFailedStory, 
-    isRetrying
+    isRetrying 
   } = useStories(children);
   
   const {
