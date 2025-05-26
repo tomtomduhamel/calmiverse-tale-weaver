@@ -6,6 +6,7 @@ import LoadingErrorHandler from "@/components/layout/LoadingErrorHandler";
 
 /**
  * Page principale de l'application
+ * Note: Le reader a maintenant sa propre route /reader/:id
  */
 const Index = () => {
   const indexPageProps = useIndexPage();
@@ -34,13 +35,12 @@ const Index = () => {
     return <LoadingErrorHandler isLoading={true} error={null} children={null} />;
   }
 
-  // Mappage explicite des props pour ContentView selon l'interface ContentViewProps
+  // Mappage explicite des props pour ContentView (reader supprimé)
   const contentViewProps = {
     currentView: indexPageProps.currentView,
     showGuide: indexPageProps.showGuide,
     stories: stories.stories || [],
     children: children || [], // S'assurer que children est toujours un tableau
-    currentStory: indexPageProps.currentStory || null,
     pendingStoryId: indexPageProps.pendingStoryId,
     isRetrying: indexPageProps.isRetrying,
     onViewChange: indexPageProps.setCurrentView,
@@ -53,7 +53,6 @@ const Index = () => {
     onSelectStory: indexPageProps.handleSelectStory,
     onDeleteStory: indexPageProps.handleDeleteStory,
     onRetryStory: indexPageProps.handleRetryStory,
-    onCloseReader: indexPageProps.handleCloseReader,
     onMarkAsRead: indexPageProps.handleMarkAsRead,
   };
 

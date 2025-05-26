@@ -16,8 +16,9 @@ const Library: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSelectStory = (story: any) => {
-    // Naviguer vers la page de lecture avec l'ID de l'histoire
-    navigate(`/?view=reader&story=${story.id}`);
+    // Naviguer vers la nouvelle route dédiée pour le lecteur
+    console.log("[Library] Navigation vers le lecteur:", story.id);
+    navigate(`/reader/${story.id}`);
   };
 
   const handleDeleteStory = async (storyId: string) => {

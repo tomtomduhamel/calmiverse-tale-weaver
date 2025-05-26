@@ -10,7 +10,6 @@ interface ContentViewProps {
   showGuide: boolean;
   stories: Story[];
   children: Child[];
-  currentStory: Story | null;
   pendingStoryId: string | null;
   isRetrying: boolean;
   onViewChange: (view: ViewType) => void;
@@ -23,12 +22,12 @@ interface ContentViewProps {
   onSelectStory: (story: Story) => void;
   onDeleteStory: (storyId: string) => Promise<boolean>;
   onRetryStory: (storyId: string) => Promise<boolean>;
-  onCloseReader: () => void;
   onMarkAsRead: (storyId: string) => Promise<boolean>;
 }
 
 /**
  * Composant conteneur principal pour le contenu de l'application
+ * Note: Le reader a maintenant sa propre route /reader/:id
  */
 const ContentView: React.FC<ContentViewProps> = (props) => {
   return <ContentRouter {...props} />;

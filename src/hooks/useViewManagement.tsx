@@ -7,11 +7,7 @@ export const useViewManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentView, setCurrentViewState] = useState<ViewType>(() => {
-    // Initialiser la vue en fonction de l'URL actuelle
-    const searchParams = new URLSearchParams(location.search);
-    const viewParam = searchParams.get('view') as ViewType | null;
-    
-    if (viewParam === "reader") return "reader";
+    // Initialiser la vue en fonction de l'URL actuelle (sans reader)
     if (location.pathname === "/settings") return "settings";
     if (location.pathname === "/children") return "profiles";
     if (location.pathname === "/library") return "library";
@@ -20,22 +16,14 @@ export const useViewManagement = () => {
   });
   const [showGuide, setShowGuide] = useState<boolean>(false);
 
-  // Synchroniser la vue avec l'URL
+  // Synchroniser la vue avec l'URL (sans reader)
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const viewParam = searchParams.get('view') as ViewType | null;
-    
     console.log("[useViewManagement] Synchronisation avec l'URL", { 
       path: location.pathname, 
-      search: location.search, 
-      viewParam,
       currentLocation: location
     });
 
-    if (viewParam === "reader") {
-      console.log("[useViewManagement] Vue reader détectée dans l'URL");
-      setCurrentViewState("reader");
-    } else if (location.pathname === "/") {
+    if (location.pathname === "/") {
       setCurrentViewState("home");
     } else if (location.pathname === "/settings") {
       setCurrentViewState("settings");
@@ -52,13 +40,13 @@ export const useViewManagement = () => {
     setShowGuide(!hideGuide);
   }, [location]);
 
-  // Fonction pour changer de vue avec navigation simplifiée
-  const setCurrentView = useCallback((view: ViewType, storyId?: string) => {
-    console.log("[useViewManagement] Changement de vue vers", view, "avec storyId:", storyId);
+  // Fonction pour changer de vue (sans reader)
+  const setCurrentView = useCallback((view: ViewType) => {
+    console.log("[useViewManagement] Changement de vue vers", view);
     
     setCurrentViewState(view);
 
-    // Navigation basée sur la vue
+    // Navigation basée sur la vue (reader n'est plus géré ici)
     switch (view) {
       case "home":
         navigate("/");
@@ -75,20 +63,9 @@ export const useViewManagement = () => {
       case "settings":
         navigate("/settings");
         break;
-      case "reader":
-        // Pour la vue reader, ajouter les paramètres nécessaires
-        const currentPath = location.pathname;
-        const searchParams = new URLSearchParams();
-        searchParams.set('view', 'reader');
-        if (storyId) {
-          searchParams.set('story', storyId);
-        }
-        const newUrl = `${currentPath}?${searchParams.toString()}`;
-        console.log("[useViewManagement] Navigation vers reader:", newUrl);
-        navigate(newUrl);
-        break;
+      // reader n'est plus géré ici - utiliser navigate("/reader/:id") directement
     }
-  }, [navigate, location.pathname]);
+  }, [navigate]);
 
   return {
     currentView,

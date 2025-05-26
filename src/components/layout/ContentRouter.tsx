@@ -4,8 +4,7 @@ import {
   HomeView,
   CreateStoryView,
   ProfilesView,
-  LibraryView,
-  ReaderView
+  LibraryView
 } from "@/pages/views";
 import type { ViewType } from "@/types/views";
 import type { Story } from "@/types/story";
@@ -23,7 +22,6 @@ interface ViewHandlers {
   onSelectStory: (story: Story) => void;
   onDeleteStory: (storyId: string) => Promise<boolean>;
   onRetryStory: (storyId: string) => Promise<boolean>;
-  onCloseReader: () => void;
   onMarkAsRead: (storyId: string) => Promise<boolean>;
 }
 
@@ -32,20 +30,19 @@ interface ContentRouterProps extends ViewHandlers {
   showGuide: boolean;
   stories: Story[];
   children: Child[];
-  currentStory: Story | null;
   pendingStoryId: string | null;
   isRetrying: boolean;
 }
 
 /**
  * Composant de routage déclaratif pour les différentes vues de l'application
+ * Note: Le reader n'est plus géré ici, il a sa propre route /reader/:id
  */
 const ContentRouter: React.FC<ContentRouterProps> = ({
   currentView,
   showGuide,
   stories,
   children,
-  currentStory,
   pendingStoryId,
   isRetrying,
   onViewChange,
@@ -58,7 +55,6 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
   onSelectStory,
   onDeleteStory,
   onRetryStory,
-  onCloseReader,
   onMarkAsRead
 }) => {
   const isMobile = useIsMobile();
@@ -66,53 +62,14 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
   // Validation pour débogage
   useEffect(() => {
     console.log("[ContentRouter] DEBUG: Rendu avec currentView =", currentView);
-    console.log("[ContentRouter] DEBUG: currentStory =", currentStory?.id);
     console.log("[ContentRouter] DEBUG: children transmis =", {
       children: children,
       childrenCount: children?.length || 0,
       childrenIds: children?.map(c => c.id) || []
     });
-    
-    if (currentView === "reader") {
-      console.log("[ContentRouter] DEBUG: Vue reader demandée!");
-      if (!currentStory) {
-        console.error("[ContentRouter] ERROR: Vue reader demandée mais currentStory est null!");
-      } else {
-        console.log("[ContentRouter] SUCCESS: Vue reader avec histoire:", currentStory.id);
-      }
-    }
-  }, [currentView, currentStory, children]);
+  }, [currentView, children]);
   
-  // PRIORITÉ ABSOLUE : Afficher le lecteur d'histoire si demandé
-  if (currentView === "reader") {
-    console.log("[ContentRouter] DEBUG: Affichage du ReaderView", {
-      hasCurrentStory: !!currentStory,
-      storyId: currentStory?.id
-    });
-    
-    if (currentStory) {
-      return (
-        <ReaderView
-          story={currentStory}
-          onClose={onCloseReader}
-          onMarkAsRead={onMarkAsRead}
-        />
-      );
-    } else {
-      // Si pas d'histoire mais vue reader demandée, afficher un message de chargement
-      console.log("[ContentRouter] DEBUG: Vue reader sans histoire - chargement...");
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p>Chargement de l'histoire...</p>
-          </div>
-        </div>
-      );
-    }
-  }
-  
-  // Mapping des vues à des composants
+  // Mapping des vues à des composants (reader supprimé)
   const viewComponents = {
     home: (
       <HomeView 
@@ -154,8 +111,8 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
     )
   };
   
-  // Affichage normal des autres vues
-  console.log("[ContentRouter] DEBUG: Affichage de la vue normale:", currentView);
+  // Affichage des vues (reader n'est plus inclus)
+  console.log("[ContentRouter] DEBUG: Affichage de la vue:", currentView);
   return (
     <div className={isMobile ? "pb-16" : ""}>
       {viewComponents[currentView as keyof typeof viewComponents]}

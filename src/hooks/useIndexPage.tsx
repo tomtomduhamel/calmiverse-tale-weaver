@@ -5,7 +5,6 @@ import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
 import { useViewManagement } from "@/hooks/useViewManagement";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useStoriesState } from "@/hooks/stories/useStoriesState";
-import { useStoryFromUrl } from "@/hooks/useStoryFromUrl";
 import { useAuthRedirection } from "@/hooks/app/useAuthRedirection";
 import { useToast } from "@/hooks/use-toast";
 import type { Child } from "@/types/child";
@@ -18,22 +17,14 @@ export const useIndexPage = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   
-  // Gérer l'état des histoires
+  // Gérer l'état des histoires (currentStory supprimé car géré par StoryReaderPage)
   const {
-    currentStory,
-    setCurrentStory,
     lastError,
     setLastError,
     isRetrying,
     setIsRetrying,
     clearError
   } = useStoriesState(stories);
-
-  // Hook pour charger une histoire depuis l'URL
-  const { isLoadingFromUrl } = useStoryFromUrl({
-    stories: stories.stories || [],
-    setCurrentStory
-  });
 
   // Redirection automatique pour les utilisateurs non connectés
   useAuthRedirection();
@@ -85,52 +76,22 @@ export const useIndexPage = () => {
     }
   };
 
-  // Gestion de la sélection d'histoires
+  // Gestion de la sélection d'histoires (navigation vers /reader/:id)
   const handleSelectStory = (story: any) => {
-    console.log("[useIndexPage] DEBUG: Sélection d'histoire:", story.id, "status:", story.status);
-    
-    // Définir l'histoire courante IMMÉDIATEMENT
-    setCurrentStory(story);
-    console.log("[useIndexPage] DEBUG: Histoire courante définie:", story.id);
-    
-    // Changer la vue vers reader avec l'ID de l'histoire
-    console.log("[useIndexPage] DEBUG: Changement de vue vers 'reader' avec storyId:", story.id);
-    setCurrentView("reader", story.id);
-    
-    // Marquer l'histoire comme lue si nécessaire (en arrière-plan)
-    if (story.status === "ready") {
-      console.log("[useIndexPage] DEBUG: Marquage de l'histoire comme lue en arrière-plan");
-      handleMarkAsRead(story.id).catch(error => {
-        console.error("[useIndexPage] ERROR: Erreur lors du marquage de l'histoire comme lue:", error);
-      });
-    }
+    console.log("[useIndexPage] DEBUG: Sélection d'histoire - navigation vers /reader/", story.id);
+    // Navigation directe vers la route dédiée - plus de gestion locale du currentStory
+    window.location.href = `/reader/${story.id}`;
   };
 
   // Gestionnaires d'événements
   const handleStoryCreated = (story: any) => {
     console.log("[useIndexPage] Histoire créée:", story.id);
-    setCurrentStory(story);
-    setCurrentView("reader", story.id);
-  };
-
-  const handleCloseReader = () => {
-    console.log("[useIndexPage] Fermeture du lecteur");
-    setCurrentStory(null);
     setCurrentView("library");
   };
 
   const handleMarkAsRead = async (storyId: string): Promise<boolean> => {
     try {
       await stories.updateStoryStatus(storyId, "read");
-      
-      // Mettre à jour l'histoire actuelle si c'est celle qui vient d'être marquée comme lue
-      if (currentStory && currentStory.id === storyId) {
-        setCurrentStory({
-          ...currentStory,
-          status: "read"
-        });
-      }
-      
       return true;
     } catch (error) {
       console.error("[useIndexPage] Erreur lors du marquage comme lu:", error);
@@ -141,12 +102,6 @@ export const useIndexPage = () => {
   const handleDeleteStory = async (storyId: string): Promise<boolean> => {
     try {
       await stories.deleteStory(storyId);
-      
-      // Si l'histoire supprimée était celle en cours de lecture, fermer le lecteur
-      if (currentStory && currentStory.id === storyId) {
-        handleCloseReader();
-      }
-      
       return true;
     } catch (error) {
       console.error("[useIndexPage] Erreur lors de la suppression:", error);
@@ -168,13 +123,12 @@ export const useIndexPage = () => {
   };
 
   // État de chargement global
-  const isLoading = stories.isLoading || isLoadingFromUrl;
+  const isLoading = stories.isLoading;
 
   return {
     // États
     currentView,
     showGuide,
-    currentStory,
     pendingStoryId: stories.pendingStoryId,
     isRetrying,
     isLoading,
@@ -195,7 +149,6 @@ export const useIndexPage = () => {
     handleSelectStory,
     handleDeleteStory,
     handleRetryStory,
-    handleCloseReader,
     handleMarkAsRead,
     clearError
   };

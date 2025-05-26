@@ -1,6 +1,6 @@
 
 import React, { ReactNode } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Navigation from './navigation/Navigation';
 import { SidebarProvider } from './ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -13,23 +13,24 @@ interface ShellProps {
 
 export const Shell: React.FC<ShellProps> = ({ children }) => {
   const isMobile = useIsMobile();
+  const location = useLocation();
   const { currentView, setCurrentView } = useViewManagement();
   
   // Déterminer si le menu mobile doit être affiché
-  // Ne pas l'afficher si nous sommes en mode lecteur d'histoire
-  const showMobileMenu = isMobile && currentView !== "reader";
+  // Ne pas l'afficher si nous sommes sur la route du lecteur d'histoire
+  const showMobileMenu = isMobile && !location.pathname.startsWith('/reader/');
   
   console.log("[Shell] DEBUG: Configuration du menu mobile", {
     isMobile,
-    currentView,
+    pathname: location.pathname,
     showMobileMenu
   });
   
   return (
     <SidebarProvider>
       <div className="flex flex-col min-h-screen w-full">
-        {/* Only show top navigation on desktop */}
-        {!isMobile && <Navigation />}
+        {/* Only show top navigation on desktop and not on reader pages */}
+        {!isMobile && !location.pathname.startsWith('/reader/') && <Navigation />}
         
         {/* Adjust padding to avoid content being hidden under bottom nav */}
         <div className={`flex-1 w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-20' : 'pb-8'}`}>

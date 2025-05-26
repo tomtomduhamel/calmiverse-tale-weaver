@@ -15,6 +15,7 @@ import TestConnection from "./pages/TestConnection";
 import DiagnosticConnection from "./pages/DiagnosticConnection";
 import CreateStoryN8n from "./pages/CreateStoryN8n";
 import Library from "./pages/Library";
+import StoryReaderPage from "./pages/StoryReaderPage";
 import Shell from "./components/Shell";
 import { Toaster } from "@/components/ui/toaster"
 import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
@@ -38,6 +39,7 @@ function App() {
             <Route path="kids-profile" element={<KidsProfile />} />
             <Route path="settings" element={<Settings />} />
             <Route path="library" element={<Library />} />
+            <Route path="reader/:id" element={<StoryReaderPage />} />
             <Route path="create-story-simple" element={<MinimalStoryPage />} />
             <Route path="create-story-n8n" element={<CreateStoryN8n />} />
             <Route path="test-connection" element={<TestConnection />} />
