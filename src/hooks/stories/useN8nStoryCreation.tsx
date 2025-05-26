@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,8 +9,8 @@ interface N8nStoryRequest {
   objective: string;
 }
 
-// Webhook de production n8n
-const N8N_PRODUCTION_WEBHOOK = "https://tomtomduhamel.app.n8n.cloud/webhook/4cd35a66-3113-40a9-9e89-8f79ce59b44f";
+// Webhook de test n8n
+const N8N_TEST_WEBHOOK = "https://tomtomduhamel.app.n8n.cloud/webhook-test/4cd35a66-3113-40a9-9e89-8f79ce59b44f";
 
 // Fonction pour générer le prompt d'histoire complet
 const generateStoryPrompt = (objective: string, childrenNames: string[]): string => {
@@ -60,7 +59,7 @@ export const useN8nStoryCreation = () => {
     setIsGenerating(true);
 
     try {
-      console.log('[N8nStoryCreation] Déclenchement webhook n8n de production:', formData);
+      console.log('[N8nStoryCreation] Déclenchement webhook n8n de test:', formData);
 
       // Récupérer les noms des enfants
       const childrenNames = formData.childrenIds.map(id => {
@@ -83,13 +82,13 @@ export const useN8nStoryCreation = () => {
         requestId: crypto.randomUUID().slice(0, 8)
       };
 
-      console.log('[N8nStoryCreation] Envoi données à n8n production:', {
+      console.log('[N8nStoryCreation] Envoi données à n8n test:', {
         ...n8nData,
         storyPrompt: `${storyPrompt.substring(0, 100)}...` // Log tronqué pour la lisibilité
       });
 
-      // Appeler le webhook n8n de production
-      const response = await fetch(N8N_PRODUCTION_WEBHOOK, {
+      // Appeler le webhook n8n de test
+      const response = await fetch(N8N_TEST_WEBHOOK, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,11 +101,11 @@ export const useN8nStoryCreation = () => {
       }
 
       const result = await response.json();
-      console.log('[N8nStoryCreation] Réponse n8n production:', result);
+      console.log('[N8nStoryCreation] Réponse n8n test:', result);
 
       toast({
-        title: "Génération démarrée",
-        description: "Votre histoire est en cours de création. Elle apparaîtra dans votre bibliothèque dans quelques instants.",
+        title: "Test de génération démarré",
+        description: "Votre test d'automatisation n8n a été envoyé. Vérifiez votre workflow n8n pour confirmer la réception.",
       });
 
       return result;
@@ -115,8 +114,8 @@ export const useN8nStoryCreation = () => {
       console.error('[N8nStoryCreation] Erreur:', error);
       
       toast({
-        title: "Erreur de génération",
-        description: error.message || "Impossible de créer l'histoire. Veuillez réessayer.",
+        title: "Erreur de test",
+        description: error.message || "Impossible de déclencher le test n8n. Vérifiez votre webhook.",
         variant: "destructive"
       });
       
