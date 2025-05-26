@@ -4,6 +4,7 @@ import StoryReader from "@/components/StoryReader";
 import type { Story } from "@/types/story";
 import { useViewManagement } from "@/hooks/useViewManagement";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 interface ReaderViewProps {
   story: Story;
@@ -13,6 +14,7 @@ interface ReaderViewProps {
 
 export const ReaderView: React.FC<ReaderViewProps> = ({ story: initialStory, onClose, onMarkAsRead }) => {
   const { setCurrentView } = useViewManagement();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [story, setStory] = useState<Story>(initialStory);
 
@@ -20,6 +22,8 @@ export const ReaderView: React.FC<ReaderViewProps> = ({ story: initialStory, onC
   const handleClose = () => {
     console.log("[ReaderView] DEBUG: Fermeture du lecteur et retour à la bibliothèque");
     onClose();
+    // Navigation directe vers la bibliothèque
+    navigate("/library");
     setCurrentView("library");
   };
 

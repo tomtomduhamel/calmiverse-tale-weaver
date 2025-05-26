@@ -3,7 +3,6 @@ import React from "react";
 import { useIndexPage } from "@/hooks/useIndexPage";
 import ContentView from "@/components/layout/ContentView";
 import LoadingErrorHandler from "@/components/layout/LoadingErrorHandler";
-import MobileMenu from "@/components/MobileMenu";
 
 /**
  * Page principale de l'application
@@ -64,12 +63,6 @@ const Index = () => {
         <div className={`index-container max-w-7xl mx-auto p-2 sm:p-4 ${isMobile ? 'pb-32' : 'mb-20'}`}>
           <ContentView {...contentViewProps} />
         </div>
-        
-        {/* Menu de navigation pour mobile */}
-        <MobileMenu 
-          currentView={indexPageProps.currentView} 
-          onViewChange={indexPageProps.setCurrentView} 
-        />
       </LoadingErrorHandler>
     </div>
   );

@@ -1,5 +1,6 @@
 
 import { useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import type { Story } from "@/types/story";
 import type { ViewType } from "@/types/views";
 
@@ -17,22 +18,22 @@ export const useStorySelection = ({
   setCurrentView,
   handleMarkAsRead
 }: UseStorySelectionProps) => {
+  const location = useLocation();
 
   const handleSelectStory = useCallback((story: Story) => {
-    console.log("[useStorySelection] DEBUG: Sélection directe d'histoire:", story.id, "status:", story.status);
+    console.log("[useStorySelection] DEBUG: Sélection d'histoire:", story.id, "status:", story.status);
     
+    // Définir l'histoire courante IMMÉDIATEMENT
     setCurrentStory(story);
     console.log("[useStorySelection] DEBUG: Histoire courante définie:", story.id);
     
-    // Utilisation d'un setTimeout pour garantir que l'état est bien mis à jour
-    setTimeout(() => {
-      console.log("[useStorySelection] DEBUG: Changement de vue vers 'reader'");
-      setCurrentView("reader");
-    }, 50);
+    // Changer la vue vers reader IMMÉDIATEMENT
+    console.log("[useStorySelection] DEBUG: Changement de vue vers 'reader'");
+    setCurrentView("reader");
     
-    // Marquer l'histoire comme lue si nécessaire
+    // Marquer l'histoire comme lue si nécessaire (en arrière-plan)
     if (story.status === "ready") {
-      console.log("[useStorySelection] DEBUG: Marquage de l'histoire comme lue");
+      console.log("[useStorySelection] DEBUG: Marquage de l'histoire comme lue en arrière-plan");
       handleMarkAsRead(story.id).catch(error => {
         console.error("[useStorySelection] ERROR: Erreur lors du marquage de l'histoire comme lue:", error);
       });

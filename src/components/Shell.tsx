@@ -19,6 +19,12 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   // Ne pas l'afficher si nous sommes en mode lecteur d'histoire
   const showMobileMenu = isMobile && currentView !== "reader";
   
+  console.log("[Shell] DEBUG: Configuration du menu mobile", {
+    isMobile,
+    currentView,
+    showMobileMenu
+  });
+  
   return (
     <SidebarProvider>
       <div className="flex flex-col min-h-screen w-full">

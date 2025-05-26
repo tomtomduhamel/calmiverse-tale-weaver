@@ -28,10 +28,12 @@ export const useViewManagement = () => {
     console.log("[useViewManagement] Synchronisation avec l'URL", { 
       path: location.pathname, 
       search: location.search, 
-      viewParam
+      viewParam,
+      currentLocation: location
     });
 
     if (viewParam === "reader") {
+      console.log("[useViewManagement] Vue reader détectée dans l'URL");
       setCurrentViewState("reader");
     } else if (location.pathname === "/") {
       setCurrentViewState("home");
@@ -78,7 +80,9 @@ export const useViewManagement = () => {
         const currentPath = location.pathname;
         const searchParams = new URLSearchParams(location.search);
         searchParams.set('view', 'reader');
-        navigate(`${currentPath}?${searchParams.toString()}`);
+        const newUrl = `${currentPath}?${searchParams.toString()}`;
+        console.log("[useViewManagement] Navigation vers reader:", newUrl);
+        navigate(newUrl);
         break;
     }
   }, [navigate, location.pathname, location.search]);

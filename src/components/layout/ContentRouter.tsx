@@ -73,10 +73,36 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
       childrenIds: children?.map(c => c.id) || []
     });
     
-    if (currentView === "reader" && !currentStory) {
-      console.error("[ContentRouter] ERROR: Vue reader demandée mais currentStory est null!");
+    if (currentView === "reader") {
+      console.log("[ContentRouter] DEBUG: Vue reader demandée!");
+      if (!currentStory) {
+        console.error("[ContentRouter] ERROR: Vue reader demandée mais currentStory est null!");
+      } else {
+        console.log("[ContentRouter] SUCCESS: Vue reader avec histoire:", currentStory.id);
+      }
     }
   }, [currentView, currentStory, children]);
+  
+  // Condition pour afficher le lecteur d'histoire - PRIORITÉ ABSOLUE
+  const shouldShowReader = currentView === "reader" && currentStory !== null;
+  
+  console.log("[ContentRouter] DEBUG: shouldShowReader =", shouldShowReader, {
+    currentView,
+    hasCurrentStory: !!currentStory,
+    storyId: currentStory?.id
+  });
+  
+  // Rendu prioritaire du lecteur en mode plein écran
+  if (shouldShowReader && currentStory) {
+    console.log("[ContentRouter] DEBUG: Affichage du ReaderView pour l'histoire:", currentStory.id);
+    return (
+      <ReaderView
+        story={currentStory}
+        onClose={onCloseReader}
+        onMarkAsRead={onMarkAsRead}
+      />
+    );
+  }
   
   // Mapping des vues à des composants
   const viewComponents = {
@@ -120,21 +146,8 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
     )
   };
   
-  // Condition pour afficher le lecteur d'histoire 
-  const shouldShowReader = currentView === "reader" && currentStory !== null;
-  
-  // Rendu prioritaire du lecteur en mode plein écran
-  if (shouldShowReader && currentStory) {
-    return (
-      <ReaderView
-        story={currentStory}
-        onClose={onCloseReader}
-        onMarkAsRead={onMarkAsRead}
-      />
-    );
-  }
-  
   // Affichage normal si le lecteur n'est pas actif
+  console.log("[ContentRouter] DEBUG: Affichage de la vue normale:", currentView);
   return (
     <div className={isMobile ? "pb-16" : ""}>
       {/* Afficher la vue sélectionnée */}
