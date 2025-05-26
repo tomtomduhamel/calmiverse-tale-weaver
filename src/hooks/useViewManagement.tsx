@@ -53,8 +53,8 @@ export const useViewManagement = () => {
   }, [location]);
 
   // Fonction pour changer de vue avec navigation simplifiée
-  const setCurrentView = useCallback((view: ViewType) => {
-    console.log("[useViewManagement] Changement de vue vers", view);
+  const setCurrentView = useCallback((view: ViewType, storyId?: string) => {
+    console.log("[useViewManagement] Changement de vue vers", view, "avec storyId:", storyId);
     
     setCurrentViewState(view);
 
@@ -76,16 +76,19 @@ export const useViewManagement = () => {
         navigate("/settings");
         break;
       case "reader":
-        // Pour la vue reader, ajouter un paramètre à l'URL actuelle
+        // Pour la vue reader, ajouter les paramètres nécessaires
         const currentPath = location.pathname;
-        const searchParams = new URLSearchParams(location.search);
+        const searchParams = new URLSearchParams();
         searchParams.set('view', 'reader');
+        if (storyId) {
+          searchParams.set('story', storyId);
+        }
         const newUrl = `${currentPath}?${searchParams.toString()}`;
         console.log("[useViewManagement] Navigation vers reader:", newUrl);
         navigate(newUrl);
         break;
     }
-  }, [navigate, location.pathname, location.search]);
+  }, [navigate, location.pathname]);
 
   return {
     currentView,

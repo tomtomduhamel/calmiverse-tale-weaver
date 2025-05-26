@@ -1,12 +1,11 @@
 
 import { useCallback } from "react";
-import { useLocation } from "react-router-dom";
 import type { Story } from "@/types/story";
 import type { ViewType } from "@/types/views";
 
 interface UseStorySelectionProps {
   setCurrentStory: (story: Story | null) => void;
-  setCurrentView: (view: ViewType) => void;
+  setCurrentView: (view: ViewType, storyId?: string) => void;
   handleMarkAsRead: (storyId: string) => Promise<boolean>;
 }
 
@@ -18,7 +17,6 @@ export const useStorySelection = ({
   setCurrentView,
   handleMarkAsRead
 }: UseStorySelectionProps) => {
-  const location = useLocation();
 
   const handleSelectStory = useCallback((story: Story) => {
     console.log("[useStorySelection] DEBUG: Sélection d'histoire:", story.id, "status:", story.status);
@@ -27,9 +25,9 @@ export const useStorySelection = ({
     setCurrentStory(story);
     console.log("[useStorySelection] DEBUG: Histoire courante définie:", story.id);
     
-    // Changer la vue vers reader IMMÉDIATEMENT
-    console.log("[useStorySelection] DEBUG: Changement de vue vers 'reader'");
-    setCurrentView("reader");
+    // Changer la vue vers reader avec l'ID de l'histoire
+    console.log("[useStorySelection] DEBUG: Changement de vue vers 'reader' avec storyId:", story.id);
+    setCurrentView("reader", story.id);
     
     // Marquer l'histoire comme lue si nécessaire (en arrière-plan)
     if (story.status === "ready") {

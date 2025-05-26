@@ -1,119 +1,158 @@
 
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useStories } from "@/hooks/useStories";
-import { useStoryManagement } from "@/hooks/useStoryManagement";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
+import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
 import { useViewManagement } from "@/hooks/useViewManagement";
-import { useAuthRedirection, useAppInitialization } from "@/hooks/app";
-import { useChildManagement } from "@/hooks/stories/useChildManagement";
-import { useStorySubmission } from "@/hooks/stories/useStorySubmission";
-import { useStorySelection } from "@/hooks/stories/useStorySelection";
-import { usePendingStoryMonitor } from "@/hooks/stories/monitoring/usePendingStoryMonitor";
-import type { Story } from "@/types/story";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useChildManagement, useStorySubmission, useStorySelection } from "@/hooks/stories";
+import { useStoriesState } from "@/hooks/stories/useStoriesState";
+import { useStoryFromUrl } from "@/hooks/useStoryFromUrl";
+import { useAuthRedirection } from "@/hooks/app/useAuthRedirection";
 
-/**
- * Hook principal pour la page d'index, orchestrant les différents hooks spécialisés
- */
 export const useIndexPage = () => {
-  // Hooks d'authentification et d'initialisation
-  const { user, authLoading, isAuthenticated } = useAuthRedirection();
-  const { isInitialized } = useAppInitialization();
-  
-  // Hooks de gestion des vues et de l'affichage
-  const { 
-    currentView, 
-    setCurrentView, 
-    showGuide 
-  } = useViewManagement();
+  const { user } = useSupabaseAuth();
+  const { children, addChild, updateChild, deleteChild } = useSupabaseChildren();
+  const stories = useSupabaseStories();
+  const { currentView, setCurrentView, showGuide } = useViewManagement();
   const isMobile = useIsMobile();
   
-  // Hooks de gestion des enfants et des histoires
-  const { 
-    children, 
-    childrenLoading, 
-    handleAddChild, 
-    handleUpdateChild, 
-    handleDeleteChild, 
-    handleCreateChildFromStory 
-  } = useChildManagement(setCurrentView);
-  
-  // Debug: Log détaillé des enfants dans useIndexPage
-  console.log('[useIndexPage] État des enfants:', {
-    children: children,
-    childrenCount: children?.length || 0,
-    childrenLoading,
-    childrenData: children?.map(c => ({ id: c.id, name: c.name })) || [],
-    user: user?.id,
-    timestamp: new Date().toISOString()
-  });
-  
-  const { 
-    stories, 
-    currentStory, 
-    setCurrentStory, 
-    deleteStory, 
-    retryFailedStory, 
-    isRetrying 
-  } = useStories(children);
-  
+  // Gérer l'état des histoires
   const {
-    handleStorySubmit,
-    handleCloseReader,
-    handleDeleteStory,
-    handleRetryStory,
-    handleMarkAsRead,
-  } = useStoryManagement();
-  
-  // Hooks de monitoring et de soumission d'histoires
-  const { pendingStoryId, setPendingStoryId } = usePendingStoryMonitor({
-    stories: stories.stories,
-    fetchStories: stories.fetchStories,
-    onStoryCompleted: (story: Story) => setCurrentStory(story)
+    currentStory,
+    setCurrentStory,
+    lastError,
+    setLastError,
+    isRetrying,
+    setIsRetrying,
+    clearError
+  } = useStoriesState(stories);
+
+  // Hook pour charger une histoire depuis l'URL
+  const { isLoadingFromUrl } = useStoryFromUrl({
+    stories: stories.stories || [],
+    setCurrentStory
   });
-  
-  const { handleStorySubmitWrapper } = useStorySubmission(
-    handleStorySubmit, 
-    setCurrentView,
-    setPendingStoryId
-  );
-  
-  // Hook de sélection d'histoires
+
+  // Redirection automatique pour les utilisateurs non connectés
+  useAuthRedirection();
+
+  // Gestion des enfants
+  const { handleAddChild, handleUpdateChild, handleDeleteChild } = useChildManagement({
+    addChild,
+    updateChild,
+    deleteChild
+  });
+
+  // Gestion de la soumission d'histoires
+  const { 
+    handleStorySubmitWrapper, 
+    handleCreateChildFromStory,
+    pendingStoryId
+  } = useStorySubmission({
+    createStory: stories.createStory,
+    addChild,
+    setLastError,
+    setIsRetrying
+  });
+
+  // Gestion de la sélection d'histoires
   const { handleSelectStory } = useStorySelection({
     setCurrentStory,
     setCurrentView,
-    handleMarkAsRead
+    handleMarkAsRead: stories.updateStoryStatus
   });
-  
+
+  // Gestionnaires d'événements
+  const handleStoryCreated = (story: any) => {
+    console.log("[useIndexPage] Histoire créée:", story.id);
+    setCurrentStory(story);
+    setCurrentView("reader", story.id);
+  };
+
+  const handleCloseReader = () => {
+    console.log("[useIndexPage] Fermeture du lecteur");
+    setCurrentStory(null);
+    setCurrentView("library");
+  };
+
+  const handleMarkAsRead = async (storyId: string): Promise<boolean> => {
+    try {
+      await stories.updateStoryStatus(storyId, "read");
+      
+      // Mettre à jour l'histoire actuelle si c'est celle qui vient d'être marquée comme lue
+      if (currentStory && currentStory.id === storyId) {
+        setCurrentStory({
+          ...currentStory,
+          status: "read"
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("[useIndexPage] Erreur lors du marquage comme lu:", error);
+      return false;
+    }
+  };
+
+  const handleDeleteStory = async (storyId: string): Promise<boolean> => {
+    try {
+      await stories.deleteStory(storyId);
+      
+      // Si l'histoire supprimée était celle en cours de lecture, fermer le lecteur
+      if (currentStory && currentStory.id === storyId) {
+        handleCloseReader();
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("[useIndexPage] Erreur lors de la suppression:", error);
+      return false;
+    }
+  };
+
+  const handleRetryStory = async (storyId: string): Promise<boolean> => {
+    try {
+      setIsRetrying(true);
+      await stories.retryFailedStory(storyId);
+      return true;
+    } catch (error) {
+      console.error("[useIndexPage] Erreur lors de la relance:", error);
+      return false;
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
   // État de chargement global
-  const isLoading = authLoading || !isInitialized || stories.isLoading || childrenLoading;
-  
-  // Interface unifiée pour les composants
+  const isLoading = stories.isLoading || isLoadingFromUrl;
+
   return {
     // États
-    isInitialized,
-    pendingStoryId,
     currentView,
     showGuide,
     currentStory,
-    isLoading,
-    isMobile,
-    user,
-    stories,
-    children: children || [], // S'assurer que children est toujours un tableau défini
+    pendingStoryId,
     isRetrying,
+    isLoading,
+    stories,
+    children,
+    user,
+    isMobile,
+    lastError,
     
     // Actions
     setCurrentView,
-    handleCreateChildFromStory,
-    handleStorySubmitWrapper,
     handleAddChild,
     handleUpdateChild,
     handleDeleteChild,
+    handleStorySubmitWrapper,
+    handleCreateChildFromStory,
+    handleStoryCreated,
     handleSelectStory,
     handleDeleteStory,
     handleRetryStory,
-    handleMarkAsRead,
-    handleStoryCreated: setCurrentStory,
     handleCloseReader,
-    setCurrentStory,
+    handleMarkAsRead,
+    clearError
   };
 };

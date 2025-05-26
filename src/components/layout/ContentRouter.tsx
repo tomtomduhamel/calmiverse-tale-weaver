@@ -83,25 +83,33 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
     }
   }, [currentView, currentStory, children]);
   
-  // Condition pour afficher le lecteur d'histoire - PRIORITÉ ABSOLUE
-  const shouldShowReader = currentView === "reader" && currentStory !== null;
-  
-  console.log("[ContentRouter] DEBUG: shouldShowReader =", shouldShowReader, {
-    currentView,
-    hasCurrentStory: !!currentStory,
-    storyId: currentStory?.id
-  });
-  
-  // Rendu prioritaire du lecteur en mode plein écran
-  if (shouldShowReader && currentStory) {
-    console.log("[ContentRouter] DEBUG: Affichage du ReaderView pour l'histoire:", currentStory.id);
-    return (
-      <ReaderView
-        story={currentStory}
-        onClose={onCloseReader}
-        onMarkAsRead={onMarkAsRead}
-      />
-    );
+  // PRIORITÉ ABSOLUE : Afficher le lecteur d'histoire si demandé
+  if (currentView === "reader") {
+    console.log("[ContentRouter] DEBUG: Affichage du ReaderView", {
+      hasCurrentStory: !!currentStory,
+      storyId: currentStory?.id
+    });
+    
+    if (currentStory) {
+      return (
+        <ReaderView
+          story={currentStory}
+          onClose={onCloseReader}
+          onMarkAsRead={onMarkAsRead}
+        />
+      );
+    } else {
+      // Si pas d'histoire mais vue reader demandée, afficher un message de chargement
+      console.log("[ContentRouter] DEBUG: Vue reader sans histoire - chargement...");
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Chargement de l'histoire...</p>
+          </div>
+        </div>
+      );
+    }
   }
   
   // Mapping des vues à des composants
@@ -146,11 +154,10 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
     )
   };
   
-  // Affichage normal si le lecteur n'est pas actif
+  // Affichage normal des autres vues
   console.log("[ContentRouter] DEBUG: Affichage de la vue normale:", currentView);
   return (
     <div className={isMobile ? "pb-16" : ""}>
-      {/* Afficher la vue sélectionnée */}
       {viewComponents[currentView as keyof typeof viewComponents]}
     </div>
   );
