@@ -20,10 +20,10 @@ const generateStoryPrompt = (objective: string, childrenNames: string[]): string
     : `${childrenNames.slice(0, -1).join(', ')} et ${childrenNames[childrenNames.length - 1]}`;
 
   const objectivePrompts = {
-    sleep: `Créez une histoire douce et apaisante pour aider ${childrenText} à s'endormir. L'histoire doit être calme, réconfortante et se terminer de manière paisible. Utilisez un langage simple et des images relaxantes.`,
-    focus: `Créez une histoire engageante qui aide ${childrenText} à se concentrer. L'histoire doit captiver l'attention tout en étant éducative et stimulante intellectuellement.`,
-    relax: `Créez une histoire relaxante pour aider ${childrenText} à se détendre. L'histoire doit être apaisante, avec un rythme lent et des éléments qui favorisent la relaxation.`,
-    fun: `Créez une histoire amusante et divertissante pour ${childrenText}. L'histoire doit être joyeuse, pleine d'aventures et de moments ludiques qui feront sourire.`
+    sleep: `Créer une histoire douce et apaisante pour aider ${childrenText} à s'endormir. L'histoire doit être calme, réconfortante et se terminer de manière paisible. Utilisez un langage simple et des images relaxantes. L'histoire doit utiliser les techniques d’hypnose ericksonienne pour permettre un endormissement apaisé et régénérateur.`,
+    focus: `Créer une histoire engageante qui aide ${childrenText} à se concentrer. L'histoire doit captiver l'attention tout en étant éducative et stimulante intellectuellement.`,
+    relax: `Créer une histoire relaxante pour aider ${childrenText} à se détendre. L'histoire doit être apaisante, avec un rythme lent et des éléments qui favorisent la relaxation.`,
+    fun: `Créer une histoire amusante et divertissante pour ${childrenText}. L'histoire doit être joyeuse, pleine d'aventures et de moments ludiques qui feront sourire.`
   };
 
   const basePrompt = objectivePrompts[objective as keyof typeof objectivePrompts] || 
@@ -32,13 +32,13 @@ const generateStoryPrompt = (objective: string, childrenNames: string[]): string
   return `${basePrompt}
 
 Instructions pour la génération :
-- Personnalisez l'histoire avec le(s) prénom(s) : ${childrenText}
-- Adaptez le vocabulaire et la complexité à l'âge des enfants
-- Créez une histoire de 1200 à 1500 mots
-- Structurez avec un début, un développement et une fin satisfaisante
-- Incluez des éléments magiques ou imaginaires adaptés à l'enfance
-- Assurez-vous que l'histoire respecte l'objectif : ${objective}
-- Utilisez un ton bienveillant et positif
+- Personnaliser l'histoire avec le(s) prénom(s) : ${childrenText}
+- Adapter le vocabulaire et la complexité à l'âge des enfants
+- Créer une histoire de 1200 à 1500 mots
+- Structurer avec un début, un développement et une fin satisfaisante
+- Inclure des éléments magiques ou imaginaires adaptés à l'enfance
+- S'assurer que l'histoire respecte l'objectif : ${objective}
+- Utiliser un ton bienveillant et positif
 - Interdire tout contenu effrayant ou inapproprié
 
 Générez maintenant l'histoire complète en français.`;
