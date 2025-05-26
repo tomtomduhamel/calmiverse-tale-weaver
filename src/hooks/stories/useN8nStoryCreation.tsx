@@ -73,32 +73,19 @@ export const useN8nStoryCreation = () => {
       // Générer le prompt complet pour l'histoire
       const storyPrompt = generateStoryPrompt(formData.objective, childrenNames);
 
-      // Préparer les données enrichies pour n8n
+      // Préparer les données pour n8n (sans webhook de retour)
       const n8nData = {
         userId: user.id,
         userEmail: user.email,
         objective: formData.objective,
         childrenNames,
         childrenIds: formData.childrenIds,
-        storyPrompt, // Ajout du prompt complet
+        storyPrompt, // Prompt complet pour la génération
         timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID().slice(0, 8),
-        // Données supplémentaires pour n8n
-        callbackUrl: `${window.location.origin}/supabase/functions/n8n-story-webhook`,
-        expectedResponse: {
-          title: "string - Titre de l'histoire",
-          content: "string - Contenu complet de l'histoire",
-          summary: "string - Résumé de l'histoire",
-          preview: "string - Aperçu court de l'histoire",
-          objective: formData.objective,
-          childrenNames: childrenNames,
-          userId: user.id,
-          childrenIds: formData.childrenIds,
-          status: "completed"
-        }
+        requestId: crypto.randomUUID().slice(0, 8)
       };
 
-      console.log('[N8nStoryCreation] Envoi données enrichies à n8n:', {
+      console.log('[N8nStoryCreation] Envoi données à n8n:', {
         ...n8nData,
         storyPrompt: `${storyPrompt.substring(0, 100)}...` // Log tronqué pour la lisibilité
       });
@@ -121,7 +108,7 @@ export const useN8nStoryCreation = () => {
 
       toast({
         title: "Génération démarrée",
-        description: "La génération via n8n a été déclenchée avec le prompt complet. L'histoire apparaîtra dans votre bibliothèque une fois créée.",
+        description: "La génération via n8n a été déclenchée. L'histoire sera créée directement en base via votre automatisation n8n.",
       });
 
       return result;
