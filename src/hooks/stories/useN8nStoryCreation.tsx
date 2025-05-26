@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,7 +34,7 @@ const generateStoryPrompt = (objective: string, childrenNames: string[]): string
 Instructions pour la génération :
 - Personnalisez l'histoire avec le(s) prénom(s) : ${childrenText}
 - Adaptez le vocabulaire et la complexité à l'âge des enfants
-- Créez une histoire d'environ 800-1200 mots
+- Créez une histoire de 1200 à 1500 mots
 - Structurez avec un début, un développement et une fin satisfaisante
 - Incluez des éléments magiques ou imaginaires adaptés à l'enfance
 - Assurez-vous que l'histoire respecte l'objectif : ${objective}
