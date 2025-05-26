@@ -2,7 +2,7 @@
 import React from "react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
-import { LoadingStory } from "@/components/LoadingStory";
+import LoadingStory from "@/components/LoadingStory";
 import N8nStoryCreator from "@/components/story/n8n/N8nStoryCreator";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
