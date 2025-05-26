@@ -140,8 +140,8 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
         <N8nDebugPanel
           children={children}
           selectedChildrenIds={selectedChildrenIds}
-          hasChildren={hasChildren}
-          isFormValid={isFormValid}
+          hasChildren={Boolean(hasChildren)}
+          isFormValid={Boolean(isFormValid)}
         />
       </CardContent>
     </Card>
