@@ -39,7 +39,7 @@ Instructions pour la génération :
 - Incluez des éléments magiques ou imaginaires adaptés à l'enfance
 - Assurez-vous que l'histoire respecte l'objectif : ${objective}
 - Utilisez un ton bienveillant et positif
-- Évitez tout contenu effrayant ou inapproprié
+- Interdire tout contenu effrayant ou inapproprié
 
 Générez maintenant l'histoire complète en français.`;
 };
