@@ -40,7 +40,7 @@ Instructions pour la génération :
 - Utiliser un ton bienveillant et positif
 - Interdire tout contenu effrayant ou inapproprié
 
-Générez maintenant l'histoire complète en français.`;
+Générer maintenant l'histoire complète en français en t'assurant de respecter le nombre de mots demandés c'est-à-dire entre 1200 et 1500 mots.`;
 };
 
 export const useN8nStoryCreation = () => {
