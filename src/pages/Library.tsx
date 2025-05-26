@@ -12,7 +12,7 @@ import LoadingStory from "@/components/LoadingStory";
 const Library: React.FC = () => {
   const { user, loading: authLoading } = useSupabaseAuth();
   const { children, loading: childrenLoading } = useSupabaseChildren();
-  const { stories, loading: storiesLoading, fetchStories } = useSupabaseStories();
+  const { stories, isLoading: storiesLoading, fetchStories } = useSupabaseStories();
   const navigate = useNavigate();
 
   const handleSelectStory = (story: any) => {
