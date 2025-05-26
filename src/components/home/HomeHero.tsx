@@ -18,15 +18,13 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
   const { user } = useSupabaseAuth();
 
   const handleLibraryClick = () => {
-    onViewChange("library");
+    navigate("/library");
   };
 
   const handleCreateStoryClick = () => {
-    // Rediriger vers la nouvelle page de création d'histoire via n8n
     navigate("/create-story-n8n");
   };
 
-  // Debug: Afficher les informations sur les enfants dans HomeHero
   console.log('[HomeHero] Enfants reçus dans HomeHero:', {
     childrenCount: children?.length || 0,
     children: children?.map(c => ({ id: c.id, name: c.name })) || [],

@@ -23,53 +23,29 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   // Items for the bottom navigation
   const menuItems = [
     { icon: Home, title: "Accueil", view: "home" as ViewType, path: "/" },
-    { icon: Library, title: "Bibliothèque", view: "library" as ViewType, path: "/app" },
-    { icon: PenSquare, title: "Créer", view: "create" as ViewType, path: "/create-story-simple" },
+    { icon: Library, title: "Bibliothèque", view: "library" as ViewType, path: "/library" },
+    { icon: PenSquare, title: "Créer", view: "create" as ViewType, path: "/create-story-n8n" },
     { icon: Users, title: "Profils", view: "profiles" as ViewType, path: "/children" },
     { icon: Settings, title: "Paramètres", view: "settings" as ViewType, path: "/settings" }
   ];
 
   const handleNavigation = (view: ViewType, path: string) => {
-    // Si nous sommes en mode lecteur, on doit d'abord revenir à la bibliothèque
-    if (currentView === "reader" && view !== "reader") {
-      console.log("[MobileMenu] DEBUG: Navigation depuis le lecteur vers", view);
-      onViewChange(view);
-      navigate(path);
-      return;
-    }
-    
-    // Pour la page d'accueil et la bibliothèque, on peut changer la vue directement si on est déjà sur /app ou /
-    if ((path === "/" || path === "/app") && (location.pathname === "/" || location.pathname === "/app")) {
-      onViewChange(view);
-    } else {
-      // Dans les autres cas, on navigue vers la page correspondante
-      navigate(path);
-      
-      // On met à jour la vue si nécessaire (pour la cohérence de l'interface)
-      if (path === "/") {
-        onViewChange("home");
-      } else if (path === "/app") {
-        onViewChange("library");
-      } else if (path === "/settings") {
-        onViewChange("settings");
-      } else if (path === "/children") {
-        onViewChange("profiles");
-      } else if (path === "/create-story-simple") {
-        onViewChange("create");
-      }
-    }
+    console.log("[MobileMenu] Navigation vers", { view, path });
+    navigate(path);
+    onViewChange(view);
   };
 
-  // Déterminer la vue active en fonction du chemin actuel si la vue n'est pas déjà correctement définie
-  React.useEffect(() => {
-    if (location.pathname === "/settings" && currentView !== "settings") {
-      onViewChange("settings");
-    } else if (location.pathname === "/children" && currentView !== "profiles") {
-      onViewChange("profiles");
-    } else if (location.pathname === "/create-story-simple" && currentView !== "create") {
-      onViewChange("create");
-    }
-  }, [location.pathname, currentView, onViewChange]);
+  // Déterminer la vue active en fonction du chemin actuel
+  const getActiveView = (): ViewType => {
+    if (location.pathname === "/library") return "library";
+    if (location.pathname === "/settings") return "settings";
+    if (location.pathname === "/children") return "profiles";
+    if (location.pathname === "/create-story-n8n") return "create";
+    if (location.pathname === "/") return "home";
+    return currentView;
+  };
+
+  const activeView = getActiveView();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-background shadow-lg border-t border-border rounded-t-xl z-60">
@@ -80,7 +56,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
             onClick={() => handleNavigation(item.view, item.path)}
             className={cn(
               "flex flex-col items-center justify-center w-full p-1 rounded-md transition-colors",
-              currentView === item.view
+              activeView === item.view
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground"
             )}

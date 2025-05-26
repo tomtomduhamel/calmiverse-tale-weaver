@@ -3,9 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { ViewType } from '@/types/views';
 
-/**
- * Hook spécialisé pour gérer la navigation entre les différentes vues de l'application
- */
 export const useViewManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,26 +14,21 @@ export const useViewManagement = () => {
     if (viewParam === "reader") return "reader";
     if (location.pathname === "/settings") return "settings";
     if (location.pathname === "/children") return "profiles";
-    if (location.pathname === "/create-story-simple") return "create";
-    if (location.pathname === "/app") return "library";
+    if (location.pathname === "/library") return "library";
+    if (location.pathname === "/create-story-n8n") return "create";
     return "home";
   });
   const [showGuide, setShowGuide] = useState<boolean>(false);
 
-  // Synchroniser la vue avec l'URL au chargement et lors des changements d'URL
+  // Synchroniser la vue avec l'URL
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const viewParam = searchParams.get('view') as ViewType | null;
     
-    console.log("[useViewManagement] DEBUG: Vue synchronisée avec l'URL", { 
+    console.log("[useViewManagement] Synchronisation avec l'URL", { 
       path: location.pathname, 
       search: location.search, 
-      viewParam, 
-      currentView: viewParam || (location.pathname === "/" ? "home" : 
-                                location.pathname === "/settings" ? "settings" : 
-                                location.pathname === "/children" ? "profiles" :
-                                location.pathname === "/create-story-simple" ? "create" : 
-                                location.pathname === "/app" ? "library" : "home")
+      viewParam
     });
 
     if (viewParam === "reader") {
@@ -47,10 +39,10 @@ export const useViewManagement = () => {
       setCurrentViewState("settings");
     } else if (location.pathname === "/children") {
       setCurrentViewState("profiles");
-    } else if (location.pathname === "/create-story-simple") {
-      setCurrentViewState("create");
-    } else if (location.pathname === "/app") {
+    } else if (location.pathname === "/library") {
       setCurrentViewState("library");
+    } else if (location.pathname === "/create-story-n8n") {
+      setCurrentViewState("create");
     }
     
     // Vérifier si le guide doit être affiché
@@ -58,40 +50,38 @@ export const useViewManagement = () => {
     setShowGuide(!hideGuide);
   }, [location]);
 
-  // Fonction pour changer de vue avec synchronisation de l'URL
+  // Fonction pour changer de vue avec navigation simplifiée
   const setCurrentView = useCallback((view: ViewType) => {
-    console.log("[useViewManagement] DEBUG: Changement de vue vers", view);
+    console.log("[useViewManagement] Changement de vue vers", view);
     
-    // Toujours mettre à jour l'état local immédiatement
     setCurrentViewState(view);
 
     // Navigation basée sur la vue
-    if (view === "home") {
-      navigate("/");
-    } else if (view === "create") {
-      navigate("/create-story-simple");
-    } else if (view === "profiles") {
-      navigate("/children");
-    } else if (view === "library") {
-      navigate("/app");
-    } else if (view === "settings") {
-      navigate("/settings");
-    } else if (view === "reader") {
-      // Pour la vue reader, nous ajoutons un paramètre à l'URL actuelle
-      // au lieu de naviguer vers une nouvelle page
-      const currentPath = location.pathname;
-      
-      // Préserver le chemin actuel et ajouter le paramètre view
-      if (currentPath === "/app") {
-        navigate("/app?view=reader");
-      } else if (currentPath === "/") {
-        navigate("/?view=reader");
-      } else {
-        // Cas particulier: Si nous sommes déjà sur une autre page, il faut revenir à /app
-        navigate("/app?view=reader");
-      }
+    switch (view) {
+      case "home":
+        navigate("/");
+        break;
+      case "create":
+        navigate("/create-story-n8n");
+        break;
+      case "profiles":
+        navigate("/children");
+        break;
+      case "library":
+        navigate("/library");
+        break;
+      case "settings":
+        navigate("/settings");
+        break;
+      case "reader":
+        // Pour la vue reader, ajouter un paramètre à l'URL actuelle
+        const currentPath = location.pathname;
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set('view', 'reader');
+        navigate(`${currentPath}?${searchParams.toString()}`);
+        break;
     }
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, location.search]);
 
   return {
     currentView,

@@ -13,10 +13,11 @@ import PublicStory from './pages/PublicStory';
 import NotFound from './pages/NotFound';
 import TestConnection from "./pages/TestConnection";
 import DiagnosticConnection from "./pages/DiagnosticConnection";
+import CreateStoryN8n from "./pages/CreateStoryN8n";
+import Library from "./pages/Library";
 import Shell from "./components/Shell";
 import { Toaster } from "@/components/ui/toaster"
 import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
-import CreateStoryN8n from "./pages/CreateStoryN8n";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
             <Route path="children" element={<ChildrenListPage />} />
             <Route path="kids-profile" element={<KidsProfile />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="library" element={<Library />} />
             <Route path="create-story-simple" element={<MinimalStoryPage />} />
             <Route path="create-story-n8n" element={<CreateStoryN8n />} />
             <Route path="test-connection" element={<TestConnection />} />
