@@ -3,14 +3,11 @@ import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Webhook, Loader2 } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { useN8nStoryCreation } from "@/hooks/stories/useN8nStoryCreation";
 import { useN8nFormState } from "@/hooks/stories/n8n/useN8nFormState";
-import N8nWebhookUrlInput from "./N8nWebhookUrlInput";
 import N8nChildrenSelector from "./N8nChildrenSelector";
 import N8nObjectiveSelector from "./N8nObjectiveSelector";
-import N8nInfoPanels from "./N8nInfoPanels";
-import N8nDebugPanel from "./N8nDebugPanel";
 import type { Child } from "@/types/child";
 
 interface N8nStoryCreatorProps {
@@ -25,8 +22,6 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
   const { createStoryWithN8n, isGenerating } = useN8nStoryCreation();
   
   const {
-    webhookUrl,
-    setWebhookUrl,
     selectedChildrenIds,
     selectedObjective,
     setSelectedObjective,
@@ -50,11 +45,6 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!webhookUrl) {
-      console.error("[N8nStoryCreator] URL webhook manquante");
-      return;
-    }
-
     if (selectedChildrenIds.length === 0) {
       console.error("[N8nStoryCreator] Aucun enfant sélectionné");
       return;
@@ -74,8 +64,7 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
 
       const result = await createStoryWithN8n({
         childrenIds: selectedChildrenIds,
-        objective: selectedObjective,
-        webhookUrl
+        objective: selectedObjective
       }, children);
 
       if (result && onStoryCreated) {
@@ -89,21 +78,16 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
   };
 
   return (
-    <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
+    <Card className="border-primary/20 bg-white/80 shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
-          <Webhook className="h-5 w-5" />
-          Création d'histoire via n8n
-          <Badge variant="secondary" className="ml-2">EXPÉRIMENTAL</Badge>
+        <CardTitle className="flex items-center gap-2 text-primary-dark">
+          <Sparkles className="h-5 w-5" />
+          Créer votre histoire personnalisée
+          <Badge variant="secondary" className="ml-2">IA</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <N8nWebhookUrlInput
-            webhookUrl={webhookUrl}
-            onWebhookUrlChange={setWebhookUrl}
-          />
-
           <N8nChildrenSelector
             children={children}
             selectedChildrenIds={selectedChildrenIds}
@@ -119,30 +103,35 @@ const N8nStoryCreator: React.FC<N8nStoryCreatorProps> = ({
           <Button 
             type="submit" 
             disabled={!isFormValid || isGenerating || !hasChildren}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-primary hover:bg-primary/90 text-white"
+            size="lg"
           >
             {isGenerating ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Déclenchement n8n...
+                Création en cours...
               </>
             ) : (
               <>
-                <Webhook className="h-4 w-4 mr-2" />
-                Déclencher la génération n8n
+                <Sparkles className="h-4 w-4 mr-2" />
+                Créer mon histoire
               </>
             )}
           </Button>
         </form>
 
-        <N8nInfoPanels />
-        
-        <N8nDebugPanel
-          children={children}
-          selectedChildrenIds={selectedChildrenIds}
-          hasChildren={Boolean(hasChildren)}
-          isFormValid={Boolean(isFormValid)}
-        />
+        {/* Informations pour l'utilisateur */}
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200">
+          <div className="text-sm text-blue-800 dark:text-blue-200">
+            <p className="font-medium mb-1">✨ Comment ça marche ?</p>
+            <ul className="list-disc list-inside space-y-1 text-xs">
+              <li>Sélectionnez un ou plusieurs enfants</li>
+              <li>Choisissez l'objectif de l'histoire</li>
+              <li>Notre IA génère une histoire unique et personnalisée</li>
+              <li>L'histoire apparaîtra dans votre bibliothèque</li>
+            </ul>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

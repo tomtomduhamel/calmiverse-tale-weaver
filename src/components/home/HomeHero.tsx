@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ViewType } from "@/types/views";
 import { Link, useNavigate } from "react-router-dom";
-import N8nStoryCreator from "@/components/story/n8n/N8nStoryCreator";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import type { Child } from "@/types/child";
 
@@ -20,6 +19,11 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
 
   const handleLibraryClick = () => {
     onViewChange("library");
+  };
+
+  const handleCreateStoryClick = () => {
+    // Rediriger vers la nouvelle page de création d'histoire via n8n
+    navigate("/create-story-n8n");
   };
 
   // Debug: Afficher les informations sur les enfants dans HomeHero
@@ -70,11 +74,9 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
               </div>
               <h3 className="text-lg font-semibold mb-1 text-primary-dark">Créer une histoire</h3>
               <p className="text-muted-foreground text-xs mb-3 flex-grow">Générez facilement des histoires uniques pour vos enfants</p>
-              <Link to="/create-story-simple" className="w-full">
-                <Button className="w-full bg-primary hover:bg-primary-dark text-primary-foreground">
-                  Commencer
-                </Button>
-              </Link>
+              <Button onClick={handleCreateStoryClick} className="w-full bg-primary hover:bg-primary-dark text-primary-foreground">
+                Commencer
+              </Button>
             </CardContent>
           </Card>
 
@@ -112,20 +114,6 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Module n8n - Affiché seulement si l'utilisateur est connecté */}
-        {user && (
-          <div className="mt-8">
-            <N8nStoryCreator 
-              children={children} 
-              onStoryCreated={(storyId) => {
-                console.log('Histoire n8n créée:', storyId);
-                // Optionnel: rediriger vers la bibliothèque
-                onViewChange("library");
-              }}
-            />
-          </div>
-        )}
 
         {/* Pied de page avec espacement réduit */}
         <div className="text-center pt-2">

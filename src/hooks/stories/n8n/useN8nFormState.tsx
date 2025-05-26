@@ -7,7 +7,6 @@ interface UseN8nFormStateProps {
 }
 
 export const useN8nFormState = ({ children }: UseN8nFormStateProps) => {
-  const [webhookUrl, setWebhookUrl] = useState("");
   const [selectedChildrenIds, setSelectedChildrenIds] = useState<string[]>([]);
   const [selectedObjective, setSelectedObjective] = useState("");
 
@@ -49,12 +48,10 @@ export const useN8nFormState = ({ children }: UseN8nFormStateProps) => {
     setSelectedObjective("");
   };
 
-  const isFormValid = webhookUrl && selectedChildrenIds.length > 0 && selectedObjective;
+  const isFormValid = selectedChildrenIds.length > 0 && selectedObjective;
   const hasChildren = children && Array.isArray(children) && children.length > 0;
 
   return {
-    webhookUrl,
-    setWebhookUrl,
     selectedChildrenIds,
     selectedObjective,
     setSelectedObjective,

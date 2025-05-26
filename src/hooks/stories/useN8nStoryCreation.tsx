@@ -8,8 +8,10 @@ import type { Child } from '@/types/child';
 interface N8nStoryRequest {
   childrenIds: string[];
   objective: string;
-  webhookUrl: string;
 }
+
+// Webhook de production n8n
+const N8N_PRODUCTION_WEBHOOK = "https://tomtomduhamel.app.n8n.cloud/webhook/4cd35a66-3113-40a9-9e89-8f79ce59b44f";
 
 // Fonction pour générer le prompt d'histoire complet
 const generateStoryPrompt = (objective: string, childrenNames: string[]): string => {
@@ -55,14 +57,10 @@ export const useN8nStoryCreation = () => {
       throw new Error("Utilisateur non connecté");
     }
 
-    if (!formData.webhookUrl) {
-      throw new Error("URL de webhook n8n requise");
-    }
-
     setIsGenerating(true);
 
     try {
-      console.log('[N8nStoryCreation] Déclenchement webhook n8n:', formData);
+      console.log('[N8nStoryCreation] Déclenchement webhook n8n de production:', formData);
 
       // Récupérer les noms des enfants
       const childrenNames = formData.childrenIds.map(id => {
@@ -73,7 +71,7 @@ export const useN8nStoryCreation = () => {
       // Générer le prompt complet pour l'histoire
       const storyPrompt = generateStoryPrompt(formData.objective, childrenNames);
 
-      // Préparer les données pour n8n (sans webhook de retour)
+      // Préparer les données pour n8n
       const n8nData = {
         userId: user.id,
         userEmail: user.email,
@@ -85,13 +83,13 @@ export const useN8nStoryCreation = () => {
         requestId: crypto.randomUUID().slice(0, 8)
       };
 
-      console.log('[N8nStoryCreation] Envoi données à n8n:', {
+      console.log('[N8nStoryCreation] Envoi données à n8n production:', {
         ...n8nData,
         storyPrompt: `${storyPrompt.substring(0, 100)}...` // Log tronqué pour la lisibilité
       });
 
-      // Appeler le webhook n8n
-      const response = await fetch(formData.webhookUrl, {
+      // Appeler le webhook n8n de production
+      const response = await fetch(N8N_PRODUCTION_WEBHOOK, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,11 +102,11 @@ export const useN8nStoryCreation = () => {
       }
 
       const result = await response.json();
-      console.log('[N8nStoryCreation] Réponse n8n:', result);
+      console.log('[N8nStoryCreation] Réponse n8n production:', result);
 
       toast({
         title: "Génération démarrée",
-        description: "La génération via n8n a été déclenchée. L'histoire sera créée directement en base via votre automatisation n8n.",
+        description: "Votre histoire est en cours de création. Elle apparaîtra dans votre bibliothèque dans quelques instants.",
       });
 
       return result;
@@ -117,8 +115,8 @@ export const useN8nStoryCreation = () => {
       console.error('[N8nStoryCreation] Erreur:', error);
       
       toast({
-        title: "Erreur n8n",
-        description: error.message || "Impossible de déclencher la génération via n8n",
+        title: "Erreur de génération",
+        description: error.message || "Impossible de créer l'histoire. Veuillez réessayer.",
         variant: "destructive"
       });
       

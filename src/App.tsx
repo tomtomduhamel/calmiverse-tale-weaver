@@ -1,99 +1,51 @@
-
-import React, { Suspense, useEffect, useState } from 'react';
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  useLocation,
-  Navigate,
-} from 'react-router-dom';
-import { Toaster } from '@/components/ui/toaster';
-import { useToast } from '@/hooks/use-toast';
-import Shell from './components/Shell';
-import Auth from './pages/Auth';
-import Index from './pages/Index';
-import NotFound from './pages/NotFound';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TestConnection from './pages/TestConnection';
-import Settings from './pages/Settings';
-import KidsProfile from './pages/KidsProfile';
-import PublicStory from './pages/PublicStory';
-import SupabaseProvider from './providers/SupabaseProvider';
-import ThemeProvider from './providers/ThemeProvider';
-import { useSupabaseAuth } from './contexts/SupabaseAuthContext';
-import { checkAuthState } from './integrations/supabase/client';
-import SharedStory from './pages/SharedStory';
-import MinimalStoryPage from './pages/MinimalStoryPage';
-import ChildrenListPage from './pages/ChildrenListPage';
-import DiagnosticConnection from './pages/DiagnosticConnection';
-
-function PublicRoute() {
-  return <Shell />;
-}
-
-function PrivateRoute() {
-  const { session, loading } = useSupabaseAuth();
-  const location = useLocation();
-  const { toast } = useToast();
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (!session && !loading) {
-        toast({
-          title: 'Non authentifié',
-          description:
-            'Vous devez être connecté pour accéder à cette page. Redirection vers la page de connexion...',
-        });
-      }
-      setHasCheckedAuth(true);
-    };
-
-    checkAuth();
-  }, [session, loading, toast, location]);
-
-  if (loading || !hasCheckedAuth) {
-    return <div>Chargement...</div>;
-  }
-
-  return session ? (
-    <Shell />
-  ) : (
-    <Navigate to="/login" replace state={{ from: location }} />
-  );
-}
+import React from "react";
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { Auth } from './pages/Auth';
+import { Index } from './pages/Index';
+import { ChildrenListPage } from './pages/ChildrenListPage';
+import { KidsProfile } from './pages/KidsProfile';
+import { Settings } from './pages/Settings';
+import { MinimalStoryPage } from './pages/MinimalStoryPage';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { SharedStory } from './pages/SharedStory';
+import { PublicStory } from './pages/PublicStory';
+import { NotFound } from './pages/NotFound';
+import { TestConnection } from "./pages/TestConnection";
+import { DiagnosticConnection } from "./pages/DiagnosticConnection";
+import Shell from "./components/Shell";
+import { ToastProvider } from "@/hooks/use-toast"
+import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
+import { CreateStoryN8n } from "./pages/CreateStoryN8n";
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-react-theme">
-      <SupabaseProvider>
-        <Router>
-          <Routes>
-            <Route element={<PublicRoute />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Auth />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/test-connection" element={<TestConnection />} />
-              <Route path="/shared-story" element={<SharedStory />} />
-              <Route path="/diagnostic" element={<DiagnosticConnection />} />
-            </Route>
+    <SupabaseAuthProvider>
+      <ToastProvider>
+        <Routes>
+          {/* Routes publiques */}
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/shared/:token" element={<SharedStory />} />
+          <Route path="/story/:id" element={<PublicStory />} />
+          <Route path="/404" element={<NotFound />} />
 
-            <Route element={<PrivateRoute />}>
-              <Route path="/app" element={<Index />} />
-              <Route path="/children" element={<ChildrenListPage />} />
-              <Route path="/profiles/:profileId" element={<KidsProfile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/story/:storyId" element={<PublicStory />} />
-              <Route path="/create-story-simple" element={<MinimalStoryPage />} />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-        <Toaster />
-      </SupabaseProvider>
-    </ThemeProvider>
+          {/* Routes avec authentification */}
+          <Route path="/" element={<Shell />}>
+            <Route index element={<Index />} />
+            <Route path="children" element={<ChildrenListPage />} />
+            <Route path="kids-profile" element={<KidsProfile />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="create-story-simple" element={<MinimalStoryPage />} />
+            <Route path="create-story-n8n" element={<CreateStoryN8n />} />
+            <Route path="test-connection" element={<TestConnection />} />
+            <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
+          </Route>
+
+          {/* Route de fallback */}
+          <Route path="*" element={<Navigate to="/404" replace />} />
+        </Routes>
+      </ToastProvider>
+    </SupabaseAuthProvider>
   );
 }
 
