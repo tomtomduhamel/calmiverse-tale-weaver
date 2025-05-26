@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ViewType } from "@/types/views";
 import { Link, useNavigate } from "react-router-dom";
-import N8nStoryCreator from "@/components/story/N8nStoryCreator";
+import N8nStoryCreator from "@/components/story/n8n/N8nStoryCreator";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import type { Child } from "@/types/child";
 
