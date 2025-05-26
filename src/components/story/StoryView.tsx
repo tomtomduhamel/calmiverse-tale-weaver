@@ -49,10 +49,8 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
       setView("create");
     } else if (newView === "library") {
       setView("list");
-    } else if (newView === "reader") {
-      setView("read");
     }
-    // Ignore other ViewType values that don't map to ViewMode
+    // Note: "reader" is no longer handled here as it has its own route /reader/:id
   }, []);
 
   const handleSelectStory = useCallback((story: Story) => {

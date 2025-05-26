@@ -1,33 +1,27 @@
 
 import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Story } from "@/types/story";
-import type { ViewType } from "@/types/views";
 
 interface UseStorySelectionProps {
-  setCurrentStory: (story: Story | null) => void;
-  setCurrentView: (view: ViewType, storyId?: string) => void;
   handleMarkAsRead: (storyId: string) => Promise<boolean>;
 }
 
 /**
  * Hook spécialisé pour gérer la sélection et l'affichage des histoires
+ * Maintenant utilise React Router pour naviguer vers /reader/:id
  */
 export const useStorySelection = ({
-  setCurrentStory,
-  setCurrentView,
   handleMarkAsRead
 }: UseStorySelectionProps) => {
+  const navigate = useNavigate();
 
   const handleSelectStory = useCallback((story: Story) => {
     console.log("[useStorySelection] DEBUG: Sélection d'histoire:", story.id, "status:", story.status);
     
-    // Définir l'histoire courante IMMÉDIATEMENT
-    setCurrentStory(story);
-    console.log("[useStorySelection] DEBUG: Histoire courante définie:", story.id);
-    
-    // Changer la vue vers reader avec l'ID de l'histoire
-    console.log("[useStorySelection] DEBUG: Changement de vue vers 'reader' avec storyId:", story.id);
-    setCurrentView("reader", story.id);
+    // Navigation directe vers la route dédiée du lecteur
+    console.log("[useStorySelection] DEBUG: Navigation vers /reader/", story.id);
+    navigate(`/reader/${story.id}`);
     
     // Marquer l'histoire comme lue si nécessaire (en arrière-plan)
     if (story.status === "ready") {
@@ -36,7 +30,7 @@ export const useStorySelection = ({
         console.error("[useStorySelection] ERROR: Erreur lors du marquage de l'histoire comme lue:", error);
       });
     }
-  }, [setCurrentStory, setCurrentView, handleMarkAsRead]);
+  }, [navigate, handleMarkAsRead]);
 
   return { handleSelectStory };
 };
