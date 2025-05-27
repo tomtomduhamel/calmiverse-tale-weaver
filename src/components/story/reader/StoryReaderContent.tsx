@@ -9,7 +9,7 @@ import type { Story } from "@/types/story";
 interface StoryReaderContentProps {
   story: Story;
   childName?: string;
-  readingTime: number;
+  readingTime: string;
   fontSize: number;
   isDarkMode: boolean;
   setShowSummary: (show: boolean) => void;
