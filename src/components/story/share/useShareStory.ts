@@ -21,14 +21,26 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
     setError(null);
 
     try {
+      // Récupérer les données de l'histoire et de l'utilisateur
       const { data: storyData, error: storyError } = await supabase
         .from('stories')
-        .select('*')
+        .select('title, content, childrennames, objective, authorid')
         .eq('id', storyId)
         .single();
       
       if (storyError || !storyData) {
         throw new Error("Histoire introuvable");
+      }
+
+      // Récupérer les informations de l'utilisateur
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('firstname, lastname')
+        .eq('id', storyData.authorid)
+        .single();
+
+      if (userError) {
+        console.warn('Impossible de récupérer les informations utilisateur:', userError);
       }
 
       const token = generateToken();
@@ -56,30 +68,37 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
 
       if (updateError) throw updateError;
 
-      // Données pour le webhook
+      // Données pour le webhook N8N
       const webhookData = {
-        storyId,
         recipientEmail: email,
+        storyTitle: storyData.title || "Histoire sans titre",
+        storyContent: storyData.content || "",
+        childrenNames: storyData.childrennames || [],
+        storyObjective: storyData.objective || "",
+        senderFirstName: userData?.firstname || "",
+        senderLastName: userData?.lastname || "",
         publicUrl: `${window.location.origin}/stories/${storyId}?token=${token}`,
-        expirationDate: expiresAt.toISOString(),
-        senderName: "Calmi"
+        expirationDate: expiresAt.toISOString()
       };
 
-      // PLACEHOLDER: Remplacez cette URL par votre webhook Make.com réel dans votre environnement de production
-      const makeWebhookUrl = import.meta.env.VITE_EMAIL_WEBHOOK_URL || 'PLACEHOLDER_EMAIL_WEBHOOK_URL';
+      // Envoi au webhook N8N
+      const n8nWebhookUrl = 'https://tomtomduhamel.app.n8n.cloud/webhook-test/9655e007-2b71-4b57-ab03-748eaa158ebe';
+      
       try {
-        if (makeWebhookUrl && makeWebhookUrl !== 'PLACEHOLDER_EMAIL_WEBHOOK_URL') {
-          await fetch(makeWebhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(webhookData)
-          });
-        } else {
-          console.log('Email webhook URL not configured:', webhookData);
+        const response = await fetch(n8nWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookData)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erreur webhook: ${response.status}`);
         }
+
+        console.log('Données envoyées au webhook N8N:', webhookData);
       } catch (webhookError) {
-        console.warn('Email webhook failed, but story was shared:', webhookError);
-        // Continue execution even if webhook fails
+        console.error('Erreur webhook N8N:', webhookError);
+        throw new Error("Impossible d'envoyer l'email via le webhook");
       }
 
       toast({
