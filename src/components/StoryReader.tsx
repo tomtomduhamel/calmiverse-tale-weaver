@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import type { Story } from "@/types/story";
@@ -53,32 +52,31 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const { userSettings } = useUserSettings();
   const musicSyncEnabled = userSettings?.readingPreferences?.backgroundMusicEnabled !== false;
   
-  // Hook pour gérer la musique de fond (instance unique)
+  // Hook pour gérer la musique de fond (instance unique centralisée)
   const backgroundSound = useBackgroundSound({
     soundId: story?.sound_id,
     storyObjective: typeof story?.objective === 'string' ? story.objective : story?.objective?.value,
     autoPlay: false
   });
   
-  // Fonction de synchronisation musique/défilement centralisée
+  // Fonction de synchronisation musique/défilement simplifiée
   const handleScrollStateChange = useCallback((isScrolling: boolean) => {
-    // Ne synchroniser que si la musique est activée dans les préférences
-    if (!musicSyncEnabled || !backgroundSound.musicEnabled) {
+    // Ne synchroniser que si la musique est activée et disponible
+    if (!musicSyncEnabled || !backgroundSound.musicEnabled || !backgroundSound.soundDetails) {
       return;
     }
     
-    console.log(`StoryReader: Synchronisation musique - Défilement: ${isScrolling ? 'ON' : 'OFF'}, Musique: ${backgroundSound.isPlaying ? 'ON' : 'OFF'}`);
+    console.log(`🎵 StoryReader: Synchronisation musique - Défilement: ${isScrolling ? 'ON' : 'OFF'}, Musique: ${backgroundSound.isPlaying ? 'ON' : 'OFF'}`);
     
+    // Synchronisation simple : si le défilement change d'état et que la musique n'est pas dans le bon état
     if (isScrolling && !backgroundSound.isPlaying) {
-      // Le défilement démarre, démarrer la musique
+      console.log("🎵 Démarrage de la musique avec le défilement");
       backgroundSound.togglePlay();
-      console.log("StoryReader: Musique démarrée avec le défilement");
     } else if (!isScrolling && backgroundSound.isPlaying) {
-      // Le défilement s'arrête, arrêter la musique
+      console.log("🎵 Pause de la musique avec l'arrêt du défilement");
       backgroundSound.togglePlay();
-      console.log("StoryReader: Musique mise en pause avec le défilement");
     }
-  }, [musicSyncEnabled, backgroundSound.musicEnabled, backgroundSound.isPlaying, backgroundSound.togglePlay]);
+  }, [musicSyncEnabled, backgroundSound.musicEnabled, backgroundSound.soundDetails, backgroundSound.isPlaying, backgroundSound.togglePlay]);
   
   // Utiliser le hook pour la gestion du défilement automatique avec callback de synchronisation
   const { 
@@ -129,6 +127,12 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   // Log pour débogage
   useEffect(() => {
     console.log("[StoryReader] DEBUG: Lecteur d'histoire affiché pour:", story?.id);
+    console.log("[StoryReader] DEBUG: État de la musique:", {
+      isPlaying: backgroundSound.isPlaying,
+      isLoading: backgroundSound.isLoading,
+      soundDetails: backgroundSound.soundDetails ? backgroundSound.soundDetails.title : null,
+      error: backgroundSound.error
+    });
     
     // Désactiver le scroll du corps quand le reader est ouvert
     document.body.style.overflow = 'hidden';
@@ -137,7 +141,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
       console.log("[StoryReader] DEBUG: Lecteur d'histoire fermé");
       document.body.style.overflow = '';
     };
-  }, [story?.id]);
+  }, [story?.id, backgroundSound.isPlaying, backgroundSound.isLoading, backgroundSound.soundDetails, backgroundSound.error]);
 
   if (!story) {
     return <EmptyStoryView onBack={handleBack} />;

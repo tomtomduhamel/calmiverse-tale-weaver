@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Volume2, VolumeX, Disc, AlertCircle } from "lucide-react";
+import { Volume2, VolumeX, Disc, AlertCircle, RefreshCw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBackgroundSound } from '@/hooks/story/useBackgroundSound';
 
@@ -25,7 +25,8 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
     musicEnabled,
     error,
     volume,
-    setVolume
+    setVolume,
+    reinitialize
   } = useBackgroundSound({ 
     soundId, 
     storyObjective,
@@ -33,14 +34,12 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
   });
 
   // Log pour débogage
-  console.log("🎵 BackgroundSoundButton rendu avec:", {
+  console.log("🎵 BackgroundSoundButton rendu:", {
     soundId,
     storyObjective,
-    isDarkMode,
-    autoPlay,
     isPlaying,
     isLoading,
-    soundDetails: soundDetails ? { id: soundDetails.id, title: soundDetails.title, objective: soundDetails.objective } : null,
+    soundDetails: soundDetails ? { id: soundDetails.id, title: soundDetails.title } : null,
     musicEnabled,
     error,
     volume
@@ -62,53 +61,59 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
   };
 
   // Adapter le texte du tooltip en fonction de l'objectif
-  let tooltipText = 'Volume du fond sonore';
-  if (soundDetails?.objective) {
-    switch (soundDetails.objective) {
-      case 'sleep':
-        tooltipText = 'Volume du fond sonore pour s\'endormir';
-        break;
-      case 'focus':
-        tooltipText = 'Volume du fond sonore pour la concentration';
-        break;
-      case 'relax':
-        tooltipText = 'Volume du fond sonore pour la relaxation';
-        break;
-      case 'fun':
-        tooltipText = 'Volume du fond sonore pour s\'amuser';
-        break;
-      default:
-        tooltipText = 'Volume du fond sonore';
-    }
-  }
+  const getTooltipText = () => {
+    const baseText = 'Volume du fond sonore';
+    if (!soundDetails?.objective) return baseText;
+    
+    const objectiveTexts = {
+      sleep: 'pour s\'endormir',
+      focus: 'pour la concentration', 
+      relax: 'pour la relaxation',
+      fun: 'pour s\'amuser'
+    };
+    
+    return `${baseText} ${objectiveTexts[soundDetails.objective as keyof typeof objectiveTexts] || ''}`;
+  };
 
-  // En cas d'erreur, afficher un bouton d'alerte
+  // En cas d'erreur, afficher un bouton d'erreur avec option de retry
   if (error) {
     console.error("❌ Erreur de fond sonore:", error);
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant={isDarkMode ? "outline" : "ghost"}
-              size="icon"
-              className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} bg-red-100 dark:bg-red-900/30`}
-              aria-label="Erreur de fond sonore"
-              disabled
-            >
-              <AlertCircle className="h-4 w-4 text-red-500" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant={isDarkMode ? "outline" : "ghost"}
+                size="icon"
+                className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} bg-red-100 dark:bg-red-900/30`}
+                aria-label="Erreur de fond sonore"
+                disabled
+              >
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              </Button>
+              <Button
+                variant={isDarkMode ? "outline" : "ghost"}
+                size="icon"
+                onClick={reinitialize}
+                className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} hover:bg-blue-100 dark:hover:bg-blue-900/30`}
+                aria-label="Réessayer le chargement"
+              >
+                <RefreshCw className="h-3 w-3" />
+              </Button>
+            </div>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="z-[100]">
             <div className="text-xs text-red-500">Erreur de fond sonore</div>
             <div className="text-xs opacity-70">{error}</div>
+            <div className="text-xs text-blue-500 mt-1">Cliquez sur ↻ pour réessayer</div>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
     );
   }
 
-  // Si en cours de chargement sans erreur, afficher l'indicateur
+  // Si en cours de chargement, afficher l'indicateur
   if (isLoading) {
     return (
       <TooltipProvider>
@@ -131,13 +136,34 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
     );
   }
 
-  // Si aucun son n'a été trouvé, ne pas afficher le bouton
+  // Si aucun son n'a été trouvé, afficher un indicateur d'absence
   if (!soundDetails) {
     console.log("🎵 Aucun fond sonore disponible");
-    return null;
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={isDarkMode ? "outline" : "ghost"}
+              size="icon"
+              className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} opacity-50`}
+              disabled
+            >
+              <VolumeX className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="z-[100]">
+            <div className="text-xs">Aucun fond sonore disponible</div>
+            <div className="text-xs opacity-70">
+              {storyObjective ? `pour l'objectif: ${storyObjective}` : ''}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   }
 
-  // Bouton de contrôle du volume avec tooltip
+  // Bouton de contrôle du volume avec retour visuel amélioré
   return (
     <TooltipProvider>
       <Tooltip>
@@ -146,22 +172,33 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
             variant={isDarkMode ? "outline" : "ghost"}
             size="icon"
             onClick={toggleVolume}
-            className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} ${volume > 0 ? "bg-green-100 dark:bg-green-900" : "bg-gray-100 dark:bg-gray-800"} transition-all`}
+            className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} ${
+              volume > 0 && isPlaying 
+                ? "bg-green-100 dark:bg-green-900 ring-2 ring-green-300 dark:ring-green-700" 
+                : volume > 0 
+                ? "bg-blue-100 dark:bg-blue-900" 
+                : "bg-gray-100 dark:bg-gray-800"
+            } transition-all duration-200`}
             aria-label={volume > 0 ? "Couper le volume du fond sonore" : "Activer le volume du fond sonore"}
           >
             {volume > 0 ? (
-              <Volume2 className="h-4 w-4" />
+              <Volume2 className={`h-4 w-4 ${isPlaying ? 'text-green-600 dark:text-green-400' : ''}`} />
             ) : (
               <VolumeX className="h-4 w-4" />
             )}
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="z-[100]">
-          <div className="text-xs">
+          <div className="text-xs font-medium">
             {volume > 0 ? "Couper le volume" : "Activer le volume"}
           </div>
           {soundDetails && (
-            <div className="text-xs opacity-70 mt-1">{soundDetails.title}</div>
+            <>
+              <div className="text-xs opacity-70 mt-1">{soundDetails.title}</div>
+              <div className="text-xs opacity-60">
+                État: {isPlaying ? "🎵 En lecture" : "⏸️ En pause"}
+              </div>
+            </>
           )}
         </TooltipContent>
       </Tooltip>

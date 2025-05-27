@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 /**
- * Hook pour charger les détails d'un son à partir de son ID ou trouver un son adapté à un objectif
+ * Hook pour charger les détails d'un son avec gestion améliorée des erreurs
  */
 export const useSoundDetails = (soundId?: string | null, storyObjective?: string | null) => {
   const [soundDetails, setSoundDetails] = useState<any>(null);
@@ -18,7 +18,7 @@ export const useSoundDetails = (soundId?: string | null, storyObjective?: string
       setError(null);
       
       // Log pour débogage - infos initiales
-      console.log("🔊 useSoundDetails - Initialisation avec:", { 
+      console.log("🔊 useSoundDetails - Début du chargement:", { 
         soundId, 
         storyObjective
       });
@@ -34,14 +34,19 @@ export const useSoundDetails = (soundId?: string | null, storyObjective?: string
           // Rechercher un son correspondant à l'objectif
           const { data: matchingSounds, error: matchingError } = await supabase
             .from('sound_backgrounds')
-            .select('id, title, file_path')
+            .select('id, title, file_path, objective')
             .eq('objective', storyObjective)
+            .not('file_path', 'is', null)
             .order('created_at', { ascending: false });
             
           if (matchingError) {
             console.error("❌ Erreur lors de la recherche de sons par objectif:", matchingError);
             setError(`Erreur de recherche: ${matchingError.message}`);
-          } else if (matchingSounds && matchingSounds.length > 0) {
+            setIsLoading(false);
+            return;
+          }
+          
+          if (matchingSounds && matchingSounds.length > 0) {
             // Choisir un son aléatoire parmi ceux qui correspondent
             const randomIndex = Math.floor(Math.random() * matchingSounds.length);
             soundToLoad = matchingSounds[randomIndex].id;
@@ -53,16 +58,21 @@ export const useSoundDetails = (soundId?: string | null, storyObjective?: string
           } else {
             console.warn(`⚠️ Aucun son trouvé pour l'objectif: ${storyObjective}`);
             setError(`Aucun son disponible pour l'objectif: ${storyObjective}`);
+            setIsLoading(false);
+            return;
           }
         } catch (e) {
           console.error("❌ Erreur lors de la sélection du son par objectif:", e);
           setError(`Erreur lors de la sélection: ${e instanceof Error ? e.message : String(e)}`);
+          setIsLoading(false);
+          return;
         }
       }
       
       if (!soundToLoad) {
         console.log("ℹ️ Aucun son à charger (ID manquant et objectif non trouvé)");
         setIsLoading(false);
+        setSoundDetails(null);
         return;
       }
 
@@ -78,8 +88,9 @@ export const useSoundDetails = (soundId?: string | null, storyObjective?: string
           
         if (error) {
           console.error(`❌ Erreur lors de la récupération des détails du son ID ${soundToLoad}:`, error);
-          setError(`Erreur de récupération: ${error.message}`);
-          throw error;
+          setError(`Son non trouvé: ${error.message}`);
+          setIsLoading(false);
+          return;
         }
         
         if (!data) {
@@ -89,23 +100,34 @@ export const useSoundDetails = (soundId?: string | null, storyObjective?: string
           return;
         }
         
-        console.log("✅ Détails du son récupérés:", data);
-        setSoundDetails(data);
-        
         // Vérifier si le son a un chemin de fichier valide
         if (!data.file_path) {
           console.error(`❌ Le son ID ${soundToLoad} n'a pas de chemin de fichier valide`);
-          setError(`Chemin de fichier manquant pour le son ID: ${soundToLoad}`);
+          setError(`Fichier audio manquant pour: ${data.title || 'Son sans titre'}`);
           setIsLoading(false);
+          return;
         }
+        
+        console.log("✅ Détails du son récupérés avec succès:", {
+          id: data.id,
+          title: data.title,
+          file_path: data.file_path,
+          objective: data.objective
+        });
+        
+        setSoundDetails(data);
+        setError(null);
+        
       } catch (error: any) {
         console.error('❌ Erreur de chargement du son:', error);
+        const errorMessage = `Erreur de chargement: ${error.message || 'Erreur inconnue'}`;
+        setError(errorMessage);
+        
         toast({
-          title: 'Erreur',
-          description: 'Impossible de charger les détails du fond sonore',
+          title: 'Erreur de fond sonore',
+          description: 'Impossible de charger le fond sonore pour cette histoire',
           variant: 'destructive',
         });
-        setError(`Erreur de chargement: ${error.message || 'Erreur inconnue'}`);
       } finally {
         setIsLoading(false);
       }

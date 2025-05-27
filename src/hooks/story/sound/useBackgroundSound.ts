@@ -1,7 +1,7 @@
 
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
 import { useSoundDetails } from './useSoundDetails';
-import { useSoundPlayer } from './useSoundPlayer';
+import { useAudioPlayer } from './useAudioPlayer';
 
 interface BackgroundSoundProps {
   soundId?: string | null;
@@ -10,7 +10,7 @@ interface BackgroundSoundProps {
 }
 
 /**
- * Hook principal pour gérer le fond sonore d'une histoire
+ * Hook principal pour gérer le fond sonore d'une histoire - Version refactorisée
  */
 export const useBackgroundSound = ({ 
   soundId, 
@@ -21,34 +21,43 @@ export const useBackgroundSound = ({
   const { userSettings } = useUserSettings();
   const musicEnabled = userSettings?.readingPreferences?.backgroundMusicEnabled ?? true;
 
-  // Utiliser le hook spécialisé pour charger les détails du son
-  const { soundDetails, isLoading, error: detailsError } = useSoundDetails(soundId, storyObjective);
+  // Charger les détails du son
+  const { soundDetails, isLoading: isLoadingDetails, error: detailsError } = useSoundDetails(soundId, storyObjective);
   
-  // Utiliser le hook spécialisé pour la lecture du son
+  // Gérer la lecture audio avec le nouveau player centralisé
   const { 
     isPlaying, 
+    isLoading: isLoadingAudio,
+    volume,
+    error: audioError,
     togglePlay, 
     setVolume, 
-    stopSound, 
-    volume,
-    error: playerError 
-  } = useSoundPlayer({
+    stopAudio,
+    reinitialize
+  } = useAudioPlayer({
     soundDetails,
-    autoPlay,
-    musicEnabled
+    musicEnabled,
+    autoPlay
   });
 
-  // Combiner les erreurs potentielles
-  const error = detailsError || playerError;
+  // Combiner les états de chargement et les erreurs
+  const isLoading = isLoadingDetails || isLoadingAudio;
+  const error = detailsError || audioError;
 
-  // Log pour débogage
-  console.log("🎵 useBackgroundSound - État:", {
+  // Log pour débogage complet
+  console.log("🎵 useBackgroundSound - État complet:", {
     soundId,
     storyObjective,
-    isPlaying,
-    isLoading,
-    soundDetails: soundDetails ? { title: soundDetails.title, objective: soundDetails.objective } : null,
+    autoPlay,
     musicEnabled,
+    soundDetails: soundDetails ? { 
+      id: soundDetails.id, 
+      title: soundDetails.title, 
+      file_path: soundDetails.file_path,
+      objective: soundDetails.objective 
+    } : null,
+    isLoading,
+    isPlaying,
     volume,
     error
   });
@@ -59,10 +68,11 @@ export const useBackgroundSound = ({
     soundDetails,
     togglePlay,
     setVolume,
-    stopSound,
+    stopSound: stopAudio,
     musicEnabled,
     volume,
-    error
+    error,
+    reinitialize // Fonction pour relancer l'initialisation si nécessaire
   };
 };
 
