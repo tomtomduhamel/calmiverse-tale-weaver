@@ -34,6 +34,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, backgroundSoundControl
   const autoScrollEnabled = userSettings?.readingPreferences?.autoScrollEnabled !== false;
   
   // Fonction pour synchroniser la musique avec le défilement
+  // Ne se déclenche que si la musique est activée dans les préférences
   const syncMusicWithScroll = useCallback((isScrolling: boolean) => {
     if (!backgroundSoundControls || !backgroundSoundControls.musicEnabled) {
       return;
@@ -69,7 +70,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, backgroundSoundControl
     setScrollStatus('running');
     setIsManuallyPaused(false);
     
-    // Synchroniser la musique au démarrage
+    // Synchroniser la musique au démarrage seulement si elle est activée
     syncMusicWithScroll(true);
     
     const pixelsPerSecond = calculateScrollSpeed(readingSpeed);
@@ -104,7 +105,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, backgroundSoundControl
         scrollToPosition(maxScrollPosition);
         console.log("Auto-scroll: Reached the end");
         setScrollStatus('idle');
-        // Arrêter la musique quand on atteint la fin
+        // Arrêter la musique quand on atteint la fin seulement si elle était synchronisée
         syncMusicWithScroll(false);
         return;
       }
@@ -125,7 +126,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, backgroundSoundControl
     }
     
     setScrollStatus('idle');
-    // Synchroniser la musique à l'arrêt
+    // Synchroniser la musique à l'arrêt seulement si elle est activée
     syncMusicWithScroll(false);
     console.log("Auto-scroll: Stopped");
   }, [animationFrameRef, setScrollStatus, syncMusicWithScroll]);
@@ -139,7 +140,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, backgroundSoundControl
       }
       
       setScrollStatus('paused');
-      // Synchroniser la musique lors de la pause
+      // Synchroniser la musique lors de la pause seulement si elle est activée
       syncMusicWithScroll(false);
       console.log("Auto-scroll: Paused");
     }
@@ -149,7 +150,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, backgroundSoundControl
   const resumeAutoScroll = useCallback(() => {
     if (scrollStatusRef.current === 'paused') {
       setScrollStatus('running');
-      // Synchroniser la musique lors de la reprise
+      // Synchroniser la musique lors de la reprise seulement si elle est activée
       syncMusicWithScroll(true);
       console.log("Auto-scroll: Resumed");
       startAutoScroll();
