@@ -44,14 +44,15 @@ export const StoryContent: React.FC<StoryContentProps> = ({
       className={`prose max-w-none ${textColor} transition-all duration-700`}
       style={{ 
         fontSize: `${fontSize}px`,
-        lineHeight: 1.6
+        lineHeight: 1.6,
+        textAlign: 'justify'
       }}
     >
       <ReactMarkdown
         components={{
-          h1: ({ node, ...props }) => <h1 className={`text-2xl font-bold mt-8 mb-4 ${textColor}`} {...props} />,
-          h2: ({ node, ...props }) => <h2 className={`text-xl font-bold mt-6 mb-3 ${textColor}`} {...props} />,
-          p: ({ node, ...props }) => <p className={`my-4 ${textColor}`} {...props} />,
+          h1: ({ node, ...props }) => <h1 className={`text-2xl font-bold mt-8 mb-4 ${textColor} text-center`} {...props} />,
+          h2: ({ node, ...props }) => <h2 className={`text-xl font-bold mt-6 mb-3 ${textColor} text-center`} {...props} />,
+          p: ({ node, ...props }) => <p className={`my-4 ${textColor}`} style={{ textAlign: 'justify' }} {...props} />,
           strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
           em: ({ node, ...props }) => <em className="italic" {...props} />,
           ul: ({ node, ...props }) => <ul className="list-disc ml-6 my-4" {...props} />,
