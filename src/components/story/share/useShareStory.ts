@@ -155,9 +155,9 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
       };
 
       // PLACEHOLDER: Remplacez cette URL par votre webhook Make.com pour Kindle dans votre environnement de production
-      const makeWebhookUrl = import.meta.env.VITE_KINDLE_WEBHOOK_URL || 'PLACEHOLDER_KINDLE_WEBHOOK_URL';
+      const makeWebhookUrl = import.meta.env.VITE_KINDLE_WEBHOOK_URL || 'https://tomtomduhamel.app.n8n.cloud/webhook-test/7bca54e0-e309-4c09-9aa3-83b205220d11';
       try {
-        if (makeWebhookUrl && makeWebhookUrl !== 'PLACEHOLDER_KINDLE_WEBHOOK_URL') {
+        if (makeWebhookUrl && makeWebhookUrl !== 'https://tomtomduhamel.app.n8n.cloud/webhook-test/7bca54e0-e309-4c09-9aa3-83b205220d11') {
           await fetch(makeWebhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
