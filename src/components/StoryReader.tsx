@@ -15,6 +15,7 @@ import { useMarkAsRead } from "@/hooks/story/useMarkAsRead";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
 import { useBackgroundSound } from "@/hooks/story/useBackgroundSound";
 import { useUserSettings } from "@/hooks/settings/useUserSettings";
+import { Button } from "@/components/ui/button";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -219,9 +220,5 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     </div>
   );
 };
-
-// Import manquant
-import { Button } from "@/components/ui/button";
-import { useCallback } from "react";
 
 export default StoryReader;
