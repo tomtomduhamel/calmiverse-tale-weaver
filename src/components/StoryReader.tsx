@@ -1,22 +1,19 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Card } from "@/components/ui/card";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
-import { ReaderControls } from "./story/ReaderControls";
-import { StoryHeader } from "./story/StoryHeader";
-import { StoryContent } from "./story/StoryContent";
 import { ReadingGuide } from "./story/ReadingGuide";
 import { AutoScrollIndicator } from "./story/AutoScrollIndicator";
-import { ScrollArea } from "./ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyStoryView } from "./story/reader/EmptyStoryView";
 import { useAutoScroll } from "@/hooks/story/useAutoScroll";
 import { useMarkAsRead } from "@/hooks/story/useMarkAsRead";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
-import { useBackgroundSound } from "@/hooks/story/useBackgroundSound";
+import { useBackgroundSound } from "@/hooks/story/sound/useBackgroundSound";
 import { useUserSettings } from "@/hooks/settings/useUserSettings";
-import { Button } from "@/components/ui/button";
+import { StoryReaderLayout } from "./story/reader/StoryReaderLayout";
+import { StoryReaderHeader } from "./story/reader/StoryReaderHeader";
+import { StoryReaderContent } from "./story/reader/StoryReaderContent";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -52,23 +49,21 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const { userSettings } = useUserSettings();
   const musicSyncEnabled = userSettings?.readingPreferences?.backgroundMusicEnabled !== false;
   
-  // Hook pour gérer la musique de fond (instance unique centralisée)
+  // Hook pour gérer la musique de fond
   const backgroundSound = useBackgroundSound({
     soundId: story?.sound_id,
     storyObjective: typeof story?.objective === 'string' ? story.objective : story?.objective?.value,
     autoPlay: false
   });
   
-  // Fonction de synchronisation musique/défilement simplifiée
+  // Fonction de synchronisation musique/défilement
   const handleScrollStateChange = useCallback((isScrolling: boolean) => {
-    // Ne synchroniser que si la musique est activée et disponible
     if (!musicSyncEnabled || !backgroundSound.musicEnabled || !backgroundSound.soundDetails) {
       return;
     }
     
     console.log(`🎵 StoryReader: Synchronisation musique - Défilement: ${isScrolling ? 'ON' : 'OFF'}, Musique: ${backgroundSound.isPlaying ? 'ON' : 'OFF'}`);
     
-    // Synchronisation simple : si le défilement change d'état et que la musique n'est pas dans le bon état
     if (isScrolling && !backgroundSound.isPlaying) {
       console.log("🎵 Démarrage de la musique avec le défilement");
       backgroundSound.togglePlay();
@@ -78,7 +73,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     }
   }, [musicSyncEnabled, backgroundSound.musicEnabled, backgroundSound.soundDetails, backgroundSound.isPlaying, backgroundSound.togglePlay]);
   
-  // Utiliser le hook pour la gestion du défilement automatique avec callback de synchronisation
+  // Gestion du défilement automatique
   const { 
     isAutoScrolling,
     isPaused,
@@ -94,7 +89,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     onScrollStateChange: handleScrollStateChange
   });
   
-  // Utiliser le hook pour la gestion du marquage comme lu
+  // Gestion du marquage comme lu
   const { isUpdatingReadStatus, handleMarkAsRead } = useMarkAsRead({
     story,
     onMarkAsRead,
@@ -108,12 +103,10 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     }
   }, [initialStory]);
 
-  // Use onBack if provided, otherwise fallback to onClose
+  // Gestion de la fermeture
   const handleBack = () => {
     console.log("[StoryReader] DEBUG: Bouton Fermer cliqué");
-    // S'assurer d'arrêter le défilement automatique lors de la fermeture
     stopAutoScroll();
-    // Arrêter aussi la musique
     if (backgroundSound.isPlaying) {
       backgroundSound.stopSound();
     }
@@ -124,7 +117,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     }
   };
 
-  // Log pour débogage
+  // Effets de cycle de vie
   useEffect(() => {
     console.log("[StoryReader] DEBUG: Lecteur d'histoire affiché pour:", story?.id);
     console.log("[StoryReader] DEBUG: État de la musique:", {
@@ -134,7 +127,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
       error: backgroundSound.error
     });
     
-    // Désactiver le scroll du corps quand le reader est ouvert
     document.body.style.overflow = 'hidden';
     
     return () => {
@@ -150,80 +142,51 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const readingTime = calculateReadingTime(story.story_text);
 
   return (
-    <div 
-      className={`fixed inset-0 z-50 flex flex-col min-h-screen transition-colors duration-300
-        ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
-    >
-      <div className="flex-1 max-w-3xl mx-auto px-4 flex flex-col h-full">
-        <div className="flex justify-between items-center py-4 sticky top-0 z-10" 
-             style={{ backgroundColor: isDarkMode ? '#1a1a1a' : 'white' }}>
-          <ReaderControls
-            fontSize={fontSize}
-            setFontSize={setFontSize}
-            isDarkMode={isDarkMode}
-            setIsDarkMode={setIsDarkMode}
-            storyId={story.id}
-            title={story.title}
-            story={story}
-            setShowReadingGuide={setShowReadingGuide}
-            onMarkAsRead={handleMarkAsRead}
-            isRead={story.status === "read"}
-            isAutoScrolling={isAutoScrolling}
-            isPaused={isPaused}
-            onToggleAutoScroll={toggleAutoScroll}
-            autoScrollEnabled={autoScrollEnabled}
-            isUpdatingReadStatus={isUpdatingReadStatus}
-            isManuallyPaused={isManuallyPaused}
-          />
-          <Button 
-            variant={isDarkMode ? "outline" : "ghost"} 
-            onClick={handleBack}
-            className={`transition-transform hover:scale-105 ${isDarkMode ? "text-white border-gray-600 hover:bg-gray-800" : ""}`}
-          >
-            Fermer
-          </Button>
-        </div>
+    <StoryReaderLayout isDarkMode={isDarkMode} scrollAreaRef={scrollAreaRef}>
+      <StoryReaderHeader
+        story={story}
+        fontSize={fontSize}
+        setFontSize={setFontSize}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+        setShowReadingGuide={setShowReadingGuide}
+        handleMarkAsRead={handleMarkAsRead}
+        isAutoScrolling={isAutoScrolling}
+        isPaused={isPaused}
+        isManuallyPaused={isManuallyPaused}
+        onToggleAutoScroll={toggleAutoScroll}
+        autoScrollEnabled={autoScrollEnabled}
+        isUpdatingReadStatus={isUpdatingReadStatus}
+        onBack={handleBack}
+      />
 
-        <ScrollArea 
-          ref={scrollAreaRef} 
-          className="flex-1 pr-4"
-        >
-          <Card className={`p-6 transition-all duration-300 mb-6 ${isDarkMode ? "bg-gray-800" : "bg-white"} animate-fade-in`}>
-            <StoryHeader
-              story={story}
-              childName={childName}
-              readingTime={readingTime}
-              setShowSummary={setShowSummary}
-              onToggleFavorite={onToggleFavorite}
-              isDarkMode={isDarkMode}
-            />
+      <StoryReaderContent
+        story={story}
+        childName={childName}
+        readingTime={readingTime}
+        fontSize={fontSize}
+        isDarkMode={isDarkMode}
+        setShowSummary={setShowSummary}
+        onToggleFavorite={onToggleFavorite}
+        scrollAreaRef={scrollAreaRef}
+      />
 
-            <StoryContent
-              story={story}
-              fontSize={fontSize}
-              isDarkMode={isDarkMode}
-            />
-          </Card>
-        </ScrollArea>
+      <AutoScrollIndicator
+        isAutoScrolling={isAutoScrolling}
+        isPaused={isPaused}
+        onPauseScroll={handlePauseScroll}
+        onResumeScroll={handleResumeScroll}
+        isDarkMode={isDarkMode}
+      />
 
-        {/* Indicateur flottant pour le défilement automatique */}
-        <AutoScrollIndicator
-          isAutoScrolling={isAutoScrolling}
-          isPaused={isPaused}
-          onPauseScroll={handlePauseScroll}
-          onResumeScroll={handleResumeScroll}
-          isDarkMode={isDarkMode}
-        />
+      <StorySummaryDialog 
+        story={story}
+        showSummary={showSummary}
+        setShowSummary={setShowSummary}
+      />
 
-        <StorySummaryDialog 
-          story={story}
-          showSummary={showSummary}
-          setShowSummary={setShowSummary}
-        />
-
-        <ReadingGuide open={showReadingGuide} onOpenChange={setShowReadingGuide} />
-      </div>
-    </div>
+      <ReadingGuide open={showReadingGuide} onOpenChange={setShowReadingGuide} />
+    </StoryReaderLayout>
   );
 };
 
