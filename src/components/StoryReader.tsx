@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
@@ -15,6 +14,7 @@ import { useAutoScroll } from "@/hooks/story/useAutoScroll";
 import { useMarkAsRead } from "@/hooks/story/useMarkAsRead";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
 import { useBackgroundSound } from "@/hooks/story/useBackgroundSound";
+import { useUserSettings } from "@/hooks/settings/useUserSettings";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -46,6 +46,10 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   // Calcul des métriques pour le défilement automatique
   const wordCount = story?.story_text?.trim().split(/\s+/).length || 0;
   
+  // Récupération des paramètres utilisateur pour la synchronisation
+  const { userSettings } = useUserSettings();
+  const musicSyncEnabled = userSettings?.readingPreferences?.backgroundMusicEnabled !== false;
+  
   // Hook pour gérer la musique de fond
   const backgroundSound = useBackgroundSound({
     soundId: story?.sound_id,
@@ -53,7 +57,27 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     autoPlay: false
   });
   
-  // Utiliser le hook pour la gestion du défilement automatique avec le contrôle de la musique
+  // Fonction de synchronisation musique/défilement centralisée
+  const handleScrollStateChange = useCallback((isScrolling: boolean) => {
+    // Ne synchroniser que si la musique est activée dans les préférences
+    if (!musicSyncEnabled || !backgroundSound.musicEnabled) {
+      return;
+    }
+    
+    console.log(`StoryReader: Synchronisation musique - Défilement: ${isScrolling ? 'ON' : 'OFF'}, Musique: ${backgroundSound.isPlaying ? 'ON' : 'OFF'}`);
+    
+    if (isScrolling && !backgroundSound.isPlaying) {
+      // Le défilement démarre, démarrer la musique
+      backgroundSound.togglePlay();
+      console.log("StoryReader: Musique démarrée avec le défilement");
+    } else if (!isScrolling && backgroundSound.isPlaying) {
+      // Le défilement s'arrête, arrêter la musique
+      backgroundSound.togglePlay();
+      console.log("StoryReader: Musique mise en pause avec le défilement");
+    }
+  }, [musicSyncEnabled, backgroundSound]);
+  
+  // Utiliser le hook pour la gestion du défilement automatique avec callback de synchronisation
   const { 
     isAutoScrolling,
     isPaused,
@@ -66,7 +90,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   } = useAutoScroll({ 
     wordCount, 
     scrollAreaRef,
-    backgroundSoundControls: backgroundSound
+    onScrollStateChange: handleScrollStateChange
   });
   
   // Utiliser le hook pour la gestion du marquage comme lu
@@ -198,5 +222,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
 
 // Import manquant
 import { Button } from "@/components/ui/button";
+import { useCallback } from "react";
 
 export default StoryReader;
