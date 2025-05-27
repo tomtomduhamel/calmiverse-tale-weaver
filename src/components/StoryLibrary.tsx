@@ -15,6 +15,7 @@ interface StoryLibraryProps {
   isRetrying?: boolean;
   pendingStoryId?: string | null;
   onForceRefresh?: () => void;
+  onCreateStory?: () => void;
 }
 
 const StoryLibrary: React.FC<StoryLibraryProps> = ({ 
@@ -25,7 +26,8 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   onViewChange,
   isRetrying = false,
   pendingStoryId,
-  onForceRefresh
+  onForceRefresh,
+  onCreateStory
 }) => {
   const { toast } = useToast();
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
@@ -101,6 +103,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         isRetrying={isRetrying}
         isDeletingId={isDeletingId}
         pendingStoryId={pendingStoryId}
+        onCreateStory={onCreateStory}
       />
     </div>
   );

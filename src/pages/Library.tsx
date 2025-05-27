@@ -36,6 +36,10 @@ const Library: React.FC = () => {
     navigate("/");
   };
 
+  const handleCreateStory = () => {
+    navigate("/create-story-n8n");
+  };
+
   if (authLoading || childrenLoading || storiesLoading) {
     return <LoadingStory />;
   }
@@ -77,6 +81,7 @@ const Library: React.FC = () => {
             onDeleteStory={handleDeleteStory}
             onRetryStory={handleRetryStory}
             onForceRefresh={fetchStories}
+            onCreateStory={handleCreateStory}
           />
         </div>
       </div>

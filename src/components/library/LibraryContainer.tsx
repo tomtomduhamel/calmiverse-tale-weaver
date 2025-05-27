@@ -19,6 +19,7 @@ interface LibraryContainerProps {
   isRetrying?: boolean;
   isDeletingId?: string | null;
   pendingStoryId?: string | null;
+  onCreateStory?: () => void;
 }
 
 const LibraryContainer: React.FC<LibraryContainerProps> = ({
@@ -29,7 +30,8 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   onViewChange,
   isRetrying = false,
   isDeletingId,
-  pendingStoryId
+  pendingStoryId,
+  onCreateStory
 }) => {
   // États locaux pour la pagination et le filtrage
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -76,12 +78,20 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   // Histoires en erreur pour l'alerte
   const errorStories = stories.filter(story => story.status === 'error');
 
+  const handleCreateStory = () => {
+    if (onCreateStory) {
+      onCreateStory();
+    } else if (onViewChange) {
+      onViewChange("create");
+    }
+  };
+
   return (
     <div className={`space-y-6 p-4 transition-all duration-300 ${isZenMode ? 'bg-neutral-50' : ''}`}>
       <LibraryHeader 
         isZenMode={isZenMode}
         onZenModeToggle={() => setIsZenMode(!isZenMode)}
-        onCreateStory={() => onViewChange?.("create")}
+        onCreateStory={handleCreateStory}
       />
 
       <LibraryErrorAlert 
