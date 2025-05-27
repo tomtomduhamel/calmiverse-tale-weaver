@@ -33,7 +33,7 @@ const generateStoryPrompt = (objective: string, childrenNames: string[]): string
 Instructions pour la génération :
 - Personnaliser l'histoire avec le(s) prénom(s) : ${childrenText}
 - Adapter le vocabulaire et la complexité à l'âge des enfants
-- Créer une histoire de 1200 à 1500 mots
+- Créer une histoire de 1200 à 1500 mots décomposée de cette manière : introduction (300-400 mots), développement principal (600-800 mots), et conclusion (300-400 mots)
 - Structurer avec un début, un développement et une fin satisfaisante
 - Inclure des éléments magiques ou imaginaires adaptés à l'enfance
 - S'assurer que l'histoire respecte l'objectif : ${objective}
