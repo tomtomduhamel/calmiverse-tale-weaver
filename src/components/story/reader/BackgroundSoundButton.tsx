@@ -19,6 +19,7 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
   autoPlay = false
 }) => {
   const {
+    isPlaying,
     isLoading,
     soundDetails,
     musicEnabled,
@@ -37,6 +38,7 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
     storyObjective,
     isDarkMode,
     autoPlay,
+    isPlaying,
     isLoading,
     soundDetails: soundDetails ? { id: soundDetails.id, title: soundDetails.title, objective: soundDetails.objective } : null,
     musicEnabled,

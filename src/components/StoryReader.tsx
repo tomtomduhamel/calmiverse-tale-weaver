@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import type { Story } from "@/types/story";
@@ -77,7 +78,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
       backgroundSound.togglePlay();
       console.log("StoryReader: Musique mise en pause avec le défilement");
     }
-  }, [musicSyncEnabled, backgroundSound]);
+  }, [musicSyncEnabled, backgroundSound.musicEnabled, backgroundSound.isPlaying, backgroundSound.togglePlay]);
   
   // Utiliser le hook pour la gestion du défilement automatique avec callback de synchronisation
   const { 
