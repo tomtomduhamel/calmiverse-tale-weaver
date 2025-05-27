@@ -28,12 +28,12 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   
   return (
     <SidebarProvider>
-      <div className="flex flex-col min-h-screen w-full">
+      <div className="flex flex-col min-h-screen w-full relative">
         {/* Only show top navigation on desktop and not on reader pages */}
         {!isMobile && !location.pathname.startsWith('/reader/') && <Navigation />}
         
-        {/* Adjust padding to avoid content being hidden under bottom nav */}
-        <div className={`flex-1 w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-20' : 'pb-8'}`}>
+        {/* Main content with proper spacing for mobile menu */}
+        <div className={`flex-1 w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-24' : 'pb-8'}`}>
           {children || <Outlet />}
         </div>
         
