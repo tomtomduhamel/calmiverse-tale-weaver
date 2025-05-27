@@ -8,9 +8,15 @@ import { calculateScrollSpeed, calculateScrollMetrics, calculateTargetPosition }
 interface UseAutoScrollProps {
   wordCount: number;
   scrollAreaRef: React.RefObject<HTMLDivElement>;
+  backgroundSoundControls?: {
+    isPlaying: boolean;
+    togglePlay: () => void;
+    stopSound: () => void;
+    musicEnabled: boolean;
+  };
 }
 
-export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) => {
+export const useAutoScroll = ({ wordCount, scrollAreaRef, backgroundSoundControls }: UseAutoScrollProps) => {
   const {
     scrollStatus,
     setScrollStatus,
@@ -26,6 +32,25 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
   const { userSettings } = useUserSettings();
   const readingSpeed = userSettings?.readingPreferences?.readingSpeed || 125;
   const autoScrollEnabled = userSettings?.readingPreferences?.autoScrollEnabled !== false;
+  
+  // Fonction pour synchroniser la musique avec le défilement
+  const syncMusicWithScroll = useCallback((isScrolling: boolean) => {
+    if (!backgroundSoundControls || !backgroundSoundControls.musicEnabled) {
+      return;
+    }
+    
+    console.log(`Auto-scroll: Synchronisation musique - Défilement: ${isScrolling ? 'ON' : 'OFF'}, Musique: ${backgroundSoundControls.isPlaying ? 'ON' : 'OFF'}`);
+    
+    if (isScrolling && !backgroundSoundControls.isPlaying) {
+      // Le défilement démarre, démarrer la musique
+      backgroundSoundControls.togglePlay();
+      console.log("Auto-scroll: Musique démarrée avec le défilement");
+    } else if (!isScrolling && backgroundSoundControls.isPlaying) {
+      // Le défilement s'arrête, arrêter la musique
+      backgroundSoundControls.togglePlay();
+      console.log("Auto-scroll: Musique mise en pause avec le défilement");
+    }
+  }, [backgroundSoundControls]);
   
   // Démarrer le défilement
   const startAutoScroll = useCallback(() => {
@@ -43,6 +68,9 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     
     setScrollStatus('running');
     setIsManuallyPaused(false);
+    
+    // Synchroniser la musique au démarrage
+    syncMusicWithScroll(true);
     
     const pixelsPerSecond = calculateScrollSpeed(readingSpeed);
     const startTime = Date.now();
@@ -76,6 +104,8 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
         scrollToPosition(maxScrollPosition);
         console.log("Auto-scroll: Reached the end");
         setScrollStatus('idle');
+        // Arrêter la musique quand on atteint la fin
+        syncMusicWithScroll(false);
         return;
       }
       
@@ -85,7 +115,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     
     animationFrameRef.current = requestAnimationFrame(performScroll);
     
-  }, [getViewportElement, readingSpeed, scrollStatusRef, setScrollStatus, setIsManuallyPaused, animationFrameRef, scrollToPosition]);
+  }, [getViewportElement, readingSpeed, scrollStatusRef, setScrollStatus, setIsManuallyPaused, animationFrameRef, scrollToPosition, syncMusicWithScroll]);
   
   // Arrêter le défilement
   const stopAutoScroll = useCallback(() => {
@@ -95,8 +125,10 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
     }
     
     setScrollStatus('idle');
+    // Synchroniser la musique à l'arrêt
+    syncMusicWithScroll(false);
     console.log("Auto-scroll: Stopped");
-  }, [animationFrameRef, setScrollStatus]);
+  }, [animationFrameRef, setScrollStatus, syncMusicWithScroll]);
   
   // Mettre en pause
   const pauseAutoScroll = useCallback(() => {
@@ -107,18 +139,22 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef }: UseAutoScrollProps) 
       }
       
       setScrollStatus('paused');
+      // Synchroniser la musique lors de la pause
+      syncMusicWithScroll(false);
       console.log("Auto-scroll: Paused");
     }
-  }, [scrollStatusRef, animationFrameRef, setScrollStatus]);
+  }, [scrollStatusRef, animationFrameRef, setScrollStatus, syncMusicWithScroll]);
   
   // Reprendre après pause
   const resumeAutoScroll = useCallback(() => {
     if (scrollStatusRef.current === 'paused') {
       setScrollStatus('running');
+      // Synchroniser la musique lors de la reprise
+      syncMusicWithScroll(true);
       console.log("Auto-scroll: Resumed");
       startAutoScroll();
     }
-  }, [scrollStatusRef, setScrollStatus, startAutoScroll]);
+  }, [scrollStatusRef, setScrollStatus, startAutoScroll, syncMusicWithScroll]);
   
   // Fonction pour le bouton toggle
   const toggleAutoScroll = useCallback(() => {

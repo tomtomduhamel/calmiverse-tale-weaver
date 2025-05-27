@@ -14,6 +14,7 @@ import { EmptyStoryView } from "./story/reader/EmptyStoryView";
 import { useAutoScroll } from "@/hooks/story/useAutoScroll";
 import { useMarkAsRead } from "@/hooks/story/useMarkAsRead";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
+import { useBackgroundSound } from "@/hooks/story/useBackgroundSound";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -45,7 +46,14 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   // Calcul des métriques pour le défilement automatique
   const wordCount = story?.story_text?.trim().split(/\s+/).length || 0;
   
-  // Utiliser le hook pour la gestion du défilement automatique
+  // Hook pour gérer la musique de fond
+  const backgroundSound = useBackgroundSound({
+    soundId: story?.sound_id,
+    storyObjective: typeof story?.objective === 'string' ? story.objective : story?.objective?.value,
+    autoPlay: false
+  });
+  
+  // Utiliser le hook pour la gestion du défilement automatique avec le contrôle de la musique
   const { 
     isAutoScrolling,
     isPaused,
@@ -55,7 +63,11 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     handlePauseScroll,
     handleResumeScroll,
     stopAutoScroll
-  } = useAutoScroll({ wordCount, scrollAreaRef });
+  } = useAutoScroll({ 
+    wordCount, 
+    scrollAreaRef,
+    backgroundSoundControls: backgroundSound
+  });
   
   // Utiliser le hook pour la gestion du marquage comme lu
   const { isUpdatingReadStatus, handleMarkAsRead } = useMarkAsRead({
@@ -76,6 +88,10 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     console.log("[StoryReader] DEBUG: Bouton Fermer cliqué");
     // S'assurer d'arrêter le défilement automatique lors de la fermeture
     stopAutoScroll();
+    // Arrêter aussi la musique
+    if (backgroundSound.isPlaying) {
+      backgroundSound.stopSound();
+    }
     if (onBack) {
       onBack();
     } else if (onClose) {
