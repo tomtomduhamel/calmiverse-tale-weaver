@@ -21,10 +21,11 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
   const {
     isPlaying,
     isLoading,
-    togglePlay,
     soundDetails,
     musicEnabled,
-    error
+    error,
+    volume,
+    setVolume
   } = useBackgroundSound({ 
     soundId, 
     storyObjective,
@@ -41,7 +42,8 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
     isLoading,
     soundDetails: soundDetails ? { id: soundDetails.id, title: soundDetails.title, objective: soundDetails.objective } : null,
     musicEnabled,
-    error
+    error,
+    volume
   });
 
   // Si la musique est désactivée, ne rien afficher
@@ -50,24 +52,33 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
     return null;
   }
 
+  // Fonction pour basculer entre muet et volume normal
+  const toggleVolume = () => {
+    if (volume > 0) {
+      setVolume(0); // Couper le son
+    } else {
+      setVolume(0.5); // Remettre un volume normal
+    }
+  };
+
   // Adapter le texte du tooltip en fonction de l'objectif
-  let tooltipText = 'Fond sonore';
+  let tooltipText = 'Volume du fond sonore';
   if (soundDetails?.objective) {
     switch (soundDetails.objective) {
       case 'sleep':
-        tooltipText = 'Fond sonore pour s\'endormir';
+        tooltipText = 'Volume du fond sonore pour s\'endormir';
         break;
       case 'focus':
-        tooltipText = 'Fond sonore pour la concentration';
+        tooltipText = 'Volume du fond sonore pour la concentration';
         break;
       case 'relax':
-        tooltipText = 'Fond sonore pour la relaxation';
+        tooltipText = 'Volume du fond sonore pour la relaxation';
         break;
       case 'fun':
-        tooltipText = 'Fond sonore pour s\'amuser';
+        tooltipText = 'Volume du fond sonore pour s\'amuser';
         break;
       default:
-        tooltipText = 'Fond sonore';
+        tooltipText = 'Volume du fond sonore';
     }
   }
 
@@ -126,7 +137,7 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
     return null;
   }
 
-  // Bouton principal avec tooltip simple
+  // Bouton de contrôle du volume avec tooltip
   return (
     <TooltipProvider>
       <Tooltip>
@@ -134,11 +145,11 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
           <Button
             variant={isDarkMode ? "outline" : "ghost"}
             size="icon"
-            onClick={togglePlay}
-            className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} ${isPlaying ? "bg-green-100 dark:bg-green-900" : ""} transition-all`}
-            aria-label={isPlaying ? "Mettre en pause le fond sonore" : "Jouer le fond sonore"}
+            onClick={toggleVolume}
+            className={`rounded-full ${isDarkMode ? "border-gray-600 text-white" : ""} ${volume > 0 ? "bg-green-100 dark:bg-green-900" : "bg-gray-100 dark:bg-gray-800"} transition-all`}
+            aria-label={volume > 0 ? "Couper le volume du fond sonore" : "Activer le volume du fond sonore"}
           >
-            {isPlaying ? (
+            {volume > 0 ? (
               <Volume2 className="h-4 w-4" />
             ) : (
               <VolumeX className="h-4 w-4" />
@@ -147,7 +158,7 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
         </TooltipTrigger>
         <TooltipContent side="bottom" className="z-[100]">
           <div className="text-xs">
-            {isPlaying ? "Mettre en pause" : "Jouer"} {tooltipText.toLowerCase()}
+            {volume > 0 ? "Couper le volume" : "Activer le volume"}
           </div>
           {soundDetails && (
             <div className="text-xs opacity-70 mt-1">{soundDetails.title}</div>

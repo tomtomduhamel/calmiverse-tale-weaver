@@ -30,6 +30,7 @@ export const useBackgroundSound = ({
     togglePlay, 
     setVolume, 
     stopSound, 
+    volume,
     error: playerError 
   } = useSoundPlayer({
     soundDetails,
@@ -48,6 +49,7 @@ export const useBackgroundSound = ({
     isLoading,
     soundDetails: soundDetails ? { title: soundDetails.title, objective: soundDetails.objective } : null,
     musicEnabled,
+    volume,
     error
   });
 
@@ -59,6 +61,7 @@ export const useBackgroundSound = ({
     setVolume,
     stopSound,
     musicEnabled,
+    volume,
     error
   };
 };
