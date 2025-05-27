@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import type { Story } from "@/types/story";
@@ -51,7 +52,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const { userSettings } = useUserSettings();
   const musicSyncEnabled = userSettings?.readingPreferences?.backgroundMusicEnabled !== false;
   
-  // Hook pour gérer la musique de fond
+  // Hook pour gérer la musique de fond (instance unique)
   const backgroundSound = useBackgroundSound({
     soundId: story?.sound_id,
     storyObjective: typeof story?.objective === 'string' ? story.objective : story?.objective?.value,
