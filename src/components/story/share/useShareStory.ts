@@ -82,7 +82,7 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
       };
 
       // Envoi au webhook N8N
-      const n8nWebhookUrl = 'https://tomtomduhamel.app.n8n.cloud/webhook-test/9655e007-2b71-4b57-ab03-748eaa158ebe';
+      const n8nWebhookUrl = 'https://tomtomduhamel.app.n8n.cloud/webhook/9655e007-2b71-4b57-ab03-748eaa158ebe';
       
       try {
         const response = await fetch(n8nWebhookUrl, {
