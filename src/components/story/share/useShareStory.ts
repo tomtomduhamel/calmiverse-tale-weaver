@@ -1,25 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/integrations/supabase/client';
-import { generateToken } from '@/utils/tokenUtils';
-
-// Fonction pour formater le contenu de l'histoire avec des balises HTML
-const formatStoryContentForEmail = (content: string): string => {
-  if (!content) return '';
-  
-  // Séparer le contenu en paragraphes basés sur les doubles sauts de ligne
-  const paragraphs = content.split(/\n\s*\n/);
-  
-  // Convertir chaque paragraphe en balise <p> et gérer les sauts de ligne simples
-  const formattedParagraphs = paragraphs.map(paragraph => {
-    // Remplacer les sauts de ligne simples par des <br>
-    const formattedParagraph = paragraph.trim().replace(/\n/g, '<br>');
-    return `<p style="margin-bottom: 16px; line-height: 1.6;">${formattedParagraph}</p>`;
-  });
-  
-  return formattedParagraphs.join('');
-};
+import { emailSharingService } from '@/services/emailSharingService';
+import { kindleSharingService } from '@/services/kindleSharingService';
 
 export const useShareStory = (storyId: string, onClose: () => void) => {
   const [email, setEmail] = useState('');
@@ -38,88 +21,8 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
     setError(null);
 
     try {
-      // Récupérer les données de l'histoire et de l'utilisateur
-      const { data: storyData, error: storyError } = await supabase
-        .from('stories')
-        .select('title, content, childrennames, objective, authorid')
-        .eq('id', storyId)
-        .single();
-      
-      if (storyError || !storyData) {
-        throw new Error("Histoire introuvable");
-      }
-
-      // Récupérer les informations de l'utilisateur
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('firstname, lastname')
-        .eq('id', storyData.authorid)
-        .single();
-
-      if (userError) {
-        console.warn('Impossible de récupérer les informations utilisateur:', userError);
-      }
-
-      const token = generateToken();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
-
-      // Mettre à jour les données de partage dans Supabase
-      const { error: updateError } = await supabase
-        .from('stories')
-        .update({
-          sharing: {
-            publicAccess: {
-              enabled: true,
-              token,
-              expiresAt: expiresAt.toISOString()
-            },
-            sharedEmails: [{
-              email,
-              sharedAt: new Date().toISOString(),
-              accessCount: 0
-            }]
-          }
-        })
-        .eq('id', storyId);
-
-      if (updateError) throw updateError;
-
-      // Formater le contenu de l'histoire pour l'email
-      const formattedContent = formatStoryContentForEmail(storyData.content || "");
-
-      // Données pour le webhook N8N
-      const webhookData = {
-        recipientEmail: email,
-        storyTitle: storyData.title || "Histoire sans titre",
-        storyContent: formattedContent,
-        childrenNames: storyData.childrennames || [],
-        storyObjective: storyData.objective || "",
-        senderFirstName: userData?.firstname || "",
-        senderLastName: userData?.lastname || "",
-        publicUrl: `${window.location.origin}/stories/${storyId}?token=${token}`,
-        expirationDate: expiresAt.toISOString()
-      };
-
-      // Envoi au webhook N8N
-      const n8nWebhookUrl = 'https://tomtomduhamel.app.n8n.cloud/webhook/9655e007-2b71-4b57-ab03-748eaa158ebe';
-      
-      try {
-        const response = await fetch(n8nWebhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookData)
-        });
-
-        if (!response.ok) {
-          throw new Error(`Erreur webhook: ${response.status}`);
-        }
-
-        console.log('Données envoyées au webhook N8N:', webhookData);
-      } catch (webhookError) {
-        console.error('Erreur webhook N8N:', webhookError);
-        throw new Error("Impossible d'envoyer l'email via le webhook");
-      }
+      const webhookData = await emailSharingService.prepareEmailShareData(storyId, email);
+      await emailSharingService.sendToEmailWebhook(webhookData);
 
       toast({
         title: "Histoire partagée",
@@ -157,57 +60,8 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
     setError(null);
     
     try {
-      // Récupérer les données de l'histoire
-      const { data: storyData, error: storyError } = await supabase
-        .from('stories')
-        .select('title, content, childrennames, objective, authorid')
-        .eq('id', storyId)
-        .single();
-      
-      if (storyError || !storyData) {
-        throw new Error("Histoire introuvable");
-      }
-
-      // Récupérer les informations de l'utilisateur
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('firstname, lastname')
-        .eq('id', storyData.authorid)
-        .single();
-
-      if (userError) {
-        console.warn('Impossible de récupérer les informations utilisateur:', userError);
-      }
-
-      // Préparer les données pour le webhook N8N Kindle
-      const kindleWebhookData = {
-        firstname: userData?.firstname || "",
-        lastname: userData?.lastname || "",
-        title: storyData.title || "Histoire sans titre",
-        content: storyData.content || "",
-        childrennames: storyData.childrennames || [],
-        objective: storyData.objective || ""
-      };
-
-      // Envoyer au webhook N8N pour Kindle
-      const kindleWebhookUrl = 'https://tomtomduhamel.app.n8n.cloud/webhook-test/7bca54e0-e309-4c09-9aa3-83b205220d11';
-      
-      try {
-        const response = await fetch(kindleWebhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(kindleWebhookData)
-        });
-
-        if (!response.ok) {
-          throw new Error(`Erreur webhook Kindle: ${response.status}`);
-        }
-
-        console.log('Données envoyées au webhook N8N Kindle:', kindleWebhookData);
-      } catch (webhookError) {
-        console.error('Erreur webhook N8N Kindle:', webhookError);
-        throw new Error("Impossible d'envoyer l'histoire vers Kindle");
-      }
+      const webhookData = await kindleSharingService.prepareKindleShareData(storyId);
+      await kindleSharingService.sendToKindleWebhook(webhookData);
 
       toast({
         title: "Envoi Kindle",
