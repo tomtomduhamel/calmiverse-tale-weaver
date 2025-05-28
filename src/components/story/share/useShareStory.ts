@@ -157,9 +157,10 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
     setError(null);
     
     try {
+      // Récupérer les données de l'histoire
       const { data: storyData, error: storyError } = await supabase
         .from('stories')
-        .select('*')
+        .select('title, content, childrennames, objective, authorid')
         .eq('id', storyId)
         .single();
       
@@ -167,38 +168,55 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
         throw new Error("Histoire introuvable");
       }
 
-      // Préparer les données pour Kindle
-      const kindleData = {
-        storyId,
-        storyContent: storyData.content || "",
-        title: storyData.title || "Histoire sans titre"
+      // Récupérer les informations de l'utilisateur
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('firstname, lastname')
+        .eq('id', storyData.authorid)
+        .single();
+
+      if (userError) {
+        console.warn('Impossible de récupérer les informations utilisateur:', userError);
+      }
+
+      // Préparer les données pour le webhook N8N Kindle
+      const kindleWebhookData = {
+        firstname: userData?.firstname || "",
+        lastname: userData?.lastname || "",
+        title: storyData.title || "Histoire sans titre",
+        content: storyData.content || "",
+        childrennames: storyData.childrennames || [],
+        objective: storyData.objective || ""
       };
 
-      // PLACEHOLDER: Remplacez cette URL par votre webhook n8n pour Kindle dans votre environnement de production
-      const makeWebhookUrl = import.meta.env.VITE_KINDLE_WEBHOOK_URL || 'https://tomtomduhamel.app.n8n.cloud/webhook-test/7bca54e0-e309-4c09-9aa3-83b205220d11';
+      // Envoyer au webhook N8N pour Kindle
+      const kindleWebhookUrl = 'https://tomtomduhamel.app.n8n.cloud/webhook-test/7bca54e0-e309-4c09-9aa3-83b205220d11';
+      
       try {
-        if (makeWebhookUrl && makeWebhookUrl !== 'https://tomtomduhamel.app.n8n.cloud/webhook-test/7bca54e0-e309-4c09-9aa3-83b205220d11') {
-          await fetch(makeWebhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(kindleData)
-          });
-        } else {
-          console.log('Kindle webhook URL not configured:', kindleData);
+        const response = await fetch(kindleWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(kindleWebhookData)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erreur webhook Kindle: ${response.status}`);
         }
+
+        console.log('Données envoyées au webhook N8N Kindle:', kindleWebhookData);
       } catch (webhookError) {
-        console.error('Kindle webhook failed:', webhookError);
-        throw new Error("Échec de l'envoi à Kindle");
+        console.error('Erreur webhook N8N Kindle:', webhookError);
+        throw new Error("Impossible d'envoyer l'histoire vers Kindle");
       }
 
       toast({
         title: "Envoi Kindle",
-        description: "L'histoire a été envoyée à votre Kindle",
+        description: "L'histoire a été envoyée vers votre Kindle",
       });
       onClose();
     } catch (error) {
       console.error('Erreur lors de l\'envoi Kindle:', error);
-      const errorMessage = error instanceof Error ? error.message : "Impossible d'envoyer l'histoire à votre Kindle";
+      const errorMessage = error instanceof Error ? error.message : "Impossible d'envoyer l'histoire vers Kindle";
       
       setError(errorMessage);
       
