@@ -4,6 +4,23 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { generateToken } from '@/utils/tokenUtils';
 
+// Fonction pour formater le contenu de l'histoire avec des balises HTML
+const formatStoryContentForEmail = (content: string): string => {
+  if (!content) return '';
+  
+  // Séparer le contenu en paragraphes basés sur les doubles sauts de ligne
+  const paragraphs = content.split(/\n\s*\n/);
+  
+  // Convertir chaque paragraphe en balise <p> et gérer les sauts de ligne simples
+  const formattedParagraphs = paragraphs.map(paragraph => {
+    // Remplacer les sauts de ligne simples par des <br>
+    const formattedParagraph = paragraph.trim().replace(/\n/g, '<br>');
+    return `<p style="margin-bottom: 16px; line-height: 1.6;">${formattedParagraph}</p>`;
+  });
+  
+  return formattedParagraphs.join('');
+};
+
 export const useShareStory = (storyId: string, onClose: () => void) => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -68,11 +85,14 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
 
       if (updateError) throw updateError;
 
+      // Formater le contenu de l'histoire pour l'email
+      const formattedContent = formatStoryContentForEmail(storyData.content || "");
+
       // Données pour le webhook N8N
       const webhookData = {
         recipientEmail: email,
         storyTitle: storyData.title || "Histoire sans titre",
-        storyContent: storyData.content || "",
+        storyContent: formattedContent,
         childrenNames: storyData.childrennames || [],
         storyObjective: storyData.objective || "",
         senderFirstName: userData?.firstname || "",
