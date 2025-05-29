@@ -56,16 +56,24 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
   };
 
   const handleKindleShare = async () => {
+    console.log('Début du partage Kindle pour l\'histoire:', storyId);
     setIsLoading(true);
     setError(null);
     
     try {
+      // Préparer les données incluant l'email Kindle de l'utilisateur
       const webhookData = await kindleSharingService.prepareKindleShareData(storyId);
+      console.log('Données préparées pour l\'envoi Kindle:', {
+        ...webhookData,
+        content: `${webhookData.content.substring(0, 50)}...` // Log tronqué
+      });
+      
+      // Envoyer au webhook N8N avec l'email Kindle inclus
       await kindleSharingService.sendToKindleWebhook(webhookData);
 
       toast({
         title: "Envoi Kindle",
-        description: "L'histoire a été envoyée vers votre Kindle",
+        description: `L'histoire a été envoyée vers votre Kindle (${webhookData.kindleEmail})`,
       });
       onClose();
     } catch (error) {
