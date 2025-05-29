@@ -20,11 +20,12 @@ export const useUpdateKindleSettings = (
 
   const updateSettings = async (newSettings: Partial<KindleSettings>): Promise<KindleSettingsUpdateResult> => {
     if (!user) {
+      console.error('Utilisateur non connecté pour la mise à jour des paramètres Kindle');
       return { success: false, errors: [{ message: "Utilisateur non connecté" }] };
     }
 
     try {
-      console.log('Mise à jour des paramètres Kindle:', newSettings);
+      console.log('Début de la mise à jour des paramètres Kindle:', newSettings);
       
       // Fusionner les paramètres existants avec les nouveaux paramètres
       const mergedSettings = {
@@ -44,6 +45,8 @@ export const useUpdateKindleSettings = (
         kindleEmail: validated.kindleEmail,
       };
 
+      console.log('Paramètres validés, tentative de sauvegarde en base:', validatedSettings);
+
       // Mettre à jour en base de données
       const { error } = await supabase
         .from('users')
@@ -55,21 +58,25 @@ export const useUpdateKindleSettings = (
         .eq('id', user.id);
 
       if (error) {
-        throw error;
+        console.error('Erreur Supabase lors de la mise à jour:', error);
+        throw new Error(`Erreur de base de données: ${error.message}`);
       }
       
       // Mettre à jour l'état local
       setSettings(validatedSettings);
-      console.log('Paramètres Kindle sauvegardés avec succès en base:', validatedSettings);
+      console.log('Paramètres Kindle sauvegardés avec succès:', validatedSettings);
       
       return { success: true };
     } catch (error) {
       console.error('Erreur lors de la mise à jour des paramètres Kindle:', error);
       
       if (error instanceof z.ZodError) {
-        return { success: false, errors: error.errors };
+        const errorMessages = error.errors.map(err => ({ message: err.message }));
+        return { success: false, errors: errorMessages };
       }
-      return { success: false, errors: [{ message: "Une erreur est survenue" }] };
+      
+      const errorMessage = error instanceof Error ? error.message : "Une erreur inconnue est survenue";
+      return { success: false, errors: [{ message: errorMessage }] };
     }
   };
 

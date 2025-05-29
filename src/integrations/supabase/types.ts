@@ -185,6 +185,7 @@ export type Database = {
           firstname: string | null
           id: string
           inapp_notifications: boolean | null
+          kindle_email: string | null
           language: string | null
           lastname: string | null
           reading_speed: number | null
@@ -201,6 +202,7 @@ export type Database = {
           firstname?: string | null
           id: string
           inapp_notifications?: boolean | null
+          kindle_email?: string | null
           language?: string | null
           lastname?: string | null
           reading_speed?: number | null
@@ -217,6 +219,7 @@ export type Database = {
           firstname?: string | null
           id?: string
           inapp_notifications?: boolean | null
+          kindle_email?: string | null
           language?: string | null
           lastname?: string | null
           reading_speed?: number | null

@@ -17,11 +17,14 @@ export const useKindleSettingsState = () => {
   useEffect(() => {
     const loadSettings = async () => {
       if (!user) {
+        console.log('Aucun utilisateur connecté, paramètres par défaut');
         setIsLoading(false);
         return;
       }
 
       try {
+        console.log('Chargement des paramètres Kindle pour l\'utilisateur:', user.id);
+        
         const { data: userData, error } = await supabase
           .from('users')
           .select('firstname, lastname, kindle_email')
@@ -55,12 +58,16 @@ export const useKindleSettingsState = () => {
       if (storedSettings && user) {
         try {
           const parsed = JSON.parse(storedSettings);
-          console.log('Migration des paramètres Kindle depuis localStorage');
+          console.log('Migration des paramètres Kindle depuis localStorage:', parsed);
           
           // Sauvegarder en base de données
           const { error } = await supabase
             .from('users')
-            .update({ kindle_email: parsed.kindleEmail })
+            .update({ 
+              firstname: parsed.firstName || '',
+              lastname: parsed.lastName || '',
+              kindle_email: parsed.kindleEmail || ''
+            })
             .eq('id', user.id);
 
           if (!error) {
@@ -74,6 +81,8 @@ export const useKindleSettingsState = () => {
             // Supprimer de localStorage après migration réussie
             localStorage.removeItem('kindleSettings');
             console.log('Migration réussie, localStorage nettoyé');
+          } else {
+            console.error('Erreur lors de la migration:', error);
           }
         } catch (error) {
           console.error('Erreur lors de la migration depuis localStorage:', error);

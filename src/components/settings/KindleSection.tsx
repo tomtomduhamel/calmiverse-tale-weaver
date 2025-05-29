@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { useKindleSettings } from '@/hooks/useKindleSettings';
+import { useKindleSettings } from '@/hooks/kindle/useKindleSettings';
 
 export const KindleSection = () => {
   const [email, setEmail] = useState('');
@@ -32,7 +32,7 @@ export const KindleSection = () => {
     setIsUpdating(true);
     
     try {
-      console.log('Sauvegarde des paramètres Kindle avec email:', email);
+      console.log('Tentative de sauvegarde de l\'email Kindle:', email);
       const result = await updateSettings({
         firstName: settings.firstName || '',
         lastName: settings.lastName || '',
@@ -44,14 +44,22 @@ export const KindleSection = () => {
           title: "Adresse email mise à jour",
           description: "Votre adresse Kindle a été enregistrée avec succès.",
         });
+        console.log('Email Kindle sauvegardé avec succès');
       } else {
-        throw new Error(result.errors?.[0]?.message || "Une erreur est survenue");
+        const errorMessage = result.errors?.[0]?.message || "Une erreur est survenue";
+        console.error('Erreur lors de la sauvegarde:', errorMessage);
+        toast({
+          title: "Erreur",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde de l\'email Kindle:', error);
+      const errorMessage = error instanceof Error ? error.message : "Impossible de mettre à jour l'adresse email";
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de mettre à jour l'adresse email",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -96,6 +104,7 @@ export const KindleSection = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="votreadresse@kindle.com" 
                 className="flex-1"
+                disabled={isUpdating}
               />
               <Button 
                 type="submit" 
@@ -107,7 +116,7 @@ export const KindleSection = () => {
                 ) : (
                   <Save className="h-4 w-4 mr-2" />
                 )}
-                Enregistrer
+                {isUpdating ? "Sauvegarde..." : "Enregistrer"}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
