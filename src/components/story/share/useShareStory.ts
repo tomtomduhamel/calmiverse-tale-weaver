@@ -56,24 +56,26 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
   };
 
   const handleKindleShare = async () => {
-    console.log('Début du partage Kindle pour l\'histoire:', storyId);
+    console.log('Début du partage Kindle avec génération EPUB pour l\'histoire:', storyId);
     setIsLoading(true);
     setError(null);
     
     try {
-      // Préparer les données incluant l'email Kindle de l'utilisateur
+      // Préparer les données incluant la génération de l'EPUB
       const webhookData = await kindleSharingService.prepareKindleShareData(storyId);
-      console.log('Données préparées pour l\'envoi Kindle:', {
+      console.log('Données préparées pour l\'envoi Kindle avec EPUB:', {
         ...webhookData,
-        content: `${webhookData.content.substring(0, 50)}...` // Log tronqué
+        content: `${webhookData.content.substring(0, 50)}...`, // Log tronqué
+        epubFilename: webhookData.epubFilename,
+        hasEpubUrl: !!webhookData.epubUrl
       });
       
-      // Envoyer au webhook N8N avec l'email Kindle inclus
+      // Envoyer au webhook N8N avec l'EPUB inclus
       await kindleSharingService.sendToKindleWebhook(webhookData);
 
       toast({
-        title: "Envoi Kindle",
-        description: `L'histoire a été envoyée vers votre Kindle (${webhookData.kindleEmail})`,
+        title: "Envoi Kindle réussi",
+        description: `L'histoire "${webhookData.title}" a été convertie en EPUB et envoyée vers votre Kindle (${webhookData.kindleEmail})`,
       });
       onClose();
     } catch (error) {
