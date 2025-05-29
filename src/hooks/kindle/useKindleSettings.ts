@@ -4,7 +4,7 @@ import { useUpdateKindleSettings } from './useUpdateKindleSettings';
 import { KindleSettings } from './types';
 
 export const useKindleSettings = () => {
-  const { settings, setSettings } = useKindleSettingsState();
+  const { settings, setSettings, isLoading } = useKindleSettingsState();
   const { updateSettings } = useUpdateKindleSettings(settings, setSettings);
 
   const isConfigured = Boolean(settings.kindleEmail);
@@ -13,5 +13,6 @@ export const useKindleSettings = () => {
     settings,
     updateSettings,
     isConfigured,
+    isLoading,
   };
 };

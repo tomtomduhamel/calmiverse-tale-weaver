@@ -12,22 +12,18 @@ import { Mail, Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useKindleSettings } from '@/hooks/useKindleSettings';
 
-interface KindleSectionProps {
-  kindleEmail: string;
-}
-
-export const KindleSection = ({ kindleEmail }: KindleSectionProps) => {
-  const [email, setEmail] = useState(kindleEmail);
+export const KindleSection = () => {
+  const [email, setEmail] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const { settings, updateSettings } = useKindleSettings();
+  const { settings, updateSettings, isLoading } = useKindleSettings();
   const { toast } = useToast();
   
-  // Mettre à jour l'email local lorsque kindleEmail change
+  // Mettre à jour l'email local lorsque les settings changent
   useEffect(() => {
-    if (kindleEmail) {
-      setEmail(kindleEmail);
+    if (settings.kindleEmail) {
+      setEmail(settings.kindleEmail);
     }
-  }, [kindleEmail]);
+  }, [settings.kindleEmail]);
   
   const isValidEmail = email.trim() !== '' && email.endsWith('@kindle.com');
   
@@ -62,6 +58,25 @@ export const KindleSection = ({ kindleEmail }: KindleSectionProps) => {
       setIsUpdating(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Paramètres Kindle
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <Card>

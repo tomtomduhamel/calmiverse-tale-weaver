@@ -1,55 +1,92 @@
 
 import { useState, useEffect } from 'react';
-import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { KindleSettings } from './types';
 
-const kindleSettingsSchema = z.object({
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  kindleEmail: z.string()
-    .email("Format d'email invalide")
-    .regex(/@kindle\.com$/, "L'email doit se terminer par @kindle.com")
-});
-
 export const useKindleSettingsState = () => {
+  const { user } = useSupabaseAuth();
   const [settings, setSettings] = useState<KindleSettings>({
     firstName: '',
     lastName: '',
     kindleEmail: '',
   });
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Charger les paramètres depuis localStorage au montage
+  // Charger les paramètres depuis Supabase
   useEffect(() => {
-    const loadSettings = () => {
+    const loadSettings = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('firstname, lastname, kindle_email')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Erreur lors du chargement des paramètres Kindle:', error);
+          // Migration depuis localStorage si pas de données en base
+          await migrateFromLocalStorage();
+        } else if (userData) {
+          const userSettings: KindleSettings = {
+            firstName: userData.firstname || '',
+            lastName: userData.lastname || '',
+            kindleEmail: userData.kindle_email || '',
+          };
+          setSettings(userSettings);
+          console.log('Paramètres Kindle chargés depuis Supabase:', userSettings);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des paramètres Kindle:', error);
+        await migrateFromLocalStorage();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Migration depuis localStorage vers Supabase
+    const migrateFromLocalStorage = async () => {
       const storedSettings = localStorage.getItem('kindleSettings');
-      if (storedSettings) {
+      if (storedSettings && user) {
         try {
-          console.log('Chargement des paramètres Kindle depuis localStorage');
           const parsed = JSON.parse(storedSettings);
-          const validated = kindleSettingsSchema.safeParse(parsed);
-          if (validated.success) {
-            // Ensure all required properties are present
-            const validatedSettings: KindleSettings = {
-              firstName: validated.data.firstName || '',
-              lastName: validated.data.lastName || '',
-              kindleEmail: validated.data.kindleEmail || '',
+          console.log('Migration des paramètres Kindle depuis localStorage');
+          
+          // Sauvegarder en base de données
+          const { error } = await supabase
+            .from('users')
+            .update({ kindle_email: parsed.kindleEmail })
+            .eq('id', user.id);
+
+          if (!error) {
+            const migratedSettings: KindleSettings = {
+              firstName: parsed.firstName || '',
+              lastName: parsed.lastName || '',
+              kindleEmail: parsed.kindleEmail || '',
             };
-            setSettings(validatedSettings);
-            console.log('Paramètres Kindle chargés:', validatedSettings);
-          } else {
-            console.error('Validation des paramètres Kindle échouée:', validated.error);
+            setSettings(migratedSettings);
+            
+            // Supprimer de localStorage après migration réussie
+            localStorage.removeItem('kindleSettings');
+            console.log('Migration réussie, localStorage nettoyé');
           }
         } catch (error) {
-          console.error('Erreur lors du chargement des paramètres Kindle:', error);
+          console.error('Erreur lors de la migration depuis localStorage:', error);
         }
       }
     };
 
     loadSettings();
-  }, []);
+  }, [user]);
 
   return {
     settings,
-    setSettings
+    setSettings,
+    isLoading
   };
 };

@@ -1,4 +1,6 @@
 
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { z } from 'zod';
 import { KindleSettings, KindleSettingsUpdateResult } from './types';
 
@@ -14,7 +16,13 @@ export const useUpdateKindleSettings = (
   settings: KindleSettings,
   setSettings: React.Dispatch<React.SetStateAction<KindleSettings>>
 ) => {
+  const { user } = useSupabaseAuth();
+
   const updateSettings = async (newSettings: Partial<KindleSettings>): Promise<KindleSettingsUpdateResult> => {
+    if (!user) {
+      return { success: false, errors: [{ message: "Utilisateur non connecté" }] };
+    }
+
     try {
       console.log('Mise à jour des paramètres Kindle:', newSettings);
       
@@ -35,11 +43,24 @@ export const useUpdateKindleSettings = (
         lastName: validated.lastName || '',
         kindleEmail: validated.kindleEmail,
       };
+
+      // Mettre à jour en base de données
+      const { error } = await supabase
+        .from('users')
+        .update({
+          firstname: validatedSettings.firstName,
+          lastname: validatedSettings.lastName,
+          kindle_email: validatedSettings.kindleEmail
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        throw error;
+      }
       
-      // Mettre à jour l'état local et localStorage
+      // Mettre à jour l'état local
       setSettings(validatedSettings);
-      localStorage.setItem('kindleSettings', JSON.stringify(validatedSettings));
-      console.log('Paramètres Kindle sauvegardés avec succès:', validatedSettings);
+      console.log('Paramètres Kindle sauvegardés avec succès en base:', validatedSettings);
       
       return { success: true };
     } catch (error) {

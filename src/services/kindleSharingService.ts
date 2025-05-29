@@ -8,6 +8,7 @@ export interface KindleShareData {
   content: string;
   childrennames: string[];
   objective: string;
+  kindleEmail: string;
 }
 
 export const kindleSharingService = {
@@ -34,7 +35,7 @@ export const kindleSharingService = {
   async getUserData(authorId: string) {
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('firstname, lastname')
+      .select('firstname, lastname, kindle_email')
       .eq('id', authorId)
       .single();
 
@@ -71,13 +72,18 @@ export const kindleSharingService = {
     const storyData = await this.getStoryData(storyId);
     const userData = await this.getUserData(storyData.authorid);
 
+    if (!userData?.kindle_email) {
+      throw new Error("Aucun email Kindle configuré. Veuillez configurer votre email Kindle dans les paramètres.");
+    }
+
     return {
       firstname: userData?.firstname || "",
       lastname: userData?.lastname || "",
       title: storyData.title || "Histoire sans titre",
       content: storyData.content || "",
       childrennames: storyData.childrennames || [],
-      objective: storyData.objective || ""
+      objective: storyData.objective || "",
+      kindleEmail: userData.kindle_email
     };
   }
 };

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { SettingsIcon, AlertCircle } from 'lucide-react';
 import { ProfileSection } from '@/components/settings/ProfileSection';
@@ -8,7 +9,6 @@ import { SecuritySection } from '@/components/settings/SecuritySection';
 import { AccountManagementSection } from '@/components/settings/AccountManagementSection';
 import { ReadingPreferencesSection } from '@/components/settings/ReadingPreferencesSection';
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
-import { useKindleSettings } from '@/hooks/useKindleSettings';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { UserSettings, SecuritySettings } from '@/types/user-settings';
@@ -16,7 +16,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const Settings = () => {
   const { user } = useSupabaseAuth();
-  const { settings: kindleSettings } = useKindleSettings();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -175,7 +174,7 @@ const Settings = () => {
         onUpdateSettings={updateUserSettings}
       />
 
-      <KindleSection kindleEmail={kindleSettings.kindleEmail} />
+      <KindleSection />
 
       <NotificationsSection 
         notifications={userSettings.notifications}

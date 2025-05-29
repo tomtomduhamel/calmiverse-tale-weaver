@@ -90,6 +90,7 @@ export type Database = {
           createdat: string
           error: string | null
           id: string
+          image_path: string | null
           objective: string | null
           preview: string | null
           sharing: Json | null
@@ -107,6 +108,7 @@ export type Database = {
           createdat?: string
           error?: string | null
           id?: string
+          image_path?: string | null
           objective?: string | null
           preview?: string | null
           sharing?: Json | null
@@ -124,6 +126,7 @@ export type Database = {
           createdat?: string
           error?: string | null
           id?: string
+          image_path?: string | null
           objective?: string | null
           preview?: string | null
           sharing?: Json | null
