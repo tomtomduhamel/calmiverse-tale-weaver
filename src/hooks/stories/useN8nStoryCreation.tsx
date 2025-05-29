@@ -10,7 +10,7 @@ interface N8nStoryRequest {
 }
 
 // Webhook n8n de test
-const N8N_WEBHOOK = "https://tomtomduhamel.app.n8n.cloud/webhook/4cd35a66-3113-40a9-9e89-8f79ce59b44f";
+const N8N_WEBHOOK = "https://tomtomduhamel.app.n8n.cloud/webhook-test/4cd35a66-3113-40a9-9e89-8f79ce59b44f";
 
 // Fonction pour générer le prompt d'histoire complet
 const generateStoryPrompt = (objective: string, childrenNames: string[]): string => {
