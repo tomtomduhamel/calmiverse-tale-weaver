@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { generateAndUploadEpub } from './epubService';
 import type { Story } from '@/types/story';
@@ -79,47 +78,6 @@ export const kindleSharingService = {
   },
 
   /**
-   * Crée un fichier EPUB formaté pour Kindle
-   */
-  async createKindleEpub(story: Story): Promise<string> {
-    console.log('Création du fichier EPUB pour Kindle:', story.title);
-
-    // Formatage du contenu avec page de titre
-    const childrenText = story.childrenNames && story.childrenNames.length > 0
-      ? story.childrenNames.length === 1 
-        ? story.childrenNames[0]
-        : `${story.childrenNames.slice(0, -1).join(', ')} et ${story.childrenNames[story.childrenNames.length - 1]}`
-      : "votre enfant";
-
-    const titlePage = `
-      <div style="text-align: center; page-break-after: always; padding: 50px 0;">
-        <h1 style="font-size: 2.5em; margin-bottom: 30px; font-weight: bold;">${story.title}</h1>
-        <p style="font-size: 1.2em; margin-bottom: 20px; font-style: italic;">${story.objective}</p>
-        <p style="font-size: 1.1em;">Une histoire pour ${childrenText}</p>
-      </div>
-    `;
-
-    const storyContent = story.story_text
-      .split('\n')
-      .map(paragraph => paragraph.trim())
-      .filter(paragraph => paragraph.length > 0)
-      .map(paragraph => `<p style="margin-bottom: 15px; line-height: 1.6;">${paragraph}</p>`)
-      .join('');
-
-    // Créer une version modifiée de l'histoire avec le contenu formaté
-    const kindleStory: Story = {
-      ...story,
-      story_text: titlePage + storyContent
-    };
-
-    // Générer et uploader l'EPUB
-    const epubUrl = await generateAndUploadEpub(kindleStory);
-    console.log('EPUB créé pour Kindle:', epubUrl);
-    
-    return epubUrl;
-  },
-
-  /**
    * Envoie les données au webhook N8N pour Kindle avec fichier EPUB
    */
   async sendToKindleWebhook(webhookData: KindleShareData) {
@@ -164,8 +122,9 @@ export const kindleSharingService = {
       throw new Error("Aucun email Kindle configuré. Veuillez configurer votre email Kindle dans les paramètres.");
     }
 
-    // Créer le fichier EPUB
-    const epubUrl = await this.createKindleEpub(story);
+    // Créer le fichier EPUB via le service dédié
+    console.log('Génération du fichier EPUB...');
+    const epubUrl = await generateAndUploadEpub(story);
     
     // Créer le nom de fichier EPUB (nettoyer le titre pour éviter les caractères spéciaux)
     const cleanTitle = story.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
