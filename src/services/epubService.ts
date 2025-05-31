@@ -48,11 +48,16 @@ function formatStoryForKindle(story: Story): string {
       : `${story.childrenNames.slice(0, -1).join(', ')} et ${story.childrenNames[story.childrenNames.length - 1]}`
     : "votre enfant";
 
+  // Gérer l'objectif qui peut être string ou objet
+  const objectiveText = typeof story.objective === 'string' 
+    ? story.objective 
+    : story.objective?.name || story.objective?.value || '';
+
   // Page de titre formatée
   const titlePage = `
     <div class="title-page">
       <h1>${escapeHtml(story.title)}</h1>
-      <p style="font-size: 1.2em; margin-bottom: 20px; font-style: italic;">${escapeHtml(story.objective)}</p>
+      <p style="font-size: 1.2em; margin-bottom: 20px; font-style: italic;">${escapeHtml(objectiveText)}</p>
       <p style="font-size: 1.1em;">Une histoire pour ${escapeHtml(childrenText)}</p>
     </div>
   `;
