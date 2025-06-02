@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { generateAndUploadEpub } from './epubService';
 import type { Story } from '@/types/story';
@@ -21,6 +22,10 @@ export const kindleSharingService = {
   async getCompleteStoryData(storyId: string): Promise<Story> {
     console.log('Récupération des données complètes de l\'histoire:', storyId);
     
+    if (!storyId) {
+      throw new Error("ID de l'histoire manquant");
+    }
+    
     const { data: storyData, error: storyError } = await supabase
       .from('stories')
       .select('*')
@@ -29,13 +34,18 @@ export const kindleSharingService = {
     
     if (storyError || !storyData) {
       console.error('Erreur lors de la récupération de l\'histoire:', storyError);
-      throw new Error("Histoire introuvable");
+      throw new Error("Histoire introuvable ou inaccessible");
+    }
+
+    if (!storyData.content || storyData.content.length < 10) {
+      throw new Error("Le contenu de l'histoire est trop court ou manquant");
     }
 
     console.log('Données complètes de l\'histoire récupérées:', {
       id: storyData.id,
       title: storyData.title,
-      hasContent: !!storyData.content
+      hasContent: !!storyData.content,
+      contentLength: storyData.content?.length || 0
     });
 
     // Mapper les données au format Story
@@ -62,6 +72,10 @@ export const kindleSharingService = {
   async getUserData(authorId: string) {
     console.log('Récupération des données utilisateur pour:', authorId);
     
+    if (!authorId) {
+      throw new Error("ID de l'auteur manquant");
+    }
+    
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('firstname, lastname, kindle_email')
@@ -73,8 +87,25 @@ export const kindleSharingService = {
       throw new Error(`Impossible de récupérer les informations utilisateur: ${userError.message}`);
     }
 
+    if (!userData) {
+      throw new Error("Utilisateur introuvable");
+    }
+
     console.log('Données utilisateur récupérées:', userData);
     return userData;
+  },
+
+  /**
+   * Valide l'email Kindle
+   */
+  validateKindleEmail(email: string): boolean {
+    if (!email || typeof email !== 'string') {
+      return false;
+    }
+    
+    // Validation basique d'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   },
 
   /**
@@ -82,6 +113,15 @@ export const kindleSharingService = {
    */
   async sendToKindleWebhook(webhookData: KindleShareData) {
     const kindleWebhookUrl = 'https://tomtomduhamel.app.n8n.cloud/webhook-test/7bca54e0-e309-4c09-9aa3-83b205220d11';
+    
+    // Validation des données avant envoi
+    if (!webhookData.epubUrl) {
+      throw new Error("URL de l'EPUB manquante");
+    }
+    
+    if (!this.validateKindleEmail(webhookData.kindleEmail)) {
+      throw new Error("Email Kindle invalide");
+    }
     
     console.log('Envoi des données au webhook N8N Kindle:', {
       ...webhookData,
@@ -92,7 +132,10 @@ export const kindleSharingService = {
     
     const response = await fetch(kindleWebhookUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'User-Agent': 'Calmiverse-App'
+      },
       body: JSON.stringify(webhookData)
     });
 
@@ -122,6 +165,10 @@ export const kindleSharingService = {
       throw new Error("Aucun email Kindle configuré. Veuillez configurer votre email Kindle dans les paramètres.");
     }
 
+    if (!this.validateKindleEmail(userData.kindle_email)) {
+      throw new Error("L'email Kindle configuré n'est pas valide. Veuillez le corriger dans les paramètres.");
+    }
+
     // Créer le fichier EPUB via le service dédié
     console.log('Génération du fichier EPUB...');
     const epubUrl = await generateAndUploadEpub(story);
@@ -130,13 +177,18 @@ export const kindleSharingService = {
     const cleanTitle = story.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
     const epubFilename = `${cleanTitle}.epub`;
 
+    // Gérer l'objectif qui peut être string ou objet
+    const objectiveText = typeof story.objective === 'string' 
+      ? story.objective 
+      : story.objective?.name || story.objective?.value || '';
+
     const preparedData: KindleShareData = {
       firstname: userData.firstname || "",
       lastname: userData.lastname || "",
       title: story.title,
       content: story.story_text,
       childrennames: story.childrenNames || [],
-      objective: story.objective || "",
+      objective: objectiveText,
       kindleEmail: userData.kindle_email,
       epubUrl,
       epubFilename

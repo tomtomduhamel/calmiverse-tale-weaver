@@ -22,6 +22,7 @@ serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
+    console.error('❌ [upload-epub] Méthode non autorisée:', req.method);
     return new Response(
       JSON.stringify({ error: 'Méthode non autorisée' }),
       { 
@@ -32,9 +33,27 @@ serve(async (req) => {
   }
 
   try {
+    // Vérifier que le bucket existe
+    console.log('🔍 [upload-epub] Vérification de l\'existence du bucket story-files...');
+    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    
+    if (bucketsError) {
+      console.error('❌ [upload-epub] Erreur lors de la vérification des buckets:', bucketsError);
+      throw new Error(`Erreur lors de la vérification des buckets: ${bucketsError.message}`);
+    }
+    
+    const storyFilesBucket = buckets?.find(bucket => bucket.name === 'story-files');
+    if (!storyFilesBucket) {
+      console.error('❌ [upload-epub] Bucket story-files introuvable');
+      throw new Error('Le bucket de stockage story-files n\'existe pas. Veuillez le créer dans Supabase Storage.');
+    }
+    
+    console.log('✅ [upload-epub] Bucket story-files trouvé');
+
     const { content, filename } = await req.json();
     
     if (!content || !filename) {
+      console.error('❌ [upload-epub] Contenu ou nom de fichier manquant');
       throw new Error('Contenu ou nom de fichier manquant');
     }
 
@@ -42,6 +61,7 @@ serve(async (req) => {
 
     // Créer un vrai fichier EPUB avec structure complète
     const epubBuffer = createCompleteEpubFile(content, filename);
+    console.log('📦 [upload-epub] EPUB généré, taille:', epubBuffer.byteLength, 'bytes');
     
     // Générer un nom de fichier unique avec timestamp
     const timestamp = Date.now();
@@ -65,12 +85,19 @@ serve(async (req) => {
       throw new Error(`Erreur lors de l'upload: ${uploadError.message}`);
     }
 
+    console.log('✅ [upload-epub] Fichier uploadé avec succès:', uploadData);
+
     // Obtenir l'URL publique
     const { data: urlData } = supabase.storage
       .from('story-files')
       .getPublicUrl(storagePath);
 
     const publicUrl = urlData.publicUrl;
+    
+    if (!publicUrl) {
+      console.error('❌ [upload-epub] Aucune URL publique générée');
+      throw new Error('Impossible de générer l\'URL publique du fichier');
+    }
     
     console.log('✅ [upload-epub] EPUB uploadé avec succès:', publicUrl);
 
@@ -79,7 +106,8 @@ serve(async (req) => {
         success: true,
         url: publicUrl,
         filename: epubFilename,
-        size: epubBuffer.byteLength
+        size: epubBuffer.byteLength,
+        path: storagePath
       }),
       {
         status: 200,
@@ -88,12 +116,17 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('❌ [upload-epub] Erreur:', error.message);
+    console.error('❌ [upload-epub] Erreur complète:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
 
     return new Response(
       JSON.stringify({
         error: true,
-        message: error.message
+        message: error.message,
+        details: error.stack ? error.stack.split('\n').slice(0, 3).join('\n') : 'Aucun détail disponible'
       }),
       {
         status: 500,
