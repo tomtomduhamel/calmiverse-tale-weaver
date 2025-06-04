@@ -52,7 +52,7 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro`
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro'
       },
       body: JSON.stringify(requestBody)
     });
@@ -118,7 +118,7 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
     console.error("💥 Erreur complète lors de la génération de l'EPUB:", {
       message: error instanceof Error ? error.message : 'Erreur inconnue',
       stack: error instanceof Error ? error.stack : 'Pas de stack trace',
-      name: error instanceof Error ? error.name : 'Type d'erreur inconnu',
+      name: error instanceof Error ? error.name : 'Type d\'erreur inconnu',
       storyTitle: story?.title || 'Titre inconnu',
       timestamp: new Date().toISOString()
     });
