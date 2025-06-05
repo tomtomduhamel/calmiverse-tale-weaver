@@ -79,7 +79,7 @@ export const emailSharingService = {
    * Envoie les données au webhook N8N pour l'email
    */
   async sendToEmailWebhook(webhookData: EmailShareData) {
-    const n8nWebhookUrl = 'https://tomtomduhamel.app.n8n.cloud/webhook/9655e007-2b71-4b57-ab03-748eaa158ebe';
+    const n8nWebhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/9655e007-2b71-4b57-ab03-748eaa158ebe';
     
     const response = await fetch(n8nWebhookUrl, {
       method: 'POST',
