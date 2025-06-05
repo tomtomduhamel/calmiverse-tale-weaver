@@ -1,4 +1,5 @@
 
+import { supabase } from '@/integrations/supabase/client';
 import type { Story } from '@/types/story';
 
 export const generateAndUploadEpub = async (story: Story): Promise<string> => {
@@ -28,14 +29,8 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
       throw new Error("Impossible de générer un nom de fichier valide à partir du titre");
     }
     
-    console.log("📤 Appel direct à la fonction Edge upload-epub...");
+    console.log("📤 Appel à la fonction Edge upload-epub via le client Supabase...");
 
-    // Construction de l'URL de la fonction Edge avec le project ID
-    const supabaseUrl = 'https://ioeihnoxvtpxtqhxklpw.supabase.co';
-    const functionUrl = `${supabaseUrl}/functions/v1/upload-epub`;
-    
-    console.log("🌐 URL de la fonction:", functionUrl);
-    
     const requestBody = { 
       content: kindleContent, 
       filename: cleanTitle
@@ -47,34 +42,21 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
       contentPreview: kindleContent.substring(0, 100) + "..."
     });
 
-    // Appel direct avec fetch au lieu de supabase.functions.invoke
-    const response = await fetch(functionUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro'
-      },
-      body: JSON.stringify(requestBody)
+    // Utilisation du client Supabase pour appeler la fonction Edge
+    const { data, error } = await supabase.functions.invoke('upload-epub', {
+      body: requestBody
     });
 
-    console.log("📡 Réponse HTTP reçue:", {
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries())
+    console.log("📡 Réponse de la fonction Edge:", {
+      hasData: !!data,
+      hasError: !!error,
+      data: data
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Erreur HTTP de la fonction Edge:", {
-        status: response.status,
-        statusText: response.statusText,
-        errorBody: errorText
-      });
-      throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+    if (error) {
+      console.error("❌ Erreur de la fonction Edge:", error);
+      throw new Error(`Erreur de la fonction upload-epub: ${error.message}`);
     }
-    
-    const data = await response.json();
-    console.log("📥 Données reçues de la fonction Edge:", data);
     
     if (!data) {
       console.error("❌ Aucune donnée retournée par la fonction Edge");

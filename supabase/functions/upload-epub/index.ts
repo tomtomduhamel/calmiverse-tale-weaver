@@ -33,7 +33,7 @@ serve(async (req) => {
   }
 
   try {
-    // Vérifier que le bucket existe
+    // Vérifier et créer le bucket s'il n'existe pas
     console.log('🔍 [upload-epub] Vérification de l\'existence du bucket story-files...');
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
     
@@ -42,13 +42,26 @@ serve(async (req) => {
       throw new Error(`Erreur lors de la vérification des buckets: ${bucketsError.message}`);
     }
     
-    const storyFilesBucket = buckets?.find(bucket => bucket.name === 'story-files');
-    if (!storyFilesBucket) {
-      console.error('❌ [upload-epub] Bucket story-files introuvable');
-      throw new Error('Le bucket de stockage story-files n\'existe pas. Veuillez le créer dans Supabase Storage.');
-    }
+    let storyFilesBucket = buckets?.find(bucket => bucket.name === 'story-files');
     
-    console.log('✅ [upload-epub] Bucket story-files trouvé');
+    if (!storyFilesBucket) {
+      console.log('📦 [upload-epub] Création du bucket story-files...');
+      const { data: newBucket, error: createError } = await supabase.storage.createBucket('story-files', {
+        public: true,
+        allowedMimeTypes: ['application/epub+zip'],
+        fileSizeLimit: 10485760 // 10MB
+      });
+      
+      if (createError) {
+        console.error('❌ [upload-epub] Erreur lors de la création du bucket:', createError);
+        throw new Error(`Impossible de créer le bucket de stockage: ${createError.message}`);
+      }
+      
+      console.log('✅ [upload-epub] Bucket story-files créé avec succès');
+      storyFilesBucket = newBucket;
+    } else {
+      console.log('✅ [upload-epub] Bucket story-files trouvé');
+    }
 
     const { content, filename } = await req.json();
     

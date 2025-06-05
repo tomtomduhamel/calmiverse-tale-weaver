@@ -1,5 +1,6 @@
 
 import { generateAndUploadEpub } from './epubService';
+import { supabase } from '@/integrations/supabase/client';
 import type { Story } from '@/types/story';
 
 export interface KindleShareData {
@@ -25,53 +26,44 @@ export const kindleSharingService = {
       throw new Error("ID de l'histoire manquant");
     }
     
-    // Utilisation d'un appel fetch direct pour plus de transparence
-    const supabaseUrl = 'https://ioeihnoxvtpxtqhxklpw.supabase.co';
-    const apiUrl = `${supabaseUrl}/rest/v1/stories?id=eq.${storyId}&select=*`;
-    
-    console.log('🌐 [KindleService] URL API Supabase:', apiUrl);
-    
     try {
-      const response = await fetch(apiUrl, {
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro',
-          'Content-Type': 'application/json'
-        }
-      });
+      console.log('🌐 [KindleService] Utilisation du client Supabase pour récupérer l\'histoire');
       
-      console.log('📡 [KindleService] Réponse API stories:', {
-        status: response.status,
-        statusText: response.statusText
-      });
+      // Utilisation du client Supabase au lieu d'un appel fetch direct
+      const { data: storyData, error } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('id', storyId)
+        .single();
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [KindleService] Erreur API stories:', errorText);
-        throw new Error(`Erreur API: ${response.status} - ${errorText}`);
+      if (error) {
+        console.error('❌ [KindleService] Erreur Supabase:', error);
+        throw new Error(`Erreur lors de la récupération de l'histoire: ${error.message}`);
       }
       
-      const storyDataArray = await response.json();
-      console.log('📥 [KindleService] Données reçues:', storyDataArray);
-      
-      if (!storyDataArray || storyDataArray.length === 0) {
-        throw new Error("Histoire introuvable ou inaccessible");
+      if (!storyData) {
+        console.error('❌ [KindleService] Aucune donnée retournée pour l\'histoire:', storyId);
+        throw new Error("Histoire introuvable");
       }
       
-      const storyData = storyDataArray[0];
-      
-      if (!storyData.content || storyData.content.length < 10) {
-        throw new Error("Le contenu de l'histoire est trop court ou manquant");
-      }
-
-      console.log('✅ [KindleService] Données complètes de l\'histoire récupérées:', {
+      console.log('📥 [KindleService] Données reçues:', {
         id: storyData.id,
         title: storyData.title,
         hasContent: !!storyData.content,
-        contentLength: storyData.content?.length || 0
+        contentLength: storyData.content?.length || 0,
+        authorId: storyData.authorid
       });
+      
+      // Validation du contenu avant mapping
+      if (!storyData.content || storyData.content.length < 10) {
+        console.error('❌ [KindleService] Contenu insuffisant:', {
+          hasContent: !!storyData.content,
+          contentLength: storyData.content?.length || 0
+        });
+        throw new Error("Le contenu de l'histoire est trop court ou manquant");
+      }
 
-      // Mapper les données au format Story
+      // Mapping correct des données de la base vers le type Story
       const story: Story = {
         id: storyData.id,
         title: storyData.title || "Histoire sans titre",
@@ -81,15 +73,34 @@ export const kindleSharingService = {
         childrenNames: storyData.childrennames || [],
         createdAt: new Date(storyData.createdat),
         status: storyData.status as any || 'ready',
-        story_text: storyData.content || "",
+        story_text: storyData.content, // CORRECTION: mapping correct content -> story_text
         story_summary: storyData.summary || "",
         authorId: storyData.authorid
       };
 
+      console.log('✅ [KindleService] Histoire mappée avec succès:', {
+        id: story.id,
+        title: story.title,
+        storyTextLength: story.story_text.length,
+        authorId: story.authorId
+      });
+
       return story;
     } catch (error) {
       console.error('💥 [KindleService] Erreur lors de la récupération de l\'histoire:', error);
-      throw error;
+      
+      // Messages d'erreur plus explicites pour l'utilisateur
+      if (error instanceof Error) {
+        if (error.message.includes('not found') || error.message.includes('introuvable')) {
+          throw new Error("Cette histoire n'existe pas ou vous n'avez pas les droits pour y accéder.");
+        }
+        if (error.message.includes('permission') || error.message.includes('unauthorized')) {
+          throw new Error("Vous n'avez pas les permissions nécessaires pour accéder à cette histoire.");
+        }
+        throw error;
+      }
+      
+      throw new Error("Erreur technique lors de la récupération de l'histoire. Veuillez réessayer.");
     }
   },
 
@@ -103,39 +114,33 @@ export const kindleSharingService = {
       throw new Error("ID de l'auteur manquant");
     }
     
-    const supabaseUrl = 'https://ioeihnoxvtpxtqhxklpw.supabase.co';
-    const apiUrl = `${supabaseUrl}/rest/v1/users?id=eq.${authorId}&select=firstname,lastname,kindle_email`;
-    
-    console.log('🌐 [KindleService] URL API utilisateur:', apiUrl);
-    
     try {
-      const response = await fetch(apiUrl, {
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro',
-          'Content-Type': 'application/json'
-        }
-      });
+      console.log('🌐 [KindleService] Utilisation du client Supabase pour récupérer l\'utilisateur');
       
-      console.log('📡 [KindleService] Réponse API utilisateur:', {
-        status: response.status,
-        statusText: response.statusText
-      });
+      // Utilisation du client Supabase
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('firstname, lastname, kindle_email')
+        .eq('id', authorId)
+        .single();
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [KindleService] Erreur API utilisateur:', errorText);
-        throw new Error(`Erreur API utilisateur: ${response.status} - ${errorText}`);
+      if (error) {
+        console.error('❌ [KindleService] Erreur Supabase utilisateur:', error);
+        throw new Error(`Erreur lors de la récupération des données utilisateur: ${error.message}`);
       }
       
-      const userData = await response.json();
-      console.log('📥 [KindleService] Données utilisateur reçues:', userData);
-      
-      if (!userData || userData.length === 0) {
+      if (!userData) {
+        console.error('❌ [KindleService] Utilisateur introuvable:', authorId);
         throw new Error("Utilisateur introuvable");
       }
       
-      return userData[0];
+      console.log('📥 [KindleService] Données utilisateur récupérées:', {
+        hasFirstname: !!userData.firstname,
+        hasLastname: !!userData.lastname,
+        hasKindleEmail: !!userData.kindle_email
+      });
+      
+      return userData;
     } catch (error) {
       console.error('💥 [KindleService] Erreur lors de la récupération des données utilisateur:', error);
       throw error;
@@ -239,7 +244,14 @@ export const kindleSharingService = {
     try {
       // Récupérer les données complètes de l'histoire
       const story = await this.getCompleteStoryData(storyId);
-      const userData = await this.getUserData(story.authorId!);
+      
+      // Vérification que l'authorId est présent
+      if (!story.authorId) {
+        console.error('❌ [KindleService] AuthorId manquant dans l\'histoire:', storyId);
+        throw new Error("Impossible d'identifier l'auteur de cette histoire.");
+      }
+      
+      const userData = await this.getUserData(story.authorId);
 
       if (!userData?.kindle_email) {
         console.error('❌ [KindleService] Aucun email Kindle configuré pour l\'utilisateur:', story.authorId);
@@ -268,7 +280,7 @@ export const kindleSharingService = {
         firstname: userData.firstname || "",
         lastname: userData.lastname || "",
         title: story.title,
-        content: story.story_text,
+        content: story.story_text, // Utilisation du bon champ story_text
         childrennames: story.childrenNames || [],
         objective: objectiveText,
         kindleEmail: userData.kindle_email,
@@ -286,7 +298,13 @@ export const kindleSharingService = {
       return preparedData;
     } catch (error) {
       console.error('💥 [KindleService] Erreur lors de la préparation des données Kindle:', error);
-      throw error;
+      
+      // Amélioration des messages d'erreur pour l'utilisateur
+      if (error instanceof Error) {
+        throw error; // On propage les erreurs déjà formatées
+      }
+      
+      throw new Error("Erreur technique lors de la préparation de l'envoi Kindle. Veuillez réessayer.");
     }
   }
 };
