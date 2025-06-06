@@ -276,16 +276,8 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
             children={children}
             selectedChildrenIds={selectedChildrenIds}
             onChildSelect={handleChildSelect}
+            onCreateChildClick={() => setShowChildForm(true)}
           />
-          
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowChildForm(true)}
-            className="w-full"
-          >
-            Créer un profil enfant
-          </Button>
           
           {/* Sélecteur d'objectifs */}
           <div className="space-y-4">

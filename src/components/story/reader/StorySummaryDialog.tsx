@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import ReactMarkdown from 'react-markdown';
 import { Settings } from "lucide-react";
 import type { Story } from "@/types/story";
-import { StorySettingsDialog } from "./StorySettingsDialog";
+import StorySettingsDialog from "./StorySettingsDialog";
 import { useStoryManagement } from "@/hooks/useStoryManagement";
 
 interface StorySummaryDialogProps {
