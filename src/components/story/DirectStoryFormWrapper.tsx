@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { Loader2 } from "lucide-react";
@@ -9,7 +8,7 @@ import type { Story } from "@/types/story";
 interface DirectStoryFormWrapperProps {
   onSubmit: (formData: { childrenIds: string[]; objective: string }) => Promise<string>;
   children: Child[];
-  onCreateChild: (child: Omit<Child, "id">) => Promise<string>;
+  onCreateChild: () => void;
   onStoryCreated: (story: Story) => void;
 }
 
@@ -66,8 +65,13 @@ const DirectStoryFormWrapper: React.FC<DirectStoryFormWrapperProps> = ({
       children={children}
       objectives={objectivesToUse}
       onCreateChild={onCreateChild}
-      onSubmit={onSubmit}
-      onStoryCreated={onStoryCreated}
+      selectedChildrenIds={[]}
+      selectedObjective=""
+      isSubmitting={false}
+      formError={null}
+      onChildSelect={() => {}}
+      onObjectiveSelect={() => {}}
+      onSubmit={() => {}}
     />
   );
 };

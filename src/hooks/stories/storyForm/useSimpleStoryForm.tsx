@@ -14,49 +14,24 @@ export const useSimpleStoryForm = (
   children: Child[],
   onStoryCreated: (story: Story) => void
 ) => {
-  // Get form state
+  // Get form handlers which now include state
+  const handlers = useSimpleStoryFormHandlers(onSubmit, onStoryCreated);
+  
+  // Get form state from useSimpleStoryFormState
   const {
-    selectedChildrenIds,
-    setSelectedChildrenIds,
-    selectedObjective,
-    setSelectedObjective,
-    formError,
-    setFormError,
-    isSubmitting,
-    setIsSubmitting,
-    showChildForm,
-    setShowChildForm,
     user,
     session,
-    authLoading
+    authLoading,
+    showChildForm,
+    setShowChildForm
   } = useSimpleStoryFormState();
 
   // Get form validation
   const { validateForm } = useSimpleStoryFormValidation(
-    selectedChildrenIds,
-    selectedObjective,
+    handlers.selectedChildrenIds,
+    handlers.selectedObjective,
     user,
     session
-  );
-
-  // Get form handlers
-  const {
-    handleChildSelect,
-    handleObjectiveSelect,
-    handleFormSubmit,
-    isGenerateButtonDisabled
-  } = useSimpleStoryFormHandlers(
-    selectedChildrenIds,
-    setSelectedChildrenIds,
-    selectedObjective,
-    setSelectedObjective,
-    formError,
-    setFormError,
-    isSubmitting,
-    setIsSubmitting,
-    validateForm,
-    onSubmit,
-    onStoryCreated
   );
 
   // Child form interface
@@ -66,18 +41,18 @@ export const useSimpleStoryForm = (
   };
 
   return {
-    // Form state
-    selectedChildrenIds,
-    selectedObjective,
-    formError,
-    isSubmitting,
+    // Form state from handlers
+    selectedChildrenIds: handlers.selectedChildrenIds,
+    selectedObjective: handlers.selectedObjective,
+    formError: handlers.formError,
+    isSubmitting: handlers.isSubmitting,
     authLoading,
-    isGenerateButtonDisabled,
+    isGenerateButtonDisabled: handlers.isGenerateButtonDisabled,
     
     // Form handlers
-    handleChildSelect,
-    handleObjectiveSelect,
-    handleFormSubmit,
+    handleChildSelect: handlers.handleChildSelect,
+    handleObjectiveSelect: handlers.handleObjectiveSelect,
+    handleFormSubmit: handlers.handleFormSubmit,
     
     // Child form controls
     childFormControls

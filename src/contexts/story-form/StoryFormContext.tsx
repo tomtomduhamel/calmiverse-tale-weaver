@@ -223,3 +223,6 @@ export const useStoryFormContext = () => {
   }
   return context;
 };
+
+// Export alias for easier import
+export const useStoryForm = useStoryFormContext;

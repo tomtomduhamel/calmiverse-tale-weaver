@@ -9,7 +9,7 @@ import type { Story } from "@/types/story";
 interface StoryFormV2WrapperProps {
   onSubmit: (formData: { childrenIds: string[]; objective: string }) => Promise<string>;
   children: Child[];
-  onCreateChild: (child: Omit<Child, "id">) => Promise<string>;
+  onCreateChild: () => void;
   onStoryCreated: (story: Story) => void;
 }
 

@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import RobustChildSelector from "./form/RobustChildSelector";
 import { useRobustChildSelection } from "@/hooks/stories/useRobustChildSelection";
 import { useToast } from "@/hooks/use-toast";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import type { Child } from "@/types/child";
 import type { Story } from "@/types/story";
 import type { Objective } from "@/types/story";
@@ -51,6 +51,7 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
   
   // Hooks utilitaires
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
   const isMobile = useIsMobile();
   
   // Référence pour suivre les soumissions et l'état des sélections
@@ -222,6 +223,7 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
       const childData = {
         name: childName,
         birthDate: new Date(new Date().getFullYear() - parseInt(childAge), 0, 1),
+        authorId: user?.id || "",
         teddyName: "",
         teddyDescription: "",
         imaginaryWorld: "",
@@ -250,7 +252,7 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
         variant: "destructive",
       });
     }
-  }, [childName, childAge, onCreateChild, toast]);
+  }, [childName, childAge, onCreateChild, toast, user?.id]);
   
   // Calculer l'état du bouton
   const isButtonDisabled = isSubmitting || selectedChildrenIds.length === 0 || !selectedObjective;
@@ -274,8 +276,16 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
             children={children}
             selectedChildrenIds={selectedChildrenIds}
             onChildSelect={handleChildSelect}
-            onCreateChild={() => setShowChildForm(true)}
           />
+          
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowChildForm(true)}
+            className="w-full"
+          >
+            Créer un profil enfant
+          </Button>
           
           {/* Sélecteur d'objectifs */}
           <div className="space-y-4">
@@ -331,15 +341,53 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
         </form>
         
         {/* Dialog pour créer un enfant */}
-        <CreateChildDialog
-          isOpen={showChildForm}
-          onClose={() => setShowChildForm(false)}
-          childName={childName}
-          setChildName={setChildName}
-          childAge={childAge}
-          setChildAge={setChildAge}
-          onCreateChild={handleCreateChild}
-        />
+        {showChildForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Créer un profil enfant</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Nom</label>
+                  <input
+                    type="text"
+                    value={childName}
+                    onChange={(e) => setChildName(e.target.value)}
+                    className="w-full p-2 border rounded-md"
+                    placeholder="Prénom de l'enfant"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Âge</label>
+                  <input
+                    type="number"
+                    value={childAge}
+                    onChange={(e) => setChildAge(e.target.value)}
+                    className="w-full p-2 border rounded-md"
+                    min="1"
+                    max="18"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    type="button"
+                    onClick={handleCreateChild}
+                    className="flex-1"
+                  >
+                    Créer
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowChildForm(false)}
+                    className="flex-1"
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

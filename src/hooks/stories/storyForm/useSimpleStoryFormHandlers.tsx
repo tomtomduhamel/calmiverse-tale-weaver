@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
 
@@ -8,6 +8,23 @@ export const useSimpleStoryFormHandlers = (
   onStoryCreated: (story: Story) => void
 ) => {
   const { toast } = useToast();
+  const [selectedChildrenIds, setSelectedChildrenIds] = useState<string[]>([]);
+  const [selectedObjective, setSelectedObjective] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  
+  const handleChildSelect = useCallback((childId: string) => {
+    setSelectedChildrenIds(prev => {
+      const isSelected = prev.includes(childId);
+      return isSelected 
+        ? prev.filter(id => id !== childId)
+        : [...prev, childId];
+    });
+  }, []);
+  
+  const handleObjectiveSelect = useCallback((objective: string) => {
+    setSelectedObjective(objective);
+  }, []);
   
   const handleFormSubmit = useCallback(async (
     selectedChildrenIds: string[],
@@ -32,7 +49,7 @@ export const useSimpleStoryFormHandlers = (
           childrenIds: selectedChildrenIds,
           createdAt: new Date(),
           status: 'pending',
-          content: "", // CORRECTION: utiliser 'content' au lieu de 'story_text'
+          content: "",
           story_summary: "",
           objective: selectedObjective
         };
@@ -60,7 +77,20 @@ export const useSimpleStoryFormHandlers = (
     }
   }, [onSubmit, onStoryCreated, toast]);
   
+  const isGenerateButtonDisabled = isSubmitting || selectedChildrenIds.length === 0 || !selectedObjective;
+  
   return {
-    handleFormSubmit
+    selectedChildrenIds,
+    setSelectedChildrenIds,
+    selectedObjective,
+    setSelectedObjective,
+    isSubmitting,
+    setIsSubmitting,
+    formError,
+    setFormError,
+    handleChildSelect,
+    handleObjectiveSelect,
+    handleFormSubmit,
+    isGenerateButtonDisabled
   };
 };
