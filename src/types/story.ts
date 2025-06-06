@@ -9,7 +9,7 @@ export interface Story {
   childrenNames?: string[];
   createdAt: Date;
   status: 'pending' | 'ready' | 'read' | 'error' | 'regenerating';
-  story_text: string;
+  content: string; // CORRECTION: utiliser 'content' comme dans la BDD
   story_summary: string;
   authorId?: string;
   sharedWith?: string[];

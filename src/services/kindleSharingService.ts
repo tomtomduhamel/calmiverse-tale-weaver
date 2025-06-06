@@ -29,7 +29,6 @@ export const kindleSharingService = {
     try {
       console.log('🌐 [KindleService] Utilisation du client Supabase pour récupérer l\'histoire');
       
-      // Utilisation du client Supabase au lieu d'un appel fetch direct
       const { data: storyData, error } = await supabase
         .from('stories')
         .select('*')
@@ -54,7 +53,7 @@ export const kindleSharingService = {
         authorId: storyData.authorid
       });
       
-      // Validation du contenu avant mapping
+      // CORRECTION: Validation du contenu depuis la colonne 'content'
       if (!storyData.content || storyData.content.length < 10) {
         console.error('❌ [KindleService] Contenu insuffisant:', {
           hasContent: !!storyData.content,
@@ -63,7 +62,7 @@ export const kindleSharingService = {
         throw new Error("Le contenu de l'histoire est trop court ou manquant");
       }
 
-      // Mapping correct des données de la base vers le type Story
+      // CORRECTION: Mapping correct des données - utiliser 'content' au lieu de 'story_text'
       const story: Story = {
         id: storyData.id,
         title: storyData.title || "Histoire sans titre",
@@ -73,7 +72,7 @@ export const kindleSharingService = {
         childrenNames: storyData.childrennames || [],
         createdAt: new Date(storyData.createdat),
         status: storyData.status as any || 'ready',
-        story_text: storyData.content, // CORRECTION: mapping correct content -> story_text
+        content: storyData.content, // CORRECTION: utiliser 'content' directement
         story_summary: storyData.summary || "",
         authorId: storyData.authorid
       };
@@ -81,7 +80,7 @@ export const kindleSharingService = {
       console.log('✅ [KindleService] Histoire mappée avec succès:', {
         id: story.id,
         title: story.title,
-        storyTextLength: story.story_text.length,
+        contentLength: story.content.length,
         authorId: story.authorId
       });
 
@@ -115,9 +114,6 @@ export const kindleSharingService = {
     }
     
     try {
-      console.log('🌐 [KindleService] Utilisation du client Supabase pour récupérer l\'utilisateur');
-      
-      // Utilisation du client Supabase
       const { data: userData, error } = await supabase
         .from('users')
         .select('firstname, lastname, kindle_email')
@@ -156,7 +152,6 @@ export const kindleSharingService = {
       return false;
     }
     
-    // Validation basique d'email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const isValid = emailRegex.test(email);
     
@@ -189,23 +184,12 @@ export const kindleSharingService = {
     
     console.log('📤 [KindleService] Envoi des données au webhook N8N Kindle:', {
       ...webhookData,
-      content: `${webhookData.content.substring(0, 100)}...`, // Log tronqué pour la lisibilité
+      content: `${webhookData.content.substring(0, 100)}...`,
       epubUrl: webhookData.epubUrl,
       epubFilename: webhookData.epubFilename
     });
     
     try {
-      console.log('🌐 [KindleService] URL du webhook N8N:', kindleWebhookUrl);
-      
-      // Test d'accessibilité de l'URL EPUB avant envoi
-      console.log('🔍 [KindleService] Test de l\'URL EPUB avant envoi:', webhookData.epubUrl);
-      try {
-        const epubTestResponse = await fetch(webhookData.epubUrl, { method: 'HEAD' });
-        console.log('✅ [KindleService] EPUB accessible, statut:', epubTestResponse.status);
-      } catch (epubError) {
-        console.warn('⚠️ [KindleService] Avertissement: URL EPUB potentiellement inaccessible:', epubError);
-      }
-      
       const response = await fetch(kindleWebhookUrl, {
         method: 'POST',
         headers: { 
@@ -263,11 +247,11 @@ export const kindleSharingService = {
         throw new Error("L'email Kindle configuré n'est pas valide. Veuillez le corriger dans les paramètres.");
       }
 
-      // Créer le fichier EPUB via le service dédié
+      // CORRECTION: Créer l'EPUB avec le bon champ 'content'
       console.log('📔 [KindleService] Génération du fichier EPUB...');
       const epubUrl = await generateAndUploadEpub(story);
       
-      // Créer le nom de fichier EPUB (nettoyer le titre pour éviter les caractères spéciaux)
+      // Créer le nom de fichier EPUB
       const cleanTitle = story.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
       const epubFilename = `${cleanTitle}.epub`;
 
@@ -280,7 +264,7 @@ export const kindleSharingService = {
         firstname: userData.firstname || "",
         lastname: userData.lastname || "",
         title: story.title,
-        content: story.story_text, // Utilisation du bon champ story_text
+        content: story.content, // CORRECTION: Utilisation du bon champ 'content'
         childrennames: story.childrenNames || [],
         objective: objectiveText,
         kindleEmail: userData.kindle_email,
@@ -290,7 +274,7 @@ export const kindleSharingService = {
 
       console.log('✅ [KindleService] Données préparées pour Kindle avec EPUB:', {
         ...preparedData,
-        content: `${preparedData.content.substring(0, 100)}...`, // Log tronqué pour la lisibilité
+        content: `${preparedData.content.substring(0, 100)}...`,
         epubUrl: preparedData.epubUrl,
         epubFilename: preparedData.epubFilename
       });
@@ -299,9 +283,8 @@ export const kindleSharingService = {
     } catch (error) {
       console.error('💥 [KindleService] Erreur lors de la préparation des données Kindle:', error);
       
-      // Amélioration des messages d'erreur pour l'utilisateur
       if (error instanceof Error) {
-        throw error; // On propage les erreurs déjà formatées
+        throw error;
       }
       
       throw new Error("Erreur technique lors de la préparation de l'envoi Kindle. Veuillez réessayer.");

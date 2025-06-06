@@ -6,16 +6,16 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
   try {
     console.log("🔧 Début de la génération de l'EPUB pour l'histoire:", story.title);
     
-    // Validation des données d'entrée
-    if (!story.title || !story.story_text) {
+    // CORRECTION: Validation avec le bon champ 'content'
+    if (!story.title || !story.content) {
       throw new Error("Les données de l'histoire sont incomplètes (titre ou contenu manquant)");
     }
     
-    if (story.story_text.length < 10) {
+    if (story.content.length < 10) {
       throw new Error("Le contenu de l'histoire est trop court pour générer un EPUB");
     }
     
-    // Créer le contenu HTML formaté pour Kindle
+    // CORRECTION: Créer le contenu HTML formaté pour Kindle avec le bon champ
     const kindleContent = formatStoryForKindle(story);
     
     if (!kindleContent || kindleContent.length < 50) {
@@ -41,6 +41,23 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
       contentLength: kindleContent.length,
       contentPreview: kindleContent.substring(0, 100) + "..."
     });
+
+    // Test de connectivité de la fonction Edge avant l'appel
+    console.log("🔍 Test de connectivité de la fonction Edge...");
+    
+    try {
+      // Appel de test simple pour vérifier que la fonction Edge est accessible
+      const testResponse = await fetch(`${supabase.supabaseUrl}/functions/v1/upload-epub`, {
+        method: 'OPTIONS',
+        headers: {
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+        }
+      });
+      console.log("✅ Fonction Edge accessible, statut test:", testResponse.status);
+    } catch (testError) {
+      console.error("❌ Fonction Edge inaccessible:", testError);
+      throw new Error("La fonction de génération d'EPUB n'est pas disponible. Veuillez contacter le support.");
+    }
 
     // Utilisation du client Supabase pour appeler la fonction Edge
     const { data, error } = await supabase.functions.invoke('upload-epub', {
@@ -78,15 +95,6 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
       new URL(data.url);
     } catch {
       throw new Error("L'URL générée pour l'EPUB n'est pas valide");
-    }
-    
-    // Test de l'accessibilité de l'URL générée
-    console.log("🔍 Test d'accessibilité de l'URL générée:", data.url);
-    try {
-      const testResponse = await fetch(data.url, { method: 'HEAD' });
-      console.log("✅ URL accessible, statut:", testResponse.status);
-    } catch (urlError) {
-      console.warn("⚠️ Problème d'accessibilité de l'URL:", urlError);
     }
     
     console.log("✅ EPUB généré et uploadé avec succès:", {
@@ -149,8 +157,8 @@ function formatStoryForKindle(story: Story): string {
       </div>
     `;
 
-    // Contenu de l'histoire formaté
-    const storyContent = story.story_text
+    // CORRECTION: Contenu de l'histoire formaté avec le bon champ 'content'
+    const storyContent = story.content
       .split('\n')
       .map(paragraph => paragraph.trim())
       .filter(paragraph => paragraph.length > 0)

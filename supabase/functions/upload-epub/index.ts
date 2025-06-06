@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -33,32 +32,41 @@ serve(async (req) => {
   }
 
   try {
-    // Vérifier et créer le bucket s'il n'existe pas
-    console.log('🔍 [upload-epub] Vérification de l\'existence du bucket story-files...');
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    // CORRECTION: Vérification robuste et création automatique du bucket
+    console.log('🔍 [upload-epub] Vérification/création du bucket story-files...');
     
-    if (bucketsError) {
-      console.error('❌ [upload-epub] Erreur lors de la vérification des buckets:', bucketsError);
-      throw new Error(`Erreur lors de la vérification des buckets: ${bucketsError.message}`);
+    let bucketExists = false;
+    try {
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+      
+      if (listError) {
+        console.warn('⚠️ [upload-epub] Erreur lors de la liste des buckets:', listError);
+      } else {
+        bucketExists = buckets?.some(bucket => bucket.name === 'story-files') || false;
+      }
+    } catch (error) {
+      console.warn('⚠️ [upload-epub] Impossible de lister les buckets:', error);
     }
     
-    let storyFilesBucket = buckets?.find(bucket => bucket.name === 'story-files');
-    
-    if (!storyFilesBucket) {
+    if (!bucketExists) {
       console.log('📦 [upload-epub] Création du bucket story-files...');
-      const { data: newBucket, error: createError } = await supabase.storage.createBucket('story-files', {
-        public: true,
-        allowedMimeTypes: ['application/epub+zip'],
-        fileSizeLimit: 10485760 // 10MB
-      });
-      
-      if (createError) {
-        console.error('❌ [upload-epub] Erreur lors de la création du bucket:', createError);
-        throw new Error(`Impossible de créer le bucket de stockage: ${createError.message}`);
+      try {
+        const { error: createError } = await supabase.storage.createBucket('story-files', {
+          public: true,
+          allowedMimeTypes: ['application/epub+zip', 'application/octet-stream'],
+          fileSizeLimit: 10485760 // 10MB
+        });
+        
+        if (createError) {
+          console.error('❌ [upload-epub] Erreur lors de la création du bucket:', createError);
+          // Continuer même si la création échoue - le bucket existe peut-être déjà
+        } else {
+          console.log('✅ [upload-epub] Bucket story-files créé avec succès');
+        }
+      } catch (createBucketError) {
+        console.warn('⚠️ [upload-epub] Erreur création bucket (peut déjà exister):', createBucketError);
+        // Continuer le processus
       }
-      
-      console.log('✅ [upload-epub] Bucket story-files créé avec succès');
-      storyFilesBucket = newBucket;
     } else {
       console.log('✅ [upload-epub] Bucket story-files trouvé');
     }
@@ -84,18 +92,59 @@ serve(async (req) => {
 
     console.log('📤 [upload-epub] Upload vers Supabase Storage:', storagePath);
 
-    // Uploader vers Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('story-files')
-      .upload(storagePath, epubBuffer, {
-        contentType: 'application/epub+zip',
-        cacheControl: '3600',
-        upsert: false
-      });
+    // CORRECTION: Upload robuste avec retry et gestion d'erreurs améliorée
+    let uploadSuccess = false;
+    let uploadData = null;
+    let uploadError = null;
 
-    if (uploadError) {
-      console.error('❌ [upload-epub] Erreur upload:', uploadError);
-      throw new Error(`Erreur lors de l'upload: ${uploadError.message}`);
+    // Tentative d'upload principal
+    try {
+      const result = await supabase.storage
+        .from('story-files')
+        .upload(storagePath, epubBuffer, {
+          contentType: 'application/epub+zip',
+          cacheControl: '3600',
+          upsert: true // CORRECTION: Permettre l'écrasement
+        });
+      
+      uploadData = result.data;
+      uploadError = result.error;
+      uploadSuccess = !result.error;
+    } catch (uploadException) {
+      console.error('❌ [upload-epub] Exception lors de l\'upload:', uploadException);
+      uploadError = uploadException;
+    }
+
+    // Si l'upload principal échoue, essayer avec un nom différent
+    if (!uploadSuccess) {
+      console.warn('⚠️ [upload-epub] Premier upload échoué, tentative avec nom alternatif...');
+      const alternativeFilename = `${cleanFilename}_${timestamp}_${Math.random().toString(36).substring(7)}.epub`;
+      const alternativePath = `epubs/${alternativeFilename}`;
+      
+      try {
+        const result = await supabase.storage
+          .from('story-files')
+          .upload(alternativePath, epubBuffer, {
+            contentType: 'application/epub+zip',
+            cacheControl: '3600',
+            upsert: true
+          });
+        
+        if (!result.error) {
+          uploadData = result.data;
+          uploadError = null;
+          uploadSuccess = true;
+          storagePath = alternativePath;
+          console.log('✅ [upload-epub] Upload alternatif réussi:', alternativePath);
+        }
+      } catch (alternativeError) {
+        console.error('❌ [upload-epub] Upload alternatif échoué aussi:', alternativeError);
+      }
+    }
+
+    if (!uploadSuccess) {
+      console.error('❌ [upload-epub] Tous les uploads ont échoué:', uploadError);
+      throw new Error(`Erreur lors de l'upload: ${uploadError?.message || 'Upload impossible'}`);
     }
 
     console.log('✅ [upload-epub] Fichier uploadé avec succès:', uploadData);
