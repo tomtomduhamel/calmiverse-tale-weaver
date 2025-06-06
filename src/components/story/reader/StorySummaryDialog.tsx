@@ -69,9 +69,8 @@ export const StorySummaryDialog: React.FC<StorySummaryDialogProps> = ({
       {/* Dialog pour les paramètres d'histoire */}
       <StorySettingsDialog 
         story={story}
-        showSettings={showSettings}
-        setShowSettings={setShowSettings}
-        onRegenerateStory={handleRegenerateStory}
+        open={showSettings}
+        onOpenChange={setShowSettings}
       />
     </>
   );
