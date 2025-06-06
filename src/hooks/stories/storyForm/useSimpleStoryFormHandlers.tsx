@@ -1,164 +1,66 @@
 
-import { useCallback, useMemo } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import type { Child } from '@/types/child';
-import type { Story } from '@/types/story';
+import { useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import type { Story } from "@/types/story";
 
-/**
- * Hook for managing the handlers of the simplified story form
- * Note: Cette version corrigée assure une manipulation correcte des types
- */
 export const useSimpleStoryFormHandlers = (
-  selectedChildrenIds: string[],
-  setSelectedChildrenIds: (ids: string[] | ((prev: string[]) => string[])) => void,
-  selectedObjective: string,
-  setSelectedObjective: (objective: string) => void,
-  formError: string | null,
-  setFormError: (error: string | null) => void,
-  isSubmitting: boolean,
-  setIsSubmitting: (isSubmitting: boolean) => void,
-  validateForm: () => { isValid: boolean; error: string | null },
-  onSubmit: (formData: { childrenIds: string[], objective: string }) => Promise<string>,
+  onSubmit: (formData: { childrenIds: string[]; objective: string }) => Promise<string>,
   onStoryCreated: (story: Story) => void
 ) => {
   const { toast } = useToast();
-
-  // Child selection handler - fixed to ensure proper typing
-  const handleChildSelect = useCallback((childId: string) => {
-    if (!childId) return;
-    
-    console.log('[useSimpleStoryFormHandlers] Toggle child:', childId, 'Current selection:', selectedChildrenIds);
-    
-    // Use the functional updater with explicit typing
-    setSelectedChildrenIds((prev: string[]) => {
-      const isSelected = prev.includes(childId);
-      const newSelection = isSelected 
-        ? prev.filter(id => id !== childId) 
-        : [...prev, childId];
-      
-      console.log('[useSimpleStoryFormHandlers] New selection:', newSelection);
-      return newSelection;
-    });
-  }, [selectedChildrenIds, setSelectedChildrenIds]);
-
-  // Objective selection handler
-  const handleObjectiveSelect = useCallback((objective: string) => {
-    console.log('[useSimpleStoryFormHandlers] Select objective:', objective);
-    setSelectedObjective(objective);
-  }, [setSelectedObjective]);
-
-  // Form submission handler
-  const handleFormSubmit = useCallback(async (event: React.FormEvent) => {
-    // Prevent default form behavior
-    event.preventDefault();
-    
-    console.log('[useSimpleStoryFormHandlers] Form submitted');
-    
-    if (isSubmitting) {
-      console.log('[useSimpleStoryFormHandlers] Submission already in progress, cancelling');
-      return;
-    }
-
+  
+  const handleFormSubmit = useCallback(async (
+    selectedChildrenIds: string[],
+    selectedObjective: string,
+    setIsSubmitting: (submitting: boolean) => void,
+    setFormError: (error: string | null) => void
+  ) => {
     try {
-      // Validate the form
-      const validation = validateForm();
-      if (!validation.isValid) {
-        console.error('[useSimpleStoryFormHandlers] Validation error:', validation.error);
-        setFormError(validation.error);
-        return;
-      }
-
-      // Start submission
       setIsSubmitting(true);
       setFormError(null);
-      
-      // Notify user
-      toast({
-        title: "Création en cours",
-        description: "Nous préparons votre histoire, veuillez patienter...",
-      });
-
-      // Call the API with explicit logging
-      console.log('[useSimpleStoryFormHandlers] Submitting data:', {
-        childrenIds: selectedChildrenIds,
-        objective: selectedObjective
-      });
       
       const storyId = await onSubmit({
         childrenIds: selectedChildrenIds,
         objective: selectedObjective
       });
       
-      console.log('[useSimpleStoryFormHandlers] Story created successfully, ID:', storyId);
-      
-      // Notify of intermediate success
-      toast({
-        title: "Histoire en préparation",
-        description: "Votre histoire est en cours de génération, vous serez redirigé(e) lorsqu'elle sera prête.",
-      });
-      
-      // Call success callback
-      if (onStoryCreated) {
-        onStoryCreated({
+      if (storyId && onStoryCreated) {
+        const tempStory: Story = {
           id: storyId,
-          // Temporary values while waiting for generation to complete
           title: "Histoire en cours de génération",
           preview: "Génération en cours...",
           childrenIds: selectedChildrenIds,
           createdAt: new Date(),
           status: 'pending',
-          story_text: "",
+          content: "", // CORRECTION: utiliser 'content' au lieu de 'story_text'
           story_summary: "",
           objective: selectedObjective
-        } as Story);
+        };
+        
+        onStoryCreated(tempStory);
       }
       
-      // Reset form
-      setSelectedChildrenIds([]);
-      setSelectedObjective('');
+      toast({
+        title: "Histoire créée",
+        description: "Votre histoire est en cours de génération",
+      });
+      
+      return storyId;
       
     } catch (error: any) {
-      console.error('[useSimpleStoryFormHandlers] Error during creation:', error);
-      setFormError(error?.message || "Une erreur est survenue lors de la création de l'histoire");
-      
+      setFormError(error?.message || "Erreur lors de la création");
       toast({
         title: "Erreur",
-        description: error?.message || "Une erreur est survenue pendant la création de l'histoire",
+        description: error?.message || "Erreur lors de la création",
         variant: "destructive",
       });
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
-  }, [
-    isSubmitting, 
-    validateForm, 
-    selectedChildrenIds, 
-    selectedObjective, 
-    onSubmit, 
-    onStoryCreated, 
-    toast,
-    setFormError,
-    setIsSubmitting,
-    setSelectedChildrenIds,
-    setSelectedObjective
-  ]);
-
-  // Calculate button disabled state
-  const isGenerateButtonDisabled = useMemo(() => {
-    const disabled = isSubmitting || selectedChildrenIds.length === 0 || !selectedObjective;
-    console.log('[useSimpleStoryFormHandlers] Button state:', { 
-      disabled, 
-      isSubmitting, 
-      childrenSelected: selectedChildrenIds.length > 0, 
-      objectiveSelected: !!selectedObjective 
-    });
-    return disabled;
-  }, [isSubmitting, selectedChildrenIds, selectedObjective]);
-
+  }, [onSubmit, onStoryCreated, toast]);
+  
   return {
-    handleChildSelect,
-    handleObjectiveSelect,
-    handleFormSubmit,
-    isGenerateButtonDisabled
+    handleFormSubmit
   };
 };

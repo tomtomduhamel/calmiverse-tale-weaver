@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -95,91 +96,42 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
       clearTimeout(initTimer);
       if (domCheckTimerRef.current) clearInterval(domCheckTimerRef.current);
     };
-  }, [forceInitialSelection, selectedChildrenIds]);
+  }, [selectedChildrenIds, forceInitialSelection]);
   
-  // Journalisation détaillée de l'état du formulaire
-  useEffect(() => {
-    console.log("[RobustDirectStoryForm] État du formulaire mis à jour:", {
-      selectedChildrenIds,
-      selectedObjective,
-      formError,
-      isSubmitting,
-      timestamp: new Date().toISOString()
-    });
-  }, [selectedChildrenIds, selectedObjective, formError, isSubmitting]);
+  // Gestionnaire pour la sélection d'objectif
+  const handleObjectiveSelect = useCallback((objective: string) => {
+    console.log("[RobustDirectStoryForm] Sélection d'objectif:", objective);
+    setSelectedObjective(objective);
+    setFormError(null); // Effacer les erreurs lors de modifications
+  }, []);
   
-  // Validation avec journalisation avancée et récupération DOM
+  // Validation robuste du formulaire
   const validateForm = useCallback(() => {
-    // Force la récupération des sélections DOM au moment de la validation
-    const selectedDomElements = document.querySelectorAll('[data-selected="true"]');
-    const domIds = Array.from(selectedDomElements)
-      .map(el => el.getAttribute('data-child-id'))
-      .filter(Boolean) as string[];
+    const currentIds = getSelectedIds();
     
-    // Fusion des sources d'IDs pour maximiser la fiabilité
-    let actualSelectedIds = [...selectedIdsRef.current];
-    
-    // Si l'état interne est vide mais que le DOM a des sélections, utiliser le DOM comme source de vérité
-    if (actualSelectedIds.length === 0 && domIds.length > 0) {
-      console.log("[RobustDirectStoryForm] Récupération d'état depuis le DOM pendant validation", domIds);
-      actualSelectedIds = [...domIds];
-      
-      // Mettre à jour l'état interne avec les sélections DOM
-      handleChildSelect(domIds[0]);
-    }
-    
-    console.log("[RobustDirectStoryForm] Validation du formulaire:", {
-      enfants: actualSelectedIds,
-      enfantsRef: selectedIdsRef.current,
-      enfantsDom: domIds,
-      objectif: selectedObjective,
-      tentative: submissionAttemptRef.current,
-      timestamp: new Date().toISOString()
+    console.log("[RobustDirectStoryForm] Validation avec:", {
+      selectedChildrenIds: currentIds,
+      selectedObjective,
+      submissionAttempt: submissionAttemptRef.current
     });
     
-    // Vérification des enfants avec priorité sur les sélections DOM
-    const effectiveChildrenIds = actualSelectedIds.length > 0 ? actualSelectedIds : domIds;
-    
-    if (!effectiveChildrenIds || effectiveChildrenIds.length === 0) {
-      console.error("[RobustDirectStoryForm] Validation échouée: aucun enfant sélectionné");
+    if (!currentIds || currentIds.length === 0) {
       return { isValid: false, error: "Veuillez sélectionner au moins un enfant pour créer une histoire" };
     }
     
-    // Vérification de l'objectif
     if (!selectedObjective) {
-      console.error("[RobustDirectStoryForm] Validation échouée: aucun objectif sélectionné");
       return { isValid: false, error: "Veuillez sélectionner un objectif pour l'histoire" };
     }
     
-    return { isValid: true, error: null, effectiveChildrenIds };
-  }, [selectedIdsRef, selectedObjective, handleChildSelect]);
+    return { isValid: true, error: null };
+  }, [getSelectedIds, selectedObjective]);
   
-  // Gestionnaire d'objectif
-  const handleObjectiveChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value;
-    console.log("[RobustDirectStoryForm] Objectif sélectionné:", value);
-    setSelectedObjective(value);
-    
-    // Effacer les erreurs liées à l'objectif
-    if (formError && formError.toLowerCase().includes('objectif')) {
-      setFormError(null);
-    }
-  }, [formError]);
-  
-  // Soumission sécurisée avec journalisation détaillée et capture DOM
+  // Gestionnaire de soumission avec mécanismes de sauvegarde
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Incrémenter le compteur de tentatives
     submissionAttemptRef.current += 1;
-    
-    console.log("[RobustDirectStoryForm] Soumission du formulaire tentative #", 
-      submissionAttemptRef.current, {
-        enfantsUI: selectedChildrenIds,
-        enfantsRef: selectedIdsRef.current,
-        objectif: selectedObjective
-      }
-    );
+    console.log(`[RobustDirectStoryForm] Tentative de soumission #${submissionAttemptRef.current}`);
     
     if (isSubmitting) {
       console.log("[RobustDirectStoryForm] Soumission déjà en cours, ignorée");
@@ -187,89 +139,60 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
     }
     
     try {
-      // Analyse du DOM pour trouver les enfants sélectionnés visuellement
-      const selectedDomElements = document.querySelectorAll('[data-selected="true"]');
-      const domSelectedIds = Array.from(selectedDomElements)
-        .map(el => el.getAttribute('data-child-id'))
-        .filter(Boolean) as string[];
-      
-      console.log("[RobustDirectStoryForm] Éléments DOM sélectionnés:", {
-        count: selectedDomElements.length,
-        ids: domSelectedIds
-      });
-      
-      // Dernière vérification pour s'assurer de la cohérence des sélections
-      // avec priorité sur les sélections DOM si l'état interne est vide
-      const validation = validateForm();
-      if (!validation.isValid) {
-        setFormError(validation.error);
-        toast({
-          title: "Erreur",
-          description: validation.error || "Veuillez vérifier le formulaire",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Utiliser les IDs effectifs identifiés par validateForm
-      const finalSelectedIds = validation.effectiveChildrenIds || 
-                              (selectedChildrenIds.length > 0 ? selectedChildrenIds : domSelectedIds);
-      
-      if (!finalSelectedIds || finalSelectedIds.length === 0) {
-        console.error("[RobustDirectStoryForm] Erreur critique: aucun enfant sélectionné après validation");
-        setFormError("Veuillez sélectionner au moins un enfant pour créer une histoire");
-        return;
-      }
-      
-      console.log("[RobustDirectStoryForm] IDs finaux pour soumission:", finalSelectedIds);
-      
-      // Début de la soumission
       setIsSubmitting(true);
       setFormError(null);
       
-      toast({
-        title: "Création en cours",
-        description: "Nous préparons votre histoire, veuillez patienter...",
-      });
+      // Force une nouvelle analyse du DOM avant validation
+      forceInitialSelection();
+      const currentIds = getSelectedIds();
       
-      // Appel API avec données cohérentes garanties
+      console.log("[RobustDirectStoryForm] IDs finaux pour soumission:", currentIds);
+      
+      // Validation avec les IDs actuels
+      const validation = validateForm();
+      if (!validation.isValid) {
+        setFormError(validation.error);
+        return;
+      }
+      
+      // Préparer les données pour l'API
       const formData = {
-        childrenIds: finalSelectedIds,
+        childrenIds: currentIds,
         objective: selectedObjective
       };
       
-      console.log("[RobustDirectStoryForm] Données soumises:", formData);
+      console.log("[RobustDirectStoryForm] Soumission des données:", formData);
       
+      // Appeler l'API
       const storyId = await onSubmit(formData);
-      console.log("[RobustDirectStoryForm] Histoire créée avec ID:", storyId);
       
-      toast({
-        title: "Histoire en préparation",
-        description: "Votre histoire est en cours de génération, vous serez redirigé(e) lorsqu'elle sera prête.",
-      });
+      console.log("[RobustDirectStoryForm] Histoire créée avec succès, ID:", storyId);
       
-      if (onStoryCreated) {
-        onStoryCreated({
+      // Créer une histoire temporaire pour la navigation
+      if (storyId && onStoryCreated) {
+        const tempStory: Story = {
           id: storyId,
           title: "Histoire en cours de génération",
           preview: "Génération en cours...",
-          childrenIds: finalSelectedIds,
+          childrenIds: currentIds,
           createdAt: new Date(),
           status: 'pending',
-          story_text: "",
+          content: "", // CORRECTION: utiliser 'content' au lieu de 'story_text'
           story_summary: "",
           objective: selectedObjective
-        } as Story);
+        };
+        
+        onStoryCreated(tempStory);
       }
       
       // Réinitialiser le formulaire
       setSelectedObjective("");
-      selectedIdsRef.current = [];
-      setFormError(null);
       
-      console.log("[RobustDirectStoryForm] Soumission réussie");
+      toast({
+        title: "Histoire créée",
+        description: "Votre histoire est en cours de génération",
+      });
       
-      return storyId;
     } catch (error: any) {
       console.error("[RobustDirectStoryForm] Erreur lors de la soumission:", error);
       setFormError(error?.message || "Une erreur est survenue lors de la création de l'histoire");
@@ -279,196 +202,145 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
         description: error?.message || "Une erreur est survenue",
         variant: "destructive",
       });
-      
-      throw error;
     } finally {
       setIsSubmitting(false);
     }
   }, [
-    selectedChildrenIds,
-    selectedIdsRef,
-    selectedObjective,
     isSubmitting,
     validateForm,
-    toast,
+    selectedObjective,
     onSubmit,
-    onStoryCreated
+    onStoryCreated,
+    forceInitialSelection,
+    getSelectedIds,
+    toast
   ]);
   
-  // Gestion de la création d'enfant
-  const handleCreateChildClick = useCallback(() => {
-    setShowChildForm(true);
-  }, []);
-  
-  // Fonction modifiée pour s'adapter à la nouvelle signature
-  const handleAddChild = useCallback(async () => {
+  // Gestionnaire pour la création d'enfant
+  const handleCreateChild = useCallback(async () => {
     try {
-      if (!childName || !childAge) {
-        throw new Error("Le nom et l'âge de l'enfant sont requis");
-      }
-      
-      // Calcul de la date de naissance à partir de l'âge
-      const today = new Date();
-      const birthYear = today.getFullYear() - parseInt(childAge);
-      const birthDate = new Date(birthYear, today.getMonth(), today.getDate());
-      
-      const newChild: Omit<Child, "id"> = {
+      const childData = {
         name: childName,
-        birthDate: birthDate,
-        authorId: "current-user", // Sera remplacé par l'API
+        birthDate: new Date(new Date().getFullYear() - parseInt(childAge), 0, 1),
+        teddyName: "",
+        teddyDescription: "",
+        imaginaryWorld: "",
+        interests: [],
+        gender: "unknown" as const
       };
       
-      const childId = await onCreateChild(newChild);
-      console.log("[RobustDirectStoryForm] Nouvel enfant créé avec ID:", childId);
+      const newChildId = await onCreateChild(childData);
+      console.log("[RobustDirectStoryForm] Enfant créé avec ID:", newChildId);
       
-      // Sélectionner automatiquement le nouvel enfant
-      handleChildSelect(childId);
-      
-      // Réinitialiser le formulaire et le fermer
+      // Réinitialiser le formulaire enfant
       setChildName("");
       setChildAge("5");
       setShowChildForm(false);
       
       toast({
         title: "Enfant ajouté",
-        description: `${childName} a été ajouté avec succès`,
+        description: "Le profil enfant a été créé avec succès",
       });
-    } catch (error: any) {
-      console.error("[RobustDirectStoryForm] Erreur lors de l'ajout de l'enfant:", error);
       
+    } catch (error: any) {
+      console.error("[RobustDirectStoryForm] Erreur lors de la création d'enfant:", error);
       toast({
         title: "Erreur",
-        description: error?.message || "Une erreur est survenue lors de l'ajout de l'enfant",
+        description: "Impossible de créer le profil enfant",
         variant: "destructive",
       });
     }
-  }, [childName, childAge, onCreateChild, handleChildSelect, toast]);
+  }, [childName, childAge, onCreateChild, toast]);
   
-  // Calculer si le bouton doit être désactivé
-  const isGenerateButtonDisabled = 
-    isSubmitting || 
-    (selectedChildrenIds.length === 0 && document.querySelectorAll('[data-selected="true"]').length === 0) || 
-    !selectedObjective;
+  // Calculer l'état du bouton
+  const isButtonDisabled = isSubmitting || selectedChildrenIds.length === 0 || !selectedObjective;
   
   return (
-    <div className="w-full animate-fade-in">
-      <ScrollArea className={isMobile ? "h-[calc(100vh-180px)]" : "h-auto max-h-[800px]"}>
-        <form 
-          onSubmit={handleSubmit}
-          className="space-y-8 bg-card shadow-card rounded-xl p-6 sm:p-8 mx-auto max-w-4xl"
-          data-testid="robust-story-form"
-        >
-          <div className="text-center mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-primary">Créer une histoire</h1>
-            <p className="text-muted-foreground mt-2">
-              Personnalisez une histoire magique pour un moment spécial
-            </p>
+    <div className="w-full max-w-4xl mx-auto p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold text-center mb-6 text-primary">
+          Créer une histoire personnalisée
+        </h2>
+        
+        {formError && (
+          <div className="bg-destructive/10 border-l-4 border-destructive p-4 mb-6 rounded">
+            <p className="text-destructive">{formError}</p>
           </div>
-          
-          {/* Afficher les erreurs */}
-          {formError && (
-            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 animate-pulse">
-              <p className="text-destructive font-medium">{formError}</p>
-            </div>
-          )}
-          
-          {/* Sélection d'enfant robuste */}
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Sélecteur d'enfants robuste */}
           <RobustChildSelector
             children={children}
             selectedChildrenIds={selectedChildrenIds}
             onChildSelect={handleChildSelect}
-            onCreateChildClick={handleCreateChildClick}
-            hasError={formError?.toLowerCase().includes('enfant')}
+            onCreateChild={() => setShowChildForm(true)}
           />
           
-          {/* Sélection d'objectif */}
-          <div className="space-y-2">
-            <div className={cn(
-              "text-secondary dark:text-white text-lg font-medium",
-              formError?.toLowerCase().includes('objectif') ? "text-destructive" : ""
-            )}>
-              Quel est l'objectif de cette histoire ?
-              {formError?.toLowerCase().includes('objectif') && <span className="ml-2 text-sm text-destructive">*</span>}
-            </div>
+          {/* Sélecteur d'objectifs */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Quel est l'objectif de cette histoire ?</h3>
             
-            <select
-              value={selectedObjective}
-              onChange={handleObjectiveChange}
-              className={cn(
-                "w-full p-3 rounded-md border bg-white dark:bg-muted font-medium text-secondary",
-                formError?.toLowerCase().includes('objectif') ? "border-destructive" : "border-input",
-              )}
-              data-testid="objective-select"
-              disabled={isSubmitting}
-            >
-              <option value="">Choisir un objectif...</option>
-              {objectives.map(objective => (
-                <option key={objective.value} value={objective.value}>
-                  {objective.label}
-                </option>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {objectives.map((objective) => (
+                <div
+                  key={objective.id}
+                  className={cn(
+                    "p-4 border rounded-lg cursor-pointer transition-colors",
+                    selectedObjective === objective.value
+                      ? "bg-primary/10 border-primary"
+                      : "hover:bg-muted/50 border-border"
+                  )}
+                  onClick={() => handleObjectiveSelect(objective.value)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={cn(
+                      "w-4 h-4 rounded-full border-2",
+                      selectedObjective === objective.value
+                        ? "bg-primary border-primary"
+                        : "border-gray-300"
+                    )}>
+                      {selectedObjective === objective.value && (
+                        <div className="w-full h-full rounded-full bg-primary"></div>
+                      )}
+                    </div>
+                    <span className="font-medium">{objective.label}</span>
+                  </div>
+                </div>
               ))}
-            </select>
+            </div>
           </div>
           
           {/* Bouton de soumission */}
-          <div className="pt-4">
-            <Button
-              type="submit"
-              className={cn(
-                "w-full py-6 text-lg font-semibold transition-all",
-                isGenerateButtonDisabled ? "opacity-70" : "hover:shadow-lg"
-              )}
-              disabled={isGenerateButtonDisabled}
-              data-testid="generate-story-button"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Génération en cours...
-                </span>
-              ) : "Générer l'histoire"}
-            </Button>
-          </div>
-          
-          {/* Déboggage - uniquement visible en développement */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-8 p-3 bg-muted/30 rounded-lg text-xs">
-              <h4 className="font-bold mb-1 text-muted-foreground">Débogage</h4>
-              <pre className="overflow-auto max-h-32 text-muted-foreground/70">
-                {JSON.stringify({
-                  selectedChildrenIds,
-                  selectedIdsRef: selectedIdsRef.current,
-                  domSelectedCount: document.querySelectorAll('[data-selected="true"]').length,
-                  domSelectedIds: Array.from(document.querySelectorAll('[data-selected="true"]'))
-                    .map(el => el.getAttribute('data-child-id')),
-                  selectedObjective,
-                  formError,
-                  isSubmitting,
-                  submissionAttempts: submissionAttemptRef.current
-                }, null, 2)}
-              </pre>
-            </div>
-          )}
+          <Button
+            type="submit"
+            className="w-full py-6 text-lg font-semibold"
+            disabled={isButtonDisabled}
+          >
+            {isSubmitting ? (
+              <>
+                <div className="mr-2 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+                Création en cours...
+              </>
+            ) : (
+              <>
+                ✨ Générer l'histoire
+              </>
+            )}
+          </Button>
         </form>
-      </ScrollArea>
-      
-      {/* Dialog pour création d'enfant */}
-      <CreateChildDialog
-        open={showChildForm}
-        onOpenChange={setShowChildForm}
-        childName={childName}
-        childAge={childAge}
-        onSubmit={handleAddChild}
-        onReset={() => {
-          setChildName("");
-          setChildAge("5");
-        }}
-        onChildNameChange={setChildName}
-        onChildAgeChange={setChildAge}
-      />
+        
+        {/* Dialog pour créer un enfant */}
+        <CreateChildDialog
+          isOpen={showChildForm}
+          onClose={() => setShowChildForm(false)}
+          childName={childName}
+          setChildName={setChildName}
+          childAge={childAge}
+          setChildAge={setChildAge}
+          onCreateChild={handleCreateChild}
+        />
+      </div>
     </div>
   );
 };

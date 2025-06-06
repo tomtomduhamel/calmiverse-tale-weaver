@@ -1,151 +1,64 @@
 
 import { useCallback } from "react";
-import { useNotificationCenter } from "@/hooks/useNotificationCenter";
+import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@/types/story";
 
-interface UseFormSubmissionProps {
-  selectedChildrenIds: string[];
-  selectedObjective: string;
-  isSubmitting: boolean;
-  setError: (error: string | null) => void;
-  setIsSubmitting: (isSubmitting: boolean) => void;
-  resetForm: () => void;
-  validateForm: () => { isValid: boolean; error: string | null };
-  onSubmit: (formData: { childrenIds: string[], objective: string }) => Promise<string>;
-  onStoryCreated: (story: Story) => void;
-  updateDebugInfo: (info: Record<string, any>) => void;
-}
-
-/**
- * Hook optimisé pour gérer la soumission du formulaire
- */
-export function useFormSubmission({
-  selectedChildrenIds,
-  selectedObjective,
-  isSubmitting,
-  setError,
-  setIsSubmitting,
-  resetForm,
-  validateForm,
-  onSubmit,
-  onStoryCreated,
-  updateDebugInfo
-}: UseFormSubmissionProps) {
-  const { notifySuccess, notifyError, notifyInfo } = useNotificationCenter();
+export const useFormSubmission = (
+  onSubmit: (formData: { childrenIds: string[]; objective: string }) => Promise<string>,
+  onStoryCreated: (story: Story) => void
+) => {
+  const { toast } = useToast();
   
-  // Gestionnaire de soumission optimisé
-  const handleFormSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("[useFormSubmission] handleFormSubmit called");
-    
-    // Éviter les soumissions multiples
-    if (isSubmitting) {
-      console.warn("[useFormSubmission] Form already submitting, ignoring duplicate submission");
-      return;
-    }
-    
+  const handleSubmission = useCallback(async (
+    selectedChildrenIds: string[],
+    selectedObjective: string,
+    setIsSubmitting: (loading: boolean) => void,
+    setFormError: (error: string | null) => void
+  ) => {
     try {
-      // Valider le formulaire
-      const validation = validateForm();
-      if (!validation.isValid) {
-        console.error("[useFormSubmission] Form validation failed:", validation.error);
-        setError(validation.error);
-        notifyError(
-          "Erreur de validation", 
-          validation.error || "Veuillez vérifier le formulaire"
-        );
-        return;
-      }
-      
-      // Commencer la soumission
-      console.log("[useFormSubmission] Form validation passed, starting submission");
       setIsSubmitting(true);
-      setError(null);
+      setFormError(null);
       
-      // Notifier l'utilisateur
-      notifyInfo(
-        "Création en cours", 
-        "Nous préparons votre histoire, veuillez patienter..."
-      );
-      
-      // Journaliser les données soumises
-      console.log("[useFormSubmission] Submitting data:", {
-        childrenIds: selectedChildrenIds,
-        objective: selectedObjective,
-        childrenCount: selectedChildrenIds.length
-      });
-      
-      updateDebugInfo({
-        submissionTimestamp: new Date().toISOString(),
-        submittedChildrenIds: [...selectedChildrenIds],
-        submittedObjective: selectedObjective
-      });
-      
-      // Appeler l'API
       const storyId = await onSubmit({
         childrenIds: selectedChildrenIds,
         objective: selectedObjective
       });
       
-      console.log("[useFormSubmission] Story created successfully, ID:", storyId);
-      
-      // Notification de succès
-      notifySuccess(
-        "Histoire en préparation",
-        "Votre histoire est en cours de génération, vous serez notifié(e) lorsqu'elle sera prête."
-      );
-      
-      // Appeler le callback de succès
-      if (onStoryCreated && storyId) {
-        onStoryCreated({
+      if (storyId && onStoryCreated) {
+        const tempStory: Story = {
           id: storyId,
           title: "Histoire en cours de génération",
           preview: "Génération en cours...",
           childrenIds: selectedChildrenIds,
           createdAt: new Date(),
           status: 'pending',
-          story_text: "",
+          content: "", // CORRECTION: utiliser 'content' au lieu de 'story_text'
           story_summary: "",
           objective: selectedObjective
-        } as Story);
+        };
+        
+        onStoryCreated(tempStory);
       }
       
-      // Réinitialiser le formulaire
-      resetForm();
+      toast({
+        title: "Histoire créée",
+        description: "Votre histoire est en cours de génération",
+      });
       
       return storyId;
-    } catch (error: any) {
-      console.error("[useFormSubmission] Error during submission:", error);
-      setError(error?.message || "Une erreur est survenue lors de la création de l'histoire");
       
-      notifyError(
-        "Erreur",
-        error?.message || "Une erreur est survenue pendant la création de l'histoire"
-      );
-
-      updateDebugInfo({
-        errorTimestamp: new Date().toISOString(),
-        errorMessage: error?.message || "Unknown error",
-        errorStack: error?.stack || null
+    } catch (error: any) {
+      setFormError(error?.message || "Erreur lors de la création de l'histoire");
+      toast({
+        title: "Erreur",
+        description: error?.message || "Erreur lors de la création de l'histoire",
+        variant: "destructive",
       });
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
-  }, [
-    isSubmitting,
-    selectedChildrenIds,
-    selectedObjective,
-    setError,
-    setIsSubmitting,
-    resetForm,
-    validateForm,
-    onSubmit,
-    onStoryCreated,
-    updateDebugInfo,
-    notifySuccess,
-    notifyError,
-    notifyInfo
-  ]);
-
-  return { handleFormSubmit };
-}
+  }, [onSubmit, onStoryCreated, toast]);
+  
+  return { handleSubmission };
+};
