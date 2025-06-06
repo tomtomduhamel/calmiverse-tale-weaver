@@ -54,7 +54,7 @@ export const useStoryOperations = (
             childrenNames: result.storyData.childrennames || childrenNames,
             createdAt: new Date(result.storyData.createdat),
             status: result.storyData.status,
-            story_text: result.storyData.content,
+            content: result.storyData.content, // CORRECTION: utiliser 'content' au lieu de 'story_text'
             story_summary: result.storyData.summary,
             error: result.storyData.error || null,
             updatedAt: new Date(result.storyData.updatedat)

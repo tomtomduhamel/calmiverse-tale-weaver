@@ -168,7 +168,7 @@ export const useUnifiedStoryForm = (
           childrenIds: selectedChildrenIds,
           createdAt: new Date(),
           status: 'pending',
-          story_text: "",
+          content: "", // CORRECTION: utiliser 'content' au lieu de 'story_text'
           story_summary: "",
           objective: selectedObjective
         } as Story);

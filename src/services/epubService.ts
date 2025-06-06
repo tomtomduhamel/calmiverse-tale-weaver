@@ -46,11 +46,15 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
     console.log("🔍 Test de connectivité de la fonction Edge...");
     
     try {
+      // CORRECTION: Utiliser les URLs publiques au lieu des propriétés protégées
+      const supabaseUrl = 'https://ioeihnoxvtpxtqhxklpw.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro';
+      
       // Appel de test simple pour vérifier que la fonction Edge est accessible
-      const testResponse = await fetch(`${supabase.supabaseUrl}/functions/v1/upload-epub`, {
+      const testResponse = await fetch(`${supabaseUrl}/functions/v1/upload-epub`, {
         method: 'OPTIONS',
         headers: {
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
         }
       });
       console.log("✅ Fonction Edge accessible, statut test:", testResponse.status);

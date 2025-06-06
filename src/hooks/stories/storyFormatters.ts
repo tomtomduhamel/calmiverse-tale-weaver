@@ -16,7 +16,7 @@ export function formatStoryFromSupabase(story: any): Story {
     childrenNames: story.childrennames || [],
     createdAt: new Date(story.createdat),
     status: story.status || 'completed',
-    story_text: story.content || '',
+    content: story.content || '', // CORRECTION: utiliser 'content' au lieu de 'story_text'
     story_summary: story.summary || '',
     authorId: story.authorid,
     error: story.error || null,

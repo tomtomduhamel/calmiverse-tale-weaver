@@ -167,7 +167,7 @@ const SimplifiedUnifiedCreator: React.FC<SimplifiedUnifiedCreatorProps> = ({
           childrenIds: validIds,
           createdAt: new Date(),
           status: 'pending',
-          story_text: "",
+          content: "", // CORRECTION: utiliser 'content' au lieu de 'story_text'
           story_summary: "",
           objective: validObjective
         };

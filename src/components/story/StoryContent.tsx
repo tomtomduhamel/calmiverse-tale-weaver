@@ -32,7 +32,7 @@ export const StoryContent: React.FC<StoryContentProps> = ({
         {/* Afficher le texte existant mais avec une opacité réduite */}
         <div className="opacity-30">
           <ReactMarkdown>
-            {story.story_text}
+            {story.content}
           </ReactMarkdown>
         </div>
       </div>
@@ -67,7 +67,7 @@ export const StoryContent: React.FC<StoryContentProps> = ({
           ),
         }}
       >
-        {story.story_text}
+        {story.content}
       </ReactMarkdown>
     </div>
   );
