@@ -43,7 +43,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
   // Calcul des métriques pour le défilement automatique
-  const wordCount = story?.story_text?.trim().split(/\s+/).length || 0;
+  const wordCount = story?.content?.trim().split(/\s+/).length || 0;
   
   // Récupération des paramètres utilisateur pour la synchronisation
   const { userSettings } = useUserSettings();
@@ -139,7 +139,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     return <EmptyStoryView onBack={handleBack} />;
   }
 
-  const readingTimeString = calculateReadingTime(story.story_text);
+  const readingTimeString = calculateReadingTime(story.content);
 
   return (
     <StoryReaderLayout isDarkMode={isDarkMode} scrollAreaRef={scrollAreaRef}>
