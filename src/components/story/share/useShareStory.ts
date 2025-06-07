@@ -2,9 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { emailSharingService } from '@/services/emailSharingService';
-import { kindleSharingService } from '@/services/kindleSharingService';
-import { optimizedEpubService } from '@/services/optimizedEpubService';
-import { useKindleUploadWithRetry } from '@/hooks/kindle/useKindleUploadWithRetry';
+import { useRobustKindleUpload } from '@/hooks/kindle/useRobustKindleUpload';
 
 export const useShareStory = (storyId: string, onClose: () => void) => {
   const [email, setEmail] = useState('');
@@ -12,8 +10,13 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   
-  // Hook pour l'upload avec retry
-  const { uploadProgress, isUploading, uploadEpubWithRetry, resetProgress } = useKindleUploadWithRetry();
+  // Utiliser le nouveau hook robuste pour Kindle
+  const { 
+    isUploading, 
+    uploadProgress, 
+    uploadToKindle, 
+    resetProgress 
+  } = useRobustKindleUpload();
 
   // Reset error when story ID changes
   useEffect(() => {
@@ -52,74 +55,13 @@ export const useShareStory = (storyId: string, onClose: () => void) => {
   };
 
   const handleKindleShare = async () => {
-    console.log('🚀 [ShareStory] Début partage Kindle optimisé pour:', storyId);
-    setIsLoading(true);
+    console.log('🚀 [ShareStory] Début partage Kindle robuste pour:', storyId);
     setError(null);
-    resetProgress();
     
-    try {
-      // Récupérer les données de l'histoire
-      const story = await kindleSharingService.getCompleteStoryData(storyId);
-      const userData = await kindleSharingService.getUserData(story.authorId);
-
-      if (!userData?.kindle_email) {
-        throw new Error("Aucun email Kindle configuré. Veuillez configurer votre email Kindle dans les paramètres.");
-      }
-
-      if (!kindleSharingService.validateKindleEmail(userData.kindle_email)) {
-        throw new Error("L'email Kindle configuré n'est pas valide. Veuillez le corriger dans les paramètres.");
-      }
-
-      // Utiliser le service optimisé avec retry
-      const epubUrl = await uploadEpubWithRetry(
-        optimizedEpubService.formatStoryForKindle(story, story.content),
-        story.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_'),
-        {
-          maxAttempts: 3,
-          baseDelay: 2000,
-          maxDelay: 15000,
-          timeoutMs: 45000
-        }
-      );
-
-      // Préparer les données pour le webhook N8N
-      const objectiveText = typeof story.objective === 'string' 
-        ? story.objective 
-        : story.objective?.name || story.objective?.value || '';
-
-      const webhookData = {
-        firstname: userData.firstname || "",
-        lastname: userData.lastname || "",
-        title: story.title,
-        content: story.content,
-        childrennames: story.childrenNames || [],
-        objective: objectiveText,
-        kindleEmail: userData.kindle_email,
-        epubUrl,
-        epubFilename: `${story.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_')}.epub`
-      };
-
-      // Envoyer au webhook N8N
-      await kindleSharingService.sendToKindleWebhook(webhookData);
-
-      toast({
-        title: "Envoi Kindle réussi",
-        description: `L'histoire "${story.title}" a été envoyée vers votre Kindle (${userData.kindle_email})`,
-      });
-
-    } catch (error) {
-      console.error('❌ [ShareStory] Erreur envoi Kindle:', error);
-      const errorMessage = error instanceof Error ? error.message : "Impossible d'envoyer l'histoire vers Kindle";
-      
-      setError(errorMessage);
-      
-      toast({
-        title: "Erreur Kindle",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+    const success = await uploadToKindle(storyId);
+    
+    if (!success) {
+      setError("Échec de l'envoi vers Kindle après plusieurs tentatives");
     }
   };
 

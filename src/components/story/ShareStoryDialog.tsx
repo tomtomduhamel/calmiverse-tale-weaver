@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import EmailShareForm from './share/EmailShareForm';
 import KindleShareButton from './share/KindleShareButton';
-import { KindleUploadProgressDialog } from '../kindle/KindleUploadProgressDialog';
+import { RobustKindleProgressDialog } from '../kindle/RobustKindleProgressDialog';
 import { useShareStory } from './share/useShareStory';
 
 interface ShareStoryDialogProps {
@@ -81,12 +81,11 @@ export const ShareStoryDialog = ({ storyId, isOpen, onClose }: ShareStoryDialogP
         </DialogContent>
       </Dialog>
 
-      <KindleUploadProgressDialog
+      <RobustKindleProgressDialog
         isOpen={showProgressDialog}
         onClose={handleProgressDialogClose}
         progress={uploadProgress}
         onRetry={handleRetry}
-        canRetry={uploadProgress?.step === 'error'}
       />
     </>
   );
