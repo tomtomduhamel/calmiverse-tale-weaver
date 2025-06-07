@@ -28,10 +28,12 @@ export const useKindleUploadDiagnostic = () => {
   const testConnectivity = useCallback(async () => {
     const startTime = Date.now();
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/upload-epub`, {
+      // Use the correct Supabase URL from the client configuration
+      const supabaseUrl = "https://ioeihnoxvtpxtqhxklpw.supabase.co";
+      const response = await fetch(`${supabaseUrl}/functions/v1/upload-epub`, {
         method: 'OPTIONS',
         headers: {
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro`,
         }
       });
       

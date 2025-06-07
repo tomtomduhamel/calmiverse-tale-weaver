@@ -17,6 +17,11 @@ interface UploadProgress {
   maxAttempts?: number;
 }
 
+interface SupabaseResponse {
+  data?: { url?: string };
+  error?: { message?: string };
+}
+
 const DEFAULT_CONFIG: RetryConfig = {
   maxAttempts: 3,
   baseDelay: 1000,
@@ -40,12 +45,12 @@ export const useKindleUploadWithRetry = () => {
     return Math.min(jitterDelay, config.maxDelay);
   };
 
-  const uploadWithTimeout = async (content: string, filename: string, timeoutMs: number) => {
+  const uploadWithTimeout = async (content: string, filename: string, timeoutMs: number): Promise<SupabaseResponse> => {
     return Promise.race([
       supabase.functions.invoke('upload-epub', {
         body: { content, filename }
-      }),
-      new Promise((_, reject) =>
+      }) as Promise<SupabaseResponse>,
+      new Promise<SupabaseResponse>((_, reject) =>
         setTimeout(() => reject(new Error('Upload timeout')), timeoutMs)
       )
     ]);
