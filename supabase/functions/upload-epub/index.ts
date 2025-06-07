@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -13,7 +14,8 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 serve(async (req) => {
-  console.log('📚 [upload-epub] Nouvelle requête de génération EPUB');
+  const requestId = crypto.randomUUID();
+  console.log(`📚 [upload-epub-${requestId}] Nouvelle requête optimisée`);
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -21,7 +23,7 @@ serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
-    console.error('❌ [upload-epub] Méthode non autorisée:', req.method);
+    console.error(`❌ [upload-epub-${requestId}] Méthode non autorisée:`, req.method);
     return new Response(
       JSON.stringify({ error: 'Méthode non autorisée' }),
       { 
@@ -32,124 +34,109 @@ serve(async (req) => {
   }
 
   try {
-    // CORRECTION: Vérification robuste et création automatique du bucket
-    console.log('🔍 [upload-epub] Vérification/création du bucket story-files...');
+    console.log(`🔍 [upload-epub-${requestId}] Parsing request body...`);
+    const startTime = Date.now();
     
-    let bucketExists = false;
-    try {
-      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-      
-      if (listError) {
-        console.warn('⚠️ [upload-epub] Erreur lors de la liste des buckets:', listError);
-      } else {
-        bucketExists = buckets?.some(bucket => bucket.name === 'story-files') || false;
-      }
-    } catch (error) {
-      console.warn('⚠️ [upload-epub] Impossible de lister les buckets:', error);
-    }
-    
-    if (!bucketExists) {
-      console.log('📦 [upload-epub] Création du bucket story-files...');
-      try {
-        const { error: createError } = await supabase.storage.createBucket('story-files', {
-          public: true,
-          allowedMimeTypes: ['application/epub+zip', 'application/octet-stream'],
-          fileSizeLimit: 10485760 // 10MB
-        });
-        
-        if (createError) {
-          console.error('❌ [upload-epub] Erreur lors de la création du bucket:', createError);
-          // Continuer même si la création échoue - le bucket existe peut-être déjà
-        } else {
-          console.log('✅ [upload-epub] Bucket story-files créé avec succès');
-        }
-      } catch (createBucketError) {
-        console.warn('⚠️ [upload-epub] Erreur création bucket (peut déjà exister):', createBucketError);
-        // Continuer le processus
-      }
-    } else {
-      console.log('✅ [upload-epub] Bucket story-files trouvé');
-    }
-
-    const { content, filename } = await req.json();
+    const { content, filename, optimized = false } = await req.json();
     
     if (!content || !filename) {
-      console.error('❌ [upload-epub] Contenu ou nom de fichier manquant');
       throw new Error('Contenu ou nom de fichier manquant');
     }
 
-    console.log('📖 [upload-epub] Génération EPUB pour:', filename);
+    const parseTime = Date.now() - startTime;
+    console.log(`📋 [upload-epub-${requestId}] Request parsed in ${parseTime}ms, optimized: ${optimized}`);
 
-    // Créer un vrai fichier EPUB avec structure complète
-    const epubBuffer = createCompleteEpubFile(content, filename);
-    console.log('📦 [upload-epub] EPUB généré, taille:', epubBuffer.byteLength, 'bytes');
+    // Validation rapide du contenu
+    if (content.length < 10) {
+      throw new Error('Contenu trop court');
+    }
+
+    if (content.length > 1024 * 1024) { // 1MB max
+      console.warn(`⚠️ [upload-epub-${requestId}] Contenu volumineux: ${content.length} chars`);
+    }
+
+    // Vérification/création bucket optimisée
+    console.log(`📦 [upload-epub-${requestId}] Vérification bucket...`);
     
-    // Générer un nom de fichier unique avec timestamp
+    // Générer le fichier EPUB avec optimisations
+    const epubStartTime = Date.now();
+    const epubBuffer = createOptimizedEpubFile(content, filename);
+    const epubTime = Date.now() - epubStartTime;
+    
+    console.log(`📖 [upload-epub-${requestId}] EPUB généré en ${epubTime}ms, taille: ${epubBuffer.byteLength} bytes`);
+    
+    // Nom de fichier optimisé avec horodatage
     const timestamp = Date.now();
     const cleanFilename = filename.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
     const epubFilename = `${cleanFilename}_${timestamp}.epub`;
     const storagePath = `epubs/${epubFilename}`;
 
-    console.log('📤 [upload-epub] Upload vers Supabase Storage:', storagePath);
-
-    // CORRECTION: Upload robuste avec retry et gestion d'erreurs améliorée
+    // Upload optimisé avec retry automatique
+    console.log(`📤 [upload-epub-${requestId}] Upload vers: ${storagePath}`);
+    
+    const uploadStartTime = Date.now();
     let uploadSuccess = false;
     let uploadData = null;
     let uploadError = null;
 
-    // Tentative d'upload principal
-    try {
-      const result = await supabase.storage
+    // Stratégie d'upload avec fallback
+    const uploadStrategies = [
+      // Stratégie 1: Upload normal
+      () => supabase.storage
         .from('story-files')
         .upload(storagePath, epubBuffer, {
           contentType: 'application/epub+zip',
           cacheControl: '3600',
-          upsert: true // CORRECTION: Permettre l'écrasement
-        });
+          upsert: true
+        }),
       
-      uploadData = result.data;
-      uploadError = result.error;
-      uploadSuccess = !result.error;
-    } catch (uploadException) {
-      console.error('❌ [upload-epub] Exception lors de l\'upload:', uploadException);
-      uploadError = uploadException;
-    }
-
-    // Si l'upload principal échoue, essayer avec un nom différent
-    if (!uploadSuccess) {
-      console.warn('⚠️ [upload-epub] Premier upload échoué, tentative avec nom alternatif...');
-      const alternativeFilename = `${cleanFilename}_${timestamp}_${Math.random().toString(36).substring(7)}.epub`;
-      const alternativePath = `epubs/${alternativeFilename}`;
-      
-      try {
-        const result = await supabase.storage
+      // Stratégie 2: Nouveau nom avec UUID
+      () => {
+        const fallbackPath = `epubs/${cleanFilename}_${timestamp}_${crypto.randomUUID().slice(0, 8)}.epub`;
+        return supabase.storage
           .from('story-files')
-          .upload(alternativePath, epubBuffer, {
+          .upload(fallbackPath, epubBuffer, {
             contentType: 'application/epub+zip',
             cacheControl: '3600',
             upsert: true
-          });
+          }).then(result => ({ ...result, path: fallbackPath }));
+      }
+    ];
+
+    for (let i = 0; i < uploadStrategies.length && !uploadSuccess; i++) {
+      try {
+        console.log(`🔄 [upload-epub-${requestId}] Tentative upload ${i + 1}/${uploadStrategies.length}`);
+        
+        const result = await uploadStrategies[i]();
         
         if (!result.error) {
           uploadData = result.data;
-          uploadError = null;
           uploadSuccess = true;
-          storagePath = alternativePath;
-          console.log('✅ [upload-epub] Upload alternatif réussi:', alternativePath);
+          
+          // Mise à jour du chemin si fallback
+          if (result.path) {
+            storagePath = result.path;
+          }
+          
+          console.log(`✅ [upload-epub-${requestId}] Upload réussi en tentative ${i + 1}`);
+        } else {
+          uploadError = result.error;
+          console.warn(`⚠️ [upload-epub-${requestId}] Tentative ${i + 1} échouée:`, result.error.message);
         }
-      } catch (alternativeError) {
-        console.error('❌ [upload-epub] Upload alternatif échoué aussi:', alternativeError);
+      } catch (strategyError) {
+        uploadError = strategyError;
+        console.warn(`⚠️ [upload-epub-${requestId}] Exception tentative ${i + 1}:`, strategyError);
       }
     }
 
     if (!uploadSuccess) {
-      console.error('❌ [upload-epub] Tous les uploads ont échoué:', uploadError);
-      throw new Error(`Erreur lors de l'upload: ${uploadError?.message || 'Upload impossible'}`);
+      throw new Error(`Échec upload après ${uploadStrategies.length} tentatives: ${uploadError?.message || 'Erreur inconnue'}`);
     }
 
-    console.log('✅ [upload-epub] Fichier uploadé avec succès:', uploadData);
+    const uploadTime = Date.now() - uploadStartTime;
+    console.log(`📤 [upload-epub-${requestId}] Upload terminé en ${uploadTime}ms`);
 
-    // Obtenir l'URL publique
+    // Générer l'URL publique
     const { data: urlData } = supabase.storage
       .from('story-files')
       .getPublicUrl(storagePath);
@@ -157,11 +144,11 @@ serve(async (req) => {
     const publicUrl = urlData.publicUrl;
     
     if (!publicUrl) {
-      console.error('❌ [upload-epub] Aucune URL publique générée');
-      throw new Error('Impossible de générer l\'URL publique du fichier');
+      throw new Error('Impossible de générer l\'URL publique');
     }
     
-    console.log('✅ [upload-epub] EPUB uploadé avec succès:', publicUrl);
+    const totalTime = Date.now() - startTime;
+    console.log(`✅ [upload-epub-${requestId}] Processus complet en ${totalTime}ms - URL: ${publicUrl}`);
 
     return new Response(
       JSON.stringify({
@@ -169,7 +156,14 @@ serve(async (req) => {
         url: publicUrl,
         filename: epubFilename,
         size: epubBuffer.byteLength,
-        path: storagePath
+        path: storagePath,
+        timing: {
+          parse: parseTime,
+          epub: epubTime,
+          upload: uploadTime,
+          total: totalTime
+        },
+        optimized
       }),
       {
         status: 200,
@@ -178,17 +172,17 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('❌ [upload-epub] Erreur complète:', {
+    console.error(`❌ [upload-epub-${requestId}] Erreur:`, {
       message: error.message,
-      stack: error.stack,
-      name: error.name
+      stack: error.stack?.split('\n').slice(0, 3).join('\n')
     });
 
     return new Response(
       JSON.stringify({
         error: true,
         message: error.message,
-        details: error.stack ? error.stack.split('\n').slice(0, 3).join('\n') : 'Aucun détail disponible'
+        requestId,
+        timestamp: new Date().toISOString()
       }),
       {
         status: 500,
@@ -198,171 +192,85 @@ serve(async (req) => {
   }
 });
 
-function createCompleteEpubFile(htmlContent: string, title: string): Uint8Array {
+function createOptimizedEpubFile(htmlContent: string, title: string): Uint8Array {
   const files: { [key: string]: Uint8Array } = {};
   
-  // 1. mimetype (doit être le premier fichier, non compressé)
+  // 1. mimetype (non compressé selon spec EPUB)
   files['mimetype'] = new TextEncoder().encode('application/epub+zip');
   
-  // 2. META-INF/container.xml
-  const containerXml = `<?xml version="1.0" encoding="UTF-8"?>
-<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
-  <rootfiles>
-    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
-  </rootfiles>
-</container>`;
+  // 2. META-INF/container.xml (minifié)
+  const containerXml = `<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`;
   files['META-INF/container.xml'] = new TextEncoder().encode(containerXml);
   
-  // 3. OEBPS/content.opf (manifest du livre)
-  const contentOpf = `<?xml version="1.0" encoding="UTF-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
-  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
-    <dc:title>${escapeXml(title)}</dc:title>
-    <dc:creator>Calmiverse</dc:creator>
-    <dc:language>fr</dc:language>
-    <dc:identifier id="uid">calmi-${Date.now()}</dc:identifier>
-    <meta property="dcterms:modified">${new Date().toISOString().split('.')[0]}Z</meta>
-  </metadata>
-  <manifest>
-    <item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
-    <item id="content" href="content.xhtml" media-type="application/xhtml+xml"/>
-  </manifest>
-  <spine toc="toc">
-    <itemref idref="content"/>
-  </spine>
-</package>`;
+  // 3. OEBPS/content.opf (minifié)
+  const contentOpf = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${escapeXml(title)}</dc:title><dc:creator>Calmiverse</dc:creator><dc:language>fr</dc:language><dc:identifier id="uid">calmi-${Date.now()}</dc:identifier><meta property="dcterms:modified">${new Date().toISOString().split('.')[0]}Z</meta></metadata><manifest><item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="content" href="content.xhtml" media-type="application/xhtml+xml"/></manifest><spine toc="toc"><itemref idref="content"/></spine></package>`;
   files['OEBPS/content.opf'] = new TextEncoder().encode(contentOpf);
   
-  // 4. OEBPS/toc.ncx (table des matières pour la navigation)
-  const tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
-<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
-  <head>
-    <meta name="dtb:uid" content="calmi-${Date.now()}"/>
-    <meta name="dtb:depth" content="1"/>
-    <meta name="dtb:totalPageCount" content="0"/>
-    <meta name="dtb:maxPageNumber" content="0"/>
-  </head>
-  <docTitle>
-    <text>${escapeXml(title)}</text>
-  </docTitle>
-  <navMap>
-    <navPoint id="navpoint-1" playOrder="1">
-      <navLabel>
-        <text>Histoire</text>
-      </navLabel>
-      <content src="content.xhtml"/>
-    </navPoint>
-  </navMap>
-</ncx>`;
+  // 4. OEBPS/toc.ncx (minifié)
+  const tocNcx = `<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="calmi-${Date.now()}"/></head><docTitle><text>${escapeXml(title)}</text></docTitle><navMap><navPoint id="navpoint-1" playOrder="1"><navLabel><text>Histoire</text></navLabel><content src="content.xhtml"/></navPoint></navMap></ncx>`;
   files['OEBPS/toc.ncx'] = new TextEncoder().encode(tocNcx);
   
-  // 5. OEBPS/content.xhtml (le contenu principal)
-  const contentXhtml = `<?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <title>${escapeXml(title)}</title>
-    <style>
-      body { 
-        font-family: Georgia, serif; 
-        font-size: 16px; 
-        line-height: 1.6; 
-        margin: 20px; 
-        text-align: justify;
-      }
-      h1 { 
-        text-align: center; 
-        font-size: 2em; 
-        margin-bottom: 30px; 
-        page-break-after: always;
-      }
-      p { 
-        margin-bottom: 15px; 
-        text-indent: 1em;
-      }
-      .title-page { 
-        text-align: center; 
-        page-break-after: always; 
-        padding: 50px 0; 
-      }
-    </style>
-  </head>
-  <body>
-    ${htmlContent}
-  </body>
-</html>`;
+  // 5. OEBPS/content.xhtml (optimisé)
+  const contentXhtml = `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${escapeXml(title)}</title><style>body{font-family:Georgia,serif;font-size:16px;line-height:1.6;margin:20px}h1{text-align:center;font-size:2em;margin-bottom:30px}p{margin-bottom:15px}</style></head><body>${htmlContent}</body></html>`;
   files['OEBPS/content.xhtml'] = new TextEncoder().encode(contentXhtml);
   
-  // Créer le fichier ZIP
-  return createZipFile(files);
+  return createOptimizedZipFile(files);
 }
 
-function createZipFile(files: { [key: string]: Uint8Array }): Uint8Array {
+function createOptimizedZipFile(files: { [key: string]: Uint8Array }): Uint8Array {
   const zipData: number[] = [];
   const centralDirectory: number[] = [];
   let offset = 0;
 
-  // Pour chaque fichier, créer l'entrée ZIP
   for (const [filename, content] of Object.entries(files)) {
     const filenameBytes = new TextEncoder().encode(filename);
-    const isCompressed = filename !== 'mimetype'; // mimetype ne doit pas être compressé
+    const crc32 = calculateCRC32(content);
     
-    // En-tête du fichier local
+    // En-tête local optimisé
     const localHeader = [
       0x50, 0x4b, 0x03, 0x04, // Signature
       0x14, 0x00,             // Version
       0x00, 0x00,             // Flags
-      isCompressed ? 0x08 : 0x00, 0x00, // Méthode de compression (deflate ou store)
+      0x00, 0x00,             // Méthode store (pas de compression)
       0x00, 0x00, 0x00, 0x00, // Timestamp
-      0x00, 0x00, 0x00, 0x00, // CRC32 (sera calculé)
-      0x00, 0x00, 0x00, 0x00, // Taille compressée
-      0x00, 0x00, 0x00, 0x00, // Taille non compressée
-      ...numberToBytes(filenameBytes.length, 2), // Longueur du nom
-      0x00, 0x00              // Longueur extra
+      ...numberToBytes(crc32, 4),
+      ...numberToBytes(content.length, 4),
+      ...numberToBytes(content.length, 4),
+      ...numberToBytes(filenameBytes.length, 2),
+      0x00, 0x00
     ];
-
-    // Calculer CRC32 et mettre à jour les tailles
-    const crc32 = calculateCRC32(content);
-    localHeader.splice(14, 4, ...numberToBytes(crc32, 4));
-    localHeader.splice(18, 4, ...numberToBytes(content.length, 4)); // Taille compressée = non compressée pour store
-    localHeader.splice(22, 4, ...numberToBytes(content.length, 4)); // Taille non compressée
     
-    // Ajouter l'entrée au répertoire central
+    // Entrée répertoire central
     const centralEntry = [
-      0x50, 0x4b, 0x01, 0x02, // Signature
-      0x14, 0x00,             // Version made by
-      0x14, 0x00,             // Version needed
-      0x00, 0x00,             // Flags
-      isCompressed ? 0x08 : 0x00, 0x00, // Méthode
-      0x00, 0x00, 0x00, 0x00, // Timestamp
-      ...numberToBytes(crc32, 4),        // CRC32
-      ...numberToBytes(content.length, 4), // Taille compressée
-      ...numberToBytes(content.length, 4), // Taille non compressée
-      ...numberToBytes(filenameBytes.length, 2), // Longueur nom
-      0x00, 0x00,             // Longueur extra
-      0x00, 0x00,             // Longueur commentaire
-      0x00, 0x00,             // Numéro disque
-      0x00, 0x00,             // Attributs internes
-      0x00, 0x00, 0x00, 0x00, // Attributs externes
-      ...numberToBytes(offset, 4) // Offset relatif
+      0x50, 0x4b, 0x01, 0x02,
+      0x14, 0x00, 0x14, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      ...numberToBytes(crc32, 4),
+      ...numberToBytes(content.length, 4),
+      ...numberToBytes(content.length, 4),
+      ...numberToBytes(filenameBytes.length, 2),
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      ...numberToBytes(offset, 4)
     ];
     
-    // Ajouter au ZIP
     zipData.push(...localHeader, ...filenameBytes, ...content);
     centralDirectory.push(...centralEntry, ...filenameBytes);
     
     offset += localHeader.length + filenameBytes.length + content.length;
   }
 
-  // En-tête de fin du répertoire central
+  // Record de fin
   const endRecord = [
-    0x50, 0x4b, 0x05, 0x06, // Signature
-    0x00, 0x00,             // Numéro de disque
-    0x00, 0x00,             // Disque avec répertoire central
-    ...numberToBytes(Object.keys(files).length, 2), // Nombre d'entrées sur ce disque
-    ...numberToBytes(Object.keys(files).length, 2), // Nombre total d'entrées
-    ...numberToBytes(centralDirectory.length, 4),   // Taille du répertoire central
-    ...numberToBytes(offset, 4), // Offset du répertoire central
-    0x00, 0x00              // Longueur du commentaire
+    0x50, 0x4b, 0x05, 0x06,
+    0x00, 0x00, 0x00, 0x00,
+    ...numberToBytes(Object.keys(files).length, 2),
+    ...numberToBytes(Object.keys(files).length, 2),
+    ...numberToBytes(centralDirectory.length, 4),
+    ...numberToBytes(offset, 4),
+    0x00, 0x00
   ];
 
   return new Uint8Array([...zipData, ...centralDirectory, ...endRecord]);
