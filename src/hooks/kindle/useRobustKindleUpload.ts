@@ -11,6 +11,7 @@ interface RobustUploadProgress {
   progress: number;
   message: string;
   details?: string;
+  bucketUsed?: string;
 }
 
 export const useRobustKindleUpload = () => {
@@ -63,32 +64,42 @@ export const useRobustKindleUpload = () => {
       updateProgress({
         step: 'uploading',
         progress: 50,
-        message: 'Upload vers le stockage...',
-        details: 'Envoi du fichier EPUB vers Supabase Storage'
+        message: 'Sélection du bucket optimal...',
+        details: 'Recherche du meilleur bucket de stockage disponible'
       });
 
-      // 3. S'assurer que le bucket existe
-      await robustStorageUpload.ensureBucketExists('epub-files');
+      // 3. Sélectionner automatiquement le meilleur bucket
+      const selectedBucket = await robustStorageUpload.selectBestBucket();
+      console.log('🎯 [RobustKindle] Bucket sélectionné:', selectedBucket);
 
-      // 4. Upload vers Supabase Storage
+      updateProgress({
+        progress: 60,
+        message: 'Upload vers le stockage...',
+        details: `Envoi vers le bucket ${selectedBucket} avec système de fallback`
+      });
+
+      // 4. Upload vers Supabase Storage avec fallback automatique
       const cleanTitle = story.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
       const filename = `${cleanTitle}.epub`;
       
       const uploadResult = await robustStorageUpload.uploadFile(
         epubResult.blob,
         filename,
-        'epub-files'
+        selectedBucket
       );
 
       if (!uploadResult.success || !uploadResult.url) {
         throw new Error(uploadResult.error || 'Erreur upload Storage');
       }
 
+      console.log('✅ [RobustKindle] Upload réussi avec bucket:', uploadResult.bucketUsed);
+
       updateProgress({
         step: 'sending',
         progress: 80,
         message: 'Envoi vers Kindle...',
-        details: 'Transmission à N8N pour envoi par email'
+        details: `Transmission à N8N (fichier uploadé dans ${uploadResult.bucketUsed})`,
+        bucketUsed: uploadResult.bucketUsed
       });
 
       // 5. Préparer les données pour le webhook
@@ -115,7 +126,8 @@ export const useRobustKindleUpload = () => {
         step: 'completed',
         progress: 100,
         message: 'Envoi terminé avec succès!',
-        details: `L'histoire "${story.title}" a été envoyée vers ${userData.kindle_email}`
+        details: `L'histoire "${story.title}" a été envoyée vers ${userData.kindle_email}`,
+        bucketUsed: uploadResult.bucketUsed
       });
 
       toast({

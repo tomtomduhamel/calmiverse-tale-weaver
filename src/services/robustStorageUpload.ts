@@ -5,89 +5,104 @@ export interface UploadResult {
   success: boolean;
   url?: string;
   error?: string;
+  bucketUsed?: string;
 }
 
 export const robustStorageUpload = {
   /**
-   * Upload un fichier vers Supabase Storage avec retry automatique
+   * Upload un fichier vers Supabase Storage avec retry automatique et fallback de bucket
    */
   async uploadFile(
     blob: Blob, 
     filename: string, 
-    bucketName: string = 'epub-files'
+    preferredBucket: string = 'epub-files'
   ): Promise<UploadResult> {
     console.log('📤 [RobustUpload] Début upload vers Storage:', filename);
     
     const maxAttempts = 3;
+    const fallbackBuckets = ['epub-files', 'story-files']; // Liste des buckets à essayer
     let lastError: Error | null = null;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        console.log(`📤 [RobustUpload] Tentative ${attempt}/${maxAttempts}`);
-        
-        // Créer un nom de fichier unique avec timestamp
-        const timestamp = Date.now();
-        const uniqueFilename = `${timestamp}-${filename}`;
-        
-        // Upload vers Supabase Storage
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .upload(uniqueFilename, blob, {
-            cacheControl: '3600',
-            upsert: false // Toujours créer un nouveau fichier
-          });
+    // Assurer que le bucket préféré est en premier
+    const bucketsToTry = [preferredBucket, ...fallbackBuckets.filter(b => b !== preferredBucket)];
 
-        if (error) {
-          throw new Error(`Erreur Storage: ${error.message}`);
-        }
+    for (const bucketName of bucketsToTry) {
+      console.log(`🪣 [RobustUpload] Tentative avec bucket: ${bucketName}`);
+      
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          console.log(`📤 [RobustUpload] Bucket ${bucketName} - Tentative ${attempt}/${maxAttempts}`);
+          
+          // Créer un nom de fichier unique avec timestamp
+          const timestamp = Date.now();
+          const uniqueFilename = `${timestamp}-${filename}`;
+          
+          // Upload vers Supabase Storage
+          const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(uniqueFilename, blob, {
+              cacheControl: '3600',
+              upsert: false // Toujours créer un nouveau fichier
+            });
 
-        if (!data?.path) {
-          throw new Error('Aucun path retourné par Storage');
-        }
+          if (error) {
+            // Erreur spécifique au bucket
+            if (error.message.includes('Bucket not found') || error.message.includes('bucket does not exist')) {
+              console.warn(`⚠️ [RobustUpload] Bucket ${bucketName} introuvable, tentative suivante...`);
+              break; // Passer au bucket suivant
+            }
+            throw new Error(`Erreur Storage (${bucketName}): ${error.message}`);
+          }
 
-        // Obtenir l'URL publique
-        const { data: urlData } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(data.path);
+          if (!data?.path) {
+            throw new Error(`Aucun path retourné par Storage (${bucketName})`);
+          }
 
-        if (!urlData?.publicUrl) {
-          throw new Error('Impossible d\'obtenir l\'URL publique');
-        }
+          // Obtenir l'URL publique
+          const { data: urlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(data.path);
 
-        console.log('✅ [RobustUpload] Upload réussi:', urlData.publicUrl);
-        
-        return {
-          success: true,
-          url: urlData.publicUrl
-        };
+          if (!urlData?.publicUrl) {
+            throw new Error(`Impossible d'obtenir l'URL publique (${bucketName})`);
+          }
 
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        console.warn(`⚠️ [RobustUpload] Tentative ${attempt} échouée:`, lastError.message);
-        
-        if (attempt < maxAttempts) {
-          // Délai exponentiel entre les tentatives
-          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-          console.log(`⏳ [RobustUpload] Attente ${delay}ms avant nouvelle tentative`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          console.log(`✅ [RobustUpload] Upload réussi avec bucket ${bucketName}:`, urlData.publicUrl);
+          
+          return {
+            success: true,
+            url: urlData.publicUrl,
+            bucketUsed: bucketName
+          };
+
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          console.warn(`⚠️ [RobustUpload] Bucket ${bucketName} - Tentative ${attempt} échouée:`, lastError.message);
+          
+          if (attempt < maxAttempts) {
+            // Délai exponentiel entre les tentatives
+            const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+            console.log(`⏳ [RobustUpload] Attente ${delay}ms avant nouvelle tentative`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
         }
       }
     }
 
-    console.error('❌ [RobustUpload] Échec après toutes les tentatives:', lastError?.message);
+    console.error('❌ [RobustUpload] Échec après toutes les tentatives avec tous les buckets:', lastError?.message);
     
     return {
       success: false,
-      error: lastError?.message || 'Erreur d\'upload inconnue'
+      error: lastError?.message || 'Erreur d\'upload inconnue après tentatives avec tous les buckets disponibles'
     };
   },
 
   /**
-   * Vérifie si le bucket existe et le crée si nécessaire
+   * Vérifie si un bucket existe
    */
-  async ensureBucketExists(bucketName: string = 'epub-files'): Promise<boolean> {
+  async checkBucketExists(bucketName: string): Promise<boolean> {
     try {
-      console.log('🪣 [RobustUpload] Vérification du bucket:', bucketName);
+      console.log('🔍 [RobustUpload] Vérification existence bucket:', bucketName);
       
       // Lister les buckets pour vérifier l'existence
       const { data: buckets, error } = await supabase.storage.listBuckets();
@@ -98,32 +113,52 @@ export const robustStorageUpload = {
       }
       
       const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
+      console.log(`📋 [RobustUpload] Bucket ${bucketName} existe:`, bucketExists);
       
-      if (bucketExists) {
-        console.log('✅ [RobustUpload] Bucket existe déjà');
-        return true;
-      }
-      
-      console.log('📁 [RobustUpload] Création du bucket:', bucketName);
-      
-      // Créer le bucket s'il n'existe pas
-      const { error: createError } = await supabase.storage.createBucket(bucketName, {
-        public: true, // Bucket public pour accès facile aux EPUBs
-        allowedMimeTypes: ['application/epub+zip'],
-        fileSizeLimit: 10 * 1024 * 1024 // 10MB max
-      });
-      
-      if (createError) {
-        console.error('❌ [RobustUpload] Erreur création bucket:', createError);
-        return false;
-      }
-      
-      console.log('✅ [RobustUpload] Bucket créé avec succès');
-      return true;
-      
+      return bucketExists;
     } catch (error) {
       console.error('❌ [RobustUpload] Erreur vérification bucket:', error);
       return false;
+    }
+  },
+
+  /**
+   * Obtient la liste des buckets disponibles pour l'upload
+   */
+  async getAvailableBuckets(): Promise<string[]> {
+    try {
+      const { data: buckets, error } = await supabase.storage.listBuckets();
+      
+      if (error || !buckets) {
+        console.error('❌ [RobustUpload] Erreur récupération buckets:', error);
+        return ['epub-files']; // Fallback par défaut
+      }
+      
+      const availableBuckets = buckets
+        .filter(bucket => ['epub-files', 'story-files'].includes(bucket.name))
+        .map(bucket => bucket.name);
+      
+      console.log('📋 [RobustUpload] Buckets disponibles:', availableBuckets);
+      return availableBuckets.length > 0 ? availableBuckets : ['epub-files'];
+    } catch (error) {
+      console.error('❌ [RobustUpload] Erreur listage buckets:', error);
+      return ['epub-files'];
+    }
+  },
+
+  /**
+   * Sélectionne automatiquement le meilleur bucket disponible
+   */
+  async selectBestBucket(): Promise<string> {
+    const availableBuckets = await this.getAvailableBuckets();
+    
+    // Priorité : epub-files > story-files > premier disponible
+    if (availableBuckets.includes('epub-files')) {
+      return 'epub-files';
+    } else if (availableBuckets.includes('story-files')) {
+      return 'story-files';
+    } else {
+      return availableBuckets[0] || 'epub-files';
     }
   }
 };

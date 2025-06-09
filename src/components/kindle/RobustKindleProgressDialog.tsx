@@ -3,7 +3,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, RefreshCw, Database } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface RobustUploadProgress {
@@ -11,6 +11,7 @@ interface RobustUploadProgress {
   progress: number;
   message: string;
   details?: string;
+  bucketUsed?: string;
 }
 
 interface RobustKindleProgressDialogProps {
@@ -41,12 +42,12 @@ export const RobustKindleProgressDialog: React.FC<RobustKindleProgressDialogProp
 
   const getStepDescription = (step: string) => {
     const descriptions = {
-      validating: 'Vérification des données et paramètres',
-      generating: 'Création du fichier EPUB côté client',
-      uploading: 'Envoi vers le stockage sécurisé',
-      sending: 'Transmission vers votre Kindle',
+      validating: 'Vérification des données et paramètres utilisateur',
+      generating: 'Création du fichier EPUB côté client avec JSZip',
+      uploading: 'Envoi vers le stockage sécurisé avec système de fallback',
+      sending: 'Transmission vers votre appareil Kindle',
       completed: 'Envoi terminé avec succès',
-      error: 'Une erreur est survenue'
+      error: 'Une erreur est survenue lors du processus'
     };
     return descriptions[step as keyof typeof descriptions] || step;
   };
@@ -88,6 +89,13 @@ export const RobustKindleProgressDialog: React.FC<RobustKindleProgressDialogProp
                     {progress.details}
                   </div>
                 )}
+
+                {progress.bucketUsed && (
+                  <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                    <Database className="h-3 w-3" />
+                    <span>Stockage utilisé: <strong>{progress.bucketUsed}</strong></span>
+                  </div>
+                )}
               </div>
 
               {hasError && (
@@ -104,6 +112,11 @@ export const RobustKindleProgressDialog: React.FC<RobustKindleProgressDialogProp
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription>
                     Votre histoire a été convertie en EPUB et envoyée vers votre Kindle. 
+                    {progress.bucketUsed && (
+                      <span className="block mt-1 text-xs text-muted-foreground">
+                        Fichier stocké dans le bucket: {progress.bucketUsed}
+                      </span>
+                    )}
                     Vérifiez votre appareil dans quelques minutes.
                   </AlertDescription>
                 </Alert>
