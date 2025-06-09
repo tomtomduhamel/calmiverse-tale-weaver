@@ -29,7 +29,7 @@ const Navigation = () => {
 
   const navItems = [
     { icon: Home, label: 'Accueil', path: '/' },
-    { icon: BookOpen, label: 'Histoires', path: '/app' },
+    { icon: BookOpen, label: 'Histoires', path: '/library' },
     { icon: Users, label: 'Profils', path: '/children' },
     { icon: Settings, label: 'Paramètres', path: '/settings' },
   ];
