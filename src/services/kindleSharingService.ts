@@ -169,7 +169,7 @@ export const kindleSharingService = {
   async sendToKindleWebhook(webhookData: KindleShareData) {
     console.log('🚀 [KindleService] Début envoi webhook N8N pour Kindle');
     
-    const kindleWebhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook-test/7bca54e0-e309-4c09-9aa3-83b205220d11';
+    const kindleWebhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/7bca54e0-e309-4c09-9aa3-83b205220d11';
     
     // Validation des données avant envoi
     if (!webhookData.epubUrl) {
