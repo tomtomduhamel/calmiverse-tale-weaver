@@ -1,6 +1,7 @@
 
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/dom';
 import { User, Session } from '@supabase/supabase-js';
 
 // Create a custom renderer that includes providers if needed
@@ -15,10 +16,8 @@ export * from '@testing-library/react';
 // Override render method
 export { customRender as render };
 
-// Import and explicitly export the commonly used functions to ensure they're available
-import * as testingLibrary from '@testing-library/react';
-export const screen = testingLibrary.screen;
-export const fireEvent = testingLibrary.fireEvent;
+// Export the commonly used functions from @testing-library/dom
+export { screen, fireEvent };
 
 // Helper function to wait for promises
 export const flushPromises = () => new Promise(resolve => setTimeout(resolve, 0));
