@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/__tests__/helpers/test-utils';
 import SimpleChildSelector from '@/components/story/form/SimpleChildSelector';
 import type { Child } from '@/types/child';
 

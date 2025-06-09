@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/__tests__/helpers/test-utils';
 import { StoryProgress } from '@/components/story/form/StoryProgress';
 
 describe('StoryProgress', () => {
