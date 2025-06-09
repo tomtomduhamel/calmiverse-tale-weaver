@@ -1,6 +1,8 @@
 
+
 import React, { ReactElement } from 'react';
-import { render, RenderOptions, screen, fireEvent } from '@testing-library/react';
+import { render, RenderOptions } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { User, Session } from '@supabase/supabase-js';
 
 // Create a custom renderer that includes providers if needed
@@ -48,3 +50,4 @@ export const createMockSession = (user: User): Session => ({
   expires_in: 3600,
   token_type: 'bearer',
 });
+
