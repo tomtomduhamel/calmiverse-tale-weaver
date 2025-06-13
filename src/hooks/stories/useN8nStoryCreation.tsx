@@ -26,21 +26,21 @@ const generateStoryPrompt = (objective: string, childrenNames: string[]): string
   };
 
   const basePrompt = objectivePrompts[objective as keyof typeof objectivePrompts] || 
-    `Créez une histoire personnalisée pour ${childrenText} avec pour objectif: ${objective}.`;
+    `Créer une histoire pour enfants personnalisée pour ${childrenText} avec pour objectif: ${objective}.`;
 
   return `${basePrompt}
 
 Instructions pour la génération :
 - Personnaliser l'histoire avec le(s) prénom(s) : ${childrenText}
-- Adapter le vocabulaire et la complexité à l'âge des enfants
-- Créer une histoire de 1200 à 1500 mots décomposée de cette manière : début (300-400 mots), développement (600-800 mots), et fin (300-400 mots)
+- Adapter le vocabulaire et la complexité à des enfants de 3 à 7 ans
+- Créer une histoire d'environ 1500 mots décomposée de cette manière : début (300-400 mots), développement (600-800 mots), et fin (300-400 mots)
 - Structurer avec un début, un développement et une fin satisfaisante. Le tout avec des sauts de lignes pour faciliter la lecture
 - Inclure des éléments magiques ou imaginaires adaptés à l'enfance
-- S'assurer que l'histoire respecte l'objectif : ${objective}
-- Utiliser un ton bienveillant et positif
+- S'assurer que l'histoire respecte l'objectif: ${objective}
+- Utiliser un ton bienveillant et positif sans utiliser trop de superlatifs
 - Interdire tout contenu effrayant ou inapproprié
 
-Générer maintenant l'histoire complète en français en t'assurant de respecter le nombre de mots demandés c'est-à-dire un minimum de 1200 mots.`;
+Générer maintenant l'histoire complète en français en t'assurant de respecter le nombre de mots demandés c'est-à-dire environ de 1500 mots`;
 };
 
 export const useN8nStoryCreation = () => {
