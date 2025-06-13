@@ -38,6 +38,7 @@ export interface Story {
   updatedAt?: Date;
   sound_id?: string | null;
   settings?: StorySettings;
+  story_analysis?: StoryAnalysis;
 }
 
 export interface Objective {
@@ -62,4 +63,26 @@ export interface StorySettings {
   atmosphere: string;
   theme: string;
   additionalNotes?: string;
+}
+
+export interface StoryAnalysis {
+  writingStyle?: string;
+  keywords?: string[];
+  recurringPhrases?: string[];
+  narrativeStructure?: {
+    beginning?: string;
+    middle?: string;
+    end?: string;
+  };
+  characters?: {
+    main?: Array<{
+      name: string;
+      characteristics: string[];
+    }>;
+    secondary?: Array<{
+      name: string;
+      characteristics: string[];
+    }>;
+  };
+  themes?: string[];
 }

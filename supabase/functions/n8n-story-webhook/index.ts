@@ -56,7 +56,8 @@ serve(async (req) => {
       status = 'completed',
       tags = [],
       isFavorite = false,
-      sound_id = null
+      sound_id = null,
+      story_analysis = null
     } = body;
 
     if (!title || !content || !summary || !preview || !objective || !childrenNames || !userId) {
@@ -71,7 +72,7 @@ serve(async (req) => {
 
     console.log(`👤 [n8n-webhook-${requestId}] Utilisateur validé: ${user.user.email}`);
 
-    // Créer l'histoire en base
+    // Créer l'histoire en base avec l'analyse
     const { data: story, error: insertError } = await supabase
       .from('stories')
       .insert({
@@ -85,6 +86,7 @@ serve(async (req) => {
         childrenids: childrenIds,
         authorid: userId,
         sound_id,
+        story_analysis,
         createdat: new Date().toISOString(),
         updatedat: new Date().toISOString()
       })
@@ -97,12 +99,16 @@ serve(async (req) => {
     }
 
     console.log(`✅ [n8n-webhook-${requestId}] Histoire créée: ${story.id}`);
+    if (story_analysis) {
+      console.log(`📊 [n8n-webhook-${requestId}] Analyse incluse: ${Object.keys(story_analysis).join(', ')}`);
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         storyId: story.id,
         message: 'Histoire créée avec succès via n8n',
+        hasAnalysis: !!story_analysis,
         requestId
       }),
       {

@@ -96,6 +96,7 @@ export type Database = {
           sharing: Json | null
           sound_id: string | null
           status: string | null
+          story_analysis: Json | null
           summary: string | null
           title: string
           updatedat: string
@@ -114,6 +115,7 @@ export type Database = {
           sharing?: Json | null
           sound_id?: string | null
           status?: string | null
+          story_analysis?: Json | null
           summary?: string | null
           title: string
           updatedat?: string
@@ -132,6 +134,7 @@ export type Database = {
           sharing?: Json | null
           sound_id?: string | null
           status?: string | null
+          story_analysis?: Json | null
           summary?: string | null
           title?: string
           updatedat?: string

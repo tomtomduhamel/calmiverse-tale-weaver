@@ -1,4 +1,3 @@
-
 import { generateAndUploadEpub } from './epubService';
 import { supabase } from '@/integrations/supabase/client';
 import type { Story } from '@/types/story';
@@ -50,7 +49,8 @@ export const kindleSharingService = {
         title: storyData.title,
         hasContent: !!storyData.content,
         contentLength: storyData.content?.length || 0,
-        authorId: storyData.authorid
+        authorId: storyData.authorid,
+        hasAnalysis: !!storyData.story_analysis
       });
       
       // CORRECTION: Validation du contenu depuis la colonne 'content'
@@ -74,14 +74,16 @@ export const kindleSharingService = {
         status: storyData.status as any || 'ready',
         content: storyData.content, // CORRECTION: utiliser 'content' directement
         story_summary: storyData.summary || "",
-        authorId: storyData.authorid
+        authorId: storyData.authorid,
+        story_analysis: storyData.story_analysis || undefined
       };
 
       console.log('✅ [KindleService] Histoire mappée avec succès:', {
         id: story.id,
         title: story.title,
         contentLength: story.content.length,
-        authorId: story.authorId
+        authorId: story.authorId,
+        hasAnalysis: !!story.story_analysis
       });
 
       return story;
