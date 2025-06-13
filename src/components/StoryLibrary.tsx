@@ -16,6 +16,7 @@ interface StoryLibraryProps {
   pendingStoryId?: string | null;
   onForceRefresh?: () => void;
   onCreateStory?: () => void;
+  isDeletingId?: string | null;
 }
 
 const StoryLibrary: React.FC<StoryLibraryProps> = ({ 
@@ -27,23 +28,18 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   isRetrying = false,
   pendingStoryId,
   onForceRefresh,
-  onCreateStory
+  onCreateStory,
+  isDeletingId
 }) => {
   const { toast } = useToast();
-  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
 
   // Gestion de la suppression avec logs de débogage
   const handleDelete = useCallback(async (storyId: string) => {
     try {
       console.log("[StoryLibrary] DEBUG: Tentative de suppression de l'histoire:", storyId);
-      setIsDeletingId(storyId);
       
       if (onDeleteStory) {
         await onDeleteStory(storyId);
-        toast({
-          title: "Histoire supprimée",
-          description: "L'histoire a été supprimée avec succès",
-        });
       } else {
         console.error("[StoryLibrary] ERROR: Fonction onDeleteStory non définie");
         toast({
@@ -54,13 +50,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
       }
     } catch (error: any) {
       console.error("[StoryLibrary] ERROR: Erreur lors de la suppression:", error);
-      toast({
-        title: "Erreur",
-        description: error?.message || "Une erreur est survenue lors de la suppression",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeletingId(null);
+      // L'erreur est déjà gérée dans Library.tsx, pas besoin de toast ici
     }
   }, [onDeleteStory, toast]);
 

@@ -1,11 +1,13 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
+import { useStoryDeletion } from "@/hooks/stories/useStoryDeletion";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import StoryLibrary from "@/components/StoryLibrary";
 import LoadingStory from "@/components/LoadingStory";
 
@@ -13,22 +15,51 @@ const Library: React.FC = () => {
   const { user, loading: authLoading } = useSupabaseAuth();
   const { children, loading: childrenLoading } = useSupabaseChildren();
   const { stories, isLoading: storiesLoading, fetchStories } = useSupabaseStories();
+  const { deleteStory } = useStoryDeletion();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
+  // État local pour gérer la suppression
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+
   const handleSelectStory = (story: any) => {
-    // Naviguer vers la nouvelle route dédiée pour le lecteur
     console.log("[Library] Navigation vers le lecteur:", story.id);
     navigate(`/reader/${story.id}`);
   };
 
   const handleDeleteStory = async (storyId: string) => {
-    // Logique de suppression d'histoire sera gérée par StoryLibrary
-    console.log("Suppression de l'histoire:", storyId);
+    console.log("[Library] DEBUG: Début de la suppression pour l'histoire:", storyId);
+    
+    try {
+      setIsDeletingId(storyId);
+      
+      console.log("[Library] DEBUG: Appel de deleteStory avec ID:", storyId);
+      await deleteStory(storyId);
+      
+      console.log("[Library] DEBUG: Suppression réussie, rafraîchissement de la liste");
+      // Rafraîchir la liste des histoires après suppression
+      await fetchStories();
+      
+      toast({
+        title: "Histoire supprimée",
+        description: "L'histoire a été supprimée avec succès de votre bibliothèque",
+      });
+      
+      console.log("[Library] DEBUG: Suppression terminée avec succès");
+    } catch (error: any) {
+      console.error("[Library] ERROR: Erreur lors de la suppression:", error);
+      toast({
+        title: "Erreur de suppression",
+        description: error?.message || "Impossible de supprimer l'histoire. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingId(null);
+    }
   };
 
   const handleRetryStory = async (storyId: string) => {
-    // Logique de relance d'histoire sera gérée par StoryLibrary
-    console.log("Relance de l'histoire:", storyId);
+    console.log("[Library] DEBUG: Relance de l'histoire:", storyId);
     return true;
   };
 
@@ -82,6 +113,7 @@ const Library: React.FC = () => {
             onRetryStory={handleRetryStory}
             onForceRefresh={fetchStories}
             onCreateStory={handleCreateStory}
+            isDeletingId={isDeletingId}
           />
         </div>
       </div>
