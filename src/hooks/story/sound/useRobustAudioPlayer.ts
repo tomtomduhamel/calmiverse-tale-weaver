@@ -74,33 +74,26 @@ export const useRobustAudioPlayer = ({
 
       console.log(`🎵 [RobustAudioPlayer] Initialisation pour: ${soundDetails.title}`);
       
-      // Diagnostic avant initialisation
       const diagnostic = await audioService.runDiagnostic(soundDetails.file_path);
       updateState({ diagnosticInfo: diagnostic });
-
-      if (!diagnostic.networkOk) {
-        throw new Error('Pas de connexion réseau');
-      }
 
       if (!diagnostic.supabaseOk) {
         throw new Error('Connexion Supabase échouée');
       }
 
-      // Obtenir une URL validée
       const validatedUrl = await audioService.getValidatedAudioUrl(soundDetails.file_path);
       
       if (!validatedUrl) {
-        throw new Error(`Impossible de valider l'URL pour ${soundDetails.title}`);
+        const errorReason = diagnostic.audioUrl?.error || `Impossible de valider l'URL pour ${soundDetails.title}`;
+        throw new Error(errorReason);
       }
 
-      // Créer l'élément audio avec URL validée
       const audio = new Audio();
       audio.loop = true;
       audio.volume = state.volume;
       audio.preload = 'auto';
-      audio.crossOrigin = 'anonymous'; // Ajout pour éviter les problèmes CORS
+      audio.crossOrigin = 'anonymous';
 
-      // Gestionnaires d'événements avec logs détaillés
       audio.addEventListener('loadstart', () => {
         console.log(`🎵 [RobustAudioPlayer] Début chargement: ${soundDetails.title}`);
       });
@@ -143,12 +136,10 @@ export const useRobustAudioPlayer = ({
           retry: retryCountRef.current
         });
 
-        // Tentative de retry si pas encore au maximum
         if (retryCountRef.current < maxRetries) {
           retryCountRef.current++;
           console.log(`🎵 [RobustAudioPlayer] Tentative ${retryCountRef.current}/${maxRetries}`);
           
-          // Nettoyer le cache et réessayer
           audioService.clearCache();
           setTimeout(() => initializeAudio(), 1000 * retryCountRef.current);
           return;
@@ -171,7 +162,6 @@ export const useRobustAudioPlayer = ({
     } catch (error) {
       console.error('🎵 [RobustAudioPlayer] Erreur initialisation:', error);
       
-      // Tentative de retry pour erreurs générales
       if (retryCountRef.current < maxRetries) {
         retryCountRef.current++;
         console.log(`🎵 [RobustAudioPlayer] Retry général ${retryCountRef.current}/${maxRetries}`);
@@ -231,12 +221,10 @@ export const useRobustAudioPlayer = ({
     initializeAudio();
   }, [initializeAudio]);
 
-  // Initialisation automatique
   useEffect(() => {
     initializeAudio();
   }, [initializeAudio]);
 
-  // Nettoyage à la destruction
   useEffect(() => {
     return () => {
       cleanupAudio();

@@ -10,7 +10,7 @@ interface AudioValidationResult {
 }
 
 interface CachedAudioUrl {
-  url: string;
+  url:string;
   validatedAt: number;
   isValid: boolean;
 }
@@ -152,25 +152,9 @@ class AudioService {
   }
 
   /**
-   * Teste la connectivité réseau générale
-   */
-  async testNetworkConnectivity(): Promise<boolean> {
-    try {
-      const response = await fetch('https://ioeihnoxvtpxtqhxklpw.supabase.co/health', {
-        method: 'HEAD',
-        cache: 'no-cache'
-      });
-      return response.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Diagnostic complet du système audio
+   * Diagnostic simplifié du système audio
    */
   async runDiagnostic(filePath?: string): Promise<{
-    networkOk: boolean;
     supabaseOk: boolean;
     audioUrl?: AudioValidationResult;
     cacheStats: {
@@ -178,12 +162,9 @@ class AudioService {
       validEntries: number;
     };
   }> {
-    console.log(`🎵 [AudioService] Démarrage diagnostic complet`);
+    console.log(`🎵 [AudioService] Démarrage diagnostic simplifié`);
     
-    const [networkOk, supabaseOk] = await Promise.all([
-      this.testNetworkConnectivity(),
-      this.validateSupabaseConnection()
-    ]);
+    const supabaseOk = await this.validateSupabaseConnection();
     
     let audioUrl;
     if (filePath) {
@@ -199,7 +180,6 @@ class AudioService {
     }
     
     const diagnostic = {
-      networkOk,
       supabaseOk,
       audioUrl,
       cacheStats: {
@@ -208,7 +188,7 @@ class AudioService {
       }
     };
     
-    console.log(`🎵 [AudioService] Diagnostic terminé:`, diagnostic);
+    console.log(`🎵 [AudioService] Diagnostic simplifié terminé:`, diagnostic);
     return diagnostic;
   }
 
