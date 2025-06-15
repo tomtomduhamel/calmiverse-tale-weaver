@@ -34,7 +34,7 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
           if (soundData.volume > 0) {
             soundData.setVolume(0);
           } else {
-            soundData.setVolume(0.5);
+            soundData.setVolume(0.5); // Rétablir à un volume par défaut
           }
         };
 
@@ -47,7 +47,9 @@ export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
             storyObjective={storyObjective}
             volume={soundData.volume}
             isPlaying={soundData.isPlaying}
+            diagnosticInfo={soundData.diagnosticInfo}
             onVolumeToggle={toggleVolume}
+            onPlayToggle={soundData.togglePlay}
             onReinitialize={soundData.reinitialize}
           />
         );

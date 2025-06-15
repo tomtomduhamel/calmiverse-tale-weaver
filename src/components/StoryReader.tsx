@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
@@ -9,8 +8,6 @@ import { EmptyStoryView } from "./story/reader/EmptyStoryView";
 import { useAutoScroll } from "@/hooks/story/useAutoScroll";
 import { useMarkAsRead } from "@/hooks/story/useMarkAsRead";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
-import { useBackgroundSound } from "@/hooks/story/sound/useBackgroundSound";
-import { useUserSettings } from "@/hooks/settings/useUserSettings";
 import { StoryReaderLayout } from "./story/reader/StoryReaderLayout";
 import { StoryReaderHeader } from "./story/reader/StoryReaderHeader";
 import { StoryReaderContent } from "./story/reader/StoryReaderContent";
@@ -45,35 +42,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   // Calcul des métriques pour le défilement automatique
   const wordCount = story?.content?.trim().split(/\s+/).length || 0;
   
-  // Récupération des paramètres utilisateur pour la synchronisation
-  const { userSettings } = useUserSettings();
-  const musicSyncEnabled = userSettings?.readingPreferences?.backgroundMusicEnabled !== false;
-  
-  // Hook pour gérer la musique de fond
-  const backgroundSound = useBackgroundSound({
-    soundId: story?.sound_id,
-    storyObjective: typeof story?.objective === 'string' ? story.objective : story?.objective?.value,
-    autoPlay: false
-  });
-  
-  // Fonction de synchronisation musique/défilement
-  const handleScrollStateChange = useCallback((isScrolling: boolean) => {
-    if (!musicSyncEnabled || !backgroundSound.musicEnabled || !backgroundSound.soundDetails) {
-      return;
-    }
-    
-    console.log(`🎵 StoryReader: Synchronisation musique - Défilement: ${isScrolling ? 'ON' : 'OFF'}, Musique: ${backgroundSound.isPlaying ? 'ON' : 'OFF'}`);
-    
-    if (isScrolling && !backgroundSound.isPlaying) {
-      console.log("🎵 Démarrage de la musique avec le défilement");
-      backgroundSound.togglePlay();
-    } else if (!isScrolling && backgroundSound.isPlaying) {
-      console.log("🎵 Pause de la musique avec l'arrêt du défilement");
-      backgroundSound.togglePlay();
-    }
-  }, [musicSyncEnabled, backgroundSound.musicEnabled, backgroundSound.soundDetails, backgroundSound.isPlaying, backgroundSound.togglePlay]);
-  
-  // Gestion du défilement automatique
+  // Gestion du défilement automatique (sans la logique audio)
   const { 
     isAutoScrolling,
     isPaused,
@@ -86,7 +55,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   } = useAutoScroll({ 
     wordCount, 
     scrollAreaRef,
-    onScrollStateChange: handleScrollStateChange
   });
   
   // Gestion du marquage comme lu
@@ -107,9 +75,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const handleBack = () => {
     console.log("[StoryReader] DEBUG: Bouton Fermer cliqué");
     stopAutoScroll();
-    if (backgroundSound.isPlaying) {
-      backgroundSound.stopSound();
-    }
     if (onBack) {
       onBack();
     } else if (onClose) {
@@ -120,20 +85,13 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   // Effets de cycle de vie
   useEffect(() => {
     console.log("[StoryReader] DEBUG: Lecteur d'histoire affiché pour:", story?.id);
-    console.log("[StoryReader] DEBUG: État de la musique:", {
-      isPlaying: backgroundSound.isPlaying,
-      isLoading: backgroundSound.isLoading,
-      soundDetails: backgroundSound.soundDetails ? backgroundSound.soundDetails.title : null,
-      error: backgroundSound.error
-    });
-    
     document.body.style.overflow = 'hidden';
     
     return () => {
       console.log("[StoryReader] DEBUG: Lecteur d'histoire fermé");
       document.body.style.overflow = '';
     };
-  }, [story?.id, backgroundSound.isPlaying, backgroundSound.isLoading, backgroundSound.soundDetails, backgroundSound.error]);
+  }, [story?.id]);
 
   if (!story) {
     return <EmptyStoryView onBack={handleBack} />;

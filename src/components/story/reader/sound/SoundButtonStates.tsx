@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Volume2, VolumeX, Disc, AlertCircle, RefreshCw, Bug } from "lucide-react";
+import { Volume2, VolumeX, Disc, AlertCircle, RefreshCw, Bug, Play, Pause } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AudioDiagnosticPanel } from './AudioDiagnosticPanel';
 import { audioService } from '@/services/audioService';
@@ -16,6 +15,7 @@ interface SoundButtonStatesProps {
   isPlaying: boolean;
   diagnosticInfo?: any;
   onVolumeToggle: () => void;
+  onPlayToggle: () => void;
   onReinitialize: () => void;
 }
 
@@ -29,6 +29,7 @@ export const SoundButtonStates: React.FC<SoundButtonStatesProps> = ({
   isPlaying,
   diagnosticInfo,
   onVolumeToggle,
+  onPlayToggle,
   onReinitialize
 }) => {
   const [showDiagnostic, setShowDiagnostic] = useState(false);
@@ -152,58 +153,71 @@ export const SoundButtonStates: React.FC<SoundButtonStatesProps> = ({
     );
   }
 
-  // Contrôle du volume
-  const buttonStateClass = volume > 0 && isPlaying 
-    ? "bg-green-100 dark:bg-green-900 ring-2 ring-green-300 dark:ring-green-700" 
-    : volume > 0 
-    ? "bg-blue-100 dark:bg-blue-900" 
-    : "bg-gray-100 dark:bg-gray-800";
-
+  // Contrôles Audio (Volume et Play/Pause)
   return (
     <div className="space-y-2">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1">
+        {/* Bouton Play/Pause */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={isDarkMode ? "outline" : "ghost"}
+                size="icon"
+                onClick={onPlayToggle}
+                className={`${baseButtonClass} ${isPlaying ? 'bg-green-100 dark:bg-green-900/50 ring-1 ring-green-400' : ''}`}
+                aria-label={isPlaying ? "Mettre en pause" : "Lancer la lecture"}
+              >
+                {isPlaying ? <Pause className="h-4 w-4 text-green-600" /> : <Play className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="z-[100]">
+              <p>{isPlaying ? "Mettre en pause" : "Lancer la lecture"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        {/* Bouton Volume/Mute */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
                 variant={isDarkMode ? "outline" : "ghost"}
                 size="icon"
                 onClick={onVolumeToggle}
-                className={`${baseButtonClass} ${buttonStateClass} transition-all duration-200`}
-                aria-label={volume > 0 ? "Couper le volume du fond sonore" : "Activer le volume du fond sonore"}
+                className={`${baseButtonClass}`}
+                aria-label={volume > 0 ? "Couper le volume" : "Activer le volume"}
               >
-                {volume > 0 ? (
-                  <Volume2 className={`h-4 w-4 ${isPlaying ? 'text-green-600 dark:text-green-400' : ''}`} />
-                ) : (
-                  <VolumeX className="h-4 w-4" />
-                )}
+                {volume > 0 ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
               </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="z-[100]">
+              <p>{volume > 0 ? "Couper le son" : "Activer le son"}</p>
+              <p className="text-xs opacity-70 mt-1">{soundDetails.title}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        {/* Bouton Diagnostic */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
                 variant={isDarkMode ? "outline" : "ghost"}
                 size="icon"
                 onClick={() => setShowDiagnostic(!showDiagnostic)}
                 className={`${baseButtonClass} hover:bg-gray-100 dark:hover:bg-gray-800`}
-                aria-label="Diagnostic audio"
+                aria-label="Ouvrir le diagnostic audio"
               >
                 <Bug className="h-3 w-3" />
               </Button>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="z-[100]">
-            <div className="text-xs font-medium">
-              {volume > 0 ? "Couper le volume" : "Activer le volume"}
-            </div>
-            {soundDetails && (
-              <>
-                <div className="text-xs opacity-70 mt-1">{soundDetails.title}</div>
-                <div className="text-xs opacity-60">
-                  État: {isPlaying ? "🎵 En lecture" : "⏸️ En pause"}
-                </div>
-              </>
-            )}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="z-[100]">
+              <p>Diagnostic Audio</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
       {showDiagnostic && (
         <AudioDiagnosticPanel
