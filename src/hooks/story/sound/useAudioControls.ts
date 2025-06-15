@@ -7,7 +7,7 @@ interface UseAudioControlsProps {
 }
 
 export const useAudioControls = ({ musicEnabled }: UseAudioControlsProps) => {
-  const { state, updateState, audioRef } = useAudioState();
+  const { state, updateState, audioRef, isInitializedRef } = useAudioState();
 
   const togglePlay = useCallback(() => {
     if (!audioRef.current || !musicEnabled) {
@@ -52,6 +52,7 @@ export const useAudioControls = ({ musicEnabled }: UseAudioControlsProps) => {
     state,
     updateState,
     audioRef,
+    isInitializedRef, // Corrigé: propage isInitializedRef
     togglePlay,
     stopAudio,
     setVolume

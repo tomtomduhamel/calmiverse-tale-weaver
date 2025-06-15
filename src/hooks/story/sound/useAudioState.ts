@@ -1,5 +1,5 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 
 interface AudioState {
   isPlaying: boolean;
@@ -12,7 +12,7 @@ interface AudioState {
 export const useAudioState = () => {
   const [state, setState] = useState<AudioState>({
     isPlaying: false,
-    isLoading: false,
+    isLoading: true, // Corrigé: Initialiser à true pour refléter le chargement en cours
     volume: 0.5,
     error: null,
     currentSoundId: null
@@ -21,9 +21,9 @@ export const useAudioState = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isInitializedRef = useRef(false);
 
-  const updateState = (updates: Partial<AudioState>) => {
+  const updateState = useCallback((updates: Partial<AudioState>) => {
     setState(prev => ({ ...prev, ...updates }));
-  };
+  }, []); // Stabilisé avec useCallback
 
   return {
     state,

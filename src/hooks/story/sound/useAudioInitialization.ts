@@ -112,7 +112,13 @@ export const useAudioInitialization = ({
       });
 
       audio.addEventListener('error', (e) => {
+        const mediaError = audio.error;
         console.error('🎵 Erreur audio:', e);
+        console.error('🎵 Détails MediaError:', {
+          code: mediaError?.code,
+          message: mediaError?.message,
+          source: audio.currentSrc,
+        });
         const errorMsg = `Impossible de charger le fichier audio: ${soundDetails.title}`;
         updateState({ 
           error: errorMsg, 

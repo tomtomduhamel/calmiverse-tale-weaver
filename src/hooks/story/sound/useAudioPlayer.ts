@@ -9,14 +9,22 @@ interface AudioPlayerProps {
 }
 
 export const useAudioPlayer = ({ soundDetails, musicEnabled, autoPlay = false }: AudioPlayerProps) => {
-  const { state, updateState, audioRef, togglePlay, stopAudio, setVolume } = useAudioControls({ musicEnabled });
+  const { 
+    state, 
+    updateState, 
+    audioRef, 
+    isInitializedRef, // Corrigé: Récupération de la ref partagée
+    togglePlay, 
+    stopAudio, 
+    setVolume 
+  } = useAudioControls({ musicEnabled });
   
   const { initializeAudio } = useAudioInitialization({
     soundDetails,
     musicEnabled,
     autoPlay,
     audioRef,
-    isInitializedRef: { current: false },
+    isInitializedRef, // Corrigé: Utilisation de la ref partagée
     state,
     updateState
   });
