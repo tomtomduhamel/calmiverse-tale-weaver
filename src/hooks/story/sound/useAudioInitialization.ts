@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseAudioInitializationProps {
   soundDetails: any | null;
@@ -26,13 +27,22 @@ export const useAudioInitialization = ({
       return filePath;
     }
     
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    if (!supabaseUrl) {
-      throw new Error('URL Supabase non configurée');
+    console.log(`🎵 Construction de l'URL pour le fichier : ${filePath} dans le bucket 'story_sounds'`);
+    
+    // Utiliser le client Supabase pour obtenir l'URL publique de manière fiable
+    const { data } = supabase
+      .storage
+      .from('story_sounds') // Nom correct du bucket
+      .getPublicUrl(filePath);
+
+    if (!data.publicUrl) {
+      const errorMessage = `Impossible de construire l'URL pour le fichier audio : ${filePath}`;
+      console.error(`🎵 ${errorMessage}`);
+      throw new Error(errorMessage);
     }
     
-    const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath;
-    return `${supabaseUrl}/storage/v1/object/public/sound-backgrounds/${cleanPath}`;
+    console.log(`🎵 URL publique générée : ${data.publicUrl}`);
+    return data.publicUrl;
   }, []);
 
   const cleanupAudio = useCallback(() => {
