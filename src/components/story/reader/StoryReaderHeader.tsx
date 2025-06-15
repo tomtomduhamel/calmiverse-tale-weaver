@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ReaderControls } from "../ReaderControls";
@@ -62,12 +61,6 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
         isManuallyPaused={isManuallyPaused}
       />
       <div className="flex items-center gap-2">
-        <BackgroundSoundButton
-          soundId={story.sound_id}
-          storyObjective={typeof story.objective === 'string' ? story.objective : story.objective?.value}
-          isDarkMode={isDarkMode}
-          autoPlay={false}
-        />
         <Button 
           variant={isDarkMode ? "outline" : "ghost"} 
           onClick={onBack}
@@ -79,3 +72,4 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
     </div>
   );
 };
+
