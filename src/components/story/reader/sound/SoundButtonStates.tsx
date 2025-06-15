@@ -73,33 +73,15 @@ export const SoundButtonStates: React.FC<SoundButtonStatesProps> = ({
                 >
                   <RefreshCw className="h-3 w-3" />
                 </Button>
-                <Button
-                  variant={isDarkMode ? "outline" : "ghost"}
-                  size="icon"
-                  onClick={() => setShowDiagnostic(!showDiagnostic)}
-                  className={`${baseButtonClass} hover:bg-yellow-100 dark:hover:bg-yellow-900/30`}
-                  aria-label="Diagnostic audio"
-                >
-                  <Bug className="h-3 w-3" />
-                </Button>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="z-[100]">
               <div className="text-xs text-red-500">Erreur de fond sonore</div>
               <div className="text-xs opacity-70">{error}</div>
-              <div className="text-xs text-blue-500 mt-1">↻ Réessayer | 🐛 Diagnostic</div>
+              <div className="text-xs text-blue-500 mt-1">↻ Réessayer</div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-
-        {showDiagnostic && (
-          <AudioDiagnosticPanel
-            diagnosticInfo={diagnosticInfo}
-            onRunDiagnostic={handleRunDiagnostic}
-            onClearCache={handleClearCache}
-            soundDetails={soundDetails}
-          />
-        )}
       </div>
     );
   }
@@ -197,36 +179,7 @@ export const SoundButtonStates: React.FC<SoundButtonStatesProps> = ({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-
-        {/* Bouton Diagnostic */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={isDarkMode ? "outline" : "ghost"}
-                size="icon"
-                onClick={() => setShowDiagnostic(!showDiagnostic)}
-                className={`${baseButtonClass} hover:bg-gray-100 dark:hover:bg-gray-800`}
-                aria-label="Ouvrir le diagnostic audio"
-              >
-                <Bug className="h-3 w-3" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="z-[100]">
-              <p>Diagnostic Audio</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
-
-      {showDiagnostic && (
-        <AudioDiagnosticPanel
-          diagnosticInfo={diagnosticInfo}
-          onRunDiagnostic={handleRunDiagnostic}
-          onClearCache={handleClearCache}
-          soundDetails={soundDetails}
-        />
-      )}
     </div>
   );
 };
