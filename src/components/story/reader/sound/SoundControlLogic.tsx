@@ -20,7 +20,7 @@ export const SoundControlLogic: React.FC<SoundControlLogicProps> = ({
     autoPlay 
   });
 
-  console.log("🎵 SoundControlLogic rendu:", {
+  console.log("🎵 SoundControlLogic robuste - rendu:", {
     soundId,
     storyObjective,
     isPlaying: soundData.isPlaying,
@@ -28,7 +28,8 @@ export const SoundControlLogic: React.FC<SoundControlLogicProps> = ({
     soundDetails: soundData.soundDetails ? { id: soundData.soundDetails.id, title: soundData.soundDetails.title } : null,
     musicEnabled: soundData.musicEnabled,
     error: soundData.error,
-    volume: soundData.volume
+    volume: soundData.volume,
+    diagnosticInfo: soundData.diagnosticInfo
   });
 
   return <>{children(soundData)}</>;

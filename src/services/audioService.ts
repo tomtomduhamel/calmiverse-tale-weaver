@@ -1,0 +1,226 @@
+
+import { supabase } from '@/integrations/supabase/client';
+
+interface AudioValidationResult {
+  isValid: boolean;
+  url: string;
+  error?: string;
+  statusCode?: number;
+  responseTime?: number;
+}
+
+interface CachedAudioUrl {
+  url: string;
+  validatedAt: number;
+  isValid: boolean;
+}
+
+class AudioService {
+  private urlCache = new Map<string, CachedAudioUrl>();
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private readonly REQUEST_TIMEOUT = 10000; // 10 secondes
+
+  /**
+   * Valide une URL audio avec des vérifications approfondies
+   */
+  async validateAudioUrl(filePath: string): Promise<AudioValidationResult> {
+    const startTime = Date.now();
+    
+    try {
+      console.log(`🎵 [AudioService] Validation de l'URL pour: ${filePath}`);
+      
+      // Construire l'URL publique via Supabase
+      const { data } = supabase.storage.from('story_sounds').getPublicUrl(filePath);
+      const url = data.publicUrl;
+      
+      if (!url) {
+        throw new Error('Impossible de construire l\'URL publique');
+      }
+      
+      console.log(`🎵 [AudioService] URL générée: ${url}`);
+      
+      // Tester la connectivité avec timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.REQUEST_TIMEOUT);
+      
+      try {
+        const response = await fetch(url, {
+          method: 'HEAD', // Plus rapide qu'un GET complet
+          signal: controller.signal,
+          cache: 'no-cache'
+        });
+        
+        clearTimeout(timeoutId);
+        const responseTime = Date.now() - startTime;
+        
+        console.log(`🎵 [AudioService] Réponse HTTP: ${response.status} en ${responseTime}ms`);
+        
+        if (response.ok) {
+          // Vérifier le content-type si disponible
+          const contentType = response.headers.get('content-type');
+          if (contentType && !contentType.startsWith('audio/')) {
+            console.warn(`🎵 [AudioService] Content-Type suspect: ${contentType}`);
+          }
+          
+          return {
+            isValid: true,
+            url,
+            responseTime
+          };
+        } else {
+          return {
+            isValid: false,
+            url,
+            error: `HTTP ${response.status}: ${response.statusText}`,
+            statusCode: response.status,
+            responseTime
+          };
+        }
+        
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        const responseTime = Date.now() - startTime;
+        
+        if (fetchError.name === 'AbortError') {
+          return {
+            isValid: false,
+            url,
+            error: `Timeout après ${this.REQUEST_TIMEOUT}ms`,
+            responseTime
+          };
+        }
+        
+        return {
+          isValid: false,
+          url,
+          error: `Erreur réseau: ${fetchError.message}`,
+          responseTime
+        };
+      }
+      
+    } catch (error: any) {
+      const responseTime = Date.now() - startTime;
+      console.error(`🎵 [AudioService] Erreur validation:`, error);
+      
+      return {
+        isValid: false,
+        url: '',
+        error: `Erreur service: ${error.message}`,
+        responseTime
+      };
+    }
+  }
+
+  /**
+   * Obtient une URL audio validée avec cache
+   */
+  async getValidatedAudioUrl(filePath: string): Promise<string | null> {
+    // Vérifier le cache d'abord
+    const cached = this.urlCache.get(filePath);
+    const now = Date.now();
+    
+    if (cached && (now - cached.validatedAt) < this.CACHE_DURATION && cached.isValid) {
+      console.log(`🎵 [AudioService] URL en cache valide pour: ${filePath}`);
+      return cached.url;
+    }
+    
+    // Valider l'URL
+    const validation = await this.validateAudioUrl(filePath);
+    
+    // Mettre en cache le résultat
+    this.urlCache.set(filePath, {
+      url: validation.url,
+      validatedAt: now,
+      isValid: validation.isValid
+    });
+    
+    if (validation.isValid) {
+      console.log(`🎵 [AudioService] URL validée avec succès: ${validation.url}`);
+      return validation.url;
+    } else {
+      console.error(`🎵 [AudioService] URL invalide:`, validation.error);
+      return null;
+    }
+  }
+
+  /**
+   * Nettoie le cache des URLs
+   */
+  clearCache(): void {
+    console.log(`🎵 [AudioService] Nettoyage du cache (${this.urlCache.size} entrées)`);
+    this.urlCache.clear();
+  }
+
+  /**
+   * Teste la connectivité réseau générale
+   */
+  async testNetworkConnectivity(): Promise<boolean> {
+    try {
+      const response = await fetch('https://ioeihnoxvtpxtqhxklpw.supabase.co/health', {
+        method: 'HEAD',
+        cache: 'no-cache'
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Diagnostic complet du système audio
+   */
+  async runDiagnostic(filePath?: string): Promise<{
+    networkOk: boolean;
+    supabaseOk: boolean;
+    audioUrl?: AudioValidationResult;
+    cacheStats: {
+      size: number;
+      validEntries: number;
+    };
+  }> {
+    console.log(`🎵 [AudioService] Démarrage diagnostic complet`);
+    
+    const [networkOk, supabaseOk] = await Promise.all([
+      this.testNetworkConnectivity(),
+      this.validateSupabaseConnection()
+    ]);
+    
+    let audioUrl;
+    if (filePath) {
+      audioUrl = await this.validateAudioUrl(filePath);
+    }
+    
+    const now = Date.now();
+    let validEntries = 0;
+    for (const cached of this.urlCache.values()) {
+      if (cached.isValid && (now - cached.validatedAt) < this.CACHE_DURATION) {
+        validEntries++;
+      }
+    }
+    
+    const diagnostic = {
+      networkOk,
+      supabaseOk,
+      audioUrl,
+      cacheStats: {
+        size: this.urlCache.size,
+        validEntries
+      }
+    };
+    
+    console.log(`🎵 [AudioService] Diagnostic terminé:`, diagnostic);
+    return diagnostic;
+  }
+
+  private async validateSupabaseConnection(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.storage.listBuckets();
+      return !error && Array.isArray(data);
+    } catch {
+      return false;
+    }
+  }
+}
+
+// Instance singleton
+export const audioService = new AudioService();

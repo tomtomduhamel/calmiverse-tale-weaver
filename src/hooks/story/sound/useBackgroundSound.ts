@@ -1,7 +1,7 @@
 
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
 import { useSoundDetails } from './useSoundDetails';
-import { useAudioPlayer } from './useAudioPlayer';
+import { useRobustAudioPlayer } from './useRobustAudioPlayer';
 
 interface BackgroundSoundProps {
   soundId?: string | null;
@@ -10,7 +10,7 @@ interface BackgroundSoundProps {
 }
 
 /**
- * Hook principal pour gérer le fond sonore d'une histoire - Version refactorisée
+ * Hook principal pour gérer le fond sonore d'une histoire - Version robuste
  */
 export const useBackgroundSound = ({ 
   soundId, 
@@ -24,17 +24,18 @@ export const useBackgroundSound = ({
   // Charger les détails du son
   const { soundDetails, isLoading: isLoadingDetails, error: detailsError } = useSoundDetails(soundId, storyObjective);
   
-  // Gérer la lecture audio avec le nouveau player centralisé
+  // Gérer la lecture audio avec le nouveau player robuste
   const { 
     isPlaying, 
     isLoading: isLoadingAudio,
     volume,
     error: audioError,
+    diagnosticInfo,
     togglePlay, 
     setVolume, 
     stopAudio,
     reinitialize
-  } = useAudioPlayer({
+  } = useRobustAudioPlayer({
     soundDetails,
     musicEnabled,
     autoPlay
@@ -44,8 +45,8 @@ export const useBackgroundSound = ({
   const isLoading = isLoadingDetails || isLoadingAudio;
   const error = detailsError || audioError;
 
-  // Log pour débogage complet
-  console.log("🎵 useBackgroundSound - État complet:", {
+  // Log pour débogage complet avec diagnostic
+  console.log("🎵 useBackgroundSound - État robuste:", {
     soundId,
     storyObjective,
     autoPlay,
@@ -59,7 +60,8 @@ export const useBackgroundSound = ({
     isLoading,
     isPlaying,
     volume,
-    error
+    error,
+    diagnostic: diagnosticInfo
   });
 
   return {
@@ -72,7 +74,8 @@ export const useBackgroundSound = ({
     musicEnabled,
     volume,
     error,
-    reinitialize // Fonction pour relancer l'initialisation si nécessaire
+    reinitialize,
+    diagnosticInfo // Information de diagnostic pour debugging avancé
   };
 };
 
