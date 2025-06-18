@@ -2,7 +2,11 @@
 import type { Story } from '@/types/story';
 
 export const formatStoriesFromSupabase = (supabaseStories: any[]): Story[] => {
-  return supabaseStories.map(story => ({
+  return supabaseStories.map(story => formatStoryFromSupabase(story));
+};
+
+export const formatStoryFromSupabase = (story: any): Story => {
+  return {
     id: story.id,
     id_stories: story.id,
     title: story.title || "Histoire sans titre",
@@ -18,9 +22,9 @@ export const formatStoriesFromSupabase = (supabaseStories: any[]): Story[] => {
     authorId: story.authorid,
     error: story.error,
     tags: [],
-    isFavorite: story.is_favorite || false, // Mapping du nouveau champ
+    isFavorite: story.is_favorite || false,
     sharing: story.sharing,
     sound_id: story.sound_id,
     story_analysis: story.story_analysis
-  }));
+  };
 };

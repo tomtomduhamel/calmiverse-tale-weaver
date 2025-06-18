@@ -6,8 +6,8 @@ import StatusFilter from "./StatusFilter";
 interface StoryFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'error';
-  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error') => void;
+  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites';
+  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites') => void;
 }
 
 const StoryFilters: React.FC<StoryFiltersProps> = ({
@@ -19,11 +19,11 @@ const StoryFilters: React.FC<StoryFiltersProps> = ({
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
       <SearchBar 
-        value={searchTerm}
-        onChange={onSearchChange}
+        searchTerm={searchTerm}
+        onSearchChange={onSearchChange}
       />
       <StatusFilter
-        currentStatus={statusFilter}
+        statusFilter={statusFilter}
         onStatusChange={onStatusChange}
       />
     </div>

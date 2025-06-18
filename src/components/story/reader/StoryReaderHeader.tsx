@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, MoreVertical } from "lucide-react";
+import { ArrowLeft, Settings } from "lucide-react";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { FavoriteReaderButton } from "./FavoriteReaderButton";
 import type { Story } from "@/types/story";
