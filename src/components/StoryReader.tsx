@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
@@ -35,6 +36,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [showReadingGuide, setShowReadingGuide] = useState(false);
+  const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false);
   
   const isMobile = useIsMobile();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -82,6 +84,32 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     }
   };
 
+  // Gestion des paramètres
+  const handleSettingsClick = () => {
+    setShowReadingGuide(true);
+  };
+
+  // Gestion du toggle favori
+  const handleToggleFavorite = async (storyId: string, currentFavoriteStatus: boolean) => {
+    if (!onToggleFavorite) return;
+    
+    setIsUpdatingFavorite(true);
+    try {
+      await onToggleFavorite(storyId);
+      // Mettre à jour l'état local
+      if (story && story.id === storyId) {
+        setStory({
+          ...story,
+          isFavorite: !currentFavoriteStatus
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors du toggle favori:", error);
+    } finally {
+      setIsUpdatingFavorite(false);
+    }
+  };
+
   // Effets de cycle de vie
   useEffect(() => {
     console.log("[StoryReader] DEBUG: Lecteur d'histoire affiché pour:", story?.id);
@@ -103,19 +131,11 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     <StoryReaderLayout isDarkMode={isDarkMode} scrollAreaRef={scrollAreaRef}>
       <StoryReaderHeader
         story={story}
-        fontSize={fontSize}
-        setFontSize={setFontSize}
+        onClose={handleBack}
+        onSettingsClick={handleSettingsClick}
+        onToggleFavorite={handleToggleFavorite}
+        isUpdatingFavorite={isUpdatingFavorite}
         isDarkMode={isDarkMode}
-        setIsDarkMode={setIsDarkMode}
-        setShowReadingGuide={setShowReadingGuide}
-        handleMarkAsRead={handleMarkAsRead}
-        isAutoScrolling={isAutoScrolling}
-        isPaused={isPaused}
-        isManuallyPaused={isManuallyPaused}
-        onToggleAutoScroll={toggleAutoScroll}
-        autoScrollEnabled={autoScrollEnabled}
-        isUpdatingReadStatus={isUpdatingReadStatus}
-        onBack={handleBack}
       />
 
       <StoryReaderContent
