@@ -91,6 +91,7 @@ export type Database = {
           error: string | null
           id: string
           image_path: string | null
+          is_favorite: boolean
           objective: string | null
           preview: string | null
           sharing: Json | null
@@ -110,6 +111,7 @@ export type Database = {
           error?: string | null
           id?: string
           image_path?: string | null
+          is_favorite?: boolean
           objective?: string | null
           preview?: string | null
           sharing?: Json | null
@@ -129,6 +131,7 @@ export type Database = {
           error?: string | null
           id?: string
           image_path?: string | null
+          is_favorite?: boolean
           objective?: string | null
           preview?: string | null
           sharing?: Json | null

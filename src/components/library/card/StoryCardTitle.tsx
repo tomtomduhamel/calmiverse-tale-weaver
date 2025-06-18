@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Star, BookCheck } from "lucide-react";
+import { BookCheck } from "lucide-react";
 import type { Story } from "@/types/story";
 import { Badge } from "@/components/ui/badge";
 
@@ -10,7 +10,7 @@ interface StoryCardTitleProps {
   status: Story['status'];
 }
 
-const StoryCardTitle: React.FC<StoryCardTitleProps> = ({ title, isFavorite = false, status }) => {
+const StoryCardTitle: React.FC<StoryCardTitleProps> = ({ title, status }) => {
   // Nettoyer le titre en supprimant les astérisques au début et à la fin
   const cleanTitle = title.replace(/^\*\*|\*\*$/g, "");
   
@@ -25,12 +25,6 @@ const StoryCardTitle: React.FC<StoryCardTitleProps> = ({ title, isFavorite = fal
             <BookCheck className="h-3 w-3 mr-1" />
             Lu
           </Badge>
-        )}
-        {isFavorite && (
-          <Star
-            className="h-5 w-5 text-amber-400 fill-amber-400 flex-shrink-0"
-            aria-label="Favori"
-          />
         )}
       </div>
     </div>

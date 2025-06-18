@@ -44,6 +44,9 @@ export const useStories = (children: any[] = []) => {
     retryFailedStory: handleRetryFailedStory,
     lastError,
     isRetrying,
-    clearError
+    clearError,
+    // Nouvelles fonctions pour les favoris
+    toggleFavorite: supabaseStories.toggleFavorite,
+    isUpdatingFavorite: supabaseStories.isUpdatingFavorite
   };
 };

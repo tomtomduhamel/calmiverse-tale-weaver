@@ -1,28 +1,30 @@
 
-import React from 'react';
-import SearchBar from '../SearchBar';
-import StatusFilter from '../StatusFilter';
-import { useIsMobile } from '@/hooks/use-mobile';
+import React from "react";
+import SearchBar from "../SearchBar";
+import StatusFilter from "../StatusFilter";
 
 interface LibraryFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'error';
-  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error') => void;
+  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites';
+  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites') => void;
 }
 
 const LibraryFilters: React.FC<LibraryFiltersProps> = ({
   searchTerm,
   onSearchChange,
   statusFilter,
-  onStatusChange
+  onStatusChange,
 }) => {
-  const isMobile = useIsMobile();
-  
   return (
-    <div className={`flex ${isMobile ? 'flex-col space-y-3' : 'sm:flex-row'} gap-4 items-start sm:items-center`}>
-      <SearchBar value={searchTerm} onChange={onSearchChange} />
-      <StatusFilter currentStatus={statusFilter} onStatusChange={onStatusChange} />
+    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+      <div className="flex-1 w-full sm:w-auto">
+        <SearchBar searchTerm={searchTerm} onSearchChange={onSearchChange} />
+      </div>
+      <StatusFilter 
+        statusFilter={statusFilter} 
+        onStatusChange={onStatusChange} 
+      />
     </div>
   );
 };

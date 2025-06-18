@@ -1,39 +1,27 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StatusFilterProps {
-  currentStatus: 'all' | 'pending' | 'ready' | 'read' | 'error';
-  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error') => void;
+  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites';
+  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites') => void;
 }
 
-const StatusFilter: React.FC<StatusFilterProps> = ({ currentStatus, onStatusChange }) => {
-  const statuses: { value: 'all' | 'pending' | 'ready' | 'read' | 'error', label: string }[] = [
-    { value: 'all', label: 'Toutes' },
-    { value: 'pending', label: 'En cours' },
-    { value: 'ready', label: 'Prêtes à lire' },
-    { value: 'read', label: 'Lues' },
-    { value: 'error', label: 'En erreur' }
-  ];
-
+const StatusFilter: React.FC<StatusFilterProps> = ({ statusFilter, onStatusChange }) => {
   return (
-    <div className="flex flex-wrap gap-2">
-      {statuses.map((status) => (
-        <Button
-          key={status.value}
-          variant={currentStatus === status.value ? "default" : "outline"}
-          size="sm"
-          onClick={() => onStatusChange(status.value)}
-          className="text-xs rounded-full px-4"
-        >
-          {status.label}
-          {status.value === 'error' && (
-            <Badge className="ml-2 bg-red-500 text-xs" variant="outline">!</Badge>
-          )}
-        </Button>
-      ))}
-    </div>
+    <Select value={statusFilter} onValueChange={onStatusChange}>
+      <SelectTrigger className="w-full sm:w-48">
+        <SelectValue placeholder="Filtrer par statut" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Toutes les histoires</SelectItem>
+        <SelectItem value="favorites">⭐ Favoris</SelectItem>
+        <SelectItem value="pending">⏳ En génération</SelectItem>
+        <SelectItem value="ready">📖 Prêtes</SelectItem>
+        <SelectItem value="read">✅ Lues</SelectItem>
+        <SelectItem value="error">❌ En erreur</SelectItem>
+      </SelectContent>
+    </Select>
   );
 };
 

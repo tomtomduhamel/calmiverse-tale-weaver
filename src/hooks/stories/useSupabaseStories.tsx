@@ -6,12 +6,13 @@ import { useStoryDeletion } from './useStoryDeletion';
 import { useStoryUpdate } from './useStoryUpdate';
 import { useStoryCloudFunctions } from './useStoryCloudFunctions';
 import { usePendingStoryMonitor } from './monitoring/usePendingStoryMonitor';
+import { useStoryFavorites } from './useStoryFavorites';
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 /**
  * Hook principal pour gérer les histoires avec Supabase
- * Maintenant avec surveillance améliorée des timeouts et récupération automatique
+ * Maintenant avec gestion des favoris intégrée
  */
 export const useSupabaseStories = () => {
   const { toast } = useToast();
@@ -23,6 +24,7 @@ export const useSupabaseStories = () => {
   const { deleteStory } = useStoryDeletion();
   const { updateStoryStatus } = useStoryUpdate();
   const { retryStoryGeneration } = useStoryCloudFunctions();
+  const { toggleFavorite, getFavoriteStories, isUpdating: isUpdatingFavorite } = useStoryFavorites();
   
   // Surveillance améliorée des histoires en attente
   const pendingMonitor = usePendingStoryMonitor({
@@ -34,6 +36,16 @@ export const useSupabaseStories = () => {
       fetchStories();
     }
   });
+  
+  // Gestion des favoris avec rafraîchissement automatique
+  const handleToggleFavorite = useCallback(async (storyId: string, currentFavoriteStatus: boolean): Promise<boolean> => {
+    const success = await toggleFavorite(storyId, currentFavoriteStatus);
+    if (success) {
+      // Rafraîchir la liste des histoires pour refléter le changement
+      await fetchStories();
+    }
+    return success;
+  }, [toggleFavorite, fetchStories]);
   
   // Création d'une histoire avec gestion d'erreur centralisée et surveillance automatique
   const handleCreateStory = useCallback(async (formData: { childrenIds: string[], objective: string }, children: any[] = []) => {
@@ -102,6 +114,10 @@ export const useSupabaseStories = () => {
     deleteStory,
     updateStoryStatus,
     retryStoryGeneration,
+    // Nouvelles fonctionnalités de favoris
+    toggleFavorite: handleToggleFavorite,
+    getFavoriteStories,
+    isUpdatingFavorite,
     // Exposer les fonctionnalités de surveillance
     pendingStoryId: pendingMonitor.pendingStoryId,
     isMonitoring: pendingMonitor.isMonitoring,

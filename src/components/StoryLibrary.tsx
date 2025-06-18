@@ -11,8 +11,10 @@ interface StoryLibraryProps {
   onSelectStory: (story: Story) => void;
   onDeleteStory?: (storyId: string) => void;
   onRetryStory?: (storyId: string) => void;
+  onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
   onViewChange?: (view: ViewType) => void;
   isRetrying?: boolean;
+  isUpdatingFavorite?: boolean;
   pendingStoryId?: string | null;
   onForceRefresh?: () => void;
   onCreateStory?: () => void;
@@ -24,8 +26,10 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   onSelectStory,
   onDeleteStory,
   onRetryStory,
+  onToggleFavorite,
   onViewChange,
   isRetrying = false,
+  isUpdatingFavorite = false,
   pendingStoryId,
   onForceRefresh,
   onCreateStory,
@@ -68,6 +72,20 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
     }
   }, [onRetryStory]);
 
+  // Gestion des favoris avec logs de débogage
+  const handleToggleFavorite = useCallback(async (storyId: string, currentFavoriteStatus: boolean) => {
+    if (onToggleFavorite) {
+      try {
+        console.log("[StoryLibrary] DEBUG: Toggle favori pour histoire:", storyId, "statut actuel:", currentFavoriteStatus);
+        await onToggleFavorite(storyId, currentFavoriteStatus);
+      } catch (error) {
+        console.error("[StoryLibrary] ERROR: Erreur lors du toggle favori:", error);
+      }
+    } else {
+      console.log("[StoryLibrary] DEBUG: Fonction onToggleFavorite non définie");
+    }
+  }, [onToggleFavorite]);
+
   const handleRecoveryComplete = useCallback(() => {
     console.log("[StoryLibrary] Récupération terminée, rafraîchissement des données");
     if (onForceRefresh) {
@@ -89,8 +107,10 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         onSelectStory={onSelectStory}
         onDeleteStory={handleDelete}
         onRetryStory={handleRetry}
+        onToggleFavorite={handleToggleFavorite}
         onViewChange={onViewChange}
         isRetrying={isRetrying}
+        isUpdatingFavorite={isUpdatingFavorite}
         isDeletingId={isDeletingId}
         pendingStoryId={pendingStoryId}
         onCreateStory={onCreateStory}

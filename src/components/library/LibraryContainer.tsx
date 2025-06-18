@@ -15,9 +15,11 @@ interface LibraryContainerProps {
   onSelectStory: (story: Story) => void;
   onDeleteStory?: (storyId: string) => void;
   onRetryStory?: (storyId: string) => void;
+  onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
   onViewChange?: (view: ViewType) => void;
   isRetrying?: boolean;
   isDeletingId?: string | null;
+  isUpdatingFavorite?: boolean;
   pendingStoryId?: string | null;
   onCreateStory?: () => void;
 }
@@ -27,34 +29,57 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   onSelectStory,
   onDeleteStory,
   onRetryStory,
+  onToggleFavorite,
   onViewChange,
   isRetrying = false,
   isDeletingId,
+  isUpdatingFavorite = false,
   pendingStoryId,
   onCreateStory
 }) => {
   // États locaux pour la pagination et le filtrage
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'ready' | 'read' | 'error'>('all');
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites'>('all');
   const [isZenMode, setIsZenMode] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const storiesPerPage = 6;
 
-  // Filtrage et tri des histoires
+  // Filtrage et tri des histoires avec gestion des favoris
   const filteredStories = React.useMemo(() => {
     return stories
       .filter(story => {
         const matchesSearch = (story.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
                             (story.preview?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
-        const matchesStatus = statusFilter === 'all' || story.status === statusFilter;
+        
+        let matchesStatus = false;
+        switch (statusFilter) {
+          case 'all':
+            matchesStatus = true;
+            break;
+          case 'favorites':
+            matchesStatus = story.isFavorite === true;
+            break;
+          default:
+            matchesStatus = story.status === statusFilter;
+        }
+        
         return matchesSearch && matchesStatus;
       })
       .sort((a, b) => {
+        // Priorisation pour l'affichage des favoris
         const getPriority = (story: Story) => {
-          if (story.status === 'error') return 0; // Show errors first
-          if (story.status === 'pending') return 1; // Show pending second
-          if (story.isFavorite) return story.status === 'read' ? 3 : 2;
-          return story.status === 'read' ? 5 : 4;
+          // Les favoris non lus en premier
+          if (story.isFavorite && story.status !== 'read') return 0;
+          // Les histoires en erreur ensuite
+          if (story.status === 'error') return 1;
+          // Les histoires en génération
+          if (story.status === 'pending') return 2;
+          // Les favoris lus
+          if (story.isFavorite && story.status === 'read') return 3;
+          // Les histoires prêtes non favorites
+          if (story.status === 'ready') return 4;
+          // Les histoires lues non favorites
+          return 5;
         };
 
         const priorityA = getPriority(a);
@@ -62,6 +87,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
 
         if (priorityA !== priorityB) return priorityA - priorityB;
         
+        // Tri par date de création pour histoires de même priorité
         return b.createdAt.getTime() - a.createdAt.getTime();
       });
   }, [stories, searchTerm, statusFilter]);
@@ -115,9 +141,11 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
         stories={currentStories}
         onDelete={onDeleteStory}
         onRetry={onRetryStory}
+        onToggleFavorite={onToggleFavorite}
         onCardClick={onSelectStory}
         isRetrying={isRetrying}
         isDeletingId={isDeletingId}
+        isUpdatingFavorite={isUpdatingFavorite}
         pendingStoryId={pendingStoryId}
       />
 
