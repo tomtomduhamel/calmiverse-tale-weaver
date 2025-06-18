@@ -12,6 +12,7 @@ import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
 import { StoryReaderLayout } from "./story/reader/StoryReaderLayout";
 import { StoryReaderHeader } from "./story/reader/StoryReaderHeader";
 import { StoryReaderContent } from "./story/reader/StoryReaderContent";
+import { ReaderControls } from "./story/ReaderControls";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -44,7 +45,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   // Calcul des métriques pour le défilement automatique
   const wordCount = story?.content?.trim().split(/\s+/).length || 0;
   
-  // Gestion du défilement automatique (sans la logique audio)
+  // Gestion du défilement automatique
   const { 
     isAutoScrolling,
     isPaused,
@@ -148,6 +149,34 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         onToggleFavorite={onToggleFavorite}
         scrollAreaRef={scrollAreaRef}
       />
+
+      {/* Contrôles du lecteur restaurés */}
+      <div className={`sticky bottom-0 border-t p-4 ${
+        isDarkMode 
+          ? 'bg-gray-900 border-gray-700' 
+          : 'bg-white border-gray-200'
+      }`}>
+        <div className="max-w-4xl mx-auto">
+          <ReaderControls
+            fontSize={fontSize}
+            setFontSize={setFontSize}
+            isDarkMode={isDarkMode}
+            setIsDarkMode={setIsDarkMode}
+            storyId={story.id}
+            title={story.title}
+            story={story}
+            setShowReadingGuide={setShowReadingGuide}
+            onMarkAsRead={handleMarkAsRead}
+            isRead={story.status === 'read'}
+            isAutoScrolling={isAutoScrolling}
+            isPaused={isPaused}
+            onToggleAutoScroll={toggleAutoScroll}
+            autoScrollEnabled={autoScrollEnabled}
+            isUpdatingReadStatus={isUpdatingReadStatus}
+            isManuallyPaused={isManuallyPaused}
+          />
+        </div>
+      </div>
 
       <AutoScrollIndicator
         isAutoScrolling={isAutoScrolling}
