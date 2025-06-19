@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
@@ -13,6 +12,10 @@ import { StoryReaderLayout } from "./story/reader/StoryReaderLayout";
 import { StoryReaderHeader } from "./story/reader/StoryReaderHeader";
 import { StoryReaderContent } from "./story/reader/StoryReaderContent";
 import { ReaderControls } from "./story/ReaderControls";
+import { FloatingToggleButton } from "./story/reader/controls/FloatingToggleButton";
+import { CollapsibleControls } from "./story/reader/controls/CollapsibleControls";
+import { UserActivityDetector } from "./story/reader/controls/UserActivityDetector";
+import { useControlsVisibility } from "@/hooks/story/reader/useControlsVisibility";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -41,6 +44,18 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   
   const isMobile = useIsMobile();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  
+  // Gestion de la visibilité des contrôles
+  const {
+    isVisible: controlsVisible,
+    toggleVisibility: toggleControls,
+    handleUserActivity,
+    keepVisible: keepControlsVisible,
+    allowAutoHide: allowControlsAutoHide
+  } = useControlsVisibility({
+    autoHideDelay: 4000, // 4 secondes d'inactivité
+    persistState: true
+  });
   
   // Calcul des métriques pour le défilement automatique
   const wordCount = story?.content?.trim().split(/\s+/).length || 0;
@@ -129,34 +144,35 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const readingTimeString = calculateReadingTime(story.content);
 
   return (
-    <StoryReaderLayout isDarkMode={isDarkMode} scrollAreaRef={scrollAreaRef}>
-      <StoryReaderHeader
-        story={story}
-        onClose={handleBack}
-        onSettingsClick={handleSettingsClick}
-        onToggleFavorite={handleToggleFavorite}
-        isUpdatingFavorite={isUpdatingFavorite}
-        isDarkMode={isDarkMode}
-      />
+    <UserActivityDetector onActivity={handleUserActivity}>
+      <StoryReaderLayout isDarkMode={isDarkMode} scrollAreaRef={scrollAreaRef}>
+        <StoryReaderHeader
+          story={story}
+          onClose={handleBack}
+          onSettingsClick={handleSettingsClick}
+          onToggleFavorite={handleToggleFavorite}
+          isUpdatingFavorite={isUpdatingFavorite}
+          isDarkMode={isDarkMode}
+        />
 
-      <StoryReaderContent
-        story={story}
-        childName={childName}
-        readingTime={readingTimeString}
-        fontSize={fontSize}
-        isDarkMode={isDarkMode}
-        setShowSummary={setShowSummary}
-        onToggleFavorite={onToggleFavorite}
-        scrollAreaRef={scrollAreaRef}
-      />
+        <StoryReaderContent
+          story={story}
+          childName={childName}
+          readingTime={readingTimeString}
+          fontSize={fontSize}
+          isDarkMode={isDarkMode}
+          setShowSummary={setShowSummary}
+          onToggleFavorite={onToggleFavorite}
+          scrollAreaRef={scrollAreaRef}
+        />
 
-      {/* Contrôles du lecteur restaurés */}
-      <div className={`sticky bottom-0 border-t p-4 ${
-        isDarkMode 
-          ? 'bg-gray-900 border-gray-700' 
-          : 'bg-white border-gray-200'
-      }`}>
-        <div className="max-w-4xl mx-auto">
+        {/* Contrôles rétractables */}
+        <CollapsibleControls
+          isVisible={controlsVisible}
+          isDarkMode={isDarkMode}
+          onMouseEnter={keepControlsVisible}
+          onMouseLeave={allowControlsAutoHide}
+        >
           <ReaderControls
             fontSize={fontSize}
             setFontSize={setFontSize}
@@ -175,25 +191,32 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             isUpdatingReadStatus={isUpdatingReadStatus}
             isManuallyPaused={isManuallyPaused}
           />
-        </div>
-      </div>
+        </CollapsibleControls>
 
-      <AutoScrollIndicator
-        isAutoScrolling={isAutoScrolling}
-        isPaused={isPaused}
-        onPauseScroll={handlePauseScroll}
-        onResumeScroll={handleResumeScroll}
-        isDarkMode={isDarkMode}
-      />
+        {/* Bouton flottant de toggle */}
+        <FloatingToggleButton
+          isVisible={controlsVisible}
+          onToggle={toggleControls}
+          isDarkMode={isDarkMode}
+        />
 
-      <StorySummaryDialog 
-        story={story}
-        showSummary={showSummary}
-        setShowSummary={setShowSummary}
-      />
+        <AutoScrollIndicator
+          isAutoScrolling={isAutoScrolling}
+          isPaused={isPaused}
+          onPauseScroll={handlePauseScroll}
+          onResumeScroll={handleResumeScroll}
+          isDarkMode={isDarkMode}
+        />
 
-      <ReadingGuide open={showReadingGuide} onOpenChange={setShowReadingGuide} />
-    </StoryReaderLayout>
+        <StorySummaryDialog 
+          story={story}
+          showSummary={showSummary}
+          setShowSummary={setShowSummary}
+        />
+
+        <ReadingGuide open={showReadingGuide} onOpenChange={setShowReadingGuide} />
+      </StoryReaderLayout>
+    </UserActivityDetector>
   );
 };
 
