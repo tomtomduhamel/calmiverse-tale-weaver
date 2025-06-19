@@ -8,7 +8,7 @@ import { FavoriteButton } from "../story/FavoriteButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Loader2, BookCheck } from "lucide-react";
+import { Loader2, BookCheck, Sparkles } from "lucide-react";
 
 interface StoryCardProps {
   story: Story;
@@ -36,6 +36,16 @@ const StoryCard: React.FC<StoryCardProps> = ({
   // Toutes les histoires sont maintenant cliquables
   const isClickable = true;
   
+  // Vérifier si l'histoire est récente (dernières 24h)
+  const isRecentStory = (): boolean => {
+    const now = new Date();
+    const storyDate = new Date(story.createdAt);
+    const hoursDiff = (now.getTime() - storyDate.getTime()) / (1000 * 60 * 60);
+    return hoursDiff <= 24;
+  };
+
+  const isRecent = isRecentStory();
+  
   const cardStyles = [
     "transition-all duration-300 hover:shadow-md relative",
     isClickable ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01] bg-green-50/30 border-green-300" : "",
@@ -44,6 +54,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
     story.status === "read" ? "border-green-200 bg-green-50" : "",
     story.isFavorite && story.status !== "error" && story.status !== "read" ? "border-amber-200" : "",
     story.isFavorite && story.status === "read" ? "border-green-200" : "",
+    isRecent ? "border-blue-300 bg-blue-50/50" : "", // Style pour les histoires récentes
   ].join(" ");
 
   const getTimeAgo = (date: Date) => {
@@ -82,7 +93,15 @@ const StoryCard: React.FC<StoryCardProps> = ({
     <Card className={cardStyles} onClick={handleCardClick}>
       <CardContent className="pt-6 pb-2">
         <div className="flex justify-between items-start mb-2">
-          <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
+          <div className="flex items-center gap-2 flex-1">
+            <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
+            {isRecent && (
+              <div className="flex items-center text-blue-600 text-xs">
+                <Sparkles className="h-3 w-3 mr-1" />
+                <span className="font-medium">Nouveau</span>
+              </div>
+            )}
+          </div>
           
           {/* Bouton favoris */}
           <div data-favorite-button onClick={handleToggleFavorite}>
@@ -118,7 +137,9 @@ const StoryCard: React.FC<StoryCardProps> = ({
               En génération...
             </span>
           ) : (
-            getTimeAgo(story.createdAt)
+            <span className={isRecent ? "text-blue-600 font-medium" : ""}>
+              {getTimeAgo(story.createdAt)}
+            </span>
           )}
         </span>
         <StoryCardActions 

@@ -44,7 +44,15 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   const [currentPage, setCurrentPage] = React.useState(1);
   const storiesPerPage = 6;
 
-  // Filtrage et tri des histoires avec gestion des favoris
+  // Fonction pour vérifier si une histoire est récente (dernières 24h)
+  const isRecentStory = (story: Story): boolean => {
+    const now = new Date();
+    const storyDate = new Date(story.createdAt);
+    const hoursDiff = (now.getTime() - storyDate.getTime()) / (1000 * 60 * 60);
+    return hoursDiff <= 24;
+  };
+
+  // Filtrage et tri amélioré des histoires
   const filteredStories = React.useMemo(() => {
     return stories
       .filter(story => {
@@ -66,20 +74,42 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
         return matchesSearch && matchesStatus;
       })
       .sort((a, b) => {
-        // Priorisation pour l'affichage des favoris
+        // Nouveau système de priorités amélioré
         const getPriority = (story: Story) => {
-          // Les favoris non lus en premier
-          if (story.isFavorite && story.status !== 'read') return 0;
-          // Les histoires en erreur ensuite
-          if (story.status === 'error') return 1;
-          // Les histoires en génération
-          if (story.status === 'pending') return 2;
-          // Les favoris lus
-          if (story.isFavorite && story.status === 'read') return 3;
-          // Les histoires prêtes non favorites
-          if (story.status === 'ready') return 4;
-          // Les histoires lues non favorites
-          return 5;
+          const isRecent = isRecentStory(story);
+          
+          // Priorité 0 : Histoires récentes (moins de 24h) avec statut critique
+          if (isRecent && (story.status === 'error' || story.status === 'pending')) return 0;
+          
+          // Priorité 1 : Histoires récentes prêtes ou non lues
+          if (isRecent && (story.status === 'ready' || story.status !== 'read')) return 1;
+          
+          // Priorité 2 : Histoires récentes lues
+          if (isRecent && story.status === 'read') return 2;
+          
+          // Priorité 3 : Favoris non récents avec problèmes
+          if (story.isFavorite && story.status === 'error') return 3;
+          
+          // Priorité 4 : Favoris non récents en génération
+          if (story.isFavorite && story.status === 'pending') return 4;
+          
+          // Priorité 5 : Favoris non récents non lus
+          if (story.isFavorite && story.status !== 'read') return 5;
+          
+          // Priorité 6 : Favoris non récents lus
+          if (story.isFavorite && story.status === 'read') return 6;
+          
+          // Priorité 7 : Histoires non récentes avec erreurs
+          if (story.status === 'error') return 7;
+          
+          // Priorité 8 : Histoires non récentes en génération
+          if (story.status === 'pending') return 8;
+          
+          // Priorité 9 : Histoires non récentes prêtes
+          if (story.status === 'ready') return 9;
+          
+          // Priorité 10 : Histoires non récentes lues
+          return 10;
         };
 
         const priorityA = getPriority(a);
@@ -87,7 +117,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
 
         if (priorityA !== priorityB) return priorityA - priorityB;
         
-        // Tri par date de création pour histoires de même priorité
+        // En cas d'égalité de priorité, tri par date de création (plus récent en premier)
         return b.createdAt.getTime() - a.createdAt.getTime();
       });
   }, [stories, searchTerm, statusFilter]);
