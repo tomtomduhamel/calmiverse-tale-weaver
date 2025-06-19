@@ -18,7 +18,9 @@ export const useControlsVisibility = (options: UseControlsVisibilityOptions = {}
 
   const [isVisible, setIsVisible] = useState(getInitialState);
   const [isUserInteracting, setIsUserInteracting] = useState(false);
+  const [isInGracePeriod, setIsInGracePeriod] = useState(false);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const graceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
 
   // Persister l'état
@@ -34,35 +36,55 @@ export const useControlsVisibility = (options: UseControlsVisibilityOptions = {}
       clearTimeout(hideTimeoutRef.current);
     }
 
-    if (isVisible && !isUserInteracting) {
+    if (isVisible && !isUserInteracting && !isInGracePeriod) {
       hideTimeoutRef.current = setTimeout(() => {
         setIsVisible(false);
       }, autoHideDelay);
     }
-  }, [isVisible, isUserInteracting, autoHideDelay]);
+  }, [isVisible, isUserInteracting, isInGracePeriod, autoHideDelay]);
 
-  // Détecter l'activité utilisateur
+  // Détecter l'activité utilisateur avec vérification de la période de grâce
   const handleUserActivity = useCallback(() => {
+    // Ignorer l'activité pendant la période de grâce après un toggle manuel
+    if (isInGracePeriod) {
+      return;
+    }
+
     lastActivityRef.current = Date.now();
     if (!isVisible) {
       setIsVisible(true);
     }
     resetAutoHideTimer();
-  }, [isVisible, resetAutoHideTimer]);
+  }, [isVisible, isInGracePeriod, resetAutoHideTimer]);
 
-  // Toggle manuel de la visibilité
+  // Toggle manuel de la visibilité avec période de grâce
   const toggleVisibility = useCallback(() => {
-    setIsVisible(prev => !prev);
+    const newVisibility = !isVisible;
+    setIsVisible(newVisibility);
+    
+    // Démarrer une période de grâce de 2 secondes pour éviter la réapparition immédiate
+    setIsInGracePeriod(true);
+    
+    if (graceTimeoutRef.current) {
+      clearTimeout(graceTimeoutRef.current);
+    }
+    
+    graceTimeoutRef.current = setTimeout(() => {
+      setIsInGracePeriod(false);
+    }, 2000);
+
     // Empêcher le masquage automatique pendant un court moment après un toggle manuel
     setIsUserInteracting(true);
-    setTimeout(() => setIsUserInteracting(false), 2000);
-  }, []);
+    setTimeout(() => setIsUserInteracting(false), 3000);
+  }, [isVisible]);
 
   // Afficher temporairement les contrôles
   const showTemporarily = useCallback(() => {
+    if (isInGracePeriod) return; // Respecter la période de grâce
+    
     setIsVisible(true);
     resetAutoHideTimer();
-  }, [resetAutoHideTimer]);
+  }, [isInGracePeriod, resetAutoHideTimer]);
 
   // Forcer l'affichage (utile quand l'utilisateur interagit avec les contrôles)
   const keepVisible = useCallback(() => {
@@ -83,6 +105,9 @@ export const useControlsVisibility = (options: UseControlsVisibilityOptions = {}
     return () => {
       if (hideTimeoutRef.current) {
         clearTimeout(hideTimeoutRef.current);
+      }
+      if (graceTimeoutRef.current) {
+        clearTimeout(graceTimeoutRef.current);
       }
     };
   }, []);

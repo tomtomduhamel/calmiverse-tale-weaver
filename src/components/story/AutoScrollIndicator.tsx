@@ -22,18 +22,31 @@ export const AutoScrollIndicator: React.FC<AutoScrollIndicatorProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  // Calculer la position bottom en fonction de la présence du menu mobile
-  const bottomPosition = isMobile ? '5rem' : '2rem';
+  // Calculer la position en tenant compte du bouton toggle sur mobile
+  const getPositionStyles = () => {
+    if (isMobile) {
+      return {
+        bottom: '5rem',  // Position coordonnée avec le toggle button
+        right: '1rem',   // Alignement cohérent
+      };
+    }
+    return {
+      bottom: '2rem',  // Position normale sur desktop
+      right: '2rem',
+    };
+  };
   
   // Si l'auto-scroll n'est pas actif ou est déjà en pause, ne pas afficher l'indicateur
   if (!isAutoScrolling || isPaused) {
     return null;
   }
+
+  const positionStyles = getPositionStyles();
   
   return (
     <div 
-      className={`fixed right-8 z-50 transition-all duration-300 opacity-70 hover:opacity-100 animate-fade-in`}
-      style={{ bottom: bottomPosition }}
+      className="fixed z-50 transition-all duration-300 opacity-70 hover:opacity-100 animate-fade-in"
+      style={positionStyles}
     >
       <TooltipProvider>
         <Tooltip>

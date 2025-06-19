@@ -13,15 +13,24 @@ export const UserActivityDetector: React.FC<UserActivityDetectorProps> = ({
   useEffect(() => {
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
     
-    const handleActivity = () => {
+    const handleActivity = (event: Event) => {
+      // Vérifier si l'événement provient du bouton toggle pour éviter les conflits
+      const target = event.target as HTMLElement;
+      const isToggleButton = target.closest('[data-toggle-controls]');
+      
+      // Ignorer l'activité du bouton toggle
+      if (isToggleButton) {
+        return;
+      }
+      
       onActivity();
     };
 
     // Throttle pour éviter trop d'appels
     let timeoutId: NodeJS.Timeout;
-    const throttledHandler = () => {
+    const throttledHandler = (event: Event) => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(handleActivity, 100);
+      timeoutId = setTimeout(() => handleActivity(event), 100);
     };
 
     events.forEach(event => {
