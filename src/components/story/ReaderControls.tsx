@@ -1,26 +1,17 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  Minus, 
-  Plus, 
-  Moon, 
-  Sun, 
-  Share2, 
-  BookOpen, 
-  Play, 
-  Pause,
-  Volume2
-} from "lucide-react";
-import type { Story } from "@/types/story";
-import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Settings, Download } from "lucide-react";
 import { FontControls } from "./reader/FontControls";
 import { ThemeToggle } from "./reader/ThemeToggle";
-import { UtilityButtons } from "./reader/UtilityButtons";
-import { MarkAsReadButton } from "./reader/MarkAsReadButton";
 import { AutoScrollControl } from "./reader/AutoScrollControl";
-import BackgroundSoundButton from "./reader/BackgroundSoundButton";
+import { MarkAsReadButton } from "./reader/MarkAsReadButton";
+import { UtilityButtons } from "./reader/UtilityButtons";
+import { ElevenLabsTextToSpeech } from "./ElevenLabsTextToSpeech";
+import { VoiceSelector } from "./reader/VoiceSelector";
+import type { Story } from "@/types/story";
 
 interface ReaderControlsProps {
   fontSize: number;
@@ -31,8 +22,8 @@ interface ReaderControlsProps {
   title: string;
   story: Story;
   setShowReadingGuide: (show: boolean) => void;
-  onMarkAsRead: (storyId: string) => Promise<boolean>;
-  isRead: boolean;
+  onMarkAsRead?: (storyId: string) => Promise<boolean>;
+  isRead?: boolean;
   isAutoScrolling?: boolean;
   isPaused?: boolean;
   onToggleAutoScroll?: () => void;
@@ -51,66 +42,98 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   story,
   setShowReadingGuide,
   onMarkAsRead,
-  isRead,
-  isAutoScrolling,
-  isPaused,
+  isRead = false,
+  isAutoScrolling = false,
+  isPaused = false,
   onToggleAutoScroll,
-  autoScrollEnabled,
-  isUpdatingReadStatus,
-  isManuallyPaused
+  autoScrollEnabled = false,
+  isUpdatingReadStatus = false,
+  isManuallyPaused = false,
 }) => {
+  const [selectedVoiceId, setSelectedVoiceId] = useState('9BWtsMINqrJLrRacOk9x'); // Aria par défaut
+
   return (
-    <TooltipProvider>
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* Contrôles de police */}
-        <FontControls 
+    <Card className={`p-4 space-y-4 transition-colors duration-300 ${
+      isDarkMode ? "bg-gray-800 text-white border-gray-700" : "bg-white border-gray-200"
+    }`}>
+      {/* Contrôles de police */}
+      <div>
+        <FontControls
           fontSize={fontSize}
           setFontSize={setFontSize}
           isDarkMode={isDarkMode}
         />
+      </div>
+
+      <Separator className={isDarkMode ? "bg-gray-600" : ""} />
+
+      {/* Contrôles de thème et lecture */}
+      <div className="flex items-center justify-between gap-4">
+        <ThemeToggle isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
         
-        {/* Toggle thème */}
-        <ThemeToggle 
-          isDarkMode={isDarkMode}
-          setIsDarkMode={setIsDarkMode}
-        />
-        
-        {/* Fond sonore */}
-        <BackgroundSoundButton 
-          soundId={story.sound_id}
-          storyObjective={typeof story.objective === 'string' ? story.objective : story.objective?.value}
-          isDarkMode={isDarkMode}
-          autoPlay={false}
-        />
-        
-        {/* Contrôle de défilement automatique */}
-        {autoScrollEnabled && (
+        <div className="flex items-center gap-2">
+          <ElevenLabsTextToSpeech
+            text={story.content}
+            isDarkMode={isDarkMode}
+            voiceId={selectedVoiceId}
+          />
+          
+          <Button
+            variant="outline"
+            onClick={() => setShowReadingGuide(true)}
+            className={`w-10 h-10 ${isDarkMode ? "border-gray-600 text-white hover:bg-gray-700" : ""}`}
+            title="Paramètres de lecture"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <Separator className={isDarkMode ? "bg-gray-600" : ""} />
+
+      {/* Sélecteur de voix */}
+      <VoiceSelector
+        selectedVoiceId={selectedVoiceId}
+        onVoiceChange={setSelectedVoiceId}
+        isDarkMode={isDarkMode}
+      />
+
+      <Separator className={isDarkMode ? "bg-gray-600" : ""} />
+
+      {/* Contrôle de défilement automatique */}
+      {onToggleAutoScroll && (
+        <>
           <AutoScrollControl
-            isAutoScrolling={isAutoScrolling || false}
-            isPaused={isPaused || false}
-            isManuallyPaused={isManuallyPaused || false}
-            onToggleAutoScroll={onToggleAutoScroll || (() => {})}
+            isAutoScrolling={isAutoScrolling}
+            isPaused={isPaused}
+            onToggleAutoScroll={onToggleAutoScroll}
+            autoScrollEnabled={autoScrollEnabled}
+            isDarkMode={isDarkMode}
+            isManuallyPaused={isManuallyPaused}
+          />
+          <Separator className={isDarkMode ? "bg-gray-600" : ""} />
+        </>
+      )}
+
+      {/* Actions sur l'histoire */}
+      <div className="flex flex-col gap-3">
+        {onMarkAsRead && (
+          <MarkAsReadButton
+            storyId={storyId}
+            isRead={isRead}
+            onMarkAsRead={onMarkAsRead}
+            isUpdating={isUpdatingReadStatus}
             isDarkMode={isDarkMode}
           />
         )}
         
-        {/* Boutons utilitaires */}
-        <UtilityButtons 
-          setShowReadingGuide={setShowReadingGuide}
-          isDarkMode={isDarkMode}
+        <UtilityButtons
           storyId={storyId}
           title={title}
-        />
-        
-        {/* Bouton marquer comme lu */}
-        <MarkAsReadButton 
-          storyId={storyId}
-          onMarkAsRead={onMarkAsRead}
-          isRead={isRead}
+          story={story}
           isDarkMode={isDarkMode}
-          isUpdatingReadStatus={isUpdatingReadStatus || false}
         />
       </div>
-    </TooltipProvider>
+    </Card>
   );
 };
