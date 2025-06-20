@@ -107,7 +107,6 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
             isAutoScrolling={isAutoScrolling}
             isPaused={isPaused}
             onToggleAutoScroll={onToggleAutoScroll}
-            autoScrollEnabled={autoScrollEnabled}
             isDarkMode={isDarkMode}
             isManuallyPaused={isManuallyPaused}
           />
@@ -122,16 +121,16 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
             storyId={storyId}
             isRead={isRead}
             onMarkAsRead={onMarkAsRead}
-            isUpdating={isUpdatingReadStatus}
+            isUpdatingReadStatus={isUpdatingReadStatus}
             isDarkMode={isDarkMode}
           />
         )}
         
         <UtilityButtons
+          setShowReadingGuide={setShowReadingGuide}
+          isDarkMode={isDarkMode}
           storyId={storyId}
           title={title}
-          story={story}
-          isDarkMode={isDarkMode}
         />
       </div>
     </Card>
