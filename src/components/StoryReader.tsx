@@ -180,7 +180,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
           isAutoScrolling={isAutoScrolling}
           isPaused={isPaused}
           onToggleAutoScroll={toggleAutoScroll}
-          autoScrollEnabled={autoScrollEnabled}
           isUpdatingReadStatus={isUpdatingReadStatus}
           isManuallyPaused={isManuallyPaused}
         />
