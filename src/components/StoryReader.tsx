@@ -1,13 +1,10 @@
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { ReadingGuide } from "./story/ReadingGuide";
 import { AutoScrollIndicator } from "./story/AutoScrollIndicator";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyStoryView } from "./story/reader/EmptyStoryView";
-import { useAutoScroll } from "@/hooks/story/useAutoScroll";
-import { useMarkAsRead } from "@/hooks/story/useMarkAsRead";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
 import { StoryReaderLayout } from "./story/reader/StoryReaderLayout";
 import { StoryReaderHeader } from "./story/reader/StoryReaderHeader";
@@ -15,7 +12,7 @@ import { StoryReaderContent } from "./story/reader/StoryReaderContent";
 import { ReaderControls } from "./story/ReaderControls";
 import { FloatingToggleButton } from "./story/reader/controls/FloatingToggleButton";
 import { CollapsibleControls } from "./story/reader/controls/CollapsibleControls";
-import { useControlsVisibility } from "@/hooks/story/reader/useControlsVisibility";
+import { useStoryReader } from "@/hooks/story/reader/useStoryReader";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -34,104 +31,43 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   onMarkAsRead,
   childName 
 }) => {
-  // États du lecteur
-  const [story, setStory] = useState<Story | null>(initialStory);
-  const [fontSize, setFontSize] = useState(16);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
-  const [showReadingGuide, setShowReadingGuide] = useState(false);
-  const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false);
-  
-  const isMobile = useIsMobile();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  
-  // Gestion de la visibilité des contrôles (100% manuel)
   const {
-    isVisible: controlsVisible,
-    toggleVisibility: toggleControls
-  } = useControlsVisibility({
-    persistState: true
-  });
-  
-  // Calcul des métriques pour le défilement automatique
-  const wordCount = story?.content?.trim().split(/\s+/).length || 0;
-  
-  // Gestion du défilement automatique
-  const { 
+    // State
+    story,
+    fontSize,
+    setFontSize,
+    isDarkMode,
+    setIsDarkMode,
+    showSummary,
+    setShowSummary,
+    showReadingGuide,
+    setShowReadingGuide,
+    isUpdatingFavorite,
+    scrollAreaRef,
+    controlsVisible,
+    toggleControls,
+    isUpdatingReadStatus,
+    
+    // Auto scroll state
     isAutoScrolling,
     isPaused,
     isManuallyPaused,
-    autoScrollEnabled,
     toggleAutoScroll,
     handlePauseScroll,
     handleResumeScroll,
-    stopAutoScroll
-  } = useAutoScroll({ 
-    wordCount, 
-    scrollAreaRef,
-  });
-  
-  // Gestion du marquage comme lu
-  const { isUpdatingReadStatus, handleMarkAsRead } = useMarkAsRead({
-    story,
-    onMarkAsRead,
-    setStory
-  });
-  
-  // Mettre à jour l'état local quand initialStory change
-  useEffect(() => {
-    if (initialStory) {
-      setStory(initialStory);
-    }
-  }, [initialStory]);
-
-  // Gestion de la fermeture
-  const handleBack = () => {
-    console.log("[StoryReader] DEBUG: Bouton Fermer cliqué");
-    stopAutoScroll();
-    if (onBack) {
-      onBack();
-    } else if (onClose) {
-      onClose();
-    }
-  };
-
-  // Gestion des paramètres
-  const handleSettingsClick = () => {
-    setShowReadingGuide(true);
-  };
-
-  // Gestion du toggle favori
-  const handleToggleFavorite = async (storyId: string, currentFavoriteStatus: boolean) => {
-    if (!onToggleFavorite) return;
     
-    setIsUpdatingFavorite(true);
-    try {
-      await onToggleFavorite(storyId);
-      // Mettre à jour l'état local
-      if (story && story.id === storyId) {
-        setStory({
-          ...story,
-          isFavorite: !currentFavoriteStatus
-        });
-      }
-    } catch (error) {
-      console.error("Erreur lors du toggle favori:", error);
-    } finally {
-      setIsUpdatingFavorite(false);
-    }
-  };
-
-  // Effets de cycle de vie
-  useEffect(() => {
-    console.log("[StoryReader] DEBUG: Lecteur d'histoire affiché pour:", story?.id);
-    document.body.style.overflow = 'hidden';
-    
-    return () => {
-      console.log("[StoryReader] DEBUG: Lecteur d'histoire fermé");
-      document.body.style.overflow = '';
-    };
-  }, [story?.id]);
+    // Actions
+    handleBack,
+    handleSettingsClick,
+    handleToggleFavorite,
+    handleMarkAsRead
+  } = useStoryReader({
+    story: initialStory,
+    onClose,
+    onBack,
+    onToggleFavorite,
+    onMarkAsRead
+  });
 
   if (!story) {
     return <EmptyStoryView onBack={handleBack} />;
