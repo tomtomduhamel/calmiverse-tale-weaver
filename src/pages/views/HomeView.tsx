@@ -19,7 +19,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onViewChange, showGuide, children }
   });
 
   return (
-    <div className="px-4 py-8">
+    <div className="min-h-screen w-full">
       <HomeHero 
         onViewChange={onViewChange} 
         children={children || []} 
