@@ -8,11 +8,19 @@ interface UseElevenLabsTTSOptions {
   modelId?: string;
 }
 
+interface TTSCache {
+  [key: string]: string; // hash du texte -> base64 audio
+}
+
 export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [generationProgress, setGenerationProgress] = useState<string>('');
+  
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const cacheRef = useRef<TTSCache>({});
   const { toast } = useToast();
 
   const {
@@ -20,15 +28,31 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
     modelId = 'eleven_multilingual_v2'
   } = options;
 
+  // Génère une clé de cache basée sur le texte et les paramètres
+  const getCacheKey = useCallback((text: string) => {
+    const normalizedText = text.trim().toLowerCase();
+    return `${voiceId}-${modelId}-${btoa(normalizedText).substring(0, 20)}`;
+  }, [voiceId, modelId]);
+
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       setIsPlaying(false);
+      setProgress(0);
     }
   }, []);
 
-  const generateAndPlaySpeech = useCallback(async (text: string) => {
+  const clearCache = useCallback(() => {
+    cacheRef.current = {};
+    console.log('🗑️ Cache TTS vidé');
+    toast({
+      title: "Cache vidé",
+      description: "Le cache des audios générés a été effacé",
+    });
+  }, [toast]);
+
+  const generateAndPlaySpeech = useCallback(async (text: string, showProgressToast: boolean = true) => {
     if (!text.trim()) {
       toast({
         title: "Erreur",
@@ -44,8 +68,50 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
       return;
     }
 
+    const cacheKey = getCacheKey(text);
+    
+    // Vérifier le cache d'abord
+    if (cacheRef.current[cacheKey]) {
+      console.log('📦 Audio trouvé dans le cache');
+      try {
+        const audioBlob = new Blob(
+          [Uint8Array.from(atob(cacheRef.current[cacheKey]), c => c.charCodeAt(0))],
+          { type: 'audio/mpeg' }
+        );
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        
+        audio.onplay = () => setIsPlaying(true);
+        audio.onended = () => {
+          setIsPlaying(false);
+          setProgress(0);
+          URL.revokeObjectURL(audioUrl);
+        };
+        audio.ontimeupdate = () => {
+          if (audio.duration) {
+            setProgress((audio.currentTime / audio.duration) * 100);
+          }
+        };
+        
+        await audio.play();
+        
+        if (showProgressToast) {
+          toast({
+            title: "Lecture depuis le cache",
+            description: "Audio récupéré du cache local",
+          });
+        }
+        return;
+      } catch (error) {
+        console.error('❌ Erreur lecture cache:', error);
+        delete cacheRef.current[cacheKey];
+      }
+    }
+
     setIsLoading(true);
     setError(null);
+    setGenerationProgress('Connexion à ElevenLabs...');
 
     try {
       console.log('🎙️ Début génération ElevenLabs...', { 
@@ -54,18 +120,18 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
         modelId 
       });
 
-      // Limiter le texte pour éviter les timeouts
-      const limitedText = text.slice(0, 1000);
-      if (text.length > 1000) {
+      if (showProgressToast) {
         toast({
-          title: "Texte tronqué",
-          description: `Le texte a été limité à 1000 caractères (était ${text.length})`,
+          title: "Génération en cours",
+          description: "Création de l'audio avec ElevenLabs...",
         });
       }
+
+      setGenerationProgress('Envoi du texte...');
       
       const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
         body: { 
-          text: limitedText,
+          text,
           voiceId,
           modelId 
         }
@@ -83,6 +149,12 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
         throw new Error(data?.error || 'Réponse invalide du service de synthèse vocale');
       }
 
+      // Mettre en cache l'audio généré
+      cacheRef.current[cacheKey] = data.audioContent;
+      console.log('💾 Audio mis en cache');
+
+      setGenerationProgress('Préparation de la lecture...');
+
       // Créer l'URL audio à partir du base64
       console.log('🎵 Création de l\'audio blob...');
       const audioBlob = new Blob(
@@ -98,12 +170,13 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
       // Gestionnaires d'événements audio
       audio.onloadstart = () => {
         console.log('🔄 Chargement audio démarré');
-        setIsLoading(true);
+        setGenerationProgress('Chargement audio...');
       };
       
       audio.oncanplay = () => {
         console.log('✅ Audio prêt à jouer');
         setIsLoading(false);
+        setGenerationProgress('');
       };
       
       audio.onplay = () => {
@@ -111,15 +184,23 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
         setIsPlaying(true);
       };
       
+      audio.ontimeupdate = () => {
+        if (audio.duration) {
+          setProgress((audio.currentTime / audio.duration) * 100);
+        }
+      };
+      
       audio.onended = () => {
         console.log('⏹️ Lecture audio terminée');
         setIsPlaying(false);
+        setProgress(0);
         URL.revokeObjectURL(audioUrl);
       };
       
       audio.onerror = (e) => {
         console.error('💥 Erreur lecture audio:', e);
         setIsPlaying(false);
+        setProgress(0);
         setError('Erreur lors de la lecture audio');
         URL.revokeObjectURL(audioUrl);
         toast({
@@ -132,10 +213,14 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
       // Lancer la lecture
       await audio.play();
 
-      toast({
-        title: "Lecture démarrée",
-        description: `Audio généré avec la voix sélectionnée`,
-      });
+      if (showProgressToast) {
+        toast({
+          title: "Lecture démarrée",
+          description: data.segments 
+            ? `Audio généré (${data.processedTextLength}/${data.originalTextLength} caractères)`
+            : "Audio généré avec succès",
+        });
+      }
 
     } catch (error: any) {
       console.error('💥 Erreur synthèse vocale:', error);
@@ -144,12 +229,14 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
       
       // Messages d'erreur spécifiques
       let userMessage = "Impossible de générer l'audio";
-      if (errorMessage.includes('Clé API')) {
-        userMessage = "Clé API ElevenLabs non configurée ou invalide";
-      } else if (errorMessage.includes('quota')) {
-        userMessage = "Limite de quota ElevenLabs atteinte";
-      } else if (errorMessage.includes('Timeout')) {
-        userMessage = "La génération a pris trop de temps, essayez un texte plus court";
+      if (errorMessage.includes('Clé API') || errorMessage.includes('invalide')) {
+        userMessage = "Configuration ElevenLabs incorrecte. Vérifiez votre clé API.";
+      } else if (errorMessage.includes('quota') || errorMessage.includes('limite')) {
+        userMessage = "Limite ElevenLabs atteinte. Vérifiez votre plan ou attendez.";
+      } else if (errorMessage.includes('Timeout') || errorMessage.includes('timeout')) {
+        userMessage = "La génération a pris trop de temps. Essayez un texte plus court.";
+      } else if (errorMessage.includes('connexion')) {
+        userMessage = "Problème de connexion. Vérifiez votre réseau.";
       }
       
       toast({
@@ -159,14 +246,19 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
       });
     } finally {
       setIsLoading(false);
+      setGenerationProgress('');
     }
-  }, [voiceId, modelId, isPlaying, stopAudio, toast]);
+  }, [voiceId, modelId, isPlaying, stopAudio, toast, getCacheKey]);
 
   return {
     generateAndPlaySpeech,
     stopAudio,
+    clearCache,
     isLoading,
     isPlaying,
-    error
+    error,
+    progress,
+    generationProgress,
+    cacheSize: Object.keys(cacheRef.current).length
   };
 };
