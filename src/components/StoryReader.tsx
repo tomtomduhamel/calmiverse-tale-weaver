@@ -9,7 +9,7 @@ import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
 import { StoryReaderLayout } from "./story/reader/StoryReaderLayout";
 import { StoryReaderHeader } from "./story/reader/StoryReaderHeader";
 import { StoryReaderContent } from "./story/reader/StoryReaderContent";
-import { ReaderControls } from "./story/ReaderControls";
+import ReaderControls from "./story/ReaderControls";
 import { FloatingToggleButton } from "./story/reader/controls/FloatingToggleButton";
 import { CollapsibleControls } from "./story/reader/controls/CollapsibleControls";
 import { useStoryReader } from "@/hooks/story/reader/useStoryReader";
