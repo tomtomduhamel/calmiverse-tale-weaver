@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Card,
@@ -93,7 +92,7 @@ export const AccountManagementSection = () => {
           Gestion du compte
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex justify-center">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" className="flex items-center gap-2">
