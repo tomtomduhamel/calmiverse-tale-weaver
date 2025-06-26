@@ -1,38 +1,33 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Settings } from "lucide-react";
-import { FontControls } from "./reader/FontControls";
-import { ThemeToggle } from "./reader/ThemeToggle";
+import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Play, Pause } from "lucide-react";
+import { TextToSpeech } from "./TextToSpeech";
 import { AutoScrollControl } from "./reader/AutoScrollControl";
-import { MarkAsReadButton } from "./reader/MarkAsReadButton";
-import { UtilityButtons } from "./reader/UtilityButtons";
 import { ElevenLabsTextToSpeech } from "./ElevenLabsTextToSpeech";
-import { VoiceSelector } from "./reader/VoiceSelector";
-import { BackgroundSoundButton } from "./reader/BackgroundSoundButton";
-import type { Story } from "@/types/story";
+import { ElevenLabsNewTTS } from "./ElevenLabsNewTTS";
 
 interface ReaderControlsProps {
   fontSize: number;
   setFontSize: (size: number) => void;
   isDarkMode: boolean;
-  setIsDarkMode: (dark: boolean) => void;
+  setIsDarkMode: (darkMode: boolean) => void;
   storyId: string;
   title: string;
-  story: Story;
+  story: any;
   setShowReadingGuide: (show: boolean) => void;
   onMarkAsRead?: (storyId: string) => Promise<boolean>;
-  isRead?: boolean;
-  isAutoScrolling?: boolean;
-  isPaused?: boolean;
-  onToggleAutoScroll?: () => void;
-  isUpdatingReadStatus?: boolean;
-  isManuallyPaused?: boolean;
+  isRead: boolean;
+  isAutoScrolling: boolean;
+  isPaused: boolean;
+  onToggleAutoScroll: () => void;
+  isUpdatingReadStatus: boolean;
+  isManuallyPaused: boolean;
 }
 
-export const ReaderControls: React.FC<ReaderControlsProps> = ({
+const ReaderControls: React.FC<ReaderControlsProps> = ({
   fontSize,
   setFontSize,
   isDarkMode,
@@ -42,120 +37,134 @@ export const ReaderControls: React.FC<ReaderControlsProps> = ({
   story,
   setShowReadingGuide,
   onMarkAsRead,
-  isRead = false,
-  isAutoScrolling = false,
-  isPaused = false,
+  isRead,
+  isAutoScrolling,
+  isPaused,
   onToggleAutoScroll,
-  isUpdatingReadStatus = false,
-  isManuallyPaused = false,
+  isUpdatingReadStatus,
+  isManuallyPaused
 }) => {
-  const [selectedVoiceId, setSelectedVoiceId] = useState('9BWtsMINqrJLrRacOk9x'); // Aria par défaut
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const handleFontSizeChange = (value: number[]) => {
+    setFontSize(value[0]);
+  };
+
+  const handleToggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
+  const handleReadingGuideClick = () => {
+    setShowReadingGuide(true);
+  };
+
+  const handleMarkAsReadClick = async () => {
+    if (onMarkAsRead) {
+      await onMarkAsRead(storyId);
+    }
+  };
 
   return (
-    <Card className={`p-4 space-y-4 transition-colors duration-300 ${
-      isDarkMode ? "bg-gray-800 text-white border-gray-700" : "bg-white border-gray-200"
-    }`}>
-      {/* Contrôles de police */}
-      <div>
-        <FontControls
-          fontSize={fontSize}
-          setFontSize={setFontSize}
-          isDarkMode={isDarkMode}
-        />
-      </div>
+    <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} border-t p-4 transition-colors duration-300`}>
+      <div className="max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Colonne 1: Contrôles de lecture */}
+          <div className="space-y-3">
+            <h3 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Lecture
+            </h3>
+            
+            <div className="flex flex-wrap gap-2">
+              <TextToSpeech text={story.content} isDarkMode={isDarkMode} />
+              <ElevenLabsTextToSpeech text={story.content} isDarkMode={isDarkMode} />
+              <ElevenLabsNewTTS text={story.content} isDarkMode={isDarkMode} />
+            </div>
+            
+            <AutoScrollControl
+              isAutoScrolling={isAutoScrolling}
+              isPaused={isPaused}
+              onToggleAutoScroll={onToggleAutoScroll}
+              isDarkMode={isDarkMode}
+              isManuallyPaused={isManuallyPaused}
+            />
+          </div>
 
-      <Separator className={isDarkMode ? "bg-gray-600" : ""} />
+          {/* Colonne 2: Apparence */}
+          <div className="space-y-3">
+            <h3 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Apparence
+            </h3>
+            <div>
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="dark-mode" className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  <span className="ml-1">Mode {isDarkMode ? 'Clair' : 'Sombre'}</span>
+                </Label>
+                <Switch
+                  id="dark-mode"
+                  checked={isDarkMode}
+                  onCheckedChange={handleToggleDarkMode}
+                />
+              </div>
+            </div>
+            <div>
+              <Label className={`block text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Taille du texte
+              </Label>
+              <Slider
+                defaultValue={[fontSize]}
+                max={30}
+                min={12}
+                step={1}
+                onValueChange={handleFontSizeChange}
+                className="mt-2"
+              />
+            </div>
+          </div>
 
-      {/* Contrôles de thème et paramètres */}
-      <div className="flex items-center justify-between gap-4">
-        <ThemeToggle isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-        
-        <Button
-          variant="outline"
-          onClick={() => setShowReadingGuide(true)}
-          className={`w-10 h-10 ${isDarkMode ? "border-gray-600 text-white hover:bg-gray-700" : ""}`}
-          title="Paramètres de lecture"
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <Separator className={isDarkMode ? "bg-gray-600" : ""} />
-
-      {/* Section Audio - Fond sonore et Synthèse vocale */}
-      <div className="space-y-3">
-        <h4 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-700'}`}>
-          Contrôles Audio
-        </h4>
-        
-        {/* Ligne 1: Fond sonore d'ambiance */}
-        <div className="flex items-center justify-between">
-          <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            Musique d'ambiance
-          </span>
-          <BackgroundSoundButton
-            soundId={story.sound_id}
-            storyObjective={typeof story.objective === 'string' ? story.objective : story.objective?.value}
-            isDarkMode={isDarkMode}
-            autoPlay={false}
-          />
+          {/* Colonne 3: Options supplémentaires */}
+          <div className="space-y-3">
+            <h3 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Options
+            </h3>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handleReadingGuideClick}
+                disabled={!isMounted}
+              >
+                <Bookmark className="h-4 w-4 mr-2" />
+                Guide de lecture
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handleMarkAsReadClick}
+                disabled={isRead || isUpdatingReadStatus || !onMarkAsRead}
+              >
+                {isRead ? (
+                  <>
+                    <BookOpenCheck className="h-4 w-4 mr-2" />
+                    Marqué comme lu
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2 animate-pulse" />
+                    Marquer comme lu
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
-
-        {/* Ligne 2: Synthèse vocale */}
-        <div className="flex items-center justify-between">
-          <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            Lecture vocale
-          </span>
-          <ElevenLabsTextToSpeech
-            text={story.content}
-            isDarkMode={isDarkMode}
-            voiceId={selectedVoiceId}
-          />
-        </div>
-
-        {/* Sélecteur de voix */}
-        <VoiceSelector
-          selectedVoiceId={selectedVoiceId}
-          onVoiceChange={setSelectedVoiceId}
-          isDarkMode={isDarkMode}
-        />
       </div>
-
-      <Separator className={isDarkMode ? "bg-gray-600" : ""} />
-
-      {/* Contrôle de défilement automatique */}
-      {onToggleAutoScroll && (
-        <>
-          <AutoScrollControl
-            isAutoScrolling={isAutoScrolling}
-            isPaused={isPaused}
-            onToggleAutoScroll={onToggleAutoScroll}
-            isDarkMode={isDarkMode}
-            isManuallyPaused={isManuallyPaused}
-          />
-          <Separator className={isDarkMode ? "bg-gray-600" : ""} />
-        </>
-      )}
-
-      {/* Actions sur l'histoire */}
-      <div className="flex flex-col gap-3">
-        {onMarkAsRead && (
-          <MarkAsReadButton
-            storyId={storyId}
-            isRead={isRead}
-            onMarkAsRead={onMarkAsRead}
-            isUpdatingReadStatus={isUpdatingReadStatus}
-            isDarkMode={isDarkMode}
-          />
-        )}
-        
-        <UtilityButtons
-          setShowReadingGuide={setShowReadingGuide}
-          isDarkMode={isDarkMode}
-          storyId={storyId}
-          title={title}
-        />
-      </div>
-    </Card>
+    </div>
   );
 };
+
+export default ReaderControls;
