@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Terminal, Copy, RefreshCw } from 'lucide-react';
+import { Terminal, Copy, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,66 +22,138 @@ export const EdgeFunctionLogger: React.FC<EdgeFunctionLoggerProps> = ({
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      console.log('📋 [EdgeFunctionLogger] Tentative de récupération des logs...');
+      console.log('📋 [EdgeFunctionLogger] Génération de logs de test...');
       
-      // Effectuer plusieurs appels pour générer des logs
+      // Tests séquentiels avec supabase.functions.invoke uniquement
       const testCalls = [
-        { text: 'Test 1', testConnection: true },
-        { text: 'Test 2 avec plus de texte pour voir la différence', voiceId: '9BWtsMINqrJLrRacOk9x' },
-        { ping: true },
-        { testSecrets: true }
+        { 
+          name: 'Test Ping', 
+          body: { ping: true },
+          description: 'Test de connectivité basique'
+        },
+        { 
+          name: 'Test Secrets', 
+          body: { testSecrets: true },
+          description: 'Vérification de la configuration des secrets'
+        },
+        { 
+          name: 'Test API ElevenLabs', 
+          body: { testConnection: true },
+          description: 'Test de connexion à l\'API ElevenLabs'
+        },
+        { 
+          name: 'Test Génération Audio', 
+          body: { 
+            text: 'Test de génération audio Calmiverse.',
+            voiceId: '9BWtsMINqrJLrRacOk9x',
+            modelId: 'eleven_multilingual_v2'
+          },
+          description: 'Test de génération audio complète'
+        }
       ];
 
       const results = [];
       
-      for (const [index, body] of testCalls.entries()) {
-        console.log(`🔄 [EdgeFunctionLogger] Appel ${index + 1}/4:`, body);
+      for (const [index, testCall] of testCalls.entries()) {
+        console.log(`🔄 [EdgeFunctionLogger] ${testCall.name} (${index + 1}/${testCalls.length})`);
+        
+        const startTime = Date.now();
         
         try {
-          const { data, error } = await supabase.functions.invoke('tts-elevenlabs', { body });
+          const { data, error } = await supabase.functions.invoke('tts-elevenlabs', { 
+            body: testCall.body 
+          });
+          
+          const duration = Date.now() - startTime;
           
           results.push({
+            name: testCall.name,
+            description: testCall.description,
             call: index + 1,
-            body,
+            body: testCall.body,
             success: !error,
-            result: error || data,
+            data: data,
+            error: error,
+            duration: duration,
             timestamp: new Date().toISOString()
           });
           
-          console.log(`✅ [EdgeFunctionLogger] Appel ${index + 1} terminé:`, { data, error });
+          console.log(`✅ [EdgeFunctionLogger] ${testCall.name} réussi (${duration}ms):`, { data, error });
         } catch (e: any) {
+          const duration = Date.now() - startTime;
+          
           results.push({
+            name: testCall.name,
+            description: testCall.description,
             call: index + 1,
-            body,
+            body: testCall.body,
             success: false,
-            result: e.message,
+            data: null,
+            error: { message: e.message, details: e },
+            duration: duration,
             timestamp: new Date().toISOString()
           });
           
-          console.error(`❌ [EdgeFunctionLogger] Appel ${index + 1} échoué:`, e);
+          console.error(`❌ [EdgeFunctionLogger] ${testCall.name} échoué (${duration}ms):`, e);
         }
         
         // Petite pause entre les appels
-        await new Promise(resolve => setTimeout(resolve, 500));
+        if (index < testCalls.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
       
-      const logOutput = results.map(r => 
-        `[${r.timestamp}] Appel ${r.call} ${r.success ? '✅' : '❌'}\n` +
-        `Body: ${JSON.stringify(r.body, null, 2)}\n` +
-        `Result: ${JSON.stringify(r.result, null, 2)}\n` +
-        `${'='.repeat(50)}\n`
-      ).join('\n');
+      // Génération du rapport de logs
+      const logOutput = results.map(r => {
+        const status = r.success ? '✅ SUCCÈS' : '❌ ÉCHEC';
+        const header = `[${r.timestamp}] ${r.name} ${status} (${r.duration}ms)`;
+        const description = `Description: ${r.description}`;
+        const bodyLog = `Requête: ${JSON.stringify(r.body, null, 2)}`;
+        
+        let responseLog = '';
+        if (r.success && r.data) {
+          responseLog = `Réponse: ${JSON.stringify(r.data, null, 2)}`;
+        } else if (r.error) {
+          responseLog = `Erreur: ${JSON.stringify(r.error, null, 2)}`;
+        }
+        
+        return [header, description, bodyLog, responseLog, '='.repeat(80)].join('\n');
+      }).join('\n\n');
       
-      setLogs(logOutput);
+      const summary = `RÉSUMÉ DU DIAGNOSTIC TTS ELEVENLABS
+Tests effectués: ${results.length}
+Succès: ${results.filter(r => r.success).length}
+Échecs: ${results.filter(r => !r.success).length}
+Durée totale: ${results.reduce((acc, r) => acc + r.duration, 0)}ms
+Date: ${new Date().toLocaleString()}
+
+${'='.repeat(80)}
+
+DÉTAILS DES TESTS:
+
+${logOutput}`;
+      
+      setLogs(summary);
+      
+      const successCount = results.filter(r => r.success).length;
+      const failureCount = results.filter(r => !r.success).length;
       
       toast({
         title: "Logs générés",
-        description: `${results.length} appels de test effectués`,
+        description: `${successCount} succès, ${failureCount} échecs sur ${results.length} tests`,
+        variant: failureCount > 0 ? "destructive" : "default"
       });
       
     } catch (error: any) {
       console.error('💥 [EdgeFunctionLogger] Erreur:', error);
-      setLogs(`Erreur lors de la génération des logs:\n${error.message}\n\nStack trace:\n${error.stack || 'N/A'}`);
+      setLogs(`ERREUR LORS DE LA GÉNÉRATION DES LOGS
+${new Date().toLocaleString()}
+
+Message: ${error.message}
+Stack: ${error.stack || 'N/A'}
+
+Cette erreur indique un problème avec le système de diagnostic lui-même.
+Vérifiez votre connexion et authentification Supabase.`);
       
       toast({
         title: "Erreur",
@@ -101,12 +173,26 @@ export const EdgeFunctionLogger: React.FC<EdgeFunctionLoggerProps> = ({
     });
   };
 
+  const getStatusInfo = () => {
+    if (!logs) return null;
+    
+    const successMatch = logs.match(/Succès: (\d+)/);
+    const failureMatch = logs.match(/Échecs: (\d+)/);
+    
+    const successCount = successMatch ? parseInt(successMatch[1]) : 0;
+    const failureCount = failureMatch ? parseInt(failureMatch[1]) : 0;
+    
+    return { successCount, failureCount };
+  };
+
+  const statusInfo = getStatusInfo();
+
   return (
     <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <CardHeader>
         <CardTitle className={`text-sm flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
           <Terminal className="h-4 w-4" />
-          Logs Edge Function
+          Logs Edge Function TTS
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -143,26 +229,30 @@ export const EdgeFunctionLogger: React.FC<EdgeFunctionLoggerProps> = ({
           )}
         </div>
 
-        {logs && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">
-                {logs.split('Appel').length - 1} appels de test
+        {statusInfo && (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="flex items-center gap-1">
+              <CheckCircle className="h-3 w-3 text-green-500" />
+              {statusInfo.successCount} succès
+            </Badge>
+            {statusInfo.failureCount > 0 && (
+              <Badge variant="destructive" className="flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {statusInfo.failureCount} échecs
               </Badge>
-              <Badge variant={logs.includes('❌') ? 'destructive' : 'default'}>
-                {logs.includes('❌') ? 'Erreurs détectées' : 'Tous les tests OK'}
-              </Badge>
-            </div>
-            
-            <Textarea
-              value={logs}
-              readOnly
-              className={`font-mono text-xs min-h-[300px] ${
-                isDarkMode ? 'bg-gray-900 text-green-400 border-gray-600' : 'bg-gray-50'
-              }`}
-              placeholder="Les logs apparaîtront ici..."
-            />
+            )}
           </div>
+        )}
+
+        {logs && (
+          <Textarea
+            value={logs}
+            readOnly
+            className={`font-mono text-xs min-h-[300px] ${
+              isDarkMode ? 'bg-gray-900 text-green-400 border-gray-600' : 'bg-gray-50'
+            }`}
+            placeholder="Les logs apparaîtront ici..."
+          />
         )}
       </CardContent>
     </Card>

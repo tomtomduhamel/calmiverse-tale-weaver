@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Play, Pause } from "lucide-react";
+import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon } from "lucide-react";
 import { TextToSpeech } from "./TextToSpeech";
 import { AutoScrollControl } from "./reader/AutoScrollControl";
 import { ElevenLabsTextToSpeech } from "./ElevenLabsTextToSpeech";
 import { ElevenLabsNewTTS } from "./ElevenLabsNewTTS";
+import { SimpleTTSButton } from "./reader/SimpleTTSButton";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 
 interface ReaderControlsProps {
@@ -79,11 +81,28 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               Lecture
             </h3>
             
-            <div className="flex flex-wrap gap-2">
-              <TextToSpeech text={story.content} isDarkMode={isDarkMode} />
-              <ElevenLabsTextToSpeech text={story.content} isDarkMode={isDarkMode} />
-              <ElevenLabsNewTTS text={story.content} isDarkMode={isDarkMode} />
+            {/* Nouveau composant TTS simplifié */}
+            <div className="p-3 border rounded bg-card">
+              <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Synthèse vocale ElevenLabs
+              </h4>
+              <SimpleTTSButton 
+                text={story.content} 
+                isDarkMode={isDarkMode} 
+              />
             </div>
+
+            {/* Anciens composants TTS (pour comparaison) */}
+            <details className="text-xs">
+              <summary className={`cursor-pointer ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Autres options TTS (legacy)
+              </summary>
+              <div className="mt-2 space-y-2">
+                <TextToSpeech text={story.content} isDarkMode={isDarkMode} />
+                <ElevenLabsTextToSpeech text={story.content} isDarkMode={isDarkMode} />
+                <ElevenLabsNewTTS text={story.content} isDarkMode={isDarkMode} />
+              </div>
+            </details>
             
             <AutoScrollControl
               isAutoScrolling={isAutoScrolling}
@@ -161,7 +180,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 )}
               </Button>
               
-              {/* Ajout du bouton de diagnostic technique */}
+              {/* Bouton de diagnostic technique */}
               <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
             </div>
           </div>

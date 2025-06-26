@@ -35,13 +35,11 @@ export const AdvancedElevenLabsDiagnostic: React.FC<AdvancedElevenLabsDiagnostic
 
   const initializeDiagnosticSteps = (): DiagnosticStep[] => [
     { name: 'Authentification utilisateur', status: 'pending' },
+    { name: 'Test de ping Edge Function', status: 'pending' },
     { name: 'Configuration des secrets', status: 'pending' },
-    { name: 'Connectivité Edge Function', status: 'pending' },
     { name: 'Test API ElevenLabs', status: 'pending' },
     { name: 'Génération audio test', status: 'pending' },
-    { name: 'Performance et latence', status: 'pending' },
-    { name: 'Gestion du cache', status: 'pending' },
-    { name: 'Formats de sortie', status: 'pending' }
+    { name: 'Test de performance', status: 'pending' }
   ];
 
   const updateStep = (stepName: string, updates: Partial<DiagnosticStep>) => {
@@ -61,7 +59,7 @@ export const AdvancedElevenLabsDiagnostic: React.FC<AdvancedElevenLabsDiagnostic
 
       // Étape 1: Vérification de l'authentification
       setCurrentStep('Authentification utilisateur');
-      setProgress(10);
+      setProgress(15);
       updateStep('Authentification utilisateur', { status: 'running' });
       
       const startTime1 = Date.now();
@@ -80,184 +78,211 @@ export const AdvancedElevenLabsDiagnostic: React.FC<AdvancedElevenLabsDiagnostic
         duration: Date.now() - startTime1
       });
 
-      // Étape 2: Configuration des secrets
-      setCurrentStep('Configuration des secrets');
-      setProgress(20);
-      updateStep('Configuration des secrets', { status: 'running' });
+      // Étape 2: Test de ping Edge Function
+      setCurrentStep('Test de ping Edge Function');
+      setProgress(30);
+      updateStep('Test de ping Edge Function', { status: 'running' });
       
       const startTime2 = Date.now();
-      const { data: secretsTest, error: secretsError } = await supabase.functions.invoke('tts-elevenlabs', {
-        body: { 
-          testSecrets: true
-        }
-      });
-      
-      if (secretsError) {
-        updateStep('Configuration des secrets', {
-          status: 'error',
-          message: `Erreur secrets: ${secretsError.message}`,
-          details: secretsError,
-          duration: Date.now() - startTime2
+      try {
+        console.log('🏓 Testing ping with supabase.functions.invoke...');
+        
+        const { data: pingData, error: pingError } = await supabase.functions.invoke('tts-elevenlabs', {
+          body: { ping: true }
         });
-      } else {
-        updateStep('Configuration des secrets', {
-          status: 'success',
-          message: 'Secrets configurés correctement',
-          details: secretsTest,
+        
+        if (pingError) {
+          console.error('❌ Ping error:', pingError);
+          updateStep('Test de ping Edge Function', {
+            status: 'error',
+            message: `Erreur ping: ${pingError.message}`,
+            details: pingError,
+            duration: Date.now() - startTime2
+          });
+        } else {
+          console.log('✅ Ping successful:', pingData);
+          updateStep('Test de ping Edge Function', {
+            status: 'success',
+            message: 'Edge Function accessible',
+            details: pingData,
+            duration: Date.now() - startTime2
+          });
+        }
+      } catch (error: any) {
+        console.error('💥 Ping exception:', error);
+        updateStep('Test de ping Edge Function', {
+          status: 'error',
+          message: `Exception ping: ${error.message}`,
+          details: error,
           duration: Date.now() - startTime2
         });
       }
 
-      // Étape 3: Test de connectivité Edge Function
-      setCurrentStep('Connectivité Edge Function');
-      setProgress(30);
-      updateStep('Connectivité Edge Function', { status: 'running' });
+      // Étape 3: Configuration des secrets
+      setCurrentStep('Configuration des secrets');
+      setProgress(45);
+      updateStep('Configuration des secrets', { status: 'running' });
       
       const startTime3 = Date.now();
-      const functionUrl = `https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/tts-elevenlabs`;
-      
       try {
-        const directResponse = await fetch(functionUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ ping: true })
+        console.log('🔐 Testing secrets configuration...');
+        
+        const { data: secretsTest, error: secretsError } = await supabase.functions.invoke('tts-elevenlabs', {
+          body: { testSecrets: true }
         });
         
-        const responseData = await directResponse.text();
-        
-        updateStep('Connectivité Edge Function', {
-          status: directResponse.ok ? 'success' : 'error',
-          message: `Status: ${directResponse.status} - ${directResponse.statusText}`,
-          details: { status: directResponse.status, response: responseData },
-          duration: Date.now() - startTime3
-        });
-      } catch (fetchError: any) {
-        updateStep('Connectivité Edge Function', {
+        if (secretsError) {
+          console.error('❌ Secrets error:', secretsError);
+          updateStep('Configuration des secrets', {
+            status: 'error',
+            message: `Erreur secrets: ${secretsError.message}`,
+            details: secretsError,
+            duration: Date.now() - startTime3
+          });
+        } else {
+          console.log('✅ Secrets test result:', secretsTest);
+          updateStep('Configuration des secrets', {
+            status: secretsTest?.success ? 'success' : 'error',
+            message: secretsTest?.success ? 'Secrets configurés correctement' : 'Problème de configuration des secrets',
+            details: secretsTest,
+            duration: Date.now() - startTime3
+          });
+        }
+      } catch (error: any) {
+        console.error('💥 Secrets exception:', error);
+        updateStep('Configuration des secrets', {
           status: 'error',
-          message: `Erreur réseau: ${fetchError.message}`,
-          details: fetchError,
+          message: `Exception secrets: ${error.message}`,
+          details: error,
           duration: Date.now() - startTime3
         });
       }
 
       // Étape 4: Test API ElevenLabs
       setCurrentStep('Test API ElevenLabs');
-      setProgress(50);
+      setProgress(60);
       updateStep('Test API ElevenLabs', { status: 'running' });
       
       const startTime4 = Date.now();
-      const { data: elevenLabsTest, error: elevenLabsError } = await supabase.functions.invoke('tts-elevenlabs', {
-        body: { 
-          testConnection: true
+      try {
+        console.log('🎤 Testing ElevenLabs API connection...');
+        
+        const { data: elevenLabsTest, error: elevenLabsError } = await supabase.functions.invoke('tts-elevenlabs', {
+          body: { testConnection: true }
+        });
+        
+        if (elevenLabsError) {
+          console.error('❌ ElevenLabs API error:', elevenLabsError);
+          updateStep('Test API ElevenLabs', {
+            status: 'error',
+            message: `API Test échoué: ${elevenLabsError.message}`,
+            details: elevenLabsError,
+            duration: Date.now() - startTime4
+          });
+        } else {
+          console.log('✅ ElevenLabs API test result:', elevenLabsTest);
+          updateStep('Test API ElevenLabs', {
+            status: elevenLabsTest?.success ? 'success' : 'error',
+            message: elevenLabsTest?.message || 'Test API réalisé',
+            details: elevenLabsTest,
+            duration: Date.now() - startTime4
+          });
         }
-      });
-      
-      if (elevenLabsError) {
+      } catch (error: any) {
+        console.error('💥 ElevenLabs API exception:', error);
         updateStep('Test API ElevenLabs', {
           status: 'error',
-          message: `API Test échoué: ${elevenLabsError.message}`,
-          details: elevenLabsError,
-          duration: Date.now() - startTime4
-        });
-      } else {
-        updateStep('Test API ElevenLabs', {
-          status: elevenLabsTest?.success ? 'success' : 'error',
-          message: elevenLabsTest?.message || 'Test API réalisé',
-          details: elevenLabsTest,
+          message: `Exception API: ${error.message}`,
+          details: error,
           duration: Date.now() - startTime4
         });
       }
 
       // Étape 5: Génération audio test
       setCurrentStep('Génération audio test');
-      setProgress(70);
+      setProgress(80);
       updateStep('Génération audio test', { status: 'running' });
       
       const startTime5 = Date.now();
-      const { data: audioTest, error: audioError } = await supabase.functions.invoke('tts-elevenlabs', {
-        body: { 
-          text: 'Test de génération audio avec ElevenLabs.',
-          voiceId: '9BWtsMINqrJLrRacOk9x',
-          modelId: 'eleven_multilingual_v2'
+      try {
+        console.log('🎵 Testing audio generation...');
+        
+        const { data: audioTest, error: audioError } = await supabase.functions.invoke('tts-elevenlabs', {
+          body: { 
+            text: 'Test diagnostic Calmiverse.',
+            voiceId: '9BWtsMINqrJLrRacOk9x',
+            modelId: 'eleven_multilingual_v2'
+          }
+        });
+        
+        if (audioError) {
+          console.error('❌ Audio generation error:', audioError);
+          updateStep('Génération audio test', {
+            status: 'error',
+            message: `Génération échouée: ${audioError.message}`,
+            details: audioError,
+            duration: Date.now() - startTime5
+          });
+        } else {
+          console.log('✅ Audio generation result:', audioTest);
+          const audioSize = audioTest?.audioContent?.length || 0;
+          updateStep('Génération audio test', {
+            status: audioTest?.success ? 'success' : 'error',
+            message: audioTest?.success ? `Audio généré: ${Math.round(audioSize / 1024)}KB` : 'Génération échouée',
+            details: { ...audioTest, audioSizeKB: Math.round(audioSize / 1024) },
+            duration: Date.now() - startTime5
+          });
         }
-      });
-      
-      if (audioError) {
+      } catch (error: any) {
+        console.error('💥 Audio generation exception:', error);
         updateStep('Génération audio test', {
           status: 'error',
-          message: `Génération échouée: ${audioError.message}`,
-          details: audioError,
-          duration: Date.now() - startTime5
-        });
-      } else {
-        const audioSize = audioTest?.audioContent?.length || 0;
-        updateStep('Génération audio test', {
-          status: audioTest?.success ? 'success' : 'error',
-          message: `Audio généré: ${Math.round(audioSize / 1024)}KB`,
-          details: { ...audioTest, audioSizeKB: Math.round(audioSize / 1024) },
+          message: `Exception audio: ${error.message}`,
+          details: error,
           duration: Date.now() - startTime5
         });
       }
 
-      // Étape 6: Test de performance et latence
-      setCurrentStep('Performance et latence');
-      setProgress(85);
-      updateStep('Performance et latence', { status: 'running' });
+      // Étape 6: Test de performance
+      setCurrentStep('Test de performance');
+      setProgress(100);
+      updateStep('Test de performance', { status: 'running' });
       
       const startTime6 = Date.now();
-      const performanceResults = [];
-      
-      // Test multiple de petites requêtes
-      for (let i = 0; i < 3; i++) {
-        const testStart = Date.now();
-        try {
-          await supabase.functions.invoke('tts-elevenlabs', {
-            body: { text: `Test ${i + 1}`, testConnection: true }
-          });
-          performanceResults.push(Date.now() - testStart);
-        } catch (e) {
-          performanceResults.push(-1);
+      try {
+        console.log('⚡ Testing performance...');
+        
+        const performanceResults = [];
+        for (let i = 0; i < 3; i++) {
+          const testStart = Date.now();
+          try {
+            await supabase.functions.invoke('tts-elevenlabs', {
+              body: { ping: true }
+            });
+            performanceResults.push(Date.now() - testStart);
+          } catch (e) {
+            performanceResults.push(-1);
+          }
         }
+        
+        const validResults = performanceResults.filter(r => r > 0);
+        const avgLatency = validResults.length > 0 ? validResults.reduce((a, b) => a + b, 0) / validResults.length : -1;
+        
+        updateStep('Test de performance', {
+          status: avgLatency > 0 ? 'success' : 'error',
+          message: avgLatency > 0 ? `Latence moyenne: ${Math.round(avgLatency)}ms` : 'Tests de performance échoués',
+          details: { latencies: performanceResults, average: avgLatency },
+          duration: Date.now() - startTime6
+        });
+      } catch (error: any) {
+        console.error('💥 Performance test exception:', error);
+        updateStep('Test de performance', {
+          status: 'error',
+          message: `Exception performance: ${error.message}`,
+          details: error,
+          duration: Date.now() - startTime6
+        });
       }
-      
-      const avgLatency = performanceResults.filter(r => r > 0).reduce((a, b) => a + b, 0) / performanceResults.filter(r => r > 0).length;
-      
-      updateStep('Performance et latence', {
-        status: avgLatency > 0 ? 'success' : 'error',
-        message: `Latence moyenne: ${Math.round(avgLatency)}ms`,
-        details: { latencies: performanceResults, average: avgLatency },
-        duration: Date.now() - startTime6
-      });
-
-      // Étape 7: Test de gestion du cache
-      setCurrentStep('Gestion du cache');
-      setProgress(95);
-      updateStep('Gestion du cache', { status: 'running' });
-      
-      const startTime7 = Date.now();
-      // Simuler un test de cache (ici on teste juste la cohérence)
-      updateStep('Gestion du cache', {
-        status: 'success',
-        message: 'Cache fonctionnel (simulation)',
-        details: { cacheEnabled: true },
-        duration: Date.now() - startTime7
-      });
-
-      // Étape 8: Formats de sortie
-      setCurrentStep('Formats de sortie');
-      setProgress(100);
-      updateStep('Formats de sortie', { status: 'running' });
-      
-      const startTime8 = Date.now();
-      updateStep('Formats de sortie', {
-        status: 'success',
-        message: 'MP3 base64 supporté',
-        details: { formats: ['mp3'], encoding: 'base64' },
-        duration: Date.now() - startTime8
-      });
 
       toast({
         title: "Diagnostic terminé",
