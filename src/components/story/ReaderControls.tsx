@@ -8,6 +8,7 @@ import { TextToSpeech } from "./TextToSpeech";
 import { AutoScrollControl } from "./reader/AutoScrollControl";
 import { ElevenLabsTextToSpeech } from "./ElevenLabsTextToSpeech";
 import { ElevenLabsNewTTS } from "./ElevenLabsNewTTS";
+import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 
 interface ReaderControlsProps {
   fontSize: number;
@@ -159,6 +160,9 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                   </>
                 )}
               </Button>
+              
+              {/* Ajout du bouton de diagnostic technique */}
+              <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
             </div>
           </div>
         </div>
