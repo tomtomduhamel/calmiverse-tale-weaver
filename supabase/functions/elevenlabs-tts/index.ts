@@ -1,5 +1,5 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -102,6 +102,57 @@ serve(async (req) => {
   console.log(`🎙️ [${requestId}] ElevenLabs TTS - Début de la requête`);
 
   try {
+    // Vérification de l'authentification JWT
+    const authHeader = req.headers.get('authorization');
+    console.log(`🔑 [${requestId}] Auth header présent:`, !!authHeader);
+    
+    if (!authHeader) {
+      console.error(`❌ [${requestId}] Aucun header d'autorisation trouvé`);
+      return new Response(
+        JSON.stringify({
+          error: 'Authentification requise',
+          success: false,
+          timestamp: new Date().toISOString()
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Initialiser le client Supabase pour vérifier l'auth
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error(`❌ [${requestId}] Configuration Supabase manquante`);
+      throw new Error('Configuration Supabase incomplète');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Extraire le JWT du header Authorization
+    const jwt = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
+    
+    if (authError || !user) {
+      console.error(`❌ [${requestId}] Erreur d'authentification:`, authError);
+      return new Response(
+        JSON.stringify({
+          error: 'Token d\'authentification invalide',
+          success: false,
+          timestamp: new Date().toISOString()
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    console.log(`✅ [${requestId}] Utilisateur authentifié:`, user.email);
+
     const requestBody: TTSRequest = await req.json();
     const { text, voiceId = '9BWtsMINqrJLrRacOk9x', modelId = 'eleven_multilingual_v2', testConnection = false } = requestBody;
 

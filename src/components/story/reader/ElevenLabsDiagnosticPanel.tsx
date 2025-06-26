@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Wifi, Volume2, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { RefreshCw, Wifi, Volume2, AlertCircle, CheckCircle, Clock, User } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 interface DiagnosticResult {
   status: 'checking' | 'success' | 'error';
@@ -23,13 +24,27 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<DiagnosticResult | null>(null);
   const { toast } = useToast();
+  const { user } = useSupabaseAuth();
 
   const runDiagnostic = async () => {
     setIsRunning(true);
-    setResult({ status: 'checking', message: 'Test de connexion en cours...' });
+    setResult({ status: 'checking', message: 'Vérification de l\'authentification...' });
 
     try {
       console.log('🔍 Début du diagnostic ElevenLabs...');
+      
+      // Vérifier d'abord l'authentification
+      if (!user) {
+        setResult({
+          status: 'error',
+          message: 'Utilisateur non connecté. Veuillez vous connecter pour utiliser cette fonctionnalité.',
+          details: { authRequired: true }
+        });
+        return;
+      }
+
+      console.log('✅ Utilisateur connecté:', user.email);
+      setResult({ status: 'checking', message: 'Test de connexion ElevenLabs en cours...' });
       
       const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
         body: { 
@@ -41,10 +56,24 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
       console.log('📡 Réponse diagnostic:', { data, error });
 
       if (error) {
+        console.error('❌ Erreur détaillée:', error);
+        
+        let errorMessage = `Erreur de connexion: ${error.message}`;
+        let details = error;
+        
+        // Messages d'erreur spécifiques selon le type d'erreur
+        if (error.message?.includes('Failed to send a request')) {
+          errorMessage = 'Impossible de contacter la fonction ElevenLabs. Vérifiez que la fonction est déployée.';
+        } else if (error.message?.includes('JWT')) {
+          errorMessage = 'Problème d\'authentification. Essayez de vous reconnecter.';
+        } else if (error.message?.includes('Network')) {
+          errorMessage = 'Problème de réseau. Vérifiez votre connexion internet.';
+        }
+        
         setResult({
           status: 'error',
-          message: `Erreur de connexion: ${error.message}`,
-          details: error
+          message: errorMessage,
+          details
         });
         return;
       }
@@ -112,7 +141,18 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* État de la connexion */}
+        {/* État de l'authentification */}
+        <div className="flex items-center justify-between">
+          <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            <User className="h-3 w-3" />
+            Authentification
+          </span>
+          <Badge variant={user ? 'default' : 'destructive'}>
+            {user ? 'Connecté' : 'Non connecté'}
+          </Badge>
+        </div>
+
+        {/* État de la connexion API */}
         <div className="flex items-center justify-between">
           <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             <Wifi className="h-3 w-3" />
@@ -149,10 +189,17 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
           </details>
         )}
 
+        {/* Recommandation si utilisateur non connecté */}
+        {!user && (
+          <div className="p-2 rounded text-xs bg-yellow-50 text-yellow-800 border border-yellow-200">
+            💡 Connectez-vous pour tester la synthèse vocale ElevenLabs
+          </div>
+        )}
+
         {/* Actions */}
         <Button 
           onClick={runDiagnostic}
-          disabled={isRunning}
+          disabled={isRunning || !user}
           size="sm" 
           variant="outline" 
           className={`w-full ${isDarkMode ? 'border-gray-600 text-white hover:bg-gray-700' : ''}`}
