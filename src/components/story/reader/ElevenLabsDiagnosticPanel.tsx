@@ -33,7 +33,6 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
     try {
       console.log('🔍 Début du diagnostic ElevenLabs...');
       
-      // Vérifier d'abord l'authentification
       if (!user) {
         setResult({
           status: 'error',
@@ -46,7 +45,7 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
       console.log('✅ Utilisateur connecté:', user.email);
       setResult({ status: 'checking', message: 'Test de connexion ElevenLabs en cours...' });
       
-      const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
+      const { data, error } = await supabase.functions.invoke('tts-elevenlabs', {
         body: { 
           text: 'Test de connexion',
           testConnection: true
@@ -61,7 +60,6 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
         let errorMessage = `Erreur de connexion: ${error.message}`;
         let details = error;
         
-        // Messages d'erreur spécifiques selon le type d'erreur
         if (error.message?.includes('Failed to send a request')) {
           errorMessage = 'Impossible de contacter la fonction ElevenLabs. Vérifiez que la fonction est déployée.';
         } else if (error.message?.includes('JWT')) {
@@ -141,7 +139,6 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* État de l'authentification */}
         <div className="flex items-center justify-between">
           <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             <User className="h-3 w-3" />
@@ -152,7 +149,6 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
           </Badge>
         </div>
 
-        {/* État de la connexion API */}
         <div className="flex items-center justify-between">
           <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             <Wifi className="h-3 w-3" />
@@ -166,7 +162,6 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
           </Badge>
         </div>
 
-        {/* Message de résultat */}
         {result && (
           <div className={`p-2 rounded text-xs ${
             result.status === 'success' 
@@ -179,7 +174,6 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
           </div>
         )}
 
-        {/* Informations détaillées en cas d'erreur */}
         {result?.status === 'error' && result.details && (
           <details className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             <summary className="cursor-pointer">Détails techniques</summary>
@@ -189,14 +183,12 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
           </details>
         )}
 
-        {/* Recommandation si utilisateur non connecté */}
         {!user && (
           <div className="p-2 rounded text-xs bg-yellow-50 text-yellow-800 border border-yellow-200">
             💡 Connectez-vous pour tester la synthèse vocale ElevenLabs
           </div>
         )}
 
-        {/* Actions */}
         <Button 
           onClick={runDiagnostic}
           disabled={isRunning || !user}
@@ -213,10 +205,4 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
             <>
               <RefreshCw className="h-3 w-3 mr-2" />
               Tester la connexion
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-};
+            

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -14,8 +13,36 @@ interface TTSRequest {
   testConnection?: boolean;
 }
 
+// Fonction pour segmenter le texte intelligemment - Version consolidée 2025
+function segmentText(text: string, maxLength: number = 2500): string[] {
+  if (text.length <= maxLength) {
+    return [text];
+  }
+
+  const sentences = text.match(/[^\.!?]+[\.!?]+/g) || [text];
+  const segments: string[] = [];
+  let currentSegment = '';
+
+  for (const sentence of sentences) {
+    const trimmedSentence = sentence.trim();
+    
+    if (currentSegment.length + trimmedSentence.length > maxLength && currentSegment.length > 0) {
+      segments.push(currentSegment.trim());
+      currentSegment = trimmedSentence;
+    } else {
+      currentSegment += (currentSegment.length > 0 ? ' ' : '') + trimmedSentence;
+    }
+  }
+  
+  if (currentSegment.trim().length > 0) {
+    segments.push(currentSegment.trim());
+  }
+
+  return segments;
+}
+
 serve(async (req) => {
-  console.log(`🎙️ TTS-ElevenLabs - ${req.method} request received`);
+  console.log(`🎙️ TTS-ElevenLabs CONSOLIDÉ - ${req.method} request received`);
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -24,7 +51,7 @@ serve(async (req) => {
   }
 
   const requestId = crypto.randomUUID().substring(0, 8);
-  console.log(`🔄 [${requestId}] Processing TTS request`);
+  console.log(`🔄 [${requestId}] Processing TTS request - Version consolidée`);
 
   try {
     // Vérification de l'authentification
@@ -111,10 +138,17 @@ serve(async (req) => {
           const errorText = await testResponse.text();
           console.error(`❌ [${requestId}] ElevenLabs test failed:`, errorText);
           
+          let errorMessage = `ElevenLabs API test failed: ${testResponse.status}`;
+          if (testResponse.status === 401) {
+            errorMessage = 'Clé API ElevenLabs invalide ou expirée';
+          } else if (testResponse.status === 429) {
+            errorMessage = 'Limite de quota ElevenLabs atteinte';
+          }
+          
           return new Response(
             JSON.stringify({
               success: false,
-              message: `ElevenLabs API test failed: ${testResponse.status}`,
+              message: errorMessage,
               timestamp: new Date().toISOString()
             }),
             {
@@ -130,7 +164,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             success: true,
-            message: 'ElevenLabs connection successful',
+            message: 'Connexion ElevenLabs réussie',
             userInfo: userData.email || 'Connected user',
             timestamp: new Date().toISOString()
           }),
@@ -143,7 +177,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             success: false,
-            message: `Connection test failed: ${error.message}`,
+            message: `Test de connexion échoué: ${error.message}`,
             timestamp: new Date().toISOString()
           }),
           {
@@ -168,63 +202,106 @@ serve(async (req) => {
       );
     }
 
-    // Limiter la longueur du texte pour éviter les timeouts
-    const maxLength = 2500;
-    const processedText = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-    
-    console.log(`🎵 [${requestId}] Generating audio for ${processedText.length} characters`);
+    // Segmentation du texte
+    const segments = segmentText(text, 2500);
+    const processedText = segments[0];
 
-    // Générer l'audio avec ElevenLabs
-    const ttsResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'audio/mpeg',
-        'Content-Type': 'application/json',
-        'xi-api-key': ELEVENLABS_API_KEY,
-      },
-      body: JSON.stringify({
-        text: processedText,
-        model_id: modelId,
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.0,
-          use_speaker_boost: true
-        }
-      })
-    });
-
-    if (!ttsResponse.ok) {
-      const errorText = await ttsResponse.text();
-      console.error(`❌ [${requestId}] ElevenLabs TTS failed:`, errorText);
-      
-      let errorMessage = `ElevenLabs error: ${ttsResponse.status}`;
-      if (ttsResponse.status === 401) {
-        errorMessage = 'Invalid ElevenLabs API key';
-      } else if (ttsResponse.status === 429) {
-        errorMessage = 'ElevenLabs quota exceeded';
-      } else if (ttsResponse.status === 422) {
-        errorMessage = 'Invalid voice parameters';
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: errorMessage,
-          timestamp: new Date().toISOString()
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+    if (segments.length > 1) {
+      console.log(`⚠️ [${requestId}] Texte segmenté - traitement du premier segment (${processedText.length}/${text.length} chars)`);
     }
 
-    // Convertir l'audio en base64
-    const audioBuffer = await ttsResponse.arrayBuffer();
+    console.log(`🎵 [${requestId}] Generating audio for ${processedText.length} characters`);
+
+    // Configuration avec retry
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.log(`⏰ [${requestId}] Timeout de 30 secondes atteint`);
+      controller.abort();
+    }, 30000);
+
+    let lastError: any = null;
+    let audioBuffer: ArrayBuffer | null = null;
+
+    // Système de retry avec backoff exponentiel
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        console.log(`🔄 [${requestId}] Tentative ${attempt}/3`);
+        
+        const ttsResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'audio/mpeg',
+            'Content-Type': 'application/json',
+            'xi-api-key': ELEVENLABS_API_KEY,
+          },
+          body: JSON.stringify({
+            text: processedText,
+            model_id: modelId,
+            voice_settings: {
+              stability: 0.5,
+              similarity_boost: 0.75,
+              style: 0.0,
+              use_speaker_boost: true
+            }
+          }),
+          signal: controller.signal
+        });
+
+        if (!ttsResponse.ok) {
+          const errorText = await ttsResponse.text();
+          console.error(`❌ [${requestId}] ElevenLabs TTS failed attempt ${attempt} (${ttsResponse.status}):`, errorText);
+          
+          let errorMessage = `ElevenLabs error: ${ttsResponse.status}`;
+          if (ttsResponse.status === 401) {
+            errorMessage = 'Clé API ElevenLabs invalide';
+            throw new Error(errorMessage);
+          } else if (ttsResponse.status === 429) {
+            errorMessage = 'Quota ElevenLabs dépassé';
+          } else if (ttsResponse.status === 422) {
+            errorMessage = 'Paramètres de voix invalides';
+            throw new Error(errorMessage);
+          }
+          
+          lastError = new Error(errorMessage);
+          
+          if (attempt < 3 && (ttsResponse.status >= 500 || ttsResponse.status === 429)) {
+            const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+            console.log(`⏳ [${requestId}] Attente ${delay}ms avant retry...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          
+          throw lastError;
+        }
+
+        audioBuffer = await ttsResponse.arrayBuffer();
+        console.log(`✅ [${requestId}] Audio généré avec succès - Taille: ${audioBuffer.byteLength} bytes`);
+        break;
+
+      } catch (error: any) {
+        lastError = error;
+        console.error(`💥 [${requestId}] Erreur tentative ${attempt}:`, error.message);
+        
+        if (error.name === 'AbortError') {
+          throw new Error('Timeout: Génération audio trop longue (30s)');
+        }
+        
+        if (attempt === 3) {
+          throw error;
+        }
+      }
+    }
+
+    clearTimeout(timeoutId);
+
+    if (!audioBuffer) {
+      throw lastError || new Error('Impossible de générer l\'audio après 3 tentatives');
+    }
+
+    // Convertir en base64
     const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
 
-    console.log(`✅ [${requestId}] Audio generated successfully - Size: ${audioBuffer.byteLength} bytes`);
+    console.log(`🎉 [${requestId}] Génération terminée avec succès`);
 
     return new Response(
       JSON.stringify({
@@ -240,12 +317,22 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error(`💥 [${requestId}] Unexpected error:`, error);
+    console.error(`💥 [${requestId}] Erreur dans tts-elevenlabs:`, error);
     
+    let errorMessage = error.message || 'Erreur inconnue lors de la génération audio';
+    
+    if (error.name === 'AbortError') {
+      errorMessage = 'Timeout: Génération audio trop longue. Essayez avec un texte plus court.';
+    } else if (errorMessage.includes('Clé API')) {
+      errorMessage = 'Configuration ElevenLabs incorrecte. Vérifiez votre clé API.';
+    } else if (errorMessage.includes('quota')) {
+      errorMessage = 'Limite ElevenLabs atteinte. Vérifiez votre plan.';
+    }
+
     return new Response(
       JSON.stringify({
         success: false,
-        error: `Unexpected error: ${error.message}`,
+        error: errorMessage,
         timestamp: new Date().toISOString()
       }),
       {

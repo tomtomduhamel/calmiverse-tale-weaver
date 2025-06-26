@@ -9,7 +9,7 @@ interface TTSHookProps {
 }
 
 interface TTSCache {
-  [key: string]: string; // base64 audio content
+  [key: string]: string;
 }
 
 export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => {
@@ -43,7 +43,7 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
       if (!audioContent) {
         setGenerationProgress("Génération de l'audio avec ElevenLabs...");
         
-        console.log('🎙️ Calling new tts-elevenlabs function...');
+        console.log('🎙️ Calling tts-elevenlabs function...');
         
         const { data, error } = await supabase.functions.invoke('tts-elevenlabs', {
           body: {
@@ -116,7 +116,6 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
         });
       });
 
-      // Load the audio
       audio.load();
 
     } catch (error: any) {
