@@ -205,4 +205,10 @@ export const ElevenLabsDiagnosticPanel: React.FC<ElevenLabsDiagnosticPanelProps>
             <>
               <RefreshCw className="h-3 w-3 mr-2" />
               Tester la connexion
-            
+            </>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
