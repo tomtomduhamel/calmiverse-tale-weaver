@@ -66,8 +66,8 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {/* Mode simple - Création d'histoire */}
           <Card className="border border-primary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
-            <CardContent className="p-3 sm:p-4 flex flex-col">
-              <div className="mb-2 sm:mb-3 p-2 bg-primary/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
+              <div className="mb-2 sm:mb-3 p-2 bg-primary/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
                 <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary-dark" />
               </div>
               <h3 className="text-base sm:text-lg font-semibold mb-1 text-primary-dark">Créer une histoire</h3>
@@ -85,8 +85,8 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
 
           {/* Univers des enfants */}
           <Card className="border border-secondary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
-            <CardContent className="p-3 sm:p-4 flex flex-col">
-              <div className="mb-2 sm:mb-3 p-2 bg-secondary/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
+              <div className="mb-2 sm:mb-3 p-2 bg-secondary/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
                 <Users className="h-4 w-4 sm:h-5 sm:w-5 text-secondary" />
               </div>
               <h3 className="text-base sm:text-lg font-semibold mb-1 text-secondary-dark">Univers des enfants</h3>
@@ -103,8 +103,8 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
 
           {/* Bibliothèque */}
           <Card className="border border-accent/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
-            <CardContent className="p-3 sm:p-4 flex flex-col">
-              <div className="mb-2 sm:mb-3 p-2 bg-accent/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
+              <div className="mb-2 sm:mb-3 p-2 bg-accent/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
                 <Library className="h-4 w-4 sm:h-5 sm:w-5 text-accent-dark" />
               </div>
               <h3 className="text-base sm:text-lg font-semibold mb-1 text-accent-dark">Bibliothèque</h3>
