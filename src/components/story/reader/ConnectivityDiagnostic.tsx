@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertCircle, CheckCircle, Loader2, Network, User, Key } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, supabaseUrl, supabaseAnonKey } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface ConnectivityDiagnosticProps {
@@ -30,13 +30,11 @@ export const ConnectivityDiagnostic: React.FC<ConnectivityDiagnosticProps> = ({
 
       // Test 1: Configuration du client Supabase
       diagnosticResults.push(`\n1️⃣ TEST DE CONFIGURATION CLIENT`);
-      const supabaseUrl = supabase.supabaseUrl;
-      const supabaseKey = supabase.supabaseKey;
       
       diagnosticResults.push(`URL Supabase: ${supabaseUrl}`);
-      diagnosticResults.push(`Clé publique: ${supabaseKey.substring(0, 20)}...`);
+      diagnosticResults.push(`Clé publique: ${supabaseAnonKey.substring(0, 20)}...`);
       
-      if (!supabaseUrl || !supabaseKey) {
+      if (!supabaseUrl || !supabaseAnonKey) {
         diagnosticResults.push(`❌ Configuration Supabase manquante`);
         throw new Error('Configuration Supabase invalide');
       }
