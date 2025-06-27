@@ -5,9 +5,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon } from "lucide-react";
-import { TextToSpeech } from "./TextToSpeech";
 import { AutoScrollControl } from "./reader/AutoScrollControl";
-import { SimpleTTSButton } from "./reader/SimpleTTSButton";
+import { UnifiedTTSButton } from "./reader/UnifiedTTSButton";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 
 interface ReaderControlsProps {
@@ -76,26 +75,21 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
           {/* Colonne 1: Contrôles de lecture */}
           <div className="space-y-3">
             <h3 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Lecture
+              Lecture Audio
             </h3>
             
-            {/* TTS Premium ElevenLabs */}
+            {/* TTS Unifié avec fallback automatique */}
             <div className="p-3 border rounded bg-card">
               <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                🎙️ Audio Premium (ElevenLabs)
+                🎧 Lecture intelligente
               </h4>
-              <SimpleTTSButton 
+              <UnifiedTTSButton 
                 text={story.content} 
                 isDarkMode={isDarkMode} 
               />
-            </div>
-
-            {/* TTS Standard (Système) */}
-            <div className="p-3 border rounded bg-card">
-              <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                🔊 Audio Standard (Système)
-              </h4>
-              <TextToSpeech text={story.content} isDarkMode={isDarkMode} />
+              <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Essaie ElevenLabs Premium, puis Audio Standard automatiquement
+              </p>
             </div>
             
             <AutoScrollControl

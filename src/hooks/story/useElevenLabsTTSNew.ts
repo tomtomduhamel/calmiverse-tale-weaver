@@ -8,16 +8,11 @@ interface TTSHookProps {
   modelId?: string;
 }
 
-interface TTSCache {
-  [key: string]: string;
-}
-
 export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [generationProgress, setGenerationProgress] = useState<string | null>(null);
-  const [audioCache] = useState<TTSCache>({});
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   
   const { toast } = useToast();
@@ -32,45 +27,44 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
       return;
     }
 
-    const cacheKey = `${text.substring(0, 100)}-${voiceId}-${modelId}`;
-    
     try {
       setIsLoading(true);
-      setGenerationProgress("Initialisation de la synthèse vocale...");
+      setGenerationProgress("Test de connectivité...");
       
-      let audioContent = audioCache[cacheKey];
+      console.log('🎙️ [TTS] Testing connectivity...');
       
-      if (!audioContent) {
-        setGenerationProgress("Génération de l'audio avec ElevenLabs...");
-        
-        console.log('🎙️ [TTS] Calling tts-elevenlabs function...');
-        
-        const { data, error } = await supabase.functions.invoke('tts-elevenlabs', {
-          body: {
-            text,
-            voiceId: voiceId || '9BWtsMINqrJLrRacOk9x',
-            modelId: modelId || 'eleven_multilingual_v2'
-          }
-        });
+      // Test de base d'abord
+      const { data: connectTest, error: connectError } = await supabase.functions.invoke('tts-test', {
+        body: { ping: true }
+      });
 
-        if (error) {
-          console.error('❌ [TTS] Error:', error);
-          throw new Error(error.message || 'Erreur lors de la génération audio');
-        }
-
-        if (!data?.success) {
-          console.error('❌ [TTS] Generation failed:', data);
-          throw new Error(data?.error || 'Échec de la génération audio');
-        }
-
-        audioContent = data.audioContent;
-        audioCache[cacheKey] = audioContent;
-        
-        console.log('✅ [TTS] Audio generated successfully');
-      } else {
-        setGenerationProgress("Lecture depuis le cache...");
-        console.log('📦 [TTS] Using cached audio');
+      if (connectError) {
+        console.error('❌ [TTS] Connectivity test failed:', connectError);
+        throw new Error('Problème de connectivité avec Supabase Functions');
       }
+
+      console.log('✅ [TTS] Connectivity OK:', connectTest);
+      setGenerationProgress("Génération audio ElevenLabs...");
+
+      const { data, error } = await supabase.functions.invoke('tts-elevenlabs', {
+        body: {
+          text,
+          voiceId: voiceId || '9BWtsMINqrJLrRacOk9x',
+          modelId: modelId || 'eleven_multilingual_v2'
+        }
+      });
+
+      if (error) {
+        console.error('❌ [TTS] ElevenLabs error:', error);
+        throw new Error(error.message || 'Erreur ElevenLabs');
+      }
+
+      if (!data?.success) {
+        console.error('❌ [TTS] Generation failed:', data);
+        throw new Error(data?.error || 'Échec de la génération audio');
+      }
+
+      setGenerationProgress("Préparation de la lecture...");
 
       // Stop current audio if playing
       if (currentAudio) {
@@ -79,25 +73,22 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
       }
 
       // Create new audio element
-      const audio = new Audio(`data:audio/mpeg;base64,${audioContent}`);
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))],
+        { type: 'audio/mpeg' }
+      );
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
       setCurrentAudio(audio);
 
       // Set up audio event listeners
-      audio.addEventListener('loadstart', () => {
-        setGenerationProgress("Préparation de la lecture...");
-      });
-
       audio.addEventListener('canplay', () => {
         setIsLoading(false);
         setGenerationProgress(null);
         setIsPlaying(true);
         audio.play().catch(e => {
           console.error('❌ [TTS] Play error:', e);
-          toast({
-            title: "Erreur de lecture",
-            description: "Impossible de lire l'audio. Cliquez pour réessayer.",
-            variant: "destructive"
-          });
+          throw new Error('Erreur de lecture audio');
         });
       });
 
@@ -111,6 +102,7 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
       audio.addEventListener('ended', () => {
         setIsPlaying(false);
         setProgress(0);
+        URL.revokeObjectURL(audioUrl);
         console.log('🏁 [TTS] Audio playback completed');
       });
 
@@ -119,11 +111,8 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
         setIsLoading(false);
         setIsPlaying(false);
         setGenerationProgress(null);
-        toast({
-          title: "Erreur de lecture",
-          description: "Impossible de lire l'audio généré",
-          variant: "destructive"
-        });
+        URL.revokeObjectURL(audioUrl);
+        throw new Error('Erreur de lecture audio');
       });
 
       audio.load();
@@ -133,26 +122,9 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
       setIsLoading(false);
       setIsPlaying(false);
       setGenerationProgress(null);
-      
-      let errorMessage = "Une erreur est survenue lors de la génération audio";
-      
-      if (error.message?.includes('Failed to send')) {
-        errorMessage = "Impossible de contacter le service TTS. Vérifiez votre connexion.";
-      } else if (error.message?.includes('Invalid authentication')) {
-        errorMessage = "Problème d'authentification. Reconnectez-vous.";
-      } else if (error.message?.includes('quota')) {
-        errorMessage = "Limite ElevenLabs atteinte. Essayez plus tard.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({
-        title: "Erreur de synthèse vocale",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      throw error; // Re-throw for caller handling
     }
-  }, [voiceId, modelId, audioCache, currentAudio, toast]);
+  }, [voiceId, modelId, currentAudio]);
 
   const stopAudio = useCallback(() => {
     if (currentAudio) {
@@ -164,19 +136,10 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
     }
   }, [currentAudio]);
 
-  const clearCache = useCallback(() => {
-    Object.keys(audioCache).forEach(key => delete audioCache[key]);
-    console.log('🗑️ [TTS] Cache cleared');
-    toast({
-      title: "Cache vidé",
-      description: "Le cache audio a été vidé avec succès"
-    });
-  }, [audioCache, toast]);
-
   const testConnection = useCallback(async () => {
     try {
       setIsLoading(true);
-      setGenerationProgress("Test de connexion ElevenLabs...");
+      setGenerationProgress("Test de connexion...");
       console.log('🔗 [TTS] Testing connection...');
 
       const { data, error } = await supabase.functions.invoke('tts-elevenlabs', {
@@ -190,40 +153,26 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
 
       if (data?.success) {
         console.log('✅ [TTS] Connection test successful:', data);
-        toast({
-          title: "Test réussi",
-          description: data.message || "Connexion ElevenLabs fonctionnelle",
-        });
+        return data;
       } else {
         console.error('❌ [TTS] Connection test failed:', data);
         throw new Error(data?.message || 'Test de connexion échoué');
       }
 
-      return data;
-
-    } catch (error: any) {
-      console.error('💥 [TTS] Connection test failed:', error);
-      toast({
-        title: "Test échoué",
-        description: error.message || "Impossible de tester la connexion",
-        variant: "destructive"
-      });
-      throw error;
     } finally {
       setIsLoading(false);
       setGenerationProgress(null);
     }
-  }, [toast]);
+  }, []);
 
   return {
     generateAndPlaySpeech,
     stopAudio,
-    clearCache,
     testConnection,
     isLoading,
     isPlaying,
     progress,
     generationProgress,
-    cacheSize: Object.keys(audioCache).length
+    cacheSize: 0 // Simplified, no cache for now
   };
 };
