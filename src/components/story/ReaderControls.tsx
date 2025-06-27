@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon } from "lucide-react";
 import { AutoScrollControl } from "./reader/AutoScrollControl";
-import { UnifiedTTSButton } from "./reader/UnifiedTTSButton";
+import { RobustUnifiedTTSButton } from "./reader/RobustUnifiedTTSButton";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 
 interface ReaderControlsProps {
@@ -78,17 +78,17 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               Lecture Audio
             </h3>
             
-            {/* TTS Unifié avec fallback automatique */}
+            {/* TTS Robuste avec gestion d'erreur intelligente */}
             <div className="p-3 border rounded bg-card">
               <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                🎧 Lecture intelligente
+                🎧 Lecture Intelligente
               </h4>
-              <UnifiedTTSButton 
+              <RobustUnifiedTTSButton 
                 text={story.content} 
                 isDarkMode={isDarkMode} 
               />
               <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Essaie ElevenLabs Premium, puis Audio Standard automatiquement
+                Retry automatique • Fallback intelligent • Gestion d'erreur robuste
               </p>
             </div>
             
