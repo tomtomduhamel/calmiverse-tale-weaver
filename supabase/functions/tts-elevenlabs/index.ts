@@ -46,7 +46,7 @@ function segmentText(text: string, maxLength: number = 2500): string[] {
 
 serve(async (req) => {
   const requestId = crypto.randomUUID().substring(0, 8);
-  console.log(`🎙️ [${requestId}] TTS-ElevenLabs CONSOLIDÉ - ${req.method} request`);
+  console.log(`🎙️ [${requestId}] TTS-ElevenLabs - ${req.method} request`);
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -55,18 +55,19 @@ serve(async (req) => {
   }
 
   try {
-    // Parse request body first for better error handling
+    // Parse request body with better error handling
     let requestBody: TTSRequest = {};
     
     try {
       requestBody = await req.json();
-      console.log(`📋 [${requestId}] Request body:`, JSON.stringify(requestBody, null, 2));
+      console.log(`📋 [${requestId}] Request:`, JSON.stringify(requestBody, null, 2));
     } catch (parseError) {
       console.error(`❌ [${requestId}] JSON parse error:`, parseError);
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Invalid JSON in request body',
+          requestId,
           timestamp: new Date().toISOString()
         }),
         {
@@ -80,13 +81,13 @@ serve(async (req) => {
 
     // Handle ping requests
     if (ping) {
-      console.log(`🏓 [${requestId}] Ping request handled`);
+      console.log(`🏓 [${requestId}] Ping successful`);
       return new Response(
         JSON.stringify({
           success: true,
-          message: 'Pong! Function is alive',
+          message: 'ElevenLabs TTS function is operational',
           timestamp: new Date().toISOString(),
-          functionId: requestId
+          requestId
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -111,13 +112,14 @@ serve(async (req) => {
         elevenLabsKeyLength: elevenLabsKey?.length || 0,
       };
       
-      console.log(`🔍 [${requestId}] Secrets check:`, secretsCheck);
+      console.log(`🔍 [${requestId}] Secrets status:`, secretsCheck);
       
       return new Response(
         JSON.stringify({
-          success: true,
-          message: 'Secrets configuration check completed',
+          success: secretsCheck.elevenLabsKey,
+          message: secretsCheck.elevenLabsKey ? 'All secrets configured' : 'ELEVENLABS_API_KEY missing',
           details: secretsCheck,
+          requestId,
           timestamp: new Date().toISOString()
         }),
         {
@@ -126,14 +128,15 @@ serve(async (req) => {
       );
     }
 
-    // Vérification de l'authentification pour les autres opérations
+    // Vérifier l'authentification pour les autres opérations
     const authHeader = req.headers.get('authorization');
     if (!authHeader && !testConnection && !ping) {
       console.error(`❌ [${requestId}] No authorization header`);
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Authorization required',
+          error: 'Authorization required for TTS operations',
+          requestId,
           timestamp: new Date().toISOString()
         }),
         {
@@ -143,50 +146,6 @@ serve(async (req) => {
       );
     }
 
-    // Initialiser Supabase client si nécessaire
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!supabaseUrl || !supabaseKey) {
-      console.error(`❌ [${requestId}] Supabase configuration missing`);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Supabase configuration missing',
-          timestamp: new Date().toISOString()
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    // Vérifier l'utilisateur si authentification requise
-    if (authHeader && authHeader !== 'Bearer null') {
-      const jwt = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
-      
-      if (authError || !user) {
-        console.error(`❌ [${requestId}] Auth failed:`, authError?.message);
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: 'Invalid authentication token',
-            timestamp: new Date().toISOString()
-          }),
-          {
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-
-      console.log(`✅ [${requestId}] User authenticated: ${user.email}`);
-    }
-
     // Vérifier la clé API ElevenLabs
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
     if (!ELEVENLABS_API_KEY) {
@@ -194,7 +153,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'ElevenLabs API key not configured',
+          error: 'ELEVENLABS_API_KEY not configured in Supabase secrets',
+          requestId,
           timestamp: new Date().toISOString()
         }),
         {
@@ -206,7 +166,7 @@ serve(async (req) => {
 
     // Test de connexion si demandé
     if (testConnection) {
-      console.log(`🔍 [${requestId}] Testing ElevenLabs connection`);
+      console.log(`🔍 [${requestId}] Testing ElevenLabs API connection`);
       
       try {
         const testResponse = await fetch('https://api.elevenlabs.io/v1/user', {
@@ -216,11 +176,12 @@ serve(async (req) => {
           }
         });
 
-        const responseText = await testResponse.text();
-        console.log(`📡 [${requestId}] ElevenLabs API response: ${testResponse.status} - ${responseText}`);
+        console.log(`📡 [${requestId}] ElevenLabs API test: ${testResponse.status}`);
 
         if (!testResponse.ok) {
+          const errorText = await testResponse.text();
           let errorMessage = `ElevenLabs API test failed: ${testResponse.status}`;
+          
           if (testResponse.status === 401) {
             errorMessage = 'Clé API ElevenLabs invalide ou expirée';
           } else if (testResponse.status === 429) {
@@ -231,23 +192,17 @@ serve(async (req) => {
             JSON.stringify({
               success: false,
               message: errorMessage,
-              details: { status: testResponse.status, response: responseText },
+              details: { status: testResponse.status, response: errorText },
+              requestId,
               timestamp: new Date().toISOString()
             }),
             {
-              status: 200,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             }
           );
         }
 
-        let userData = {};
-        try {
-          userData = JSON.parse(responseText);
-        } catch (e) {
-          userData = { raw: responseText };
-        }
-        
+        const userData = await testResponse.json();
         console.log(`✅ [${requestId}] ElevenLabs connection successful`);
         
         return new Response(
@@ -255,6 +210,7 @@ serve(async (req) => {
             success: true,
             message: 'Connexion ElevenLabs réussie',
             userInfo: userData,
+            requestId,
             timestamp: new Date().toISOString()
           }),
           {
@@ -267,6 +223,7 @@ serve(async (req) => {
           JSON.stringify({
             success: false,
             message: `Test de connexion échoué: ${error.message}`,
+            requestId,
             timestamp: new Date().toISOString()
           }),
           {
@@ -283,6 +240,7 @@ serve(async (req) => {
         JSON.stringify({
           success: false,
           error: 'Text is required and cannot be empty',
+          requestId,
           timestamp: new Date().toISOString()
         }),
         {
@@ -297,138 +255,124 @@ serve(async (req) => {
     const processedText = segments[0];
 
     if (segments.length > 1) {
-      console.log(`⚠️ [${requestId}] Texte segmenté - traitement du premier segment (${processedText.length}/${text.length} chars)`);
+      console.log(`⚠️ [${requestId}] Text segmented - processing first segment (${processedText.length}/${text.length} chars)`);
     }
 
-    console.log(`🎵 [${requestId}] Generating audio for ${processedText.length} characters with voice ${voiceId} and model ${modelId}`);
+    console.log(`🎵 [${requestId}] Generating audio: ${processedText.length} chars, voice: ${voiceId}, model: ${modelId}`);
 
-    // Configuration avec retry et timeout robuste
+    // Génération audio avec timeout et retry
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.log(`⏰ [${requestId}] Timeout de 30 secondes atteint`);
+      console.log(`⏰ [${requestId}] Request timeout (30s)`);
       controller.abort();
     }, 30000);
 
-    let audioBuffer: ArrayBuffer | null = null;
-    let lastError: any = null;
+    try {
+      const ttsResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': ELEVENLABS_API_KEY,
+        },
+        body: JSON.stringify({
+          text: processedText,
+          model_id: modelId,
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+            style: 0.0,
+            use_speaker_boost: true
+          }
+        }),
+        signal: controller.signal
+      });
 
-    // Système de retry avec backoff exponentiel
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        console.log(`🔄 [${requestId}] Tentative ${attempt}/3 de génération audio`);
+      clearTimeout(timeoutId);
+
+      console.log(`📡 [${requestId}] ElevenLabs TTS response: ${ttsResponse.status}`);
+
+      if (!ttsResponse.ok) {
+        const errorText = await ttsResponse.text();
+        console.error(`❌ [${requestId}] TTS generation failed (${ttsResponse.status}):`, errorText);
         
-        const ttsResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json',
-            'xi-api-key': ELEVENLABS_API_KEY,
-          },
-          body: JSON.stringify({
-            text: processedText,
-            model_id: modelId,
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.75,
-              style: 0.0,
-              use_speaker_boost: true
-            }
+        let errorMessage = `ElevenLabs TTS error: ${ttsResponse.status}`;
+        if (ttsResponse.status === 401) {
+          errorMessage = 'Clé API ElevenLabs invalide';
+        } else if (ttsResponse.status === 429) {
+          errorMessage = 'Quota ElevenLabs dépassé';
+        } else if (ttsResponse.status === 422) {
+          errorMessage = 'Paramètres de voix invalides';
+        }
+        
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: errorMessage,
+            details: { status: ttsResponse.status, response: errorText },
+            requestId,
+            timestamp: new Date().toISOString()
           }),
-          signal: controller.signal
-        });
-
-        console.log(`📡 [${requestId}] ElevenLabs TTS response: ${ttsResponse.status} ${ttsResponse.statusText}`);
-
-        if (!ttsResponse.ok) {
-          const errorText = await ttsResponse.text();
-          console.error(`❌ [${requestId}] ElevenLabs TTS failed attempt ${attempt} (${ttsResponse.status}):`, errorText);
-          
-          let errorMessage = `ElevenLabs error: ${ttsResponse.status}`;
-          if (ttsResponse.status === 401) {
-            errorMessage = 'Clé API ElevenLabs invalide';
-            throw new Error(errorMessage);
-          } else if (ttsResponse.status === 429) {
-            errorMessage = 'Quota ElevenLabs dépassé';
-          } else if (ttsResponse.status === 422) {
-            errorMessage = 'Paramètres de voix invalides';
-            throw new Error(errorMessage);
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
-          
-          lastError = new Error(errorMessage);
-          
-          if (attempt < 3 && (ttsResponse.status >= 500 || ttsResponse.status === 429)) {
-            const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-            console.log(`⏳ [${requestId}] Attente ${delay}ms avant retry...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            continue;
-          }
-          
-          throw lastError;
-        }
-
-        audioBuffer = await ttsResponse.arrayBuffer();
-        console.log(`✅ [${requestId}] Audio généré avec succès - Taille: ${audioBuffer.byteLength} bytes`);
-        break;
-
-      } catch (error: any) {
-        lastError = error;
-        console.error(`💥 [${requestId}] Erreur tentative ${attempt}:`, error.message);
-        
-        if (error.name === 'AbortError') {
-          throw new Error('Timeout: Génération audio trop longue (30s)');
-        }
-        
-        if (attempt === 3) {
-          throw error;
-        }
+        );
       }
-    }
 
-    clearTimeout(timeoutId);
+      const audioBuffer = await ttsResponse.arrayBuffer();
+      const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
 
-    if (!audioBuffer) {
-      throw lastError || new Error('Impossible de générer l\'audio après 3 tentatives');
-    }
+      console.log(`🎉 [${requestId}] Audio generated successfully - Size: ${audioBuffer.byteLength} bytes`);
 
-    // Convertir en base64
-    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+      return new Response(
+        JSON.stringify({
+          success: true,
+          audioContent: base64Audio,
+          originalTextLength: text.length,
+          processedTextLength: processedText.length,
+          voiceId,
+          modelId,
+          audioSizeBytes: audioBuffer.byteLength,
+          requestId,
+          timestamp: new Date().toISOString()
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
 
-    console.log(`🎉 [${requestId}] Génération terminée avec succès - Audio base64: ${base64Audio.length} caractères`);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        audioContent: base64Audio,
-        originalTextLength: text.length,
-        processedTextLength: processedText.length,
-        voiceId,
-        modelId,
-        audioSizeBytes: audioBuffer.byteLength,
-        timestamp: new Date().toISOString(),
-        requestId
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      console.error(`💥 [${requestId}] TTS generation error:`, error);
+      
+      let errorMessage = error.message || 'Erreur inconnue lors de la génération audio';
+      
+      if (error.name === 'AbortError') {
+        errorMessage = 'Timeout: Génération audio trop longue (30s)';
       }
-    );
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: errorMessage,
+          requestId,
+          timestamp: new Date().toISOString()
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
   } catch (error: any) {
-    console.error(`💥 [${requestId}] Erreur dans tts-elevenlabs:`, error);
+    console.error(`💥 [${requestId}] Global error:`, error);
     
-    let errorMessage = error.message || 'Erreur inconnue lors de la génération audio';
-    
-    if (error.name === 'AbortError') {
-      errorMessage = 'Timeout: Génération audio trop longue. Essayez avec un texte plus court.';
-    } else if (errorMessage.includes('Clé API')) {
-      errorMessage = 'Configuration ElevenLabs incorrecte. Vérifiez votre clé API.';
-    } else if (errorMessage.includes('quota')) {
-      errorMessage = 'Limite ElevenLabs atteinte. Vérifiez votre plan.';
-    }
-
     return new Response(
       JSON.stringify({
         success: false,
-        error: errorMessage,
+        error: error.message || 'Erreur système inattendue',
         requestId,
         timestamp: new Date().toISOString()
       }),

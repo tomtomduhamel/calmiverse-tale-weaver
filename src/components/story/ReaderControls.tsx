@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon } from "lucide-react";
 import { TextToSpeech } from "./TextToSpeech";
 import { AutoScrollControl } from "./reader/AutoScrollControl";
-import { ElevenLabsTextToSpeech } from "./ElevenLabsTextToSpeech";
-import { ElevenLabsNewTTS } from "./ElevenLabsNewTTS";
 import { SimpleTTSButton } from "./reader/SimpleTTSButton";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 
@@ -81,10 +79,10 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               Lecture
             </h3>
             
-            {/* Nouveau composant TTS simplifié */}
+            {/* TTS Premium ElevenLabs */}
             <div className="p-3 border rounded bg-card">
               <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Synthèse vocale ElevenLabs
+                🎙️ Audio Premium (ElevenLabs)
               </h4>
               <SimpleTTSButton 
                 text={story.content} 
@@ -92,17 +90,13 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               />
             </div>
 
-            {/* Anciens composants TTS (pour comparaison) */}
-            <details className="text-xs">
-              <summary className={`cursor-pointer ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Autres options TTS (legacy)
-              </summary>
-              <div className="mt-2 space-y-2">
-                <TextToSpeech text={story.content} isDarkMode={isDarkMode} />
-                <ElevenLabsTextToSpeech text={story.content} isDarkMode={isDarkMode} />
-                <ElevenLabsNewTTS text={story.content} isDarkMode={isDarkMode} />
-              </div>
-            </details>
+            {/* TTS Standard (Système) */}
+            <div className="p-3 border rounded bg-card">
+              <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                🔊 Audio Standard (Système)
+              </h4>
+              <TextToSpeech text={story.content} isDarkMode={isDarkMode} />
+            </div>
             
             <AutoScrollControl
               isAutoScrolling={isAutoScrolling}
