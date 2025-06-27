@@ -1,9 +1,11 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Bug } from 'lucide-react';
-import { AdvancedElevenLabsDiagnostic } from './AdvancedElevenLabsDiagnostic';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Settings, Network, Volume2 } from 'lucide-react';
+import { ConnectivityDiagnostic } from './ConnectivityDiagnostic';
+import { EdgeFunctionLogger } from './EdgeFunctionLogger';
 
 interface TechnicalDiagnosticButtonProps {
   isDarkMode?: boolean;
@@ -22,20 +24,37 @@ export const TechnicalDiagnosticButton: React.FC<TechnicalDiagnosticButtonProps>
           size="sm"
           className={`${isDarkMode ? 'border-gray-600 text-white hover:bg-gray-700' : ''}`}
         >
-          <Bug className="h-3 w-3 mr-1" />
-          Diagnostic TTS
+          <Settings className="h-4 w-4 mr-2" />
+          Diagnostic Technique
         </Button>
       </DialogTrigger>
-      <DialogContent className={`max-w-4xl max-h-[80vh] overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+      <DialogContent className={`max-w-4xl max-h-[80vh] overflow-auto ${isDarkMode ? 'bg-gray-800 text-white' : ''}`}>
         <DialogHeader>
-          <DialogTitle className={isDarkMode ? 'text-white' : ''}>
-            Diagnostic Technique ElevenLabs TTS
+          <DialogTitle className={`${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Diagnostic Technique - TTS & Connectivité
           </DialogTitle>
-          <DialogDescription className={isDarkMode ? 'text-gray-300' : ''}>
-            Analyse complète du système de synthèse vocale ElevenLabs
-          </DialogDescription>
         </DialogHeader>
-        <AdvancedElevenLabsDiagnostic isDarkMode={isDarkMode} />
+        
+        <Tabs defaultValue="connectivity" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="connectivity" className="flex items-center gap-1">
+              <Network className="h-4 w-4" />
+              Connectivité
+            </TabsTrigger>
+            <TabsTrigger value="audio" className="flex items-center gap-1">
+              <Volume2 className="h-4 w-4" />
+              Audio TTS
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="connectivity" className="mt-4">
+            <ConnectivityDiagnostic isDarkMode={isDarkMode} />
+          </TabsContent>
+          
+          <TabsContent value="audio" className="mt-4">
+            <EdgeFunctionLogger isDarkMode={isDarkMode} />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
