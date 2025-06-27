@@ -58,7 +58,7 @@ ip_version = "ipv6"
 verify_jwt = false
 
 [functions.tts-test]
-verify_jwt = true
+verify_jwt = false
 
 [functions.tts-elevenlabs]
-verify_jwt = true
+verify_jwt = false

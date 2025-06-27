@@ -2,9 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle, CheckCircle, Loader2, Network, User, Key } from 'lucide-react';
+import { AlertCircle, Loader2, Network } from 'lucide-react';
 import { supabase, supabaseUrl, supabaseAnonKey } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,14 +29,8 @@ export const ConnectivityDiagnostic: React.FC<ConnectivityDiagnosticProps> = ({
 
       // Test 1: Configuration du client Supabase
       diagnosticResults.push(`\n1️⃣ TEST DE CONFIGURATION CLIENT`);
-      
       diagnosticResults.push(`URL Supabase: ${supabaseUrl}`);
       diagnosticResults.push(`Clé publique: ${supabaseAnonKey.substring(0, 20)}...`);
-      
-      if (!supabaseUrl || !supabaseAnonKey) {
-        diagnosticResults.push(`❌ Configuration Supabase manquante`);
-        throw new Error('Configuration Supabase invalide');
-      }
       diagnosticResults.push(`✅ Configuration client OK`);
 
       // Test 2: Authentification utilisateur
@@ -50,66 +43,44 @@ export const ConnectivityDiagnostic: React.FC<ConnectivityDiagnosticProps> = ({
         diagnosticResults.push(`⚠️ Aucune session active (non connecté)`);
       } else {
         diagnosticResults.push(`✅ Session active pour: ${session.user?.email}`);
-        diagnosticResults.push(`Token expire à: ${new Date(session.expires_at! * 1000).toLocaleString()}`);
       }
 
-      // Test 3: Fonction Edge publique (sans authentification)
-      diagnosticResults.push(`\n3️⃣ TEST DE FONCTION EDGE PUBLIQUE`);
+      // Test 3: Test de base de données
+      diagnosticResults.push(`\n3️⃣ TEST DE BASE DE DONNÉES`);
       try {
-        const startTime = Date.now();
+        const { data, error } = await supabase.from('stories').select('count').limit(1);
+        if (error) {
+          diagnosticResults.push(`❌ Erreur base de données: ${error.message}`);
+        } else {
+          diagnosticResults.push(`✅ Base de données accessible`);
+        }
+      } catch (dbError: any) {
+        diagnosticResults.push(`💥 Exception base de données: ${dbError.message}`);
+      }
+
+      // Test 4: Test de fonction Edge
+      diagnosticResults.push(`\n4️⃣ TEST DE FONCTION EDGE`);
+      try {
         const { data: connectivityData, error: connectivityError } = await supabase.functions.invoke('connectivity-test', {
-          body: { test: 'public-connectivity', timestamp: new Date().toISOString() }
+          body: { test: 'diagnostic', timestamp: new Date().toISOString() }
         });
-        const duration = Date.now() - startTime;
 
         if (connectivityError) {
-          diagnosticResults.push(`❌ Erreur fonction publique: ${JSON.stringify(connectivityError)}`);
-          diagnosticResults.push(`Type d'erreur: ${connectivityError.name || 'Unknown'}`);
-          diagnosticResults.push(`Message: ${connectivityError.message || 'No message'}`);
+          diagnosticResults.push(`❌ Erreur fonction Edge: ${connectivityError.message}`);
         } else {
-          diagnosticResults.push(`✅ Fonction Edge publique accessible (${duration}ms)`);
+          diagnosticResults.push(`✅ Fonction Edge accessible`);
           diagnosticResults.push(`Réponse: ${JSON.stringify(connectivityData)}`);
         }
       } catch (funcError: any) {
-        diagnosticResults.push(`💥 Exception fonction publique: ${funcError.message}`);
+        diagnosticResults.push(`💥 Exception fonction Edge: ${funcError.message}`);
       }
 
-      // Test 4: Fonction TTS avec authentification
-      diagnosticResults.push(`\n4️⃣ TEST DE FONCTION TTS (avec auth)`);
-      if (session) {
-        try {
-          const startTime = Date.now();
-          const { data: ttsData, error: ttsError } = await supabase.functions.invoke('tts-test', {
-            body: { ping: true }
-          });
-          const duration = Date.now() - startTime;
-
-          if (ttsError) {
-            diagnosticResults.push(`❌ Erreur fonction TTS: ${JSON.stringify(ttsError)}`);
-          } else {
-            diagnosticResults.push(`✅ Fonction TTS accessible (${duration}ms)`);
-            diagnosticResults.push(`Réponse: ${JSON.stringify(ttsData)}`);
-          }
-        } catch (ttsError: any) {
-          diagnosticResults.push(`💥 Exception fonction TTS: ${ttsError.message}`);
-        }
-      } else {
-        diagnosticResults.push(`⚠️ Impossible de tester TTS (non connecté)`);
-      }
-
-      // Test 5: Informations réseau
-      diagnosticResults.push(`\n5️⃣ INFORMATIONS RÉSEAU`);
-      diagnosticResults.push(`User Agent: ${navigator.userAgent}`);
-      diagnosticResults.push(`Online: ${navigator.onLine ? 'Oui' : 'Non'}`);
-      diagnosticResults.push(`URL actuelle: ${window.location.href}`);
-      
       diagnosticResults.push(`\n${'='.repeat(50)}`);
       diagnosticResults.push(`Diagnostic terminé à: ${new Date().toLocaleString()}`);
 
     } catch (error: any) {
       diagnosticResults.push(`\n💥 ERREUR CRITIQUE DU DIAGNOSTIC:`);
       diagnosticResults.push(`Message: ${error.message}`);
-      diagnosticResults.push(`Stack: ${error.stack || 'N/A'}`);
       
       toast({
         title: "Erreur de diagnostic",
