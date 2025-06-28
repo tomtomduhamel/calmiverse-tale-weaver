@@ -9,6 +9,56 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audio_files: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          duration: number | null
+          file_size: number | null
+          id: string
+          status: string
+          story_id: string | null
+          text_content: string
+          updated_at: string
+          voice_id: string | null
+          webhook_id: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          duration?: number | null
+          file_size?: number | null
+          id?: string
+          status?: string
+          story_id?: string | null
+          text_content: string
+          updated_at?: string
+          voice_id?: string | null
+          webhook_id?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          duration?: number | null
+          file_size?: number | null
+          id?: string
+          status?: string
+          story_id?: string | null
+          text_content?: string
+          updated_at?: string
+          voice_id?: string | null
+          webhook_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_files_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       children: {
         Row: {
           authorid: string

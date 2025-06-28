@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon } from "lucide-react";
 import { AutoScrollControl } from "./reader/AutoScrollControl";
-import { RobustUnifiedTTSButton } from "./reader/RobustUnifiedTTSButton";
+import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 
 interface ReaderControlsProps {
@@ -78,17 +78,18 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               Lecture Audio
             </h3>
             
-            {/* TTS Robuste avec gestion d'erreur intelligente */}
+            {/* Nouveau lecteur audio n8n */}
             <div className="p-3 border rounded bg-card">
               <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                🎧 Lecture Intelligente
+                🎧 Audio Premium via n8n
               </h4>
-              <RobustUnifiedTTSButton 
+              <N8nAudioPlayer 
+                storyId={storyId}
                 text={story.content} 
                 isDarkMode={isDarkMode} 
               />
               <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Retry automatique • Fallback intelligent • Gestion d'erreur robuste
+                Génération ElevenLabs • Qualité optimale • Via automation n8n
               </p>
             </div>
             
