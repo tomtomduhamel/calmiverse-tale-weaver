@@ -25,6 +25,7 @@ interface N8nWebhookPayload {
 }
 
 const N8N_WEBHOOK_URL = 'https://n8n.srv856374.hstgr.cloud/webhook-test/d2d88f5d-78c0-49c1-83b8-096d4b21190c';
+const TIMEOUT_DURATION = 60000; // 60 secondes timeout
 
 export const useN8nAudioGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -56,7 +57,30 @@ export const useN8nAudioGeneration = () => {
     }
   }, [toast]);
 
-  // Générer un audio via n8n
+  // Nettoyer les anciens fichiers bloqués
+  const cleanupStuckFiles = useCallback(async (storyId: string) => {
+    try {
+      const cutoffTime = new Date(Date.now() - TIMEOUT_DURATION).toISOString();
+      
+      const { error } = await supabase
+        .from('audio_files')
+        .update({ 
+          status: 'error',
+          updated_at: new Date().toISOString()
+        })
+        .eq('story_id', storyId)
+        .in('status', ['pending', 'processing'])
+        .lt('created_at', cutoffTime);
+
+      if (error) throw error;
+      
+      console.log('🧹 [N8nAudio] Nettoyage des fichiers bloqués terminé');
+    } catch (error) {
+      console.error('❌ [N8nAudio] Erreur nettoyage:', error);
+    }
+  }, []);
+
+  // Générer un audio via n8n avec timeout automatique
   const generateAudio = useCallback(async (
     storyId: string, 
     text: string, 
@@ -71,18 +95,22 @@ export const useN8nAudioGeneration = () => {
       return null;
     }
 
+    // Nettoyer les anciens fichiers bloqués d'abord
+    await cleanupStuckFiles(storyId);
+
     setIsGenerating(true);
     const requestId = crypto.randomUUID();
+    let timeoutId: NodeJS.Timeout;
 
     try {
-      console.log('🎙️ [N8nAudio] Génération audio via n8n:', { storyId, textLength: text.length, voiceId });
+      console.log('🎙️ [N8nAudio] Génération audio via n8n:', { storyId, textLength: text.length, voiceId, requestId });
 
       // 1. Créer l'entrée en base
       const { data: audioFile, error: insertError } = await supabase
         .from('audio_files')
         .insert({
           story_id: storyId,
-          text_content: text.substring(0, 1000), // Limiter pour éviter les textes trop longs
+          text_content: text.substring(0, 1000),
           status: 'pending',
           webhook_id: requestId,
           voice_id: voiceId
@@ -92,7 +120,29 @@ export const useN8nAudioGeneration = () => {
 
       if (insertError) throw insertError;
 
-      // 2. Envoyer la requête à n8n
+      // 2. Timeout automatique
+      timeoutId = setTimeout(async () => {
+        console.log('⏰ [N8nAudio] Timeout atteint, marquage comme erreur');
+        
+        await supabase
+          .from('audio_files')
+          .update({ 
+            status: 'error',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', audioFile.id);
+
+        toast({
+          title: "Timeout de génération",
+          description: "La génération audio a pris trop de temps et a été annulée",
+          variant: "destructive"
+        });
+
+        setIsGenerating(false);
+        await fetchAudioFiles(storyId);
+      }, TIMEOUT_DURATION);
+
+      // 3. Envoyer la requête à n8n
       const payload: N8nWebhookPayload = {
         text: text.substring(0, 1000),
         storyId,
@@ -111,27 +161,35 @@ export const useN8nAudioGeneration = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Webhook n8n failed: ${response.status}`);
+        throw new Error(`Webhook n8n failed: ${response.status} - ${response.statusText}`);
       }
 
-      // 3. Mettre à jour le statut en "processing"
+      // 4. Mettre à jour le statut en "processing"
       await supabase
         .from('audio_files')
-        .update({ status: 'processing' })
+        .update({ 
+          status: 'processing',
+          updated_at: new Date().toISOString()
+        })
         .eq('id', audioFile.id);
 
       toast({
         title: "🎵 Génération audio lancée",
-        description: "Votre audio est en cours de génération via n8n",
+        description: "Votre audio est en cours de génération (timeout: 60s)",
       });
 
-      // 4. Rafraîchir la liste des fichiers
+      // 5. Rafraîchir la liste des fichiers
       await fetchAudioFiles(storyId);
 
       return audioFile.id;
 
     } catch (error: any) {
       console.error('💥 [N8nAudio] Erreur génération:', error);
+      
+      // Nettoyer le timeout si erreur
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       
       toast({
         title: "Erreur génération audio",
@@ -143,7 +201,7 @@ export const useN8nAudioGeneration = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [toast, fetchAudioFiles]);
+  }, [toast, fetchAudioFiles, cleanupStuckFiles]);
 
   // Mettre à jour un fichier audio (appelé par webhook de retour n8n)
   const updateAudioFile = useCallback(async (
@@ -202,6 +260,7 @@ export const useN8nAudioGeneration = () => {
     generateAudio,
     fetchAudioFiles,
     updateAudioFile,
-    deleteAudioFile
+    deleteAudioFile,
+    cleanupStuckFiles
   };
 };

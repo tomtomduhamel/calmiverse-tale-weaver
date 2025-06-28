@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Volume2, VolumeX, Loader2, Download, RefreshCw } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Loader2, Download, RefreshCw, X } from 'lucide-react';
 import { useN8nAudioGeneration } from '@/hooks/story/audio/useN8nAudioGeneration';
 import { useToast } from '@/hooks/use-toast';
 
@@ -27,13 +27,20 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
     isGenerating,
     audioFiles,
     generateAudio,
-    fetchAudioFiles
+    fetchAudioFiles,
+    deleteAudioFile,
+    cleanupStuckFiles
   } = useN8nAudioGeneration();
 
-  // Charger les fichiers audio existants
+  // Charger les fichiers audio existants et nettoyer les bloqués
   useEffect(() => {
-    fetchAudioFiles(storyId);
-  }, [storyId, fetchAudioFiles]);
+    const loadAndCleanup = async () => {
+      await cleanupStuckFiles(storyId);
+      await fetchAudioFiles(storyId);
+    };
+    
+    loadAndCleanup();
+  }, [storyId, fetchAudioFiles, cleanupStuckFiles]);
 
   // Trouver le fichier audio prêt pour ce texte
   const readyAudioFile = audioFiles.find(
@@ -43,6 +50,11 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
 
   const pendingAudioFile = audioFiles.find(
     file => (file.status === 'pending' || file.status === 'processing') &&
+    file.text_content.substring(0, 100) === text.substring(0, 100)
+  );
+
+  const errorAudioFile = audioFiles.find(
+    file => file.status === 'error' &&
     file.text_content.substring(0, 100) === text.substring(0, 100)
   );
 
@@ -118,7 +130,16 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
 
   // Rafraîchir les fichiers
   const handleRefresh = async () => {
+    await cleanupStuckFiles(storyId);
     await fetchAudioFiles(storyId);
+  };
+
+  // Supprimer un fichier en erreur
+  const handleDeleteErrorFile = async () => {
+    if (errorAudioFile) {
+      await deleteAudioFile(errorAudioFile.id);
+      await fetchAudioFiles(storyId);
+    }
   };
 
   // Nettoyer à la destruction du composant
@@ -136,17 +157,25 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
       if (pendingAudioFile.status === 'pending') {
         return (
           <div className={`text-xs text-center ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-            🕒 En attente de traitement par n8n
+            🕒 En attente de traitement par n8n (timeout: 60s)
           </div>
         );
       }
       if (pendingAudioFile.status === 'processing') {
         return (
           <div className={`text-xs text-center ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            ⚙️ Génération audio en cours via n8n
+            ⚙️ Génération audio en cours via n8n (timeout: 60s)
           </div>
         );
       }
+    }
+
+    if (errorAudioFile) {
+      return (
+        <div className={`text-xs text-center ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
+          ❌ Erreur lors de la génération audio
+        </div>
+      );
     }
 
     if (readyAudioFile) {
@@ -202,6 +231,18 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
+
+        {/* Bouton supprimer fichier en erreur */}
+        {errorAudioFile && (
+          <Button
+            onClick={handleDeleteErrorFile}
+            variant="outline"
+            size="icon"
+            className={`text-red-500 hover:text-red-600 ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : ''}`}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* Barre de progression */}
