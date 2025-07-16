@@ -25,7 +25,7 @@ interface N8nWebhookPayload {
 }
 
 const N8N_WEBHOOK_URL = 'https://n8n.srv856374.hstgr.cloud/webhook-test/d2d88f5d-78c0-49c1-83b8-096d4b21190c';
-const TIMEOUT_DURATION = 60000; // 60 secondes timeout
+const TIMEOUT_DURATION = 120000; // 120 secondes timeout (pour textes longs)
 
 export const useN8nAudioGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -105,12 +105,12 @@ export const useN8nAudioGeneration = () => {
     try {
       console.log('🎙️ [N8nAudio] Génération audio via n8n:', { storyId, textLength: text.length, voiceId, requestId });
 
-      // 1. Créer l'entrée en base
+      // 1. Créer l'entrée en base (texte complet maintenant)
       const { data: audioFile, error: insertError } = await supabase
         .from('audio_files')
         .insert({
           story_id: storyId,
-          text_content: text.substring(0, 1000),
+          text_content: text, // Texte complet sans limitation
           status: 'pending',
           webhook_id: requestId,
           voice_id: voiceId
@@ -142,9 +142,9 @@ export const useN8nAudioGeneration = () => {
         await fetchAudioFiles(storyId);
       }, TIMEOUT_DURATION);
 
-      // 3. Envoyer la requête à n8n
+      // 3. Envoyer la requête à n8n (texte complet)
       const payload: N8nWebhookPayload = {
-        text: text.substring(0, 1000),
+        text: text, // Texte complet sans limitation
         storyId,
         voiceId,
         requestId
@@ -175,7 +175,7 @@ export const useN8nAudioGeneration = () => {
 
       toast({
         title: "🎵 Génération audio lancée",
-        description: "Votre audio est en cours de génération (timeout: 60s)",
+        description: "Votre audio est en cours de génération (timeout: 120s)",
       });
 
       // 5. Rafraîchir la liste des fichiers
