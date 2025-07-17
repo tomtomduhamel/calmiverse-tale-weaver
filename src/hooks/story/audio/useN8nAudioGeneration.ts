@@ -24,7 +24,7 @@ interface N8nWebhookPayload {
   requestId: string;
 }
 
-const N8N_WEBHOOK_URL = 'https://n8n.srv856374.hstgr.cloud/webhook-test/d2d88f5d-78c0-49c1-83b8-096d4b21190c';
+const N8N_WEBHOOK_URL = 'https://n8n.srv856374.hstgr.cloud/webhook/d2d88f5d-78c0-49c1-83b8-096d4b21190c';
 const TIMEOUT_DURATION = 120000; // 120 secondes timeout (pour textes longs)
 
 export const useN8nAudioGeneration = () => {
