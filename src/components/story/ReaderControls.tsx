@@ -70,7 +70,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             
             {/* Nouveau lecteur audio n8n */}
             <div className="p-3 border rounded bg-card">
-              <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>🎧 Audio</h4>
+              
               <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
               
             </div>
