@@ -19,13 +19,17 @@ interface N8nUploadPayload {
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
   console.log(`🎵 [upload-audio-from-n8n-${requestId}] NOUVELLE REQUÊTE ${req.method}`);
+  console.log(`🎵 [upload-audio-from-n8n-${requestId}] URL:`, req.url);
+  console.log(`🎵 [upload-audio-from-n8n-${requestId}] Headers:`, Object.fromEntries(req.headers.entries()));
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log(`✅ [upload-audio-from-n8n-${requestId}] CORS preflight handled`);
     return new Response('ok', { headers: corsHeaders });
   }
 
   if (req.method !== 'POST') {
+    console.error(`❌ [upload-audio-from-n8n-${requestId}] Méthode non autorisée:`, req.method);
     return new Response(
       JSON.stringify({ error: 'Méthode non autorisée' }),
       { 
@@ -36,10 +40,20 @@ serve(async (req) => {
   }
 
   try {
-    // Initialiser le client Supabase avec la clé service
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    // Vérifier les variables d'environnement
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
+    console.log(`🔧 [upload-audio-from-n8n-${requestId}] Variables d'environnement:`, {
+      supabaseUrl: supabaseUrl ? '✅ Présente' : '❌ Manquante',
+      supabaseServiceKey: supabaseServiceKey ? '✅ Présente' : '❌ Manquante'
+    });
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Variables d\'environnement Supabase manquantes');
+    }
+    
+    console.log(`📋 [upload-audio-from-n8n-${requestId}] Initialisation du client Supabase`);
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
@@ -47,21 +61,44 @@ serve(async (req) => {
       }
     });
 
-    // Lire les données multipart/form-data
-    const formData = await req.formData();
+    // Informations sur la requête
+    console.log(`📦 [upload-audio-from-n8n-${requestId}] Content-Type:`, req.headers.get('content-type'));
+    console.log(`📦 [upload-audio-from-n8n-${requestId}] Content-Length:`, req.headers.get('content-length'));
+
+    // Parse FormData avec timeout
+    console.log(`📥 [upload-audio-from-n8n-${requestId}] Parsing FormData...`);
+    const parseTimeout = setTimeout(() => {
+      throw new Error('Timeout lors du parsing FormData (30s)');
+    }, 30000);
+
+    let formData;
+    try {
+      formData = await req.formData();
+      clearTimeout(parseTimeout);
+      console.log(`✅ [upload-audio-from-n8n-${requestId}] FormData parsé avec succès`);
+    } catch (parseError) {
+      clearTimeout(parseTimeout);
+      console.error(`💥 [upload-audio-from-n8n-${requestId}] Erreur parsing FormData:`, parseError);
+      throw new Error(`Erreur parsing FormData: ${parseError.message}`);
+    }
+
+    // Lire les données
     const webhookId = formData.get('requestId') as string;
     const storyId = formData.get('storyId') as string;
     const audioFile = formData.get('audioFile') as File;
     const voiceId = formData.get('voiceId') as string || '9BWtsMINqrJLrRacOk9x';
     const duration = formData.get('duration') ? parseInt(formData.get('duration') as string) : null;
 
+    console.log(`📥 [upload-audio-from-n8n-${requestId}] FormData keys:`, Array.from(formData.keys()));
     console.log(`📥 [upload-audio-from-n8n-${requestId}] Données reçues:`, {
-      webhookId,
-      storyId,
+      webhookId: webhookId ? '✅' : '❌',
+      storyId: storyId ? '✅' : '❌',
+      audioFile: audioFile ? '✅' : '❌',
       audioFileName: audioFile?.name,
       audioFileSize: audioFile?.size,
-      voiceId,
-      duration
+      audioFileType: audioFile?.type,
+      voiceId: voiceId ? '✅' : '❌',
+      duration: duration ? duration : 'Non fourni'
     });
 
     // Validation des données obligatoires
@@ -81,6 +118,15 @@ serve(async (req) => {
     if (!audioFile.type.startsWith('audio/')) {
       throw new Error('Le fichier doit être un fichier audio');
     }
+
+    // Vérifier la taille du fichier (10MB max pour éviter les timeouts)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (audioFile.size > maxSize) {
+      console.error(`❌ [upload-audio-from-n8n-${requestId}] Fichier trop volumineux: ${audioFile.size} bytes`);
+      throw new Error(`Fichier trop volumineux: ${audioFile.size} bytes. Maximum autorisé: ${maxSize} bytes`);
+    }
+
+    console.log(`✅ [upload-audio-from-n8n-${requestId}] Validation du fichier réussie - Taille: ${audioFile.size} bytes`);
 
     // Trouver l'entrée correspondante dans audio_files
     const { data: audioFileRecord, error: findError } = await supabase
