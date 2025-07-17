@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -8,7 +7,6 @@ import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon } from "lucide-react";
 import { AutoScrollControl } from "./reader/AutoScrollControl";
 import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
-
 interface ReaderControlsProps {
   fontSize: number;
   setFontSize: (size: number) => void;
@@ -26,7 +24,6 @@ interface ReaderControlsProps {
   isUpdatingReadStatus: boolean;
   isManuallyPaused: boolean;
 }
-
 const ReaderControls: React.FC<ReaderControlsProps> = ({
   fontSize,
   setFontSize,
@@ -45,31 +42,24 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   isManuallyPaused
 }) => {
   const [isMounted, setIsMounted] = useState(false);
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
   const handleFontSizeChange = (value: number[]) => {
     setFontSize(value[0]);
   };
-
   const handleToggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
-
   const handleReadingGuideClick = () => {
     setShowReadingGuide(true);
   };
-
   const handleMarkAsReadClick = async () => {
     if (onMarkAsRead) {
       await onMarkAsRead(storyId);
     }
   };
-
-  return (
-    <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} border-t p-4 transition-colors duration-300`}>
+  return <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} border-t p-4 transition-colors duration-300`}>
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Colonne 1: Contrôles de lecture */}
@@ -80,26 +70,12 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             
             {/* Nouveau lecteur audio n8n */}
             <div className="p-3 border rounded bg-card">
-              <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                🎧 Audio Premium via n8n
-              </h4>
-              <N8nAudioPlayer 
-                storyId={storyId}
-                text={story.content} 
-                isDarkMode={isDarkMode} 
-              />
-              <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Génération ElevenLabs • Qualité optimale • Via automation n8n
-              </p>
+              <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>🎧 Audio</h4>
+              <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
+              
             </div>
             
-            <AutoScrollControl
-              isAutoScrolling={isAutoScrolling}
-              isPaused={isPaused}
-              onToggleAutoScroll={onToggleAutoScroll}
-              isDarkMode={isDarkMode}
-              isManuallyPaused={isManuallyPaused}
-            />
+            <AutoScrollControl isAutoScrolling={isAutoScrolling} isPaused={isPaused} onToggleAutoScroll={onToggleAutoScroll} isDarkMode={isDarkMode} isManuallyPaused={isManuallyPaused} />
           </div>
 
           {/* Colonne 2: Apparence */}
@@ -113,25 +89,14 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                   {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   <span className="ml-1">Mode {isDarkMode ? 'Clair' : 'Sombre'}</span>
                 </Label>
-                <Switch
-                  id="dark-mode"
-                  checked={isDarkMode}
-                  onCheckedChange={handleToggleDarkMode}
-                />
+                <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={handleToggleDarkMode} />
               </div>
             </div>
             <div>
               <Label className={`block text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 Taille du texte
               </Label>
-              <Slider
-                defaultValue={[fontSize]}
-                max={30}
-                min={12}
-                step={1}
-                onValueChange={handleFontSizeChange}
-                className="mt-2"
-              />
+              <Slider defaultValue={[fontSize]} max={30} min={12} step={1} onValueChange={handleFontSizeChange} className="mt-2" />
             </div>
           </div>
 
@@ -141,32 +106,18 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               Options
             </h3>
             <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={handleReadingGuideClick}
-                disabled={!isMounted}
-              >
+              <Button variant="outline" className="w-full justify-start" onClick={handleReadingGuideClick} disabled={!isMounted}>
                 <Bookmark className="h-4 w-4 mr-2" />
                 Guide de lecture
               </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={handleMarkAsReadClick}
-                disabled={isRead || isUpdatingReadStatus || !onMarkAsRead}
-              >
-                {isRead ? (
-                  <>
+              <Button variant="outline" className="w-full justify-start" onClick={handleMarkAsReadClick} disabled={isRead || isUpdatingReadStatus || !onMarkAsRead}>
+                {isRead ? <>
                     <BookOpenCheck className="h-4 w-4 mr-2" />
                     Marqué comme lu
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     <CheckCircle className="h-4 w-4 mr-2 animate-pulse" />
                     Marquer comme lu
-                  </>
-                )}
+                  </>}
               </Button>
               
               {/* Bouton de diagnostic technique */}
@@ -175,8 +126,6 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default ReaderControls;
