@@ -29,18 +29,20 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
     generateAudio,
     fetchAudioFiles,
     deleteAudioFile,
-    cleanupStuckFiles
+    cleanupStuckFiles,
+    recoverErrorFiles
   } = useN8nAudioGeneration();
 
-  // Charger les fichiers audio existants et nettoyer les bloqués
+  // Charger les fichiers audio existants et nettoyer/récupérer les fichiers
   useEffect(() => {
     const loadAndCleanup = async () => {
       await cleanupStuckFiles(storyId);
+      await recoverErrorFiles(storyId);
       await fetchAudioFiles(storyId);
     };
     
     loadAndCleanup();
-  }, [storyId, fetchAudioFiles, cleanupStuckFiles]);
+  }, [storyId, fetchAudioFiles, cleanupStuckFiles, recoverErrorFiles]);
 
   // Trouver le fichier audio prêt pour ce texte
   const readyAudioFile = audioFiles.find(
@@ -53,8 +55,15 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
     file.text_content.substring(0, 100) === text.substring(0, 100)
   );
 
+  // Fichier en erreur SANS URL (vraie erreur)
   const errorAudioFile = audioFiles.find(
-    file => file.status === 'error' &&
+    file => file.status === 'error' && !file.audio_url &&
+    file.text_content.substring(0, 100) === text.substring(0, 100)
+  );
+
+  // Fichier récupérable (en erreur mais avec URL)
+  const recoverableAudioFile = audioFiles.find(
+    file => file.status === 'error' && file.audio_url &&
     file.text_content.substring(0, 100) === text.substring(0, 100)
   );
 
@@ -128,10 +137,18 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
     await generateAudio(storyId, text);
   };
 
-  // Rafraîchir les fichiers
+  // Rafraîchir les fichiers et récupérer ceux en erreur
   const handleRefresh = async () => {
     await cleanupStuckFiles(storyId);
+    await recoverErrorFiles(storyId);
     await fetchAudioFiles(storyId);
+  };
+
+  // Récupérer un fichier marqué erreur mais avec URL
+  const handleRecoverFile = async () => {
+    if (recoverableAudioFile) {
+      await recoverErrorFiles(storyId);
+    }
   };
 
   // Supprimer un fichier en erreur
@@ -168,6 +185,14 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
           </div>
         );
       }
+    }
+
+    if (recoverableAudioFile) {
+      return (
+        <div className={`text-xs text-center ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+          🔧 Fichier récupérable (cliquez sur récupérer)
+        </div>
+      );
     }
 
     if (errorAudioFile) {
@@ -232,7 +257,20 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
           <RefreshCw className="h-4 w-4" />
         </Button>
 
-        {/* Bouton supprimer fichier en erreur */}
+        {/* Bouton récupérer fichier en erreur avec URL */}
+        {recoverableAudioFile && (
+          <Button
+            onClick={handleRecoverFile}
+            variant="outline"
+            size="icon"
+            className={`text-green-500 hover:text-green-600 ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : ''}`}
+            title="Récupérer le fichier audio"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        )}
+
+        {/* Bouton supprimer fichier en erreur SANS URL */}
         {errorAudioFile && (
           <Button
             onClick={handleDeleteErrorFile}
