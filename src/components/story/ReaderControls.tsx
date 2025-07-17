@@ -60,7 +60,72 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
     }
   };
   return <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} border-t p-4 transition-colors duration-300`}>
-      
+      <div className="max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Colonne 1: Contrôles de lecture */}
+          <div className="space-y-3">
+            <h3 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Lecture Audio
+            </h3>
+            
+            {/* Nouveau lecteur audio n8n */}
+            <div className="p-3 border rounded bg-card">
+              <h4 className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>🎧 Audio</h4>
+              <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
+              
+            </div>
+            
+            <AutoScrollControl isAutoScrolling={isAutoScrolling} isPaused={isPaused} onToggleAutoScroll={onToggleAutoScroll} isDarkMode={isDarkMode} isManuallyPaused={isManuallyPaused} />
+          </div>
+
+          {/* Colonne 2: Apparence */}
+          <div className="space-y-3">
+            <h3 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Apparence
+            </h3>
+            <div>
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="dark-mode" className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  <span className="ml-1">Mode {isDarkMode ? 'Clair' : 'Sombre'}</span>
+                </Label>
+                <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={handleToggleDarkMode} />
+              </div>
+            </div>
+            <div>
+              <Label className={`block text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Taille du texte
+              </Label>
+              <Slider defaultValue={[fontSize]} max={30} min={12} step={1} onValueChange={handleFontSizeChange} className="mt-2" />
+            </div>
+          </div>
+
+          {/* Colonne 3: Options supplémentaires */}
+          <div className="space-y-3">
+            <h3 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Options
+            </h3>
+            <div className="space-y-2">
+              <Button variant="outline" className="w-full justify-start" onClick={handleReadingGuideClick} disabled={!isMounted}>
+                <Bookmark className="h-4 w-4 mr-2" />
+                Guide de lecture
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={handleMarkAsReadClick} disabled={isRead || isUpdatingReadStatus || !onMarkAsRead}>
+                {isRead ? <>
+                    <BookOpenCheck className="h-4 w-4 mr-2" />
+                    Marqué comme lu
+                  </> : <>
+                    <CheckCircle className="h-4 w-4 mr-2 animate-pulse" />
+                    Marquer comme lu
+                  </>}
+              </Button>
+              
+              {/* Bouton de diagnostic technique */}
+              <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>;
 };
 export default ReaderControls;
