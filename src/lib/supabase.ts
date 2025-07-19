@@ -43,7 +43,7 @@ const supabaseOptions = {
   },
   global: {
     headers: {
-      'X-Client-Info': 'calmiverse-web'
+      'X-Client-Info': 'calmi-web'
     },
     // Fetch avec retry et timeout sécurisé
     fetch: (url: string, options: any) => {

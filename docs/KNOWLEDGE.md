@@ -2,7 +2,7 @@
 # Knowledges pour Calmi
 
 ## 1. Vue d'ensemble du projet
-Calmiverse est une application web qui génère des histoires personnalisées pour enfants à l'aide de l'intelligence artificielle. L'application permet aux parents de créer des profils pour leurs enfants avec leurs caractéristiques personnelles, puis de générer des histoires adaptées à chaque enfant. Ces histoires peuvent être lues en ligne, partagées ou envoyées sur Kindle.
+Calmi est une application web qui génère des histoires personnalisées pour enfants à l'aide de l'intelligence artificielle. L'application permet aux parents de créer des profils pour leurs enfants avec leurs caractéristiques personnelles, puis de générer des histoires adaptées à chaque enfant. Ces histoires peuvent être lues en ligne, partagées ou envoyées sur Kindle.
 
 ## 2. Personas utilisateurs
 - **Parents modernes (30-45 ans)** : Cherchent des contenus éducatifs et personnalisés pour leurs enfants.

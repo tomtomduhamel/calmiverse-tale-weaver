@@ -132,7 +132,7 @@ export const clientEpubGenerator = {
     const tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
 <ncx version="2005-1" xmlns="http://www.daisy.org/z3986/2005/ncx/">
   <head>
-    <meta name="dtb:uid" content="calmiverse-${Date.now()}"/>
+    <meta name="dtb:uid" content="calmi-${Date.now()}"/>
     <meta name="dtb:depth" content="1"/>
     <meta name="dtb:totalPageCount" content="0"/>
     <meta name="dtb:maxPageNumber" content="0"/>
@@ -182,7 +182,7 @@ export const clientEpubGenerator = {
     <h1>${this.escapeXml(story.title)}</h1>
     ${objectiveText ? `<p class="objective">${this.escapeXml(objectiveText)}</p>` : ''}
     <p class="children">Pour ${this.escapeXml(childrenText)}</p>
-    <p class="author">Créé par Calmiverse</p>
+    <p class="author">Créé par Calmi</p>
   </div>
   
   <div class="story-content">

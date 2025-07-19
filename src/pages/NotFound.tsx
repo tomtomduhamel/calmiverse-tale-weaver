@@ -17,7 +17,7 @@ const NotFound = () => {
       <div className="max-w-md text-center mb-8 px-4">
         <p className="mb-4">
           Ne vous inquiétez pas, même les meilleures histoires ont parfois des pages égarées.
-          Retournez à l'accueil pour continuer votre aventure avec Calmiverse.
+          Retournez à l'accueil pour continuer votre aventure avec Calmi.
         </p>
       </div>
       <Button asChild size={isMobile ? "default" : "lg"} className="bg-primary hover:bg-primary-dark text-white">

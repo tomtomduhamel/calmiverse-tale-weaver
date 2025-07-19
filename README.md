@@ -1,11 +1,11 @@
 
-# Calmiverse Tale Weaver
+# Calmi
 
 Application de génération d'histoires personnalisées pour enfants avec intelligence artificielle.
 
 ## À propos du projet
 
-Calmiverse Tale Weaver est une application qui permet de créer des histoires personnalisées pour enfants en utilisant l'intelligence artificielle.
+Calmi est une application qui permet de créer des histoires personnalisées pour enfants en utilisant l'intelligence artificielle.
 
 ## URL du projet
 
@@ -33,7 +33,7 @@ Calmiverse Tale Weaver est une application qui permet de créer des histoires pe
 1. Clonez le dépôt:
 ```sh
 git clone <YOUR_GIT_URL>
-cd calmiverse-tale-weaver
+cd calmi
 ```
 
 2. Installez les dépendances:

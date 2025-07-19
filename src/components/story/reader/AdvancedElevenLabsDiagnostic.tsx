@@ -209,7 +209,7 @@ export const AdvancedElevenLabsDiagnostic: React.FC<AdvancedElevenLabsDiagnostic
         
         const { data: audioTest, error: audioError } = await supabase.functions.invoke('tts-elevenlabs', {
           body: { 
-            text: 'Test diagnostic Calmiverse.',
+            text: 'Test diagnostic Calmi.',
             voiceId: '9BWtsMINqrJLrRacOk9x',
             modelId: 'eleven_multilingual_v2'
           }

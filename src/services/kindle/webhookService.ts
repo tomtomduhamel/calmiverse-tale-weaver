@@ -34,7 +34,7 @@ export const kindleWebhookService = {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'User-Agent': 'Calmiverse-App'
+          'User-Agent': 'Calmi-App'
         },
         body: JSON.stringify(webhookData)
       });

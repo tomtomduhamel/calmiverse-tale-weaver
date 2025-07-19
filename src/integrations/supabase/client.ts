@@ -21,7 +21,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'X-Client-Info': 'calmiverse-web',
+      'X-Client-Info': 'calmi-web',
       'apikey': supabaseAnonKey
     }
   }

@@ -224,7 +224,7 @@ Les sages qu'ils rencontrèrent leur enseignèrent de précieuses leçons sur la
 
 ${template.ending}
 
-Cette histoire a été créée spécialement pour ${childrenNames.join(' et ')}, avec tout l'amour du monde et la magie du système PostgreSQL de Calmiverse.`;
+Cette histoire a été créée spécialement pour ${childrenNames.join(' et ')}, avec tout l'amour du monde et la magie du système PostgreSQL de Calmi.`;
 
   const summary = `Une belle histoire de ${template.theme} mettant en scène ${childrenNames.join(' et ')} dans une aventure personnalisée ${template.mood}.`;
   

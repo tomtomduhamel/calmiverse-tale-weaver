@@ -1,7 +1,7 @@
 
 # Guide de contribution à Calmi
 
-Ce document explique comment contribuer au projet Calmiverse Tale Weaver.
+Ce document explique comment contribuer au projet Calmi.
 
 ## Environnement de développement
 
@@ -14,8 +14,8 @@ Ce document explique comment contribuer au projet Calmiverse Tale Weaver.
 
 1. Clonez le dépôt:
 ```bash
-git clone https://github.com/votre-username/calmiverse-tale-weaver.git
-cd calmiverse-tale-weaver
+git clone https://github.com/votre-username/calmi.git
+cd calmi
 ```
 
 2. Installez les dépendances:

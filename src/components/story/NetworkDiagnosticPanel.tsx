@@ -129,7 +129,7 @@ export const NetworkDiagnosticPanel: React.FC = () => {
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${session.data.session?.access_token}`,
           'Content-Type': 'application/json',
-          'x-client-info': 'calmiverse-web'
+          'x-client-info': 'calmi-web'
         },
         body: JSON.stringify({
           test: true,

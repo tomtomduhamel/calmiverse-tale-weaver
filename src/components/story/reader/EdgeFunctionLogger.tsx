@@ -44,7 +44,7 @@ export const EdgeFunctionLogger: React.FC<EdgeFunctionLoggerProps> = ({
         { 
           name: 'Test Génération Audio', 
           body: { 
-            text: 'Test de génération audio Calmiverse.',
+            text: 'Test de génération audio Calmi.',
             voiceId: '9BWtsMINqrJLrRacOk9x',
             modelId: 'eleven_multilingual_v2'
           },
