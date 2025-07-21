@@ -19,25 +19,43 @@ export const useN8nTitleGeneration = () => {
   const [generatedTitles, setGeneratedTitles] = useState<GeneratedTitle[]>([]);
   const { toast } = useToast();
 
-  const parseN8nTitlesResponse = (result: any): GeneratedTitle[] => {
-    console.log('[N8nTitleGeneration] Structure complète de la réponse:', JSON.stringify(result, null, 2));
+  const parseN8nTitlesResponse = (rawResult: any): GeneratedTitle[] => {
+    console.log('[N8nTitleGeneration] Structure brute de la réponse:', JSON.stringify(rawResult, null, 2));
+    
+    let result = rawResult;
+    
+    // CORRECTION CRITIQUE: Gérer le format array de n8n
+    if (Array.isArray(rawResult)) {
+      console.log('[N8nTitleGeneration] Détection format array - extraction du premier élément');
+      result = rawResult[0];
+      if (!result) {
+        console.error('[N8nTitleGeneration] Array vide reçu de n8n');
+        return [];
+      }
+    }
+    
+    console.log('[N8nTitleGeneration] Result après extraction array:', JSON.stringify(result, null, 2));
     
     let titles: GeneratedTitle[] = [];
     
-    // Format 1: result.output.title_1/title_2/title_3 ou title 1/title 2/title 3 (format actuel de n8n)
+    // Format 1: result.output.title_1/title_2/title_3 ou "title 1"/"title 2"/"title 3"
     if (result.output) {
       console.log('[N8nTitleGeneration] Détection du format output:', result.output);
       
       const outputTitles = [];
       for (let i = 1; i <= 3; i++) {
-        // Essayer d'abord avec underscore, puis avec espace
+        // Essayer les différentes variantes de clés
         const titleKeyUnderscore = `title_${i}`;
         const titleKeySpace = `title ${i}`;
         
         if (result.output[titleKeyUnderscore]) {
           outputTitles.push(result.output[titleKeyUnderscore]);
+          console.log(`[N8nTitleGeneration] Trouvé ${titleKeyUnderscore}:`, result.output[titleKeyUnderscore]);
         } else if (result.output[titleKeySpace]) {
           outputTitles.push(result.output[titleKeySpace]);
+          console.log(`[N8nTitleGeneration] Trouvé ${titleKeySpace}:`, result.output[titleKeySpace]);
+        } else {
+          console.warn(`[N8nTitleGeneration] Titre ${i} non trouvé avec les clés ${titleKeyUnderscore} ou ${titleKeySpace}`);
         }
       }
       
@@ -48,7 +66,15 @@ export const useN8nTitleGeneration = () => {
           title: typeof title === 'string' ? title : title.title || title.name || String(title),
           description: typeof title === 'object' ? title.description : undefined
         }));
-        return titles;
+        
+        // Validation : vérifier qu'on a au moins 1 titre valide
+        const validTitles = titles.filter(t => t.title && t.title.trim().length > 0);
+        if (validTitles.length === 0) {
+          console.error('[N8nTitleGeneration] Aucun titre valide trouvé dans les titres extraits');
+          return [];
+        }
+        
+        return validTitles;
       }
     }
     
@@ -88,7 +114,8 @@ export const useN8nTitleGeneration = () => {
       return titles;
     }
     
-    console.warn('[N8nTitleGeneration] Aucun format de titre reconnu dans:', result);
+    console.error('[N8nTitleGeneration] ERREUR: Aucun format de titre reconnu dans:', result);
+    console.error('[N8nTitleGeneration] Clés disponibles:', Object.keys(result));
     return [];
   };
 
@@ -127,15 +154,15 @@ export const useN8nTitleGeneration = () => {
       const result = await response.json();
       console.log('[N8nTitleGeneration] Réponse brute reçue:', JSON.stringify(result, null, 2));
 
-      // Utiliser le nouveau parser universel
+      // Utiliser le parser corrigé
       const titles = parseN8nTitlesResponse(result);
 
       if (titles.length === 0) {
-        console.error('[N8nTitleGeneration] Aucun titre extrait de la réponse');
+        console.error('[N8nTitleGeneration] ÉCHEC: Aucun titre extrait de la réponse');
         throw new Error('Aucun titre reçu de n8n - format de réponse non reconnu');
       }
 
-      console.log('[N8nTitleGeneration] Titres finaux extraits:', titles);
+      console.log('[N8nTitleGeneration] SUCCÈS: Titres finaux extraits:', titles);
       setGeneratedTitles(titles);
       
       toast({
