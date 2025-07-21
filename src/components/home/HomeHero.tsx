@@ -1,6 +1,6 @@
 
 import React from "react";
-import { BookOpen, Users, Library, Sparkles } from "lucide-react";
+import { BookOpen, Users, Library, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ViewType } from "@/types/views";
@@ -23,6 +23,10 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
 
   const handleCreateStoryClick = () => {
     navigate("/create-story-n8n");
+  };
+
+  const handleTitleStoryClick = () => {
+    navigate("/create-story-titles");
   };
 
   console.log('[HomeHero] Enfants reçus dans HomeHero:', {
@@ -62,8 +66,8 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
           </p>
         </div>
 
-        {/* Cartes optimisées mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        {/* Cartes optimisées mobile - maintenant avec 4 options */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
           {/* Mode simple - Création d'histoire */}
           <Card className="border border-primary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
@@ -83,6 +87,25 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
             </CardContent>
           </Card>
 
+          {/* Nouveau - Création avec sélection de titres */}
+          <Card className="border border-accent/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
+              <div className="mb-2 sm:mb-3 p-2 bg-accent/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
+                <Wand2 className="h-4 w-4 sm:h-5 sm:w-5 text-accent-dark" />
+              </div>
+              <h3 className="text-base sm:text-lg font-semibold mb-1 text-accent-dark">Choisir son titre</h3>
+              <p className="text-muted-foreground text-xs mb-2 sm:mb-3 flex-grow leading-relaxed">
+                Sélectionnez parmi 3 titres générés pour votre histoire
+              </p>
+              <Button 
+                onClick={handleTitleStoryClick} 
+                className="w-full bg-accent hover:bg-accent-dark text-accent-foreground h-10 sm:h-11 text-sm"
+              >
+                Essayer
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Univers des enfants */}
           <Card className="border border-secondary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
@@ -91,7 +114,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
               </div>
               <h3 className="text-base sm:text-lg font-semibold mb-1 text-secondary-dark">Univers des enfants</h3>
               <p className="text-muted-foreground text-xs mb-2 sm:mb-3 flex-grow leading-relaxed">
-                Gérez les profils et préférences de vos enfants pour une expérience personnalisée
+                Gérez les profils et préférences de vos enfants
               </p>
               <Link to="/children" className="w-full">
                 <Button className="w-full bg-secondary hover:bg-secondary-dark text-secondary-foreground h-10 sm:h-11 text-sm">
@@ -102,18 +125,18 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
           </Card>
 
           {/* Bibliothèque */}
-          <Card className="border border-accent/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
+          <Card className="border border-muted/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
-              <div className="mb-2 sm:mb-3 p-2 bg-accent/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
-                <Library className="h-4 w-4 sm:h-5 sm:w-5 text-accent-dark" />
+              <div className="mb-2 sm:mb-3 p-2 bg-muted/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
+                <Library className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-1 text-accent-dark">Bibliothèque</h3>
+              <h3 className="text-base sm:text-lg font-semibold mb-1 text-muted-foreground">Bibliothèque</h3>
               <p className="text-muted-foreground text-xs mb-2 sm:mb-3 flex-grow leading-relaxed">
-                Retrouvez toutes vos histoires et accédez à du contenu inspirant pour vos enfants
+                Retrouvez toutes vos histoires créées
               </p>
               <Button 
                 onClick={handleLibraryClick} 
-                className="w-full bg-accent hover:bg-accent-dark text-accent-foreground h-10 sm:h-11 text-sm"
+                className="w-full bg-muted hover:bg-muted/80 text-muted-foreground h-10 sm:h-11 text-sm"
               >
                 Consulter
               </Button>
