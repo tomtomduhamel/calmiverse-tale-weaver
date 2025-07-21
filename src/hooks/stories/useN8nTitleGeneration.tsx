@@ -19,6 +19,74 @@ export const useN8nTitleGeneration = () => {
   const [generatedTitles, setGeneratedTitles] = useState<GeneratedTitle[]>([]);
   const { toast } = useToast();
 
+  const parseN8nTitlesResponse = (result: any): GeneratedTitle[] => {
+    console.log('[N8nTitleGeneration] Structure complète de la réponse:', JSON.stringify(result, null, 2));
+    
+    let titles: GeneratedTitle[] = [];
+    
+    // Format 1: result.output.title_1/title_2/title_3 (format actuel de n8n)
+    if (result.output) {
+      console.log('[N8nTitleGeneration] Détection du format output:', result.output);
+      
+      const outputTitles = [];
+      for (let i = 1; i <= 3; i++) {
+        const titleKey = `title_${i}`;
+        if (result.output[titleKey]) {
+          outputTitles.push(result.output[titleKey]);
+        }
+      }
+      
+      if (outputTitles.length > 0) {
+        console.log('[N8nTitleGeneration] Titres extraits du format output:', outputTitles);
+        titles = outputTitles.map((title, index) => ({
+          id: `title-${index + 1}-${Date.now()}`,
+          title: typeof title === 'string' ? title : title.title || title.name || String(title),
+          description: typeof title === 'object' ? title.description : undefined
+        }));
+        return titles;
+      }
+    }
+    
+    // Format 2: result.titles (format array)
+    if (result.titles && Array.isArray(result.titles)) {
+      console.log('[N8nTitleGeneration] Détection du format titles array:', result.titles);
+      titles = result.titles.map((title: any, index: number) => ({
+        id: `title-${index}-${Date.now()}`,
+        title: typeof title === 'string' ? title : title.title || title.name,
+        description: typeof title === 'object' ? title.description : undefined
+      }));
+      return titles;
+    }
+    
+    // Format 3: result.title1/title2/title3 (format direct)
+    if (result.title1 && result.title2 && result.title3) {
+      console.log('[N8nTitleGeneration] Détection du format title1/title2/title3');
+      titles = [
+        { id: `title-1-${Date.now()}`, title: result.title1 },
+        { id: `title-2-${Date.now()}`, title: result.title2 },
+        { id: `title-3-${Date.now()}`, title: result.title3 }
+      ];
+      return titles;
+    }
+    
+    // Format 4: Tentative d'extraction de propriétés contenant "title"
+    const titleKeys = Object.keys(result).filter(key => 
+      key.toLowerCase().includes('title') && result[key]
+    );
+    
+    if (titleKeys.length > 0) {
+      console.log('[N8nTitleGeneration] Détection de clés contenant "title":', titleKeys);
+      titles = titleKeys.slice(0, 3).map((key, index) => ({
+        id: `title-${index}-${Date.now()}`,
+        title: String(result[key])
+      }));
+      return titles;
+    }
+    
+    console.warn('[N8nTitleGeneration] Aucun format de titre reconnu dans:', result);
+    return [];
+  };
+
   const generateTitles = async (data: TitleGenerationData): Promise<GeneratedTitle[]> => {
     setIsGeneratingTitles(true);
     
@@ -35,6 +103,8 @@ export const useN8nTitleGeneration = () => {
         requestType: 'title_generation'
       };
 
+      console.log('[N8nTitleGeneration] Payload envoyé:', JSON.stringify(payload, null, 2));
+
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
@@ -44,44 +114,33 @@ export const useN8nTitleGeneration = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
+        const errorText = await response.text();
+        console.error('[N8nTitleGeneration] Erreur HTTP:', response.status, errorText);
+        throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
-      console.log('[N8nTitleGeneration] Réponse reçue:', result);
+      console.log('[N8nTitleGeneration] Réponse brute reçue:', JSON.stringify(result, null, 2));
 
-      // Traiter la réponse de n8n pour extraire les 3 titres
-      let titles: GeneratedTitle[] = [];
-      
-      if (result.titles && Array.isArray(result.titles)) {
-        titles = result.titles.map((title: any, index: number) => ({
-          id: `title-${index}-${Date.now()}`,
-          title: typeof title === 'string' ? title : title.title || title.name,
-          description: typeof title === 'object' ? title.description : undefined
-        }));
-      } else if (result.title1 && result.title2 && result.title3) {
-        // Format alternatif si n8n renvoie title1, title2, title3
-        titles = [
-          { id: `title-1-${Date.now()}`, title: result.title1 },
-          { id: `title-2-${Date.now()}`, title: result.title2 },
-          { id: `title-3-${Date.now()}`, title: result.title3 }
-        ];
-      }
+      // Utiliser le nouveau parser universel
+      const titles = parseN8nTitlesResponse(result);
 
       if (titles.length === 0) {
-        throw new Error('Aucun titre reçu de n8n');
+        console.error('[N8nTitleGeneration] Aucun titre extrait de la réponse');
+        throw new Error('Aucun titre reçu de n8n - format de réponse non reconnu');
       }
 
+      console.log('[N8nTitleGeneration] Titres finaux extraits:', titles);
       setGeneratedTitles(titles);
       
       toast({
-        title: "Titres généres",
+        title: "Titres générés",
         description: `${titles.length} titres d'histoires ont été créés avec succès`,
       });
 
       return titles;
     } catch (error: any) {
-      console.error('[N8nTitleGeneration] Erreur:', error);
+      console.error('[N8nTitleGeneration] Erreur complète:', error);
       
       toast({
         title: "Erreur de génération",
