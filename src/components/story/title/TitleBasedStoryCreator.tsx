@@ -40,28 +40,47 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     e.preventDefault();
 
     if (!isFormValid || !hasChildren) {
+      console.warn('[TitleBasedStoryCreator] Formulaire invalide ou pas d\'enfants');
       return;
     }
 
     try {
+      console.log('[TitleBasedStoryCreator] Début de la génération des titres');
+      
       const childrenNames = children
         .filter(child => selectedChildrenIds.includes(child.id))
         .map(child => child.name);
 
-      await generateTitles({
+      console.log('[TitleBasedStoryCreator] Enfants sélectionnés:', childrenNames);
+      console.log('[TitleBasedStoryCreator] Objectif sélectionné:', selectedObjective);
+
+      const titles = await generateTitles({
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
         childrenNames
       });
 
-      setCurrentStep('titles');
+      console.log('[TitleBasedStoryCreator] Titres générés:', titles);
+      console.log('[TitleBasedStoryCreator] Nombre de titres:', titles.length);
+
+      // Vérifier explicitement si des titres ont été générés
+      if (titles && titles.length > 0) {
+        console.log('[TitleBasedStoryCreator] Transition vers l\'étape titles');
+        setCurrentStep('titles');
+      } else {
+        console.error('[TitleBasedStoryCreator] Aucun titre généré, restant sur le formulaire');
+      }
+
     } catch (error) {
-      console.error('Erreur génération titres:', error);
+      console.error('[TitleBasedStoryCreator] Erreur génération titres:', error);
+      // En cas d'erreur, rester sur le formulaire
+      setCurrentStep('form');
     }
   };
 
   const handleSelectTitle = async (selectedTitle: string) => {
     try {
+      console.log('[TitleBasedStoryCreator] Titre sélectionné:', selectedTitle);
       setCurrentStep('creating');
 
       const childrenNames = children
@@ -75,6 +94,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         childrenNames
       });
 
+      console.log('[TitleBasedStoryCreator] Histoire créée avec ID:', storyId);
+
       if (onStoryCreated) {
         onStoryCreated(storyId);
       }
@@ -84,16 +105,27 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       clearTitles();
       setCurrentStep('form');
     } catch (error) {
-      console.error('Erreur création histoire:', error);
+      console.error('[TitleBasedStoryCreator] Erreur création histoire:', error);
       setCurrentStep('titles'); // Retour à la sélection de titres
     }
   };
 
   const handleStartOver = () => {
+    console.log('[TitleBasedStoryCreator] Recommencer - reset formulaire');
     resetForm();
     clearTitles();
     setCurrentStep('form');
   };
+
+  // Log de l'état actuel pour débogage
+  console.log('[TitleBasedStoryCreator] État actuel:', {
+    currentStep,
+    generatedTitlesCount: generatedTitles.length,
+    isGeneratingTitles,
+    isCreatingStory,
+    isFormValid,
+    hasChildren
+  });
 
   const renderStep = () => {
     switch (currentStep) {
@@ -134,6 +166,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         );
 
       case 'titles':
+        console.log('[TitleBasedStoryCreator] Rendu de l\'étape titles avec', generatedTitles.length, 'titres');
         return (
           <div className="space-y-4">
             <TitleSelector
@@ -178,7 +211,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
           <Badge variant="secondary" className="ml-2">Nouveau</Badge>
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Choisissez d'abord vos paramètres, puis sélectionnez parmi 3 titres générés
+          {currentStep === 'form' && 'Choisissez d\'abord vos paramètres, puis sélectionnez parmi 3 titres générés'}
+          {currentStep === 'titles' && 'Sélectionnez le titre qui vous inspire le plus'}
+          {currentStep === 'creating' && 'Création de votre histoire en cours...'}
         </p>
       </CardHeader>
       
@@ -198,6 +233,16 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
                 <li>L'histoire complète est créée automatiquement</li>
               </ul>
             </div>
+          </div>
+        )}
+
+        {/* Debug info en développement */}
+        {currentStep === 'titles' && generatedTitles.length === 0 && (
+          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              <strong>Debug:</strong> Étape "titles" atteinte mais aucun titre disponible. 
+              Vérifiez la console pour plus de détails.
+            </p>
           </div>
         )}
       </CardContent>

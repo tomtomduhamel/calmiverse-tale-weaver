@@ -142,6 +142,8 @@ export const useN8nTitleGeneration = () => {
         console.warn(`[N8nTitleGeneration] Seulement ${titles.length} titre(s) reçu(s) au lieu de 3`);
       }
 
+      // IMPORTANT: Mettre à jour l'état local avec les titres générés
+      console.log('[N8nTitleGeneration] Mise à jour de l\'état local avec les titres:', titles);
       setGeneratedTitles(titles);
       
       toast({
@@ -149,6 +151,7 @@ export const useN8nTitleGeneration = () => {
         description: `${titles.length} titre(s) d'histoires ont été créés avec succès`,
       });
 
+      // Retourner les titres pour que le composant puisse les utiliser immédiatement
       return titles;
     } catch (error: any) {
       console.error('[N8nTitleGeneration] Erreur complète:', {
@@ -157,6 +160,9 @@ export const useN8nTitleGeneration = () => {
         userData: data,
         userId: user.id
       });
+      
+      // Vider les titres en cas d'erreur
+      setGeneratedTitles([]);
       
       toast({
         title: "Erreur de génération",
@@ -171,8 +177,16 @@ export const useN8nTitleGeneration = () => {
   };
 
   const clearTitles = () => {
+    console.log('[N8nTitleGeneration] Effacement des titres');
     setGeneratedTitles([]);
   };
+
+  // Log de l'état actuel pour débogage
+  console.log('[N8nTitleGeneration] État du hook:', {
+    generatedTitlesCount: generatedTitles.length,
+    isGeneratingTitles,
+    titlesPreview: generatedTitles.map(t => t.title).slice(0, 3)
+  });
 
   return {
     generateTitles,
