@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 interface TitleGenerationData {
   objective: string;
@@ -17,9 +18,14 @@ interface GeneratedTitle {
 export const useN8nTitleGeneration = () => {
   const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
   const [generatedTitles, setGeneratedTitles] = useState<GeneratedTitle[]>([]);
+  const { user } = useSupabaseAuth();
   const { toast } = useToast();
 
   const generateTitles = async (data: TitleGenerationData): Promise<GeneratedTitle[]> => {
+    if (!user) {
+      throw new Error('Utilisateur non connecté');
+    }
+
     setIsGeneratingTitles(true);
     
     try {
@@ -32,6 +38,7 @@ export const useN8nTitleGeneration = () => {
         objective: data.objective,
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
+        userId: user.id,
         requestType: 'title_generation'
       };
 

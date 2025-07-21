@@ -34,7 +34,8 @@ export const useN8nStoryFromTitle = () => {
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         userId: user.id,
-        requestType: 'story_creation'
+        requestType: 'story_creation',
+        timestamp: new Date().toISOString()
       };
 
       const response = await fetch(webhookUrl, {
@@ -54,6 +55,8 @@ export const useN8nStoryFromTitle = () => {
 
       // Extraire l'ID de l'histoire créée
       const storyId = result.storyId || result.id || `story-${Date.now()}`;
+      
+      console.log('[N8nStoryFromTitle] Histoire créée avec ID:', storyId, 'pour utilisateur:', user.id);
 
       toast({
         title: "Histoire en cours de création",
