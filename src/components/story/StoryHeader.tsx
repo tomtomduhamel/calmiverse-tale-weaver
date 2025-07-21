@@ -27,7 +27,7 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
   const formattedDate = story.createdAt ? format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr }) : "";
   
   return (
-    <div className="flex justify-between items-center mb-6">
+    <div className="flex justify-between items-center mb-6 max-w-4xl mx-auto">
       <div>
         <ReactMarkdown className="text-2xl font-bold">{story.title}</ReactMarkdown>
         {childName && (
