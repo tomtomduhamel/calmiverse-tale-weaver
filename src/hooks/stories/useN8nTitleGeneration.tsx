@@ -24,15 +24,20 @@ export const useN8nTitleGeneration = () => {
     
     let titles: GeneratedTitle[] = [];
     
-    // Format 1: result.output.title_1/title_2/title_3 (format actuel de n8n)
+    // Format 1: result.output.title_1/title_2/title_3 ou title 1/title 2/title 3 (format actuel de n8n)
     if (result.output) {
       console.log('[N8nTitleGeneration] Détection du format output:', result.output);
       
       const outputTitles = [];
       for (let i = 1; i <= 3; i++) {
-        const titleKey = `title_${i}`;
-        if (result.output[titleKey]) {
-          outputTitles.push(result.output[titleKey]);
+        // Essayer d'abord avec underscore, puis avec espace
+        const titleKeyUnderscore = `title_${i}`;
+        const titleKeySpace = `title ${i}`;
+        
+        if (result.output[titleKeyUnderscore]) {
+          outputTitles.push(result.output[titleKeyUnderscore]);
+        } else if (result.output[titleKeySpace]) {
+          outputTitles.push(result.output[titleKeySpace]);
         }
       }
       
