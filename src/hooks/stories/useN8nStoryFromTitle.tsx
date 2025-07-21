@@ -25,7 +25,7 @@ export const useN8nStoryFromTitle = () => {
     try {
       console.log('[N8nStoryFromTitle] Création d\'histoire à partir du titre:', data);
       
-      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook-test/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
+      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
       
       const payload = {
         action: 'create_story_from_title',
