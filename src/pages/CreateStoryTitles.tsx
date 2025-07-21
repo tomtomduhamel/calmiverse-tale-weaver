@@ -16,14 +16,23 @@ const CreateStoryTitles: React.FC = () => {
   const navigate = useNavigate();
 
   const handleStoryCreated = (storyId: string) => {
-    console.log("[CreateStoryTitles] Histoire créée:", storyId);
+    console.log("[CreateStoryTitles] Processus de création terminé:", storyId);
     
-    toast({
-      title: "Histoire créée avec succès",
-      description: "Votre histoire personnalisée a été créée et ajoutée à votre bibliothèque",
-    });
+    if (storyId === "timeout") {
+      // Cas de timeout - rediriger vers la bibliothèque avec un message
+      toast({
+        title: "Création en cours",
+        description: "Votre histoire est en cours de génération. Vérifiez votre bibliothèque dans quelques minutes.",
+      });
+    } else {
+      // Succès normal
+      toast({
+        title: "Histoire créée avec succès",
+        description: "Votre histoire personnalisée a été créée et ajoutée à votre bibliothèque",
+      });
+    }
     
-    // Rediriger vers la bibliothèque après création
+    // Dans tous les cas, rediriger vers la bibliothèque
     navigate("/library");
   };
 

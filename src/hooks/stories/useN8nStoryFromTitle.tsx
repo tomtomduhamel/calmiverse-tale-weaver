@@ -25,7 +25,8 @@ export const useN8nStoryFromTitle = () => {
     try {
       console.log('[N8nStoryFromTitle] Création d\'histoire à partir du titre:', data);
       
-      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
+      // CORRECTION CRITIQUE: Utiliser le bon webhook de test
+      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook-test/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
       
       const payload = {
         action: 'create_story_from_title',
@@ -36,6 +37,8 @@ export const useN8nStoryFromTitle = () => {
         userId: user.id,
         requestType: 'story_creation'
       };
+
+      console.log('[N8nStoryFromTitle] Envoi vers n8n avec payload:', payload);
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
@@ -50,23 +53,25 @@ export const useN8nStoryFromTitle = () => {
       }
 
       const result = await response.json();
-      console.log('[N8nStoryFromTitle] Réponse reçue:', result);
+      console.log('[N8nStoryFromTitle] Réponse n8n reçue:', result);
 
-      // Extraire l'ID de l'histoire créée
-      const storyId = result.storyId || result.id || `story-${Date.now()}`;
-
+      // CORRECTION: Ne pas créer d'ID fictif, attendre que n8n nous confirme la création
       toast({
         title: "Histoire en cours de création",
-        description: "Votre histoire personnalisée est en cours de génération",
+        description: "Votre histoire personnalisée est en cours de génération via n8n",
       });
 
-      return storyId;
+      // Retourner un identifiant temporaire pour le processus, pas un vrai storyId
+      const processId = result.processId || result.workflowId || `process-${Date.now()}`;
+      console.log('[N8nStoryFromTitle] Processus n8n lancé avec ID:', processId);
+      
+      return processId;
     } catch (error: any) {
       console.error('[N8nStoryFromTitle] Erreur:', error);
       
       toast({
         title: "Erreur de création",
-        description: error.message || "Impossible de créer l'histoire",
+        description: error.message || "Impossible de créer l'histoire via n8n",
         variant: "destructive",
       });
       

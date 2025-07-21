@@ -1,253 +1,279 @@
-
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, RotateCcw } from "lucide-react";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useN8nTitleGeneration } from "@/hooks/stories/useN8nTitleGeneration";
 import { useN8nStoryFromTitle } from "@/hooks/stories/useN8nStoryFromTitle";
-import { useN8nFormState } from "@/hooks/stories/n8n/useN8nFormState";
-import N8nChildrenSelector from "../n8n/N8nChildrenSelector";
-import N8nObjectiveSelector from "../n8n/N8nObjectiveSelector";
+import { useStoryCreationMonitor } from "@/hooks/stories/useStoryCreationMonitor";
+import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
+import { useToast } from "@/hooks/use-toast";
 import TitleSelector from "./TitleSelector";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, ArrowLeft, Sparkles } from "lucide-react";
 import type { Child } from "@/types/child";
+import type { GeneratedTitle } from "@/hooks/stories/useN8nTitleGeneration";
 
 interface TitleBasedStoryCreatorProps {
   children: Child[];
-  onStoryCreated?: (storyId: string) => void;
+  onStoryCreated: (storyId: string) => void;
 }
 
 const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   children,
-  onStoryCreated
+  onStoryCreated,
 }) => {
-  const [currentStep, setCurrentStep] = useState<'form' | 'titles' | 'creating'>('form');
+  const { user } = useSupabaseAuth();
+  const { toast } = useToast();
+  const { stories } = useSupabaseStories();
   
-  const { generateTitles, generatedTitles, isGeneratingTitles, clearTitles } = useN8nTitleGeneration();
+  // États du processus
+  const [selectedChildrenIds, setSelectedChildrenIds] = useState<string[]>([]);
+  const [selectedObjective, setSelectedObjective] = useState<string>("");
+  const [selectedTitle, setSelectedTitle] = useState<GeneratedTitle | null>(null);
+  const [currentStep, setCurrentStep] = useState<"form" | "titles" | "creating">("form");
+
+  // Hooks pour la génération et création
+  const { generateTitles, generatedTitles, isGeneratingTitles } = useN8nTitleGeneration();
   const { createStoryFromTitle, isCreatingStory } = useN8nStoryFromTitle();
   
-  const {
-    selectedChildrenIds,
-    selectedObjective,
-    setSelectedObjective,
-    handleChildSelect,
-    resetForm,
-    isFormValid,
-    hasChildren
-  } = useN8nFormState({ children });
-
-  const handleGenerateTitles = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!isFormValid || !hasChildren) {
-      console.warn('[TitleBasedStoryCreator] Formulaire invalide ou pas d\'enfants');
-      return;
+  // Hook de surveillance pour attendre la création effective
+  const { isMonitoring, startMonitoring } = useStoryCreationMonitor({
+    onStoryCreated: (storyId: string) => {
+      console.log('[TitleBasedStoryCreator] Histoire créée avec succès:', storyId);
+      onStoryCreated(storyId);
+    },
+    onTimeout: () => {
+      console.warn('[TitleBasedStoryCreator] Timeout - redirection vers bibliothèque');
+      onStoryCreated("timeout"); // Signal pour rediriger vers la bibliothèque
     }
-
-    try {
-      console.log('[TitleBasedStoryCreator] Début de la génération des titres');
-      
-      const childrenNames = children
-        .filter(child => selectedChildrenIds.includes(child.id))
-        .map(child => child.name);
-
-      console.log('[TitleBasedStoryCreator] Enfants sélectionnés:', childrenNames);
-      console.log('[TitleBasedStoryCreator] Objectif sélectionné:', selectedObjective);
-
-      const titles = await generateTitles({
-        objective: selectedObjective,
-        childrenIds: selectedChildrenIds,
-        childrenNames
-      });
-
-      console.log('[TitleBasedStoryCreator] Titres générés:', titles);
-      console.log('[TitleBasedStoryCreator] Nombre de titres:', titles.length);
-
-      // Vérifier explicitement si des titres ont été générés
-      if (titles && titles.length > 0) {
-        console.log('[TitleBasedStoryCreator] Transition vers l\'étape titles');
-        setCurrentStep('titles');
-      } else {
-        console.error('[TitleBasedStoryCreator] Aucun titre généré, restant sur le formulaire');
-      }
-
-    } catch (error) {
-      console.error('[TitleBasedStoryCreator] Erreur génération titres:', error);
-      // En cas d'erreur, rester sur le formulaire
-      setCurrentStep('form');
-    }
-  };
-
-  const handleSelectTitle = async (selectedTitle: string) => {
-    try {
-      console.log('[TitleBasedStoryCreator] Titre sélectionné:', selectedTitle);
-      setCurrentStep('creating');
-
-      const childrenNames = children
-        .filter(child => selectedChildrenIds.includes(child.id))
-        .map(child => child.name);
-
-      const storyId = await createStoryFromTitle({
-        selectedTitle,
-        objective: selectedObjective,
-        childrenIds: selectedChildrenIds,
-        childrenNames
-      });
-
-      console.log('[TitleBasedStoryCreator] Histoire créée avec ID:', storyId);
-
-      if (onStoryCreated) {
-        onStoryCreated(storyId);
-      }
-
-      // Reset après succès
-      resetForm();
-      clearTitles();
-      setCurrentStep('form');
-    } catch (error) {
-      console.error('[TitleBasedStoryCreator] Erreur création histoire:', error);
-      setCurrentStep('titles'); // Retour à la sélection de titres
-    }
-  };
-
-  const handleStartOver = () => {
-    console.log('[TitleBasedStoryCreator] Recommencer - reset formulaire');
-    resetForm();
-    clearTitles();
-    setCurrentStep('form');
-  };
-
-  // Log de l'état actuel pour débogage
-  console.log('[TitleBasedStoryCreator] État actuel:', {
-    currentStep,
-    generatedTitlesCount: generatedTitles.length,
-    isGeneratingTitles,
-    isCreatingStory,
-    isFormValid,
-    hasChildren
   });
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case 'form':
-        return (
-          <form onSubmit={handleGenerateTitles} className="space-y-4">
-            <N8nChildrenSelector
-              children={children}
-              selectedChildrenIds={selectedChildrenIds}
-              onChildSelect={handleChildSelect}
-              hasChildren={hasChildren}
-            />
+  // Objectifs possibles
+  const objectives = [
+    { id: "sleep", label: "Aider à s'endormir", value: "sleep" },
+    { id: "focus", label: "Se concentrer", value: "focus" },
+    { id: "relax", label: "Se relaxer", value: "relax" },
+    { id: "fun", label: "S'amuser", value: "fun" },
+  ];
 
-            <N8nObjectiveSelector
-              selectedObjective={selectedObjective}
-              onObjectiveSelect={setSelectedObjective}
-            />
+  // Validation du formulaire
+  const validateForm = () => {
+    if (selectedChildrenIds.length === 0) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner au moins un enfant",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (!selectedObjective) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un objectif",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
 
-            <Button 
-              type="submit" 
-              disabled={!isFormValid || isGeneratingTitles || !hasChildren}
-              className="w-full bg-primary hover:bg-primary/90 text-white"
-              size="lg"
-            >
-              {isGeneratingTitles ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Génération des titres...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Générer 3 titres
-                </>
-              )}
-            </Button>
-          </form>
-        );
+  // Fonctions de gestion des changements
+  const handleObjectiveChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedObjective(e.target.value);
+  };
 
-      case 'titles':
-        console.log('[TitleBasedStoryCreator] Rendu de l\'étape titles avec', generatedTitles.length, 'titres');
-        return (
-          <div className="space-y-4">
-            <TitleSelector
-              titles={generatedTitles}
-              onSelectTitle={handleSelectTitle}
-              isCreatingStory={isCreatingStory}
-            />
-            
-            <div className="flex justify-center pt-4">
-              <Button
-                variant="outline"
-                onClick={handleStartOver}
-                disabled={isCreatingStory}
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Recommencer
-              </Button>
-            </div>
-          </div>
-        );
+  const handleChildToggle = (childId: string) => {
+    setSelectedChildrenIds((prevIds) =>
+      prevIds.includes(childId)
+        ? prevIds.filter((id) => id !== childId)
+        : [...prevIds, childId]
+    );
+  };
 
-      case 'creating':
-      default:
-        return (
-          <div className="text-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-            <h3 className="text-lg font-semibold mb-2">Création de votre histoire...</h3>
-            <p className="text-muted-foreground">
-              Nous préparons votre histoire personnalisée, veuillez patienter.
-            </p>
-          </div>
-        );
+  const handleGenerateTitles = async () => {
+    if (!validateForm()) return;
+
+    try {
+      const selectedChildren = children.filter(child => 
+        selectedChildrenIds.includes(child.id)
+      );
+      
+      await generateTitles({
+        objective: selectedObjective,
+        childrenNames: selectedChildren.map(child => child.name)
+      });
+      
+      setCurrentStep("titles");
+    } catch (error: any) {
+      console.error("Erreur génération titres:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer les titres. Veuillez réessayer.",
+        variant: "destructive",
+      });
     }
   };
 
-  return (
-    <Card className="border-primary/20 bg-white/80 shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-primary-dark">
-          <Sparkles className="h-5 w-5" />
-          Créer avec sélection de titres
-          <Badge variant="secondary" className="ml-2">Nouveau</Badge>
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          {currentStep === 'form' && 'Choisissez d\'abord vos paramètres, puis sélectionnez parmi 3 titres générés'}
-          {currentStep === 'titles' && 'Sélectionnez le titre qui vous inspire le plus'}
-          {currentStep === 'creating' && 'Création de votre histoire en cours...'}
-        </p>
-      </CardHeader>
+  const handleTitleSelected = async (title: GeneratedTitle) => {
+    if (!validateForm()) return;
+
+    setSelectedTitle(title);
+    setCurrentStep("creating");
+
+    try {
+      const selectedChildren = children.filter(child => 
+        selectedChildrenIds.includes(child.id)
+      );
+
+      console.log('[TitleBasedStoryCreator] Démarrage création avec titre:', title.title);
       
-      <CardContent className="space-y-6">
-        {renderStep()}
+      // Compter les histoires actuelles pour surveiller les nouvelles
+      const currentStoryCount = stories.length;
+      
+      // Lancer le processus de création via n8n
+      const processId = await createStoryFromTitle({
+        selectedTitle: title.title,
+        objective: selectedObjective,
+        childrenIds: selectedChildrenIds,
+        childrenNames: selectedChildren.map(child => child.name)
+      });
 
-        {/* Informations pour l'utilisateur */}
-        {currentStep === 'form' && (
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200">
-            <div className="text-sm text-blue-800 dark:text-blue-200">
-              <p className="font-medium mb-1">✨ Comment ça marche ?</p>
-              <ul className="list-disc list-inside space-y-1 text-xs">
-                <li>Sélectionnez un ou plusieurs enfants</li>
-                <li>Choisissez l'objectif de l'histoire</li>
-                <li>Nous générons 3 titres d'histoires personnalisés</li>
-                <li>Choisissez votre titre préféré</li>
-                <li>L'histoire complète est créée automatiquement</li>
-              </ul>
-            </div>
-          </div>
-        )}
+      console.log('[TitleBasedStoryCreator] Processus n8n lancé:', processId);
+      console.log('[TitleBasedStoryCreator] Démarrage surveillance avec', currentStoryCount, 'histoires');
+      
+      // Démarrer la surveillance pour attendre que l'histoire apparaisse en base
+      startMonitoring(currentStoryCount);
+      
+    } catch (error: any) {
+      console.error("Erreur création histoire:", error);
+      setCurrentStep("titles"); // Retour à la sélection de titre
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de créer l'histoire",
+        variant: "destructive",
+      });
+    }
+  };
 
-        {/* Debug info en développement */}
-        {currentStep === 'titles' && generatedTitles.length === 0 && (
-          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              <strong>Debug:</strong> Étape "titles" atteinte mais aucun titre disponible. 
-              Vérifiez la console pour plus de détails.
-            </p>
+  // Rendu du formulaire de sélection
+  const renderForm = () => (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Paramètres de l'histoire</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Sélection des enfants */}
+        <div className="grid gap-2">
+          <h3 className="text-sm font-medium leading-none">
+            Pour qui écrivez-vous cette histoire ?
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {children.map((child) => (
+              <Button
+                key={child.id}
+                variant={
+                  selectedChildrenIds.includes(child.id) ? "secondary" : "outline"
+                }
+                onClick={() => handleChildToggle(child.id)}
+              >
+                {child.name}
+              </Button>
+            ))}
           </div>
+        </div>
+
+        {/* Sélection de l'objectif */}
+        <div className="grid gap-2">
+          <h3 className="text-sm font-medium leading-none">
+            Quel est l'objectif de cette histoire ?
+          </h3>
+          <select
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            value={selectedObjective}
+            onChange={handleObjectiveChange}
+          >
+            <option value="">Sélectionnez un objectif</option>
+            {objectives.map((objective) => (
+              <option key={objective.id} value={objective.value}>
+                {objective.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Bouton de génération des titres */}
+        <Button onClick={handleGenerateTitles} disabled={isGeneratingTitles}>
+          {isGeneratingTitles ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Génération des titres...
+            </>
+          ) : (
+            "Générer des titres"
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
+  // Rendu de la sélection des titres
+  const renderTitleSelection = () => (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <Button variant="ghost" onClick={() => setCurrentStep("form")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Retour
+        </Button>
+        <CardTitle>Sélectionnez un titre</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isGeneratingTitles ? (
+          <div className="flex items-center justify-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p>Génération des titres en cours...</p>
+          </div>
+        ) : (
+          <TitleSelector
+            titles={generatedTitles}
+            onTitleSelected={handleTitleSelected}
+          />
         )}
       </CardContent>
     </Card>
   );
+
+  // Rendu de l'état de création
+  if (currentStep === "creating") {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2">
+            <Sparkles className="h-6 w-6 animate-pulse text-primary" />
+            Création de votre histoire en cours
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <div className="flex items-center justify-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+          
+          <div className="space-y-2">
+            <p className="text-lg font-medium">
+              "{selectedTitle?.title}"
+            </p>
+            <p className="text-muted-foreground">
+              {isCreatingStory && "Envoi vers n8n en cours..."}
+              {isMonitoring && "Génération de l'histoire par l'IA..."}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Cette opération peut prendre quelques minutes. Votre histoire apparaîtra automatiquement dans votre bibliothèque une fois terminée.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return currentStep === "titles" ? renderTitleSelection() : renderForm();
 };
 
 export default TitleBasedStoryCreator;
