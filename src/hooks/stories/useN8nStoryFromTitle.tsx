@@ -25,7 +25,7 @@ export const useN8nStoryFromTitle = () => {
     try {
       console.log('[N8nStoryFromTitle] Création d\'histoire à partir du titre:', data);
       
-      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook-test/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
+      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
       
       const payload = {
         action: 'create_story_from_title',
@@ -34,8 +34,7 @@ export const useN8nStoryFromTitle = () => {
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         userId: user.id,
-        requestType: 'story_creation',
-        timestamp: new Date().toISOString()
+        requestType: 'story_creation'
       };
 
       const response = await fetch(webhookUrl, {
@@ -55,8 +54,6 @@ export const useN8nStoryFromTitle = () => {
 
       // Extraire l'ID de l'histoire créée
       const storyId = result.storyId || result.id || `story-${Date.now()}`;
-      
-      console.log('[N8nStoryFromTitle] Histoire créée avec ID:', storyId, 'pour utilisateur:', user.id);
 
       toast({
         title: "Histoire en cours de création",
