@@ -61,9 +61,7 @@ export const StoryRecoveryManager: React.FC<StoryRecoveryManagerProps> = ({
   };
   const hasProblems = zombieStories.length > 0 || errorStories.length > 0;
   if (!hasProblems) {
-    return <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
-        
-      </Card>;
+    return;
   }
   return <div className="space-y-4">
       {/* Diagnostic système intégré */}
