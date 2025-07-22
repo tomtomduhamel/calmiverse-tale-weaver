@@ -99,6 +99,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       
       await generateTitles({
         objective: selectedObjective,
+        childrenIds: selectedChildrenIds,
         childrenNames: selectedChildren.map(child => child.name)
       });
       
@@ -234,7 +235,11 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         ) : (
           <TitleSelector
             titles={generatedTitles}
-            onTitleSelected={handleTitleSelected}
+            onSelectTitle={(title) => {
+              const selectedTitle = generatedTitles.find(t => t.title === title);
+              if (selectedTitle) handleTitleSelected(selectedTitle);
+            }}
+            isCreatingStory={isCreatingStory || isMonitoring}
           />
         )}
       </CardContent>

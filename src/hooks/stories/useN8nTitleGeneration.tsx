@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
-interface TitleGenerationData {
+export interface TitleGenerationData {
   objective: string;
   childrenIds: string[];
   childrenNames: string[];
 }
 
-interface GeneratedTitle {
+export interface GeneratedTitle {
   id: string;
   title: string;
   description?: string;

@@ -14,6 +14,7 @@ interface GeneratedTitle {
 interface TitleSelectorProps {
   titles: GeneratedTitle[];
   onSelectTitle: (title: string) => void;
+  onTitleSelected?: (title: GeneratedTitle) => void;
   isCreatingStory: boolean;
 }
 
