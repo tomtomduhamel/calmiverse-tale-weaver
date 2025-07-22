@@ -10,6 +10,23 @@ interface StoryCreationData {
   childrenNames: string[];
 }
 
+// Fonction pour générer le prompt d'histoire complet (même que dans useN8nStoryCreation)
+const generateStoryPrompt = (objective: string, childrenNames: string[], selectedTitle: string): string => {
+  const childrenText = childrenNames.length === 1 
+    ? childrenNames[0] 
+    : `${childrenNames.slice(0, -1).join(', ')} et ${childrenNames[childrenNames.length - 1]}`;
+
+  const objectivePrompts = {
+    sleep: `Créer une histoire douce et apaisante pour aider ${childrenText} à s'endormir. L'histoire doit être calme, réconfortante et se terminer de manière paisible. Utilisez un langage simple et des images relaxantes. L'histoire doit utiliser les techniques d'hypnose ericksonienne pour permettre un endormissement apaisé et régénérateur.`,
+    focus: `Créer une histoire engageante qui aide ${childrenText} à se concentrer. L'histoire doit captiver l'attention tout en étant éducative et stimulante intellectuellement.`,
+    relax: `Créer une histoire relaxante pour aider ${childrenText} à se détendre. L'histoire doit être apaisante, avec un rythme lent et des éléments qui favorisent la relaxation.`,
+    fun: `Créer une histoire amusante et divertissante pour ${childrenText}. L'histoire doit être joyeuse, pleine d'aventures et de moments ludiques qui feront sourire.`
+  };
+
+  const basePrompt = objectivePrompts[objective as keyof typeof objectivePrompts] || objectivePrompts.fun;
+  return `${basePrompt} Le titre de l'histoire doit être : "${selectedTitle}". Assure-toi que l'histoire correspond bien à ce titre et développe le thème de manière créative et engageante.`;
+};
+
 export const useN8nStoryFromTitle = () => {
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const { user } = useSupabaseAuth();
@@ -25,6 +42,10 @@ export const useN8nStoryFromTitle = () => {
     try {
       console.log('[N8nStoryFromTitle] Création d\'histoire à partir du titre:', data);
       
+      // Générer le prompt complet pour l'histoire
+      const storyPrompt = generateStoryPrompt(data.objective, data.childrenNames, data.selectedTitle);
+      console.log('[N8nStoryFromTitle] Prompt généré:', storyPrompt);
+      
       // CORRECTION CRITIQUE: Utiliser le bon webhook de test
       const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook-test/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
       
@@ -35,6 +56,8 @@ export const useN8nStoryFromTitle = () => {
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         userId: user.id,
+        userEmail: user.email,
+        storyPrompt, // Prompt complet pour la génération d'histoire
         requestType: 'story_creation'
       };
 
