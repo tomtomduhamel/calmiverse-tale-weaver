@@ -40,7 +40,7 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
         preview: '',
         childrenIds: [],
         createdAt: new Date(),
-        status: 'completed',
+        status: 'ready',
         story_summary: '',
         objective: ''
       };

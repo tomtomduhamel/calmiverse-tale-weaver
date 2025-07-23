@@ -51,7 +51,7 @@ export const useN8nCompletionCallback = (options: N8nCompletionCallbackOptions =
             onStoryCompleted(storyId, {
               id: storyId,
               title: title || 'Histoire générée',
-              status: 'completed'
+              status: 'ready'
             });
           }
         }
