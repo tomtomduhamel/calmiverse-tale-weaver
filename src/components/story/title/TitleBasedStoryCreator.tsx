@@ -10,6 +10,7 @@ import { useN8nStoryFromTitle } from '@/hooks/stories/useN8nStoryFromTitle';
 import { useRealtimeStoryMonitor } from '@/hooks/stories/useRealtimeStoryMonitor';
 import TitleSelector from './TitleSelector';
 import type { Child } from '@/types/child';
+import type { GeneratedTitle } from '@/hooks/stories/useN8nTitleGeneration';
 
 interface TitleBasedStoryCreatorProps {
   children: Child[];
@@ -22,7 +23,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 }) => {
   const [selectedChildrenIds, setSelectedChildrenIds] = useState<string[]>([]);
   const [selectedObjective, setSelectedObjective] = useState<string>('fun');
-  const [generatedTitles, setGeneratedTitles] = useState<string[]>([]);
+  const [generatedTitles, setGeneratedTitles] = useState<GeneratedTitle[]>([]);
   const [selectedTitle, setSelectedTitle] = useState<string>('');
   const [currentStep, setCurrentStep] = useState<'setup' | 'titles' | 'creating'>('setup');
   
@@ -266,12 +267,17 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       <div className="space-y-6">
         <TitleSelector
           titles={generatedTitles}
-          selectedTitle={selectedTitle}
-          onTitleSelect={setSelectedTitle}
-          onBack={handleBack}
-          onCreateStory={handleCreateStory}
-          isCreating={isCreatingStory}
+          onSelectTitle={(title) => {
+            setSelectedTitle(title);
+            handleCreateStory();
+          }}
+          isCreatingStory={isCreatingStory}
         />
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={handleBack}>
+            Retour
+          </Button>
+        </div>
       </div>
     );
   }
