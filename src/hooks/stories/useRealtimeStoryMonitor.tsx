@@ -101,10 +101,7 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
           setIsMonitoring(false);
           setMonitoringStartTime(null);
 
-          toast({
-            title: "Histoire créée avec succès",
-            description: "Votre histoire est maintenant disponible dans votre bibliothèque",
-          });
+          // Pas de toast ici - sera géré par le composant appelant ou autre mécanisme
 
           if (onStoryCreated) {
             onStoryCreated(formattedStory);
@@ -148,10 +145,7 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
             setIsMonitoring(false);
             setMonitoringStartTime(null);
 
-            toast({
-              title: "Histoire complétée",
-              description: "Votre histoire est maintenant prête à être lue",
-            });
+            // Pas de toast ici - sera géré par le composant appelant
 
             if (onStoryCreated) {
               onStoryCreated(formattedStory);

@@ -165,11 +165,7 @@ export const useN8nTitleGeneration = () => {
       console.log('[N8nTitleGeneration] SUCCÈS: Titres finaux extraits:', titles);
       setGeneratedTitles(titles);
       
-      toast({
-        title: "Titres générés",
-        description: `${titles.length} titres d'histoires ont été créés avec succès`,
-      });
-
+      // Pas de toast ici - sera géré par le composant appelant
       return titles;
     } catch (error: any) {
       console.error('[N8nTitleGeneration] Erreur complète:', error);

@@ -81,10 +81,7 @@ export const useN8nStoryFromTitle = () => {
       console.log('[N8nStoryFromTitle] Réponse n8n reçue:', result);
 
       // CORRECTION: Ne pas créer d'ID fictif, attendre que n8n nous confirme la création
-      toast({
-        title: "Histoire en cours de création",
-        description: "Votre histoire personnalisée est en cours de génération via n8n",
-      });
+      // Pas de toast ici - sera géré par le composant appelant
 
       // Retourner un identifiant temporaire pour le processus, pas un vrai storyId
       const processId = result.processId || result.workflowId || `process-${Date.now()}`;

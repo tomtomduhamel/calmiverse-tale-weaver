@@ -34,8 +34,9 @@ export function Toaster() {
                 </ToastDescription>
               )}
             </div>
-            <ToastClose className="absolute right-3 top-3 rounded-md p-1.5 text-neutral-500 opacity-70 transition-opacity hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 ring-purple-400 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 shadow-sm">
+            <ToastClose className="absolute right-2 top-2 rounded-full p-2 text-neutral-600 dark:text-neutral-400 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50 border border-neutral-200 dark:border-neutral-700">
               <X className="h-4 w-4" />
+              <span className="sr-only">Fermer</span>
             </ToastClose>
             {action}
           </Toast>
