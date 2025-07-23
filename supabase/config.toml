@@ -20,7 +20,9 @@ max_client_conn = 100
 
 [realtime]
 enabled = true
-ip_version = "ipv6"
+ip_version = "IPv6"
+tenant_id = "realtime-dev"
+max_slot_name_length = 63
 
 [studio]
 enabled = true
@@ -30,35 +32,64 @@ api_url = "http://127.0.0.1:54321"
 [inbucket]
 enabled = true
 port = 54324
-SMTP_PORT = 54325
-POP3_PORT = 54326
+smtp_port = 54325
+pop3_port = 54326
 
 [storage]
 enabled = true
+port = 54327
 file_size_limit = "50MiB"
-image_transformation = true
 
 [auth]
 enabled = true
-site_url = "http://127.0.0.1:3000"
+port = 54328
+site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://127.0.0.1:3000"]
 jwt_expiry = 3600
-enable_refresh_token_rotation = true
+refresh_token_rotation_enabled = true
 refresh_token_reuse_interval = 10
-enable_manual_linking = false
+enable_signup = true
 
 [auth.email]
+enable_signup = true
+double_confirm_changes = true
 enable_confirmations = false
-
-[edge_runtime]
-enabled = true
-ip_version = "ipv6"
 
 [functions.connectivity-test]
 verify_jwt = false
 
-[functions.tts-test]
+[functions.delete-user]
+verify_jwt = true
+
+[functions.generateStory]
+verify_jwt = true
+
+[functions.n8n-audio-callback]
+verify_jwt = false
+
+[functions.n8n-story-webhook]
+verify_jwt = false
+
+[functions.n8n-story-completion-callback]
+verify_jwt = false
+
+[functions.regenerateStory]
+verify_jwt = true
+
+[functions.retry-story]
+verify_jwt = true
+
+[functions.testConnection]
 verify_jwt = false
 
 [functions.tts-elevenlabs]
+verify_jwt = true
+
+[functions.tts-test]
 verify_jwt = false
+
+[functions.upload-audio-from-n8n]
+verify_jwt = false
+
+[functions.upload-epub]
+verify_jwt = true

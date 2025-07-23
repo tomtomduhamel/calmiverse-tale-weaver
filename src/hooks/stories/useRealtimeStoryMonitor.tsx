@@ -3,6 +3,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useN8nCompletionCallback } from './useN8nCompletionCallback';
 import type { Story } from '@/types/story';
 
 interface RealtimeStoryMonitorOptions {
@@ -26,6 +27,35 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
     enabled = true
   } = options;
 
+  // Intégrer le monitoring des callbacks n8n
+  const n8nCallback = useN8nCompletionCallback({
+    onStoryCompleted: (storyId, storyData) => {
+      console.log('[RealtimeStoryMonitor] Histoire complétée via callback n8n:', storyId);
+      
+      // Créer un objet Story temporaire pour la compatibilité
+      const completedStory: Story = {
+        id: storyId,
+        title: storyData?.title || 'Histoire générée',
+        content: '',
+        preview: '',
+        childrenIds: [],
+        createdAt: new Date(),
+        status: 'completed',
+        story_summary: '',
+        objective: ''
+      };
+
+      setLastDetectedStory(completedStory);
+      setIsMonitoring(false);
+      setMonitoringStartTime(null);
+
+      if (onStoryCreated) {
+        onStoryCreated(completedStory);
+      }
+    },
+    enabled
+  });
+
   const startMonitoring = useCallback((initialStoryCount?: number) => {
     if (!user || !enabled) {
       console.warn('[RealtimeStoryMonitor] Cannot start monitoring: user not authenticated or disabled');
@@ -36,6 +66,9 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
     setIsMonitoring(true);
     setMonitoringStartTime(Date.now());
     setLastDetectedStory(null);
+
+    // Démarrer l'écoute des callbacks n8n
+    const cleanupN8n = n8nCallback.startListening();
 
     // Créer un canal Supabase Realtime pour écouter les changements sur la table stories
     const channel = supabase
@@ -77,8 +110,9 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
             onStoryCreated(formattedStory);
           }
 
-          // Nettoyer le canal après détection
+          // Nettoyer les canaux après détection
           supabase.removeChannel(channel);
+          if (cleanupN8n) cleanupN8n();
         }
       )
       .on(
@@ -123,8 +157,9 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
               onStoryCreated(formattedStory);
             }
 
-            // Nettoyer le canal après détection
+            // Nettoyer les canaux après détection
             supabase.removeChannel(channel);
+            if (cleanupN8n) cleanupN8n();
           }
         }
       )
@@ -154,6 +189,7 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
         setMonitoringStartTime(null);
         
         supabase.removeChannel(channel);
+        if (cleanupN8n) cleanupN8n();
         
         toast({
           title: "Création en cours",
@@ -171,16 +207,18 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
     return () => {
       clearTimeout(timeoutId);
       supabase.removeChannel(channel);
+      if (cleanupN8n) cleanupN8n();
       setIsMonitoring(false);
       setMonitoringStartTime(null);
     };
-  }, [user, enabled, timeoutMs, onStoryCreated, onTimeout, toast, isMonitoring, monitoringStartTime]);
+  }, [user, enabled, timeoutMs, onStoryCreated, onTimeout, toast, isMonitoring, monitoringStartTime, n8nCallback]);
 
   const stopMonitoring = useCallback(() => {
     console.log('[RealtimeStoryMonitor] Arrêt manuel du monitoring');
     setIsMonitoring(false);
     setMonitoringStartTime(null);
-  }, []);
+    n8nCallback.stopListening();
+  }, [n8nCallback]);
 
   // Nettoyage automatique si l'utilisateur se déconnecte
   useEffect(() => {
@@ -190,7 +228,7 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
   }, [user, isMonitoring, stopMonitoring]);
 
   return {
-    isMonitoring,
+    isMonitoring: isMonitoring || n8nCallback.isListening,
     startMonitoring,
     stopMonitoring,
     lastDetectedStory,
