@@ -58,7 +58,9 @@ export const useN8nStoryFromTitle = () => {
         userId: user.id,
         userEmail: user.email,
         storyPrompt, // Prompt complet pour la génération d'histoire
-        requestType: 'story_creation'
+        requestType: 'story_creation',
+        timestamp: new Date().toISOString(),
+        requestId: `story-from-title-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       };
 
       console.log('[N8nStoryFromTitle] Envoi vers n8n avec payload:', payload);
