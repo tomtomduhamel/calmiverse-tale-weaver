@@ -19,41 +19,37 @@ import Library from "./pages/Library";
 import StoryReaderPage from "./pages/StoryReaderPage";
 import Shell from "./components/Shell";
 import { Toaster } from "@/components/ui/toaster"
-import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
-
 function App() {
   return (
-    <SupabaseAuthProvider>
-      <Router>
-        <Routes>
-          {/* Routes publiques */}
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/shared/:token" element={<SharedStory />} />
-          <Route path="/story/:id" element={<PublicStory />} />
-          <Route path="/404" element={<NotFound />} />
+    <Router>
+      <Routes>
+        {/* Routes publiques */}
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/shared/:token" element={<SharedStory />} />
+        <Route path="/story/:id" element={<PublicStory />} />
+        <Route path="/404" element={<NotFound />} />
 
-          {/* Routes avec authentification */}
-          <Route path="/" element={<Shell />}>
-            <Route index element={<Index />} />
-            <Route path="children" element={<ChildrenListPage />} />
-            <Route path="kids-profile" element={<KidsProfile />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="library" element={<Library />} />
-            <Route path="reader/:id" element={<StoryReaderPage />} />
-            <Route path="create-story-simple" element={<MinimalStoryPage />} />
-            <Route path="create-story-n8n" element={<CreateStoryN8n />} />
-            <Route path="create-story-titles" element={<CreateStoryTitles />} />
-            <Route path="test-connection" element={<TestConnection />} />
-            <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
-          </Route>
+        {/* Routes avec authentification */}
+        <Route path="/" element={<Shell />}>
+          <Route index element={<Index />} />
+          <Route path="children" element={<ChildrenListPage />} />
+          <Route path="kids-profile" element={<KidsProfile />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="library" element={<Library />} />
+          <Route path="reader/:id" element={<StoryReaderPage />} />
+          <Route path="create-story-simple" element={<MinimalStoryPage />} />
+          <Route path="create-story-n8n" element={<CreateStoryN8n />} />
+          <Route path="create-story-titles" element={<CreateStoryTitles />} />
+          <Route path="test-connection" element={<TestConnection />} />
+          <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
+        </Route>
 
-          {/* Route de fallback */}
-          <Route path="*" element={<Navigate to="/404" replace />} />
-        </Routes>
-      </Router>
+        {/* Route de fallback */}
+        <Route path="*" element={<Navigate to="/404" replace />} />
+      </Routes>
       <Toaster />
-    </SupabaseAuthProvider>
+    </Router>
   );
 }
 
