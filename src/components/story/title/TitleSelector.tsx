@@ -14,7 +14,6 @@ interface GeneratedTitle {
 interface TitleSelectorProps {
   titles: GeneratedTitle[];
   onSelectTitle: (title: string) => void;
-  onTitleSelected?: (title: GeneratedTitle) => void;
   isCreatingStory: boolean;
 }
 
@@ -32,6 +31,11 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
       </div>
     );
   }
+
+  const handleTitleSelection = (title: string) => {
+    console.log('[TitleSelector] Titre sélectionné:', title);
+    onSelectTitle(title);
+  };
 
   return (
     <div className="space-y-4">
@@ -52,7 +56,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
         {titles.map((title, index) => (
           <Card 
             key={title.id}
-            className="border-primary/20 hover:border-primary/40 transition-colors cursor-pointer group"
+            className="border-primary/20 hover:border-primary/40 transition-colors group"
           >
             <CardContent className="p-4">
               <div className="flex items-start justify-between gap-4">
@@ -72,7 +76,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
                   )}
                 </div>
                 <Button
-                  onClick={() => onSelectTitle(title.title)}
+                  onClick={() => handleTitleSelection(title.title)}
                   disabled={isCreatingStory}
                   className="bg-primary hover:bg-primary/90 text-white min-w-[120px]"
                 >

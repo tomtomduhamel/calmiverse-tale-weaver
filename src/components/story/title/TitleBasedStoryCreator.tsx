@@ -84,9 +84,10 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       setGeneratedTitles(titles);
       setCurrentStep('titles');
       
+      // Toast unique pour confirmer la génération des titres
       toast({
-        title: "Titres générés",
-        description: "Choisissez le titre qui vous inspire le plus",
+        title: "Titres générés avec succès",
+        description: `${titles.length} titre${titles.length > 1 ? 's' : ''} disponible${titles.length > 1 ? 's' : ''}`,
       });
     } catch (error: any) {
       console.error('[TitleBasedStoryCreator] Erreur génération titres:', error);
@@ -98,8 +99,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     }
   }, [selectedChildrenIds, selectedObjective, children, generateTitles, toast]);
 
-  const handleCreateStory = useCallback(async () => {
-    if (!selectedTitle) {
+  const handleCreateStory = useCallback(async (titleToUse: string) => {
+    if (!titleToUse) {
       toast({
         title: "Titre requis",
         description: "Veuillez sélectionner un titre",
@@ -112,8 +113,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
       
-      console.log('[TitleBasedStoryCreator] Création histoire avec titre:', selectedTitle);
+      console.log('[TitleBasedStoryCreator] Création histoire avec titre:', titleToUse);
       
+      setSelectedTitle(titleToUse);
       setCurrentStep('creating');
       
       // Démarrer le monitoring en temps réel AVANT de créer l'histoire
@@ -121,15 +123,16 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       
       // Créer l'histoire via n8n
       await createStoryFromTitle({
-        selectedTitle,
+        selectedTitle: titleToUse,
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
         childrenNames
       });
       
+      // Toast unique pour la création
       toast({
-        title: "Création en cours",
-        description: "Votre histoire est en cours de génération. Surveillance en temps réel activée.",
+        title: "Création lancée",
+        description: "Votre histoire est en cours de génération",
       });
       
     } catch (error: any) {
@@ -142,7 +145,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         variant: "destructive",
       });
     }
-  }, [selectedTitle, selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, toast]);
+  }, [selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, toast]);
 
   const handleBack = useCallback(() => {
     if (currentStep === 'titles') {
@@ -267,10 +270,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       <div className="space-y-6">
         <TitleSelector
           titles={generatedTitles}
-          onSelectTitle={(title) => {
-            setSelectedTitle(title);
-            handleCreateStory();
-          }}
+          onSelectTitle={handleCreateStory}
           isCreatingStory={isCreatingStory}
         />
         <div className="flex justify-between">

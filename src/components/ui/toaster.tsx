@@ -8,6 +8,7 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 import { useToast } from "@/hooks/use-toast"
+import { X } from "lucide-react"
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -33,7 +34,10 @@ export function Toaster() {
                 </ToastDescription>
               )}
             </div>
-            <ToastClose className="absolute right-4 top-4 rounded-md p-1 text-neutral-500 opacity-70 transition-opacity hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 ring-purple-400" />
+            <ToastClose className="absolute right-3 top-3 rounded-md p-1.5 text-neutral-500 opacity-70 transition-opacity hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 ring-purple-400 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 shadow-sm">
+              <X className="h-4 w-4" />
+            </ToastClose>
+            {action}
           </Toast>
         )
       })}
