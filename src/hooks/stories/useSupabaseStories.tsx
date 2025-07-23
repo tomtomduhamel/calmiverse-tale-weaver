@@ -6,13 +6,14 @@ import { useStoryDeletion } from './useStoryDeletion';
 import { useStoryUpdate } from './useStoryUpdate';
 import { useStoryCloudFunctions } from './useStoryCloudFunctions';
 import { usePendingStoryMonitor } from './monitoring/usePendingStoryMonitor';
+import { useRealtimeStoryMonitor } from './useRealtimeStoryMonitor';
 import { useStoryFavorites } from './useStoryFavorites';
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 /**
  * Hook principal pour gérer les histoires avec Supabase
- * Maintenant avec gestion des favoris intégrée
+ * Maintenant avec monitoring en temps réel et gestion des favoris intégrée
  */
 export const useSupabaseStories = () => {
   const { toast } = useToast();
@@ -26,7 +27,7 @@ export const useSupabaseStories = () => {
   const { retryStoryGeneration } = useStoryCloudFunctions();
   const { toggleFavorite, getFavoriteStories, isUpdating: isUpdatingFavorite } = useStoryFavorites();
   
-  // Surveillance améliorée des histoires en attente
+  // Surveillance améliorée des histoires en attente (fallback)
   const pendingMonitor = usePendingStoryMonitor({
     stories,
     fetchStories,
@@ -35,6 +36,16 @@ export const useSupabaseStories = () => {
       // Rafraîchir les données pour s'assurer d'avoir la dernière version
       fetchStories();
     }
+  });
+
+  // Monitoring en temps réel principal
+  const realtimeMonitor = useRealtimeStoryMonitor({
+    onStoryCreated: (story) => {
+      console.log(`[SupabaseStories] Histoire créée détectée en temps réel: ${story.id}`);
+      // Rafraîchir immédiatement les données
+      fetchStories();
+    },
+    enabled: true
   });
   
   // Gestion des favoris avec rafraîchissement automatique
@@ -65,12 +76,15 @@ export const useSupabaseStories = () => {
       // Extraire l'ID de l'histoire du résultat
       const storyId = result.storyId;
       
-      // Démarrer la surveillance automatique
+      // Démarrer la surveillance en temps réel en priorité
+      realtimeMonitor.startMonitoring();
+      
+      // Démarrer la surveillance de fallback
       pendingMonitor.setPendingStoryId(storyId);
       
       toast({
         title: "Génération en cours",
-        description: "Nous commençons à générer votre histoire. Vous serez notifié dès qu'elle sera prête.",
+        description: "Nous commençons à générer votre histoire. Surveillance en temps réel activée.",
       });
       
       return storyId;
@@ -83,7 +97,7 @@ export const useSupabaseStories = () => {
       });
       throw error;
     }
-  }, [user, createStory, toast, pendingMonitor]);
+  }, [user, createStory, toast, pendingMonitor, realtimeMonitor]);
 
   // Fonction pour forcer le rafraîchissement avec vérification de santé
   const forceRefresh = useCallback(async () => {
@@ -118,11 +132,18 @@ export const useSupabaseStories = () => {
     toggleFavorite: handleToggleFavorite,
     getFavoriteStories,
     isUpdatingFavorite,
-    // Exposer les fonctionnalités de surveillance
+    // Exposer les fonctionnalités de surveillance (fallback)
     pendingStoryId: pendingMonitor.pendingStoryId,
-    isMonitoring: pendingMonitor.isMonitoring,
+    isMonitoring: pendingMonitor.isMonitoring || realtimeMonitor.isMonitoring,
     lastCheck: pendingMonitor.lastCheck,
-    stopMonitoring: pendingMonitor.stopMonitoring
+    stopMonitoring: () => {
+      pendingMonitor.stopMonitoring();
+      realtimeMonitor.stopMonitoring();
+    },
+    // Nouvelles fonctionnalités de monitoring temps réel
+    startRealtimeMonitoring: realtimeMonitor.startMonitoring,
+    isRealtimeMonitoring: realtimeMonitor.isMonitoring,
+    lastDetectedStory: realtimeMonitor.lastDetectedStory
   };
 };
 

@@ -1,16 +1,15 @@
-import React, { useState } from "react";
-import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
-import { useN8nTitleGeneration } from "@/hooks/stories/useN8nTitleGeneration";
-import { useN8nStoryFromTitle } from "@/hooks/stories/useN8nStoryFromTitle";
-import { useStoryCreationMonitor } from "@/hooks/stories/useStoryCreationMonitor";
-import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
-import { useToast } from "@/hooks/use-toast";
-import TitleSelector from "./TitleSelector";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ArrowLeft, Sparkles } from "lucide-react";
-import type { Child } from "@/types/child";
-import type { GeneratedTitle } from "@/hooks/stories/useN8nTitleGeneration";
+
+import React, { useState, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, Sparkles, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { useN8nTitleGeneration } from '@/hooks/stories/useN8nTitleGeneration';
+import { useN8nStoryFromTitle } from '@/hooks/stories/useN8nStoryFromTitle';
+import { useRealtimeStoryMonitor } from '@/hooks/stories/useRealtimeStoryMonitor';
+import TitleSelector from './TitleSelector';
+import type { Child } from '@/types/child';
 
 interface TitleBasedStoryCreatorProps {
   children: Child[];
@@ -19,266 +18,308 @@ interface TitleBasedStoryCreatorProps {
 
 const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   children,
-  onStoryCreated,
+  onStoryCreated
 }) => {
-  const { user } = useSupabaseAuth();
-  const { toast } = useToast();
-  const { stories } = useSupabaseStories();
-  
-  // États du processus
   const [selectedChildrenIds, setSelectedChildrenIds] = useState<string[]>([]);
-  const [selectedObjective, setSelectedObjective] = useState<string>("");
-  const [selectedTitle, setSelectedTitle] = useState<GeneratedTitle | null>(null);
-  const [currentStep, setCurrentStep] = useState<"form" | "titles" | "creating">("form");
-
-  // Hooks pour la génération et création
-  const { generateTitles, generatedTitles, isGeneratingTitles } = useN8nTitleGeneration();
-  const { createStoryFromTitle, isCreatingStory } = useN8nStoryFromTitle();
+  const [selectedObjective, setSelectedObjective] = useState<string>('fun');
+  const [generatedTitles, setGeneratedTitles] = useState<string[]>([]);
+  const [selectedTitle, setSelectedTitle] = useState<string>('');
+  const [currentStep, setCurrentStep] = useState<'setup' | 'titles' | 'creating'>('setup');
   
-  // Hook de surveillance pour attendre la création effective
-  const { isMonitoring, startMonitoring } = useStoryCreationMonitor({
-    onStoryCreated: (storyId: string) => {
-      console.log('[TitleBasedStoryCreator] Histoire créée avec succès:', storyId);
-      onStoryCreated(storyId);
+  const { toast } = useToast();
+  const { generateTitles, isGeneratingTitles } = useN8nTitleGeneration();
+  const { createStoryFromTitle, isCreatingStory } = useN8nStoryFromTitle();
+
+  // Utiliser le monitoring en temps réel
+  const { isMonitoring, startMonitoring } = useRealtimeStoryMonitor({
+    onStoryCreated: (story) => {
+      console.log('[TitleBasedStoryCreator] Histoire détectée par Realtime:', story.id);
+      onStoryCreated(story.id);
     },
     onTimeout: () => {
-      console.warn('[TitleBasedStoryCreator] Timeout - redirection vers bibliothèque');
-      onStoryCreated("timeout"); // Signal pour rediriger vers la bibliothèque
-    }
+      console.log('[TitleBasedStoryCreator] Timeout du monitoring, redirection vers bibliothèque');
+      onStoryCreated('timeout');
+    },
+    timeoutMs: 120000 // 2 minutes
   });
 
-  // Objectifs possibles
   const objectives = [
-    { id: "sleep", label: "Aider à s'endormir", value: "sleep" },
-    { id: "focus", label: "Se concentrer", value: "focus" },
-    { id: "relax", label: "Se relaxer", value: "relax" },
-    { id: "fun", label: "S'amuser", value: "fun" },
+    { value: 'sleep', label: 'Endormissement', icon: '🌙', description: 'Histoire apaisante pour le coucher' },
+    { value: 'focus', label: 'Concentration', icon: '🧠', description: 'Histoire stimulante et éducative' },
+    { value: 'relax', label: 'Relaxation', icon: '🌸', description: 'Histoire douce pour se détendre' },
+    { value: 'fun', label: 'Amusement', icon: '🎉', description: 'Histoire joyeuse et divertissante' }
   ];
 
-  // Validation du formulaire
-  const validateForm = () => {
+  const handleChildToggle = useCallback((childId: string) => {
+    setSelectedChildrenIds(prev => 
+      prev.includes(childId) 
+        ? prev.filter(id => id !== childId)
+        : [...prev, childId]
+    );
+  }, []);
+
+  const handleGenerateTitles = useCallback(async () => {
     if (selectedChildrenIds.length === 0) {
       toast({
-        title: "Erreur",
+        title: "Sélection requise",
         description: "Veuillez sélectionner au moins un enfant",
         variant: "destructive",
       });
-      return false;
+      return;
     }
-    if (!selectedObjective) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner un objectif",
-        variant: "destructive",
-      });
-      return false;
-    }
-    return true;
-  };
-
-  // Fonctions de gestion des changements
-  const handleObjectiveChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedObjective(e.target.value);
-  };
-
-  const handleChildToggle = (childId: string) => {
-    setSelectedChildrenIds((prevIds) =>
-      prevIds.includes(childId)
-        ? prevIds.filter((id) => id !== childId)
-        : [...prevIds, childId]
-    );
-  };
-
-  const handleGenerateTitles = async () => {
-    if (!validateForm()) return;
 
     try {
-      const selectedChildren = children.filter(child => 
-        selectedChildrenIds.includes(child.id)
-      );
+      const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
+      const childrenNames = selectedChildren.map(child => child.name);
       
-      await generateTitles({
+      console.log('[TitleBasedStoryCreator] Génération de titres pour:', childrenNames);
+      
+      const titles = await generateTitles({
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
-        childrenNames: selectedChildren.map(child => child.name)
+        childrenNames
       });
       
-      setCurrentStep("titles");
+      setGeneratedTitles(titles);
+      setCurrentStep('titles');
+      
+      toast({
+        title: "Titres générés",
+        description: "Choisissez le titre qui vous inspire le plus",
+      });
     } catch (error: any) {
-      console.error("Erreur génération titres:", error);
+      console.error('[TitleBasedStoryCreator] Erreur génération titres:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de générer les titres. Veuillez réessayer.",
+        description: error.message || "Impossible de générer les titres",
         variant: "destructive",
       });
     }
-  };
+  }, [selectedChildrenIds, selectedObjective, children, generateTitles, toast]);
 
-  const handleTitleSelected = async (title: GeneratedTitle) => {
-    if (!validateForm()) return;
-
-    setSelectedTitle(title);
-    setCurrentStep("creating");
+  const handleCreateStory = useCallback(async () => {
+    if (!selectedTitle) {
+      toast({
+        title: "Titre requis",
+        description: "Veuillez sélectionner un titre",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      const selectedChildren = children.filter(child => 
-        selectedChildrenIds.includes(child.id)
-      );
-
-      console.log('[TitleBasedStoryCreator] Démarrage création avec titre:', title.title);
+      const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
+      const childrenNames = selectedChildren.map(child => child.name);
       
-      // Compter les histoires actuelles pour surveiller les nouvelles
-      const currentStoryCount = stories.length;
+      console.log('[TitleBasedStoryCreator] Création histoire avec titre:', selectedTitle);
       
-      // Lancer le processus de création via n8n
-      const processId = await createStoryFromTitle({
-        selectedTitle: title.title,
+      setCurrentStep('creating');
+      
+      // Démarrer le monitoring en temps réel AVANT de créer l'histoire
+      const cleanupMonitoring = startMonitoring();
+      
+      // Créer l'histoire via n8n
+      await createStoryFromTitle({
+        selectedTitle,
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
-        childrenNames: selectedChildren.map(child => child.name)
+        childrenNames
       });
-
-      console.log('[TitleBasedStoryCreator] Processus n8n lancé:', processId);
-      console.log('[TitleBasedStoryCreator] Démarrage surveillance avec', currentStoryCount, 'histoires');
       
-      // Démarrer la surveillance pour attendre que l'histoire apparaisse en base
-      startMonitoring(currentStoryCount);
+      toast({
+        title: "Création en cours",
+        description: "Votre histoire est en cours de génération. Surveillance en temps réel activée.",
+      });
       
     } catch (error: any) {
-      console.error("Erreur création histoire:", error);
-      setCurrentStep("titles"); // Retour à la sélection de titre
+      console.error('[TitleBasedStoryCreator] Erreur création histoire:', error);
+      setCurrentStep('titles');
+      
       toast({
         title: "Erreur",
         description: error.message || "Impossible de créer l'histoire",
         variant: "destructive",
       });
     }
-  };
+  }, [selectedTitle, selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, toast]);
 
-  // Rendu du formulaire de sélection
-  const renderForm = () => (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Paramètres de l'histoire</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Sélection des enfants */}
-        <div className="grid gap-2">
-          <h3 className="text-sm font-medium leading-none">
-            Pour qui écrivez-vous cette histoire ?
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {children.map((child) => (
-              <Button
-                key={child.id}
-                variant={
-                  selectedChildrenIds.includes(child.id) ? "secondary" : "outline"
-                }
-                onClick={() => handleChildToggle(child.id)}
-              >
-                {child.name}
-              </Button>
-            ))}
-          </div>
-        </div>
+  const handleBack = useCallback(() => {
+    if (currentStep === 'titles') {
+      setCurrentStep('setup');
+      setGeneratedTitles([]);
+      setSelectedTitle('');
+    } else if (currentStep === 'creating') {
+      setCurrentStep('titles');
+    }
+  }, [currentStep]);
 
-        {/* Sélection de l'objectif */}
-        <div className="grid gap-2">
-          <h3 className="text-sm font-medium leading-none">
-            Quel est l'objectif de cette histoire ?
-          </h3>
-          <select
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            value={selectedObjective}
-            onChange={handleObjectiveChange}
-          >
-            <option value="">Sélectionnez un objectif</option>
-            {objectives.map((objective) => (
-              <option key={objective.id} value={objective.value}>
-                {objective.label}
-              </option>
-            ))}
-          </select>
-        </div>
+  const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
+  const selectedObjectiveData = objectives.find(obj => obj.value === selectedObjective);
 
-        {/* Bouton de génération des titres */}
-        <Button onClick={handleGenerateTitles} disabled={isGeneratingTitles}>
-          {isGeneratingTitles ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Génération des titres...
-            </>
-          ) : (
-            "Générer des titres"
-          )}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-
-  // Rendu de la sélection des titres
-  const renderTitleSelection = () => (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <Button variant="ghost" onClick={() => setCurrentStep("form")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour
-        </Button>
-        <CardTitle>Sélectionnez un titre</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {isGeneratingTitles ? (
-          <div className="flex items-center justify-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p>Génération des titres en cours...</p>
-          </div>
-        ) : (
-          <TitleSelector
-            titles={generatedTitles}
-            onSelectTitle={(title) => {
-              const selectedTitle = generatedTitles.find(t => t.title === title);
-              if (selectedTitle) handleTitleSelected(selectedTitle);
-            }}
-            isCreatingStory={isCreatingStory || isMonitoring}
-          />
-        )}
-      </CardContent>
-    </Card>
-  );
-
-  // Rendu de l'état de création
-  if (currentStep === "creating") {
+  // Étape 1: Configuration
+  if (currentStep === 'setup') {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2">
-            <Sparkles className="h-6 w-6 animate-pulse text-primary" />
-            Création de votre histoire en cours
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Sélectionnez les enfants
+            </CardTitle>
+            <CardDescription>
+              Choisissez pour qui vous souhaitez créer cette histoire
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {children.map(child => (
+                <div
+                  key={child.id}
+                  onClick={() => handleChildToggle(child.id)}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedChildrenIds.includes(child.id)
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className="font-medium">{child.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {new Date().getFullYear() - new Date(child.birthDate).getFullYear()} ans
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Objectif de l'histoire</CardTitle>
+            <CardDescription>
+              Quel est le but de cette histoire ?
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {objectives.map(objective => (
+                <div
+                  key={objective.value}
+                  onClick={() => setSelectedObjective(objective.value)}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedObjective === objective.value
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-2xl">{objective.icon}</span>
+                    <span className="font-medium">{objective.label}</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {objective.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-between items-center">
+          <div className="flex flex-wrap gap-2">
+            {selectedChildren.map(child => (
+              <Badge key={child.id} variant="secondary">
+                {child.name}
+              </Badge>
+            ))}
+            {selectedObjectiveData && (
+              <Badge variant="outline">
+                {selectedObjectiveData.icon} {selectedObjectiveData.label}
+              </Badge>
+            )}
           </div>
           
-          <div className="space-y-2">
-            <p className="text-lg font-medium">
-              "{selectedTitle?.title}"
-            </p>
-            <p className="text-muted-foreground">
-              {isCreatingStory && "Envoi vers n8n en cours..."}
-              {isMonitoring && "Génération de l'histoire par l'IA..."}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Cette opération peut prendre quelques minutes. Votre histoire apparaîtra automatiquement dans votre bibliothèque une fois terminée.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          <Button
+            onClick={handleGenerateTitles}
+            disabled={selectedChildrenIds.length === 0 || isGeneratingTitles}
+            className="min-w-[200px]"
+          >
+            {isGeneratingTitles ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Génération...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Générer les titres
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
     );
   }
 
-  return currentStep === "titles" ? renderTitleSelection() : renderForm();
+  // Étape 2: Sélection du titre
+  if (currentStep === 'titles') {
+    return (
+      <div className="space-y-6">
+        <TitleSelector
+          titles={generatedTitles}
+          selectedTitle={selectedTitle}
+          onTitleSelect={setSelectedTitle}
+          onBack={handleBack}
+          onCreateStory={handleCreateStory}
+          isCreating={isCreatingStory}
+        />
+      </div>
+    );
+  }
+
+  // Étape 3: Création en cours avec monitoring temps réel
+  if (currentStep === 'creating') {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Création de votre histoire en cours</h3>
+                <p className="text-muted-foreground mb-4">
+                  Titre sélectionné : <span className="font-medium">"{selectedTitle}"</span>
+                </p>
+                <div className="space-y-2 text-sm">
+                  <p className="flex items-center justify-center gap-2">
+                    <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
+                    Monitoring en temps réel activé
+                  </p>
+                  <p className="text-muted-foreground">
+                    Vous serez automatiquement redirigé vers votre bibliothèque dès que l'histoire sera prête
+                  </p>
+                  {isMonitoring && (
+                    <p className="text-xs text-green-600">
+                      ✓ Surveillance active via Supabase Realtime
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                disabled={isCreatingStory}
+              >
+                Retour aux titres
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return null;
 };
 
 export default TitleBasedStoryCreator;
