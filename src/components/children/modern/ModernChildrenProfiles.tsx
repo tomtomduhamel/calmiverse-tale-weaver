@@ -3,7 +3,7 @@ import ProfilesHeaderV2 from "./ProfilesHeaderV2";
 import ChildrenSearchBar from "./ChildrenSearchBar";
 import ChildrenGridLayout from "./ChildrenGridLayout";
 import AddChildModal from "./AddChildModal";
-import type { Child } from "@/types/child";
+import type { Child, ChildGender } from "@/types/child";
 import { calculateAge } from "@/utils/age";
 
 interface ModernChildrenProfilesProps {
@@ -32,6 +32,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   // Form state
   const [childName, setChildName] = useState("");
   const [birthDate, setBirthDate] = useState(new Date());
+  const [gender, setGender] = useState<ChildGender>("boy");
   const [teddyName, setTeddyName] = useState("");
   const [teddyDescription, setTeddyDescription] = useState("");
   const [imaginaryWorld, setImaginaryWorld] = useState("");
@@ -86,6 +87,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   const resetForm = () => {
     setChildName("");
     setBirthDate(new Date());
+    setGender("boy");
     setTeddyName("");
     setTeddyDescription("");
     setImaginaryWorld("");
@@ -106,6 +108,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   const handleEdit = (child: Child) => {
     setChildName(child.name);
     setBirthDate(child.birthDate);
+    setGender(child.gender);
     setTeddyName(child.teddyName || "");
     setTeddyDescription(child.teddyDescription || "");
     setImaginaryWorld(child.imaginaryWorld || "");
@@ -121,6 +124,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
         await onUpdateChild(editingChild, {
           name: childData.name,
           birthDate: childData.birthDate,
+          gender: childData.gender,
           teddyName: childData.teddyName,
           teddyDescription: childData.teddyDescription,
           imaginaryWorld: childData.imaginaryWorld,
@@ -131,6 +135,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
           authorId: childData.authorId,
           name: childData.name,
           birthDate: childData.birthDate,
+          gender: childData.gender,
           teddyName: childData.teddyName,
           teddyDescription: childData.teddyDescription,
           imaginaryWorld: childData.imaginaryWorld,
@@ -196,6 +201,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
         onOpenChange={setShowModal}
         childName={childName}
         birthDate={birthDate}
+        gender={gender}
         teddyName={teddyName}
         teddyDescription={teddyDescription}
         imaginaryWorld={imaginaryWorld}
@@ -206,6 +212,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
         onCancel={handleCancel}
         onChildNameChange={setChildName}
         onBirthDateChange={setBirthDate}
+        onGenderChange={setGender}
         onTeddyNameChange={setTeddyName}
         onTeddyDescriptionChange={setTeddyDescription}
         onImaginaryWorldChange={setImaginaryWorld}

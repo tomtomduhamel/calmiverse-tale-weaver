@@ -8,10 +8,11 @@ interface StoryCreationData {
   objective: string;
   childrenIds: string[];
   childrenNames: string[];
+  childrenGenders: string[];
 }
 
 // Fonction pour générer le prompt d'histoire complet (même que dans useN8nStoryCreation)
-const generateStoryPrompt = (objective: string, childrenNames: string[], selectedTitle: string): string => {
+const generateStoryPrompt = (objective: string, childrenNames: string[], selectedTitle: string, childrenGenders: string[] = []): string => {
   const childrenText = childrenNames.length === 1 
     ? childrenNames[0] 
     : `${childrenNames.slice(0, -1).join(', ')} et ${childrenNames[childrenNames.length - 1]}`;
@@ -43,7 +44,7 @@ export const useN8nStoryFromTitle = () => {
       console.log('[N8nStoryFromTitle] Création d\'histoire à partir du titre:', data);
       
       // Générer le prompt complet pour l'histoire
-      const storyPrompt = generateStoryPrompt(data.objective, data.childrenNames, data.selectedTitle);
+      const storyPrompt = generateStoryPrompt(data.objective, data.childrenNames, data.selectedTitle, data.childrenGenders);
       console.log('[N8nStoryFromTitle] Prompt généré:', storyPrompt);
       
       // CORRECTION CRITIQUE: Utiliser le bon webhook pour la création d'histoire
@@ -55,6 +56,7 @@ export const useN8nStoryFromTitle = () => {
         objective: data.objective,
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
+        childrenGenders: data.childrenGenders,
         userId: user.id,
         userEmail: user.email,
         storyPrompt, // Prompt complet pour la génération d'histoire

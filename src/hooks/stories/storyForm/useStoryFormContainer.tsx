@@ -76,7 +76,7 @@ export const useStoryFormContainer = (
       await onCreateChild({
         name: childName,
         birthDate,
-        gender: 'unknown',
+        gender: 'boy',
         authorId: user?.id || '',
         interests: []
       });

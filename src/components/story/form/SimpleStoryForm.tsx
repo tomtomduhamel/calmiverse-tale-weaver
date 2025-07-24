@@ -71,7 +71,7 @@ const SimpleStoryForm: React.FC<SimpleStoryFormProps> = ({
         name: childName,
         birthDate,
         interests: [],
-        gender: 'unknown',
+        gender: 'boy',
         authorId: ''  // Sera rempli par le backend
       });
       

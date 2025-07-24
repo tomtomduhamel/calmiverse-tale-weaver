@@ -69,7 +69,7 @@ export type Database = {
           authorid: string
           birthdate: string
           createdat: string
-          gender: string | null
+          gender: string
           id: string
           imaginaryworld: string | null
           interests: string[] | null
@@ -82,7 +82,7 @@ export type Database = {
           authorid: string
           birthdate: string
           createdat?: string
-          gender?: string | null
+          gender?: string
           id?: string
           imaginaryworld?: string | null
           interests?: string[] | null
@@ -95,7 +95,7 @@ export type Database = {
           authorid?: string
           birthdate?: string
           createdat?: string
-          gender?: string | null
+          gender?: string
           id?: string
           imaginaryworld?: string | null
           interests?: string[] | null

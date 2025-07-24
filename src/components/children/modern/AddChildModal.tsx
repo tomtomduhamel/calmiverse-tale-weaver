@@ -7,13 +7,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ChildForm from "../ChildForm";
-import type { Child } from "@/types/child";
+import type { Child, ChildGender } from "@/types/child";
 
 interface AddChildModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   childName: string;
   birthDate: Date;
+  gender: ChildGender;
   teddyName: string;
   teddyDescription: string;
   imaginaryWorld: string;
@@ -24,6 +25,7 @@ interface AddChildModalProps {
   onCancel: () => void;
   onChildNameChange: (value: string) => void;
   onBirthDateChange: (value: Date) => void;
+  onGenderChange: (value: ChildGender) => void;
   onTeddyNameChange: (value: string) => void;
   onTeddyDescriptionChange: (value: string) => void;
   onImaginaryWorldChange: (value: string) => void;
@@ -37,6 +39,7 @@ const AddChildModal: React.FC<AddChildModalProps> = ({
   onOpenChange,
   childName,
   birthDate,
+  gender,
   teddyName,
   teddyDescription,
   imaginaryWorld,
@@ -47,6 +50,7 @@ const AddChildModal: React.FC<AddChildModalProps> = ({
   onCancel,
   onChildNameChange,
   onBirthDateChange,
+  onGenderChange,
   onTeddyNameChange,
   onTeddyDescriptionChange,
   onImaginaryWorldChange,
@@ -75,26 +79,28 @@ const AddChildModal: React.FC<AddChildModalProps> = ({
         </DialogHeader>
 
         <div className="mt-6">
-          <ChildForm
-            childName={childName}
-            birthDate={birthDate}
-            teddyName={teddyName}
-            teddyDescription={teddyDescription}
-            imaginaryWorld={imaginaryWorld}
-            isEditing={!!editingChild}
-            childId={childId}
-            teddyPhotos={teddyPhotos}
-            onSubmit={onSubmit}
-            onCancel={handleCancel}
-            onChildNameChange={onChildNameChange}
-            onBirthDateChange={onBirthDateChange}
-            onTeddyNameChange={onTeddyNameChange}
-            onTeddyDescriptionChange={onTeddyDescriptionChange}
-            onImaginaryWorldChange={onImaginaryWorldChange}
-            onPhotoUploaded={onPhotoUploaded}
-            onPhotoDeleted={onPhotoDeleted}
-            isSubmitting={isSubmitting}
-          />
+        <ChildForm
+          childName={childName}
+          birthDate={birthDate}
+          gender={gender}
+          teddyName={teddyName}
+          teddyDescription={teddyDescription}
+          imaginaryWorld={imaginaryWorld}
+          isEditing={!!editingChild}
+          childId={childId}
+          teddyPhotos={teddyPhotos}
+          onSubmit={onSubmit}
+          onCancel={handleCancel}
+          onChildNameChange={onChildNameChange}
+          onBirthDateChange={onBirthDateChange}
+          onGenderChange={onGenderChange}
+          onTeddyNameChange={onTeddyNameChange}
+          onTeddyDescriptionChange={onTeddyDescriptionChange}
+          onImaginaryWorldChange={onImaginaryWorldChange}
+          onPhotoUploaded={onPhotoUploaded}
+          onPhotoDeleted={onPhotoDeleted}
+          isSubmitting={isSubmitting}
+        />
         </div>
       </DialogContent>
     </Dialog>

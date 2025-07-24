@@ -34,7 +34,7 @@ export const useChildFormLogic = (onCreateChild: (child: Omit<Child, "id">) => P
         name: childName,
         birthDate,
         interests: [],
-        gender: 'unknown',
+        gender: 'boy',
         authorId: '', // Will be filled by backend
         teddyName: '', // Ajout des champs obligatoires pour la cohérence
         teddyDescription: '',

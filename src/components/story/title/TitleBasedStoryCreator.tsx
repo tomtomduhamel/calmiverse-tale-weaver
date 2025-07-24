@@ -78,7 +78,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       const titles = await generateTitles({
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
-        childrenNames
+        childrenNames,
+        childrenGenders: selectedChildren.map(child => child.gender)
       });
       
       setGeneratedTitles(titles);
@@ -110,8 +111,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     }
 
     try {
-      const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
-      const childrenNames = selectedChildren.map(child => child.name);
+      const selectedChildrenForStory = children.filter(child => selectedChildrenIds.includes(child.id));
+      const childrenNames = selectedChildrenForStory.map(child => child.name);
       
       console.log('[TitleBasedStoryCreator] Création histoire avec titre:', titleToUse);
       
@@ -126,7 +127,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         selectedTitle: titleToUse,
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
-        childrenNames
+        childrenNames,
+        childrenGenders: selectedChildrenForStory.map(child => child.gender)
       });
       
       // Toast unique pour la création

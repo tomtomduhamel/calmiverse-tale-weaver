@@ -122,6 +122,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
       const submissionData = {
         name: childData.name,
         birthDate: childData.birthDate,
+        gender: childData.gender,
         teddyName: childData.teddyName || "",
         teddyDescription: childData.teddyDescription || "",
         imaginaryWorld: childData.imaginaryWorld || "",

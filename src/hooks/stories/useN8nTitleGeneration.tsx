@@ -6,6 +6,7 @@ export interface TitleGenerationData {
   objective: string;
   childrenIds: string[];
   childrenNames: string[];
+  childrenGenders: string[];
 }
 
 export interface GeneratedTitle {
@@ -132,6 +133,7 @@ export const useN8nTitleGeneration = () => {
         objective: data.objective,
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
+        childrenGenders: data.childrenGenders,
         requestType: 'title_generation'
       };
 

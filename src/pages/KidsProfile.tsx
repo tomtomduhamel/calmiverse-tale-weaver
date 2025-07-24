@@ -132,12 +132,15 @@ const KidsProfile = () => {
                 <h3 className="font-medium text-muted-foreground">Âge</h3>
                 <p>
                   {calculateAge(new Date(child.birthDate))} ans
-                  (né{child.gender === 'female' ? 'e' : ''} le {format(new Date(child.birthDate), 'dd MMMM yyyy', { locale: fr })})
+                  (né{child.gender === 'girl' ? 'e' : ''} le {format(new Date(child.birthDate), 'dd MMMM yyyy', { locale: fr })})
                 </p>
               </div>
               <div>
                 <h3 className="font-medium text-muted-foreground">Genre</h3>
-                <p>{child.gender === 'male' ? 'Garçon' : 'Fille'}</p>
+                <p>
+                  {child.gender === 'boy' ? 'Garçon' : 
+                   child.gender === 'girl' ? 'Fille' : 'Animal de compagnie'}
+                </p>
               </div>
               <div>
                 <h3 className="font-medium text-muted-foreground">Doudou préféré</h3>

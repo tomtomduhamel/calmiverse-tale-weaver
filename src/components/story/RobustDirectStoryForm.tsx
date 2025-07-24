@@ -228,7 +228,7 @@ const RobustDirectStoryForm: React.FC<RobustDirectStoryFormProps> = ({
         teddyDescription: "",
         imaginaryWorld: "",
         interests: [],
-        gender: "unknown" as const
+        gender: "boy" as const
       };
       
       const newChildId = await onCreateChild(childData);

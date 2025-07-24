@@ -4,8 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Edit, Trash2, BookOpen, Calendar, Heart, Sparkles } from "lucide-react";
-import type { Child } from "@/types/child";
+import { Edit, Trash2, BookOpen, Calendar, Heart, Sparkles, User, Cat } from "lucide-react";
+import type { Child, ChildGender } from "@/types/child";
 import { calculateAge, formatAge } from "@/utils/age";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,22 @@ const ModernChildCard: React.FC<ModernChildCardProps> = ({
   const teddyPhoto = child.teddyPhotos?.[0]?.url;
   const initials = child.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
+  // Helper function to get gender icon and label
+  const getGenderDisplay = (gender: ChildGender) => {
+    switch (gender) {
+      case 'boy':
+        return { icon: User, label: 'Garçon', color: 'text-blue-500' };
+      case 'girl':
+        return { icon: Heart, label: 'Fille', color: 'text-pink-500' };
+      case 'pet':
+        return { icon: Cat, label: 'Animal', color: 'text-orange-500' };
+      default:
+        return { icon: User, label: 'Enfant', color: 'text-gray-500' };
+    }
+  };
+
+  const genderDisplay = getGenderDisplay(child.gender);
+
   return (
     <Card className="group relative overflow-hidden bg-gradient-to-br from-background/50 to-background/80 backdrop-blur-sm border-border/50 hover:border-primary/20 hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
       {/* Background Pattern */}
@@ -56,6 +72,10 @@ const ModernChildCard: React.FC<ModernChildCardProps> = ({
                 <Badge variant="secondary" className="text-xs">
                   <Calendar className="w-3 h-3 mr-1" />
                   {formatAge(age)}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  <genderDisplay.icon className={cn("w-3 h-3 mr-1", genderDisplay.color)} />
+                  {genderDisplay.label}
                 </Badge>
                 {storiesCount > 0 && (
                   <Badge variant="outline" className="text-xs">
@@ -108,7 +128,8 @@ const ModernChildCard: React.FC<ModernChildCardProps> = ({
 
         {/* Child Details */}
         <div className="space-y-3">
-          {child.teddyName && (
+          {/* Afficher les détails teddy uniquement si ce n'est pas un animal */}
+          {child.gender !== 'pet' && child.teddyName && (
             <div className="flex items-center space-x-2 text-sm">
               <Heart className="w-4 h-4 text-pink-500 flex-shrink-0" />
               <span className="text-muted-foreground">Doudou:</span>
@@ -116,7 +137,7 @@ const ModernChildCard: React.FC<ModernChildCardProps> = ({
             </div>
           )}
 
-          {child.imaginaryWorld && (
+          {child.gender !== 'pet' && child.imaginaryWorld && (
             <div className="flex items-center space-x-2 text-sm">
               <Sparkles className="w-4 h-4 text-purple-500 flex-shrink-0" />
               <span className="text-muted-foreground">Monde:</span>
@@ -124,7 +145,7 @@ const ModernChildCard: React.FC<ModernChildCardProps> = ({
             </div>
           )}
 
-          {child.teddyDescription && (
+          {child.gender !== 'pet' && child.teddyDescription && (
             <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
               {child.teddyDescription}
             </p>

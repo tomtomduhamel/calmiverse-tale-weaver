@@ -1,11 +1,13 @@
 
+export type ChildGender = 'boy' | 'girl' | 'pet';
+
 export interface Child {
   id: string;
   authorId: string;
   name: string;
   birthDate: Date;
   interests?: string[];
-  gender?: string;
+  gender: ChildGender; // Maintenant obligatoire avec des valeurs spécifiques
   teddyName?: string;
   teddyDescription?: string;
   teddyPhotos?: {

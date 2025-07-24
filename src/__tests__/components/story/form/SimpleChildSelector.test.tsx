@@ -10,12 +10,14 @@ const mockChildren: Child[] = [
     name: 'Emma',
     birthDate: new Date('2018-01-01'),
     authorId: 'author-1',
+    gender: 'girl',
   },
   {
     id: 'child-2',
     name: 'Noah',
     birthDate: new Date('2019-01-01'),
     authorId: 'author-1',
+    gender: 'boy',
   }
 ];
 
