@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,33 +31,33 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-3'}`}>
-        <Card className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-primary" />
+      {/* Stats Cards - Centered */}
+      <div className="flex justify-center">
+        <div className="grid grid-cols-2 gap-4 max-w-md">
+          <Card className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-primary">{childrenCount}</p>
+                <p className="text-sm text-muted-foreground">Enfant{childrenCount > 1 ? 's' : ''}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-primary">{childrenCount}</p>
-              <p className="text-sm text-muted-foreground">Enfant{childrenCount > 1 ? 's' : ''}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card className="p-4 bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-accent" />
+          <Card className="p-4 bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-accent">{totalStories}</p>
+                <p className="text-sm text-muted-foreground">Histoire{totalStories > 1 ? 's' : ''}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-accent">{totalStories}</p>
-              <p className="text-sm text-muted-foreground">Histoire{totalStories > 1 ? 's' : ''}</p>
-            </div>
-          </div>
-        </Card>
-
-        {!isMobile}
+          </Card>
+        </div>
       </div>
 
       {/* Action Buttons */}
