@@ -39,7 +39,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
 }) => {
   // États locaux pour la pagination et le filtrage
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites'>('all');
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites' | 'recent'>('all');
   const [isZenMode, setIsZenMode] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const storiesPerPage = 6;
@@ -69,6 +69,9 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
             break;
           case 'unread':
             matchesStatus = story.status !== 'read' && story.status !== 'error';
+            break;
+          case 'recent':
+            matchesStatus = isRecentStory(story);
             break;
           default:
             matchesStatus = story.status === statusFilter;

@@ -6,8 +6,8 @@ import StatusFilter from "./StatusFilter";
 interface StoryFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites';
-  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites') => void;
+  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites' | 'recent';
+  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites' | 'recent') => void;
 }
 
 const StoryFilters: React.FC<StoryFiltersProps> = ({
