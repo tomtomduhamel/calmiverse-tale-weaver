@@ -13,13 +13,10 @@ const StatusFilter: React.FC<StatusFilterProps> = ({ statusFilter, onStatusChang
       <SelectTrigger className="w-full sm:w-48">
         <SelectValue placeholder="Filtrer par statut" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="bg-background border border-border shadow-md">
         <SelectItem value="all">Toutes les histoires</SelectItem>
         <SelectItem value="favorites">⭐ Favoris</SelectItem>
-        <SelectItem value="pending">⏳ En génération</SelectItem>
-        <SelectItem value="ready">📖 Prêtes</SelectItem>
         <SelectItem value="read">✅ Lues</SelectItem>
-        <SelectItem value="error">❌ En erreur</SelectItem>
       </SelectContent>
     </Select>
   );
