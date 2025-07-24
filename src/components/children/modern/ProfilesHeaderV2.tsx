@@ -3,14 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, BookOpen, Users, Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 interface ProfilesHeaderV2Props {
   onShowForm: () => void;
   onCreateStory?: () => void;
   childrenCount: number;
   totalStories?: number;
 }
-
 const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
   onShowForm,
   onCreateStory,
@@ -18,9 +16,7 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
   totalStories = 0
 }) => {
   const isMobile = useIsMobile();
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Hero Section */}
       <div className="text-center space-y-4">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full mb-4">
@@ -60,46 +56,21 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
           </div>
         </Card>
 
-        {!isMobile && (
-          <Card className="p-4 bg-gradient-to-br from-purple-500/5 to-purple-500/10 border-purple-500/20">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-purple-500">∞</p>
-                <p className="text-sm text-muted-foreground">Possibilités</p>
-              </div>
-            </div>
-          </Card>
-        )}
+        {!isMobile}
       </div>
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Button
-          onClick={onShowForm}
-          size={isMobile ? "default" : "lg"}
-          className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg"
-        >
+        <Button onClick={onShowForm} size={isMobile ? "default" : "lg"} className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg">
           <Plus className="w-5 h-5 mr-2" />
           Ajouter un enfant
         </Button>
 
-        {onCreateStory && childrenCount > 0 && (
-          <Button
-            onClick={onCreateStory}
-            variant="outline"
-            size={isMobile ? "default" : "lg"}
-            className="border-accent text-accent hover:bg-accent/10"
-          >
+        {onCreateStory && childrenCount > 0 && <Button onClick={onCreateStory} variant="outline" size={isMobile ? "default" : "lg"} className="border-accent text-accent hover:bg-accent/10">
             <BookOpen className="w-5 h-5 mr-2" />
             Créer une histoire
-          </Button>
-        )}
+          </Button>}
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default ProfilesHeaderV2;
