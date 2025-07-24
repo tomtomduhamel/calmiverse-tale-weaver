@@ -35,31 +35,9 @@ export const AccountManagementSection = () => {
       
       if (!user) return;
       
-      // 1. Supprimer les données de l'utilisateur
-      const { error: deleteChildrenError } = await supabase
-        .from('children')
-        .delete()
-        .eq('authorid', user.id);
-        
-      if (deleteChildrenError) throw deleteChildrenError;
-      
-      const { error: deleteStoriesError } = await supabase
-        .from('stories')
-        .delete()
-        .eq('authorid', user.id);
-        
-      if (deleteStoriesError) throw deleteStoriesError;
-      
-      const { error: deleteUserDataError } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', user.id);
-        
-      if (deleteUserDataError) throw deleteUserDataError;
-      
-      // 2. Supprimer le compte utilisateur via RPC
-      // Cette fonction RPC ne prend pas de paramètres, elle utilisera auth.uid() en interne
-      // Utilisation correcte de l'API supabase.rpc pour les fonctions sans paramètres
+      // Supprimer le compte utilisateur via la fonction Edge sécurisée
+      // Cette fonction gère automatiquement la suppression de toutes les données associées
+      // incluant children, stories, audio_files, story_access_logs et users
       const { error: deleteUserError } = await supabase.functions.invoke('delete-user');
       
       if (deleteUserError) throw deleteUserError;
