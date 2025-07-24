@@ -3,8 +3,8 @@ import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StatusFilterProps {
-  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites';
-  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites') => void;
+  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites';
+  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites') => void;
 }
 
 const StatusFilter: React.FC<StatusFilterProps> = ({ statusFilter, onStatusChange }) => {
@@ -16,6 +16,7 @@ const StatusFilter: React.FC<StatusFilterProps> = ({ statusFilter, onStatusChang
       <SelectContent className="bg-background border border-border shadow-md">
         <SelectItem value="all">Toutes les histoires</SelectItem>
         <SelectItem value="favorites">⭐ Favoris</SelectItem>
+        <SelectItem value="unread">📖 Non lues</SelectItem>
         <SelectItem value="read">✅ Lues</SelectItem>
       </SelectContent>
     </Select>
