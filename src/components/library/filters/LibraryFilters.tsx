@@ -6,8 +6,8 @@ import StatusFilter from "../StatusFilter";
 interface LibraryFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites';
-  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'error' | 'favorites') => void;
+  statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites';
+  onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites') => void;
 }
 
 const LibraryFilters: React.FC<LibraryFiltersProps> = ({
