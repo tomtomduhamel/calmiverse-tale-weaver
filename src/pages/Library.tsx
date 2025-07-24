@@ -83,10 +83,7 @@ const Library: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         {/* En-tête avec bouton retour */}
         <div className="mb-8">
-          <Button variant="ghost" onClick={handleBack} className="mb-4 text-muted-foreground hover:text-foreground">
-            
-            Retour à l'accueil
-          </Button>
+          
           
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
