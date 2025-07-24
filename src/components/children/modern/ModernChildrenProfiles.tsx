@@ -160,12 +160,12 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   return (
     <div className="space-y-8">
       {/* Header */}
-      <ProfilesHeaderV2
-        onShowForm={handleShowForm}
-        onCreateStory={onCreateStory}
-        childrenCount={children.length}
-        totalStories={totalStories}
-      />
+        <ProfilesHeaderV2
+          onShowForm={handleShowForm}
+          onCreateStory={onCreateStory}
+          childrenCount={children.length}
+          totalStories={totalStories || 0}
+        />
 
       {/* Search and Filters - Only show if there are children */}
       {children.length > 0 && (
