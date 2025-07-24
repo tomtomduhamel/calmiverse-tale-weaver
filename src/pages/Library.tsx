@@ -14,7 +14,7 @@ import LoadingStory from "@/components/LoadingStory";
 const Library: React.FC = () => {
   const { user, loading: authLoading } = useSupabaseAuth();
   const { children, loading: childrenLoading } = useSupabaseChildren();
-  const { stories, isLoading: storiesLoading, fetchStories } = useSupabaseStories();
+  const { stories, isLoading: storiesLoading, fetchStories, toggleFavorite, isUpdatingFavorite } = useSupabaseStories();
   const { deleteStory } = useStoryDeletion();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -61,6 +61,11 @@ const Library: React.FC = () => {
   const handleRetryStory = async (storyId: string) => {
     console.log("[Library] DEBUG: Relance de l'histoire:", storyId);
     return true;
+  };
+
+  const handleToggleFavorite = async (storyId: string, currentFavoriteStatus: boolean) => {
+    console.log("[Library] DEBUG: Toggle favori pour histoire:", storyId);
+    await toggleFavorite(storyId, currentFavoriteStatus);
   };
 
   const handleBack = () => {
@@ -111,8 +116,10 @@ const Library: React.FC = () => {
             onSelectStory={handleSelectStory}
             onDeleteStory={handleDeleteStory}
             onRetryStory={handleRetryStory}
+            onToggleFavorite={handleToggleFavorite}
             onForceRefresh={fetchStories}
             onCreateStory={handleCreateStory}
+            isUpdatingFavorite={isUpdatingFavorite}
             isDeletingId={isDeletingId}
           />
         </div>
