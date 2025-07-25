@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import type { Child } from '@/types/child';
+import { generateAdvancedStoryPrompt } from '@/utils/storyPromptUtils';
 
 interface StoryCreationData {
   selectedTitle: string;
@@ -9,24 +11,10 @@ interface StoryCreationData {
   childrenIds: string[];
   childrenNames: string[];
   childrenGenders: string[];
+  children?: Child[]; // Nouvellement ajouté pour avoir accès aux données complètes
 }
 
-// Fonction pour générer le prompt d'histoire complet (même que dans useN8nStoryCreation)
-const generateStoryPrompt = (objective: string, childrenNames: string[], selectedTitle: string, childrenGenders: string[] = []): string => {
-  const childrenText = childrenNames.length === 1 
-    ? childrenNames[0] 
-    : `${childrenNames.slice(0, -1).join(', ')} et ${childrenNames[childrenNames.length - 1]}`;
-
-  const objectivePrompts = {
-    sleep: `Créer une histoire douce et apaisante pour aider ${childrenText} à s'endormir. L'histoire doit être calme, réconfortante et se terminer de manière paisible. Utilisez un langage simple et des images relaxantes. L'histoire doit utiliser les techniques d'hypnose ericksonienne pour permettre un endormissement apaisé et régénérateur.`,
-    focus: `Créer une histoire engageante qui aide ${childrenText} à se concentrer. L'histoire doit captiver l'attention tout en étant éducative et stimulante intellectuellement.`,
-    relax: `Créer une histoire relaxante pour aider ${childrenText} à se détendre. L'histoire doit être apaisante, avec un rythme lent et des éléments qui favorisent la relaxation.`,
-    fun: `Créer une histoire amusante et divertissante pour ${childrenText}. L'histoire doit être joyeuse, pleine d'aventures et de moments ludiques qui feront sourire.`
-  };
-
-  const basePrompt = objectivePrompts[objective as keyof typeof objectivePrompts] || objectivePrompts.fun;
-  return `${basePrompt} Le titre de l'histoire doit être : "${selectedTitle}". Assure-toi que l'histoire correspond bien à ce titre et développe le thème de manière créative et engageante.`;
-};
+// Ancienne fonction remplacée par generateAdvancedStoryPrompt dans storyPromptUtils.ts
 
 export const useN8nStoryFromTitle = () => {
   const [isCreatingStory, setIsCreatingStory] = useState(false);
@@ -43,9 +31,18 @@ export const useN8nStoryFromTitle = () => {
     try {
       console.log('[N8nStoryFromTitle] Création d\'histoire à partir du titre:', data);
       
-      // Générer le prompt complet pour l'histoire
-      const storyPrompt = generateStoryPrompt(data.objective, data.childrenNames, data.selectedTitle, data.childrenGenders);
-      console.log('[N8nStoryFromTitle] Prompt généré:', storyPrompt);
+      // Utiliser les données complètes des enfants si disponibles, sinon créer des objets basiques
+      const childrenForPrompt = data.children || data.childrenNames.map((name, index) => ({
+        id: data.childrenIds[index] || `temp-${index}`,
+        name,
+        gender: data.childrenGenders[index] || 'boy',
+        birthDate: new Date(Date.now() - (5 * 365.25 * 24 * 60 * 60 * 1000)), // Default à 5 ans
+        authorId: user.id
+      })) as Child[];
+      
+      // Générer le prompt avancé avec titre et contexte multi-personnages
+      const storyPrompt = generateAdvancedStoryPrompt(data.objective, childrenForPrompt, data.selectedTitle);
+      console.log('[N8nStoryFromTitle] Prompt avancé généré:', storyPrompt.substring(0, 200) + '...');
       
       // CORRECTION CRITIQUE: Utiliser le bon webhook pour la création d'histoire
       const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
@@ -57,9 +54,16 @@ export const useN8nStoryFromTitle = () => {
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         childrenGenders: data.childrenGenders,
+        childrenData: childrenForPrompt.map(child => ({
+          id: child.id,
+          name: child.name,
+          gender: child.gender,
+          birthDate: child.birthDate.toISOString(),
+          age: Math.floor((Date.now() - child.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+        })),
         userId: user.id,
         userEmail: user.email,
-        storyPrompt, // Prompt complet pour la génération d'histoire
+        storyPrompt, // Prompt avancé avec contexte multi-personnages et titre
         requestType: 'story_creation',
         timestamp: new Date().toISOString(),
         requestId: `story-from-title-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`

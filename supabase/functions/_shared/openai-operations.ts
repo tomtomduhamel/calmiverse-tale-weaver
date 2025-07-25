@@ -1,11 +1,39 @@
 
-// Génération de l'histoire avec OpenAI en utilisant fetch directement
-export const generateStoryText = async (apiKey: string, objective: string, childrenNames: string[], isRetry = false) => {
-  console.log(`Génération du texte de l'histoire avec l'objectif: ${objective} pour: ${childrenNames.join(', ')}`);
+// Interface pour les données d'enfants dans les Edge Functions
+interface ChildData {
+  id: string;
+  name: string;
+  gender: 'boy' | 'girl' | 'pet';
+  birthDate: string;
+  age: number;
+}
+
+// Génération de l'histoire avec OpenAI en utilisant les données complètes des enfants
+export const generateStoryText = async (
+  apiKey: string, 
+  objective: string, 
+  childrenData: ChildData[] = [], 
+  storyPrompt?: string,
+  isRetry = false
+) => {
+  console.log(`Génération du texte de l'histoire avec l'objectif: ${objective} pour:`, childrenData.map(c => `${c.name} (${c.gender}, ${c.age} ans)`));
   
   try {
     const retryText = isRetry ? "Ceci est une nouvelle tentative, alors essaie une approche différente." : "";
     
+    // Si un prompt personnalisé est fourni (venant de n8n), l'utiliser directement
+    let userPrompt = "";
+    if (storyPrompt) {
+      userPrompt = `${storyPrompt}\n\n${retryText}`;
+    } else {
+      // Sinon, générer un prompt basique avec les noms seulement (fallback)
+      const childrenNames = childrenData.map(c => c.name);
+      userPrompt = `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
+      L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
+      Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.
+      ${retryText}`;
+    }
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -24,23 +52,23 @@ FORMAT DE L'HISTOIRE :
 - Structure narrative fluide et continue, sans découpage visible
 - Pas de titre explicite
 
-RÈGLES FONDAMENTALES :
-- Adapte le langage à l'âge de l'enfant
-- Crée des personnages mémorables et appropriés
-- Utilise des dialogues engageants
-- Ajoute des répétitions pour les jeunes enfants
-- Évite tout contenu effrayant ou angoissant
-- Termine toujours sur une note positive`
+RÈGLES FONDAMENTALES POUR PERSONNAGES MULTIPLES :
+- Adapte le langage à l'âge du plus jeune enfant présent
+- Crée des personnages mémorables et appropriés à chaque genre et âge
+- Utilise des dialogues engageants adaptés aux capacités linguistiques
+- Ajoute des répétitions et des onomatopées pour les très jeunes enfants
+- Intègre harmonieusement les animaux de compagnie comme personnages à part entière
+- Évite absolument tout contenu effrayant ou angoissant
+- Termine toujours sur une note positive et rassurante
+- Respecte les différences de genre sans tomber dans les stéréotypes
+- Favorise la coopération et l'amitié entre tous les personnages`
           },
           {
             role: 'user',
-            content: `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
-            L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
-            Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.
-            ${retryText}`
+            content: userPrompt
           }
         ],
-        temperature: isRetry ? 0.8 : 0.7, // Légèrement plus de créativité pour les relances
+        temperature: isRetry ? 0.8 : 0.7,
         max_tokens: 3500,
       }),
     });
@@ -120,7 +148,7 @@ export const generateSummary = async (apiKey: string, storyText: string) => {
 };
 
 // Génération de titre avec OpenAI
-export const generateTitle = async (apiKey: string, storyText: string, childrenNames: string[]) => {
+export const generateTitle = async (apiKey: string, storyText: string, childrenData: ChildData[] = []) => {
   try {
     console.log('Génération du titre de l\'histoire...');
     
@@ -154,6 +182,7 @@ export const generateTitle = async (apiKey: string, storyText: string, childrenN
     }
 
     const data = await response.json();
+    const childrenNames = childrenData.map(c => c.name);
     const title = data.choices[0].message?.content?.replace(/["']/g, '') || `Histoire pour ${childrenNames.join(' et ')}`;
     
     console.log('Titre généré avec succès:', title);
@@ -161,6 +190,7 @@ export const generateTitle = async (apiKey: string, storyText: string, childrenN
   } catch (error) {
     console.error('Erreur lors de la génération du titre:', error);
     // En cas d'erreur de titre, on retourne un titre par défaut plutôt que d'échouer tout le processus
+    const childrenNames = childrenData.map(c => c.name);
     return `Histoire pour ${childrenNames.join(' et ')}`;
   }
 };

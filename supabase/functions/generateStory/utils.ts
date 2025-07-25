@@ -106,9 +106,16 @@ export function returnExistingStory(storyDetails: any) {
 }
 
 /**
- * Generate story content
+ * Generate story content with advanced prompting support
  */
-export async function generateStoryContent(storyId: string, objective?: string, childrenNames?: string[]) {
+export async function generateStoryContent(
+  storyId: string, 
+  objective?: string, 
+  childrenNames?: string[], 
+  childrenGenders?: string[], 
+  childrenData?: any[], 
+  storyPrompt?: string
+) {
   // Initialize Supabase client
   const supabase = initializeSupabase();
   
@@ -125,6 +132,8 @@ export async function generateStoryContent(storyId: string, objective?: string, 
   childrenNames = preparedData.childrenNames;
   
   console.log(`Génération d'histoire pour: ID=${storyId}, objectif=${objective}, enfants=${childrenNames?.join(', ')}`);
+  console.log('Données avancées enfants:', childrenData ? `${childrenData.length} enfants avec données complètes` : 'Données de base uniquement');
+  console.log('Prompt personnalisé:', storyPrompt ? `${storyPrompt.substring(0, 100)}...` : 'Prompt par défaut');
   
   // Update story status to "pending" before starting
   await updateStoryInDb(supabase, storyId, {
@@ -140,19 +149,24 @@ export async function generateStoryContent(storyId: string, objective?: string, 
   const openAIApiKey = initializeOpenAI();
   
   try {
-    console.log("Début de la génération du texte de l'histoire...");
+    console.log("Début de la génération du texte de l'histoire avec contexte avancé...");
     
-    // Generate the main story text
-    const storyText = await generateStoryText(openAIApiKey, objective as string, childrenNames as string[]);
+    // Generate the main story text with advanced context
+    const storyText = await generateStoryText(
+      openAIApiKey, 
+      objective as string, 
+      childrenData || [], 
+      storyPrompt
+    );
     console.log(`Texte généré avec succès (${storyText.length} caractères)`);
     
     // Generate the summary
     console.log("Génération du résumé...");
     const summary = await generateSummary(openAIApiKey, storyText);
     
-    // Generate a title
+    // Generate a title with children data
     console.log("Génération du titre...");
-    const title = await generateTitle(openAIApiKey, storyText, childrenNames as string[]);
+    const title = await generateTitle(openAIApiKey, storyText, childrenData || []);
     
     // Create a preview from the beginning of the story
     const preview = storyText.substring(0, 200) + "...";

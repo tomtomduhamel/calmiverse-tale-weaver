@@ -39,7 +39,7 @@ serve(async (req) => {
     const requestBody = await parseRequestBody(req);
     console.log(`📋 [generateStory-${requestId}] Corps reçu:`, JSON.stringify(requestBody, null, 2));
     
-    const { storyId, objective, childrenNames, childrenGenders } = requestBody;
+    const { storyId, objective, childrenNames, childrenGenders, childrenData, storyPrompt } = requestBody;
     
     if (!storyId) {
       console.error(`❌ [generateStory-${requestId}] storyId manquant`);
@@ -50,9 +50,11 @@ serve(async (req) => {
     console.log(`🎯 [generateStory-${requestId}] Objectif: ${objective}`);
     console.log(`🎯 [generateStory-${requestId}] Enfants: ${childrenNames?.join(', ')}`);
     console.log(`🎯 [generateStory-${requestId}] Genres: ${childrenGenders?.join(', ')}`);
+    console.log(`🎯 [generateStory-${requestId}] Données complètes enfants:`, childrenData ? 'Oui' : 'Non');
+    console.log(`🎯 [generateStory-${requestId}] Prompt personnalisé:`, storyPrompt ? 'Oui' : 'Non');
     
-    // Traitement de la génération
-    const result = await generateStoryContent(storyId, objective, childrenNames, childrenGenders);
+    // Traitement de la génération avec données avancées
+    const result = await generateStoryContent(storyId, objective, childrenNames, childrenGenders, childrenData, storyPrompt);
     
     console.log(`✅ [generateStory-${requestId}] Génération terminée avec succès`);
     return result;

@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import type { Child } from '@/types/child';
+import { generateAdvancedStoryPrompt } from '@/utils/storyPromptUtils';
 
 interface N8nStoryRequest {
   childrenIds: string[];
@@ -11,37 +12,6 @@ interface N8nStoryRequest {
 
 // Webhook n8n de production
 const N8N_WEBHOOK = "https://n8n.srv856374.hstgr.cloud/webhook/4cd35a66-3113-40a9-9e89-8f79ce59b44f";
-
-// Fonction pour générer le prompt d'histoire complet
-const generateStoryPrompt = (objective: string, childrenNames: string[]): string => {
-  const childrenText = childrenNames.length === 1 
-    ? childrenNames[0] 
-    : `${childrenNames.slice(0, -1).join(', ')} et ${childrenNames[childrenNames.length - 1]}`;
-
-  const objectivePrompts = {
-    sleep: `Créer une histoire douce et apaisante pour aider ${childrenText} à s'endormir. L'histoire doit être calme, réconfortante et se terminer de manière paisible. Utilisez un langage simple et des images relaxantes. L'histoire doit utiliser les techniques d’hypnose ericksonienne pour permettre un endormissement apaisé et régénérateur.`,
-    focus: `Créer une histoire engageante qui aide ${childrenText} à se concentrer. L'histoire doit captiver l'attention tout en étant éducative et stimulante intellectuellement.`,
-    relax: `Créer une histoire relaxante pour aider ${childrenText} à se détendre. L'histoire doit être apaisante, avec un rythme lent et des éléments qui favorisent la relaxation.`,
-    fun: `Créer une histoire amusante et divertissante pour ${childrenText}. L'histoire doit être joyeuse, pleine d'aventures et de moments ludiques qui feront sourire.`
-  };
-
-  const basePrompt = objectivePrompts[objective as keyof typeof objectivePrompts] || 
-    `Créer une histoire pour enfants personnalisée pour ${childrenText} avec pour objectif: ${objective}.`;
-
-  return `${basePrompt}
-
-Instructions pour la génération :
-- Personnaliser l'histoire avec le(s) prénom(s) : ${childrenText}
-- Adapter le vocabulaire et la complexité à des enfants de 3 à 7 ans
-- Créer une histoire d'environ 1500 mots décomposée de cette manière : début (300-400 mots), développement (600-800 mots), et fin (300-400 mots)
-- Structurer avec un début, un développement et une fin satisfaisante. Le tout avec des sauts de lignes pour faciliter la lecture
-- Inclure des éléments magiques ou imaginaires adaptés à l'enfance
-- S'assurer que l'histoire respecte l'objectif: ${objective}
-- Utiliser un ton bienveillant et positif sans utiliser trop de superlatifs
-- Interdire tout contenu effrayant ou inapproprié
-
-Générer maintenant l'histoire complète en français en t'assurant de respecter le nombre de mots demandés c'est-à-dire environ de 1500 mots`;
-};
 
 export const useN8nStoryCreation = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -61,23 +31,38 @@ export const useN8nStoryCreation = () => {
     try {
       console.log('[N8nStoryCreation] Déclenchement webhook n8n de production:', formData);
 
-      // Récupérer les noms des enfants
-      const childrenNames = formData.childrenIds.map(id => {
+      // Récupérer les enfants sélectionnés avec leurs données complètes
+      const selectedChildren = formData.childrenIds.map(id => {
         const child = children.find(c => c.id === id);
-        return child?.name || `Enfant-${id.slice(0, 8)}`;
+        if (!child) {
+          throw new Error(`Enfant avec l'ID ${id} non trouvé`);
+        }
+        return child;
       });
 
-      // Générer le prompt complet pour l'histoire
-      const storyPrompt = generateStoryPrompt(formData.objective, childrenNames);
+      // Générer le prompt avancé avec analyse des personnages et adaptation d'âge
+      const storyPrompt = generateAdvancedStoryPrompt(formData.objective, selectedChildren);
+      
+      // Extraire les noms et genres pour la compatibilité avec n8n
+      const childrenNames = selectedChildren.map(child => child.name);
+      const childrenGenders = selectedChildren.map(child => child.gender);
 
-      // Préparer les données pour n8n
+      // Préparer les données enrichies pour n8n
       const n8nData = {
         userId: user.id,
         userEmail: user.email,
         objective: formData.objective,
         childrenNames,
+        childrenGenders,
         childrenIds: formData.childrenIds,
-        storyPrompt, // Prompt complet pour la génération
+        childrenData: selectedChildren.map(child => ({
+          id: child.id,
+          name: child.name,
+          gender: child.gender,
+          birthDate: child.birthDate.toISOString(),
+          age: Math.floor((Date.now() - child.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+        })),
+        storyPrompt, // Prompt avancé avec contexte multi-personnages
         timestamp: new Date().toISOString(),
         requestId: crypto.randomUUID().slice(0, 8)
       };
