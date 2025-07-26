@@ -65,7 +65,7 @@ serve(async (req) => {
     
     console.log(`📖 [upload-epub-${requestId}] EPUB généré en ${epubTime}ms, taille: ${epubBuffer.byteLength} bytes`);
     
-    // Nom de fichier nettoyé pour affichage Kindle
+    // Nom de fichier nettoyé pour affichage Kindle (SANS timestamp)
     const timestamp = Date.now();
     const cleanFilename = filename
       .replace(/^\d+_/, '') // Supprimer les chiffres au début
@@ -73,6 +73,7 @@ serve(async (req) => {
       .replace(/\s+/g, ' ')
       .trim();
     const epubFilename = `${cleanFilename}.epub`;
+    // Storage path avec timestamp pour éviter conflits, mais titre propre dans métadonnées
     const storagePath = `epubs/${timestamp}_${cleanFilename.replace(/\s+/g, '_')}.epub`;
 
     // Upload optimisé avec retry automatique
