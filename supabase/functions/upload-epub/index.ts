@@ -68,7 +68,7 @@ serve(async (req) => {
     // Nom de fichier optimisé avec horodatage
     const timestamp = Date.now();
     const cleanFilename = filename.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
-    const epubFilename = `${cleanFilename}_${timestamp}.epub`;
+    const epubFilename = `${timestamp}_${cleanFilename}.epub`;
     const storagePath = `epubs/${epubFilename}`;
 
     // Upload optimisé avec retry automatique
@@ -195,6 +195,13 @@ serve(async (req) => {
 function createOptimizedEpubFile(htmlContent: string, title: string): Uint8Array {
   const files: { [key: string]: Uint8Array } = {};
   
+  // Nettoyer le titre pour l'affichage dans les métadonnées
+  const cleanTitle = title
+    .replace(/^\d+_/, '') // Supprimer les chiffres au début
+    .replace(/_/g, ' ')   // Remplacer les underscores par des espaces
+    .replace(/\s+/g, ' ') // Nettoyer les espaces multiples
+    .trim();
+  
   // 1. mimetype (non compressé selon spec EPUB)
   files['mimetype'] = new TextEncoder().encode('application/epub+zip');
   
@@ -203,15 +210,15 @@ function createOptimizedEpubFile(htmlContent: string, title: string): Uint8Array
   files['META-INF/container.xml'] = new TextEncoder().encode(containerXml);
   
   // 3. OEBPS/content.opf (minifié)
-  const contentOpf = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${escapeXml(title)}</dc:title><dc:creator>Calmi</dc:creator><dc:language>fr</dc:language><dc:identifier id="uid">calmi-${Date.now()}</dc:identifier><meta property="dcterms:modified">${new Date().toISOString().split('.')[0]}Z</meta></metadata><manifest><item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="content" href="content.xhtml" media-type="application/xhtml+xml"/></manifest><spine toc="toc"><itemref idref="content"/></spine></package>`;
+  const contentOpf = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${escapeXml(cleanTitle)}</dc:title><dc:creator>Calmi</dc:creator><dc:language>fr</dc:language><dc:identifier id="uid">calmi-${Date.now()}</dc:identifier><meta property="dcterms:modified">${new Date().toISOString().split('.')[0]}Z</meta></metadata><manifest><item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="content" href="content.xhtml" media-type="application/xhtml+xml"/></manifest><spine toc="toc"><itemref idref="content"/></spine></package>`;
   files['OEBPS/content.opf'] = new TextEncoder().encode(contentOpf);
   
   // 4. OEBPS/toc.ncx (minifié)
-  const tocNcx = `<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="calmi-${Date.now()}"/></head><docTitle><text>${escapeXml(title)}</text></docTitle><navMap><navPoint id="navpoint-1" playOrder="1"><navLabel><text>Histoire</text></navLabel><content src="content.xhtml"/></navPoint></navMap></ncx>`;
+  const tocNcx = `<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="calmi-${Date.now()}"/></head><docTitle><text>${escapeXml(cleanTitle)}</text></docTitle><navMap><navPoint id="navpoint-1" playOrder="1"><navLabel><text>Histoire</text></navLabel><content src="content.xhtml"/></navPoint></navMap></ncx>`;
   files['OEBPS/toc.ncx'] = new TextEncoder().encode(tocNcx);
   
   // 5. OEBPS/content.xhtml (optimisé)
-  const contentXhtml = `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${escapeXml(title)}</title><style>body{font-family:Georgia,serif;font-size:16px;line-height:1.6;margin:20px}h1{text-align:center;font-size:2em;margin-bottom:30px}p{margin-bottom:15px}</style></head><body>${htmlContent}</body></html>`;
+  const contentXhtml = `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${escapeXml(cleanTitle)}</title><style>body{font-family:Georgia,serif;font-size:16px;line-height:1.6;margin:20px}h1{text-align:center;font-size:2em;margin-bottom:30px}p{margin-bottom:15px}</style></head><body>${htmlContent}</body></html>`;
   files['OEBPS/content.xhtml'] = new TextEncoder().encode(contentXhtml);
   
   return createOptimizedZipFile(files);

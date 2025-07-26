@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import type { Story } from '@/types/story';
+import { translateObjective, cleanEpubTitle } from '@/utils/objectiveTranslations';
 
 interface EpubCache {
   [key: string]: {
@@ -179,15 +180,16 @@ export const optimizedEpubService = {
           : story.childrenNames.join(' et ')
         : "votre enfant";
 
-      // Objectif simplifié
-      const objectiveText = typeof story.objective === 'string' 
-        ? story.objective 
-        : story.objective?.name || story.objective?.value || '';
+      // Traduire l'objectif en français
+      const objectiveText = translateObjective(story.objective);
+      
+      // Nettoyer le titre pour l'affichage
+      const displayTitle = cleanEpubTitle(story.title);
 
       // Page de titre compacte
       const titlePage = `
         <div class="title-page">
-          <h1>${this.escapeHtml(story.title)}</h1>
+          <h1>${this.escapeHtml(displayTitle)}</h1>
           <p>${this.escapeHtml(objectiveText)}</p>
           <p>Pour ${this.escapeHtml(childrenText)}</p>
         </div>
