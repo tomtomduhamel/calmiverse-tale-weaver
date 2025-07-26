@@ -38,8 +38,9 @@ export const kindleService = {
       console.log('📔 [KindleService] Génération du fichier EPUB...');
       const epubUrl = await generateAndUploadEpub(story);
       
-      // Créer le nom de fichier EPUB
-      const cleanTitle = story.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
+      // Utiliser cleanEpubTitle au lieu de créer nos propres underscores
+      const { cleanEpubTitle } = await import('../../utils/objectiveTranslations');
+      const cleanTitle = cleanEpubTitle(story.title);
       const epubFilename = `${cleanTitle}.epub`;
 
       // Gérer l'objectif qui peut être string ou objet

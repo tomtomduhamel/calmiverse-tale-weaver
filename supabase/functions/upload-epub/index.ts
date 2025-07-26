@@ -65,16 +65,22 @@ serve(async (req) => {
     
     console.log(`📖 [upload-epub-${requestId}] EPUB généré en ${epubTime}ms, taille: ${epubBuffer.byteLength} bytes`);
     
-    // Nom de fichier nettoyé pour affichage Kindle (SANS timestamp)
+    // CORRECTION DÉFINITIVE: Séparer nom de stockage et nom affiché
     const timestamp = Date.now();
-    const cleanFilename = filename
+    
+    // Nom propre pour les métadonnées EPUB (avec espaces)
+    const cleanDisplayTitle = filename
       .replace(/^\d+_/, '') // Supprimer les chiffres au début
-      .replace(/[^a-zA-Z0-9\s-]/g, '')
-      .replace(/\s+/g, ' ')
+      .replace(/_/g, ' ')   // Remplacer underscores par espaces
+      .replace(/[^a-zA-Z0-9\s-]/g, '') // Supprimer caractères spéciaux
+      .replace(/\s+/g, ' ') // Nettoyer espaces multiples
       .trim();
-    const epubFilename = `${cleanFilename}.epub`;
-    // Storage path avec timestamp pour éviter conflits, mais titre propre dans métadonnées
-    const storagePath = `epubs/${timestamp}_${cleanFilename.replace(/\s+/g, '_')}.epub`;
+    
+    // Nom de fichier pour l'utilisateur (propre, avec espaces)
+    const epubFilename = `${cleanDisplayTitle}.epub`;
+    
+    // Chemin de stockage interne (avec timestamp + underscores pour éviter conflits)
+    const storagePath = `epubs/${timestamp}_${cleanDisplayTitle.replace(/\s+/g, '_')}.epub`;
 
     // Upload optimisé avec retry automatique
     console.log(`📤 [upload-epub-${requestId}] Upload vers: ${storagePath}`);
@@ -97,7 +103,7 @@ serve(async (req) => {
       
       // Stratégie 2: Nouveau nom avec UUID
       () => {
-        const fallbackPath = `epubs/${cleanFilename}_${timestamp}_${crypto.randomUUID().slice(0, 8)}.epub`;
+        const fallbackPath = `epubs/${cleanDisplayTitle.replace(/\s+/g, '_')}_${timestamp}_${crypto.randomUUID().slice(0, 8)}.epub`;
         return supabase.storage
           .from('story-files')
           .upload(fallbackPath, epubBuffer, {
@@ -200,10 +206,11 @@ serve(async (req) => {
 function createOptimizedEpubFile(htmlContent: string, title: string): Uint8Array {
   const files: { [key: string]: Uint8Array } = {};
   
-  // Nettoyer le titre pour l'affichage dans les métadonnées
+  // Nettoyer le titre pour l'affichage dans les métadonnées (MÊME LOGIQUE QU'AU DESSUS)
   const cleanTitle = title
     .replace(/^\d+_/, '') // Supprimer les chiffres au début
     .replace(/_/g, ' ')   // Remplacer les underscores par des espaces
+    .replace(/[^a-zA-Z0-9\s-]/g, '') // Supprimer caractères spéciaux
     .replace(/\s+/g, ' ') // Nettoyer les espaces multiples
     .trim();
   
@@ -214,7 +221,7 @@ function createOptimizedEpubFile(htmlContent: string, title: string): Uint8Array
   const containerXml = `<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`;
   files['META-INF/container.xml'] = new TextEncoder().encode(containerXml);
   
-  // 3. OEBPS/content.opf (minifié)
+  // 3. OEBPS/content.opf (minifié) - CORRIGER LE CRÉATEUR
   const contentOpf = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${escapeXml(cleanTitle)}</dc:title><dc:creator>Calmi</dc:creator><dc:language>fr</dc:language><dc:identifier id="uid">calmi-${Date.now()}</dc:identifier><meta property="dcterms:modified">${new Date().toISOString().split('.')[0]}Z</meta></metadata><manifest><item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="content" href="content.xhtml" media-type="application/xhtml+xml"/></manifest><spine toc="toc"><itemref idref="content"/></spine></package>`;
   files['OEBPS/content.opf'] = new TextEncoder().encode(contentOpf);
   
@@ -222,7 +229,7 @@ function createOptimizedEpubFile(htmlContent: string, title: string): Uint8Array
   const tocNcx = `<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="calmi-${Date.now()}"/></head><docTitle><text>${escapeXml(cleanTitle)}</text></docTitle><navMap><navPoint id="navpoint-1" playOrder="1"><navLabel><text>Histoire</text></navLabel><content src="content.xhtml"/></navPoint></navMap></ncx>`;
   files['OEBPS/toc.ncx'] = new TextEncoder().encode(tocNcx);
   
-  // 5. OEBPS/content.xhtml (optimisé)
+  // 5. OEBPS/content.xhtml (optimisé) - Utiliser le titre propre
   const contentXhtml = `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${escapeXml(cleanTitle)}</title><style>body{font-family:Georgia,serif;font-size:16px;line-height:1.6;margin:20px}h1{text-align:center;font-size:2em;margin-bottom:30px}p{margin-bottom:15px}</style></head><body>${htmlContent}</body></html>`;
   files['OEBPS/content.xhtml'] = new TextEncoder().encode(contentXhtml);
   
