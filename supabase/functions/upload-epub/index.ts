@@ -65,11 +65,15 @@ serve(async (req) => {
     
     console.log(`📖 [upload-epub-${requestId}] EPUB généré en ${epubTime}ms, taille: ${epubBuffer.byteLength} bytes`);
     
-    // Nom de fichier optimisé avec horodatage
+    // Nom de fichier nettoyé pour affichage Kindle
     const timestamp = Date.now();
-    const cleanFilename = filename.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
-    const epubFilename = `${timestamp}_${cleanFilename}.epub`;
-    const storagePath = `epubs/${epubFilename}`;
+    const cleanFilename = filename
+      .replace(/^\d+_/, '') // Supprimer les chiffres au début
+      .replace(/[^a-zA-Z0-9\s-]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const epubFilename = `${cleanFilename}.epub`;
+    const storagePath = `epubs/${timestamp}_${cleanFilename.replace(/\s+/g, '_')}.epub`;
 
     // Upload optimisé avec retry automatique
     console.log(`📤 [upload-epub-${requestId}] Upload vers: ${storagePath}`);
