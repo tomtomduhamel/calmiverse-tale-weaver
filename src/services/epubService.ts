@@ -23,8 +23,8 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
       throw new Error("Le contenu formaté pour Kindle est invalide");
     }
     
-    // Nettoyer le nom de fichier
-    const cleanTitle = story.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
+    // Nettoyer le nom de fichier en utilisant la fonction de nettoyage appropriée
+    const cleanTitle = cleanEpubTitle(story.title);
     
     if (!cleanTitle) {
       throw new Error("Impossible de générer un nom de fichier valide à partir du titre");

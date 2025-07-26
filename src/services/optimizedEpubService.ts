@@ -105,11 +105,8 @@ export const optimizedEpubService = {
     // Formater pour Kindle avec optimisations
     const kindleContent = this.formatStoryForKindle(story, optimizedContent);
     
-    // Nom de fichier optimisé
-    const cleanTitle = story.title
-      .replace(/[^a-zA-Z0-9\s-]/g, '')
-      .replace(/\s+/g, '_')
-      .substring(0, 50); // Limiter la longueur
+    // Nom de fichier optimisé en utilisant la fonction de nettoyage appropriée
+    const cleanTitle = cleanEpubTitle(story.title).substring(0, 50); // Limiter la longueur
 
     if (!cleanTitle) {
       throw new Error("Impossible de générer un nom de fichier valide");
