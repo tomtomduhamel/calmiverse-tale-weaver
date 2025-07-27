@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Settings } from "lucide-react";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { FavoriteReaderButton } from "./FavoriteReaderButton";
+import { ShareStoryButton } from "./ShareStoryButton";
 import type { Story } from "@/types/story";
 interface StoryReaderHeaderProps {
   story: Story;
@@ -35,15 +36,30 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
         </Button>
 
         {/* Titre et temps de lecture */}
-        
+        <div className="flex-1 text-center">
+          <h1 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            {story.title}
+          </h1>
+          <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Histoire personnalisée pour {story.childrenNames?.[0] || 'votre enfant'}
+          </div>
+          <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            {readingTime} • {new Date(story.createdAt).toLocaleDateString('fr-FR')}
+          </div>
+        </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2">
           {/* Bouton favori */}
           {onToggleFavorite && <FavoriteReaderButton isFavorite={story.isFavorite || false} onToggle={handleToggleFavorite} isLoading={isUpdatingFavorite} />}
           
-          {/* Bouton paramètres */}
+          {/* Bouton partage */}
+          <ShareStoryButton storyId={story.id} title={story.title} isDarkMode={isDarkMode} />
           
+          {/* Bouton paramètres */}
+          <Button variant="ghost" size="sm" onClick={onSettingsClick} className={`${isDarkMode ? 'text-white hover:bg-gray-800' : ''}`}>
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </header>;

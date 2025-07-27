@@ -27,26 +27,12 @@ export const UtilityButtons: React.FC<UtilityButtonsProps> = ({
     <>
       <Button
         variant="outline"
-        onClick={() => setShowShareDialog(true)}
-        className={`transition-transform hover:scale-105 ${buttonStyle}`}
-      >
-        <Share2 className="h-4 w-4 mr-2" />
-        Partager
-      </Button>
-      <Button
-        variant="outline"
         onClick={() => setShowReadingGuide(true)}
         className={`transition-transform hover:scale-105 ${buttonStyle}`}
       >
         <BookOpen className="h-4 w-4 mr-2" />
         Guide
       </Button>
-
-      <ShareStoryDialog
-        storyId={storyId}
-        isOpen={showShareDialog}
-        onClose={() => setShowShareDialog(false)}
-      />
     </>
   );
 };
