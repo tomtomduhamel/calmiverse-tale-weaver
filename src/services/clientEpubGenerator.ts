@@ -98,14 +98,15 @@ export const clientEpubGenerator = {
    * Crée le fichier content.opf (métadonnées et structure)
    */
   async createContentOpf(oebps: JSZip, story: Story): Promise<void> {
-    const bookId = `calmiverse-${Date.now()}`;
+    const bookId = `calmi-${Date.now()}`;
     const childrenText = story.childrenNames?.join(', ') || 'Enfant';
+    const cleanTitle = this.cleanEpubTitle(story.title);
     
     const contentOpf = `<?xml version="1.0" encoding="UTF-8"?>
 <package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
-    <dc:title>${this.escapeXml(story.title)}</dc:title>
-    <dc:creator>Calmiverse</dc:creator>
+    <dc:title>${this.escapeXml(cleanTitle)}</dc:title>
+    <dc:creator>Calmi</dc:creator>
     <dc:identifier id="bookid">${bookId}</dc:identifier>
     <dc:language>fr</dc:language>
     <dc:date>${new Date().toISOString().split('T')[0]}</dc:date>
@@ -129,6 +130,7 @@ export const clientEpubGenerator = {
    * Crée le fichier toc.ncx (navigation)
    */
   async createTocNcx(oebps: JSZip, story: Story): Promise<void> {
+    const cleanTitle = this.cleanEpubTitle(story.title);
     const tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
 <ncx version="2005-1" xmlns="http://www.daisy.org/z3986/2005/ncx/">
   <head>
@@ -138,12 +140,12 @@ export const clientEpubGenerator = {
     <meta name="dtb:maxPageNumber" content="0"/>
   </head>
   <docTitle>
-    <text>${this.escapeXml(story.title)}</text>
+    <text>${this.escapeXml(cleanTitle)}</text>
   </docTitle>
   <navMap>
     <navPoint id="story" playOrder="1">
       <navLabel>
-        <text>${this.escapeXml(story.title)}</text>
+        <text>${this.escapeXml(cleanTitle)}</text>
       </navLabel>
       <content src="story.html"/>
     </navPoint>
@@ -161,6 +163,7 @@ export const clientEpubGenerator = {
     const objectiveText = typeof story.objective === 'string' 
       ? story.objective 
       : story.objective?.name || story.objective?.value || '';
+    const cleanTitle = this.cleanEpubTitle(story.title);
 
     // Formater le contenu en paragraphes
     const formattedContent = story.content
@@ -173,13 +176,13 @@ export const clientEpubGenerator = {
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>${this.escapeXml(story.title)}</title>
+  <title>${this.escapeXml(cleanTitle)}</title>
   <link rel="stylesheet" type="text/css" href="style.css"/>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 </head>
 <body>
   <div class="title-page">
-    <h1>${this.escapeXml(story.title)}</h1>
+    <h1>${this.escapeXml(cleanTitle)}</h1>
     ${objectiveText ? `<p class="objective">${this.escapeXml(objectiveText)}</p>` : ''}
     <p class="children">Pour ${this.escapeXml(childrenText)}</p>
     <p class="author">Créé par Calmi</p>
@@ -254,6 +257,19 @@ h2 {
 `;
     
     oebps.file('style.css', styleCss);
+  },
+
+  /**
+   * Nettoie le titre pour l'EPUB (pas de timestamp, caractères spéciaux propres)
+   */
+  cleanEpubTitle(title: string): string {
+    if (!title) return 'Histoire';
+    
+    return title
+      .replace(/^\d+-/, '') // Supprime timestamp au début
+      .replace(/[^\p{L}\p{N}\s\-''.!?]/gu, '') // Garde lettres, chiffres, espaces et ponctuation de base
+      .replace(/\s+/g, ' ') // Normalise les espaces
+      .trim();
   },
 
   /**

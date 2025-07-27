@@ -33,9 +33,9 @@ export const robustStorageUpload = {
         try {
           console.log(`📤 [RobustUpload] Bucket ${bucketName} - Tentative ${attempt}/${maxAttempts}`);
           
-          // Créer un nom de fichier unique avec timestamp
+          // Créer un nom de fichier unique avec timestamp pour le stockage interne
           const timestamp = Date.now();
-          const uniqueFilename = `${timestamp}-${filename}`;
+          const uniqueFilename = `${timestamp}-${filename.replace(/\s+/g, '_')}`;
           
           // Upload vers Supabase Storage
           const { data, error } = await supabase.storage

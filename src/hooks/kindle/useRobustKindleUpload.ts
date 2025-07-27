@@ -79,7 +79,7 @@ export const useRobustKindleUpload = () => {
       });
 
       // 4. Upload vers Supabase Storage avec fallback automatique
-      const cleanTitle = story.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
+      const cleanTitle = story.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, ' ').trim();
       const filename = `${cleanTitle}.epub`;
       
       const uploadResult = await robustStorageUpload.uploadFile(
