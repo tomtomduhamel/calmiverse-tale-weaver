@@ -9,8 +9,8 @@ interface LibraryFiltersProps {
   onSearchChange: (value: string) => void;
   statusFilter: 'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites' | 'recent';
   onStatusChange: (status: 'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites' | 'recent') => void;
-  selectedObjectives: string[];
-  onObjectiveChange: (objectives: string[]) => void;
+  selectedObjective: string | null;
+  onObjectiveChange: (objective: string | null) => void;
 }
 
 const LibraryFilters: React.FC<LibraryFiltersProps> = ({
@@ -18,7 +18,7 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
   onSearchChange,
   statusFilter,
   onStatusChange,
-  selectedObjectives,
+  selectedObjective,
   onObjectiveChange,
 }) => {
   return (
@@ -33,7 +33,7 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
         />
       </div>
       <ObjectiveFilter
-        selectedObjectives={selectedObjectives}
+        selectedObjective={selectedObjective}
         onObjectiveChange={onObjectiveChange}
       />
     </div>

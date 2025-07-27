@@ -5,20 +5,21 @@ import { STORY_OBJECTIVES } from "@/utils/objectiveUtils";
 import { cn } from "@/lib/utils";
 
 interface ObjectiveFilterProps {
-  selectedObjectives: string[];
-  onObjectiveChange: (objectives: string[]) => void;
+  selectedObjective: string | null;
+  onObjectiveChange: (objective: string | null) => void;
 }
 
 const ObjectiveFilter: React.FC<ObjectiveFilterProps> = ({
-  selectedObjectives,
+  selectedObjective,
   onObjectiveChange,
 }) => {
   const handleObjectiveToggle = (value: string) => {
-    const isSelected = selectedObjectives.includes(value);
-    if (isSelected) {
-      onObjectiveChange(selectedObjectives.filter(obj => obj !== value));
+    if (selectedObjective === value) {
+      // Désélectionner si déjà sélectionné (afficher toutes les histoires)
+      onObjectiveChange(null);
     } else {
-      onObjectiveChange([...selectedObjectives, value]);
+      // Sélectionner le nouvel objectif
+      onObjectiveChange(value);
     }
   };
 
@@ -28,7 +29,7 @@ const ObjectiveFilter: React.FC<ObjectiveFilterProps> = ({
       <div className="flex gap-1">
         {STORY_OBJECTIVES.map((objective) => {
           const IconComponent = objective.icon;
-          const isSelected = selectedObjectives.includes(objective.value);
+          const isSelected = selectedObjective === objective.value;
           
           return (
             <TooltipProvider key={objective.id}>

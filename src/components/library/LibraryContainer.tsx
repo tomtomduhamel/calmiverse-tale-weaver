@@ -45,7 +45,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   // États locaux pour la pagination et le filtrage
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites' | 'recent'>('all');
-  const [selectedObjectives, setSelectedObjectives] = React.useState<string[]>([]);
+  const [selectedObjective, setSelectedObjective] = React.useState<string | null>(null);
   const [isZenMode, setIsZenMode] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const storiesPerPage = 6;
@@ -83,14 +83,11 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
             matchesStatus = story.status === statusFilter;
         }
         
-        // Filtrage par objectifs
-        let matchesObjectives = true;
-        if (selectedObjectives.length > 0) {
-          const storyObjective = extractObjectiveValue(story.objective);
-          matchesObjectives = storyObjective ? selectedObjectives.includes(storyObjective) : false;
-        }
+        // Filter by objective (single selection)
+        const matchesObjective = !selectedObjective || 
+          extractObjectiveValue(story.objective) === selectedObjective;
         
-        return matchesSearch && matchesStatus && matchesObjectives;
+        return matchesSearch && matchesStatus && matchesObjective;
       })
       .sort((a, b) => {
         // Nouveau système de priorités amélioré
@@ -139,7 +136,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
         // En cas d'égalité de priorité, tri par date de création (plus récent en premier)
         return b.createdAt.getTime() - a.createdAt.getTime();
       });
-  }, [stories, searchTerm, statusFilter, selectedObjectives]);
+  }, [stories, searchTerm, statusFilter, selectedObjective, isRecentStory]);
 
   // Nombre total de pages pour la pagination
   const totalPages = Math.ceil(filteredStories.length / storiesPerPage);
@@ -178,12 +175,12 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
 
       <div className="flex justify-between items-center">
         <LibraryFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-          selectedObjectives={selectedObjectives}
-          onObjectiveChange={setSelectedObjectives}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        selectedObjective={selectedObjective}
+        onObjectiveChange={setSelectedObjective}
         />
         <StoryCleaner stories={stories} />
       </div>
