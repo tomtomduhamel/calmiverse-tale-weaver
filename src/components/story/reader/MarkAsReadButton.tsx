@@ -38,7 +38,7 @@ export const MarkAsReadButton: React.FC<MarkAsReadButtonProps> = ({
       ) : (
         <BookCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
       )}
-      {isUpdatingReadStatus ? "En cours..." : isRead ? "Marquer comme non lu" : "Marquer comme lu"}
+      
     </Button>
   );
 };

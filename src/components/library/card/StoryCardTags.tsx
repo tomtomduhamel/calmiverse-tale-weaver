@@ -2,6 +2,7 @@
 import React from "react";
 import { Tag, AlertCircle } from "lucide-react";
 import type { Story } from "@/types/story";
+import { translateObjective } from "@/utils/objectiveTranslations";
 
 interface StoryCardTagsProps {
   tags?: string[];
@@ -12,10 +13,7 @@ interface StoryCardTagsProps {
 
 const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags = [], objective, status, error }) => {
   const getObjectiveText = (objective: Story['objective']) => {
-    if (typeof objective === 'string') {
-      return objective;
-    }
-    return objective?.value || "Objectif non défini";
+    return translateObjective(objective) || "Objectif non défini";
   };
 
   const getStatusColor = (status: Story['status']) => {
@@ -37,26 +35,26 @@ const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags = [], objective, sta
     switch (status) {
       case 'pending':
         return 'En cours de génération';
-      case 'ready':
-        return 'Prêt à lire';
-      case 'read':
-        return 'Lu';
       case 'error':
         return 'Erreur';
       default:
-        return status;
+        return null; // Ne pas afficher les autres statuts
     }
   };
+
+  const statusText = getStatusText(status);
 
   return (
     <div className="flex flex-wrap gap-2 mb-4">
       <span className="text-xs bg-secondary/20 text-secondary-dark px-2 py-1 rounded-full">
         {getObjectiveText(objective)}
       </span>
-      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(status)} flex items-center gap-1`}>
-        {status === 'error' && <AlertCircle className="w-3 h-3" />}
-        {getStatusText(status)}
-      </span>
+      {statusText && (
+        <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(status)} flex items-center gap-1`}>
+          {status === 'error' && <AlertCircle className="w-3 h-3" />}
+          {statusText}
+        </span>
+      )}
       {tags?.map((tag, index) => (
         <span key={index} className="text-xs bg-accent/20 text-accent-dark px-2 py-1 rounded-full flex items-center gap-1">
           <Tag className="w-3 h-3" />
