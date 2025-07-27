@@ -135,8 +135,8 @@ const StoryCard: React.FC<StoryCardProps> = ({
           error={story.error}
         />
         
-        {/* Bouton marquer comme lu pour les histoires prêtes */}
-        {story.status === "ready" && onMarkAsRead && (
+        {/* Bouton marquer comme lu pour toutes les histoires sauf celles déjà lues */}
+        {story.status !== "read" && onMarkAsRead && (
           <div className="mt-3" data-mark-as-read-button>
             <MarkAsReadButton 
               storyId={story.id}
