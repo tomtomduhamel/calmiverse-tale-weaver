@@ -35,14 +35,7 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
         </Button>
 
         {/* Titre et temps de lecture */}
-        <div className="flex-1 mx-4 text-center">
-          <h1 className={`text-lg font-semibold line-clamp-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            {story.title}
-          </h1>
-          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            {readingTime}
-          </p>
-        </div>
+        
 
         {/* Actions */}
         <div className="flex items-center gap-2">
