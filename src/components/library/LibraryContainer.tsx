@@ -9,6 +9,7 @@ import LibraryErrorAlert from "./LibraryErrorAlert";
 import StoryGrid from "./StoryGrid";
 import Pagination from "./Pagination";
 import StoryCleaner from "./StoryCleaner";
+import { extractObjectiveValue } from "@/utils/objectiveUtils";
 
 interface LibraryContainerProps {
   stories: Story[];
@@ -44,6 +45,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   // États locaux pour la pagination et le filtrage
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites' | 'recent'>('all');
+  const [selectedObjectives, setSelectedObjectives] = React.useState<string[]>([]);
   const [isZenMode, setIsZenMode] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const storiesPerPage = 6;
@@ -81,7 +83,14 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
             matchesStatus = story.status === statusFilter;
         }
         
-        return matchesSearch && matchesStatus;
+        // Filtrage par objectifs
+        let matchesObjectives = true;
+        if (selectedObjectives.length > 0) {
+          const storyObjective = extractObjectiveValue(story.objective);
+          matchesObjectives = storyObjective ? selectedObjectives.includes(storyObjective) : false;
+        }
+        
+        return matchesSearch && matchesStatus && matchesObjectives;
       })
       .sort((a, b) => {
         // Nouveau système de priorités amélioré
@@ -130,7 +139,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
         // En cas d'égalité de priorité, tri par date de création (plus récent en premier)
         return b.createdAt.getTime() - a.createdAt.getTime();
       });
-  }, [stories, searchTerm, statusFilter]);
+  }, [stories, searchTerm, statusFilter, selectedObjectives]);
 
   // Nombre total de pages pour la pagination
   const totalPages = Math.ceil(filteredStories.length / storiesPerPage);
@@ -173,6 +182,8 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
           onSearchChange={setSearchTerm}
           statusFilter={statusFilter}
           onStatusChange={setStatusFilter}
+          selectedObjectives={selectedObjectives}
+          onObjectiveChange={setSelectedObjectives}
         />
         <StoryCleaner stories={stories} />
       </div>
