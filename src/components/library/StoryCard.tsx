@@ -5,6 +5,7 @@ import StoryCardTitle from "./card/StoryCardTitle";
 import StoryCardActions from "./card/StoryCardActions";
 import StoryCardTags from "./card/StoryCardTags";
 import { FavoriteButton } from "../story/FavoriteButton";
+import { MarkAsReadButton } from "../story/reader/MarkAsReadButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
@@ -16,10 +17,12 @@ interface StoryCardProps {
   onDelete?: () => void;
   onRetry?: () => void;
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
+  onMarkAsRead?: (storyId: string) => Promise<boolean>;
   isRetrying?: boolean;
   isDeleting?: boolean;
   isPending?: boolean;
   isUpdatingFavorite?: boolean;
+  isUpdatingReadStatus?: boolean;
 }
 
 const StoryCard: React.FC<StoryCardProps> = ({
@@ -28,10 +31,12 @@ const StoryCard: React.FC<StoryCardProps> = ({
   onDelete,
   onRetry,
   onToggleFavorite,
+  onMarkAsRead,
   isRetrying = false,
   isDeleting = false,
   isPending = false,
   isUpdatingFavorite = false,
+  isUpdatingReadStatus = false,
 }) => {
   // Toutes les histoires sont maintenant cliquables
   const isClickable = true;
@@ -62,8 +67,9 @@ const StoryCard: React.FC<StoryCardProps> = ({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Empêcher la propagation si le clic provient du bouton favori
-    if ((e.target as HTMLElement).closest('[data-favorite-button]')) {
+    // Empêcher la propagation si le clic provient du bouton favori ou marquer comme lu
+    if ((e.target as HTMLElement).closest('[data-favorite-button]') || 
+        (e.target as HTMLElement).closest('[data-mark-as-read-button]')) {
       return;
     }
     
@@ -128,6 +134,19 @@ const StoryCard: React.FC<StoryCardProps> = ({
           tags={story.tags}
           error={story.error}
         />
+        
+        {/* Bouton marquer comme lu pour les histoires prêtes */}
+        {story.status === "ready" && onMarkAsRead && (
+          <div className="mt-3" data-mark-as-read-button>
+            <MarkAsReadButton 
+              storyId={story.id}
+              onMarkAsRead={onMarkAsRead}
+              isRead={false}
+              isUpdatingReadStatus={isUpdatingReadStatus}
+              isDarkMode={false}
+            />
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex justify-between pt-2 pb-4">
         <span className="text-xs text-gray-500">

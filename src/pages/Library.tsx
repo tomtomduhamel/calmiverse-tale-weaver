@@ -3,6 +3,7 @@ import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
 import { useStoryDeletion } from "@/hooks/stories/useStoryDeletion";
+import { useStoryUpdate } from "@/hooks/stories/useStoryUpdate";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,12 +28,16 @@ const Library: React.FC = () => {
     deleteStory
   } = useStoryDeletion();
   const {
+    updateStoryStatus
+  } = useStoryUpdate();
+  const {
     toast
   } = useToast();
   const navigate = useNavigate();
 
-  // État local pour gérer la suppression
+  // États locaux pour gérer les actions
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [isUpdatingReadStatus, setIsUpdatingReadStatus] = useState(false);
   const handleSelectStory = (story: any) => {
     console.log("[Library] Navigation vers le lecteur:", story.id);
     navigate(`/reader/${story.id}`);
@@ -66,6 +71,35 @@ const Library: React.FC = () => {
     console.log("[Library] DEBUG: Relance de l'histoire:", storyId);
     return true;
   };
+
+  const handleMarkAsRead = async (storyId: string): Promise<boolean> => {
+    console.log("[Library] DEBUG: Marquage comme lu de l'histoire:", storyId);
+    try {
+      setIsUpdatingReadStatus(true);
+      
+      await updateStoryStatus(storyId, "read");
+      
+      // Rafraîchir la liste des histoires
+      await fetchStories();
+      
+      toast({
+        title: "Histoire marquée comme lue",
+        description: "L'histoire a été marquée comme lue avec succès"
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error("[Library] ERROR: Erreur lors du marquage comme lu:", error);
+      toast({
+        title: "Erreur",
+        description: error?.message || "Une erreur s'est produite",
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsUpdatingReadStatus(false);
+    }
+  };
   const handleBack = () => {
     navigate("/");
   };
@@ -97,7 +131,17 @@ const Library: React.FC = () => {
 
         {/* Composant de bibliothèque d'histoires */}
         <div className="max-w-6xl mx-auto">
-          <StoryLibrary stories={stories} onSelectStory={handleSelectStory} onDeleteStory={handleDeleteStory} onRetryStory={handleRetryStory} onForceRefresh={fetchStories} onCreateStory={handleCreateStory} isDeletingId={isDeletingId} />
+          <StoryLibrary 
+            stories={stories} 
+            onSelectStory={handleSelectStory} 
+            onDeleteStory={handleDeleteStory} 
+            onRetryStory={handleRetryStory} 
+            onMarkAsRead={handleMarkAsRead}
+            onForceRefresh={fetchStories} 
+            onCreateStory={handleCreateStory} 
+            isDeletingId={isDeletingId}
+            isUpdatingReadStatus={isUpdatingReadStatus}
+          />
         </div>
       </div>
     </div>;

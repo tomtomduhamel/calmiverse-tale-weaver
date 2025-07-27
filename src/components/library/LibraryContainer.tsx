@@ -16,10 +16,12 @@ interface LibraryContainerProps {
   onDeleteStory?: (storyId: string) => void;
   onRetryStory?: (storyId: string) => void;
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
+  onMarkAsRead?: (storyId: string) => Promise<boolean>;
   onViewChange?: (view: ViewType) => void;
   isRetrying?: boolean;
   isDeletingId?: string | null;
   isUpdatingFavorite?: boolean;
+  isUpdatingReadStatus?: boolean;
   pendingStoryId?: string | null;
   onCreateStory?: () => void;
 }
@@ -30,10 +32,12 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   onDeleteStory,
   onRetryStory,
   onToggleFavorite,
+  onMarkAsRead,
   onViewChange,
   isRetrying = false,
   isDeletingId,
   isUpdatingFavorite = false,
+  isUpdatingReadStatus = false,
   pendingStoryId,
   onCreateStory
 }) => {
@@ -178,10 +182,12 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
         onDelete={onDeleteStory}
         onRetry={onRetryStory}
         onToggleFavorite={onToggleFavorite}
+        onMarkAsRead={onMarkAsRead}
         onCardClick={onSelectStory}
         isRetrying={isRetrying}
         isDeletingId={isDeletingId}
         isUpdatingFavorite={isUpdatingFavorite}
+        isUpdatingReadStatus={isUpdatingReadStatus}
         pendingStoryId={pendingStoryId}
       />
 

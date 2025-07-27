@@ -12,9 +12,11 @@ interface StoryLibraryProps {
   onDeleteStory?: (storyId: string) => void;
   onRetryStory?: (storyId: string) => void;
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
+  onMarkAsRead?: (storyId: string) => Promise<boolean>;
   onViewChange?: (view: ViewType) => void;
   isRetrying?: boolean;
   isUpdatingFavorite?: boolean;
+  isUpdatingReadStatus?: boolean;
   pendingStoryId?: string | null;
   onForceRefresh?: () => void;
   onCreateStory?: () => void;
@@ -27,9 +29,11 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   onDeleteStory,
   onRetryStory,
   onToggleFavorite,
+  onMarkAsRead,
   onViewChange,
   isRetrying = false,
   isUpdatingFavorite = false,
+  isUpdatingReadStatus = false,
   pendingStoryId,
   onForceRefresh,
   onCreateStory,
@@ -108,9 +112,11 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         onDeleteStory={handleDelete}
         onRetryStory={handleRetry}
         onToggleFavorite={handleToggleFavorite}
+        onMarkAsRead={onMarkAsRead}
         onViewChange={onViewChange}
         isRetrying={isRetrying}
         isUpdatingFavorite={isUpdatingFavorite}
+        isUpdatingReadStatus={isUpdatingReadStatus}
         isDeletingId={isDeletingId}
         pendingStoryId={pendingStoryId}
         onCreateStory={onCreateStory}

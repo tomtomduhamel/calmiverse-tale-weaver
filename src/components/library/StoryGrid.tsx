@@ -8,10 +8,12 @@ interface StoryGridProps {
   onDelete?: (storyId: string) => void;
   onRetry?: (storyId: string) => void;
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
+  onMarkAsRead?: (storyId: string) => Promise<boolean>;
   onCardClick?: (story: Story) => void;
   isRetrying?: boolean;
   isDeletingId?: string | null;
   isUpdatingFavorite?: boolean;
+  isUpdatingReadStatus?: boolean;
   pendingStoryId?: string | null;
 }
 
@@ -20,10 +22,12 @@ const StoryGrid: React.FC<StoryGridProps> = ({
   onDelete,
   onRetry,
   onToggleFavorite,
+  onMarkAsRead,
   onCardClick,
   isRetrying,
   isDeletingId,
   isUpdatingFavorite,
+  isUpdatingReadStatus,
   pendingStoryId
 }) => {
   if (stories.length === 0) {
@@ -52,10 +56,12 @@ const StoryGrid: React.FC<StoryGridProps> = ({
           onDelete={onDelete ? () => onDelete(story.id) : undefined}
           onRetry={onRetry ? () => onRetry(story.id) : undefined}
           onToggleFavorite={onToggleFavorite}
+          onMarkAsRead={onMarkAsRead}
           onClick={() => handleCardClick(story)}
           isRetrying={isRetrying && pendingStoryId === story.id}
           isDeleting={isDeletingId === story.id}
           isUpdatingFavorite={isUpdatingFavorite}
+          isUpdatingReadStatus={isUpdatingReadStatus}
           isPending={pendingStoryId === story.id}
         />
       ))}
