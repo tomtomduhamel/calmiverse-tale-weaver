@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share } from "lucide-react";
-import { AutoScrollControl } from "./reader/AutoScrollControl";
+
 import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 import { ShareStoryDialog } from "./ShareStoryDialog";
@@ -20,11 +20,7 @@ interface ReaderControlsProps {
   setShowReadingGuide: (show: boolean) => void;
   onMarkAsRead?: (storyId: string) => Promise<boolean>;
   isRead: boolean;
-  isAutoScrolling: boolean;
-  isPaused: boolean;
-  onToggleAutoScroll: () => void;
   isUpdatingReadStatus: boolean;
-  isManuallyPaused: boolean;
 }
 const ReaderControls: React.FC<ReaderControlsProps> = ({
   fontSize,
@@ -37,11 +33,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   setShowReadingGuide,
   onMarkAsRead,
   isRead,
-  isAutoScrolling,
-  isPaused,
-  onToggleAutoScroll,
-  isUpdatingReadStatus,
-  isManuallyPaused
+  isUpdatingReadStatus
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const {
@@ -81,7 +73,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
               </div>
               
-              <AutoScrollControl isAutoScrolling={isAutoScrolling} isPaused={isPaused} onToggleAutoScroll={onToggleAutoScroll} isDarkMode={isDarkMode} isManuallyPaused={isManuallyPaused} />
+              {/* Auto-scroll supprimé - maintenant dans le header et bouton flottant */}
             </div>
 
             {/* Colonne 2: Apparence */}

@@ -3,7 +3,7 @@ import React from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { ReadingGuide } from "./story/ReadingGuide";
-import { AutoScrollIndicator } from "./story/AutoScrollIndicator";
+import { FloatingAutoScrollButton } from "./story/reader/FloatingAutoScrollButton";
 import { EmptyStoryView } from "./story/reader/EmptyStoryView";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
 import { StoryReaderLayout } from "./story/reader/StoryReaderLayout";
@@ -77,14 +77,18 @@ const StoryReader: React.FC<StoryReaderProps> = ({
 
   return (
     <StoryReaderLayout isDarkMode={isDarkMode} scrollAreaRef={scrollAreaRef}>
-      <StoryReaderHeader
-        story={story}
-        onClose={handleBack}
-        onSettingsClick={handleSettingsClick}
-        onToggleFavorite={handleToggleFavorite}
-        isUpdatingFavorite={isUpdatingFavorite}
-        isDarkMode={isDarkMode}
-      />
+        <StoryReaderHeader
+          story={story}
+          onClose={handleBack}
+          onSettingsClick={handleSettingsClick}
+          onToggleFavorite={handleToggleFavorite}
+          isUpdatingFavorite={isUpdatingFavorite}
+          isDarkMode={isDarkMode}
+          isAutoScrolling={isAutoScrolling}
+          isPaused={isPaused}
+          isManuallyPaused={isManuallyPaused}
+          onToggleAutoScroll={toggleAutoScroll}
+        />
 
       <StoryReaderContent
         story={story}
@@ -113,11 +117,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
           setShowReadingGuide={setShowReadingGuide}
           onMarkAsRead={handleMarkAsRead}
           isRead={story.status === 'read'}
-          isAutoScrolling={isAutoScrolling}
-          isPaused={isPaused}
-          onToggleAutoScroll={toggleAutoScroll}
           isUpdatingReadStatus={isUpdatingReadStatus}
-          isManuallyPaused={isManuallyPaused}
         />
       </CollapsibleControls>
 
@@ -128,11 +128,12 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         isDarkMode={isDarkMode}
       />
 
-      <AutoScrollIndicator
+      {/* Nouveau bouton flottant d'auto-scroll */}
+      <FloatingAutoScrollButton
         isAutoScrolling={isAutoScrolling}
         isPaused={isPaused}
-        onPauseScroll={handlePauseScroll}
-        onResumeScroll={handleResumeScroll}
+        isManuallyPaused={isManuallyPaused}
+        onToggleAutoScroll={toggleAutoScroll}
         isDarkMode={isDarkMode}
       />
 
