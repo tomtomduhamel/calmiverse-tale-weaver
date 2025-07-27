@@ -46,12 +46,30 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
         </Button>
 
         {/* Titre et temps de lecture */}
-        
+        <div className="flex-1 text-center">
+          <h1 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            {story.title}
+          </h1>
+          <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Histoire personnalisée pour {story.childrenNames?.[0] || 'votre enfant'}
+          </div>
+          <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            {readingTime} • {new Date(story.createdAt).toLocaleDateString('fr-FR')}
+          </div>
+        </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2">
           {/* Contrôle de défilement automatique */}
-          {onToggleAutoScroll && <AutoScrollHeaderButton isAutoScrolling={isAutoScrolling} isPaused={isPaused} isManuallyPaused={isManuallyPaused} onToggleAutoScroll={onToggleAutoScroll} isDarkMode={isDarkMode} />}
+          {onToggleAutoScroll && (
+            <AutoScrollHeaderButton
+              isAutoScrolling={isAutoScrolling}
+              isPaused={isPaused}
+              isManuallyPaused={isManuallyPaused}
+              onToggleAutoScroll={onToggleAutoScroll}
+              isDarkMode={isDarkMode}
+            />
+          )}
           
           {/* Bouton favori */}
           {onToggleFavorite && <FavoriteReaderButton isFavorite={story.isFavorite || false} onToggle={handleToggleFavorite} isLoading={isUpdatingFavorite} />}
@@ -75,13 +93,7 @@ const AutoScrollHeaderButton: React.FC<{
   isManuallyPaused: boolean;
   onToggleAutoScroll: () => void;
   isDarkMode: boolean;
-}> = ({
-  isAutoScrolling,
-  isPaused,
-  isManuallyPaused,
-  onToggleAutoScroll,
-  isDarkMode
-}) => {
+}> = ({ isAutoScrolling, isPaused, isManuallyPaused, onToggleAutoScroll, isDarkMode }) => {
   const getButtonState = () => {
     if (isAutoScrolling) {
       return {
@@ -103,15 +115,20 @@ const AutoScrollHeaderButton: React.FC<{
       };
     }
   };
-  const {
-    icon,
-    tooltip,
-    className
-  } = getButtonState();
-  return <TooltipProvider>
+
+  const { icon, tooltip, className } = getButtonState();
+
+  return (
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="sm" onClick={onToggleAutoScroll} className={`transition-transform hover:scale-105 ${className}`} aria-label={tooltip}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleAutoScroll}
+            className={`transition-transform hover:scale-105 ${className}`}
+            aria-label={tooltip}
+          >
             {icon}
           </Button>
         </TooltipTrigger>
@@ -119,5 +136,6 @@ const AutoScrollHeaderButton: React.FC<{
           <p>{tooltip}</p>
         </TooltipContent>
       </Tooltip>
-    </TooltipProvider>;
+    </TooltipProvider>
+  );
 };
