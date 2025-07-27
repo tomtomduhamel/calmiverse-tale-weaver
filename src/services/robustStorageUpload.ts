@@ -6,6 +6,7 @@ export interface UploadResult {
   url?: string;
   error?: string;
   bucketUsed?: string;
+  cleanFilename?: string; // Nom de fichier propre pour affichage
 }
 
 export const robustStorageUpload = {
@@ -72,7 +73,8 @@ export const robustStorageUpload = {
           return {
             success: true,
             url: urlData.publicUrl,
-            bucketUsed: bucketName
+            bucketUsed: bucketName,
+            cleanFilename: filename // Retourner le nom de fichier original propre
           };
 
         } catch (error) {

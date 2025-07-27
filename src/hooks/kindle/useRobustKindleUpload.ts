@@ -107,6 +107,9 @@ export const useRobustKindleUpload = () => {
         ? story.objective 
         : story.objective?.name || story.objective?.value || '';
 
+      // Utiliser le nom de fichier propre pour le webhook Kindle
+      const kindleFilename = uploadResult.cleanFilename || filename;
+
       const webhookData = {
         firstname: userData.firstname || "",
         lastname: userData.lastname || "",
@@ -116,7 +119,7 @@ export const useRobustKindleUpload = () => {
         objective: objectiveText,
         kindleEmail: userData.kindle_email,
         epubUrl: uploadResult.url,
-        epubFilename: filename
+        epubFilename: kindleFilename
       };
 
       // 6. Envoyer au webhook N8N
