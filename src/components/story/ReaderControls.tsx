@@ -9,7 +9,6 @@ import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 import { ShareStoryDialog } from "./ShareStoryDialog";
 import { useShareDialog } from "@/hooks/story/reader/useShareDialog";
-
 interface ReaderControlsProps {
   fontSize: number;
   setFontSize: (size: number) => void;
@@ -27,7 +26,6 @@ interface ReaderControlsProps {
   isUpdatingReadStatus: boolean;
   isManuallyPaused: boolean;
 }
-
 const ReaderControls: React.FC<ReaderControlsProps> = ({
   fontSize,
   setFontSize,
@@ -46,32 +44,29 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   isManuallyPaused
 }) => {
   const [isMounted, setIsMounted] = useState(false);
-  const { showShareDialog, openShareDialog, closeShareDialog } = useShareDialog();
-
+  const {
+    showShareDialog,
+    openShareDialog,
+    closeShareDialog
+  } = useShareDialog();
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
   const handleFontSizeChange = (value: number[]) => {
     setFontSize(value[0]);
   };
-
   const handleToggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
-
   const handleReadingGuideClick = () => {
     setShowReadingGuide(true);
   };
-
   const handleMarkAsReadClick = async () => {
     if (onMarkAsRead) {
       await onMarkAsRead(storyId);
     }
   };
-
-  return (
-    <>
+  return <>
       <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} border-t p-4 transition-colors duration-300`}>
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -86,13 +81,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
               </div>
               
-              <AutoScrollControl 
-                isAutoScrolling={isAutoScrolling} 
-                isPaused={isPaused} 
-                onToggleAutoScroll={onToggleAutoScroll} 
-                isDarkMode={isDarkMode} 
-                isManuallyPaused={isManuallyPaused} 
-              />
+              <AutoScrollControl isAutoScrolling={isAutoScrolling} isPaused={isPaused} onToggleAutoScroll={onToggleAutoScroll} isDarkMode={isDarkMode} isManuallyPaused={isManuallyPaused} />
             </div>
 
             {/* Colonne 2: Apparence */}
@@ -112,14 +101,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 <Label className={`block text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   Taille du texte
                 </Label>
-                <Slider 
-                  defaultValue={[fontSize]} 
-                  max={30} 
-                  min={12} 
-                  step={1} 
-                  onValueChange={handleFontSizeChange} 
-                  className="mt-2" 
-                />
+                <Slider defaultValue={[fontSize]} max={30} min={12} step={1} onValueChange={handleFontSizeChange} className="mt-2" />
               </div>
             </div>
 
@@ -129,43 +111,22 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 Options
               </h3>
               <div className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start" 
-                  onClick={handleReadingGuideClick} 
-                  disabled={!isMounted}
-                >
+                <Button variant="outline" className="w-full justify-start" onClick={handleReadingGuideClick} disabled={!isMounted}>
                   <Bookmark className="h-4 w-4 mr-2" />
                   Guide de lecture
                 </Button>
                 
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start" 
-                  onClick={handleMarkAsReadClick} 
-                  disabled={isRead || isUpdatingReadStatus || !onMarkAsRead}
-                >
-                  {isRead ? (
-                    <>
+                <Button variant="outline" className="w-full justify-start" onClick={handleMarkAsReadClick} disabled={isRead || isUpdatingReadStatus || !onMarkAsRead}>
+                  {isRead ? <>
                       <BookOpenCheck className="h-4 w-4 mr-2" />
                       Marqué comme lu
-                    </>
-                  ) : (
-                    <>
+                    </> : <>
                       <CheckCircle className="h-4 w-4 mr-2 animate-pulse" />
                       Marquer comme lu
-                    </>
-                  )}
+                    </>}
                 </Button>
 
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start" 
-                  onClick={openShareDialog}
-                >
-                  <Share className="h-4 w-4 mr-2" />
-                  Partager l'histoire
-                </Button>
+                
                 
                 {/* Bouton de diagnostic technique */}
                 <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
@@ -176,13 +137,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
       </div>
 
       {/* Dialog de partage */}
-      <ShareStoryDialog 
-        storyId={storyId}
-        isOpen={showShareDialog}
-        onClose={closeShareDialog}
-      />
-    </>
-  );
+      <ShareStoryDialog storyId={storyId} isOpen={showShareDialog} onClose={closeShareDialog} />
+    </>;
 };
-
 export default ReaderControls;
