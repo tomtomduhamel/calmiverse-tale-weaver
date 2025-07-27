@@ -1,4 +1,5 @@
 
+// Force recompilation after AutoScrollIndicator removal
 import React from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
