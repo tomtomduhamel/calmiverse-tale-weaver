@@ -2,14 +2,18 @@
  * Translations from technical objective values to French labels
  */
 export const objectiveTranslations: Record<string, string> = {
+  // Objectifs principaux (correspondant aux choix initiaux de l'utilisateur)
+  'sleep': 'Aider à s\'endormir',
+  'focus': 'Se concentrer',
+  'relax': 'Se détendre',
+  'fun': 'S\'amuser',
+  
   // Sleep-related objectives
-  'sleep': 'Histoire pour s\'endormir',
   'bedtime': 'Histoire du coucher',
   'calm': 'Histoire apaisante',
   'relaxation': 'Histoire de relaxation',
   
   // Fun and entertainment
-  'fun': 'Histoire amusante',
   'adventure': 'Histoire d\'aventure',
   'magic': 'Histoire magique',
   'fantasy': 'Histoire fantastique',
