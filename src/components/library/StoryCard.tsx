@@ -135,13 +135,13 @@ const StoryCard: React.FC<StoryCardProps> = ({
           error={story.error}
         />
         
-        {/* Bouton marquer comme lu pour toutes les histoires sauf celles déjà lues */}
-        {story.status !== "read" && onMarkAsRead && (
+        {/* Bouton marquer comme lu/non lu pour toutes les histoires */}
+        {onMarkAsRead && (
           <div className="mt-3" data-mark-as-read-button>
             <MarkAsReadButton 
               storyId={story.id}
               onMarkAsRead={onMarkAsRead}
-              isRead={false}
+              isRead={story.status === "read"}
               isUpdatingReadStatus={isUpdatingReadStatus}
               isDarkMode={false}
             />
