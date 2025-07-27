@@ -47,6 +47,7 @@ export const useN8nStoryFromTitle = () => {
       // CORRECTION CRITIQUE: Utiliser le bon webhook pour la création d'histoire
       const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
       
+      // Payload simplifié pour éviter les erreurs de parsing n8n
       const payload = {
         action: 'create_story_from_title',
         selectedTitle: data.selectedTitle,
@@ -54,19 +55,11 @@ export const useN8nStoryFromTitle = () => {
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         childrenGenders: data.childrenGenders,
-        childrenData: childrenForPrompt.map(child => ({
-          id: child.id,
-          name: child.name,
-          gender: child.gender,
-          birthDate: child.birthDate.toISOString(),
-          age: Math.floor((Date.now() - child.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-        })),
         userId: user.id,
         userEmail: user.email,
-        storyPrompt, // Prompt avancé avec contexte multi-personnages et titre
-        requestType: 'story_creation',
+        storyPrompt, // Prompt essentiel pour la génération
         timestamp: new Date().toISOString(),
-        requestId: `story-from-title-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        requestId: `story-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       };
 
       console.log('[N8nStoryFromTitle] Envoi vers n8n avec payload:', payload);
