@@ -64,40 +64,28 @@ const ChildrenSearchBar: React.FC<ChildrenSearchBarProps> = ({
         {/* Gender Filter with Icons */}
         <div className="flex gap-1">
           <Button
-            variant={genderFilter === 'all' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => onGenderFilterChange('all')}
-            className="bg-background/50 border-border/50 hover:bg-primary/10"
-          >
-            <Filter className="h-4 w-4" />
-            {!isMobile && <span className="ml-2">Tous</span>}
-          </Button>
-          <Button
             variant={genderFilter === 'boy' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onGenderFilterChange('boy')}
+            onClick={() => onGenderFilterChange(genderFilter === 'boy' ? 'all' : 'boy')}
             className="bg-background/50 border-border/50 hover:bg-blue-100"
           >
             <User className="h-4 w-4 text-blue-500" />
-            {!isMobile && <span className="ml-2">Garçons</span>}
           </Button>
           <Button
             variant={genderFilter === 'girl' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onGenderFilterChange('girl')}
+            onClick={() => onGenderFilterChange(genderFilter === 'girl' ? 'all' : 'girl')}
             className="bg-background/50 border-border/50 hover:bg-pink-100"
           >
             <Heart className="h-4 w-4 text-pink-500" />
-            {!isMobile && <span className="ml-2">Filles</span>}
           </Button>
           <Button
             variant={genderFilter === 'pet' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onGenderFilterChange('pet')}
+            onClick={() => onGenderFilterChange(genderFilter === 'pet' ? 'all' : 'pet')}
             className="bg-background/50 border-border/50 hover:bg-orange-100"
           >
             <Cat className="h-4 w-4 text-orange-500" />
-            {!isMobile && <span className="ml-2">Animaux</span>}
           </Button>
         </div>
 
