@@ -55,7 +55,7 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
               </div>
               <div>
                 <p className="text-2xl font-bold text-secondary">{petsCount}</p>
-                <p className="text-sm text-muted-foreground">Animal{petsCount > 1 ? 'aux' : ''}</p>
+                <p className="text-sm text-muted-foreground">Anim{petsCount > 1 ? 'aux' : 'al'}</p>
               </div>
             </div>
           </Card>
