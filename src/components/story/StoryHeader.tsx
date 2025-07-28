@@ -31,9 +31,9 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
       <div className="flex-1"></div>
       <div className="text-center">
         <ReactMarkdown className="text-2xl font-bold">{story.title}</ReactMarkdown>
-        {childName && (
+        {story.childrenNames && story.childrenNames.length > 0 && (
           <p className={`mt-1 ${isDarkMode ? "text-gray-300" : "text-muted-foreground"}`}>
-            Histoire personnalisée pour {childName}
+            Histoire personnalisée pour {story.childrenNames.join(", ")}
           </p>
         )}
         <div className={`flex items-center justify-center gap-2 mt-1 text-sm ${isDarkMode ? "text-gray-400" : "text-muted-foreground"}`}>
