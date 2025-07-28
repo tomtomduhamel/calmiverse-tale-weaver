@@ -2,18 +2,20 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, BookOpen, Users, Sparkles } from "lucide-react";
+import { Plus, BookOpen, Users, Sparkles, Heart } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 interface ProfilesHeaderV2Props {
   onShowForm: () => void;
   onCreateStory?: () => void;
   childrenCount: number;
+  petsCount: number;
   totalStories?: number;
 }
 const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
   onShowForm,
   onCreateStory,
   childrenCount,
+  petsCount,
   totalStories = 0
 }) => {
   const isMobile = useIsMobile();
@@ -33,7 +35,7 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
 
       {/* Stats Cards - Centered */}
       <div className="flex justify-center">
-        <div className="grid grid-cols-2 gap-4 max-w-md">
+        <div className="grid grid-cols-3 gap-4 max-w-2xl">
           <Card className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
@@ -42,6 +44,18 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
               <div>
                 <p className="text-2xl font-bold text-primary">{childrenCount}</p>
                 <p className="text-sm text-muted-foreground">Enfant{childrenCount > 1 ? 's' : ''}</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-gradient-to-br from-secondary/5 to-secondary/10 border-secondary/20">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center">
+                <Heart className="w-5 h-5 text-secondary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-secondary">{petsCount}</p>
+                <p className="text-sm text-muted-foreground">Animal{petsCount > 1 ? 'aux' : ''}</p>
               </div>
             </div>
           </Card>

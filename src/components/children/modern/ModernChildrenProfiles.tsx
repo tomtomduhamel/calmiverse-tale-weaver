@@ -162,13 +162,18 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
     onCreateStory?.();
   };
 
+  // Séparer les enfants des animaux de compagnie
+  const actualChildren = children.filter(child => child.gender !== 'pet');
+  const pets = children.filter(child => child.gender === 'pet');
+
   return (
     <div className="space-y-8">
       {/* Header */}
         <ProfilesHeaderV2
           onShowForm={handleShowForm}
           onCreateStory={onCreateStory}
-          childrenCount={children.length}
+          childrenCount={actualChildren.length}
+          petsCount={pets.length}
           totalStories={totalStories || 0}
         />
 
