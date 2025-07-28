@@ -44,6 +44,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   const [sortBy, setSortBy] = useState<'name' | 'age' | 'created'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [ageFilter, setAgeFilter] = useState<'all' | 'toddler' | 'preschool' | 'school'>('all');
+  const [genderFilter, setGenderFilter] = useState<'all' | 'boy' | 'girl' | 'pet'>('all');
 
   // Filter and sort children
   const filteredAndSortedChildren = useMemo(() => {
@@ -61,7 +62,10 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
       else if (ageFilter === 'preschool') matchesAge = age >= 3 && age <= 5;
       else if (ageFilter === 'school') matchesAge = age >= 6;
 
-      return matchesSearch && matchesAge;
+      // Gender filter
+      const matchesGender = genderFilter === 'all' || child.gender === genderFilter;
+
+      return matchesSearch && matchesAge && matchesGender;
     });
 
     // Sort
@@ -82,7 +86,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
     });
 
     return filtered;
-  }, [children, searchTerm, sortBy, sortOrder, ageFilter]);
+  }, [children, searchTerm, sortBy, sortOrder, ageFilter, genderFilter]);
 
   const resetForm = () => {
     setChildName("");
@@ -188,6 +192,8 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
           onSortOrderChange={setSortOrder}
           ageFilter={ageFilter}
           onAgeFilterChange={setAgeFilter}
+          genderFilter={genderFilter}
+          onGenderFilterChange={setGenderFilter}
         />
       )}
 
