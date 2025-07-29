@@ -7,6 +7,7 @@ import MinimalStoryCreator from "@/components/story/MinimalStoryCreator";
 /**
  * Page simplifiée pour la création d'histoires
  * Utilise le composant autonome MinimalStoryCreator
+ * Navigation corrigée avec useAppNavigation
  */
 const MinimalStoryPage: React.FC = () => {
   const { navigateToLibrary } = useAppNavigation();
