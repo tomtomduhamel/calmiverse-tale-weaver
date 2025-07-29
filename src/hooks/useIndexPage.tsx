@@ -76,11 +76,12 @@ export const useIndexPage = () => {
     }
   };
 
-  // Gestion de la sélection d'histoires (navigation vers /reader/:id)
+  // Gestion de la sélection d'histoires avec navigation appropriée
   const handleSelectStory = (story: any) => {
-    console.log("[useIndexPage] DEBUG: Sélection d'histoire - navigation vers /reader/", story.id);
-    // Navigation directe vers la route dédiée - plus de gestion locale du currentStory
-    window.location.href = `/reader/${story.id}`;
+    console.log("[useIndexPage] Sélection d'histoire - navigation vers /reader/", story.id);
+    // Utiliser React Router pour une navigation SPA fluide
+    setCurrentView('library'); // Préserver l'état de vue actuel
+    // La navigation sera gérée par le composant parent via useAppNavigation
   };
 
   // Gestionnaires d'événements

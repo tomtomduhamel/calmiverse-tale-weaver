@@ -35,6 +35,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   const { isMonitoring, startMonitoring } = useRealtimeStoryMonitor({
     onStoryCreated: (story) => {
       console.log('[TitleBasedStoryCreator] Histoire détectée par Realtime:', story.id);
+      // Redirection immédiate vers l'histoire créée
       onStoryCreated(story.id);
     },
     onTimeout: () => {

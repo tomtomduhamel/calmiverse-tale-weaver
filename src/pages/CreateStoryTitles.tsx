@@ -24,16 +24,12 @@ const CreateStoryTitles: React.FC = () => {
         title: "Création en cours",
         description: "Votre histoire est en cours de génération. Vérifiez votre bibliothèque dans quelques minutes.",
       });
+      navigate("/library");
     } else {
-      // Succès normal
-      toast({
-        title: "Histoire créée avec succès",
-        description: "Votre histoire personnalisée a été créée et ajoutée à votre bibliothèque",
-      });
+      // Succès normal - rediriger directement vers l'histoire créée
+      console.log("[CreateStoryTitles] Redirection vers l'histoire créée:", storyId);
+      navigate(`/reader/${storyId}`);
     }
-    
-    // Dans tous les cas, rediriger vers la bibliothèque
-    navigate("/library");
   };
 
   const handleBack = () => {
