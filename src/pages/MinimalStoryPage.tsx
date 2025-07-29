@@ -19,9 +19,7 @@ const MinimalStoryPage: React.FC = () => {
         <h1 className="text-2xl font-bold">Création d'histoire pour vos enfants</h1>
       </div>
       
-      <div className="bg-muted/10 p-3 rounded-lg border border-muted mb-6">
-        
-      </div>
+      
       
       <MinimalStoryCreator />
     </div>;
