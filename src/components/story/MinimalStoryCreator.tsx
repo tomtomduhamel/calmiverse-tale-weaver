@@ -8,11 +8,15 @@ import StatusMessages from "@/components/story/minimal/StatusMessages";
 import LoadingState from "@/components/story/minimal/LoadingState";
 import SubmitButton from "@/components/story/minimal/SubmitButton";
 
+interface MinimalStoryCreatorProps {
+  preSelectedChildId?: string;
+}
+
 /**
  * Composant autonome et minimaliste pour la création d'histoires
  * Contourne les problèmes des systèmes complexes existants
  */
-const MinimalStoryCreator: React.FC = () => {
+const MinimalStoryCreator: React.FC<MinimalStoryCreatorProps> = ({ preSelectedChildId }) => {
   const navigate = useNavigate();
   const {
     children,
@@ -26,7 +30,7 @@ const MinimalStoryCreator: React.FC = () => {
     setSelectedObjective,
     handleChildToggle,
     handleSubmit
-  } = useMinimalStoryCreator();
+  } = useMinimalStoryCreator(preSelectedChildId);
 
   // Afficher un loader pendant le chargement des données
   if (isLoading) {

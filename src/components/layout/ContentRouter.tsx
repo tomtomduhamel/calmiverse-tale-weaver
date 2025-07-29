@@ -94,7 +94,14 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
         onAddChild={onAddChild}
         onUpdateChild={onUpdateChild}
         onDeleteChild={onDeleteChild}
-        onCreateStory={() => onViewChange("create")}
+        onCreateStory={(childId) => {
+          if (childId) {
+            // Navigate to create story with pre-selected child
+            window.location.href = `/create-story-simple?childId=${childId}`;
+          } else {
+            onViewChange("create");
+          }
+        }}
       />
     ),
     

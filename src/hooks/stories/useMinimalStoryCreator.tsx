@@ -7,7 +7,7 @@ import type { Child } from "@/types/child";
 import type { Objective } from "@/types/story";
 import { toast } from "@/hooks/use-toast";
 
-export const useMinimalStoryCreator = () => {
+export const useMinimalStoryCreator = (preSelectedChildId?: string) => {
   const navigate = useNavigate();
   const { generateStory } = useStoryGeneration();
   
@@ -54,8 +54,10 @@ export const useMinimalStoryCreator = () => {
           { id: "fun", label: "S'amuser", value: "fun" },
         ]);
         
-        // Sélectionner automatiquement le premier enfant si disponible
-        if (mappedChildren.length > 0) {
+        // Sélectionner automatiquement l'enfant pré-sélectionné ou le premier enfant si disponible
+        if (preSelectedChildId && mappedChildren.some(child => child.id === preSelectedChildId)) {
+          setSelectedChildrenIds([preSelectedChildId]);
+        } else if (mappedChildren.length > 0) {
           setSelectedChildrenIds([mappedChildren[0].id]);
         }
         
@@ -76,7 +78,7 @@ export const useMinimalStoryCreator = () => {
     };
     
     loadData();
-  }, []);
+  }, [preSelectedChildId]);
   
   // Gestionnaire de sélection d'enfant
   const handleChildToggle = (childId: string) => {

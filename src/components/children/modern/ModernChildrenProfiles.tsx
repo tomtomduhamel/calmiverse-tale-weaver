@@ -11,7 +11,7 @@ interface ModernChildrenProfilesProps {
   onAddChild: (child: Omit<Child, "id">) => Promise<string>;
   onUpdateChild: (childId: string, updatedChild: Partial<Child>) => Promise<void>;
   onDeleteChild: (childId: string) => Promise<void>;
-  onCreateStory?: () => void;
+  onCreateStory?: (childId?: string) => void;
   storiesCountMap?: Record<string, number>;
   totalStories?: number;
 }
@@ -162,8 +162,8 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   };
 
   const handleCreateStoryForChild = (childId: string) => {
-    // Could be enhanced to pass specific child ID to story creation
-    onCreateStory?.();
+    // Pass the specific child ID to story creation
+    onCreateStory?.(childId);
   };
 
   // Séparer les enfants des animaux de compagnie

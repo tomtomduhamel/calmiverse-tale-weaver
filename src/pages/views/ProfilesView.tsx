@@ -10,7 +10,7 @@ interface ProfilesViewProps {
   onAddChild: (child: Omit<Child, "id">) => Promise<string>;
   onUpdateChild: (childId: string, updatedChild: Partial<Child>) => Promise<void>;
   onDeleteChild: (childId: string) => Promise<void>;
-  onCreateStory?: () => void;
+  onCreateStory?: (childId?: string) => void;
   storiesCountMap?: Record<string, number>;
   totalStories?: number;
 }

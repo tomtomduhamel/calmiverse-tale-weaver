@@ -46,7 +46,13 @@ const ChildrenListPage: React.FC = () => {
         onAddChild={handleAddChild} 
         onUpdateChild={handleUpdateChild} 
         onDeleteChild={handleDeleteChild} 
-        onCreateStory={() => navigate("/create-story-simple")}
+        onCreateStory={(childId) => {
+          if (childId) {
+            navigate(`/create-story-simple?childId=${childId}`);
+          } else {
+            navigate("/create-story-simple");
+          }
+        }}
         totalStories={totalStories}
         storiesCountMap={storiesCountMap}
       />
