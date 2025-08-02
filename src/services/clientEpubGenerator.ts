@@ -1,6 +1,10 @@
 
 import JSZip from 'jszip';
 import type { Story } from '@/types/story';
+import { translateObjective, formatFrenchTitle } from '@/utils/objectiveTranslations';
+import { calculateReadingTime } from '@/utils/readingTime';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 export interface EpubGenerationResult {
   success: boolean;
@@ -100,7 +104,7 @@ export const clientEpubGenerator = {
   async createContentOpf(oebps: JSZip, story: Story): Promise<void> {
     const bookId = `calmi-${Date.now()}`;
     const childrenText = story.childrenNames?.join(', ') || 'Enfant';
-    const cleanTitle = this.cleanEpubTitle(story.title);
+    const cleanTitle = formatFrenchTitle(this.cleanEpubTitle(story.title));
     
     const contentOpf = `<?xml version="1.0" encoding="UTF-8"?>
 <package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid">
@@ -130,7 +134,7 @@ export const clientEpubGenerator = {
    * Crée le fichier toc.ncx (navigation)
    */
   async createTocNcx(oebps: JSZip, story: Story): Promise<void> {
-    const cleanTitle = this.cleanEpubTitle(story.title);
+    const cleanTitle = formatFrenchTitle(this.cleanEpubTitle(story.title));
     const tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
 <ncx version="2005-1" xmlns="http://www.daisy.org/z3986/2005/ncx/">
   <head>
@@ -159,11 +163,11 @@ export const clientEpubGenerator = {
    * Crée le fichier story.html avec le contenu
    */
   async createStoryHtml(oebps: JSZip, story: Story): Promise<void> {
-    const childrenText = story.childrenNames?.join(' et ') || 'votre enfant';
-    const objectiveText = typeof story.objective === 'string' 
-      ? story.objective 
-      : story.objective?.name || story.objective?.value || '';
-    const cleanTitle = this.cleanEpubTitle(story.title);
+    const childrenText = story.childrenNames?.join(', ') || 'votre enfant';
+    const translatedObjective = translateObjective(story.objective);
+    const cleanTitle = formatFrenchTitle(this.cleanEpubTitle(story.title));
+    const readingTime = calculateReadingTime(story.content);
+    const formattedDate = format(new Date(story.createdAt), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr });
 
     // Formater le contenu en paragraphes
     const formattedContent = story.content
@@ -183,8 +187,9 @@ export const clientEpubGenerator = {
 <body>
   <div class="title-page">
     <h1>${this.escapeXml(cleanTitle)}</h1>
-    ${objectiveText ? `<p class="objective">${this.escapeXml(objectiveText)}</p>` : ''}
-    <p class="children">Pour ${this.escapeXml(childrenText)}</p>
+    ${translatedObjective ? `<p class="objective">${this.escapeXml(translatedObjective)}</p>` : ''}
+    <p class="children">Histoire personnalisée pour ${this.escapeXml(childrenText)}</p>
+    <p class="reading-info">${readingTime} • ${formattedDate}</p>
     <p class="author">Créé par Calmi</p>
   </div>
   
@@ -231,6 +236,12 @@ body {
   font-weight: bold;
   color: #e74c3c;
   margin: 1em 0;
+}
+
+.title-page .reading-info {
+  color: #7f8c8d;
+  font-size: 0.9em;
+  margin: 0.5em 0;
 }
 
 .title-page .author {
