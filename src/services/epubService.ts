@@ -1,7 +1,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import type { Story } from '@/types/story';
-import { translateObjective, cleanEpubTitle } from '@/utils/objectiveTranslations';
+import { translateObjective, cleanEpubTitle, formatFrenchTitle } from '@/utils/objectiveTranslations';
+import { calculateReadingTime } from '@/utils/readingTime';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 export const generateAndUploadEpub = async (story: Story): Promise<string> => {
   try {
@@ -141,25 +144,28 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
 
 function formatStoryForKindle(story: Story): string {
   try {
-    // Formater les noms des enfants
+    // Formater les noms des enfants avec des virgules
     const childrenText = story.childrenNames && story.childrenNames.length > 0
-      ? story.childrenNames.length === 1 
-        ? story.childrenNames[0]
-        : `${story.childrenNames.slice(0, -1).join(', ')} et ${story.childrenNames[story.childrenNames.length - 1]}`
+      ? story.childrenNames.join(', ')
       : "votre enfant";
 
     // Traduire l'objectif en français
     const objectiveText = translateObjective(story.objective);
     
-    // Nettoyer le titre pour l'affichage
-    const displayTitle = cleanEpubTitle(story.title);
+    // Nettoyer et formater le titre selon les règles françaises
+    const displayTitle = formatFrenchTitle(cleanEpubTitle(story.title));
+
+    // Calculer la durée de lecture et formater la date
+    const readingTime = calculateReadingTime(story.content);
+    const createdDate = format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr });
 
     // Page de titre formatée
     const titlePage = `
       <div class="title-page">
         <h1>${escapeHtml(displayTitle)}</h1>
-        <p style="font-size: 1.2em; margin-bottom: 20px; font-style: italic;">${escapeHtml(objectiveText)}</p>
-        <p style="font-size: 1.1em;">Une histoire pour ${escapeHtml(childrenText)}</p>
+        <p style="font-size: 1.1em; margin-bottom: 10px;">Histoire personnalisée pour ${escapeHtml(childrenText)}</p>
+        <p style="font-size: 1.2em; margin-bottom: 10px; font-style: italic;">${escapeHtml(objectiveText)}</p>
+        <p style="font-size: 0.9em; color: #666; margin-bottom: 40px;">${readingTime} • ${createdDate}</p>
       </div>
     `;
 

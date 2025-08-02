@@ -207,12 +207,12 @@ function createOptimizedEpubFile(htmlContent: string, title: string): Uint8Array
   const files: { [key: string]: Uint8Array } = {};
   
   // Nettoyer le titre pour l'affichage dans les métadonnées (MÊME LOGIQUE QU'AU DESSUS)
-  const cleanTitle = title
+  const cleanTitle = formatFrenchTitle(title
     .replace(/^\d+_/, '') // Supprimer les chiffres au début
     .replace(/_/g, ' ')   // Remplacer les underscores par des espaces
     .replace(/[^a-zA-Z0-9\s-]/g, '') // Supprimer caractères spéciaux
     .replace(/\s+/g, ' ') // Nettoyer les espaces multiples
-    .trim();
+    .trim());
   
   // 1. mimetype (non compressé selon spec EPUB)
   files['mimetype'] = new TextEncoder().encode('application/epub+zip');
@@ -319,6 +319,37 @@ function calculateCRC32(data: Uint8Array): number {
     crc = table[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
   }
   return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+/**
+ * Formats a title according to French capitalization rules
+ */
+function formatFrenchTitle(title: string): string {
+  if (!title) return '';
+  
+  const words = title.toLowerCase().split(' ');
+  
+  // List of articles, prepositions and conjunctions that should stay lowercase
+  const lowercaseWords = [
+    'le', 'la', 'les', 'un', 'une', 'des', 'du', 'de', 'et', 'ou', 'à', 'au', 'aux',
+    'dans', 'sur', 'avec', 'pour', 'par', 'sans', 'sous', 'vers', 'chez', 'entre',
+    'jusqu', 'depuis', 'pendant', 'avant', 'après', 'mais', 'car', 'donc', 'or', 'ni'
+  ];
+  
+  return words.map((word, index) => {
+    // Always capitalize the first word
+    if (index === 0) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }
+    
+    // Keep lowercase words lowercase unless they're proper nouns
+    if (lowercaseWords.includes(word.toLowerCase())) {
+      return word.toLowerCase();
+    }
+    
+    // Capitalize other words (potential proper nouns or important words)
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
 }
 
 function escapeXml(text: string): string {

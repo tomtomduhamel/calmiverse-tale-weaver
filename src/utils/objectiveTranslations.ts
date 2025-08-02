@@ -3,10 +3,10 @@
  */
 export const objectiveTranslations: Record<string, string> = {
   // Objectifs principaux (correspondant aux choix initiaux de l'utilisateur)
-  'sleep': 'Aider à s\'endormir',
-  'focus': 'Se concentrer',
-  'relax': 'Se détendre',
-  'fun': 'S\'amuser',
+  'sleep': 'Endormissement',
+  'focus': 'Concentration',
+  'relax': 'Relaxation',
+  'fun': 'Amusement',
   
   // Sleep-related objectives
   'bedtime': 'Histoire du coucher',
@@ -89,4 +89,36 @@ export function generateCleanFilename(title: string): string {
     .replace(/\s+/g, '_')
     .substring(0, 50)
     .trim();
+}
+
+/**
+ * Formats a title according to French capitalization rules
+ * Only capitalize the first letter and proper nouns
+ */
+export function formatFrenchTitle(title: string): string {
+  if (!title) return '';
+  
+  const words = title.toLowerCase().split(' ');
+  
+  // List of articles, prepositions and conjunctions that should stay lowercase
+  const lowercaseWords = [
+    'le', 'la', 'les', 'un', 'une', 'des', 'du', 'de', 'et', 'ou', 'à', 'au', 'aux',
+    'dans', 'sur', 'avec', 'pour', 'par', 'sans', 'sous', 'vers', 'chez', 'entre',
+    'jusqu', 'depuis', 'pendant', 'avant', 'après', 'mais', 'car', 'donc', 'or', 'ni'
+  ];
+  
+  return words.map((word, index) => {
+    // Always capitalize the first word
+    if (index === 0) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }
+    
+    // Keep lowercase words lowercase unless they're proper nouns
+    if (lowercaseWords.includes(word.toLowerCase())) {
+      return word.toLowerCase();
+    }
+    
+    // Capitalize other words (potential proper nouns or important words)
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
 }
