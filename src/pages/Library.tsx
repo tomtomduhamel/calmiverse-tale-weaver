@@ -56,6 +56,9 @@ const Library: React.FC = () => {
         description: "L'histoire a été supprimée avec succès de votre bibliothèque"
       });
       console.log("[Library] DEBUG: Suppression terminée avec succès");
+      
+      // Rediriger vers la bibliothèque après suppression réussie
+      navigate("/library");
     } catch (error: any) {
       console.error("[Library] ERROR: Erreur lors de la suppression:", error);
       toast({
