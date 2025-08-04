@@ -108,7 +108,11 @@ const StoryCard: React.FC<StoryCardProps> = ({
               src={storyImageUrl} 
               alt={`Illustration de ${story.title}`}
               className="w-full max-w-32 h-24 object-cover rounded-lg shadow-sm"
+              onLoad={() => {
+                console.log('[StoryCard] Image chargée avec succès:', storyImageUrl);
+              }}
               onError={(e) => {
+                console.error('[StoryCard] Erreur de chargement image:', storyImageUrl, 'pour l\'histoire:', story.title);
                 // Masquer l'image si elle ne charge pas
                 (e.target as HTMLImageElement).style.display = 'none';
               }}

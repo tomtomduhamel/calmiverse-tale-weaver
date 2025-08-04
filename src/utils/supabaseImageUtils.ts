@@ -8,10 +8,15 @@
  * @returns L'URL publique de l'image ou null si pas d'image
  */
 export const getStoryImageUrl = (imagePath?: string | null): string | null => {
-  if (!imagePath) return null;
+  if (!imagePath) {
+    console.log('[getStoryImageUrl] Pas d\'image path fourni:', imagePath);
+    return null;
+  }
   
   const supabaseUrl = 'https://ioeihnoxvtpxtqhxklpw.supabase.co';
-  return `${supabaseUrl}/storage/v1/object/public/storyimages/${imagePath}`;
+  const imageUrl = `${supabaseUrl}/storage/v1/object/public/storyimages/${imagePath}`;
+  console.log('[getStoryImageUrl] URL générée:', imageUrl, 'pour le chemin:', imagePath);
+  return imageUrl;
 };
 
 /**
