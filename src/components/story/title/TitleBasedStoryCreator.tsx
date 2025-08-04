@@ -268,7 +268,24 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
   // Étape 2: Sélection du titre
   if (currentStep === 'titles') {
-    return;
+    return (
+      <div className="space-y-6">
+        <TitleSelector
+          titles={generatedTitles}
+          onSelectTitle={handleCreateStory}
+          onRegenerateTitles={canRegenerate ? handleRegenerateTitles : undefined}
+          canRegenerate={canRegenerate}
+          isCreatingStory={isCreatingStory}
+          isRegenerating={isGeneratingTitles}
+        />
+        
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={handleBack}>
+            Retour à la configuration
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   // Étape 3: Création en cours avec monitoring temps réel
