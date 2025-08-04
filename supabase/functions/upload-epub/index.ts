@@ -37,7 +37,7 @@ serve(async (req) => {
     console.log(`🔍 [upload-epub-${requestId}] Parsing request body...`);
     const startTime = Date.now();
     
-    const { content, filename, optimized = false } = await req.json();
+    const { content, filename, optimized = false, imageBlob = null } = await req.json();
     
     if (!content || !filename) {
       throw new Error('Contenu ou nom de fichier manquant');
@@ -60,7 +60,7 @@ serve(async (req) => {
     
     // Générer le fichier EPUB avec optimisations
     const epubStartTime = Date.now();
-    const epubBuffer = createOptimizedEpubFile(content, filename);
+    const epubBuffer = createOptimizedEpubFile(content, filename, imageBlob);
     const epubTime = Date.now() - epubStartTime;
     
     console.log(`📖 [upload-epub-${requestId}] EPUB généré en ${epubTime}ms, taille: ${epubBuffer.byteLength} bytes`);
@@ -203,7 +203,7 @@ serve(async (req) => {
   }
 });
 
-function createOptimizedEpubFile(htmlContent: string, title: string): Uint8Array {
+function createOptimizedEpubFile(htmlContent: string, title: string, imageBlob?: string | null): Uint8Array {
   const files: { [key: string]: Uint8Array } = {};
   
   // Nettoyer le titre pour l'affichage dans les métadonnées (MÊME LOGIQUE QU'AU DESSUS)
@@ -221,16 +221,27 @@ function createOptimizedEpubFile(htmlContent: string, title: string): Uint8Array
   const containerXml = `<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`;
   files['META-INF/container.xml'] = new TextEncoder().encode(containerXml);
   
+  // Ajouter l'image si fournie
+  if (imageBlob) {
+    try {
+      const imageData = Uint8Array.from(atob(imageBlob), c => c.charCodeAt(0));
+      files['OEBPS/cover.jpg'] = imageData;
+    } catch (error) {
+      console.warn('Erreur lors du décodage de l\'image:', error);
+    }
+  }
+
   // 3. OEBPS/content.opf (minifié) - CORRIGER LE CRÉATEUR
-  const contentOpf = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${escapeXml(cleanTitle)}</dc:title><dc:creator>Calmi</dc:creator><dc:language>fr</dc:language><dc:identifier id="uid">calmi-${Date.now()}</dc:identifier><meta property="dcterms:modified">${new Date().toISOString().split('.')[0]}Z</meta></metadata><manifest><item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="content" href="content.xhtml" media-type="application/xhtml+xml"/></manifest><spine toc="toc"><itemref idref="content"/></spine></package>`;
+  const contentOpf = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${escapeXml(cleanTitle)}</dc:title><dc:creator>Calmi</dc:creator><dc:language>fr</dc:language><dc:identifier id="uid">calmi-${Date.now()}</dc:identifier><meta property="dcterms:modified">${new Date().toISOString().split('.')[0]}Z</meta></metadata><manifest><item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="content" href="content.xhtml" media-type="application/xhtml+xml"/>${imageBlob ? '<item id="cover-image" href="cover.jpg" media-type="image/jpeg"/>' : ''}</manifest><spine toc="toc"><itemref idref="content"/></spine></package>`;
   files['OEBPS/content.opf'] = new TextEncoder().encode(contentOpf);
   
   // 4. OEBPS/toc.ncx (minifié)
   const tocNcx = `<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="calmi-${Date.now()}"/></head><docTitle><text>${escapeXml(cleanTitle)}</text></docTitle><navMap><navPoint id="navpoint-1" playOrder="1"><navLabel><text>Histoire</text></navLabel><content src="content.xhtml"/></navPoint></navMap></ncx>`;
   files['OEBPS/toc.ncx'] = new TextEncoder().encode(tocNcx);
   
-  // 5. OEBPS/content.xhtml (optimisé) - Utiliser le titre propre
-  const contentXhtml = `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${escapeXml(cleanTitle)}</title><style>body{font-family:Georgia,serif;font-size:16px;line-height:1.6;margin:20px}h1{text-align:center;font-size:2em;margin-bottom:30px}p{margin-bottom:15px}</style></head><body>${htmlContent}</body></html>`;
+  // 5. OEBPS/content.xhtml (optimisé) - Utiliser le titre propre et inclure l'image si disponible
+  const imageHtml = imageBlob ? '<img src="cover.jpg" alt="Couverture" style="max-width: 300px; height: auto; margin: 0 auto 20px; display: block; border-radius: 8px;"/>' : '';
+  const contentXhtml = `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${escapeXml(cleanTitle)}</title><style>body{font-family:Georgia,serif;font-size:16px;line-height:1.6;margin:20px}h1{text-align:center;font-size:2em;margin-bottom:30px}p{margin-bottom:15px}img{max-width:100%;height:auto}</style></head><body>${imageHtml}${htmlContent}</body></html>`;
   files['OEBPS/content.xhtml'] = new TextEncoder().encode(contentXhtml);
   
   return createOptimizedZipFile(files);

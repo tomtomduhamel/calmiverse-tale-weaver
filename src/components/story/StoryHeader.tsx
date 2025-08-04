@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
+import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 
 interface StoryHeaderProps {
   story: Story;
@@ -25,11 +26,26 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
   isDarkMode = false,
 }) => {
   const formattedDate = story.createdAt ? format(story.createdAt, "d MMMM yyyy 'à' HH:mm", { locale: fr }) : "";
+  const storyImageUrl = getStoryImageUrl(story.image_path);
   
   return (
     <div className="flex justify-between items-center mb-6 max-w-4xl mx-auto">
       <div className="flex-1"></div>
       <div className="text-center">
+        {/* Image de couverture si disponible */}
+        {storyImageUrl && (
+          <div className="mb-4 flex justify-center">
+            <img 
+              src={storyImageUrl} 
+              alt={`Illustration de ${story.title}`}
+              className="w-48 h-32 object-cover rounded-lg shadow-md"
+              onError={(e) => {
+                // Masquer l'image si elle ne charge pas
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
         <ReactMarkdown className="text-2xl font-bold">{story.title}</ReactMarkdown>
         {story.childrenNames && story.childrenNames.length > 0 && (
           <p className={`mt-1 ${isDarkMode ? "text-gray-300" : "text-muted-foreground"}`}>

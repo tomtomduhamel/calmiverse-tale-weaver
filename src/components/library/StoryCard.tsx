@@ -9,7 +9,8 @@ import { MarkAsReadButton } from "../story/reader/MarkAsReadButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Loader2, BookCheck, Sparkles } from "lucide-react";
+import { Loader2, BookCheck, Sparkles, Image as ImageIcon } from "lucide-react";
+import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 
 interface StoryCardProps {
   story: Story;
@@ -95,12 +96,34 @@ const StoryCard: React.FC<StoryCardProps> = ({
     }
   };
 
+  const storyImageUrl = getStoryImageUrl(story.image_path);
+
   return (
     <Card className={cardStyles} onClick={handleCardClick}>
       <CardContent className="pt-6 pb-2">
+        {/* Image de couverture si disponible */}
+        {storyImageUrl && (
+          <div className="mb-4 flex justify-center">
+            <img 
+              src={storyImageUrl} 
+              alt={`Illustration de ${story.title}`}
+              className="w-full max-w-32 h-24 object-cover rounded-lg shadow-sm"
+              onError={(e) => {
+                // Masquer l'image si elle ne charge pas
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+        
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2 flex-1">
             <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
+            {storyImageUrl && (
+              <div title="Histoire avec image">
+                <ImageIcon className="h-3 w-3 text-blue-500" />
+              </div>
+            )}
             {isRecent && story.status !== "read" && (
               <div className="flex items-center text-blue-600 text-xs">
                 <Sparkles className="h-3 w-3 mr-1" />

@@ -37,6 +37,7 @@ export interface Story {
   isFavorite?: boolean;
   updatedAt?: Date;
   sound_id?: string | null;
+  image_path?: string | null;
   settings?: StorySettings;
   story_analysis?: StoryAnalysis;
 }

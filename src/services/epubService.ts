@@ -5,6 +5,7 @@ import { translateObjective, cleanEpubTitle, formatFrenchTitle } from '@/utils/o
 import { calculateReadingTime } from '@/utils/readingTime';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { fetchStoryImageBlob } from '@/utils/supabaseImageUtils';
 
 export const generateAndUploadEpub = async (story: Story): Promise<string> => {
   try {
@@ -25,6 +26,17 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
     if (!kindleContent || kindleContent.length < 50) {
       throw new Error("Le contenu formaté pour Kindle est invalide");
     }
+
+    // Récupérer l'image de couverture si disponible
+    let imageBlob: Blob | null = null;
+    try {
+      imageBlob = await fetchStoryImageBlob(story.image_path);
+      if (imageBlob) {
+        console.log("🖼️ Image de couverture récupérée pour l'EPUB");
+      }
+    } catch (error) {
+      console.warn("⚠️ Impossible de récupérer l'image de couverture:", error);
+    }
     
     // Nettoyer le nom de fichier en utilisant la fonction de nettoyage appropriée
     const cleanTitle = cleanEpubTitle(story.title);
@@ -37,7 +49,8 @@ export const generateAndUploadEpub = async (story: Story): Promise<string> => {
 
     const requestBody = { 
       content: kindleContent, 
-      filename: cleanTitle
+      filename: cleanTitle,
+      imageBlob: imageBlob ? await blobToBase64(imageBlob) : null
     };
     
     console.log("📦 Corps de la requête:", {
@@ -192,4 +205,24 @@ function escapeHtml(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/**
+ * Convertit un Blob en chaîne base64
+ */
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        // Retourner seulement la partie base64 (sans le préfixe data:)
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      } else {
+        reject(new Error('Impossible de convertir le blob en base64'));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }

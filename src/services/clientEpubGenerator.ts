@@ -5,6 +5,7 @@ import { translateObjective, formatFrenchTitle } from '@/utils/objectiveTranslat
 import { calculateReadingTime } from '@/utils/readingTime';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { fetchStoryImageBlob } from '@/utils/supabaseImageUtils';
 
 export interface EpubGenerationResult {
   success: boolean;
@@ -27,10 +28,21 @@ export const clientEpubGenerator = {
 
       const zip = new JSZip();
       
+      // Récupérer l'image de couverture si disponible
+      let imageBlob: Blob | null = null;
+      try {
+        imageBlob = await fetchStoryImageBlob(story.image_path);
+        if (imageBlob) {
+          console.log("🖼️ Image de couverture récupérée pour l'EPUB client");
+        }
+      } catch (error) {
+        console.warn("⚠️ Impossible de récupérer l'image de couverture:", error);
+      }
+      
       // Structure EPUB standard
       await this.createMimeType(zip);
       await this.createMetaInf(zip);
-      await this.createOebps(zip, story);
+      await this.createOebps(zip, story, imageBlob);
       
       // Générer le fichier ZIP/EPUB
       const blob = await zip.generateAsync({
@@ -81,18 +93,23 @@ export const clientEpubGenerator = {
   /**
    * Crée le contenu principal OEBPS
    */
-  async createOebps(zip: JSZip, story: Story): Promise<void> {
+  async createOebps(zip: JSZip, story: Story, imageBlob?: Blob | null): Promise<void> {
     const oebps = zip.folder('OEBPS');
     if (!oebps) throw new Error('Impossible de créer le dossier OEBPS');
 
+    // Ajouter l'image de couverture si disponible
+    if (imageBlob) {
+      oebps.file("cover.jpg", imageBlob);
+    }
+
     // Fichier de configuration OPF
-    await this.createContentOpf(oebps, story);
+    await this.createContentOpf(oebps, story, !!imageBlob);
     
     // Table des matières NCX
     await this.createTocNcx(oebps, story);
     
     // Contenu HTML de l'histoire
-    await this.createStoryHtml(oebps, story);
+    await this.createStoryHtml(oebps, story, imageBlob);
     
     // CSS pour le style
     await this.createStyleCss(oebps);
@@ -101,7 +118,7 @@ export const clientEpubGenerator = {
   /**
    * Crée le fichier content.opf (métadonnées et structure)
    */
-  async createContentOpf(oebps: JSZip, story: Story): Promise<void> {
+  async createContentOpf(oebps: JSZip, story: Story, hasImage: boolean = false): Promise<void> {
     const bookId = `calmi-${Date.now()}`;
     const childrenText = story.childrenNames?.join(', ') || 'Enfant';
     const cleanTitle = formatFrenchTitle(this.cleanEpubTitle(story.title));
@@ -117,11 +134,12 @@ export const clientEpubGenerator = {
     <dc:description>Histoire personnalisée pour ${this.escapeXml(childrenText)}</dc:description>
     <meta name="cover" content="cover"/>
   </metadata>
-  <manifest>
-    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
-    <item id="style" href="style.css" media-type="text/css"/>
-    <item id="story" href="story.html" media-type="application/xhtml+xml"/>
-  </manifest>
+    <manifest>
+      <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+      <item id="style" href="style.css" media-type="text/css"/>
+      <item id="story" href="story.html" media-type="application/xhtml+xml"/>
+      ${hasImage ? '<item id="cover-image" href="cover.jpg" media-type="image/jpeg"/>' : ''}
+    </manifest>
   <spine toc="ncx">
     <itemref idref="story"/>
   </spine>
@@ -162,7 +180,7 @@ export const clientEpubGenerator = {
   /**
    * Crée le fichier story.html avec le contenu
    */
-  async createStoryHtml(oebps: JSZip, story: Story): Promise<void> {
+  async createStoryHtml(oebps: JSZip, story: Story, imageBlob?: Blob | null): Promise<void> {
     const childrenText = story.childrenNames?.join(', ') || 'votre enfant';
     const translatedObjective = translateObjective(story.objective);
     const cleanTitle = formatFrenchTitle(this.cleanEpubTitle(story.title));
@@ -186,6 +204,7 @@ export const clientEpubGenerator = {
 </head>
 <body>
   <div class="title-page">
+    ${imageBlob ? '<img src="cover.jpg" alt="Couverture" style="max-width: 300px; height: auto; margin: 0 auto 20px; display: block; border-radius: 8px;"/>' : ''}
     <h1>${this.escapeXml(cleanTitle)}</h1>
     ${translatedObjective ? `<p class="objective">${this.escapeXml(translatedObjective)}</p>` : ''}
     <p class="children">Histoire personnalisée pour ${this.escapeXml(childrenText)}</p>
