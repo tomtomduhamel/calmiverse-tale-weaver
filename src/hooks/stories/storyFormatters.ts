@@ -6,6 +6,8 @@ export const formatStoriesFromSupabase = (supabaseStories: any[]): Story[] => {
 };
 
 export const formatStoryFromSupabase = (story: any): Story => {
+  console.log('[formatStoryFromSupabase] Mapping story:', story.id, 'avec image_path:', story.image_path);
+  
   return {
     id: story.id,
     id_stories: story.id,
@@ -25,6 +27,7 @@ export const formatStoryFromSupabase = (story: any): Story => {
     isFavorite: story.is_favorite || false,
     sharing: story.sharing,
     sound_id: story.sound_id,
-    story_analysis: story.story_analysis
+    story_analysis: story.story_analysis,
+    image_path: story.image_path || null
   };
 };

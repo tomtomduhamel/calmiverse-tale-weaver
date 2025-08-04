@@ -62,7 +62,14 @@ export const useStoriesQuery = () => {
       
       console.log(`Found ${data?.length || 0} stories for user ${user.id}`);
       
+      // Log des données brutes pour débogage
+      if (data && data.length > 0) {
+        console.log('[useStoriesQuery] Échantillon de données brutes:', data[0]);
+        console.log('[useStoriesQuery] Images détectées:', data.filter(s => s.image_path).map(s => ({ id: s.id, title: s.title, image_path: s.image_path })));
+      }
+      
       const formattedStories = formatStoriesFromSupabase(data || []);
+      console.log('[useStoriesQuery] Stories formatées avec images:', formattedStories.filter(s => s.image_path).map(s => ({ id: s.id, title: s.title, image_path: s.image_path })));
       setStories(formattedStories);
     } catch (err: any) {
       console.error("Error in useStoriesQuery:", err);
