@@ -203,10 +203,20 @@ serve(async (req) => {
   }
 });
 
+/**
+ * Crée un fichier EPUB optimisé avec structure complète pour Kindle
+ */
 function createOptimizedEpubFile(htmlContent: string, title: string, imageBlob?: string | null): Uint8Array {
+  console.log('[createOptimizedEpubFile] Début création EPUB:', {
+    title,
+    hasContent: !!htmlContent,
+    hasImage: !!(imageBlob && imageBlob.length > 0),
+    imageBlobLength: imageBlob?.length || 0
+  });
+
   const files: { [key: string]: Uint8Array } = {};
   
-  // Nettoyer le titre pour l'affichage dans les métadonnées (MÊME LOGIQUE QU'AU DESSUS)
+  // Nettoyer le titre pour l'affichage dans les métadonnées
   const cleanTitle = formatFrenchTitle(title
     .replace(/^\d+_/, '') // Supprimer les chiffres au début
     .replace(/_/g, ' ')   // Remplacer les underscores par des espaces
@@ -214,36 +224,208 @@ function createOptimizedEpubFile(htmlContent: string, title: string, imageBlob?:
     .replace(/\s+/g, ' ') // Nettoyer les espaces multiples
     .trim());
   
-  // 1. mimetype (non compressé selon spec EPUB)
+  // 1. mimetype (non compressé, obligatoire pour EPUB)
   files['mimetype'] = new TextEncoder().encode('application/epub+zip');
   
-  // 2. META-INF/container.xml (minifié)
-  const containerXml = `<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`;
+  // 2. META-INF/container.xml
+  const containerXml = `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`;
   files['META-INF/container.xml'] = new TextEncoder().encode(containerXml);
   
-  // Ajouter l'image si fournie
-  if (imageBlob) {
+  // Détection du type d'image et extension appropriée
+  const hasImage = imageBlob && imageBlob.length > 0;
+  let imageExtension = 'jpeg';
+  let imageMimeType = 'image/jpeg';
+  
+  if (hasImage && imageBlob) {
     try {
+      console.log('[createOptimizedEpubFile] Traitement image, taille base64:', imageBlob.length);
+      
+      // Décodage pour analyser les premiers bytes
       const imageData = Uint8Array.from(atob(imageBlob), c => c.charCodeAt(0));
-      files['OEBPS/cover.jpg'] = imageData;
+      
+      // Vérification des signatures de fichiers
+      if (imageData.length >= 8) {
+        // PNG signature: 89 50 4E 47 0D 0A 1A 0A
+        if (imageData[0] === 0x89 && imageData[1] === 0x50 && imageData[2] === 0x4E && imageData[3] === 0x47) {
+          imageExtension = 'png';
+          imageMimeType = 'image/png';
+          console.log('[createOptimizedEpubFile] Image détectée comme PNG');
+        }
+        // JPEG signature: FF D8 FF
+        else if (imageData[0] === 0xFF && imageData[1] === 0xD8 && imageData[2] === 0xFF) {
+          imageExtension = 'jpeg';
+          imageMimeType = 'image/jpeg';
+          console.log('[createOptimizedEpubFile] Image détectée comme JPEG');
+        } else {
+          console.warn('[createOptimizedEpubFile] Format d\'image non reconnu, utilisation JPEG par défaut');
+        }
+      }
+      
+      // Ajouter l'image avec la bonne extension
+      files[`OEBPS/cover.${imageExtension}`] = imageData;
+      console.log('[createOptimizedEpubFile] Image ajoutée:', `cover.${imageExtension}`, 'taille:', imageData.length);
     } catch (error) {
-      console.warn('Erreur lors du décodage de l\'image:', error);
+      console.error('[createOptimizedEpubFile] Erreur lors du traitement de l\'image:', error);
     }
   }
-
-  // 3. OEBPS/content.opf (minifié) - CORRIGER LE CRÉATEUR
-  const contentOpf = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${escapeXml(cleanTitle)}</dc:title><dc:creator>Calmi</dc:creator><dc:language>fr</dc:language><dc:identifier id="uid">calmi-${Date.now()}</dc:identifier><meta property="dcterms:modified">${new Date().toISOString().split('.')[0]}Z</meta></metadata><manifest><item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="content" href="content.xhtml" media-type="application/xhtml+xml"/>${imageBlob ? '<item id="cover-image" href="cover.jpg" media-type="image/jpeg"/>' : ''}</manifest><spine toc="toc"><itemref idref="content"/></spine></package>`;
+  
+  // 3. OEBPS/content.opf avec métadonnées optimisées pour Kindle
+  const contentOpf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title>${escapeXml(cleanTitle)}</dc:title>
+    <dc:creator opf:role="aut">Calmiverse</dc:creator>
+    <dc:identifier id="bookid">calmiverse-${Date.now()}</dc:identifier>
+    <dc:language>fr</dc:language>
+    <dc:date>${new Date().toISOString().split('T')[0]}</dc:date>
+    <dc:publisher>Calmiverse</dc:publisher>
+    <dc:subject>Histoire pour enfants</dc:subject>
+    <dc:description>Histoire personnalisée générée par Calmiverse</dc:description>
+    ${hasImage ? `<meta name="cover" content="cover-image"/>` : ''}
+  </metadata>
+  <manifest>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    ${hasImage ? `<item id="cover-page" href="cover.xhtml" media-type="application/xhtml+xml"/>` : ''}
+    <item id="content" href="content.xhtml" media-type="application/xhtml+xml"/>
+    ${hasImage ? `<item id="cover-image" href="cover.${imageExtension}" media-type="${imageMimeType}"/>` : ''}
+  </manifest>
+  <spine toc="ncx">
+    ${hasImage ? `<itemref idref="cover-page"/>` : ''}
+    <itemref idref="content"/>
+  </spine>
+  <guide>
+    ${hasImage ? `<reference type="cover" title="Couverture" href="cover.xhtml"/>` : ''}
+    <reference type="text" title="Histoire" href="content.xhtml"/>
+  </guide>
+</package>`;
   files['OEBPS/content.opf'] = new TextEncoder().encode(contentOpf);
   
-  // 4. OEBPS/toc.ncx (minifié)
-  const tocNcx = `<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="calmi-${Date.now()}"/></head><docTitle><text>${escapeXml(cleanTitle)}</text></docTitle><navMap><navPoint id="navpoint-1" playOrder="1"><navLabel><text>Histoire</text></navLabel><content src="content.xhtml"/></navPoint></navMap></ncx>`;
+  // 4. OEBPS/toc.ncx
+  const tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head>
+    <meta name="dtb:uid" content="calmiverse-${Date.now()}"/>
+    <meta name="dtb:depth" content="1"/>
+    <meta name="dtb:totalPageCount" content="0"/>
+    <meta name="dtb:maxPageNumber" content="0"/>
+  </head>
+  <docTitle>
+    <text>${escapeXml(cleanTitle)}</text>
+  </docTitle>
+  <navMap>
+    ${hasImage ? `
+    <navPoint id="navpoint-cover" playOrder="1">
+      <navLabel>
+        <text>Couverture</text>
+      </navLabel>
+      <content src="cover.xhtml"/>
+    </navPoint>` : ''}
+    <navPoint id="navpoint-content" playOrder="${hasImage ? '2' : '1'}">
+      <navLabel>
+        <text>${escapeXml(cleanTitle)}</text>
+      </navLabel>
+      <content src="content.xhtml"/>
+    </navPoint>
+  </navMap>
+</ncx>`;
   files['OEBPS/toc.ncx'] = new TextEncoder().encode(tocNcx);
   
-  // 5. OEBPS/content.xhtml (optimisé) - Utiliser le titre propre et inclure l'image si disponible
-  const imageHtml = imageBlob ? '<img src="cover.jpg" alt="Couverture" style="max-width: 300px; height: auto; margin: 0 auto 20px; display: block; border-radius: 8px;"/>' : '';
-  const contentXhtml = `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${escapeXml(cleanTitle)}</title><style>body{font-family:Georgia,serif;font-size:16px;line-height:1.6;margin:20px}h1{text-align:center;font-size:2em;margin-bottom:30px}p{margin-bottom:15px}img{max-width:100%;height:auto}</style></head><body>${imageHtml}${htmlContent}</body></html>`;
+  // 5. Page de couverture séparée pour Kindle (si image présente)
+  if (hasImage) {
+    const coverXhtml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Couverture</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <style type="text/css">
+    body {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    .cover {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cover img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <div class="cover">
+    <img src="cover.${imageExtension}" alt="Couverture de ${escapeXml(cleanTitle)}"/>
+  </div>
+</body>
+</html>`;
+    files['OEBPS/cover.xhtml'] = new TextEncoder().encode(coverXhtml);
+    console.log('[createOptimizedEpubFile] Page de couverture créée');
+  }
+  
+  // 6. OEBPS/content.xhtml - contenu principal optimisé pour Kindle
+  const contentXhtml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>${escapeXml(cleanTitle)}</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <style type="text/css">
+    body { 
+      font-family: "Bookerly", "Times New Roman", serif; 
+      line-height: 1.6; 
+      margin: 1em; 
+      color: #1a1a1a;
+    }
+    h1 { 
+      color: #2D3748; 
+      text-align: center; 
+      margin: 1em 0 2em 0; 
+      font-size: 1.8em;
+      page-break-before: always;
+    }
+    h2 {
+      color: #4A5568;
+      margin: 1.5em 0 1em 0;
+      font-size: 1.3em;
+    }
+    p { 
+      margin-bottom: 1em; 
+      text-align: justify; 
+      text-indent: 1.5em;
+    }
+    .story-meta {
+      text-align: center;
+      font-style: italic;
+      color: #666;
+      margin-bottom: 2em;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 1em;
+    }
+    @media amzn-mobi {
+      body { margin: 0; }
+    }
+    @media amzn-kf8 {
+      body { font-family: "Bookerly", serif; }
+    }
+  </style>
+</head>
+<body>
+  ${htmlContent}
+</body>
+</html>`;
   files['OEBPS/content.xhtml'] = new TextEncoder().encode(contentXhtml);
   
+  console.log('[createOptimizedEpubFile] EPUB créé avec', Object.keys(files).length, 'fichiers');
   return createOptimizedZipFile(files);
 }
 
