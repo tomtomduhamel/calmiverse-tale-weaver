@@ -23,12 +23,22 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 }) => {
   const [selectedChildrenIds, setSelectedChildrenIds] = useState<string[]>([]);
   const [selectedObjective, setSelectedObjective] = useState<string>('fun');
-  const [generatedTitles, setGeneratedTitles] = useState<GeneratedTitle[]>([]);
+  
   const [selectedTitle, setSelectedTitle] = useState<string>('');
   const [currentStep, setCurrentStep] = useState<'setup' | 'titles' | 'creating'>('setup');
+  const [hasUsedRegeneration, setHasUsedRegeneration] = useState<boolean>(false);
   
   const { toast } = useToast();
-  const { generateTitles, isGeneratingTitles } = useN8nTitleGeneration();
+  const { 
+    generateTitles, 
+    generateAdditionalTitles,
+    clearTitles, 
+    resetRegenerationState,
+    generatedTitles, 
+    isGeneratingTitles,
+    regenerationUsed,
+    canRegenerate
+  } = useN8nTitleGeneration();
   const { createStoryFromTitle, isCreatingStory } = useN8nStoryFromTitle();
 
   // Utiliser le monitoring en temps réel
@@ -60,6 +70,31 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     );
   }, []);
 
+  // Regénérer 3 titres supplémentaires
+  const handleRegenerateTitles = useCallback(async () => {
+    if (!selectedObjective || selectedChildrenIds.length === 0) return;
+
+    try {
+      const selectedChildrenForTitles = children.filter(child => selectedChildrenIds.includes(child.id));
+
+      await generateAdditionalTitles({
+        objective: selectedObjective,
+        childrenIds: selectedChildrenIds,
+        childrenNames: selectedChildrenForTitles.map(c => c.name),
+        childrenGenders: selectedChildrenForTitles.map(c => c.gender)
+      });
+
+      setHasUsedRegeneration(true);
+    } catch (error: any) {
+      console.error("Erreur lors de la regénération:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de regénérer les titres",
+        variant: "destructive",
+      });
+    }
+  }, [selectedObjective, selectedChildrenIds, children, generateAdditionalTitles, toast]);
+
   const handleGenerateTitles = useCallback(async () => {
     if (selectedChildrenIds.length === 0) {
       toast({
@@ -83,8 +118,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         childrenGenders: selectedChildren.map(child => child.gender)
       });
       
-      setGeneratedTitles(titles);
       setCurrentStep('titles');
+      setHasUsedRegeneration(false); // Réinitialiser pour cette nouvelle session
+      resetRegenerationState();
       
       // Toast unique pour confirmer la génération des titres
       toast({
@@ -153,12 +189,13 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   const handleBack = useCallback(() => {
     if (currentStep === 'titles') {
       setCurrentStep('setup');
-      setGeneratedTitles([]);
+      clearTitles();
       setSelectedTitle('');
+      setHasUsedRegeneration(false);
     } else if (currentStep === 'creating') {
       setCurrentStep('titles');
     }
-  }, [currentStep]);
+  }, [currentStep, clearTitles]);
 
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
   const selectedObjectiveData = objectives.find(obj => obj.value === selectedObjective);
@@ -271,11 +308,14 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   if (currentStep === 'titles') {
     return (
       <div className="space-y-6">
-        <TitleSelector
-          titles={generatedTitles}
-          onSelectTitle={handleCreateStory}
-          isCreatingStory={isCreatingStory}
-        />
+            <TitleSelector
+              titles={generatedTitles}
+              onSelectTitle={handleCreateStory}
+              onRegenerateTitles={handleRegenerateTitles}
+              canRegenerate={canRegenerate}
+              isCreatingStory={isCreatingStory}
+              isRegenerating={isGeneratingTitles}
+            />
         <div className="flex justify-between">
           <Button variant="outline" onClick={handleBack}>
             Retour

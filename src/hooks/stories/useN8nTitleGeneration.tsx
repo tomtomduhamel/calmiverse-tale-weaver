@@ -18,6 +18,7 @@ export interface GeneratedTitle {
 export const useN8nTitleGeneration = () => {
   const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
   const [generatedTitles, setGeneratedTitles] = useState<GeneratedTitle[]>([]);
+  const [regenerationUsed, setRegenerationUsed] = useState(false);
   const { toast } = useToast();
 
   const parseN8nTitlesResponse = (rawResult: any): GeneratedTitle[] => {
@@ -120,6 +121,79 @@ export const useN8nTitleGeneration = () => {
     return [];
   };
 
+  // Fonction pour générer des titres supplémentaires (regénération)
+  const generateAdditionalTitles = async (data: TitleGenerationData): Promise<GeneratedTitle[]> => {
+    if (regenerationUsed) {
+      toast({
+        title: "Regénération déjà utilisée",
+        description: "Vous ne pouvez regénérer des titres qu'une seule fois par création d'histoire",
+        variant: "destructive",
+      });
+      return [];
+    }
+
+    try {
+      setIsGeneratingTitles(true);
+      
+      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb14-4e1b-8b6b-b21e872c1d60';
+      
+      const payload = {
+        action: 'generate_titles',
+        objective: data.objective,
+        childrenIds: data.childrenIds,
+        childrenNames: data.childrenNames,
+        childrenGenders: data.childrenGenders,
+        requestType: 'title_regeneration'
+      };
+
+      console.log('[N8nTitleGeneration] Regénération - Payload envoyé:', JSON.stringify(payload, null, 2));
+
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[N8nTitleGeneration] Erreur HTTP regénération:', response.status, errorText);
+        throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('[N8nTitleGeneration] Réponse regénération reçue:', JSON.stringify(result, null, 2));
+
+      const newTitles = parseN8nTitlesResponse(result);
+      
+      if (newTitles.length === 0) {
+        throw new Error('Aucun nouveau titre reçu');
+      }
+      
+      // Placer les nouveaux titres EN PREMIER (choix B)
+      setGeneratedTitles(prevTitles => [...newTitles, ...prevTitles]);
+      setRegenerationUsed(true);
+      
+      toast({
+        title: "Nouveaux titres générés",
+        description: "3 nouveaux titres ont été ajoutés en haut de la liste",
+      });
+      
+      return newTitles;
+    } catch (error: any) {
+      console.error("Erreur lors de la regénération des titres:", error);
+      toast({
+        title: "Erreur de regénération",
+        description: error.message || "Impossible de générer de nouveaux titres",
+        variant: "destructive",
+      });
+      return [];
+    } finally {
+      setIsGeneratingTitles(false);
+    }
+  };
+
   const generateTitles = async (data: TitleGenerationData): Promise<GeneratedTitle[]> => {
     setIsGeneratingTitles(true);
     
@@ -166,6 +240,7 @@ export const useN8nTitleGeneration = () => {
 
       console.log('[N8nTitleGeneration] SUCCÈS: Titres finaux extraits:', titles);
       setGeneratedTitles(titles);
+      setRegenerationUsed(false); // Réinitialiser la regénération pour une nouvelle session
       
       // Pas de toast ici - sera géré par le composant appelant
       return titles;
@@ -186,12 +261,22 @@ export const useN8nTitleGeneration = () => {
 
   const clearTitles = () => {
     setGeneratedTitles([]);
+    setRegenerationUsed(false);
+  };
+
+  // Fonction pour réinitialiser l'état de regénération
+  const resetRegenerationState = () => {
+    setRegenerationUsed(false);
   };
 
   return {
     generateTitles,
+    generateAdditionalTitles,
     clearTitles,
+    resetRegenerationState,
     generatedTitles,
-    isGeneratingTitles
+    isGeneratingTitles,
+    regenerationUsed,
+    canRegenerate: !regenerationUsed && generatedTitles.length === 3,
   };
 };

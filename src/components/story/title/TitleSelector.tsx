@@ -1,9 +1,7 @@
-
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2 } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface GeneratedTitle {
   id: string;
@@ -14,98 +12,106 @@ interface GeneratedTitle {
 interface TitleSelectorProps {
   titles: GeneratedTitle[];
   onSelectTitle: (title: string) => void;
+  onRegenerateTitles?: () => void;
+  canRegenerate?: boolean;
   isCreatingStory: boolean;
+  isRegenerating?: boolean;
 }
 
 const TitleSelector: React.FC<TitleSelectorProps> = ({
   titles,
   onSelectTitle,
-  isCreatingStory
+  onRegenerateTitles,
+  canRegenerate = false,
+  isCreatingStory,
+  isRegenerating = false,
 }) => {
   if (titles.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">
-          Aucun titre disponible. Veuillez réessayer la génération.
-        </p>
+        <p className="text-muted-foreground">Aucun titre disponible</p>
       </div>
     );
   }
 
-  const handleTitleSelection = (title: string) => {
-    console.log('[TitleSelector] Titre sélectionné:', title);
-    onSelectTitle(title);
-  };
-
   return (
     <div className="space-y-4">
-      <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold flex items-center justify-center gap-2 mb-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          Choisissez votre titre préféré
-          <Badge variant="secondary" className="ml-2">
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <Badge variant="secondary" className="text-sm">
             {titles.length} titre{titles.length > 1 ? 's' : ''} généré{titles.length > 1 ? 's' : ''}
           </Badge>
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Sélectionnez le titre qui vous inspire le plus pour créer votre histoire personnalisée
-        </p>
-      </div>
-
-      <div className="grid gap-4">
-        {titles.map((title, index) => (
-          <Card 
-            key={title.id}
-            className="border-primary/20 hover:border-primary/40 transition-colors group"
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className="text-xs">
-                      Titre {index + 1}
-                    </Badge>
-                  </div>
-                  <h4 className="font-medium text-primary-dark group-hover:text-primary transition-colors">
-                    {title.title}
-                  </h4>
-                  {title.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {title.description}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  onClick={() => handleTitleSelection(title.title)}
-                  disabled={isCreatingStory}
-                  className="bg-primary hover:bg-primary/90 text-white min-w-[120px]"
-                >
-                  {isCreatingStory ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Création...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Choisir
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {titles.length < 3 && (
-        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded border border-amber-200 dark:border-amber-800">
-          <p className="text-sm text-amber-800 dark:text-amber-200">
-            <strong>Note:</strong> Seulement {titles.length} titre{titles.length > 1 ? 's' : ''} généré{titles.length > 1 ? 's' : ''} au lieu de 3. 
-            Vous pouvez utiliser {titles.length > 1 ? 'l\'un de ces titres' : 'ce titre'} ou recommencer pour en obtenir plus.
-          </p>
+          
+          {canRegenerate && onRegenerateTitles && (
+            <Button
+              onClick={onRegenerateTitles}
+              disabled={isRegenerating || isCreatingStory}
+              variant="outline"
+              size="sm"
+              className="text-sm"
+            >
+              {isRegenerating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
+                  Génération...
+                </>
+              ) : (
+                "Générer 3 autres titres"
+              )}
+            </Button>
+          )}
         </div>
-      )}
+
+        <div className="grid grid-cols-1 gap-4">
+          {titles.map((title, index) => (
+            <Card 
+              key={title.id} 
+              className={`cursor-pointer transition-all hover:shadow-md ${
+                isCreatingStory || isRegenerating ? 'opacity-50' : ''
+              }`}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg leading-tight mb-2">
+                      {title.title}
+                    </CardTitle>
+                    {title.description && (
+                      <CardDescription className="text-sm">
+                        {title.description}
+                      </CardDescription>
+                    )}
+                  </div>
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    #{index + 1}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Button
+                  onClick={() => onSelectTitle(title.title)}
+                  disabled={isCreatingStory || isRegenerating}
+                  className="w-full"
+                >
+                  {isCreatingStory ? "Création en cours..." : "Choisir"}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {titles.length < 3 && titles.length < 6 && (
+          <p className="text-sm text-muted-foreground mt-4 text-center">
+            Note: Seulement {titles.length} titre{titles.length > 1 ? 's ont' : ' a'} été généré{titles.length > 1 ? 's' : ''}.
+          </p>
+        )}
+        
+        {!canRegenerate && titles.length === 6 && (
+          <p className="text-sm text-muted-foreground mt-4 text-center">
+            ✨ Vous avez maintenant 6 titres parmi lesquels choisir !
+          </p>
+        )}
+      </div>
     </div>
   );
 };
