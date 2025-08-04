@@ -1,5 +1,5 @@
 
-import { useState, createContext, useContext } from 'react';
+import React, { useState, createContext, useContext } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { useAuthSession } from '@/hooks/auth/useAuthSession';
 import { useAuthOperations } from '@/hooks/auth/useAuthOperations';
