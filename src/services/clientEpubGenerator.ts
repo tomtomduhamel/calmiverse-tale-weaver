@@ -100,6 +100,8 @@ export const clientEpubGenerator = {
     // Ajouter l'image de couverture si disponible
     if (imageBlob) {
       oebps.file("cover.jpg", imageBlob);
+      // Créer la page de couverture HTML
+      await this.createCoverHtml(oebps, story, imageBlob);
     }
 
     // Fichier de configuration OPF
@@ -132,17 +134,20 @@ export const clientEpubGenerator = {
     <dc:language>fr</dc:language>
     <dc:date>${new Date().toISOString().split('T')[0]}</dc:date>
     <dc:description>Histoire personnalisée pour ${this.escapeXml(childrenText)}</dc:description>
-    <meta name="cover" content="cover"/>
+    ${hasImage ? '<meta name="cover" content="cover-image"/>' : ''}
   </metadata>
     <manifest>
       <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
       <item id="style" href="style.css" media-type="text/css"/>
+      ${hasImage ? '<item id="cover" href="cover.html" media-type="application/xhtml+xml"/>' : ''}
       <item id="story" href="story.html" media-type="application/xhtml+xml"/>
-      ${hasImage ? '<item id="cover-image" href="cover.jpg" media-type="image/jpeg"/>' : ''}
+      ${hasImage ? '<item id="cover-image" href="cover.jpg" media-type="image/jpeg" properties="cover-image"/>' : ''}
     </manifest>
   <spine toc="ncx">
+    ${hasImage ? '<itemref idref="cover"/>' : ''}
     <itemref idref="story"/>
   </spine>
+  ${hasImage ? '<guide><reference type="cover" title="Couverture" href="cover.html"/></guide>' : ''}
 </package>`;
     
     oebps.file('content.opf', contentOpf);
@@ -178,6 +183,30 @@ export const clientEpubGenerator = {
   },
 
   /**
+   * Crée la page de couverture HTML séparée
+   */
+  async createCoverHtml(oebps: JSZip, story: Story, imageBlob: Blob): Promise<void> {
+    const cleanTitle = formatFrenchTitle(this.cleanEpubTitle(story.title));
+    
+    const coverHtml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Couverture - ${this.escapeXml(cleanTitle)}</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+</head>
+<body>
+  <div class="cover-page">
+    <img src="cover.jpg" alt="Couverture de l'histoire" class="cover-image"/>
+  </div>
+</body>
+</html>`;
+    
+    oebps.file('cover.html', coverHtml);
+  },
+
+  /**
    * Crée le fichier story.html avec le contenu
    */
   async createStoryHtml(oebps: JSZip, story: Story, imageBlob?: Blob | null): Promise<void> {
@@ -204,7 +233,6 @@ export const clientEpubGenerator = {
 </head>
 <body>
   <div class="title-page">
-    ${imageBlob ? '<img src="cover.jpg" alt="Couverture" style="max-width: 300px; height: auto; margin: 0 auto 20px; display: block; border-radius: 8px;"/>' : ''}
     <h1>${this.escapeXml(cleanTitle)}</h1>
     ${translatedObjective ? `<p class="objective">${this.escapeXml(translatedObjective)}</p>` : ''}
     <p class="children">Histoire personnalisée pour ${this.escapeXml(childrenText)}</p>
@@ -231,6 +259,25 @@ body {
   line-height: 1.6;
   margin: 1em;
   color: #333;
+}
+
+.cover-page {
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+}
+
+.cover-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .title-page {

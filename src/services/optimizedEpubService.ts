@@ -95,6 +95,24 @@ export const optimizedEpubService = {
       throw new Error("Les données de l'histoire sont incomplètes");
     }
 
+    // Récupérer l'image de l'histoire si elle existe
+    let imageBlob: Blob | null = null;
+    if (story.image_path) {
+      console.log('🖼️ [OptimizedEpub] Récupération de l\'image:', story.image_path);
+      try {
+        const { fetchStoryImageBlob } = await import('@/utils/supabaseImageUtils');
+        imageBlob = await fetchStoryImageBlob(story.image_path);
+        if (imageBlob) {
+          console.log('✅ [OptimizedEpub] Image récupérée avec succès');
+        } else {
+          console.warn('⚠️ [OptimizedEpub] Impossible de récupérer l\'image');
+        }
+      } catch (error) {
+        console.warn('⚠️ [OptimizedEpub] Erreur récupération image:', error);
+        imageBlob = null;
+      }
+    }
+
     // Optimiser le contenu
     const optimizedContent = this.optimizeContent(story);
     
@@ -115,11 +133,19 @@ export const optimizedEpubService = {
     console.log('📤 [OptimizedEpub] Appel fonction Edge avec contenu optimisé...');
 
     try {
+      // Convertir l'image en base64 si elle existe
+      let imageBase64: string | null = null;
+      if (imageBlob) {
+        imageBase64 = await this.blobToBase64(imageBlob);
+        console.log('🔄 [OptimizedEpub] Image convertie en base64');
+      }
+
       const { data, error } = await supabase.functions.invoke('upload-epub', {
         body: { 
           content: kindleContent, 
           filename: cleanTitle,
-          optimized: true // Flag pour indiquer le contenu optimisé
+          optimized: true, // Flag pour indiquer le contenu optimisé
+          imageBlob: imageBase64 // Inclure l'image encodée
         }
       });
 
@@ -218,6 +244,23 @@ export const optimizedEpubService = {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  },
+
+  /**
+   * Convertit un Blob en base64
+   */
+  async blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Retourner seulement la partie base64 (sans le préfixe data:...)
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   },
 
   /**
