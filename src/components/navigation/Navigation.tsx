@@ -36,7 +36,7 @@ const Navigation = () => {
     path: '/library'
   }, {
     icon: Users,
-    label: 'Profils',
+    label: 'Enfants',
     path: '/children'
   }, {
     icon: Settings,
