@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,9 +21,7 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
   return <div className="space-y-6">
       {/* Hero Section */}
       <div className="text-center space-y-4">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full mb-4">
-          <Sparkles className="w-8 h-8 text-primary" />
-        </div>
+        
         <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           L'univers de vos enfants
         </h1>
