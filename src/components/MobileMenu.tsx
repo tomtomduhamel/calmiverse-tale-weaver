@@ -24,7 +24,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   const menuItems = [
     { icon: Home, title: "Accueil", view: "home" as ViewType, path: "/" },
     { icon: Library, title: "Bibliothèque", view: "library" as ViewType, path: "/library" },
-    { icon: PenSquare, title: "Créer", view: "create" as ViewType, path: "/create-story-n8n" },
+    { icon: PenSquare, title: "Créer", view: "create" as ViewType, path: "/create-story-titles" },
     { icon: Users, title: "Profils", view: "profiles" as ViewType, path: "/children" },
     { icon: Settings, title: "Paramètres", view: "settings" as ViewType, path: "/settings" }
   ];
@@ -40,7 +40,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
     if (location.pathname === "/library") return "library";
     if (location.pathname === "/settings") return "settings";
     if (location.pathname === "/children") return "profiles";
-    if (location.pathname === "/create-story-n8n") return "create";
+    if (location.pathname === "/create-story-titles") return "create";
     if (location.pathname === "/") return "home";
     return currentView;
   };

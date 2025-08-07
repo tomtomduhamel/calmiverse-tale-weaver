@@ -2,14 +2,20 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface LibraryHeaderProps {
   isZenMode: boolean;
   onZenModeToggle: () => void;
-  onCreateStory: () => void;
 }
 
-const LibraryHeader = ({ isZenMode, onZenModeToggle, onCreateStory }: LibraryHeaderProps) => {
+const LibraryHeader = ({ isZenMode, onZenModeToggle }: LibraryHeaderProps) => {
+  const navigate = useNavigate();
+  
+  const handleCreateStory = () => {
+    navigate("/create-story-titles");
+  };
+
   return (
     <div className="flex justify-between items-center mb-6">
       <h2 className="text-2xl font-semibold">Bibliothèque des histoires</h2>
@@ -23,7 +29,7 @@ const LibraryHeader = ({ isZenMode, onZenModeToggle, onCreateStory }: LibraryHea
           <Eye className="h-4 w-4" />
         </Button>
         <Button
-          onClick={onCreateStory}
+          onClick={handleCreateStory}
           className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2"
         >
           <PlusCircle className="w-5 h-5" />

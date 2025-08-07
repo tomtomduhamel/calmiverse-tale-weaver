@@ -163,7 +163,6 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
       <LibraryHeader 
         isZenMode={isZenMode}
         onZenModeToggle={() => setIsZenMode(!isZenMode)}
-        onCreateStory={handleCreateStory}
       />
 
       <LibraryErrorAlert 

@@ -21,10 +21,6 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
     navigate("/library");
   };
 
-  const handleCreateStoryClick = () => {
-    navigate("/create-story-n8n");
-  };
-
   const handleTitleStoryClick = () => {
     navigate("/create-story-titles");
   };
@@ -66,9 +62,9 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
           </p>
         </div>
 
-        {/* Cartes optimisées mobile - maintenant avec 4 options */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-          {/* Mode simple - Création d'histoire */}
+        {/* Cartes optimisées mobile - maintenant avec 3 options */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          {/* Création d'histoire avec sélection de titres */}
           <Card className="border border-primary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
               <div className="mb-2 sm:mb-3 p-2 bg-primary/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
@@ -76,32 +72,13 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
               </div>
               <h3 className="text-base sm:text-lg font-semibold mb-1 text-primary-dark">Créer une histoire</h3>
               <p className="text-muted-foreground text-xs mb-2 sm:mb-3 flex-grow leading-relaxed">
-                Générez facilement des histoires uniques pour vos enfants
-              </p>
-              <Button 
-                onClick={handleCreateStoryClick} 
-                className="w-full bg-primary hover:bg-primary-dark text-primary-foreground h-10 sm:h-11 text-sm"
-              >
-                Commencer
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Nouveau - Création avec sélection de titres */}
-          <Card className="border border-accent/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
-              <div className="mb-2 sm:mb-3 p-2 bg-accent/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
-                <Wand2 className="h-4 w-4 sm:h-5 sm:w-5 text-accent-dark" />
-              </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-1 text-accent-dark">Choisir son titre</h3>
-              <p className="text-muted-foreground text-xs mb-2 sm:mb-3 flex-grow leading-relaxed">
-                Sélectionnez parmi 3 titres générés pour votre histoire
+                Choisissez parmi 3 titres générés pour créer votre histoire
               </p>
               <Button 
                 onClick={handleTitleStoryClick} 
-                className="w-full bg-accent hover:bg-accent-dark text-accent-foreground h-10 sm:h-11 text-sm"
+                className="w-full bg-primary hover:bg-primary-dark text-primary-foreground h-10 sm:h-11 text-sm"
               >
-                Essayer
+                Commencer
               </Button>
             </CardContent>
           </Card>
