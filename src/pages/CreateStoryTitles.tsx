@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
@@ -8,25 +7,30 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import TitleBasedStoryCreator from "@/components/story/title/TitleBasedStoryCreator";
 import LoadingStory from "@/components/LoadingStory";
-
 const CreateStoryTitles: React.FC = () => {
-  const { user, loading: authLoading } = useSupabaseAuth();
-  const { children, loading: childrenLoading } = useSupabaseChildren();
-  const { toast } = useToast();
+  const {
+    user,
+    loading: authLoading
+  } = useSupabaseAuth();
+  const {
+    children,
+    loading: childrenLoading
+  } = useSupabaseChildren();
+  const {
+    toast
+  } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
+
   // Récupérer l'ID de l'enfant présélectionné depuis l'URL
   const preSelectedChildId = searchParams.get('childId') || undefined;
-
   const handleStoryCreated = (storyId: string) => {
     console.log("[CreateStoryTitles] Processus de création terminé:", storyId);
-    
     if (storyId === "timeout") {
       // Cas de timeout - rediriger vers la bibliothèque avec un message
       toast({
         title: "Création en cours",
-        description: "Votre histoire est en cours de génération. Vérifiez votre bibliothèque dans quelques minutes.",
+        description: "Votre histoire est en cours de génération. Vérifiez votre bibliothèque dans quelques minutes."
       });
       navigate("/library");
     } else {
@@ -35,33 +39,21 @@ const CreateStoryTitles: React.FC = () => {
       navigate(`/reader/${storyId}`);
     }
   };
-
   const handleBack = () => {
     navigate("/");
   };
-
   if (authLoading || childrenLoading) {
     return <LoadingStory />;
   }
-
   if (!user) {
     navigate("/auth");
     return null;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+  return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         {/* En-tête avec bouton retour */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-4 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour à l'accueil
-          </Button>
+          
           
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -75,15 +67,9 @@ const CreateStoryTitles: React.FC = () => {
 
         {/* Composant de création d'histoires avec titres */}
         <div className="max-w-4xl mx-auto">
-          <TitleBasedStoryCreator
-            children={children}
-            onStoryCreated={handleStoryCreated}
-            preSelectedChildId={preSelectedChildId}
-          />
+          <TitleBasedStoryCreator children={children} onStoryCreated={handleStoryCreated} preSelectedChildId={preSelectedChildId} />
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default CreateStoryTitles;
