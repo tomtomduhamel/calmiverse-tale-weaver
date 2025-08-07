@@ -2,7 +2,7 @@
 import React from "react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,10 @@ const CreateStoryTitles: React.FC = () => {
   const { children, loading: childrenLoading } = useSupabaseChildren();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // Récupérer l'ID de l'enfant présélectionné depuis l'URL
+  const preSelectedChildId = searchParams.get('childId') || undefined;
 
   const handleStoryCreated = (storyId: string) => {
     console.log("[CreateStoryTitles] Processus de création terminé:", storyId);
@@ -74,6 +78,7 @@ const CreateStoryTitles: React.FC = () => {
           <TitleBasedStoryCreator
             children={children}
             onStoryCreated={handleStoryCreated}
+            preSelectedChildId={preSelectedChildId}
           />
         </div>
       </div>

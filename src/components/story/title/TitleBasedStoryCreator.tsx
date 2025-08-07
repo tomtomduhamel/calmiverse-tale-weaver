@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles, Users } from 'lucide-react';
@@ -13,10 +13,12 @@ import type { GeneratedTitle } from '@/hooks/stories/useN8nTitleGeneration';
 interface TitleBasedStoryCreatorProps {
   children: Child[];
   onStoryCreated: (storyId: string) => void;
+  preSelectedChildId?: string;
 }
 const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   children,
-  onStoryCreated
+  onStoryCreated,
+  preSelectedChildId
 }) => {
   const [selectedChildrenIds, setSelectedChildrenIds] = useState<string[]>([]);
   const [selectedObjective, setSelectedObjective] = useState<string>('fun');
@@ -78,6 +80,18 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     icon: '🎉',
     description: 'Histoire joyeuse et divertissante'
   }];
+  
+  // Effect pour présélectionner un enfant si spécifié
+  useEffect(() => {
+    if (preSelectedChildId && children.length > 0) {
+      const childExists = children.find(child => child.id === preSelectedChildId);
+      if (childExists) {
+        console.log('[TitleBasedStoryCreator] Présélection de l\'enfant:', childExists.name);
+        setSelectedChildrenIds([preSelectedChildId]);
+      }
+    }
+  }, [preSelectedChildId, children]);
+
   const handleChildToggle = useCallback((childId: string) => {
     setSelectedChildrenIds(prev => prev.includes(childId) ? prev.filter(id => id !== childId) : [...prev, childId]);
   }, []);
