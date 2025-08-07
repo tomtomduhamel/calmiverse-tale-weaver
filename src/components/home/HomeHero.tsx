@@ -1,4 +1,3 @@
-
 import React from "react";
 import { BookOpen, Users, Library, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,33 +6,34 @@ import type { ViewType } from "@/types/views";
 import { Link, useNavigate } from "react-router-dom";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import type { Child } from "@/types/child";
-
 interface HomeHeroProps {
   onViewChange: (view: ViewType) => void;
   children?: Child[];
 }
-
-const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
+const HomeHero: React.FC<HomeHeroProps> = ({
+  onViewChange,
+  children = []
+}) => {
   const navigate = useNavigate();
-  const { user } = useSupabaseAuth();
-
+  const {
+    user
+  } = useSupabaseAuth();
   const handleLibraryClick = () => {
     navigate("/library");
   };
-
   const handleTitleStoryClick = () => {
     navigate("/create-story-titles");
   };
-
   console.log('[HomeHero] Enfants reçus dans HomeHero:', {
     childrenCount: children?.length || 0,
-    children: children?.map(c => ({ id: c.id, name: c.name })) || [],
+    children: children?.map(c => ({
+      id: c.id,
+      name: c.name
+    })) || [],
     user: user?.id,
     childrenArray: children
   });
-
-  return (
-    <div className="flex flex-col justify-start overflow-hidden animate-fade-in px-4 py-4 sm:py-6">
+  return <div className="flex flex-col justify-start overflow-hidden animate-fade-in px-4 py-4 sm:py-6">
       {/* Arrière-plan avec gradient */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-hero"></div>
@@ -74,10 +74,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
               <p className="text-muted-foreground text-xs mb-2 sm:mb-3 flex-grow leading-relaxed">
                 Choisissez parmi 3 titres générés pour créer votre histoire
               </p>
-              <Button 
-                onClick={handleTitleStoryClick} 
-                className="w-full bg-primary hover:bg-primary-dark text-primary-foreground h-10 sm:h-11 text-sm"
-              >
+              <Button onClick={handleTitleStoryClick} className="w-full bg-primary hover:bg-primary-dark text-primary-foreground h-10 sm:h-11 text-sm">
                 Commencer
               </Button>
             </CardContent>
@@ -107,14 +104,11 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
               <div className="mb-2 sm:mb-3 p-2 bg-muted/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
                 <Library className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-1 text-muted-foreground">Bibliothèque</h3>
+              <h3 className="text-base sm:text-lg font-semibold mb-1 text-muted-foreground">Bibliothèque d'histoires</h3>
               <p className="text-muted-foreground text-xs mb-2 sm:mb-3 flex-grow leading-relaxed">
                 Retrouvez toutes vos histoires créées
               </p>
-              <Button 
-                onClick={handleLibraryClick} 
-                className="w-full bg-muted hover:bg-muted/80 text-muted-foreground h-10 sm:h-11 text-sm"
-              >
+              <Button onClick={handleLibraryClick} className="w-full bg-muted hover:bg-muted/80 text-muted-foreground h-10 sm:h-11 text-sm">
                 Consulter
               </Button>
             </CardContent>
@@ -128,8 +122,6 @@ const HomeHero: React.FC<HomeHeroProps> = ({ onViewChange, children = [] }) => {
           </p>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default HomeHero;
