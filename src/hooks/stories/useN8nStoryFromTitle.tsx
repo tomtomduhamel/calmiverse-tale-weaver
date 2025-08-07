@@ -45,7 +45,7 @@ export const useN8nStoryFromTitle = () => {
       console.log('[N8nStoryFromTitle] Prompt avancé généré:', storyPrompt.substring(0, 200) + '...');
       
       // CORRECTION CRITIQUE: Utiliser le bon webhook pour la création d'histoire
-      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
+      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook-test/067eebcf-cb13-4e1b-8b6b-b21e872c1d60';
       
       // Payload simplifié pour éviter les erreurs de parsing n8n
       const payload = {
