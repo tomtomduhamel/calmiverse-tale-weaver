@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import type { Child } from '@/types/child';
 import { generateAdvancedStoryPrompt } from '@/utils/storyPromptUtils';
+import { calculateAge } from '@/utils/age';
 
 interface StoryCreationData {
   selectedTitle: string;
@@ -40,14 +41,26 @@ export const useN8nStoryFromTitle = () => {
         authorId: user.id
       })) as Child[];
       
+      // Calculer les informations enrichies pour chaque enfant
+      const enrichedChildrenData = childrenForPrompt.map(child => ({
+        id: child.id,
+        name: child.name,
+        gender: child.gender,
+        age: calculateAge(child.birthDate),
+        teddyName: child.teddyName || null,
+        teddyDescription: child.teddyDescription || null,
+        imaginaryWorld: child.imaginaryWorld || null
+      }));
+      
       // Générer le prompt avancé avec titre et contexte multi-personnages
       const storyPrompt = generateAdvancedStoryPrompt(data.objective, childrenForPrompt, data.selectedTitle);
       console.log('[N8nStoryFromTitle] Prompt avancé généré:', storyPrompt.substring(0, 200) + '...');
+      console.log('[N8nStoryFromTitle] Données enrichies des enfants:', enrichedChildrenData);
       
       // CORRECTION CRITIQUE: Utiliser le bon webhook pour la création d'histoire
       const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/816f3f78-bbdc-4b51-88b6-13232fcf3c78';
       
-      // Payload simplifié pour éviter les erreurs de parsing n8n
+      // Payload enrichi avec les informations complètes des enfants
       const payload = {
         action: 'create_story_from_title',
         selectedTitle: data.selectedTitle,
@@ -55,6 +68,8 @@ export const useN8nStoryFromTitle = () => {
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         childrenGenders: data.childrenGenders,
+        // Nouvelles données enrichies
+        childrenData: enrichedChildrenData,
         userId: user.id,
         userEmail: user.email,
         storyPrompt, // Prompt essentiel pour la génération

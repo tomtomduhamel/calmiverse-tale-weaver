@@ -173,13 +173,14 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       // Démarrer le monitoring en temps réel AVANT de créer l'histoire
       const cleanupMonitoring = startMonitoring();
 
-      // Créer l'histoire via n8n
+      // Créer l'histoire via n8n avec les données complètes des enfants
       await createStoryFromTitle({
         selectedTitle: titleToUse,
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
         childrenNames,
-        childrenGenders: selectedChildrenForStory.map(child => child.gender)
+        childrenGenders: selectedChildrenForStory.map(child => child.gender),
+        children: selectedChildrenForStory // Passer les données complètes des enfants
       });
 
       // Toast unique pour la création
