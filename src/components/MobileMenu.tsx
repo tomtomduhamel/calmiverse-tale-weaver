@@ -8,8 +8,9 @@ import {
   PenSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import type { ViewType } from "@/types/views";
+import { useAppNavigation } from "@/hooks/navigation/useAppNavigation";
 
 interface MobileMenuProps {
   currentView: ViewType;
@@ -17,21 +18,21 @@ interface MobileMenuProps {
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) => {
-  const navigate = useNavigate();
   const location = useLocation();
+  const { navigateToHome, navigateToLibrary, navigateToCreate, navigateToProfiles, navigateToSettings } = useAppNavigation();
   
   // Items for the bottom navigation
   const menuItems = [
-    { icon: Home, title: "Accueil", view: "home" as ViewType, path: "/" },
-    { icon: Library, title: "Bibliothèque", view: "library" as ViewType, path: "/library" },
-    { icon: PenSquare, title: "Créer", view: "create" as ViewType, path: "/create-story-titles" },
-    { icon: Users, title: "Profils", view: "profiles" as ViewType, path: "/children" },
-    { icon: Settings, title: "Paramètres", view: "settings" as ViewType, path: "/settings" }
+    { icon: Home, title: "Accueil", view: "home" as ViewType, action: navigateToHome },
+    { icon: Library, title: "Bibliothèque", view: "library" as ViewType, action: navigateToLibrary },
+    { icon: PenSquare, title: "Créer", view: "create" as ViewType, action: navigateToCreate },
+    { icon: Users, title: "Enfants", view: "profiles" as ViewType, action: navigateToProfiles },
+    { icon: Settings, title: "Paramètres", view: "settings" as ViewType, action: navigateToSettings }
   ];
 
-  const handleNavigation = (view: ViewType, path: string) => {
-    console.log("[MobileMenu] Navigation vers", { view, path });
-    navigate(path);
+  const handleNavigation = (view: ViewType, action: () => void) => {
+    console.log("[MobileMenu] Navigation vers", { view });
+    action();
     onViewChange(view);
   };
 
@@ -53,7 +54,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
         {menuItems.map((item) => (
           <button
             key={item.title}
-            onClick={() => handleNavigation(item.view, item.path)}
+            onClick={() => handleNavigation(item.view, item.action)}
             className={cn(
               "flex flex-col items-center justify-center w-full p-1 rounded-md transition-colors",
               activeView === item.view
