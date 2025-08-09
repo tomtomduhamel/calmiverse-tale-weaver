@@ -5,6 +5,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import type { Child } from '@/types/child';
 import { generateAdvancedStoryPrompt } from '@/utils/storyPromptUtils';
 import { calculateAge } from '@/utils/age';
+import { estimateWordCountForDuration, StoryDurationMinutes } from '@/types/story';
 
 interface StoryCreationData {
   selectedTitle: string;
@@ -13,6 +14,7 @@ interface StoryCreationData {
   childrenNames: string[];
   childrenGenders: string[];
   children?: Child[]; // Nouvellement ajouté pour avoir accès aux données complètes
+  durationMinutes?: StoryDurationMinutes;
 }
 
 // Ancienne fonction remplacée par generateAdvancedStoryPrompt dans storyPromptUtils.ts
@@ -52,8 +54,14 @@ export const useN8nStoryFromTitle = () => {
         imaginaryWorld: child.imaginaryWorld || null
       }));
       
-      // Générer le prompt avancé avec titre et contexte multi-personnages
-      const storyPrompt = generateAdvancedStoryPrompt(data.objective, childrenForPrompt, data.selectedTitle);
+      // Générer le prompt avancé avec titre, durée et contexte multi-personnages
+      const targetWordCount = data.durationMinutes ? estimateWordCountForDuration(data.durationMinutes) : undefined;
+      const storyPrompt = generateAdvancedStoryPrompt(
+        data.objective,
+        childrenForPrompt,
+        data.selectedTitle,
+        { durationMinutes: data.durationMinutes, targetWordCount }
+      );
       console.log('[N8nStoryFromTitle] Prompt avancé généré:', storyPrompt.substring(0, 200) + '...');
       console.log('[N8nStoryFromTitle] Données enrichies des enfants:', enrichedChildrenData);
       
@@ -70,6 +78,9 @@ export const useN8nStoryFromTitle = () => {
         childrenGenders: data.childrenGenders,
         // Nouvelles données enrichies
         childrenData: enrichedChildrenData,
+        // Durée et longueur cible
+        durationMinutes: data.durationMinutes ?? null,
+        targetWordCount: targetWordCount ?? undefined,
         userId: user.id,
         userEmail: user.email,
         storyPrompt, // Prompt essentiel pour la génération

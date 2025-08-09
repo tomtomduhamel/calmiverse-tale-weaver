@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { STORY_DURATION_OPTIONS, StoryDurationMinutes } from '@/types/story';
 
 interface GeneratedTitle {
   id: string;
@@ -11,7 +12,7 @@ interface GeneratedTitle {
 
 interface TitleSelectorProps {
   titles: GeneratedTitle[];
-  onSelectTitle: (title: string) => void;
+  onSelectTitle: (title: string, durationMinutes: StoryDurationMinutes) => void;
   onRegenerateTitles?: () => void;
   canRegenerate?: boolean;
   isCreatingStory: boolean;
@@ -88,13 +89,19 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <Button
-                  onClick={() => onSelectTitle(title.title)}
-                  disabled={isCreatingStory || isRegenerating}
-                  className="w-full"
-                >
-                  {isCreatingStory ? "Création en cours..." : "Choisir"}
-                </Button>
+                <div className="grid grid-cols-3 gap-2">
+                  {STORY_DURATION_OPTIONS.map((duration) => (
+                    <Button
+                      key={duration}
+                      onClick={() => onSelectTitle(title.title, duration)}
+                      disabled={isCreatingStory || isRegenerating}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      {isCreatingStory ? "Création..." : `${duration} min`}
+                    </Button>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           ))}

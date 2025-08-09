@@ -10,6 +10,7 @@ import { useRealtimeStoryMonitor } from '@/hooks/stories/useRealtimeStoryMonitor
 import TitleSelector from './TitleSelector';
 import type { Child } from '@/types/child';
 import type { GeneratedTitle } from '@/hooks/stories/useN8nTitleGeneration';
+import type { StoryDurationMinutes } from '@/types/story';
 interface TitleBasedStoryCreatorProps {
   children: Child[];
   onStoryCreated: (storyId: string) => void;
@@ -23,6 +24,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   const [selectedChildrenIds, setSelectedChildrenIds] = useState<string[]>([]);
   const [selectedObjective, setSelectedObjective] = useState<string>('fun');
   const [selectedTitle, setSelectedTitle] = useState<string>('');
+  const [selectedDuration, setSelectedDuration] = useState<StoryDurationMinutes | null>(null);
   const [currentStep, setCurrentStep] = useState<'setup' | 'titles' | 'creating'>('setup');
   const [hasUsedRegeneration, setHasUsedRegeneration] = useState<boolean>(false);
   const {
@@ -154,7 +156,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       });
     }
   }, [selectedChildrenIds, selectedObjective, children, generateTitles, toast]);
-  const handleCreateStory = useCallback(async (titleToUse: string) => {
+  const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes) => {
     if (!titleToUse) {
       toast({
         title: "Titre requis",
@@ -166,21 +168,23 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     try {
       const selectedChildrenForStory = children.filter(child => selectedChildrenIds.includes(child.id));
       const childrenNames = selectedChildrenForStory.map(child => child.name);
-      console.log('[TitleBasedStoryCreator] Création histoire avec titre:', titleToUse);
+      console.log('[TitleBasedStoryCreator] Création histoire avec titre:', titleToUse, 'durée:', durationMinutes, 'min');
       setSelectedTitle(titleToUse);
+      setSelectedDuration(durationMinutes);
       setCurrentStep('creating');
 
       // Démarrer le monitoring en temps réel AVANT de créer l'histoire
       const cleanupMonitoring = startMonitoring();
 
-      // Créer l'histoire via n8n avec les données complètes des enfants
+      // Créer l'histoire via n8n avec les données complètes des enfants et la durée
       await createStoryFromTitle({
         selectedTitle: titleToUse,
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
         childrenNames,
         childrenGenders: selectedChildrenForStory.map(child => child.gender),
-        children: selectedChildrenForStory // Passer les données complètes des enfants
+        children: selectedChildrenForStory, // Passer les données complètes des enfants
+        durationMinutes,
       });
 
       // Toast unique pour la création

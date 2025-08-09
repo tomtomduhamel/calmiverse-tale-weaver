@@ -87,3 +87,17 @@ export interface StoryAnalysis {
   };
   themes?: string[];
 }
+
+// --- Story duration types & helpers ---
+export type StoryDurationMinutes = 5 | 10 | 15;
+
+export const STORY_DURATION_OPTIONS: readonly StoryDurationMinutes[] = [5, 10, 15] as const;
+
+// Rough reading speed for kids-friendly text (words per minute)
+const AVERAGE_WPM = 140;
+
+export const estimateWordCountForDuration = (minutes: number): number => {
+  const words = Math.round(minutes * AVERAGE_WPM);
+  // Clamp to reasonable bounds
+  return Math.min(Math.max(words, 400), 3000);
+};

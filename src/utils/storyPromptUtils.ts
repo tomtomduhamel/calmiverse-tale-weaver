@@ -1,5 +1,6 @@
 import type { Child } from '@/types/child';
 import { calculateAge } from '@/utils/age';
+import { estimateWordCountForDuration } from '@/types/story';
 
 interface CharacterAnalysis {
   children: {
@@ -117,19 +118,25 @@ const generateGenderInstructions = (analysis: CharacterAnalysis): string => {
  * Génère le prompt d'histoire avancé avec contexte multi-personnages et adaptation d'âge
  */
 export const generateAdvancedStoryPrompt = (
-  objective: string, 
-  children: Child[], 
-  selectedTitle?: string
+  objective: string,
+  children: Child[],
+  selectedTitle?: string,
+  options?: { durationMinutes?: number; targetWordCount?: number }
 ): string => {
   const analysis = analyzeCharacters(children);
   const characterContext = generateCharacterContext(analysis);
   const vocabularyInstructions = getVocabularyLevel(analysis.youngestAge);
   const genderInstructions = generateGenderInstructions(analysis);
 
+  const targetWords = options?.targetWordCount ?? (options?.durationMinutes ? estimateWordCountForDuration(options.durationMinutes) : 1500);
+  const startWords = Math.max(200, Math.round(targetWords * 0.25));
+  const middleWords = Math.max(400, Math.round(targetWords * 0.5));
+  const endWords = Math.max(200, Math.round(targetWords * 0.25));
+
   // Construire la liste des noms pour le texte
   const allNames = [...analysis.children.map(c => c.child.name), ...analysis.pets.map(p => p.name)];
-  const namesText = allNames.length === 1 
-    ? allNames[0] 
+  const namesText = allNames.length === 1
+    ? allNames[0]
     : `${allNames.slice(0, -1).join(', ')} et ${allNames[allNames.length - 1]}`;
 
   // Prompts par objectif adaptés au contexte multi-personnages
@@ -138,15 +145,19 @@ export const generateAdvancedStoryPrompt = (
     focus: `Créer une histoire engageante qui aide ${namesText} à se concentrer. L'histoire doit captiver l'attention tout en étant éducative et stimulante intellectuellement. Intègre des défis et des mystères adaptés à leur âge.`,
     relax: `Créer une histoire relaxante pour aider ${namesText} à se détendre. L'histoire doit être apaisante, avec un rythme lent et des éléments qui favorisent la relaxation. Privilégie les paysages naturels et les moments de contemplation.`,
     fun: `Créer une histoire amusante et divertissante pour ${namesText}. L'histoire doit être joyeuse, pleine d'aventures et de moments ludiques qui feront sourire. Intègre de l'humour adapté à leur âge.`
-  };
+  } as const;
 
-  const basePrompt = objectivePrompts[objective as keyof typeof objectivePrompts] || 
+  const basePrompt = objectivePrompts[objective as keyof typeof objectivePrompts] ||
     `Créer une histoire pour enfants personnalisée pour ${namesText} avec pour objectif: ${objective}.`;
 
   let titleInstruction = "";
   if (selectedTitle) {
     titleInstruction = `Le titre de l'histoire doit être : "${selectedTitle}". Assure-toi que l'histoire correspond bien à ce titre et développe le thème de manière créative et engageante.\n\n`;
   }
+
+  const durationNote = options?.durationMinutes
+    ? `- L'histoire doit pouvoir être lue en environ ${options.durationMinutes} minutes\n`
+    : "";
 
   return `${basePrompt}
 
@@ -165,13 +176,13 @@ ${genderInstructions}
 
 INSTRUCTIONS POUR LA GÉNÉRATION :
 - Personnaliser l'histoire avec tous les prénoms : ${namesText}
-- Créer une histoire d'environ 1500 mots décomposée ainsi : début (300-400 mots), développement (600-800 mots), fin (300-400 mots)
+- Créer une histoire d'environ ${targetWords} mots décomposée ainsi : début (~${startWords} mots), développement (~${middleWords} mots), fin (~${endWords} mots)
 - Structurer avec un début, un développement et une fin satisfaisante avec des sauts de lignes pour faciliter la lecture
 - Inclure des éléments magiques ou imaginaires adaptés à l'enfance
 - S'assurer que l'histoire respecte l'objectif: ${objective}
 - Utiliser un ton bienveillant et positif sans utiliser trop de superlatifs
 - Interdire tout contenu effrayant ou inapproprié
 - Développer les relations entre les personnages selon leurs caractéristiques
-
-Générer maintenant l'histoire complète en français en respectant le nombre de mots demandés (environ 1500 mots).`;
+${durationNote}
+Générer maintenant l'histoire complète en français en respectant le nombre de mots demandés (environ ${targetWords} mots).`;
 };
