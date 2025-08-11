@@ -18,6 +18,8 @@ import CreateStoryTitles from "./pages/CreateStoryTitles";
 import Library from "./pages/Library";
 import StoryReaderPage from "./pages/StoryReaderPage";
 import Shell from "./components/Shell";
+import PromptAdmin from './pages/admin/PromptAdmin';
+import AdminGuard from './components/admin/AdminGuard';
 import { Toaster } from "@/components/ui/toaster"
 function App() {
   return (
@@ -43,6 +45,7 @@ function App() {
           <Route path="create-story-titles" element={<CreateStoryTitles />} />
           <Route path="test-connection" element={<TestConnection />} />
           <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
+          <Route path="admin/prompts" element={<AdminGuard><PromptAdmin /></AdminGuard>} />
         </Route>
 
         {/* Route de fallback */}
