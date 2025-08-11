@@ -143,6 +143,7 @@ export type Database = {
           childrennames: string[] | null
           content: string | null
           createdat: string
+          deduplication_key: string | null
           error: string | null
           id: string
           image_path: string | null
@@ -163,6 +164,7 @@ export type Database = {
           childrennames?: string[] | null
           content?: string | null
           createdat?: string
+          deduplication_key?: string | null
           error?: string | null
           id?: string
           image_path?: string | null
@@ -183,6 +185,7 @@ export type Database = {
           childrennames?: string[] | null
           content?: string | null
           createdat?: string
+          deduplication_key?: string | null
           error?: string | null
           id?: string
           image_path?: string | null
@@ -295,9 +298,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_story_duplicate: {
+        Args: {
+          p_title: string
+          p_authorid: string
+          p_objective?: string
+          p_children_names?: string[]
+        }
+        Returns: boolean
+      }
       delete_user: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_deduplication_key: {
+        Args: {
+          p_title: string
+          p_authorid: string
+          p_objective?: string
+          p_children_names?: string[]
+        }
+        Returns: string
       }
     }
     Enums: {
