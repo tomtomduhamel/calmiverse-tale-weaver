@@ -135,7 +135,7 @@ export const useN8nTitleGeneration = () => {
     try {
       setIsGeneratingTitles(true);
       
-      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb14-4e1b-8b6b-b21e872c1d60';
+      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook-test/067eebcf-cb14-4e1b-8b6b-b21e872c1d60';
       
       const payload = {
         action: 'generate_titles',
@@ -200,7 +200,7 @@ export const useN8nTitleGeneration = () => {
     try {
       console.log('[N8nTitleGeneration] Envoi de la requête pour générer 3 titres:', data);
       
-      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb14-4e1b-8b6b-b21e872c1d60';
+      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook-test/067eebcf-cb14-4e1b-8b6b-b21e872c1d60';
       
       const payload = {
         action: 'generate_titles',
