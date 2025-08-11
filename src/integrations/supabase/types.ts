@@ -106,6 +106,84 @@ export type Database = {
         }
         Relationships: []
       }
+      prompt_template_versions: {
+        Row: {
+          changelog: string | null
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          template_id: string
+          version: number
+        }
+        Insert: {
+          changelog?: string | null
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          template_id: string
+          version: number
+        }
+        Update: {
+          changelog?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          template_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompt_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prompt_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_prompt_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prompt_templates: {
+        Row: {
+          active_version_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          key: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active_version_id?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          key: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active_version_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          key?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sound_backgrounds: {
         Row: {
           created_at: string
@@ -239,6 +317,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           auto_scroll_enabled: boolean | null
@@ -295,7 +394,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_active_prompt_templates: {
+        Row: {
+          active_content: string | null
+          active_version: number | null
+          active_version_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string | null
+          key: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_story_duplicate: {
@@ -320,9 +433,24 @@ export type Database = {
         }
         Returns: string
       }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      next_template_version: {
+        Args: { p_template_id: string }
+        Returns: number
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -449,6 +577,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
