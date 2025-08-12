@@ -9,6 +9,8 @@ import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 import { ShareStoryDialog } from "./ShareStoryDialog";
 import { useShareDialog } from "@/hooks/story/reader/useShareDialog";
+import BackgroundSoundButton from "./reader/BackgroundSoundButton";
+import { extractObjectiveValue } from "@/utils/objectiveUtils";
 interface ReaderControlsProps {
   fontSize: number;
   setFontSize: (size: number) => void;
@@ -71,6 +73,21 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               {/* Nouveau lecteur audio n8n */}
               <div className="p-3 border rounded bg-card">
                 <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
+              </div>
+
+              {/* Musique de fond (compact) */}
+              <div className="p-3 border rounded bg-card">
+                <div className="flex items-center justify-between">
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Musique d'ambiance
+                  </div>
+                  <BackgroundSoundButton
+                    soundId={story.sound_id}
+                    storyObjective={extractObjectiveValue(story.objective) || undefined}
+                    isDarkMode={isDarkMode}
+                    autoPlay={false}
+                  />
+                </div>
               </div>
               
               {/* Auto-scroll supprimé - maintenant dans le header et bouton flottant */}
