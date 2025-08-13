@@ -38,7 +38,10 @@ export const kindleDataService = {
         hasContent: !!storyData.content,
         contentLength: storyData.content?.length || 0,
         authorId: storyData.authorid,
-        hasAnalysis: !!storyData.story_analysis
+        hasAnalysis: !!storyData.story_analysis,
+        hasImagePath: !!storyData.image_path,
+        imagePath: storyData.image_path || null,
+        soundId: storyData.sound_id || null
       });
       
       // Validation du contenu depuis la colonne 'content'
@@ -63,7 +66,9 @@ export const kindleDataService = {
         content: storyData.content,
         story_summary: storyData.summary || "",
         authorId: storyData.authorid,
-        story_analysis: storyData.story_analysis || undefined
+        story_analysis: storyData.story_analysis || undefined,
+        image_path: storyData.image_path || null,
+        sound_id: storyData.sound_id || null
       };
 
       console.log('✅ [KindleDataService] Histoire mappée avec succès:', {
@@ -71,7 +76,10 @@ export const kindleDataService = {
         title: story.title,
         contentLength: story.content.length,
         authorId: story.authorId,
-        hasAnalysis: !!story.story_analysis
+        hasAnalysis: !!story.story_analysis,
+        hasImagePath: !!story.image_path,
+        imagePath: story.image_path || null,
+        soundId: story.sound_id || null
       });
 
       return story;
