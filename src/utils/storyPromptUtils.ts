@@ -77,11 +77,11 @@ export const generateCharacterContext = (analysis: CharacterAnalysis): string =>
  */
 const getVocabularyLevel = (youngestAge: number): string => {
   if (youngestAge <= 3) {
-    return "Utilise un vocabulaire très simple avec des mots courts et familiers. Privilégie les répétitions et les onomatopées. Structure des phrases courtes de 3-5 mots maximum.";
+    return "Utilise un vocabulaire très simple avec des mots familiers. Privilégie les répétitions et les onomatopées.";
   } else if (youngestAge <= 5) {
-    return "Utilise un vocabulaire simple et accessible. Évite les mots complexes. Structure des phrases courtes et claires de 5-8 mots.";
+    return "Utilise un vocabulaire simple et accessible. Évite les mots complexes.";
   } else if (youngestAge <= 7) {
-    return "Utilise un vocabulaire adapté aux enfants d'âge scolaire. Introduis quelques mots nouveaux avec contexte. Structure des phrases de longueur moyenne.";
+    return "Utilise un vocabulaire adapté aux enfants d'âge scolaire. Introduis quelques mots nouveaux avec contexte.";
   } else {
     return "Utilise un vocabulaire plus riche et varié. Peux introduire des concepts plus complexes de manière adaptée aux enfants.";
   }
