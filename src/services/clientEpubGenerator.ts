@@ -97,15 +97,32 @@ export const clientEpubGenerator = {
     const oebps = zip.folder('OEBPS');
     if (!oebps) throw new Error('Impossible de créer le dossier OEBPS');
 
+    // Déterminer l'extension et le type MIME de l'image de couverture
+    let imageExt: 'jpeg' | 'png' | 'webp' = 'jpeg';
+    let imageMime: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg';
+    if (imageBlob && imageBlob.type) {
+      const t = imageBlob.type.toLowerCase();
+      if (t.includes('png')) {
+        imageExt = 'png';
+        imageMime = 'image/png';
+      } else if (t.includes('jpeg') || t.includes('jpg')) {
+        imageExt = 'jpeg';
+        imageMime = 'image/jpeg';
+      } else if (t.includes('webp')) {
+        imageExt = 'webp';
+        imageMime = 'image/webp';
+      }
+    }
+
     // Ajouter l'image de couverture si disponible
     if (imageBlob) {
-      oebps.file("cover.jpg", imageBlob);
+      oebps.file(`cover.${imageExt}`, imageBlob);
       // Créer la page de couverture HTML
-      await this.createCoverHtml(oebps, story, imageBlob);
+      await this.createCoverHtml(oebps, story, imageExt);
     }
 
     // Fichier de configuration OPF
-    await this.createContentOpf(oebps, story, !!imageBlob);
+    await this.createContentOpf(oebps, story, !!imageBlob, imageExt, imageMime);
     
     // Table des matières NCX
     await this.createTocNcx(oebps, story);
@@ -120,7 +137,13 @@ export const clientEpubGenerator = {
   /**
    * Crée le fichier content.opf (métadonnées et structure)
    */
-  async createContentOpf(oebps: JSZip, story: Story, hasImage: boolean = false): Promise<void> {
+  async createContentOpf(
+    oebps: JSZip,
+    story: Story,
+    hasImage: boolean = false,
+    imageExt: 'jpeg' | 'png' | 'webp' = 'jpeg',
+    imageMime: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg'
+  ): Promise<void> {
     const bookId = `calmi-${Date.now()}`;
     const childrenText = story.childrenNames?.join(', ') || 'Enfant';
     const cleanTitle = formatFrenchTitle(this.cleanEpubTitle(story.title));
@@ -141,7 +164,7 @@ export const clientEpubGenerator = {
       <item id="style" href="style.css" media-type="text/css"/>
       ${hasImage ? '<item id="cover" href="cover.html" media-type="application/xhtml+xml"/>' : ''}
       <item id="story" href="story.html" media-type="application/xhtml+xml"/>
-      ${hasImage ? '<item id="cover-image" href="cover.jpg" media-type="image/jpeg" properties="cover-image"/>' : ''}
+      ${hasImage ? `<item id="cover-image" href="cover.${imageExt}" media-type="${imageMime}" properties="cover-image"/>` : ''}
     </manifest>
   <spine toc="ncx">
     ${hasImage ? '<itemref idref="cover"/>' : ''}
@@ -185,7 +208,7 @@ export const clientEpubGenerator = {
   /**
    * Crée la page de couverture HTML séparée
    */
-  async createCoverHtml(oebps: JSZip, story: Story, imageBlob: Blob): Promise<void> {
+  async createCoverHtml(oebps: JSZip, story: Story, imageExt: 'jpeg' | 'png' | 'webp'): Promise<void> {
     const cleanTitle = formatFrenchTitle(this.cleanEpubTitle(story.title));
     
     const coverHtml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -198,7 +221,7 @@ export const clientEpubGenerator = {
 </head>
 <body>
   <div class="cover-page">
-    <img src="cover.jpg" alt="Couverture de l'histoire" class="cover-image"/>
+    <img src="cover.${imageExt}" alt="Couverture de l'histoire" class="cover-image"/>
   </div>
 </body>
 </html>`;
