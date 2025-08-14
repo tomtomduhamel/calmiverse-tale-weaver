@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -413,10 +413,10 @@ export type Database = {
     Functions: {
       check_story_duplicate: {
         Args: {
-          p_title: string
           p_authorid: string
-          p_objective?: string
           p_children_names?: string[]
+          p_objective?: string
+          p_title: string
         }
         Returns: boolean
       }
@@ -426,17 +426,17 @@ export type Database = {
       }
       generate_deduplication_key: {
         Args: {
-          p_title: string
           p_authorid: string
-          p_objective?: string
           p_children_names?: string[]
+          p_objective?: string
+          p_title: string
         }
         Returns: string
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
