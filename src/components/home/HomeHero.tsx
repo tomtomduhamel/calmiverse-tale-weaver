@@ -65,8 +65,8 @@ const HomeHero: React.FC<HomeHeroProps> = ({
         {/* Cartes optimisées mobile - maintenant avec 3 options */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {/* Création d'histoire avec sélection de titres */}
-          <Card className="border border-primary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
+          <Card className="border border-primary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift h-full">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center h-full">
               <div className="mb-2 sm:mb-3 p-2 bg-primary/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
                 <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary-dark" />
               </div>
@@ -74,15 +74,15 @@ const HomeHero: React.FC<HomeHeroProps> = ({
               <p className="text-muted-foreground text-xs mb-2 sm:mb-3 flex-grow leading-relaxed">
                 Choisissez parmi 3 titres générés pour créer votre histoire
               </p>
-              <Button onClick={handleTitleStoryClick} className="w-full bg-primary hover:bg-primary-dark text-primary-foreground h-10 sm:h-11 text-sm">
+              <Button onClick={handleTitleStoryClick} className="w-full bg-primary hover:bg-primary-dark text-primary-foreground h-10 sm:h-11 text-sm mt-auto">
                 Commencer
               </Button>
             </CardContent>
           </Card>
 
           {/* Univers des enfants */}
-          <Card className="border border-secondary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
+          <Card className="border border-secondary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift h-full">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center h-full">
               <div className="mb-2 sm:mb-3 p-2 bg-secondary/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
                 <Users className="h-4 w-4 sm:h-5 sm:w-5 text-secondary" />
               </div>
@@ -90,7 +90,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({
               <p className="text-muted-foreground text-xs mb-2 sm:mb-3 flex-grow leading-relaxed">
                 Gérez les profils et préférences de vos enfants
               </p>
-              <Link to="/children" className="w-full">
+              <Link to="/children" className="w-full mt-auto">
                 <Button className="w-full bg-secondary hover:bg-secondary-dark text-secondary-foreground h-10 sm:h-11 text-sm">
                   Explorer
                 </Button>
@@ -99,8 +99,8 @@ const HomeHero: React.FC<HomeHeroProps> = ({
           </Card>
 
           {/* Bibliothèque */}
-          <Card className="border border-muted/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift">
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
+          <Card className="border border-muted/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift h-full">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center h-full">
               <div className="mb-2 sm:mb-3 p-2 bg-muted/20 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto">
                 <Library className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               </div>
@@ -108,7 +108,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({
               <p className="text-muted-foreground text-xs mb-2 sm:mb-3 flex-grow leading-relaxed">
                 Retrouvez toutes vos histoires créées
               </p>
-              <Button onClick={handleLibraryClick} className="w-full bg-muted hover:bg-muted/80 text-muted-foreground h-10 sm:h-11 text-sm">
+              <Button onClick={handleLibraryClick} className="w-full bg-muted hover:bg-muted/80 text-muted-foreground h-10 sm:h-11 text-sm mt-auto">
                 Consulter
               </Button>
             </CardContent>
