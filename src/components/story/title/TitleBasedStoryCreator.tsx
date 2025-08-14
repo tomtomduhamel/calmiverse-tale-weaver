@@ -1,12 +1,15 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles, Users } from 'lucide-react';
+import { Loader2, Sparkles, Users, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useN8nTitleGeneration } from '@/hooks/stories/useN8nTitleGeneration';
 import { useN8nStoryFromTitle } from '@/hooks/stories/useN8nStoryFromTitle';
 import { useRealtimeStoryMonitor } from '@/hooks/stories/useRealtimeStoryMonitor';
+import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
 import TitleSelector from './TitleSelector';
 import type { Child } from '@/types/child';
 import type { GeneratedTitle } from '@/hooks/stories/useN8nTitleGeneration';
@@ -21,12 +24,25 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   onStoryCreated,
   preSelectedChildId
 }) => {
-  const [selectedChildrenIds, setSelectedChildrenIds] = useState<string[]>([]);
-  const [selectedObjective, setSelectedObjective] = useState<string>('fun');
-  const [selectedTitle, setSelectedTitle] = useState<string>('');
-  const [selectedDuration, setSelectedDuration] = useState<StoryDurationMinutes | null>(null);
-  const [currentStep, setCurrentStep] = useState<'setup' | 'titles' | 'creating'>('setup');
-  const [hasUsedRegeneration, setHasUsedRegeneration] = useState<boolean>(false);
+  // Use persisted state instead of local state
+  const {
+    currentStep,
+    selectedChildrenIds,
+    selectedObjective,
+    generatedTitles,
+    selectedTitle,
+    selectedDuration,
+    regenerationUsed,
+    updateCurrentStep,
+    updateSelectedChildren,
+    updateSelectedObjective,
+    updateGeneratedTitles,
+    updateSelectedTitle,
+    updateSelectedDuration,
+    incrementRegeneration,
+    clearPersistedState,
+    hasPersistedSession
+  } = usePersistedStoryCreation();
   const {
     toast
   } = useToast();
@@ -35,9 +51,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     generateAdditionalTitles,
     clearTitles,
     resetRegenerationState,
-    generatedTitles,
     isGeneratingTitles,
-    regenerationUsed,
     canRegenerate
   } = useN8nTitleGeneration();
   const {
@@ -83,33 +97,39 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     description: 'Histoire joyeuse et divertissante'
   }];
   
-  // Effect pour présélectionner un enfant si spécifié
+  // Effect pour présélectionner un enfant si spécifié et pas déjà de session
   useEffect(() => {
-    if (preSelectedChildId && children.length > 0) {
+    if (preSelectedChildId && children.length > 0 && !hasPersistedSession()) {
       const childExists = children.find(child => child.id === preSelectedChildId);
-      if (childExists) {
+      if (childExists && !selectedChildrenIds.includes(preSelectedChildId)) {
         console.log('[TitleBasedStoryCreator] Présélection de l\'enfant:', childExists.name);
-        setSelectedChildrenIds([preSelectedChildId]);
+        updateSelectedChildren([preSelectedChildId]);
       }
     }
-  }, [preSelectedChildId, children]);
+  }, [preSelectedChildId, children, hasPersistedSession, selectedChildrenIds, updateSelectedChildren]);
 
   const handleChildToggle = useCallback((childId: string) => {
-    setSelectedChildrenIds(prev => prev.includes(childId) ? prev.filter(id => id !== childId) : [...prev, childId]);
-  }, []);
+    const newSelection = selectedChildrenIds.includes(childId) 
+      ? selectedChildrenIds.filter(id => id !== childId)
+      : [...selectedChildrenIds, childId];
+    updateSelectedChildren(newSelection);
+  }, [selectedChildrenIds, updateSelectedChildren]);
 
   // Regénérer 3 titres supplémentaires
   const handleRegenerateTitles = useCallback(async () => {
     if (!selectedObjective || selectedChildrenIds.length === 0) return;
     try {
       const selectedChildrenForTitles = children.filter(child => selectedChildrenIds.includes(child.id));
-      await generateAdditionalTitles({
+      const newTitles = await generateAdditionalTitles({
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
         childrenNames: selectedChildrenForTitles.map(c => c.name),
         childrenGenders: selectedChildrenForTitles.map(c => c.gender)
       });
-      setHasUsedRegeneration(true);
+      if (newTitles && newTitles.length > 0) {
+        updateGeneratedTitles([...generatedTitles, ...newTitles]);
+        incrementRegeneration();
+      }
     } catch (error: any) {
       console.error("Erreur lors de la regénération:", error);
       toast({
@@ -118,7 +138,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         variant: "destructive"
       });
     }
-  }, [selectedObjective, selectedChildrenIds, children, generateAdditionalTitles, toast]);
+  }, [selectedObjective, selectedChildrenIds, children, generateAdditionalTitles, generatedTitles, updateGeneratedTitles, incrementRegeneration, toast]);
   const handleGenerateTitles = useCallback(async () => {
     if (selectedChildrenIds.length === 0) {
       toast({
@@ -138,9 +158,11 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         childrenNames,
         childrenGenders: selectedChildren.map(child => child.gender)
       });
-      setCurrentStep('titles');
-      setHasUsedRegeneration(false); // Réinitialiser pour cette nouvelle session
-      resetRegenerationState();
+      if (titles && titles.length > 0) {
+        updateGeneratedTitles(titles);
+        updateCurrentStep('titles');
+        resetRegenerationState();
+      }
 
       // Toast unique pour confirmer la génération des titres
       toast({
@@ -155,7 +177,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         variant: "destructive"
       });
     }
-  }, [selectedChildrenIds, selectedObjective, children, generateTitles, toast]);
+  }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateGeneratedTitles, updateCurrentStep, resetRegenerationState, toast]);
   const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes) => {
     if (!titleToUse) {
       toast({
@@ -169,9 +191,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       const selectedChildrenForStory = children.filter(child => selectedChildrenIds.includes(child.id));
       const childrenNames = selectedChildrenForStory.map(child => child.name);
       console.log('[TitleBasedStoryCreator] Création histoire avec titre:', titleToUse, 'durée:', durationMinutes, 'min');
-      setSelectedTitle(titleToUse);
-      setSelectedDuration(durationMinutes);
-      setCurrentStep('creating');
+      updateSelectedTitle(titleToUse);
+      updateSelectedDuration(durationMinutes);
+      updateCurrentStep('creating');
 
       // Démarrer le monitoring en temps réel AVANT de créer l'histoire
       const cleanupMonitoring = startMonitoring();
@@ -194,30 +216,62 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       });
     } catch (error: any) {
       console.error('[TitleBasedStoryCreator] Erreur création histoire:', error);
-      setCurrentStep('titles');
+      updateCurrentStep('titles');
       toast({
         title: "Erreur",
         description: error.message || "Impossible de créer l'histoire",
         variant: "destructive"
       });
     }
-  }, [selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, toast]);
+  }, [selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, updateSelectedTitle, updateSelectedDuration, updateCurrentStep, toast]);
   const handleBack = useCallback(() => {
     if (currentStep === 'titles') {
-      setCurrentStep('setup');
+      updateCurrentStep('setup');
       clearTitles();
-      setSelectedTitle('');
-      setHasUsedRegeneration(false);
     } else if (currentStep === 'creating') {
-      setCurrentStep('titles');
+      updateCurrentStep('titles');
     }
-  }, [currentStep, clearTitles]);
+  }, [currentStep, clearTitles, updateCurrentStep]);
+
+  // Gestion de la recommencer
+  const handleRestart = useCallback(() => {
+    clearPersistedState();
+    toast({
+      title: "Session réinitialisée",
+      description: "Vous pouvez recommencer la création d'histoire."
+    });
+  }, [clearPersistedState, toast]);
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
   const selectedObjectiveData = objectives.find(obj => obj.value === selectedObjective);
 
   // Étape 1: Configuration
   if (currentStep === 'setup') {
     return <div className="space-y-6">
+        {/* Notification de session récupérée */}
+        {hasPersistedSession() && (
+          <Alert className="mb-6">
+            <RefreshCw className="h-4 w-4" />
+            <AlertDescription>
+              Une session de création d'histoire a été récupérée. 
+              <Button variant="link" className="ml-2 p-0" onClick={handleRestart}>
+                Recommencer
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Indicateur de progression */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+            <span>Configuration</span>
+            <span>Sélection du titre</span>
+            <span>Création</span>
+          </div>
+          <Progress 
+            value={currentStep === 'setup' ? 33 : currentStep === 'titles' ? 66 : 100} 
+            className="h-2" 
+          />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -249,7 +303,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {objectives.map(objective => <div key={objective.value} onClick={() => setSelectedObjective(objective.value)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedObjective === objective.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+              {objectives.map(objective => <div key={objective.value} onClick={() => updateSelectedObjective(objective.value)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedObjective === objective.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-2xl">{objective.icon}</span>
                     <span className="font-medium">{objective.label}</span>
