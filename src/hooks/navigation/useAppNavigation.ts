@@ -32,7 +32,7 @@ export const useAppNavigation = () => {
   // Navigation vers la création d'histoire
   const navigateToCreate = useCallback(() => {
     console.log('[AppNavigation] Navigation vers la création');
-    navigate('/create-story-titles');
+    navigate('/create-story/step-1');
   }, [navigate]);
 
   // Navigation vers les profils

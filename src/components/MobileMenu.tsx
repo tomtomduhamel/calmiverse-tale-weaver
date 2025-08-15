@@ -41,7 +41,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
     if (location.pathname === "/library") return "library";
     if (location.pathname === "/settings") return "settings";
     if (location.pathname === "/children") return "profiles";
-    if (location.pathname === "/create-story-titles") return "create";
+    if (location.pathname.startsWith("/create-story")) return "create";
     if (location.pathname === "/") return "home";
     return currentView;
   };

@@ -22,7 +22,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({
     navigate("/library");
   };
   const handleTitleStoryClick = () => {
-    navigate("/create-story-titles");
+    navigate("/create-story/step-1");
   };
   console.log('[HomeHero] Enfants reçus dans HomeHero:', {
     childrenCount: children?.length || 0,

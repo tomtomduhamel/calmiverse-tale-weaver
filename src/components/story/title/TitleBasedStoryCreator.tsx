@@ -226,7 +226,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   }, [selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, updateSelectedTitle, updateSelectedDuration, updateCurrentStep, toast]);
   const handleBack = useCallback(() => {
     if (currentStep === 'titles') {
-      updateCurrentStep('setup');
+      updateCurrentStep('objective');
       clearTitles();
     } else if (currentStep === 'creating') {
       updateCurrentStep('titles');
@@ -245,7 +245,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   const selectedObjectiveData = objectives.find(obj => obj.value === selectedObjective);
 
   // Étape 1: Configuration
-  if (currentStep === 'setup') {
+  if (currentStep === 'children') {
     return <div className="space-y-6">
         {/* Notification de session récupérée */}
         {hasPersistedSession() && (
@@ -262,15 +262,16 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
         {/* Indicateur de progression */}
         <div className="mb-6">
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-            <span>Configuration</span>
-            <span>Sélection du titre</span>
-            <span>Création</span>
-          </div>
-          <Progress 
-            value={currentStep === 'setup' ? 33 : currentStep === 'titles' ? 66 : 100} 
-            className="h-2" 
-          />
+        <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+          <span>Sélection enfants</span>
+          <span>Choix objectif</span>
+          <span>Sélection du titre</span>
+          <span>Création</span>
+        </div>
+        <Progress 
+          value={currentStep === 'children' ? 25 : currentStep === 'objective' ? 50 : currentStep === 'titles' ? 75 : 100} 
+          className="h-2" 
+        />
         </div>
         <Card>
           <CardHeader>

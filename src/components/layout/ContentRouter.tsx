@@ -97,7 +97,7 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
         onCreateStory={(childId) => {
           if (childId) {
             // Navigate to create story with pre-selected child
-            window.location.href = `/create-story-titles?childId=${childId}`;
+            window.location.href = `/create-story/step-1?childId=${childId}`;
           } else {
             onViewChange("create");
           }

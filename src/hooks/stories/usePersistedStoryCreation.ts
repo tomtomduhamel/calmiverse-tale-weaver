@@ -3,7 +3,7 @@ import type { GeneratedTitle } from '@/hooks/stories/useN8nTitleGeneration';
 import type { StoryDurationMinutes } from '@/types/story';
 
 interface PersistedStoryCreationState {
-  currentStep: 'setup' | 'titles' | 'creating';
+  currentStep: 'children' | 'objective' | 'titles' | 'creating';
   selectedChildrenIds: string[];
   selectedObjective: string;
   generatedTitles: GeneratedTitle[];
@@ -36,7 +36,7 @@ export const usePersistedStoryCreation = () => {
     
     // Return default state
     return {
-      currentStep: 'setup' as const,
+      currentStep: 'children' as const,
       selectedChildrenIds: [],
       selectedObjective: '',
       generatedTitles: [],
@@ -61,7 +61,7 @@ export const usePersistedStoryCreation = () => {
   }, [state]);
 
   // Update functions
-  const updateCurrentStep = useCallback((step: 'setup' | 'titles' | 'creating') => {
+  const updateCurrentStep = useCallback((step: 'children' | 'objective' | 'titles' | 'creating') => {
     setState(prev => ({ ...prev, currentStep: step }));
   }, []);
 
@@ -93,7 +93,7 @@ export const usePersistedStoryCreation = () => {
   const clearPersistedState = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     setState({
-      currentStep: 'setup',
+      currentStep: 'children',
       selectedChildrenIds: [],
       selectedObjective: '',
       generatedTitles: [],
@@ -106,7 +106,7 @@ export const usePersistedStoryCreation = () => {
 
   // Check if we have a persisted session
   const hasPersistedSession = useCallback(() => {
-    return state.currentStep !== 'setup' || 
+    return state.currentStep !== 'children' || 
            state.selectedChildrenIds.length > 0 || 
            state.selectedObjective !== '' ||
            state.generatedTitles.length > 0;

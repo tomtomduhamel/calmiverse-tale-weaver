@@ -13,7 +13,7 @@ const LibraryHeader = ({ isZenMode, onZenModeToggle }: LibraryHeaderProps) => {
   const navigate = useNavigate();
   
   const handleCreateStory = () => {
-    navigate("/create-story-titles");
+    navigate("/create-story/step-1");
   };
 
   return (
