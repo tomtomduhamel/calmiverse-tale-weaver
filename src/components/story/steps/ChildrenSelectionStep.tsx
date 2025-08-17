@@ -78,8 +78,11 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({ children,
     }
   };
 
-  // Split children into chunks for horizontal scrolling if more than 8
-  const maxVisibleCards = 8;
+  // Optimize display: reverse order so most popular appear first (left side)
+  const displayChildren = [...children].reverse();
+  
+  // Split children into chunks for horizontal scrolling if more than 10
+  const maxVisibleCards = 10;
   const needsScrolling = children.length > maxVisibleCards;
 
   return (
@@ -129,18 +132,28 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({ children,
         <CardContent>
           {needsScrolling ? (
             <div className="relative group">
-              {/* Conteneur de scroll horizontal */}
+              {/* Message contextuel */}
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-muted-foreground">
+                  🏆 Les plus populaires en premier
+                </p>
+                <p className="text-xs text-muted-foreground md:hidden">
+                  Glissez horizontalement →
+                </p>
+              </div>
+              
+              {/* Conteneur de scroll horizontal optimisé */}
               <div 
-                className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"
+                className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
                 style={{
                   scrollSnapType: 'x mandatory',
                   WebkitOverflowScrolling: 'touch'
                 }}
               >
-                {children.map(child => (
+                {displayChildren.map(child => (
                   <div 
                     key={child.id}
-                    className="flex-none w-64"
+                    className="flex-none w-44 sm:w-48"
                     style={{ scrollSnapAlign: 'start' }}
                   >
                     <ChildCard 
@@ -154,17 +167,12 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({ children,
               </div>
               
               {/* Indicateurs visuels de scroll */}
-              <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none opacity-60"></div>
-              <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none opacity-60"></div>
-              
-              {/* Instruction de scroll pour mobile */}
-              <p className="text-xs text-muted-foreground text-center mt-2 md:hidden">
-                Glissez horizontalement pour voir plus d'options
-              </p>
+              <div className="absolute left-0 top-12 bottom-4 w-6 bg-gradient-to-r from-background to-transparent pointer-events-none opacity-50"></div>
+              <div className="absolute right-0 top-12 bottom-4 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none opacity-50"></div>
             </div>
           ) : (
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4">
-              {children.map(child => (
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
+              {displayChildren.map(child => (
                 <ChildCard 
                   key={child.id}
                   child={child}
@@ -221,48 +229,68 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, isSelected, onToggle, getG
   const age = calculateAge(child.birthDate);
   const storiesCount = (child as any).storiesCount || 0;
   
+  // Determine popularity level for visual indicators
+  const isTopPerformer = storiesCount >= 3;
+  const isPopular = storiesCount > 5;
+  
   return (
     <div 
       onClick={() => onToggle(child.id)}
-      className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+      className={`relative p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 ${
         isSelected 
           ? 'border-primary bg-primary/5 shadow-sm' 
           : 'border-border hover:border-primary/50'
-      }`}
+      } ${isPopular ? 'ring-1 ring-primary/20' : ''}`}
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg">{getGenderIcon(child.gender)}</span>
-            <h3 className="font-semibold text-base">{child.name}</h3>
-            {storiesCount > 0 && (
-              <Badge variant="secondary" className="text-xs ml-1">
-                ⭐ {storiesCount}
-              </Badge>
-            )}
+      {/* Top badges */}
+      {isTopPerformer && (
+        <div className="absolute -top-2 -right-2 z-10">
+          {isPopular ? (
+            <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-black font-bold text-xs px-2 py-1">
+              🏆 TOP
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="text-xs px-2 py-1 bg-primary/10">
+              ⭐
+            </Badge>
+          )}
+        </div>
+      )}
+      
+      {/* Main content - more compact layout */}
+      <div className="space-y-2">
+        {/* Name and icon row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <span className="text-lg flex-shrink-0">{getGenderIcon(child.gender)}</span>
+            <h3 className="font-semibold text-sm truncate">{child.name}</h3>
           </div>
-          <Badge variant="outline" className="text-xs">
+          {isSelected && (
+            <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+              <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+            </div>
+          )}
+        </div>
+        
+        {/* Age and stories count */}
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs px-2 py-0.5">
             {age} an{age > 1 ? 's' : ''}
           </Badge>
+          {storiesCount > 0 && (
+            <Badge variant="secondary" className="text-xs px-2 py-0.5">
+              📚 {storiesCount}
+            </Badge>
+          )}
         </div>
-        {isSelected && (
-          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-            <div className="h-2 w-2 rounded-full bg-white"></div>
+        
+        {/* Teddy name - more compact */}
+        {child.teddyName && (
+          <div className="text-xs text-muted-foreground truncate">
+            🧸 {child.teddyName}
           </div>
         )}
       </div>
-      
-      {child.teddyName && (
-        <div className="text-sm text-muted-foreground">
-          🧸 {child.teddyName}
-        </div>
-      )}
-      
-      {storiesCount > 5 && (
-        <div className="text-xs text-primary font-medium mt-2">
-          🏆 Populaire
-        </div>
-      )}
     </div>
   );
 };
