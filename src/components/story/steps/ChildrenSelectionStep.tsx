@@ -128,24 +128,39 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({ children,
         </CardHeader>
         <CardContent>
           {needsScrolling ? (
-            <div className="relative">
-              <ScrollArea className="w-full">
-                <div className="flex gap-4 pb-4 min-w-full">
-                  {children.map(child => (
-                    <div 
-                      key={child.id}
-                      className="flex-none w-64"
-                    >
-                      <ChildCard 
-                        child={child}
-                        isSelected={selectedChildrenIds.includes(child.id)}
-                        onToggle={handleChildToggle}
-                        getGenderIcon={getGenderIcon}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
+            <div className="relative group">
+              {/* Conteneur de scroll horizontal */}
+              <div 
+                className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"
+                style={{
+                  scrollSnapType: 'x mandatory',
+                  WebkitOverflowScrolling: 'touch'
+                }}
+              >
+                {children.map(child => (
+                  <div 
+                    key={child.id}
+                    className="flex-none w-64"
+                    style={{ scrollSnapAlign: 'start' }}
+                  >
+                    <ChildCard 
+                      child={child}
+                      isSelected={selectedChildrenIds.includes(child.id)}
+                      onToggle={handleChildToggle}
+                      getGenderIcon={getGenderIcon}
+                    />
+                  </div>
+                ))}
+              </div>
+              
+              {/* Indicateurs visuels de scroll */}
+              <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none opacity-60"></div>
+              <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none opacity-60"></div>
+              
+              {/* Instruction de scroll pour mobile */}
+              <p className="text-xs text-muted-foreground text-center mt-2 md:hidden">
+                Glissez horizontalement pour voir plus d'options
+              </p>
             </div>
           ) : (
             <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4">
@@ -196,7 +211,7 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({ children,
 
 // Composant pour une carte enfant individuelle
 interface ChildCardProps {
-  child: Child;
+  child: Child & { storiesCount?: number };
   isSelected: boolean;
   onToggle: (childId: string) => void;
   getGenderIcon: (gender: string) => string;
@@ -204,6 +219,7 @@ interface ChildCardProps {
 
 const ChildCard: React.FC<ChildCardProps> = ({ child, isSelected, onToggle, getGenderIcon }) => {
   const age = calculateAge(child.birthDate);
+  const storiesCount = (child as any).storiesCount || 0;
   
   return (
     <div 
@@ -219,6 +235,11 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, isSelected, onToggle, getG
           <div className="flex items-center gap-2 mb-1">
             <span className="text-lg">{getGenderIcon(child.gender)}</span>
             <h3 className="font-semibold text-base">{child.name}</h3>
+            {storiesCount > 0 && (
+              <Badge variant="secondary" className="text-xs ml-1">
+                ⭐ {storiesCount}
+              </Badge>
+            )}
           </div>
           <Badge variant="outline" className="text-xs">
             {age} an{age > 1 ? 's' : ''}
@@ -234,6 +255,12 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, isSelected, onToggle, getG
       {child.teddyName && (
         <div className="text-sm text-muted-foreground">
           🧸 {child.teddyName}
+        </div>
+      )}
+      
+      {storiesCount > 5 && (
+        <div className="text-xs text-primary font-medium mt-2">
+          🏆 Populaire
         </div>
       )}
     </div>
