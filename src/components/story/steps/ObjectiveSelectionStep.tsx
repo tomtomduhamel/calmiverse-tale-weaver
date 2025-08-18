@@ -3,13 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, Target, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Target } from 'lucide-react';
 import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
-import { useN8nTitleGeneration } from '@/hooks/stories/useN8nTitleGeneration';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ObjectiveSelectionStepProps {
   children: Child[];
@@ -20,11 +18,9 @@ const ObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ childre
     selectedChildrenIds,
     selectedObjective,
     updateSelectedObjective,
-    updateCurrentStep,
-    updateGeneratedTitles
+    updateCurrentStep
   } = usePersistedStoryCreation();
   
-  const { generateTitles, resetRegenerationState, isGeneratingTitles } = useN8nTitleGeneration();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,7 +37,7 @@ const ObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ childre
     updateSelectedObjective(objective);
   }, [updateSelectedObjective]);
 
-  const handleGenerateTitles = useCallback(async () => {
+  const handleContinueToTitles = useCallback(() => {
     if (!selectedObjective) {
       toast({
         title: "Objectif requis",
@@ -51,37 +47,10 @@ const ObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ childre
       return;
     }
 
-    try {
-      const childrenNames = selectedChildren.map(child => child.name);
-      console.log('[ObjectiveSelectionStep] Génération de titres pour:', childrenNames);
-      
-      const titles = await generateTitles({
-        objective: selectedObjective,
-        childrenIds: selectedChildrenIds,
-        childrenNames,
-        childrenGenders: selectedChildren.map(child => child.gender)
-      });
-      
-      if (titles && titles.length > 0) {
-        updateGeneratedTitles(titles);
-        updateCurrentStep('titles');
-        resetRegenerationState();
-        navigate('/create-story/step-3');
-      }
-
-      toast({
-        title: "Titres générés avec succès",
-        description: `${titles.length} titre${titles.length > 1 ? 's' : ''} disponible${titles.length > 1 ? 's' : ''}`
-      });
-    } catch (error: any) {
-      console.error('[ObjectiveSelectionStep] Erreur génération titres:', error);
-      toast({
-        title: "Erreur",
-        description: error.message || "Impossible de générer les titres",
-        variant: "destructive"
-      });
-    }
-  }, [selectedObjective, selectedChildren, selectedChildrenIds, generateTitles, updateGeneratedTitles, updateCurrentStep, resetRegenerationState, navigate, toast]);
+    console.log('[ObjectiveSelectionStep] Navigation vers la sélection de titres, objectif:', selectedObjective);
+    updateCurrentStep('titles');
+    navigate('/create-story/step-3');
+  }, [selectedObjective, updateCurrentStep, navigate, toast]);
 
   const handleBack = useCallback(() => {
     navigate('/create-story/step-1');
@@ -199,21 +168,12 @@ const ObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ childre
             </Badge>
           )}
           <Button 
-            onClick={handleGenerateTitles}
-            disabled={!selectedObjective || isGeneratingTitles}
+            onClick={handleContinueToTitles}
+            disabled={!selectedObjective}
             className="min-w-[180px]"
           >
-            {isGeneratingTitles ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Génération...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Générer les titres
-              </>
-            )}
+            <ArrowRight className="w-4 h-4 mr-2" />
+            Continuer
           </Button>
         </div>
       </div>

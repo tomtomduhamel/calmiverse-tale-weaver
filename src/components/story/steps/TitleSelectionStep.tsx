@@ -65,7 +65,7 @@ const TitleSelectionStep: React.FC<TitleSelectionStepProps> = ({ children, onSto
 
   const selectedObjectiveData = objectives.find(obj => obj.value === selectedObjective);
 
-  // Auto-génération des titres si manquants
+  // Auto-génération des titres si manquants (avec délai pour éviter double génération)
   useEffect(() => {
     console.log('[TitleSelectionStep] Vérification auto-génération:', {
       generatedTitlesCount: generatedTitles.length,
@@ -81,8 +81,16 @@ const TitleSelectionStep: React.FC<TitleSelectionStepProps> = ({ children, onSto
       generatedTitles.length === 0 && 
       !isGeneratingTitles
     ) {
-      console.log('[TitleSelectionStep] Auto-génération des titres déclenchée');
-      handleAutoGenerateTitles();
+      console.log('[TitleSelectionStep] Auto-génération des titres déclenchée avec délai');
+      // Petit délai pour permettre la synchronisation depuis ObjectiveSelectionStep
+      const timer = setTimeout(() => {
+        // Re-vérifier que les titres ne sont toujours pas là après le délai
+        if (generatedTitles.length === 0 && !isGeneratingTitles) {
+          handleAutoGenerateTitles();
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
     }
   }, [selectedObjective, selectedChildrenIds, generatedTitles.length, isGeneratingTitles]);
 
