@@ -15,11 +15,16 @@ export interface GeneratedTitle {
   description?: string;
 }
 
-export const useN8nTitleGeneration = () => {
+export const useN8nTitleGeneration = (
+  persistedTitles?: GeneratedTitle[],
+  onTitlesGenerated?: (titles: GeneratedTitle[]) => void
+) => {
   const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
-  const [generatedTitles, setGeneratedTitles] = useState<GeneratedTitle[]>([]);
   const [regenerationUsed, setRegenerationUsed] = useState(false);
   const { toast } = useToast();
+
+  // Utiliser les titres persistés comme source de vérité
+  const generatedTitles = persistedTitles || [];
 
   const parseN8nTitlesResponse = (rawResult: any): GeneratedTitle[] => {
     console.log('[N8nTitleGeneration] Structure brute de la réponse:', JSON.stringify(rawResult, null, 2));
@@ -171,8 +176,9 @@ export const useN8nTitleGeneration = () => {
         throw new Error('Aucun nouveau titre reçu');
       }
       
-      // Placer les nouveaux titres EN PREMIER (choix B)
-      setGeneratedTitles(prevTitles => [...newTitles, ...prevTitles]);
+      // Placer les nouveaux titres EN PREMIER et notifier la persistance
+      const updatedTitles = [...newTitles, ...generatedTitles];
+      onTitlesGenerated?.(updatedTitles);
       setRegenerationUsed(true);
       
       toast({
@@ -247,7 +253,8 @@ export const useN8nTitleGeneration = () => {
       console.log('[N8nTitleGeneration] SUCCÈS: Titres finaux extraits:', titles);
       console.log('[N8nTitleGeneration] ===== FIN GÉNÉRATION TITRES - SUCCÈS =====');
       
-      setGeneratedTitles(titles);
+      // Notifier la persistance des nouveaux titres
+      onTitlesGenerated?.(titles);
       setRegenerationUsed(false); // Réinitialiser la regénération pour une nouvelle session
       
       // Pas de toast ici - sera géré par le composant appelant
@@ -270,7 +277,7 @@ export const useN8nTitleGeneration = () => {
   };
 
   const clearTitles = () => {
-    setGeneratedTitles([]);
+    onTitlesGenerated?.([]);
     setRegenerationUsed(false);
   };
 

@@ -33,7 +33,10 @@ const TitleSelectionStep: React.FC<TitleSelectionStepProps> = ({ children, onSto
     incrementRegeneration
   } = usePersistedStoryCreation();
   
-  const { generateTitles, generateAdditionalTitles, isGeneratingTitles, canRegenerate } = useN8nTitleGeneration();
+  const { generateTitles, generateAdditionalTitles, isGeneratingTitles, canRegenerate } = useN8nTitleGeneration(
+    generatedTitles,
+    updateGeneratedTitles
+  );
   const { createStoryFromTitle, isCreatingStory } = useN8nStoryFromTitle();
   const navigate = useNavigate();
   const { toast } = useToast();

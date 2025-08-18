@@ -47,7 +47,7 @@ export const usePersistedStoryCreation = () => {
     };
   });
 
-  // Save to localStorage whenever state changes
+  // Save to localStorage whenever state changes avec protection contre les boucles
   useEffect(() => {
     try {
       const stateToSave = {
@@ -55,6 +55,12 @@ export const usePersistedStoryCreation = () => {
         timestamp: Date.now()
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+      console.log('[usePersistedStoryCreation] Session sauvegardée:', {
+        step: state.currentStep,
+        childrenCount: state.selectedChildrenIds.length,
+        objective: state.selectedObjective,
+        titlesCount: state.generatedTitles.length
+      });
     } catch (error) {
       console.warn('Failed to save story creation state:', error);
     }
