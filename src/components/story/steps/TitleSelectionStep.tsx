@@ -1,9 +1,9 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
 import { useN8nTitleGeneration } from '@/hooks/stories/useN8nTitleGeneration';
 import { useN8nStoryFromTitle } from '@/hooks/stories/useN8nStoryFromTitle';
@@ -33,7 +33,7 @@ const TitleSelectionStep: React.FC<TitleSelectionStepProps> = ({ children, onSto
     incrementRegeneration
   } = usePersistedStoryCreation();
   
-  const { generateAdditionalTitles, isGeneratingTitles, canRegenerate } = useN8nTitleGeneration();
+  const { generateTitles, generateAdditionalTitles, isGeneratingTitles, canRegenerate } = useN8nTitleGeneration();
   const { createStoryFromTitle, isCreatingStory } = useN8nStoryFromTitle();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -61,6 +61,98 @@ const TitleSelectionStep: React.FC<TitleSelectionStepProps> = ({ children, onSto
   ];
 
   const selectedObjectiveData = objectives.find(obj => obj.value === selectedObjective);
+
+  // Auto-génération des titres si manquants
+  useEffect(() => {
+    console.log('[TitleSelectionStep] Vérification auto-génération:', {
+      generatedTitlesCount: generatedTitles.length,
+      selectedObjective,
+      selectedChildrenCount: selectedChildrenIds.length,
+      isGeneratingTitles
+    });
+
+    // Vérifier si on a les prérequis et aucun titre généré
+    if (
+      selectedObjective && 
+      selectedChildrenIds.length > 0 && 
+      generatedTitles.length === 0 && 
+      !isGeneratingTitles
+    ) {
+      console.log('[TitleSelectionStep] Auto-génération des titres déclenchée');
+      handleAutoGenerateTitles();
+    }
+  }, [selectedObjective, selectedChildrenIds, generatedTitles.length, isGeneratingTitles]);
+
+  // Vérification des prérequis et redirection si nécessaire
+  useEffect(() => {
+    if (!selectedObjective || selectedChildrenIds.length === 0) {
+      console.warn('[TitleSelectionStep] Prérequis manquants, redirection vers étapes précédentes');
+      toast({
+        title: "Étapes manquantes",
+        description: "Veuillez d'abord sélectionner des enfants et un objectif",
+        variant: "destructive"
+      });
+      
+      if (selectedChildrenIds.length === 0) {
+        navigate('/create-story/step-1');
+      } else if (!selectedObjective) {
+        navigate('/create-story/step-2');
+      }
+    }
+  }, [selectedObjective, selectedChildrenIds, navigate, toast]);
+
+  // Auto-génération des titres
+  const handleAutoGenerateTitles = useCallback(async () => {
+    if (!selectedObjective || selectedChildrenIds.length === 0) return;
+    
+    try {
+      const selectedChildrenForTitles = children.filter(child => selectedChildrenIds.includes(child.id));
+      
+      console.log('[TitleSelectionStep] Démarrage auto-génération avec:', {
+        objective: selectedObjective,
+        childrenIds: selectedChildrenIds,
+        childrenNames: selectedChildrenForTitles.map(c => c.name)
+      });
+
+      const newTitles = await generateTitles({
+        objective: selectedObjective,
+        childrenIds: selectedChildrenIds,
+        childrenNames: selectedChildrenForTitles.map(c => c.name),
+        childrenGenders: selectedChildrenForTitles.map(c => c.gender)
+      });
+      
+      if (newTitles && newTitles.length > 0) {
+        updateGeneratedTitles(newTitles);
+        console.log('[TitleSelectionStep] Auto-génération réussie:', newTitles.length, 'titres');
+        
+        toast({
+          title: "Titres générés",
+          description: `${newTitles.length} titre${newTitles.length > 1 ? 's ont' : ' a'} été généré${newTitles.length > 1 ? 's' : ''} automatiquement`,
+        });
+      }
+    } catch (error: any) {
+      console.error("[TitleSelectionStep] Erreur auto-génération:", error);
+      toast({
+        title: "Erreur de génération",
+        description: "Impossible de générer les titres automatiquement. Utilisez le bouton de génération manuelle.",
+        variant: "destructive"
+      });
+    }
+  }, [selectedObjective, selectedChildrenIds, children, generateTitles, updateGeneratedTitles, toast]);
+
+  // Génération manuelle de titres (bouton de secours)
+  const handleManualGenerateTitles = useCallback(async () => {
+    if (!selectedObjective || selectedChildrenIds.length === 0) {
+      toast({
+        title: "Données manquantes",
+        description: "Veuillez sélectionner des enfants et un objectif",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    await handleAutoGenerateTitles();
+  }, [handleAutoGenerateTitles, selectedObjective, selectedChildrenIds, toast]);
 
   // Regénérer 3 titres supplémentaires
   const handleRegenerateTitles = useCallback(async () => {
@@ -245,15 +337,55 @@ const TitleSelectionStep: React.FC<TitleSelectionStepProps> = ({ children, onSto
         </p>
       </div>
 
+      {/* État de chargement pour auto-génération */}
+      {isGeneratingTitles && generatedTitles.length === 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Génération de vos titres personnalisés</h3>
+                <p className="text-muted-foreground">
+                  Création de titres adaptés à {selectedChildren.map(c => c.name).join(', ')} pour l'objectif "{selectedObjectiveData?.label}"
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Bouton de génération manuelle si aucun titre et pas en cours de génération */}
+      {generatedTitles.length === 0 && !isGeneratingTitles && selectedObjective && selectedChildrenIds.length > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <RefreshCw className="h-8 w-8 text-muted-foreground" />
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Génération des titres</h3>
+                <p className="text-muted-foreground mb-4">
+                  Les titres n'ont pas pu être générés automatiquement. Cliquez sur le bouton ci-dessous pour les générer manuellement.
+                </p>
+                <Button onClick={handleManualGenerateTitles} disabled={isGeneratingTitles}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Générer les titres
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Sélecteur de titres */}
-      <TitleSelector
-        titles={generatedTitles}
-        onSelectTitle={handleCreateStory}
-        onRegenerateTitles={canRegenerate ? handleRegenerateTitles : undefined}
-        canRegenerate={canRegenerate}
-        isCreatingStory={isCreatingStory}
-        isRegenerating={isGeneratingTitles}
-      />
+      {generatedTitles.length > 0 && (
+        <TitleSelector
+          titles={generatedTitles}
+          onSelectTitle={handleCreateStory}
+          onRegenerateTitles={canRegenerate ? handleRegenerateTitles : undefined}
+          canRegenerate={canRegenerate}
+          isCreatingStory={isCreatingStory}
+          isRegenerating={isGeneratingTitles}
+        />
+      )}
       
       {/* Navigation */}
       <div className="flex justify-center">

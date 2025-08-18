@@ -112,6 +112,28 @@ export const usePersistedStoryCreation = () => {
            state.generatedTitles.length > 0;
   }, [state]);
 
+  // Validate session coherence
+  const hasValidSession = useCallback(() => {
+    const hasRequiredData = state.selectedChildrenIds.length > 0 && state.selectedObjective;
+    const sessionAge = Date.now() - state.timestamp;
+    const isNotExpired = sessionAge < EXPIRATION_TIME;
+    
+    console.log('[usePersistedStoryCreation] Validation session:', {
+      hasRequiredData,
+      sessionAge: Math.round(sessionAge / 1000 / 60), // minutes
+      isNotExpired,
+      currentStep: state.currentStep
+    });
+    
+    return hasRequiredData && isNotExpired;
+  }, [state]);
+
+  // Force refresh session data (for debugging)
+  const refreshSession = useCallback(() => {
+    console.log('[usePersistedStoryCreation] Refresh forcé de la session');
+    setState(prev => ({ ...prev, timestamp: Date.now() }));
+  }, []);
+
   return {
     // State
     currentStep: state.currentStep,
@@ -131,6 +153,8 @@ export const usePersistedStoryCreation = () => {
     updateSelectedDuration,
     incrementRegeneration,
     clearPersistedState,
-    hasPersistedSession
+    hasPersistedSession,
+    hasValidSession,
+    refreshSession
   };
 };

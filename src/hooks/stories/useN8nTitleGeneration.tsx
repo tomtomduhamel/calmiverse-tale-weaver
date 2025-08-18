@@ -195,6 +195,12 @@ export const useN8nTitleGeneration = () => {
   };
 
   const generateTitles = async (data: TitleGenerationData): Promise<GeneratedTitle[]> => {
+    console.log('[N8nTitleGeneration] ===== DÉBUT GÉNÉRATION TITRES =====');
+    console.log('[N8nTitleGeneration] État initial:', { 
+      currentTitles: generatedTitles.length, 
+      isGenerating: isGeneratingTitles 
+    });
+    
     setIsGeneratingTitles(true);
     
     try {
@@ -239,12 +245,15 @@ export const useN8nTitleGeneration = () => {
       }
 
       console.log('[N8nTitleGeneration] SUCCÈS: Titres finaux extraits:', titles);
+      console.log('[N8nTitleGeneration] ===== FIN GÉNÉRATION TITRES - SUCCÈS =====');
+      
       setGeneratedTitles(titles);
       setRegenerationUsed(false); // Réinitialiser la regénération pour une nouvelle session
       
       // Pas de toast ici - sera géré par le composant appelant
       return titles;
     } catch (error: any) {
+      console.error('[N8nTitleGeneration] ===== ERREUR GÉNÉRATION TITRES =====');
       console.error('[N8nTitleGeneration] Erreur complète:', error);
       
       toast({
@@ -255,6 +264,7 @@ export const useN8nTitleGeneration = () => {
       
       throw error;
     } finally {
+      console.log('[N8nTitleGeneration] ===== FIN GÉNÉRATION TITRES - CLEANUP =====');
       setIsGeneratingTitles(false);
     }
   };
