@@ -56,10 +56,8 @@ const HomeHero: React.FC<HomeHeroProps> = ({
             Bienvenue sur Calmi
           </h1>
           
-          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto animate-fade-in px-2">
-            Créez des histoires personnalisées pour accompagner vos enfants 
-            dans leur bien-être et leur développement
-          </p>
+          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto animate-fade-in px-2">Créez des histoires personnalisées pour accompagner vos enfants dans 
+leur bien-être et leur développement</p>
         </div>
 
         {/* Cartes optimisées mobile - maintenant avec 3 options */}
@@ -117,9 +115,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({
 
         {/* Pied de page compact */}
         <div className="text-center pt-2">
-          <p className="text-xs text-muted-foreground/70">
-            Calmi - Histoires personnalisées pour le bien-être des enfants
-          </p>
+          <p className="text-xs text-muted-foreground/70">Histoires personnalisées pour le bien-être des enfants</p>
         </div>
       </div>
     </div>;
