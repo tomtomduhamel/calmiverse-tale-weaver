@@ -5,6 +5,8 @@ import type { Story } from "@/types/story";
 import type { ViewType } from "@/types/views";
 import LibraryHeader from "./LibraryHeader";
 import LibraryFilters from "./filters/LibraryFilters";
+import MobileFilters from "./MobileFilters";
+import { useIsMobile } from "@/hooks/use-mobile";
 import LibraryErrorAlert from "./LibraryErrorAlert";
 import StoryGrid from "./StoryGrid";
 import Pagination from "./Pagination";
@@ -42,13 +44,14 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   pendingStoryId,
   onCreateStory
 }) => {
+  const isMobile = useIsMobile();
   // États locaux pour la pagination et le filtrage
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites' | 'recent'>('all');
   const [selectedObjective, setSelectedObjective] = React.useState<string | null>(null);
   const [isZenMode, setIsZenMode] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const storiesPerPage = 6;
+  const storiesPerPage = isMobile ? 8 : 6;
 
   // Fonction pour vérifier si une histoire est récente (dernières 24h)
   const isRecentStory = (story: Story): boolean => {
@@ -159,7 +162,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   };
 
   return (
-    <div className={`space-y-6 p-4 transition-all duration-300 ${isZenMode ? 'bg-neutral-50' : ''}`}>
+    <div className={`space-y-3 sm:space-y-6 p-2 sm:p-4 transition-all duration-300 ${isZenMode ? 'bg-neutral-50' : ''}`}>
       <LibraryHeader 
         isZenMode={isZenMode}
         onZenModeToggle={() => setIsZenMode(!isZenMode)}
@@ -172,17 +175,28 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
         isRetrying={isRetrying}
       />
 
-      <div className="flex justify-between items-center">
-        <LibraryFilters
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        selectedObjective={selectedObjective}
-        onObjectiveChange={setSelectedObjective}
+      {isMobile ? (
+        <MobileFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          selectedObjective={selectedObjective}
+          onObjectiveChange={setSelectedObjective}
         />
-        <StoryCleaner stories={stories} />
-      </div>
+      ) : (
+        <div className="flex justify-between items-center">
+          <LibraryFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            selectedObjective={selectedObjective}
+            onObjectiveChange={setSelectedObjective}
+          />
+          <StoryCleaner stories={stories} />
+        </div>
+      )}
 
       <StoryGrid
         stories={currentStories}

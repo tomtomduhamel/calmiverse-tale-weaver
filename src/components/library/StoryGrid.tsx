@@ -2,6 +2,8 @@
 import React from "react";
 import type { Story } from "@/types/story";
 import StoryCard from "./StoryCard";
+import MobileStoryCard from "./MobileStoryCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StoryGridProps {
   stories: Story[];
@@ -30,10 +32,11 @@ const StoryGrid: React.FC<StoryGridProps> = ({
   isUpdatingReadStatus,
   pendingStoryId
 }) => {
+  const isMobile = useIsMobile();
   if (stories.length === 0) {
     return (
-      <div className="text-center py-10 border border-dashed rounded-lg">
-        <p className="text-muted-foreground">Aucune histoire trouvée</p>
+      <div className="text-center py-8 sm:py-10 border border-dashed rounded-lg mx-2 sm:mx-0">
+        <p className="text-muted-foreground text-sm sm:text-base">Aucune histoire trouvée</p>
       </div>
     );
   }
@@ -48,22 +51,36 @@ const StoryGrid: React.FC<StoryGridProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+    <div className={
+      isMobile 
+        ? "space-y-2 px-2" 
+        : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+    }>
       {stories.map((story) => (
-        <StoryCard
-          key={story.id}
-          story={story}
-          onDelete={onDelete ? () => onDelete(story.id) : undefined}
-          onRetry={onRetry ? () => onRetry(story.id) : undefined}
-          onToggleFavorite={onToggleFavorite}
-          onMarkAsRead={onMarkAsRead}
-          onClick={() => handleCardClick(story)}
-          isRetrying={isRetrying && pendingStoryId === story.id}
-          isDeleting={isDeletingId === story.id}
-          isUpdatingFavorite={isUpdatingFavorite}
-          isUpdatingReadStatus={isUpdatingReadStatus}
-          isPending={pendingStoryId === story.id}
-        />
+        isMobile ? (
+          <MobileStoryCard
+            key={story.id}
+            story={story}
+            onClick={() => handleCardClick(story)}
+            onToggleFavorite={onToggleFavorite}
+            isUpdatingFavorite={isUpdatingFavorite}
+          />
+        ) : (
+          <StoryCard
+            key={story.id}
+            story={story}
+            onDelete={onDelete ? () => onDelete(story.id) : undefined}
+            onRetry={onRetry ? () => onRetry(story.id) : undefined}
+            onToggleFavorite={onToggleFavorite}
+            onMarkAsRead={onMarkAsRead}
+            onClick={() => handleCardClick(story)}
+            isRetrying={isRetrying && pendingStoryId === story.id}
+            isDeleting={isDeletingId === story.id}
+            isUpdatingFavorite={isUpdatingFavorite}
+            isUpdatingReadStatus={isUpdatingReadStatus}
+            isPending={pendingStoryId === story.id}
+          />
+        )
       ))}
     </div>
   );

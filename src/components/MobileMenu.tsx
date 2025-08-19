@@ -49,22 +49,22 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   const activeView = getActiveView();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-background shadow-lg border-t border-border rounded-t-xl z-[100]">
-      <div className="flex items-center justify-around h-16 px-2 pb-safe">
+    <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md shadow-lg border-t border-border z-[100]">
+      <div className="flex items-center justify-around h-14 px-1 pb-safe">
         {menuItems.map((item) => (
           <button
             key={item.title}
             onClick={() => handleNavigation(item.view, item.action)}
             className={cn(
-              "flex flex-col items-center justify-center w-full p-1 rounded-md transition-colors",
+              "flex flex-col items-center justify-center w-full p-1 rounded-lg transition-all duration-200 min-h-[44px]",
               activeView === item.view
-                ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
+                ? "text-primary bg-primary/10"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
             )}
             aria-label={item.title}
           >
-            <item.icon className="h-5 w-5" />
-            <span className="text-xs mt-1">{item.title}</span>
+            <item.icon className="h-4 w-4" />
+            <span className="text-[10px] mt-0.5 leading-tight">{item.title}</span>
           </button>
         ))}
       </div>

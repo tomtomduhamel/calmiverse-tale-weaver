@@ -32,8 +32,8 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
         {/* Only show top navigation on desktop and not on reader pages */}
         {!isMobile && !location.pathname.startsWith('/reader/') && <Navigation />}
         
-        {/* Main content with proper spacing for mobile menu */}
-        <div className={`flex-1 w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-24' : 'pb-8'}`}>
+        {/* Main content with optimized mobile spacing */}
+        <div className={`flex-1 w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-16' : 'pb-4'}`}>
           {children || <Outlet />}
         </div>
         
