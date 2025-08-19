@@ -1,5 +1,6 @@
 import React from "react";
 import ModernChildCard from "./ModernChildCard";
+import MobileChildCard from "./MobileChildCard";
 import type { Child } from "@/types/child";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -51,22 +52,32 @@ const ChildrenGridLayout: React.FC<ChildrenGridLayoutProps> = ({
   return (
     <div 
       className={`
-        grid gap-6 
         ${isMobile 
-          ? 'grid-cols-1' 
-          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+          ? 'space-y-2 px-2' 
+          : 'grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
         }
       `}
     >
       {children.map((child) => (
-        <ModernChildCard
-          key={child.id}
-          child={child}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onCreateStory={onCreateStory}
-          storiesCount={storiesCountMap[child.id] || 0}
-        />
+        isMobile ? (
+          <MobileChildCard
+            key={child.id}
+            child={child}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onCreateStory={onCreateStory}
+            storiesCount={storiesCountMap[child.id] || 0}
+          />
+        ) : (
+          <ModernChildCard
+            key={child.id}
+            child={child}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onCreateStory={onCreateStory}
+            storiesCount={storiesCountMap[child.id] || 0}
+          />
+        )
       ))}
     </div>
   );

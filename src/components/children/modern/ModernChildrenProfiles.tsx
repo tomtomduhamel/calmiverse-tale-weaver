@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from "react";
 import ProfilesHeaderV2 from "./ProfilesHeaderV2";
 import ChildrenSearchBar from "./ChildrenSearchBar";
+import MobileChildrenFilters from "./MobileChildrenFilters";
 import ChildrenGridLayout from "./ChildrenGridLayout";
 import AddChildModal from "./AddChildModal";
 import type { Child, ChildGender } from "@/types/child";
 import { calculateAge } from "@/utils/age";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ModernChildrenProfilesProps {
   children: Child[];
@@ -25,6 +27,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   storiesCountMap = {},
   totalStories = 0
 }) => {
+  const isMobile = useIsMobile();
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -171,30 +174,45 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   const pets = children.filter(child => child.gender === 'pet');
 
   return (
-    <div className="space-y-8">
+    <div className={`${isMobile ? 'space-y-4' : 'space-y-8'}`}>
       {/* Header */}
-        <ProfilesHeaderV2
-          onShowForm={handleShowForm}
-          onCreateStory={onCreateStory}
-          childrenCount={actualChildren.length}
-          petsCount={pets.length}
-          totalStories={totalStories || 0}
-        />
+      <ProfilesHeaderV2
+        onShowForm={handleShowForm}
+        onCreateStory={onCreateStory}
+        childrenCount={actualChildren.length}
+        petsCount={pets.length}
+        totalStories={totalStories || 0}
+      />
 
       {/* Search and Filters - Only show if there are children */}
       {children.length > 0 && (
-        <ChildrenSearchBar
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          sortOrder={sortOrder}
-          onSortOrderChange={setSortOrder}
-          ageFilter={ageFilter}
-          onAgeFilterChange={setAgeFilter}
-          genderFilter={genderFilter}
-          onGenderFilterChange={setGenderFilter}
-        />
+        isMobile ? (
+          <MobileChildrenFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            sortOrder={sortOrder}
+            onSortOrderChange={setSortOrder}
+            ageFilter={ageFilter}
+            onAgeFilterChange={setAgeFilter}
+            genderFilter={genderFilter}
+            onGenderFilterChange={setGenderFilter}
+          />
+        ) : (
+          <ChildrenSearchBar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            sortOrder={sortOrder}
+            onSortOrderChange={setSortOrder}
+            ageFilter={ageFilter}
+            onAgeFilterChange={setAgeFilter}
+            genderFilter={genderFilter}
+            onGenderFilterChange={setGenderFilter}
+          />
+        )
       )}
 
       {/* Children Grid */}

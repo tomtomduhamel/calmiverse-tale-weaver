@@ -29,7 +29,7 @@ export const ProfilesView: React.FC<ProfilesViewProps> = ({
   return (
     <div className="animate-fade-in">
       <ScrollArea className={`${isMobile ? 'h-[calc(100vh-140px)]' : 'h-[calc(100vh-100px)]'} w-full px-1`}>
-        <div className="max-w-7xl mx-auto p-6">
+        <div className={`max-w-7xl mx-auto ${isMobile ? 'p-2' : 'p-6'}`}>
           <ModernChildrenProfiles
             children={children}
             onAddChild={onAddChild}
