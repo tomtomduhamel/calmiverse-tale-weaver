@@ -163,12 +163,6 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         updateCurrentStep('titles');
         resetRegenerationState();
       }
-
-      // Toast unique pour confirmer la génération des titres
-      toast({
-        title: "Titres générés avec succès",
-        description: `${titles.length} titre${titles.length > 1 ? 's' : ''} disponible${titles.length > 1 ? 's' : ''}`
-      });
     } catch (error: any) {
       console.error('[TitleBasedStoryCreator] Erreur génération titres:', error);
       toast({
