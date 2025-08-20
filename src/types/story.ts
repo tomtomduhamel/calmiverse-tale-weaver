@@ -127,6 +127,7 @@ export interface SequelData {
   childrenIds: string[];
   childrenNames: string[];
   objective: string;
+  duration: StoryDurationMinutes;
   sequelInstructions?: {
     maintainCharacterConsistency?: boolean;
     referenceToEvents?: boolean;

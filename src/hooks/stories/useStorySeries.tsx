@@ -152,6 +152,7 @@ export const useStorySeries = () => {
         childrenIds: sequelData.childrenIds,
         childrenNames: sequelData.childrenNames,
         objective: sequelData.objective,
+        duration: sequelData.duration,
         
         // Instructions spéciales pour la suite
         sequelInstructions: sequelData.sequelInstructions || {

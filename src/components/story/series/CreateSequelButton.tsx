@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Plus, BookOpen } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Plus, BookOpen, Clock } from 'lucide-react';
 import { useStorySeries } from '@/hooks/stories/useStorySeries';
-import type { Story, SequelData } from '@/types/story';
+import type { Story, SequelData, StoryDurationMinutes } from '@/types/story';
+import { STORY_DURATION_OPTIONS } from '@/types/story';
 
 interface CreateSequelButtonProps {
   story: Story;
@@ -26,6 +28,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [seriesTitle, setSeriesTitle] = useState(story.series?.title || `Les aventures de ${story.childrenNames?.[0] || 'nos héros'}`);
+  const [duration, setDuration] = useState<StoryDurationMinutes>(10);
   const [sequelInstructions, setSequelInstructions] = useState({
     maintainCharacterConsistency: true,
     referenceToEvents: true,
@@ -46,6 +49,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
       childrenIds: story.childrenIds,
       childrenNames: story.childrenNames || [],
       objective: typeof story.objective === 'string' ? story.objective : story.objective?.value || '',
+      duration,
       seriesTitle: !story.series_id ? seriesTitle : undefined,
       sequelInstructions
     };
@@ -93,6 +97,27 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
               />
             </div>
           )}
+
+          <div>
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Durée de l'histoire
+            </Label>
+            <RadioGroup
+              value={duration.toString()}
+              onValueChange={(value) => setDuration(parseInt(value) as StoryDurationMinutes)}
+              className="flex gap-4 mt-2"
+            >
+              {STORY_DURATION_OPTIONS.map((durationOption) => (
+                <div key={durationOption} className="flex items-center space-x-2">
+                  <RadioGroupItem value={durationOption.toString()} id={`duration-${durationOption}`} />
+                  <Label htmlFor={`duration-${durationOption}`} className="text-sm">
+                    {durationOption} min
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
 
           <div>
             <Label className="text-sm font-medium">Instructions pour la suite</Label>

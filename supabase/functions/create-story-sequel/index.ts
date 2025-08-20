@@ -38,6 +38,7 @@ serve(async (req) => {
       childrenIds,
       childrenNames,
       objective,
+      duration,
       sequelInstructions,
       userId,
       timestamp,
@@ -83,7 +84,18 @@ serve(async (req) => {
       seriesId: seriesId,
       tomeNumber: tomeNumber,
       
-      // Contexte narratif de l'histoire précédente
+      // Informations de l'histoire précédente depuis la base de données
+      previousStoryInfo: {
+        id: previousStory.id,
+        title: previousStory.title,
+        objective: previousStory.objective,
+        content: previousStory.content,
+        summary: previousStory.summary,
+        storyAnalysis: previousStory.story_analysis || {},
+        childrenNames: previousStory.childrennames || []
+      },
+      
+      // Contexte narratif de l'histoire précédente (données fournies par l'utilisateur)
       previousContext: {
         content: previousStoryContent,
         summary: previousStorySummary,
@@ -98,6 +110,12 @@ serve(async (req) => {
         childrenIds: childrenIds,
         childrenNames: childrenNames,
         objective: objective
+      },
+      
+      // Configuration de la suite
+      sequelConfiguration: {
+        duration: duration || 10, // Durée en minutes (par défaut 10 min)
+        estimatedWordCount: duration ? Math.round(duration * 140) : 1400 // 140 mots par minute en moyenne
       },
       
       // Instructions spéciales pour la suite
