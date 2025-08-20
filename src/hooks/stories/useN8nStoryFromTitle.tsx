@@ -66,7 +66,7 @@ export const useN8nStoryFromTitle = () => {
       console.log('[N8nStoryFromTitle] Données enrichies des enfants:', enrichedChildrenData);
       
       // CORRECTION CRITIQUE: Utiliser le bon webhook pour la création d'histoire
-      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook-test/dca7a26f-c622-49cb-aae7-6f351312b99f';
+      const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/816f3f78-bbdc-4b51-88b6-13232fcf3c78';
       
       // Payload enrichi avec les informations complètes des enfants
       const payload = {
