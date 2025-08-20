@@ -61,7 +61,7 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
       <div className="flex flex-col gap-1">
         {/* Bouton créer une suite - affiché au-dessus des autres actions si disponible */}
         {canCreateSequel && onSequelCreated && (
-          <div className="flex justify-end">
+          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
             <CreateSequelButton 
               story={story}
               onSequelCreated={onSequelCreated}
