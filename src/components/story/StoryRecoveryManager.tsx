@@ -64,8 +64,8 @@ export const StoryRecoveryManager: React.FC<StoryRecoveryManagerProps> = ({
     return;
   }
   return <div className="space-y-4">
-      {/* Diagnostic système intégré */}
-      <StoryGenerationDiagnostic stories={stories} onRecoveryComplete={onRecoveryComplete} />
+      {/* Diagnostic système intégré - DÉSACTIVÉ */}
+      {/* <StoryGenerationDiagnostic stories={stories} onRecoveryComplete={onRecoveryComplete} /> */}
       
       {/* Nettoyage radical */}
       <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
