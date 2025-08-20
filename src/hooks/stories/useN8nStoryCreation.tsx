@@ -110,9 +110,20 @@ export const useN8nStoryCreation = () => {
     }
   }, [user, toast]);
 
+  const cancelStoryCreation = useCallback(() => {
+    console.log('[N8nStoryCreation] Annulation de la création d\'histoire');
+    setIsGenerating(false);
+    
+    toast({
+      title: "Création annulée",
+      description: "La création de l'histoire a été annulée. Vous pouvez recommencer.",
+    });
+  }, [toast]);
+
   return {
     createStoryWithN8n,
-    isGenerating
+    isGenerating,
+    cancelStoryCreation
   };
 };
 

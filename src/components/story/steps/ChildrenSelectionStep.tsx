@@ -30,6 +30,12 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
     toast
   } = useToast();
 
+  // Ajout d'une option de reset automatique pour éviter les blocages
+  // useEffect(() => {
+  //   // Décommentez pour reset automatique à chaque arrivée sur l'étape 1
+  //   clearPersistedState();
+  // }, [clearPersistedState]);
+
   // Effect pour présélectionner un enfant si spécifié et pas déjà de session
   useEffect(() => {
     if (preSelectedChildId && children.length > 0 && !hasPersistedSession()) {
