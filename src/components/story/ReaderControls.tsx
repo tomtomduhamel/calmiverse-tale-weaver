@@ -4,7 +4,6 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share } from "lucide-react";
-
 import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 import { ShareStoryDialog } from "./ShareStoryDialog";
@@ -75,6 +74,15 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
               </div>
 
+              {/* Musique de fond (compact) */}
+              <div className="p-3 border rounded bg-card">
+                <div className="flex items-center justify-between">
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Musique d'ambiance
+                  </div>
+                  <BackgroundSoundButton soundId={story.sound_id} storyObjective={extractObjectiveValue(story.objective) || undefined} isDarkMode={isDarkMode} autoPlay={false} />
+                </div>
+              </div>
               
               {/* Auto-scroll supprimé - maintenant dans le header et bouton flottant */}
             </div>
@@ -92,12 +100,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                   <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={handleToggleDarkMode} />
                 </div>
               </div>
-              <div>
-                <Label className={`block text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Taille du texte
-                </Label>
-                <Slider defaultValue={[fontSize]} max={30} min={12} step={1} onValueChange={handleFontSizeChange} className="mt-2" />
-              </div>
+              
             </div>
 
             {/* Colonne 3: Options supplémentaires */}
@@ -121,21 +124,8 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                     </>}
                 </Button>
 
-                {/* Musique de fond */}
-                <div className="p-3 border rounded bg-card">
-                  <div className="flex items-center justify-between">
-                    <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Musique d'ambiance
-                    </div>
-                    <BackgroundSoundButton
-                      soundId={story.sound_id}
-                      storyObjective={extractObjectiveValue(story.objective) || undefined}
-                      isDarkMode={isDarkMode}
-                      autoPlay={false}
-                    />
-                  </div>
-                </div>
-
+                
+                
                 {/* Bouton de diagnostic technique */}
                 <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
               </div>
