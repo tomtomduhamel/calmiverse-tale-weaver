@@ -226,14 +226,19 @@ export type Database = {
           id: string
           image_path: string | null
           is_favorite: boolean
+          is_series_starter: boolean | null
+          next_story_id: string | null
           objective: string | null
           preview: string | null
+          previous_story_id: string | null
+          series_id: string | null
           sharing: Json | null
           sound_id: string | null
           status: string | null
           story_analysis: Json | null
           summary: string | null
           title: string
+          tome_number: number | null
           updatedat: string
         }
         Insert: {
@@ -247,14 +252,19 @@ export type Database = {
           id?: string
           image_path?: string | null
           is_favorite?: boolean
+          is_series_starter?: boolean | null
+          next_story_id?: string | null
           objective?: string | null
           preview?: string | null
+          previous_story_id?: string | null
+          series_id?: string | null
           sharing?: Json | null
           sound_id?: string | null
           status?: string | null
           story_analysis?: Json | null
           summary?: string | null
           title: string
+          tome_number?: number | null
           updatedat?: string
         }
         Update: {
@@ -268,14 +278,19 @@ export type Database = {
           id?: string
           image_path?: string | null
           is_favorite?: boolean
+          is_series_starter?: boolean | null
+          next_story_id?: string | null
           objective?: string | null
           preview?: string | null
+          previous_story_id?: string | null
+          series_id?: string | null
           sharing?: Json | null
           sound_id?: string | null
           status?: string | null
           story_analysis?: Json | null
           summary?: string | null
           title?: string
+          tome_number?: number | null
           updatedat?: string
         }
         Relationships: [
@@ -316,6 +331,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      story_series: {
+        Row: {
+          author_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          title: string
+          total_tomes: number
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          title: string
+          total_tomes?: number
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          title?: string
+          total_tomes?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -432,6 +480,10 @@ export type Database = {
           p_title: string
         }
         Returns: string
+      }
+      get_next_tome_number: {
+        Args: { p_series_id: string }
+        Returns: number
       }
       has_role: {
         Args: {

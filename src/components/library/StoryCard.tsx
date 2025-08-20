@@ -6,6 +6,7 @@ import StoryCardActions from "./card/StoryCardActions";
 import StoryCardTags from "./card/StoryCardTags";
 import { FavoriteButton } from "../story/FavoriteButton";
 import { MarkAsReadButton } from "../story/reader/MarkAsReadButton";
+import { SeriesIndicator } from "../story/series/SeriesIndicator";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
@@ -19,6 +20,7 @@ interface StoryCardProps {
   onRetry?: () => void;
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
   onMarkAsRead?: (storyId: string) => Promise<boolean>;
+  onSequelCreated?: (storyId: string) => void;
   isRetrying?: boolean;
   isDeleting?: boolean;
   isPending?: boolean;
@@ -33,6 +35,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
   onRetry,
   onToggleFavorite,
   onMarkAsRead,
+  onSequelCreated,
   isRetrying = false,
   isDeleting = false,
   isPending = false,
@@ -120,6 +123,17 @@ const StoryCard: React.FC<StoryCardProps> = ({
           </div>
         )}
         
+        {/* Indicateur de série si l'histoire fait partie d'une série */}
+        {story.tome_number && (
+          <div className="mb-3">
+            <SeriesIndicator 
+              tomeNumber={story.tome_number}
+              seriesTitle={story.series?.title}
+              isSeriesStarter={story.is_series_starter}
+            />
+          </div>
+        )}
+        
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2 flex-1">
             <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
@@ -192,6 +206,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
           story={story} 
           onDelete={onDelete}
           onRetry={onRetry}
+          onSequelCreated={onSequelCreated}
           isRetrying={isRetrying}
           isDeleting={isDeleting}
         />

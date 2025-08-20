@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import type { Story } from "@/types/story";
 import { Loader2 } from "lucide-react";
 import DeleteStoryDialog from "../DeleteStoryDialog";
+import { CreateSequelButton } from "../../story/series/CreateSequelButton";
 
 interface StoryCardActionsProps {
   story: Story;
@@ -12,6 +13,7 @@ interface StoryCardActionsProps {
   onRetry?: () => void;
   isRetrying?: boolean;
   isDeleting?: boolean;
+  onSequelCreated?: (storyId: string) => void;
 }
 
 const StoryCardActions: React.FC<StoryCardActionsProps> = ({ 
@@ -19,7 +21,8 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
   onDelete, 
   onRetry,
   isRetrying = false,
-  isDeleting = false
+  isDeleting = false,
+  onSequelCreated
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -50,58 +53,76 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
     }
   }, [isDeleting]);
 
+  // Déterminer si on peut créer une suite (histoire terminée et pas déjà une suite en cours)
+  const canCreateSequel = (story.status === 'ready' || story.status === 'read') && !story.next_story_id;
+
   return (
     <>
-      <div className="flex space-x-1">
-        <TooltipProvider>
-          {story.status === "error" && onRetry && (
+      <div className="flex flex-col gap-1">
+        {/* Bouton créer une suite - affiché au-dessus des autres actions si disponible */}
+        {canCreateSequel && onSequelCreated && (
+          <div className="flex justify-end">
+            <CreateSequelButton 
+              story={story}
+              onSequelCreated={onSequelCreated}
+              disabled={isDeleting || isRetrying}
+              variant="ghost"
+              size="sm"
+            />
+          </div>
+        )}
+        
+        <div className="flex space-x-1 justify-end">
+          <TooltipProvider>
+            {story.status === "error" && onRetry && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleRetry}
+                    disabled={isRetrying || isDeleting}
+                    className={`p-1.5 rounded-full text-amber-600 hover:bg-amber-100 ${
+                      isRetrying ? "cursor-not-allowed opacity-50" : ""
+                    }`}
+                    aria-label="Réessayer cette histoire"
+                    type="button"
+                  >
+                    {isRetrying ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isRetrying ? "Nouvelle tentative en cours..." : "Réessayer la génération"}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={handleRetry}
-                  disabled={isRetrying || isDeleting}
-                  className={`p-1.5 rounded-full text-amber-600 hover:bg-amber-100 ${
-                    isRetrying ? "cursor-not-allowed opacity-50" : ""
+                  onClick={handleDeleteClick}
+                  disabled={isDeleting || isRetrying}
+                  className={`p-1.5 rounded-full text-red-600 hover:bg-red-100 ${
+                    isDeleting ? "cursor-not-allowed opacity-50" : ""
                   }`}
-                  aria-label="Réessayer cette histoire"
+                  aria-label="Supprimer l'histoire"
                   type="button"
                 >
-                  {isRetrying ? (
+                  {isDeleting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <RefreshCw className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   )}
                 </button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{isRetrying ? "Nouvelle tentative en cours..." : "Réessayer la génération"}</p>
+                <p>{isDeleting ? "Suppression en cours..." : "Supprimer l'histoire"}</p>
               </TooltipContent>
             </Tooltip>
-          )}
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleDeleteClick}
-                disabled={isDeleting || isRetrying}
-                className={`p-1.5 rounded-full text-red-600 hover:bg-red-100 ${
-                  isDeleting ? "cursor-not-allowed opacity-50" : ""
-                }`}
-                aria-label="Supprimer l'histoire"
-                type="button"
-              >
-                {isDeleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{isDeleting ? "Suppression en cours..." : "Supprimer l'histoire"}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+          </TooltipProvider>
+        </div>
       </div>
 
       <DeleteStoryDialog

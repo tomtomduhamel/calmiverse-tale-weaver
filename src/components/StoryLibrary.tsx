@@ -13,6 +13,7 @@ interface StoryLibraryProps {
   onRetryStory?: (storyId: string) => void;
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
   onMarkAsRead?: (storyId: string) => Promise<boolean>;
+  onSequelCreated?: (storyId: string) => void;
   onViewChange?: (view: ViewType) => void;
   isRetrying?: boolean;
   isUpdatingFavorite?: boolean;
@@ -30,6 +31,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   onRetryStory,
   onToggleFavorite,
   onMarkAsRead,
+  onSequelCreated,
   onViewChange,
   isRetrying = false,
   isUpdatingFavorite = false,
@@ -90,6 +92,25 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
     }
   }, [onToggleFavorite]);
 
+  const handleSequelCreated = useCallback((storyId: string) => {
+    console.log("[StoryLibrary] DEBUG: Suite créée pour l'histoire:", storyId);
+    
+    // Rafraîchir les données pour afficher la nouvelle histoire
+    if (onForceRefresh) {
+      onForceRefresh();
+    }
+    
+    // Notifier le parent si nécessaire
+    if (onSequelCreated) {
+      onSequelCreated(storyId);
+    }
+    
+    toast({
+      title: "Suite créée",
+      description: "La suite de votre histoire est en cours de génération"
+    });
+  }, [onSequelCreated, onForceRefresh, toast]);
+
   const handleRecoveryComplete = useCallback(() => {
     console.log("[StoryLibrary] Récupération terminée, rafraîchissement des données");
     if (onForceRefresh) {
@@ -113,6 +134,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         onRetryStory={handleRetry}
         onToggleFavorite={handleToggleFavorite}
         onMarkAsRead={onMarkAsRead}
+        onSequelCreated={handleSequelCreated}
         onViewChange={onViewChange}
         isRetrying={isRetrying}
         isUpdatingFavorite={isUpdatingFavorite}

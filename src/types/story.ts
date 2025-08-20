@@ -40,6 +40,13 @@ export interface Story {
   image_path?: string | null;
   settings?: StorySettings;
   story_analysis?: StoryAnalysis;
+  // Nouveaux champs pour les séries/suites
+  series_id?: string | null;
+  tome_number?: number | null;
+  is_series_starter?: boolean;
+  previous_story_id?: string | null;
+  next_story_id?: string | null;
+  series?: StorySeries; // Relation avec la série
 }
 
 export interface Objective {
@@ -101,3 +108,29 @@ export const estimateWordCountForDuration = (minutes: number): number => {
   // Clamp to reasonable bounds
   return Math.min(Math.max(words, 400), 3000);
 };
+
+// --- Story Series types ---
+export interface StorySeries {
+  id: string;
+  title: string;
+  description?: string;
+  author_id: string;
+  total_tomes: number;
+  created_at: Date;
+  updated_at: Date;
+  is_active: boolean;
+}
+
+export interface SequelData {
+  seriesTitle?: string;
+  previousStoryId: string;
+  childrenIds: string[];
+  childrenNames: string[];
+  objective: string;
+  sequelInstructions?: {
+    maintainCharacterConsistency?: boolean;
+    referenceToEvents?: boolean;
+    evolutionOfCharacters?: boolean;
+    newChallengesIntroduced?: boolean;
+  };
+}

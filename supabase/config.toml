@@ -93,3 +93,6 @@ verify_jwt = false
 
 [functions.upload-epub]
 verify_jwt = true
+
+[functions.create-story-sequel]
+verify_jwt = true

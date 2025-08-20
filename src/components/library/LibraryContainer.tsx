@@ -20,6 +20,7 @@ interface LibraryContainerProps {
   onRetryStory?: (storyId: string) => void;
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
   onMarkAsRead?: (storyId: string) => Promise<boolean>;
+  onSequelCreated?: (storyId: string) => void;
   onViewChange?: (view: ViewType) => void;
   isRetrying?: boolean;
   isDeletingId?: string | null;
@@ -36,6 +37,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   onRetryStory,
   onToggleFavorite,
   onMarkAsRead,
+  onSequelCreated,
   onViewChange,
   isRetrying = false,
   isDeletingId,
@@ -198,19 +200,20 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
         </div>
       )}
 
-      <StoryGrid
-        stories={currentStories}
-        onDelete={onDeleteStory}
-        onRetry={onRetryStory}
-        onToggleFavorite={onToggleFavorite}
-        onMarkAsRead={onMarkAsRead}
-        onCardClick={onSelectStory}
-        isRetrying={isRetrying}
-        isDeletingId={isDeletingId}
-        isUpdatingFavorite={isUpdatingFavorite}
-        isUpdatingReadStatus={isUpdatingReadStatus}
-        pendingStoryId={pendingStoryId}
-      />
+        <StoryGrid
+          stories={currentStories}
+          onDelete={onDeleteStory}
+          onRetry={onRetryStory}
+          onToggleFavorite={onToggleFavorite}
+          onMarkAsRead={onMarkAsRead}
+          onSequelCreated={onSequelCreated}
+          onCardClick={onSelectStory}
+          isRetrying={isRetrying}
+          isDeletingId={isDeletingId}
+          isUpdatingFavorite={isUpdatingFavorite}
+          isUpdatingReadStatus={isUpdatingReadStatus}
+          pendingStoryId={pendingStoryId}
+        />
 
       {totalPages > 1 && (
         <Pagination
