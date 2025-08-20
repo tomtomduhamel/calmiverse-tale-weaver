@@ -40,7 +40,8 @@ serve(async (req) => {
       objective,
       sequelInstructions,
       userId,
-      timestamp
+      timestamp,
+      webhookUrl
     } = await req.json();
 
     console.log('🔄 Création suite d\'histoire:', { 
@@ -113,8 +114,8 @@ serve(async (req) => {
       locale: 'fr'
     };
 
-    // 4. Déclencher le webhook n8n (remplacer par votre URL de webhook)
-    const N8N_WEBHOOK_URL = Deno.env.get('N8N_SEQUEL_WEBHOOK_URL');
+    // 4. Déclencher le webhook n8n - priorité à l'URL fournie dans la requête
+    const N8N_WEBHOOK_URL = webhookUrl || Deno.env.get('N8N_SEQUEL_WEBHOOK_URL');
     
     if (!N8N_WEBHOOK_URL) {
       console.warn('⚠️ URL webhook n8n non configurée, simulation du déclenchement');

@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import type { Story, StorySeries, SequelData } from '@/types/story';
 
+// URL du webhook N8N pour la génération des suites d'histoires
+const N8N_SEQUEL_WEBHOOK_URL = 'https://n8n.srv856374.hstgr.cloud/webhook-test/816f3f78-bbdc-4b51-88b6-13232fcf3c78';
+
 /**
  * Hook pour gérer les séries/suites d'histoires
  */
@@ -162,9 +165,12 @@ export const useStorySeries = () => {
         timestamp: new Date().toISOString()
       };
 
-      // Appel du webhook n8n (utiliser l'URL de votre webhook)
+      // Appel du webhook n8n avec l'URL configurable
       const response = await supabase.functions.invoke('create-story-sequel', {
-        body: payload
+        body: {
+          ...payload,
+          webhookUrl: N8N_SEQUEL_WEBHOOK_URL
+        }
       });
 
       if (response.error) {
