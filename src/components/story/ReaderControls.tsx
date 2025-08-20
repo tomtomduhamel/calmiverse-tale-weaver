@@ -4,7 +4,6 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share } from "lucide-react";
-
 import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 import { ShareStoryDialog } from "./ShareStoryDialog";
@@ -81,12 +80,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                   <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Musique d'ambiance
                   </div>
-                  <BackgroundSoundButton
-                    soundId={story.sound_id}
-                    storyObjective={extractObjectiveValue(story.objective) || undefined}
-                    isDarkMode={isDarkMode}
-                    autoPlay={false}
-                  />
+                  <BackgroundSoundButton soundId={story.sound_id} storyObjective={extractObjectiveValue(story.objective) || undefined} isDarkMode={isDarkMode} autoPlay={false} />
                 </div>
               </div>
               
@@ -120,10 +114,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 Options
               </h3>
               <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start" onClick={handleReadingGuideClick} disabled={!isMounted}>
-                  <Bookmark className="h-4 w-4 mr-2" />
-                  Guide de lecture
-                </Button>
+                
                 
                 <Button variant="outline" className="w-full justify-start" onClick={handleMarkAsReadClick} disabled={isRead || isUpdatingReadStatus || !onMarkAsRead}>
                   {isRead ? <>
