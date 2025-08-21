@@ -1,25 +1,34 @@
-import React from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { Card, CardContent } from "../ui/card";
 import { FavoriteButton } from "../story/FavoriteButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Loader2, BookCheck, Sparkles, Heart } from "lucide-react";
+import { Loader2, BookCheck, Sparkles, Heart, Trash2 } from "lucide-react";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 
 interface MobileStoryCardProps {
   story: Story;
   onClick?: () => void;
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
+  onDelete?: (storyId: string) => void;
   isUpdatingFavorite?: boolean;
+  isDeleting?: boolean;
 }
 
 const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
   story,
   onClick,
   onToggleFavorite,
+  onDelete,
   isUpdatingFavorite = false,
+  isDeleting = false,
 }) => {
+  const [translateX, setTranslateX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startX = useRef(0);
+  const currentX = useRef(0);
+  const cardRef = useRef<HTMLDivElement>(null);
   const isRecentStory = (): boolean => {
     const now = new Date();
     const storyDate = new Date(story.createdAt);
@@ -55,18 +64,89 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
     }
   };
 
+  // Gestion du swipe pour la suppression
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isDragging || isDeleting) return;
+    
+    startX.current = e.touches[0].clientX;
+    currentX.current = startX.current;
+    setIsDragging(true);
+  }, [isDragging, isDeleting]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging || isDeleting) return;
+    
+    currentX.current = e.touches[0].clientX;
+    const deltaX = currentX.current - startX.current;
+    
+    // Permettre seulement le swipe vers la gauche
+    if (deltaX < 0) {
+      setTranslateX(Math.max(deltaX, -80)); // Limiter le swipe à 80px
+    }
+  }, [isDragging, isDeleting]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    
+    // Si le swipe dépasse 40px, maintenir la position de suppression
+    if (translateX < -40) {
+      setTranslateX(-80);
+    } else {
+      setTranslateX(0);
+    }
+  }, [isDragging, translateX]);
+
+  const handleDelete = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete && !isDeleting) {
+      onDelete(story.id);
+    }
+  }, [onDelete, story.id, isDeleting]);
+
+  const resetSwipe = useCallback(() => {
+    setTranslateX(0);
+  }, []);
+
   const storyImageUrl = getStoryImageUrl(story.image_path);
   const timeAgo = formatDistanceToNow(story.createdAt, { addSuffix: true, locale: fr });
 
   return (
-    <Card 
-      className={`
-        cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.98]
-        border-l-4 ${getStatusColor()}
-        ${story.isFavorite ? 'ring-1 ring-amber-200' : ''}
-      `}
-      onClick={handleCardClick}
-    >
+    <div className="relative overflow-hidden">
+      {/* Bouton de suppression en arrière-plan */}
+      <div className="absolute right-0 top-0 h-full w-20 bg-red-500 flex items-center justify-center">
+        <button
+          onClick={handleDelete}
+          disabled={isDeleting}
+          className="p-3 text-white disabled:opacity-50"
+          aria-label="Supprimer l'histoire"
+        >
+          {isDeleting ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Trash2 className="h-5 w-5" />
+          )}
+        </button>
+      </div>
+
+      {/* Carte principale */}
+      <Card 
+        ref={cardRef}
+        className={`
+          cursor-pointer border-l-4 ${getStatusColor()}
+          ${story.isFavorite ? 'ring-1 ring-amber-200' : ''}
+          ${isDragging ? 'transition-none' : 'transition-transform duration-300 ease-out'}
+          ${!isDragging && translateX === 0 ? 'hover:shadow-md active:scale-[0.98]' : ''}
+        `}
+        style={{
+          transform: `translateX(${translateX}px)`
+        }}
+        onClick={translateX < -10 ? resetSwipe : handleCardClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
       <CardContent className="p-3">
         <div className="flex items-start gap-3">
           {/* Image de couverture compacte */}
@@ -144,6 +224,7 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };
 
