@@ -134,7 +134,7 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
       <Card 
         ref={cardRef}
         className={`
-          cursor-pointer border-l-4 ${getStatusColor()}
+          cursor-pointer border-l-4 ${getStatusColor()} bg-background
           ${story.isFavorite ? 'ring-1 ring-amber-200' : ''}
           ${isDragging ? 'transition-none' : 'transition-transform duration-300 ease-out'}
           ${!isDragging && translateX === 0 ? 'hover:shadow-md active:scale-[0.98]' : ''}
