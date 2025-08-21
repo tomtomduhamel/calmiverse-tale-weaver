@@ -54,7 +54,7 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
   }, [isDeleting]);
 
   // Déterminer si on peut créer une suite (histoire terminée et pas déjà une suite en cours)
-  const canCreateSequel = (story.status === 'ready' || story.status === 'read') && !story.next_story_id;
+  const canCreateSequel = (story.status === 'ready' || story.status === 'read' || story.status === 'completed') && !story.next_story_id;
 
   return (
     <>

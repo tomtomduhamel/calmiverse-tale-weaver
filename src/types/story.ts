@@ -8,7 +8,7 @@ export interface Story {
   childrenIds: string[];
   childrenNames?: string[];
   createdAt: Date;
-  status: 'pending' | 'ready' | 'read' | 'error' | 'regenerating';
+  status: 'pending' | 'ready' | 'read' | 'error' | 'regenerating' | 'completed';
   content: string; // CORRECTION: utiliser 'content' comme dans la BDD
   story_summary: string;
   authorId?: string;
