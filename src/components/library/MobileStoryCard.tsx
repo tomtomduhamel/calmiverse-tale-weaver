@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Card, CardContent } from "../ui/card";
 import { FavoriteButton } from "../story/FavoriteButton";
+import { CreateSequelButton } from "../story/series/CreateSequelButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
@@ -12,6 +13,7 @@ interface MobileStoryCardProps {
   onClick?: () => void;
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
   onDelete?: (storyId: string) => void;
+  onSequelCreated?: (storyId: string) => void;
   isUpdatingFavorite?: boolean;
   isDeleting?: boolean;
 }
@@ -21,6 +23,7 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
   onClick,
   onToggleFavorite,
   onDelete,
+  onSequelCreated,
   isUpdatingFavorite = false,
   isDeleting = false,
 }) => {
@@ -209,6 +212,19 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
                 </div>
               )}
             </div>
+            
+            {/* Bouton créer une suite si disponible */}
+            {((story.status === 'ready' || story.status === 'read' || story.status === 'completed') && !story.next_story_id && onSequelCreated) && (
+              <div className="mb-2">
+                <CreateSequelButton 
+                  story={story}
+                  onSequelCreated={onSequelCreated}
+                  disabled={isDeleting}
+                  variant="ghost"
+                  size="sm"
+                />
+              </div>
+            )}
             
             {/* Métadonnées compactes */}
             <div className="flex items-center justify-between text-xs text-muted-foreground">

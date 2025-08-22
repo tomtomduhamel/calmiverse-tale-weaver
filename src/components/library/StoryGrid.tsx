@@ -66,6 +66,7 @@ const StoryGrid: React.FC<StoryGridProps> = ({
             onClick={() => handleCardClick(story)}
             onToggleFavorite={onToggleFavorite}
             onDelete={onDelete ? () => onDelete(story.id) : undefined}
+            onSequelCreated={onSequelCreated}
             isUpdatingFavorite={isUpdatingFavorite}
             isDeleting={isDeletingId === story.id}
           />
