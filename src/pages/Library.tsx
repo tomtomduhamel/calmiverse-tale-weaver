@@ -4,6 +4,7 @@ import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
 import { useStoryDeletion } from "@/hooks/stories/useStoryDeletion";
 import { useStoryUpdate } from "@/hooks/stories/useStoryUpdate";
+import { useStorySeries } from "@/hooks/stories/useStorySeries";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,9 @@ const Library: React.FC = () => {
   const {
     updateStoryStatus
   } = useStoryUpdate();
+  const {
+    createSequel
+  } = useStorySeries();
   const {
     toast
   } = useToast();
@@ -109,6 +113,23 @@ const Library: React.FC = () => {
   const handleCreateStory = () => {
     navigate("/create-story-n8n");
   };
+
+  const handleSequelCreated = async (storyId: string) => {
+    console.log("[Library] DEBUG: Suite créée pour l'histoire:", storyId);
+    try {
+      // Rafraîchir la liste des histoires après création d'une suite
+      await fetchStories();
+      
+      toast({
+        title: "Suite créée avec succès",
+        description: "La suite de l'histoire est en cours de génération"
+      });
+      
+      console.log("[Library] DEBUG: Suite créée et liste rafraîchie");
+    } catch (error: any) {
+      console.error("[Library] ERROR: Erreur lors du rafraîchissement après création de suite:", error);
+    }
+  };
   if (authLoading || childrenLoading || storiesLoading) {
     return <LoadingStory />;
   }
@@ -140,6 +161,7 @@ const Library: React.FC = () => {
             onDeleteStory={handleDeleteStory} 
             onRetryStory={handleRetryStory} 
             onMarkAsRead={handleMarkAsRead}
+            onSequelCreated={handleSequelCreated}
             onForceRefresh={fetchStories} 
             onCreateStory={handleCreateStory} 
             isDeletingId={isDeletingId}
