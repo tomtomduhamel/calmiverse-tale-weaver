@@ -5,6 +5,7 @@ import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
 import { useStoryDeletion } from "@/hooks/stories/useStoryDeletion";
 import { useStoryUpdate } from "@/hooks/stories/useStoryUpdate";
 import { useStorySeries } from "@/hooks/stories/useStorySeries";
+import { useStoryFavorites } from "@/hooks/stories/useStoryFavorites";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,10 @@ const Library: React.FC = () => {
   const {
     createSequel
   } = useStorySeries();
+  const {
+    toggleFavorite,
+    isUpdating: isUpdatingFavorite
+  } = useStoryFavorites();
   const {
     toast
   } = useToast();
@@ -114,6 +119,20 @@ const Library: React.FC = () => {
     navigate("/create-story-n8n");
   };
 
+  const handleToggleFavorite = async (storyId: string, currentFavoriteStatus: boolean) => {
+    console.log("[Library] DEBUG: Toggle favori pour l'histoire:", storyId, "statut actuel:", currentFavoriteStatus);
+    try {
+      const success = await toggleFavorite(storyId, currentFavoriteStatus);
+      if (success) {
+        // Rafraîchir la liste des histoires après mise à jour
+        await fetchStories();
+        console.log("[Library] DEBUG: Favori mis à jour et liste rafraîchie");
+      }
+    } catch (error: any) {
+      console.error("[Library] ERROR: Erreur lors du toggle favori:", error);
+    }
+  };
+
   const handleSequelCreated = async (storyId: string) => {
     console.log("[Library] DEBUG: Suite créée pour l'histoire:", storyId);
     try {
@@ -160,12 +179,14 @@ const Library: React.FC = () => {
             onSelectStory={handleSelectStory} 
             onDeleteStory={handleDeleteStory} 
             onRetryStory={handleRetryStory} 
+            onToggleFavorite={handleToggleFavorite}
             onMarkAsRead={handleMarkAsRead}
             onSequelCreated={handleSequelCreated}
             onForceRefresh={fetchStories} 
             onCreateStory={handleCreateStory} 
             isDeletingId={isDeletingId}
             isUpdatingReadStatus={isUpdatingReadStatus}
+            isUpdatingFavorite={isUpdatingFavorite}
           />
         </div>
       </div>

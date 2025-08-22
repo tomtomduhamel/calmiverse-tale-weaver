@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
+import { useStoryFavorites } from "@/hooks/stories/useStoryFavorites";
 import StoryReader from "@/components/StoryReader";
 import LoadingStory from "@/components/LoadingStory";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,9 @@ import type { Story } from "@/types/story";
 const StoryReaderPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { stories, updateStoryStatus } = useSupabaseStories();
+  const { stories, updateStoryStatus, fetchStories } = useSupabaseStories();
   const { children } = useSupabaseChildren();
+  const { toggleFavorite } = useStoryFavorites();
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +59,28 @@ const StoryReaderPage: React.FC = () => {
     } catch (error) {
       console.error("[StoryReaderPage] Erreur lors du marquage comme lu:", error);
       return false;
+    }
+  };
+
+  // Gestionnaire pour toggle favori
+  const handleToggleFavorite = async (storyId: string) => {
+    console.log("[StoryReaderPage] DEBUG: Toggle favori pour l'histoire:", storyId);
+    try {
+      if (currentStory) {
+        const success = await toggleFavorite(storyId, currentStory.isFavorite || false);
+        if (success) {
+          // Mettre à jour l'état local
+          setCurrentStory({
+            ...currentStory,
+            isFavorite: !currentStory.isFavorite
+          });
+          // Rafraîchir la liste des histoires
+          await fetchStories();
+          console.log("[StoryReaderPage] DEBUG: Favori mis à jour");
+        }
+      }
+    } catch (error: any) {
+      console.error("[StoryReaderPage] ERROR: Erreur lors du toggle favori:", error);
     }
   };
 
@@ -106,6 +130,7 @@ const StoryReaderPage: React.FC = () => {
     <StoryReader
       story={currentStory}
       onClose={handleClose}
+      onToggleFavorite={handleToggleFavorite}
       onMarkAsRead={handleMarkAsRead}
       childName={getChildName(currentStory.childrenIds)}
     />
