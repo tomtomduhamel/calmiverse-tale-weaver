@@ -5,7 +5,7 @@ import { CreateSequelButton } from "../story/series/CreateSequelButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Loader2, BookCheck, Sparkles, Heart, Trash2 } from "lucide-react";
+import { Loader2, BookCheck, Sparkles, Trash2 } from "lucide-react";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 
 interface MobileStoryCardProps {
@@ -62,6 +62,12 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (onToggleFavorite) {
+      onToggleFavorite(story.id, story.isFavorite || false);
+    }
+  };
+
+  const handleFavoriteToggle = () => {
     if (onToggleFavorite) {
       onToggleFavorite(story.id, story.isFavorite || false);
     }
@@ -174,18 +180,14 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
               </h3>
               
               {/* Bouton favoris compact */}
-              <div data-favorite-button onClick={handleToggleFavorite} className="flex-shrink-0">
-                {story.isFavorite ? (
-                  <Heart className="h-4 w-4 text-amber-500 fill-current" />
-                ) : (
-                  <FavoriteButton
-                    isFavorite={false}
-                    onToggle={() => {}}
-                    isLoading={isUpdatingFavorite}
-                    size="sm"
-                    variant="ghost"
-                  />
-                )}
+              <div data-favorite-button className="flex-shrink-0">
+                <FavoriteButton
+                  isFavorite={story.isFavorite || false}
+                  onToggle={handleFavoriteToggle}
+                  isLoading={isUpdatingFavorite}
+                  size="sm"
+                  variant="ghost"
+                />
               </div>
             </div>
             

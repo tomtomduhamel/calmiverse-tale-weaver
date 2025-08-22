@@ -99,6 +99,12 @@ const StoryCard: React.FC<StoryCardProps> = ({
     }
   };
 
+  const handleFavoriteToggle = () => {
+    if (onToggleFavorite) {
+      onToggleFavorite(story.id, story.isFavorite || false);
+    }
+  };
+
   const storyImageUrl = getStoryImageUrl(story.image_path);
 
   return (
@@ -151,10 +157,10 @@ const StoryCard: React.FC<StoryCardProps> = ({
           </div>
           
           {/* Bouton favoris */}
-          <div data-favorite-button onClick={handleToggleFavorite}>
+          <div data-favorite-button>
             <FavoriteButton
               isFavorite={story.isFavorite || false}
-              onToggle={() => {}} // Le gestionnaire est dans le div parent
+              onToggle={handleFavoriteToggle}
               isLoading={isUpdatingFavorite}
               size="sm"
               variant="ghost"
