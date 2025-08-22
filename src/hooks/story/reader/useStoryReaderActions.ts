@@ -44,6 +44,8 @@ export const useStoryReaderActions = ({
   const handleToggleFavorite = useCallback(async (storyId: string, currentFavoriteStatus: boolean) => {
     if (!onToggleFavorite) return;
     
+    console.log("[StoryReaderActions] DEBUG: Toggle favori appelé pour:", storyId, "statut actuel:", currentFavoriteStatus);
+    
     setIsUpdatingFavorite(true);
     try {
       await onToggleFavorite(storyId);
