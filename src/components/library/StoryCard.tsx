@@ -10,7 +10,7 @@ import { SeriesIndicator } from "../story/series/SeriesIndicator";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Loader2, BookCheck, Sparkles, Image as ImageIcon } from "lucide-react";
+import { Loader2, BookCheck, Sparkles } from "lucide-react";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 
 interface StoryCardProps {
@@ -143,11 +143,6 @@ const StoryCard: React.FC<StoryCardProps> = ({
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2 flex-1">
             <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
-            {storyImageUrl && (
-              <div title="Histoire avec image">
-                <ImageIcon className="h-3 w-3 text-blue-500" />
-              </div>
-            )}
             {isRecent && story.status !== "read" && (
               <div className="flex items-center text-blue-600 text-xs">
                 <Sparkles className="h-3 w-3 mr-1" />
