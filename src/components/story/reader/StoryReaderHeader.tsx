@@ -33,8 +33,12 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
 }) => {
   const readingTime = calculateReadingTime(story.content);
   const handleToggleFavorite = () => {
+    console.log("[StoryReaderHeader] DEBUG: Clic sur bouton favoris pour histoire:", story.id);
     if (onToggleFavorite) {
+      console.log("[StoryReaderHeader] DEBUG: Appel de onToggleFavorite avec storyId:", story.id, "et status:", story.isFavorite);
       onToggleFavorite(story.id, story.isFavorite || false);
+    } else {
+      console.log("[StoryReaderHeader] DEBUG: onToggleFavorite n'est pas défini");
     }
   };
   return <header className={`sticky top-0 z-10 border-b p-4 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
