@@ -128,6 +128,7 @@ serve(async (req) => {
       
       // Métadonnées
       userId: userId,
+      authorid: story.authorid,
       timestamp: timestamp,
       locale: 'fr'
     };
