@@ -12,6 +12,7 @@ import StoryGrid from "./StoryGrid";
 import Pagination from "./Pagination";
 import StoryCleaner from "./StoryCleaner";
 import { extractObjectiveValue } from "@/utils/objectiveUtils";
+import { useSeriesGrouping } from "@/hooks/stories/useSeriesGrouping";
 
 interface LibraryContainerProps {
   stories: Story[];
@@ -47,6 +48,10 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   onCreateStory
 }) => {
   const isMobile = useIsMobile();
+  
+  // Grouper les histoires en séries
+  const { libraryItems } = useSeriesGrouping(stories);
+  
   // États locaux pour la pagination et le filtrage
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites' | 'recent'>('all');
@@ -63,91 +68,107 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
     return hoursDiff <= 24;
   };
 
-  // Filtrage et tri amélioré des histoires
-  const filteredStories = React.useMemo(() => {
-    return stories
-      .filter(story => {
-        const matchesSearch = (story.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-                            (story.preview?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
-        
-        let matchesStatus = false;
-        switch (statusFilter) {
-          case 'all':
-            matchesStatus = true;
-            break;
-          case 'favorites':
-            matchesStatus = story.isFavorite === true;
-            break;
-          case 'unread':
-            matchesStatus = story.status !== 'read' && story.status !== 'error';
-            break;
-          case 'recent':
-            matchesStatus = isRecentStory(story);
-            break;
-          default:
-            matchesStatus = story.status === statusFilter;
+  // Filtrage et tri amélioré des éléments de la bibliothèque
+  const filteredItems = React.useMemo(() => {
+    return libraryItems
+      .filter(item => {
+        if (item.type === 'series') {
+          const matchesSearch = searchTerm ? (
+            item.series.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.series.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.stories.some(story => 
+              story.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              story.preview?.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+          ) : true;
+          
+          let matchesStatus = false;
+          switch (statusFilter) {
+            case 'all':
+              matchesStatus = true;
+              break;
+            case 'favorites':
+              matchesStatus = item.stories.some(story => story.isFavorite === true);
+              break;
+            case 'unread':
+              matchesStatus = item.stories.some(story => story.status !== 'read' && story.status !== 'error');
+              break;
+            case 'recent':
+              matchesStatus = item.stories.some(story => isRecentStory(story));
+              break;
+            default:
+              matchesStatus = item.stories.some(story => story.status === statusFilter);
+          }
+          
+          const matchesObjective = !selectedObjective || 
+            item.stories.some(story => extractObjectiveValue(story.objective) === selectedObjective);
+          
+          return matchesSearch && matchesStatus && matchesObjective;
+        } else {
+          const story = item.story;
+          const matchesSearch = (story.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+                              (story.preview?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+          
+          let matchesStatus = false;
+          switch (statusFilter) {
+            case 'all':
+              matchesStatus = true;
+              break;
+            case 'favorites':
+              matchesStatus = story.isFavorite === true;
+              break;
+            case 'unread':
+              matchesStatus = story.status !== 'read' && story.status !== 'error';
+              break;
+            case 'recent':
+              matchesStatus = isRecentStory(story);
+              break;
+            default:
+              matchesStatus = story.status === statusFilter;
+          }
+          
+          const matchesObjective = !selectedObjective || 
+            extractObjectiveValue(story.objective) === selectedObjective;
+          
+          return matchesSearch && matchesStatus && matchesObjective;
         }
-        
-        // Filter by objective (single selection)
-        const matchesObjective = !selectedObjective || 
-          extractObjectiveValue(story.objective) === selectedObjective;
-        
-        return matchesSearch && matchesStatus && matchesObjective;
       })
       .sort((a, b) => {
-        // Nouveau système de priorités amélioré
-        const getPriority = (story: Story) => {
-          const isRecent = isRecentStory(story);
-          
-          // Priorité 0 : Histoires récentes (moins de 24h) avec statut critique
-          if (isRecent && (story.status === 'error' || story.status === 'pending')) return 0;
-          
-          // Priorité 1 : Histoires récentes prêtes ou non lues
-          if (isRecent && (story.status === 'ready' || story.status !== 'read')) return 1;
-          
-          // Priorité 2 : Histoires récentes lues
-          if (isRecent && story.status === 'read') return 2;
-          
-          // Priorité 3 : Favoris non récents avec problèmes
-          if (story.isFavorite && story.status === 'error') return 3;
-          
-          // Priorité 4 : Favoris non récents en génération
-          if (story.isFavorite && story.status === 'pending') return 4;
-          
-          // Priorité 5 : Favoris non récents non lus
-          if (story.isFavorite && story.status !== 'read') return 5;
-          
-          // Priorité 6 : Favoris non récents lus
-          if (story.isFavorite && story.status === 'read') return 6;
-          
-          // Priorité 7 : Histoires non récentes avec erreurs
-          if (story.status === 'error') return 7;
-          
-          // Priorité 8 : Histoires non récentes en génération
-          if (story.status === 'pending') return 8;
-          
-          // Priorité 9 : Histoires non récentes prêtes
-          if (story.status === 'ready') return 9;
-          
-          // Priorité 10 : Histoires non récentes lues
-          return 10;
+        // Pour les séries, on utilise la date de mise à jour de la série
+        const getItemDate = (item: any) => {
+          if (item.type === 'series') {
+            return new Date(item.lastUpdated);
+          } else {
+            return item.story.updatedAt || item.story.createdAt;
+          }
         };
 
-        const priorityA = getPriority(a);
-        const priorityB = getPriority(b);
+        const getItemIsRecent = (item: any) => {
+          if (item.type === 'series') {
+            return item.stories.some((story: any) => isRecentStory(story));
+          } else {
+            return isRecentStory(item.story);
+          }
+        };
 
-        if (priorityA !== priorityB) return priorityA - priorityB;
-        
-        // En cas d'égalité de priorité, tri par date de création (plus récent en premier)
-        return b.createdAt.getTime() - a.createdAt.getTime();
+        // Priority 1: Recent items first
+        const aIsRecent = getItemIsRecent(a);
+        const bIsRecent = getItemIsRecent(b);
+        if (aIsRecent && !bIsRecent) return -1;
+        if (!aIsRecent && bIsRecent) return 1;
+
+        // Priority 2: Most recent update first
+        const aDate = getItemDate(a);
+        const bDate = getItemDate(b);
+        return new Date(bDate).getTime() - new Date(aDate).getTime();
       });
-  }, [stories, searchTerm, statusFilter, selectedObjective, isRecentStory]);
+  }, [libraryItems, searchTerm, statusFilter, selectedObjective, isRecentStory]);
 
   // Nombre total de pages pour la pagination
-  const totalPages = Math.ceil(filteredStories.length / storiesPerPage);
+  const totalPages = Math.ceil(filteredItems.length / storiesPerPage);
 
-  // Histoires à afficher sur la page actuelle
-  const currentStories = filteredStories.slice(
+  // Éléments à afficher sur la page actuelle
+  const currentItems = filteredItems.slice(
     (currentPage - 1) * storiesPerPage,
     currentPage * storiesPerPage
   );
@@ -201,7 +222,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
       )}
 
         <StoryGrid
-          stories={currentStories}
+          items={currentItems}
           onDelete={onDeleteStory}
           onRetry={onRetryStory}
           onToggleFavorite={onToggleFavorite}

@@ -1,12 +1,14 @@
 
-import React from "react";
-import type { Story } from "@/types/story";
+import React, { useState } from "react";
+import type { Story, LibraryItem } from "@/types/story";
 import StoryCard from "./StoryCard";
 import MobileStoryCard from "./MobileStoryCard";
+import { SeriesCard } from "./series/SeriesCard";
+import { SeriesStoriesModal } from "./series/SeriesStoriesModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StoryGridProps {
-  stories: Story[];
+  items: LibraryItem[];
   onDelete?: (storyId: string) => void;
   onRetry?: (storyId: string) => void;
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
@@ -21,7 +23,7 @@ interface StoryGridProps {
 }
 
 const StoryGrid: React.FC<StoryGridProps> = ({
-  stories,
+  items,
   onDelete,
   onRetry,
   onToggleFavorite,
@@ -35,7 +37,9 @@ const StoryGrid: React.FC<StoryGridProps> = ({
   pendingStoryId
 }) => {
   const isMobile = useIsMobile();
-  if (stories.length === 0) {
+  const [selectedSeries, setSelectedSeries] = useState<any>(null);
+
+  if (items.length === 0) {
     return (
       <div className="text-center py-8 sm:py-10 border border-dashed rounded-lg mx-2 sm:mx-0">
         <p className="text-muted-foreground text-sm sm:text-base">Aucune histoire trouvée</p>
@@ -53,42 +57,80 @@ const StoryGrid: React.FC<StoryGridProps> = ({
   };
 
   return (
-    <div className={
-      isMobile 
-        ? "space-y-2 px-2" 
-        : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
-    }>
-      {stories.map((story) => (
-        isMobile ? (
-          <MobileStoryCard
-            key={story.id}
-            story={story}
-            onClick={() => handleCardClick(story)}
-            onToggleFavorite={onToggleFavorite}
-            onDelete={onDelete ? () => onDelete(story.id) : undefined}
-            onSequelCreated={onSequelCreated}
-            isUpdatingFavorite={isUpdatingFavorite}
-            isDeleting={isDeletingId === story.id}
-          />
-        ) : (
-          <StoryCard
-            key={story.id}
-            story={story}
-            onDelete={onDelete ? () => onDelete(story.id) : undefined}
-            onRetry={onRetry ? () => onRetry(story.id) : undefined}
-            onToggleFavorite={onToggleFavorite}
-            onMarkAsRead={onMarkAsRead}
-            onSequelCreated={onSequelCreated}
-            onClick={() => handleCardClick(story)}
-            isRetrying={isRetrying && pendingStoryId === story.id}
-            isDeleting={isDeletingId === story.id}
-            isUpdatingFavorite={isUpdatingFavorite}
-            isUpdatingReadStatus={isUpdatingReadStatus}
-            isPending={pendingStoryId === story.id}
-          />
-        )
-      ))}
-    </div>
+    <>
+      <div className={
+        isMobile 
+          ? "space-y-2 px-2" 
+          : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+      }>
+        {items.map((item) => {
+          if (item.type === 'series') {
+            return isMobile ? (
+              // Version mobile pour les séries - utilise une carte similaire
+              <SeriesCard
+                key={item.id}
+                seriesGroup={item}
+                onClick={() => setSelectedSeries(item)}
+                className="mx-2"
+              />
+            ) : (
+              <SeriesCard
+                key={item.id}
+                seriesGroup={item}
+                onClick={() => setSelectedSeries(item)}
+              />
+            );
+          } else {
+            const story = item.story;
+            return isMobile ? (
+              <MobileStoryCard
+                key={story.id}
+                story={story}
+                onClick={() => handleCardClick(story)}
+                onToggleFavorite={onToggleFavorite}
+                onDelete={onDelete ? () => onDelete(story.id) : undefined}
+                onSequelCreated={onSequelCreated}
+                isUpdatingFavorite={isUpdatingFavorite}
+                isDeleting={isDeletingId === story.id}
+              />
+            ) : (
+              <StoryCard
+                key={story.id}
+                story={story}
+                onDelete={onDelete ? () => onDelete(story.id) : undefined}
+                onRetry={onRetry ? () => onRetry(story.id) : undefined}
+                onToggleFavorite={onToggleFavorite}
+                onMarkAsRead={onMarkAsRead}
+                onSequelCreated={onSequelCreated}
+                onClick={() => handleCardClick(story)}
+                isRetrying={isRetrying && pendingStoryId === story.id}
+                isDeleting={isDeletingId === story.id}
+                isUpdatingFavorite={isUpdatingFavorite}
+                isUpdatingReadStatus={isUpdatingReadStatus}
+                isPending={pendingStoryId === story.id}
+              />
+            );
+          }
+        })}
+      </div>
+
+      {/* Modal pour sélectionner une histoire dans une série */}
+      {selectedSeries && (
+        <SeriesStoriesModal
+          isOpen={!!selectedSeries}
+          onClose={() => setSelectedSeries(null)}
+          seriesGroup={selectedSeries}
+          onSelectStory={handleCardClick}
+          onToggleFavorite={onToggleFavorite}
+          onDeleteStory={onDelete}
+          onRetryStory={onRetry}
+          isUpdatingFavorite={isUpdatingFavorite}
+          isDeletingId={isDeletingId}
+          isRetrying={isRetrying}
+          pendingStoryId={pendingStoryId}
+        />
+      )}
+    </>
   );
 };
 

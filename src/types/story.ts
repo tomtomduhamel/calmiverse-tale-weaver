@@ -135,3 +135,23 @@ export interface SequelData {
     newChallengesIntroduced?: boolean;
   };
 }
+
+// Library display types for series grouping
+export interface SeriesGroup {
+  id: string;
+  type: 'series';
+  series: StorySeries;
+  stories: Story[];
+  totalStories: number;
+  readStories: number;
+  lastUpdated: string;
+  coverImage?: string;
+}
+
+export interface StandaloneStory {
+  id: string;
+  type: 'story';
+  story: Story;
+}
+
+export type LibraryItem = SeriesGroup | StandaloneStory;
