@@ -75,11 +75,6 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({
                 </div>
               )}
             </div>
-            
-            {/* Description */}
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {series.description || "Une série d'histoires captivantes pour enfants"}
-            </p>
           </div>
         </div>
 
