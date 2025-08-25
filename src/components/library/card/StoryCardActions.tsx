@@ -74,30 +74,7 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
         
         <div className="flex space-x-1 justify-end">
           <TooltipProvider>
-            {story.status === "error" && onRetry && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={handleRetry}
-                    disabled={isRetrying || isDeleting}
-                    className={`p-1.5 rounded-full text-amber-600 hover:bg-amber-100 ${
-                      isRetrying ? "cursor-not-allowed opacity-50" : ""
-                    }`}
-                    aria-label="Réessayer cette histoire"
-                    type="button"
-                  >
-                    {isRetrying ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="h-4 w-4" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isRetrying ? "Nouvelle tentative en cours..." : "Réessayer la génération"}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
+            {/* Bouton retry supprimé */}
 
             <Tooltip>
               <TooltipTrigger asChild>
