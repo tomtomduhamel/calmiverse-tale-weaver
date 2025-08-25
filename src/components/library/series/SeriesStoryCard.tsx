@@ -15,6 +15,7 @@ import {
 import type { Story } from '@/types/story';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { getStoryImageUrl } from '@/utils/supabaseImageUtils';
 
 interface SeriesStoryCardProps {
   story: Story;
@@ -82,10 +83,11 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
           {story.image_path ? (
             <div className="w-12 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0">
               <img 
-                src={story.image_path} 
+                src={getStoryImageUrl(story.image_path) || ''} 
                 alt={story.title}
                 className="w-full h-full object-cover"
                 onError={(e) => {
+                  console.log(`[SeriesStoryCard] Erreur chargement image pour l'histoire ${story.id}:`, story.image_path);
                   (e.target as HTMLImageElement).style.display = 'none';
                   (e.target as HTMLImageElement).parentElement!.innerHTML = `
                     <div class="w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">

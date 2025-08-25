@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { Story, LibraryItem, SeriesGroup, StandaloneStory } from '@/types/story';
 import { useSeriesData } from './useSeriesData';
+import { getStoryImageUrl } from '@/utils/supabaseImageUtils';
 
 interface UseSeriesGroupingReturn {
   libraryItems: LibraryItem[];
@@ -69,6 +70,18 @@ export const useSeriesGrouping = (stories: Story[]): UseSeriesGroupingReturn => 
           return;
         }
 
+        // Déterminer l'image de couverture avec fallback approprié
+        let coverImage: string | undefined;
+        if (seriesInfo.image_path) {
+          coverImage = getStoryImageUrl(seriesInfo.image_path) || undefined;
+          console.log(`[useSeriesGrouping] Image de série générée pour ${seriesId}:`, coverImage);
+        } else if (firstStory.image_path) {
+          coverImage = getStoryImageUrl(firstStory.image_path) || undefined;
+          console.log(`[useSeriesGrouping] Fallback à l'image de la première histoire pour ${seriesId}:`, coverImage);
+        } else {
+          console.log(`[useSeriesGrouping] Aucune image disponible pour la série ${seriesId}, utilisation du placeholder`);
+        }
+
         const seriesGroup: SeriesGroup = {
           id: seriesId,
           type: 'series',
@@ -77,7 +90,7 @@ export const useSeriesGrouping = (stories: Story[]): UseSeriesGroupingReturn => 
           totalStories: sortedStories.length,
           readStories,
           lastUpdated,
-          coverImage: seriesInfo.image_path || firstStory.image_path || undefined,
+          coverImage,
         };
 
         items.push(seriesGroup);
