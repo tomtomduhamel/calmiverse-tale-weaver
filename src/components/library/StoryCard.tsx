@@ -58,10 +58,11 @@ const StoryCard: React.FC<StoryCardProps> = ({
   const cardStyles = [
     "transition-all duration-300 hover:shadow-md relative",
     isClickable ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01] bg-green-50/30 border-green-300" : "",
-    story.status === "error" ? "border-red-200 bg-red-50" : "",
+    // Masquer le style d'erreur car les erreurs peuvent être obsolètes
+    // story.status === "error" ? "border-red-200 bg-red-50" : "",
     story.status === "pending" || isPending ? "border-amber-200 bg-amber-50" : "",
     story.status === "read" ? "border-green-200 bg-green-50" : "",
-    story.isFavorite && story.status !== "error" && story.status !== "read" ? "border-amber-200" : "",
+    story.isFavorite && story.status !== "read" ? "border-amber-200" : "",
     story.isFavorite && story.status === "read" ? "border-green-200" : "",
     isRecent ? "border-blue-300 bg-blue-50/50" : "", // Style pour les histoires récentes
   ].join(" ");

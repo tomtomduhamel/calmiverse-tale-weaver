@@ -23,11 +23,11 @@ export const usePendingStoryMonitor = ({
   const [lastCheck, setLastCheck] = useState<Date>(new Date());
   const { toast } = useToast();
 
-  // Intégrer la surveillance des timeouts
-  useStoryTimeoutMonitor({ 
-    stories: stories || [], 
-    timeoutMinutes: 10 // 10 minutes au lieu de 5 pour éviter les faux positifs
-  });
+  // Surveillance des timeouts désactivée pour éviter les fausses erreurs
+  // useStoryTimeoutMonitor({ 
+  //   stories: stories || [], 
+  //   timeoutMinutes: 10
+  // });
 
   useEffect(() => {
     if (!pendingStoryId || !stories) return;

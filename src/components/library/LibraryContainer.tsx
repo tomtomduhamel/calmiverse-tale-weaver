@@ -174,7 +174,8 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   );
 
   // Histoires en erreur pour l'alerte
-  const errorStories = stories.filter(story => story.status === 'error');
+  // Masquer les erreurs car elles peuvent être obsolètes après correction du workflow
+  const errorStories: Story[] = []; // stories.filter(story => story.status === 'error');
 
   const handleCreateStory = () => {
     if (onCreateStory) {

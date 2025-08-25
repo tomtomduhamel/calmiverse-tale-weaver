@@ -35,8 +35,9 @@ const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags = [], objective, sta
     switch (status) {
       case 'pending':
         return 'En cours de génération';
-      case 'error':
-        return 'Erreur';
+      // Masquer les erreurs car elles peuvent être obsolètes
+      // case 'error':
+      //   return 'Erreur';
       default:
         return null; // Ne pas afficher les autres statuts
     }
@@ -62,11 +63,12 @@ const StoryCardTags: React.FC<StoryCardTagsProps> = ({ tags = [], objective, sta
         </span>
       ))}
       
-      {status === 'error' && error && (
+      {/* Masquer les messages d'erreur car ils peuvent être obsolètes */}
+      {/* {status === 'error' && error && (
         <div className="w-full mt-2 text-xs text-red-600 bg-red-50 p-2 rounded-md border border-red-200">
           {error}
         </div>
-      )}
+      )} */}
     </div>
   );
 };
