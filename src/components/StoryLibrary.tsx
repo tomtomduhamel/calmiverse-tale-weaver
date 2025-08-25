@@ -120,11 +120,11 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Gestionnaire de récupération des histoires bloquées */}
-      <StoryRecoveryManager 
+      {/* Gestionnaire de récupération désactivé */}
+      {/* <StoryRecoveryManager 
         stories={stories}
         onRecoveryComplete={handleRecoveryComplete}
-      />
+      /> */}
       
       {/* Conteneur principal de la bibliothèque */}
       <LibraryContainer
