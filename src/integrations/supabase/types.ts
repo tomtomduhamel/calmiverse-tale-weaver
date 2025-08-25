@@ -295,6 +295,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_stories_next_story_id"
+            columns: ["next_story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_stories_previous_story_id"
+            columns: ["previous_story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_stories_series_id"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "story_series"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "stories_sound_id_fkey"
             columns: ["sound_id"]
             isOneToOne: false
@@ -338,6 +359,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          image_path: string | null
           is_active: boolean
           title: string
           total_tomes: number
@@ -348,6 +370,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_path?: string | null
           is_active?: boolean
           title: string
           total_tomes?: number
@@ -358,6 +381,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_path?: string | null
           is_active?: boolean
           title?: string
           total_tomes?: number
