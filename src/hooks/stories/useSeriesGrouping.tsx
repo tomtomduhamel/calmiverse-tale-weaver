@@ -1,15 +1,35 @@
 import { useMemo } from 'react';
 import type { Story, LibraryItem, SeriesGroup, StandaloneStory } from '@/types/story';
+import { useSeriesData } from './useSeriesData';
 
 interface UseSeriesGroupingReturn {
   libraryItems: LibraryItem[];
   totalItems: number;
   seriesCount: number;
   standaloneCount: number;
+  isLoading: boolean;
 }
 
 export const useSeriesGrouping = (stories: Story[]): UseSeriesGroupingReturn => {
+  // Extraire les IDs de série uniques
+  const seriesIds = useMemo(() => {
+    const ids = new Set<string>();
+    stories.forEach(story => {
+      if (story.series_id && story.tome_number) {
+        ids.add(story.series_id);
+      }
+    });
+    return Array.from(ids);
+  }, [stories]);
+
+  // Récupérer les données de série depuis la base de données
+  const { seriesData, isLoading } = useSeriesData(seriesIds);
   const libraryItems = useMemo(() => {
+    // Attendre que les données de série soient chargées
+    if (isLoading) {
+      return [];
+    }
+
     const seriesMap = new Map<string, Story[]>();
     const standaloneStories: Story[] = [];
 
@@ -41,24 +61,23 @@ export const useSeriesGrouping = (stories: Story[]): UseSeriesGroupingReturn => 
           return storyDate > latest ? storyDate : latest;
         }, sortedStories[0].updatedAt ? sortedStories[0].updatedAt.toISOString() : sortedStories[0].createdAt.toISOString());
 
+        const seriesInfo = seriesData.get(seriesId);
+        
+        if (!seriesInfo) {
+          // Fallback si les données de série ne sont pas trouvées
+          console.warn(`❌ Données de série non trouvées pour ${seriesId}`);
+          return;
+        }
+
         const seriesGroup: SeriesGroup = {
           id: seriesId,
           type: 'series',
-          series: {
-            id: seriesId,
-            title: firstStory.title.replace(/ - Tome \d+|Tome \d+ - /, ''), // Enlever le tome du titre
-            description: firstStory.story_summary || "Une série d'histoires captivantes",
-            author_id: firstStory.authorId || '',
-            total_tomes: sortedStories.length,
-            is_active: true,
-            created_at: firstStory.createdAt,
-            updated_at: new Date(lastUpdated),
-          },
+          series: seriesInfo,
           stories: sortedStories,
           totalStories: sortedStories.length,
           readStories,
           lastUpdated,
-          coverImage: firstStory.image_path || undefined,
+          coverImage: seriesInfo.image_path || firstStory.image_path || undefined,
         };
 
         items.push(seriesGroup);
@@ -86,7 +105,7 @@ export const useSeriesGrouping = (stories: Story[]): UseSeriesGroupingReturn => 
     });
 
     return items;
-  }, [stories]);
+  }, [stories, seriesData, isLoading]);
 
   const seriesCount = libraryItems.filter(item => item.type === 'series').length;
   const standaloneCount = libraryItems.filter(item => item.type === 'story').length;
@@ -96,5 +115,6 @@ export const useSeriesGrouping = (stories: Story[]): UseSeriesGroupingReturn => 
     totalItems: libraryItems.length,
     seriesCount,
     standaloneCount,
+    isLoading,
   };
 };

@@ -119,6 +119,7 @@ export interface StorySeries {
   created_at: Date;
   updated_at: Date;
   is_active: boolean;
+  image_path?: string | null;
 }
 
 export interface SequelData {
