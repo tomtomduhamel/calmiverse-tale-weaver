@@ -16,7 +16,7 @@ const StoryCardTitle: React.FC<StoryCardTitleProps> = ({ title, status }) => {
   
   return (
     <div className="flex justify-between items-start mb-2">
-      <h3 className={`text-lg font-semibold ${status === 'error' ? 'text-red-600' : ''}`}>
+      <h3 className="text-lg font-semibold text-foreground">
         {cleanTitle || "Nouvelle histoire"}
       </h3>
       <div className="flex items-center gap-1">
