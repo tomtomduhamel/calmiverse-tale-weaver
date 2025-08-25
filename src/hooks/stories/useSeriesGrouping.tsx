@@ -35,7 +35,7 @@ export const useSeriesGrouping = (stories: Story[]): UseSeriesGroupingReturn => 
         const firstStory = sortedStories[0];
         
         // Calculer les statistiques
-        const readStories = sortedStories.filter(story => story.status === 'completed').length;
+        const readStories = sortedStories.filter(story => story.status === 'read').length;
         const lastUpdated = sortedStories.reduce((latest, story) => {
           const storyDate = story.updatedAt ? story.updatedAt.toISOString() : story.createdAt.toISOString();
           return storyDate > latest ? storyDate : latest;
