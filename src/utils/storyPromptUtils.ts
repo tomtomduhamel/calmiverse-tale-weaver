@@ -77,7 +77,7 @@ export const generateCharacterContext = (analysis: CharacterAnalysis): string =>
  */
 const getVocabularyLevel = (youngestAge: number): string => {
   if (youngestAge <= 3) {
-    return "Utilise un vocabulaire très simple avec des mots familiers. Privilégie les répétitions et les onomatopées.";
+    return "Utilise un vocabulaire simple avec des mots familiers. Utilise quelques onomatopées, sans jamais en abuser pour ne pas rendre l'histoire difficile à lire et à comprendre.";
   } else if (youngestAge <= 5) {
     return "Utilise un vocabulaire simple et accessible. Évite les mots complexes.";
   } else if (youngestAge <= 7) {
