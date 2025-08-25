@@ -27,9 +27,9 @@ export const useSeriesGrouping = (stories: Story[]): UseSeriesGroupingReturn => 
 
     const items: LibraryItem[] = [];
 
-    // Créer les groupes de séries
+    // Créer les groupes de séries (seulement si 2 tomes ou plus)
     seriesMap.forEach((seriesStories, seriesId) => {
-      if (seriesStories.length > 0) {
+      if (seriesStories.length >= 2) {
         // Trier les histoires par tome_number
         const sortedStories = seriesStories.sort((a, b) => (a.tome_number || 0) - (b.tome_number || 0));
         const firstStory = sortedStories[0];
@@ -62,6 +62,9 @@ export const useSeriesGrouping = (stories: Story[]): UseSeriesGroupingReturn => 
         };
 
         items.push(seriesGroup);
+      } else if (seriesStories.length === 1) {
+        // Si une série n'a qu'un seul tome, la traiter comme une histoire standalone
+        standaloneStories.push(seriesStories[0]);
       }
     });
 
