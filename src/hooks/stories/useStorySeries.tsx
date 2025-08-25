@@ -5,7 +5,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import type { Story, StorySeries, SequelData } from '@/types/story';
 
 // URL du webhook N8N pour la génération des suites d'histoires
-const N8N_SEQUEL_WEBHOOK_URL = 'https://n8n.srv856374.hstgr.cloud/webhook-test/5bdab9d2-f772-4fc7-aa22-0ab36b81b428';
+const N8N_SEQUEL_WEBHOOK_URL = 'https://n8n.srv856374.hstgr.cloud/webhook/5bdab9d2-f772-4fc7-aa22-0ab36b81b428';
 
 /**
  * Hook pour gérer les séries/suites d'histoires
