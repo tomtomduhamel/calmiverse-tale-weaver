@@ -6,7 +6,6 @@ export const formatStoriesFromSupabase = (supabaseStories: any[]): Story[] => {
 };
 
 export const formatStoryFromSupabase = (story: any): Story => {
-  console.log('[formatStoryFromSupabase] Mapping story:', story.id, 'avec image_path:', story.image_path);
   
   return {
     id: story.id,
@@ -28,6 +27,12 @@ export const formatStoryFromSupabase = (story: any): Story => {
     sharing: story.sharing,
     sound_id: story.sound_id,
     story_analysis: story.story_analysis,
-    image_path: story.image_path || null
+    image_path: story.image_path || null,
+    // Champs pour les séries - CORRECTION MAJEURE
+    series_id: story.series_id || null,
+    tome_number: story.tome_number || null,
+    is_series_starter: story.is_series_starter || false,
+    previous_story_id: story.previous_story_id || null,
+    next_story_id: story.next_story_id || null
   };
 };

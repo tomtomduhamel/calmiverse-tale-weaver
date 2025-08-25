@@ -46,8 +46,8 @@ export const useSeriesGrouping = (stories: Story[]): UseSeriesGroupingReturn => 
           type: 'series',
           series: {
             id: seriesId,
-            title: firstStory.title.replace(/ - Tome \d+/, ''), // Enlever le tome du titre
-            description: firstStory.story_summary || undefined,
+            title: firstStory.title.replace(/ - Tome \d+|Tome \d+ - /, ''), // Enlever le tome du titre
+            description: firstStory.story_summary || "Une série d'histoires captivantes",
             author_id: firstStory.authorId || '',
             total_tomes: sortedStories.length,
             is_active: true,

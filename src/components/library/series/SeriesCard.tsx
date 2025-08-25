@@ -28,78 +28,82 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({
 
   return (
     <Card 
-      className={`group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] bg-gradient-to-br from-background to-muted/20 border-border/50 hover:border-primary/20 ${className}`}
+      className={`group cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-[1.01] bg-card border-border/40 hover:border-primary/30 ${className}`}
       onClick={onClick}
     >
-      <CardContent className="p-4 space-y-4">
+      <CardContent className="p-5 space-y-4">
         {/* Header avec image et info */}
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           {coverImage ? (
-            <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+            <div className="relative w-18 h-24 rounded-xl overflow-hidden bg-muted flex-shrink-0 shadow-sm">
               <img 
                 src={coverImage} 
                 alt={series.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+              <div className="absolute bottom-2 right-2 bg-background/90 backdrop-blur-sm rounded-full px-2 py-1">
+                <span className="text-xs font-medium text-foreground">{totalStories}</span>
+              </div>
             </div>
           ) : (
-            <div className="w-16 h-20 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center flex-shrink-0">
-              <BookOpen className="w-6 h-6 text-primary/60" />
+            <div className="w-18 h-24 rounded-xl bg-gradient-to-br from-primary/8 to-accent/8 flex flex-col items-center justify-center flex-shrink-0 shadow-sm border border-border/20">
+              <BookOpen className="w-7 h-7 text-primary/70 mb-1" />
+              <span className="text-xs font-medium text-primary/70">{totalStories}</span>
             </div>
           )}
           
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+              <h3 className="font-semibold text-foreground line-clamp-2 text-lg group-hover:text-primary transition-colors">
                 {series.title}
               </h3>
               {hasFavorites && (
-                <Star className="w-4 h-4 text-yellow-500 fill-current flex-shrink-0" />
+                <Star className="w-4 h-4 text-amber-500 fill-current flex-shrink-0 mt-1" />
               )}
             </div>
             
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+            <p className="text-sm text-muted-foreground/80 line-clamp-2 leading-relaxed">
               {series.description || "Une série d'histoires captivantes"}
             </p>
           </div>
         </div>
 
-        {/* Badges et métadonnées */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-            <BookOpen className="w-3 h-3 mr-1" />
-            {totalStories} {totalStories > 1 ? 'tomes' : 'tome'}
-          </Badge>
+        {/* Métadonnées */}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <BookOpen className="w-3.5 h-3.5" />
+            <span className="font-medium">{totalStories} {totalStories > 1 ? 'tomes' : 'tome'}</span>
+          </div>
           
-          <Badge variant="outline" className="text-xs">
-            <Clock className="w-3 h-3 mr-1" />
-            {timeAgo}
-          </Badge>
+          <div className="flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5" />
+            <span>{timeAgo}</span>
+          </div>
         </div>
 
         {/* Progression */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">Progression</span>
-            <span className="text-foreground font-medium">
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Progression de lecture</span>
+            <span className="text-sm font-medium text-foreground">
               {readStories}/{totalStories}
             </span>
           </div>
           <Progress 
             value={progressPercentage} 
-            className="h-2 bg-muted"
+            className="h-2.5 bg-muted/60"
           />
         </div>
 
         {/* Call to action */}
-        <div className="pt-2 border-t border-border/50">
-          <p className="text-sm text-primary font-medium group-hover:text-primary/80 transition-colors">
+        <div className="pt-3 border-t border-border/30">
+          <p className="text-sm text-primary/90 font-medium group-hover:text-primary transition-colors">
             {readStories === totalStories 
-              ? "Série terminée • Cliquer pour revoir"
+              ? "✓ Série terminée • Cliquer pour parcourir"
               : readStories === 0 
-                ? "Commencer la série"
-                : "Continuer la lecture"
+                ? "→ Commencer la série"
+                : `→ Continuer • Tome ${readStories + 1} en attente`
             }
           </p>
         </div>

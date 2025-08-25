@@ -25,6 +25,7 @@ interface SeriesStoryCardProps {
   isUpdatingFavorite?: boolean;
   isDeleting?: boolean;
   isRetrying?: boolean;
+  isNextRecommended?: boolean;
   className?: string;
 }
 
@@ -37,6 +38,7 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
   isUpdatingFavorite,
   isDeleting,
   isRetrying,
+  isNextRecommended = false,
   className = ""
 }) => {
   const timeAgo = formatDistanceToNow(story.createdAt, { addSuffix: true, locale: fr });
@@ -69,7 +71,9 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
 
   return (
     <Card 
-      className={`group cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01] bg-background border-border hover:border-primary/20 ${className}`}
+      className={`group cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01] bg-background border-border hover:border-primary/20 ${
+        isNextRecommended ? 'ring-2 ring-primary/20 bg-primary/5' : ''
+      } ${className}`}
       onClick={onClick}
     >
       <CardContent className="p-4">
@@ -161,10 +165,17 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
               </div>
             </div>
             
-            {/* Titre */}
-            <h4 className="font-medium text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-              {story.title}
-            </h4>
+            {/* Titre avec indicateur de recommandation */}
+            <div className="flex items-start gap-2">
+              <h4 className="font-medium text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors flex-1">
+                {story.title}
+              </h4>
+              {isNextRecommended && (
+                <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 whitespace-nowrap">
+                  À lire
+                </Badge>
+              )}
+            </div>
             
             {/* Métadonnées */}
             <div className="flex items-center justify-between gap-2">
