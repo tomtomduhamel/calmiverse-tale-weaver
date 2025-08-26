@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Pause, ArrowDown, Info } from "lucide-react";
+import { ArrowLeft, Play, Pause, ArrowDown, Info, Moon, Sun } from "lucide-react";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { FavoriteReaderButton } from "./FavoriteReaderButton";
 import { ShareStoryButton } from "./ShareStoryButton";
@@ -12,6 +12,7 @@ interface StoryReaderHeaderProps {
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
   isUpdatingFavorite?: boolean;
   isDarkMode?: boolean;
+  setIsDarkMode?: (darkMode: boolean) => void;
   // Auto-scroll props
   isAutoScrolling?: boolean;
   isPaused?: boolean;
@@ -25,6 +26,7 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
   onToggleFavorite,
   isUpdatingFavorite = false,
   isDarkMode = false,
+  setIsDarkMode,
   isAutoScrolling = false,
   isPaused = false,
   isManuallyPaused = false,
@@ -60,6 +62,19 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
         <div className="flex items-center gap-2">
           {/* Contrôle de défilement automatique */}
           {onToggleAutoScroll && <AutoScrollHeaderButton isAutoScrolling={isAutoScrolling} isPaused={isPaused} isManuallyPaused={isManuallyPaused} onToggleAutoScroll={onToggleAutoScroll} isDarkMode={isDarkMode} />}
+          
+          {/* Bouton mode sombre */}
+          {setIsDarkMode && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setIsDarkMode(!isDarkMode)} 
+              className={`${isDarkMode ? 'text-white hover:bg-gray-800' : ''}`}
+              aria-label={isDarkMode ? 'Activer le mode clair' : 'Activer le mode sombre'}
+            >
+              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+          )}
           
           {/* Bouton favori */}
           {onToggleFavorite && <FavoriteReaderButton isFavorite={story.isFavorite || false} onToggle={handleToggleFavorite} isLoading={isUpdatingFavorite} />}

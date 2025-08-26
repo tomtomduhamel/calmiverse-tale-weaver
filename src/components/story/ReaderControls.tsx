@@ -90,11 +90,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               </h3>
               <div>
                 <div className="flex items-center justify-between space-x-2">
-                  <Label htmlFor="dark-mode" className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    <span className="ml-1">{isDarkMode ? 'Mode Clair' : <><Moon className="h-4 w-4 inline mr-1" />Mode Sombre</>}</span>
-                  </Label>
-                  <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={handleToggleDarkMode} />
-                </div>
+              </div>
               </div>
               
             </div>

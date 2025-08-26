@@ -79,6 +79,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
           onToggleFavorite={handleToggleFavorite}
           isUpdatingFavorite={isUpdatingFavorite}
           isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
           isAutoScrolling={isAutoScrolling}
           isPaused={isPaused}
           isManuallyPaused={isManuallyPaused}
