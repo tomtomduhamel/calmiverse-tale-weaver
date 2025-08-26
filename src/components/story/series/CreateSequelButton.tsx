@@ -93,21 +93,6 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
             />
           ) : (
             <>
-              {!story.series_id && (
-                <div>
-                  <Label htmlFor="series-title" className="text-sm font-medium">
-                    Nom de la série
-                  </Label>
-                  <Input
-                    id="series-title"
-                    value={seriesTitle}
-                    onChange={(e) => setSeriesTitle(e.target.value)}
-                    placeholder="Nom de votre série d'histoires"
-                    className="mt-1"
-                  />
-                </div>
-              )}
-
               <div>
             <Label className="text-sm font-medium flex items-center gap-2">
               <Clock className="w-4 h-4" />
@@ -164,7 +149,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
                 <Button variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
                   Annuler
                 </Button>
-                <Button onClick={handleCreateSequel} disabled={isCreating || !seriesTitle.trim()} className="flex-1">
+                <Button onClick={handleCreateSequel} disabled={isCreating} className="flex-1">
                   {isCreating ? 'Création...' : 'Créer la suite'}
                 </Button>
               </div>
