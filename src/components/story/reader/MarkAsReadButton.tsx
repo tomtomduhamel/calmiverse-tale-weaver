@@ -34,11 +34,10 @@ export const MarkAsReadButton: React.FC<MarkAsReadButtonProps> = ({
       {isUpdatingReadStatus ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : isRead ? (
-        <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-      ) : (
         <BookCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
+      ) : (
+        <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
       )}
-      
     </Button>
   );
 };
