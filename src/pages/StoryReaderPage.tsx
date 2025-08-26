@@ -42,22 +42,32 @@ const StoryReaderPage: React.FC = () => {
     }
   }, [id, stories]);
 
-  // Gestionnaire pour marquer comme lu
+  // Gestionnaire pour marquer comme lu/non lu (toggle)
   const handleMarkAsRead = async (storyId: string): Promise<boolean> => {
     try {
-      await updateStoryStatus(storyId, "read");
+      console.log("[StoryReaderPage] DEBUG: Toggle read status pour story:", storyId);
+      console.log("[StoryReaderPage] DEBUG: Current status:", currentStory?.status);
+      
+      // Calculer le nouveau statut (toggle entre read et completed)
+      const currentStatus = currentStory?.status || "completed";
+      const newStatus = currentStatus === "read" ? "completed" : "read";
+      
+      console.log("[StoryReaderPage] DEBUG: New status:", newStatus);
+      
+      await updateStoryStatus(storyId, newStatus);
       
       // Mettre à jour l'état local
       if (currentStory && currentStory.id === storyId) {
         setCurrentStory({
           ...currentStory,
-          status: "read"
+          status: newStatus
         });
+        console.log("[StoryReaderPage] DEBUG: Local state updated to:", newStatus);
       }
       
       return true;
     } catch (error) {
-      console.error("[StoryReaderPage] Erreur lors du marquage comme lu:", error);
+      console.error("[StoryReaderPage] Erreur lors du toggle read status:", error);
       return false;
     }
   };

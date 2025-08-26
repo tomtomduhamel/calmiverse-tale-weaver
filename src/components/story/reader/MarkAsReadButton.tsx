@@ -19,6 +19,7 @@ export const MarkAsReadButton: React.FC<MarkAsReadButtonProps> = ({
   isDarkMode
 }) => {
   const handleClick = () => {
+    console.log("[MarkAsReadButton] DEBUG: Button clicked, current isRead:", isRead);
     onMarkAsRead(storyId);
   };
 
