@@ -81,18 +81,9 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               {/* Auto-scroll supprimé - maintenant dans le header et bouton flottant */}
             </div>
 
-            {/* Colonne 2: Apparence */}
+            {/* Colonne 2: Vide pour l'instant */}
             <div className="space-y-3">
-              
-              <div>
-                <div className="flex items-center justify-between space-x-2">
-                  <Label htmlFor="dark-mode" className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    <span className="ml-1">{isDarkMode ? 'Mode Clair' : <><Moon className="h-4 w-4 inline mr-1" />Mode Sombre</>}</span>
-                  </Label>
-                  <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={handleToggleDarkMode} />
-                </div>
-              </div>
-              
+              {/* Espace réservé pour futures fonctionnalités */}
             </div>
 
             {/* Colonne 3: Options supplémentaires */}
