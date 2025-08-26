@@ -1,9 +1,7 @@
 
-// Force recompilation after AutoScrollIndicator removal
 import React from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
-import { ReadingGuide } from "./story/ReadingGuide";
 import { FloatingAutoScrollButton } from "./story/reader/FloatingAutoScrollButton";
 import { EmptyStoryView } from "./story/reader/EmptyStoryView";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
@@ -41,8 +39,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     setIsDarkMode,
     showSummary,
     setShowSummary,
-    showReadingGuide,
-    setShowReadingGuide,
     isUpdatingFavorite,
     scrollAreaRef,
     controlsVisible,
@@ -59,7 +55,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     
     // Actions
     handleBack,
-    handleSettingsClick,
     handleToggleFavorite,
     handleMarkAsRead
   } = useStoryReader({
@@ -81,7 +76,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         <StoryReaderHeader
           story={story}
           onClose={handleBack}
-          onSettingsClick={handleSettingsClick}
           onToggleFavorite={handleToggleFavorite}
           isUpdatingFavorite={isUpdatingFavorite}
           isDarkMode={isDarkMode}
@@ -115,7 +109,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
           storyId={story.id}
           title={story.title}
           story={story}
-          setShowReadingGuide={setShowReadingGuide}
           onMarkAsRead={handleMarkAsRead}
           isRead={story.status === 'read'}
           isUpdatingReadStatus={isUpdatingReadStatus}
@@ -143,8 +136,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         showSummary={showSummary}
         setShowSummary={setShowSummary}
       />
-
-      <ReadingGuide open={showReadingGuide} onOpenChange={setShowReadingGuide} />
     </StoryReaderLayout>
   );
 };

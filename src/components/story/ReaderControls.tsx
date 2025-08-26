@@ -18,7 +18,6 @@ interface ReaderControlsProps {
   storyId: string;
   title: string;
   story: any;
-  setShowReadingGuide: (show: boolean) => void;
   onMarkAsRead?: (storyId: string) => Promise<boolean>;
   isRead: boolean;
   isUpdatingReadStatus: boolean;
@@ -31,7 +30,6 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   storyId,
   title,
   story,
-  setShowReadingGuide,
   onMarkAsRead,
   isRead,
   isUpdatingReadStatus
@@ -50,9 +48,6 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   };
   const handleToggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
-  };
-  const handleReadingGuideClick = () => {
-    setShowReadingGuide(true);
   };
   const handleMarkAsReadClick = async () => {
     if (onMarkAsRead) {
@@ -109,23 +104,6 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 Options
               </h3>
               <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start" onClick={handleReadingGuideClick} disabled={!isMounted}>
-                  <Bookmark className="h-4 w-4 mr-2" />
-                  Guide de lecture
-                </Button>
-                
-                <Button variant="outline" className="w-full justify-start" onClick={handleMarkAsReadClick} disabled={isRead || isUpdatingReadStatus || !onMarkAsRead}>
-                  {isRead ? <>
-                      <BookOpenCheck className="h-4 w-4 mr-2" />
-                      Marqué comme lu
-                    </> : <>
-                      <CheckCircle className="h-4 w-4 mr-2 animate-pulse" />
-                      Marquer comme lu
-                    </>}
-                </Button>
-
-                
-                
                 {/* Bouton de diagnostic technique */}
                 <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
               </div>

@@ -6,7 +6,6 @@ interface UseStoryReaderActionsProps {
   story: Story | null;
   setStory: (story: Story | null) => void;
   setIsUpdatingFavorite: (updating: boolean) => void;
-  setShowReadingGuide: (show: boolean) => void;
   onBack?: () => void;
   onClose?: () => void;
   onToggleFavorite?: (storyId: string) => void;
@@ -17,7 +16,6 @@ export const useStoryReaderActions = ({
   story,
   setStory,
   setIsUpdatingFavorite,
-  setShowReadingGuide,
   onBack,
   onClose,
   onToggleFavorite,
@@ -34,11 +32,6 @@ export const useStoryReaderActions = ({
       onClose();
     }
   }, [onBack, onClose, stopAutoScroll]);
-
-  // Gestion des paramètres
-  const handleSettingsClick = useCallback(() => {
-    setShowReadingGuide(true);
-  }, [setShowReadingGuide]);
 
   // Gestion du toggle favori
   const handleToggleFavorite = useCallback(async (storyId: string, currentFavoriteStatus: boolean) => {
@@ -65,7 +58,6 @@ export const useStoryReaderActions = ({
 
   return {
     handleBack,
-    handleSettingsClick,
     handleToggleFavorite
   };
 };

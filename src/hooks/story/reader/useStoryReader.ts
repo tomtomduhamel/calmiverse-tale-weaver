@@ -58,7 +58,6 @@ export const useStoryReader = ({
     story: storyState.story,
     setStory: storyState.setStory,
     setIsUpdatingFavorite: storyState.setIsUpdatingFavorite,
-    setShowReadingGuide: storyState.setShowReadingGuide,
     onBack,
     onClose,
     onToggleFavorite,

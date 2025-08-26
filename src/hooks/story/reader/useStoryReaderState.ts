@@ -11,7 +11,6 @@ export const useStoryReaderState = ({ initialStory }: UseStoryReaderStateProps) 
   const [fontSize, setFontSize] = useState(16);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-  const [showReadingGuide, setShowReadingGuide] = useState(false);
   const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false);
 
   // Mettre à jour l'état local quand initialStory change
@@ -30,8 +29,6 @@ export const useStoryReaderState = ({ initialStory }: UseStoryReaderStateProps) 
     setIsDarkMode,
     showSummary,
     setShowSummary,
-    showReadingGuide,
-    setShowReadingGuide,
     isUpdatingFavorite,
     setIsUpdatingFavorite
   };
