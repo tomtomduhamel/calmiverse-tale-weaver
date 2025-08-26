@@ -56,55 +56,46 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
     }
   };
   return <>
-      <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} border-t p-4 transition-colors duration-300`}>
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Colonne 1: Contrôles de lecture */}
-            <div className="space-y-3">
-              
-              
-              {/* Nouveau lecteur audio n8n */}
-              <div className="p-3 border rounded bg-card">
-                <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
-              </div>
-
-              {/* Musique de fond (compact) */}
-              <div className="p-3 border rounded bg-card">
-                <div className="flex items-center justify-between">
-                  <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Musique d'ambiance
-                  </div>
-                  <BackgroundSoundButton soundId={story.sound_id} storyObjective={extractObjectiveValue(story.objective) || undefined} isDarkMode={isDarkMode} autoPlay={false} />
-                </div>
-              </div>
-              
-              {/* Auto-scroll supprimé - maintenant dans le header et bouton flottant */}
+      <div className={`${isDarkMode ? 'bg-gray-900/95' : 'bg-white/95'} border-t transition-colors duration-300`}>
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          {/* Layout horizontal minimaliste avec les 3 fonctionnalités */}
+          <div className="flex items-center justify-between gap-8">
+            
+            {/* 1. Génération audio */}
+            <div className="flex-1">
+              <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
             </div>
 
-            {/* Colonne 2: Vide pour l'instant */}
-            <div className="space-y-3">
-              {/* Espace réservé pour futures fonctionnalités */}
+            {/* 2. Musique d'ambiance */}
+            <div className="flex items-center gap-3">
+              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Musique d'ambiance
+              </span>
+              <BackgroundSoundButton 
+                soundId={story.sound_id} 
+                storyObjective={extractObjectiveValue(story.objective) || undefined} 
+                isDarkMode={isDarkMode} 
+                autoPlay={false} 
+              />
             </div>
 
-            {/* Colonne 3: Options supplémentaires */}
-            <div className="space-y-3">
-              <h3 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Options
-              </h3>
-              <div className="space-y-2">
-                {/* Bouton Marquer comme lu */}
-                <div className="p-3 border rounded bg-card">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {isRead ? 'Histoire lue' : 'Marquer comme lue'}
-                    </span>
-                    <MarkAsReadButton storyId={storyId} onMarkAsRead={onMarkAsRead!} isRead={isRead} isUpdatingReadStatus={isUpdatingReadStatus} isDarkMode={isDarkMode} />
-                  </div>
-                </div>
+            {/* 3. Histoire lue */}
+            <div className="flex items-center gap-3">
+              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {isRead ? 'Histoire lue' : 'Marquer comme lue'}
+              </span>
+              <MarkAsReadButton 
+                storyId={storyId} 
+                onMarkAsRead={onMarkAsRead!} 
+                isRead={isRead} 
+                isUpdatingReadStatus={isUpdatingReadStatus} 
+                isDarkMode={isDarkMode} 
+              />
+            </div>
 
-                {/* Bouton de diagnostic technique */}
-                <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
-              </div>
+            {/* Diagnostic technique (discret) */}
+            <div className="ml-4">
+              <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
             </div>
           </div>
         </div>
