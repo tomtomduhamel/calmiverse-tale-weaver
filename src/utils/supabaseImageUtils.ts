@@ -14,8 +14,14 @@ export const getStoryImageUrl = (imagePath?: string | null): string | null => {
   }
   
   const supabaseUrl = 'https://ioeihnoxvtpxtqhxklpw.supabase.co';
-  const imageUrl = `${supabaseUrl}/storage/v1/object/public/storyimages/${imagePath}`;
-  console.log('[getStoryImageUrl] URL générée:', imageUrl, 'pour le chemin:', imagePath);
+  
+  // Vérifier si le chemin contient déjà le préfixe "storyimages/"
+  const cleanPath = imagePath.startsWith('storyimages/') 
+    ? imagePath.substring('storyimages/'.length)
+    : imagePath;
+  
+  const imageUrl = `${supabaseUrl}/storage/v1/object/public/storyimages/${cleanPath}`;
+  console.log('[getStoryImageUrl] URL générée:', imageUrl, 'pour le chemin original:', imagePath, 'chemin nettoyé:', cleanPath);
   return imageUrl;
 };
 
