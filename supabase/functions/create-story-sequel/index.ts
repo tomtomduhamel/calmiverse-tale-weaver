@@ -164,18 +164,80 @@ serve(async (req) => {
       );
     }
 
-    // 5. Appel du webhook n8n
-    const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(n8nPayload)
-    });
+    // 5. Validation et appel du webhook n8n avec retry
+    console.log('🔗 Appel webhook n8n:', N8N_WEBHOOK_URL);
+    
+    // Validation de l'URL du webhook
+    if (!N8N_WEBHOOK_URL.startsWith('https://')) {
+      throw new Error('URL webhook invalide: doit commencer par https://');
+    }
 
-    if (!n8nResponse.ok) {
-      console.error('❌ Erreur webhook n8n:', n8nResponse.status);
-      throw new Error('Erreur lors du déclenchement de la génération');
+    let lastError = null;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 Tentative ${attempt}/${maxRetries} d'appel webhook`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+        
+        const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(n8nPayload),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log(`📡 Réponse webhook - Status: ${n8nResponse.status}`);
+        
+        if (!n8nResponse.ok) {
+          const responseText = await n8nResponse.text();
+          console.error(`❌ Erreur webhook n8n (${n8nResponse.status}):`, responseText);
+          
+          // Erreurs permanentes - pas de retry
+          if (n8nResponse.status === 404 || n8nResponse.status === 400) {
+            throw new Error(`Webhook inaccessible (${n8nResponse.status}): ${responseText || 'Vérifiez la configuration n8n'}`);
+          }
+          
+          // Erreurs temporaires - retry possible
+          lastError = new Error(`Erreur temporaire webhook (${n8nResponse.status}): ${responseText}`);
+          
+          if (attempt < maxRetries) {
+            const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+            console.log(`⏳ Nouvelle tentative dans ${delay}ms`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          
+          throw lastError;
+        }
+        
+        console.log('✅ Webhook n8n appelé avec succès');
+        break;
+        
+      } catch (error: any) {
+        lastError = error;
+        
+        if (error.name === 'AbortError') {
+          lastError = new Error('Timeout: le webhook n8n ne répond pas dans les temps');
+        }
+        
+        console.error(`❌ Erreur tentative ${attempt}:`, error.message);
+        
+        if (attempt === maxRetries || error.message.includes('inaccessible')) {
+          throw lastError;
+        }
+        
+        // Retry avec délai exponentiel
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`⏳ Nouvelle tentative dans ${delay}ms`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
 
     console.log('✅ Webhook n8n appelé avec succès');
