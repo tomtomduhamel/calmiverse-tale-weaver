@@ -13,7 +13,6 @@ interface StoryReaderContentProps {
   fontSize: number;
   isDarkMode: boolean;
   setShowSummary: (show: boolean) => void;
-  onToggleFavorite?: (storyId: string) => void;
   scrollAreaRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -24,7 +23,6 @@ export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
   fontSize,
   isDarkMode,
   setShowSummary,
-  onToggleFavorite,
   scrollAreaRef
 }) => {
   return (
@@ -38,7 +36,6 @@ export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
           childName={childName}
           readingTime={readingTime}
           setShowSummary={setShowSummary}
-          onToggleFavorite={onToggleFavorite}
           isDarkMode={isDarkMode}
         />
 

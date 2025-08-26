@@ -7,13 +7,11 @@ import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 import { StoryImageModal } from "./reader/StoryImageModal";
-import { FavoriteReaderButton } from "./reader/FavoriteReaderButton";
 interface StoryHeaderProps {
   story: Story;
   childName?: string;
   readingTime: string;
   setShowSummary: (show: boolean) => void;
-  onToggleFavorite?: (storyId: string) => void;
   isDarkMode?: boolean;
 }
 export const StoryHeader: React.FC<StoryHeaderProps> = ({
@@ -21,7 +19,6 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
   childName,
   readingTime,
   setShowSummary,
-  onToggleFavorite,
   isDarkMode = false
 }) => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -64,13 +61,6 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
         <Button variant="outline" size="icon" onClick={() => setShowSummary(true)} className={`relative group transition-transform hover:scale-105 ${isDarkMode ? "text-white border-gray-600 hover:bg-gray-700" : ""}`}>
           <Info className="h-5 w-5" />
         </Button>
-        
-        {onToggleFavorite && (
-          <FavoriteReaderButton
-            isFavorite={story.isFavorite || false}
-            onToggle={() => onToggleFavorite(story.id)}
-          />
-        )}
       </div>
 
       {/* Modal d'agrandissement d'image */}

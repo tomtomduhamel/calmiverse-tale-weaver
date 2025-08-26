@@ -92,7 +92,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         fontSize={fontSize}
         isDarkMode={isDarkMode}
         setShowSummary={setShowSummary}
-        onToggleFavorite={onToggleFavorite}
         scrollAreaRef={scrollAreaRef}
       />
 
