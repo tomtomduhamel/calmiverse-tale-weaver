@@ -28,14 +28,31 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     md: 'h-4 w-4',
     lg: 'h-5 w-5'
   };
-  return <TooltipProvider>
+  return (
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          
+          <Button
+            variant={variant}
+            size="sm"
+            onClick={onToggle}
+            disabled={isLoading}
+            className={`${sizeClasses[size]} ${className} transition-transform hover:scale-105`}
+            aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          >
+            <Star 
+              className={`${iconSizes[size]} transition-colors ${
+                isFavorite 
+                  ? 'fill-amber-400 text-amber-400' 
+                  : 'text-gray-400 hover:text-amber-400'
+              }`}
+            />
+          </Button>
         </TooltipTrigger>
         <TooltipContent>
           <p>{isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}</p>
         </TooltipContent>
       </Tooltip>
-    </TooltipProvider>;
+    </TooltipProvider>
+  );
 };

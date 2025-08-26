@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share } from "lucide-react";
 import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
+import { MarkAsReadButton } from "./reader/MarkAsReadButton";
 import { ShareStoryDialog } from "./ShareStoryDialog";
 import { useShareDialog } from "@/hooks/story/reader/useShareDialog";
 import BackgroundSoundButton from "./reader/BackgroundSoundButton";
@@ -104,6 +105,22 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 Options
               </h3>
               <div className="space-y-2">
+                {/* Bouton Marquer comme lu */}
+                <div className="p-3 border rounded bg-card">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {isRead ? 'Histoire lue' : 'Marquer comme lue'}
+                    </span>
+                    <MarkAsReadButton
+                      storyId={storyId}
+                      onMarkAsRead={onMarkAsRead!}
+                      isRead={isRead}
+                      isUpdatingReadStatus={isUpdatingReadStatus}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
+                </div>
+
                 {/* Bouton de diagnostic technique */}
                 <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
               </div>
