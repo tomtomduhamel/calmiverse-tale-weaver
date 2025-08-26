@@ -82,7 +82,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             {/* 3. Histoire lue */}
             <div className="flex items-center gap-3">
               <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                {isRead ? 'Histoire lue' : 'Marquer comme lue'}
+                {isRead ? 'Marquer comme non lue' : 'Marquer comme lue'}
               </span>
               <MarkAsReadButton 
                 storyId={storyId} 
