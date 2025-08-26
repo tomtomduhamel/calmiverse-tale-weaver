@@ -7,6 +7,7 @@ import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 import { StoryImageModal } from "./reader/StoryImageModal";
+import { FavoriteReaderButton } from "./reader/FavoriteReaderButton";
 interface StoryHeaderProps {
   story: Story;
   childName?: string;
@@ -64,7 +65,12 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
           <Info className="h-5 w-5" />
         </Button>
         
-        {onToggleFavorite}
+        {onToggleFavorite && (
+          <FavoriteReaderButton
+            isFavorite={story.isFavorite || false}
+            onToggle={() => onToggleFavorite(story.id)}
+          />
+        )}
       </div>
 
       {/* Modal d'agrandissement d'image */}
