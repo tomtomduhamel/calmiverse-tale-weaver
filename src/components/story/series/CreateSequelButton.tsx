@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Plus, BookOpen, Clock } from 'lucide-react';
 import { useStorySeries } from '@/hooks/stories/useStorySeries';
+import { SequelCreationProgress } from './SequelCreationProgress';
 import type { Story, SequelData, StoryDurationMinutes } from '@/types/story';
 import { STORY_DURATION_OPTIONS } from '@/types/story';
 interface CreateSequelButtonProps {
@@ -27,6 +28,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [seriesTitle, setSeriesTitle] = useState(story.series?.title || `Les aventures de ${story.childrenNames?.[0] || 'nos héros'}`);
   const [duration, setDuration] = useState<StoryDurationMinutes>(10);
+  const [isCreatingSequel, setIsCreatingSequel] = useState(false);
   const [sequelInstructions, setSequelInstructions] = useState({
     maintainCharacterConsistency: true,
     referenceToEvents: true,
@@ -42,6 +44,8 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
   const canCreateSequel = story.status === 'ready' || story.status === 'read';
   if (!canCreateSequel) return null;
   const handleCreateSequel = async () => {
+    setIsCreatingSequel(true);
+    
     const sequelData: SequelData = {
       previousStoryId: story.id,
       childrenIds: story.childrenIds,
@@ -51,11 +55,19 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
       seriesTitle: !story.series_id ? seriesTitle : undefined,
       sequelInstructions
     };
+    
     const newStoryId = await createSequel(sequelData);
     if (newStoryId) {
-      setIsOpen(false);
+      // Ne pas fermer immédiatement - laisser SequelCreationProgress gérer
       onSequelCreated?.(newStoryId);
+    } else {
+      setIsCreatingSequel(false);
     }
+  };
+
+  const handleProgressComplete = () => {
+    setIsCreatingSequel(false);
+    setIsOpen(false);
   };
   return <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -74,9 +86,29 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
         </DialogHeader>
         
         <div className="space-y-4">
-          {!story.series_id}
+          {isCreatingSequel ? (
+            <SequelCreationProgress 
+              isCreating={isCreatingSequel} 
+              onComplete={handleProgressComplete}
+            />
+          ) : (
+            <>
+              {!story.series_id && (
+                <div>
+                  <Label htmlFor="series-title" className="text-sm font-medium">
+                    Nom de la série
+                  </Label>
+                  <Input
+                    id="series-title"
+                    value={seriesTitle}
+                    onChange={(e) => setSeriesTitle(e.target.value)}
+                    placeholder="Nom de votre série d'histoires"
+                    className="mt-1"
+                  />
+                </div>
+              )}
 
-          <div>
+              <div>
             <Label className="text-sm font-medium flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Durée de l'histoire
@@ -128,14 +160,16 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
             </div>
           </div>
 
-          <div className="flex gap-2 pt-4">
-            <Button variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
-              Annuler
-            </Button>
-            <Button onClick={handleCreateSequel} disabled={isCreating || !seriesTitle.trim()} className="flex-1">
-              {isCreating ? 'Création...' : 'Créer la suite'}
-            </Button>
-          </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
+                  Annuler
+                </Button>
+                <Button onClick={handleCreateSequel} disabled={isCreating || !seriesTitle.trim()} className="flex-1">
+                  {isCreating ? 'Création...' : 'Créer la suite'}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>;

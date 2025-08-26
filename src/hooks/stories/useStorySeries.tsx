@@ -179,10 +179,7 @@ export const useStorySeries = () => {
         throw new Error('Erreur lors du déclenchement de la génération');
       }
 
-      toast({
-        title: "Suite créée",
-        description: `Tome ${tomeNumber} en cours de génération`
-      });
+      // Ne pas afficher de toast ici - sera géré par le composant de progression
 
       return newStory.id;
     } catch (error: any) {
