@@ -55,6 +55,11 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
       return;
     }
     
+    // Empêcher l'ouverture de l'histoire si on clique sur le bouton "Créer une suite"
+    if ((e.target as HTMLElement).closest('[data-sequel-button]')) {
+      return;
+    }
+    
     if (onClick) {
       onClick();
     }
@@ -217,7 +222,7 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
             
             {/* Bouton créer une suite si disponible */}
             {((story.status === 'ready' || story.status === 'read' || story.status === 'completed') && !story.next_story_id && onSequelCreated) && (
-              <div className="mb-2">
+              <div className="mb-2" data-sequel-button>
                 <CreateSequelButton 
                   story={story}
                   onSequelCreated={onSequelCreated}
