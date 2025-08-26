@@ -61,9 +61,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Colonne 1: Contrôles de lecture */}
             <div className="space-y-3">
-              <h3 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Lecture Audio
-              </h3>
+              
               
               {/* Nouveau lecteur audio n8n */}
               <div className="p-3 border rounded bg-card">
@@ -85,12 +83,14 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
 
             {/* Colonne 2: Apparence */}
             <div className="space-y-3">
-              <h3 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Apparence
-              </h3>
+              
               <div>
                 <div className="flex items-center justify-between space-x-2">
-              </div>
+                  <Label htmlFor="dark-mode" className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <span className="ml-1">{isDarkMode ? 'Mode Clair' : <><Moon className="h-4 w-4 inline mr-1" />Mode Sombre</>}</span>
+                  </Label>
+                  <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={handleToggleDarkMode} />
+                </div>
               </div>
               
             </div>
@@ -102,33 +102,12 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               </h3>
               <div className="space-y-2">
                 {/* Bouton Marquer comme lu */}
-                <div className={`p-3 border rounded transition-all duration-200 ${
-                  isRead 
-                    ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
-                    : 'bg-card border-border hover:border-primary/30'
-                }`}>
+                <div className="p-3 border rounded bg-card">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {isRead ? (
-                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      ) : (
-                        <BookOpenCheck className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      <span className={`text-sm font-medium ${
-                        isRead 
-                          ? 'text-green-700 dark:text-green-300' 
-                          : isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        {isRead ? '✓ Histoire terminée' : 'Marquer comme terminée'}
-                      </span>
-                    </div>
-                    <MarkAsReadButton
-                      storyId={storyId}
-                      onMarkAsRead={onMarkAsRead!}
-                      isRead={isRead}
-                      isUpdatingReadStatus={isUpdatingReadStatus}
-                      isDarkMode={isDarkMode}
-                    />
+                    <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {isRead ? 'Histoire lue' : 'Marquer comme lue'}
+                    </span>
+                    <MarkAsReadButton storyId={storyId} onMarkAsRead={onMarkAsRead!} isRead={isRead} isUpdatingReadStatus={isUpdatingReadStatus} isDarkMode={isDarkMode} />
                   </div>
                 </div>
 
