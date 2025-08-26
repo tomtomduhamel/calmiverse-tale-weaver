@@ -57,9 +57,11 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   };
   return <>
       <div className={`${isDarkMode ? 'bg-gray-900/95' : 'bg-white/95'} border-t transition-colors duration-300`}>
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          {/* Layout horizontal minimaliste avec les 3 fonctionnalités */}
-          <div className="flex items-center justify-between gap-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          
+          {/* Layout responsive : horizontal sur desktop, grille sur mobile */}
+          <div className="hidden sm:flex items-center justify-between gap-8">
+            {/* Desktop Layout - horizontal */}
             
             {/* 1. Génération audio */}
             <div className="flex-1">
@@ -98,6 +100,50 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
             </div>
           </div>
+
+          {/* Mobile Layout - grille compacte */}
+          <div className="sm:hidden space-y-3">
+            {/* Première ligne : Génération audio (pleine largeur) */}
+            <div className="w-full">
+              <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
+            </div>
+            
+            {/* Deuxième ligne : Musique d'ambiance et Histoire lue en grille 2 colonnes */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Musique d'ambiance - compact */}
+              <div className="flex flex-col items-center gap-2 p-2 rounded-lg border border-border/50">
+                <span className={`text-xs font-medium text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Musique
+                </span>
+                <BackgroundSoundButton 
+                  soundId={story.sound_id} 
+                  storyObjective={extractObjectiveValue(story.objective) || undefined} 
+                  isDarkMode={isDarkMode} 
+                  autoPlay={false} 
+                />
+              </div>
+
+              {/* Histoire lue - compact */}
+              <div className="flex flex-col items-center gap-2 p-2 rounded-lg border border-border/50">
+                <span className={`text-xs font-medium text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {isRead ? 'Non lue' : 'Lue'}
+                </span>
+                <MarkAsReadButton 
+                  storyId={storyId} 
+                  onMarkAsRead={onMarkAsRead!} 
+                  isRead={isRead} 
+                  isUpdatingReadStatus={isUpdatingReadStatus} 
+                  isDarkMode={isDarkMode} 
+                />
+              </div>
+            </div>
+
+            {/* Diagnostic technique en bas à droite - mobile */}
+            <div className="flex justify-end">
+              <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
+            </div>
+          </div>
+
         </div>
       </div>
 
