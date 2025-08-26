@@ -24,9 +24,8 @@ export const StorySummaryDialog: React.FC<StorySummaryDialogProps> = ({
       <Dialog open={showSummary} onOpenChange={setShowSummary}>
         <DialogContent className="sm:max-w-[500px] animate-fade-in">
           <DialogHeader>
-            <DialogTitle className="flex justify-between items-center">
+            <DialogTitle className="flex justify-center items-center">
               <span>Résumé de l'histoire</span>
-              
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
