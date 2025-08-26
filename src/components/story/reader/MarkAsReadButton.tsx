@@ -24,19 +24,31 @@ export const MarkAsReadButton: React.FC<MarkAsReadButtonProps> = ({
 
   return (
     <Button 
-      variant={isDarkMode ? "outline" : "outline"}
+      variant="outline"
       onClick={handleClick}
-      className={`transition-all duration-200 hover:scale-105 flex items-center gap-2 ${
-        isDarkMode ? "text-white border-gray-600 hover:bg-gray-700" : ""
-      } ${isRead ? "bg-green-100 dark:bg-green-900/30 border-green-300 hover:bg-green-50" : "hover:bg-blue-50 border-blue-300"}`}
+      className={`
+        transition-all duration-300 hover:scale-105 flex items-center gap-2 min-w-[40px] h-[40px]
+        ${isRead 
+          ? "bg-green-500 border-green-500 text-white hover:bg-green-600 shadow-lg shadow-green-500/25" 
+          : "bg-transparent border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400"
+        }
+        ${isDarkMode && isRead 
+          ? "bg-green-600 border-green-600 hover:bg-green-700 shadow-green-600/25" 
+          : ""
+        }
+        ${isDarkMode && !isRead 
+          ? "border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500" 
+          : ""
+        }
+      `}
       disabled={isUpdatingReadStatus}
     >
       {isUpdatingReadStatus ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Loader2 className="h-5 w-5 animate-spin" />
       ) : isRead ? (
-        <BookCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
+        <BookCheck className="h-5 w-5" />
       ) : (
-        <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        <BookOpen className="h-5 w-5" />
       )}
     </Button>
   );
