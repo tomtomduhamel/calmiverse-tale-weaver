@@ -83,6 +83,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
           isPaused={isPaused}
           isManuallyPaused={isManuallyPaused}
           onToggleAutoScroll={toggleAutoScroll}
+          setShowSummary={setShowSummary}
         />
 
       <StoryReaderContent

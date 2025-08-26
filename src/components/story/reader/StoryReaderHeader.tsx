@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Pause, ArrowDown } from "lucide-react";
+import { ArrowLeft, Play, Pause, ArrowDown, Info } from "lucide-react";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { FavoriteReaderButton } from "./FavoriteReaderButton";
 import { ShareStoryButton } from "./ShareStoryButton";
@@ -17,6 +17,7 @@ interface StoryReaderHeaderProps {
   isPaused?: boolean;
   isManuallyPaused?: boolean;
   onToggleAutoScroll?: () => void;
+  setShowSummary?: (show: boolean) => void;
 }
 export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
   story,
@@ -27,7 +28,8 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
   isAutoScrolling = false,
   isPaused = false,
   isManuallyPaused = false,
-  onToggleAutoScroll
+  onToggleAutoScroll,
+  setShowSummary
 }) => {
   const readingTime = calculateReadingTime(story.content);
   const handleToggleFavorite = () => {
@@ -61,6 +63,13 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
           
           {/* Bouton favori */}
           {onToggleFavorite && <FavoriteReaderButton isFavorite={story.isFavorite || false} onToggle={handleToggleFavorite} isLoading={isUpdatingFavorite} />}
+          
+          {/* Bouton info */}
+          {setShowSummary && (
+            <Button variant="ghost" size="sm" onClick={() => setShowSummary(true)} className={`${isDarkMode ? 'text-white hover:bg-gray-800' : ''}`}>
+              <Info className="h-4 w-4" />
+            </Button>
+          )}
           
           {/* Bouton partage */}
           <ShareStoryButton storyId={story.id} title={story.title} isDarkMode={isDarkMode} />

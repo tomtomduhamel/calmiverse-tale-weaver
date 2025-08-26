@@ -58,9 +58,6 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
         <p className={`text-xs mt-1 ${isDarkMode ? "text-gray-400" : "text-muted-foreground"}`}>{formattedDate}</p>
       </div>
       <div className="flex gap-2 flex-1 justify-end">
-        <Button variant="outline" size="icon" onClick={() => setShowSummary(true)} className={`relative group transition-transform hover:scale-105 ${isDarkMode ? "text-white border-gray-600 hover:bg-gray-700" : ""}`}>
-          <Info className="h-5 w-5" />
-        </Button>
       </div>
 
       {/* Modal d'agrandissement d'image */}
