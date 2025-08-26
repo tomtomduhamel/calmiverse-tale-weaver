@@ -106,11 +106,26 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               </h3>
               <div className="space-y-2">
                 {/* Bouton Marquer comme lu */}
-                <div className="p-3 border rounded bg-card">
+                <div className={`p-3 border rounded transition-all duration-200 ${
+                  isRead 
+                    ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
+                    : 'bg-card border-border hover:border-primary/30'
+                }`}>
                   <div className="flex items-center justify-between">
-                    <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {isRead ? 'Histoire lue' : 'Marquer comme lue'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {isRead ? (
+                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      ) : (
+                        <BookOpenCheck className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className={`text-sm font-medium ${
+                        isRead 
+                          ? 'text-green-700 dark:text-green-300' 
+                          : isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        {isRead ? '✓ Histoire terminée' : 'Marquer comme terminée'}
+                      </span>
+                    </div>
                     <MarkAsReadButton
                       storyId={storyId}
                       onMarkAsRead={onMarkAsRead!}
