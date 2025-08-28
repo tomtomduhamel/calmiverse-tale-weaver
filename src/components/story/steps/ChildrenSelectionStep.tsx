@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { calculateAge } from '@/utils/age';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileChildrenSelectionStep from './mobile/MobileChildrenSelectionStep';
 interface ChildrenSelectionStepProps {
   children: Child[];
   preSelectedChildId?: string;
@@ -19,6 +21,18 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
   children,
   preSelectedChildId
 }) => {
+  const isMobile = useIsMobile();
+  
+  // Rediriger vers la version mobile si sur mobile
+  if (isMobile) {
+    return (
+      <MobileChildrenSelectionStep 
+        children={children} 
+        preSelectedChildId={preSelectedChildId} 
+      />
+    );
+  }
+
   const {
     selectedChildrenIds,
     updateSelectedChildren,
