@@ -45,6 +45,9 @@ export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
           isDarkMode={isDarkMode}
         />
       </Card>
+      
+      {/* Padding supplémentaire pour mobile afin d'assurer l'accès au contenu final */}
+      <div className="h-32 md:h-16" />
     </ScrollArea>
   );
 };
