@@ -95,42 +95,44 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
         </div>
       )}
 
-      {/* Grille des enfants - zone principale compacte */}
-      <div className="flex-1 px-4 min-h-0">
-        {children.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="text-4xl mb-3">👶</div>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Aucun enfant n'a été ajouté
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/children')}
-              className="gap-2"
-              size="sm"
-            >
-              <Plus className="h-4 w-4" />
-              Ajouter un enfant
-            </Button>
-          </div>
-        ) : (
-          <div className={cn(
-            "grid gap-3 h-fit",
-            children.length <= 2 ? "grid-cols-2" :
-            children.length <= 4 ? "grid-cols-2" :
-            children.length <= 6 ? "grid-cols-3" : "grid-cols-3"
-          )}>
-            {children.map(child => (
-              <MobileChildCard
-                key={child.id}
-                child={child}
-                isSelected={selectedChildrenIds.includes(child.id)}
-                onToggle={handleChildToggle}
-                getGenderIcon={getGenderIcon}
-              />
-            ))}
-          </div>
-        )}
+      {/* Grille des enfants - zone principale avec scroll et espacement sécurisé */}
+      <div className="flex-1 px-4 min-h-0 overflow-y-auto">
+        <div className="pb-6"> {/* Espacement sécurisé en bas pour éviter la superposition */}
+          {children.length === 0 ? (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+              <div className="text-4xl mb-3">👶</div>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Aucun enfant n'a été ajouté
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/children')}
+                className="gap-2"
+                size="sm"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter un enfant
+              </Button>
+            </div>
+          ) : (
+            <div className={cn(
+              "grid gap-3",
+              children.length <= 2 ? "grid-cols-2" :
+              children.length <= 4 ? "grid-cols-2" :
+              children.length <= 6 ? "grid-cols-3" : "grid-cols-3"
+            )}>
+              {children.map(child => (
+                <MobileChildCard
+                  key={child.id}
+                  child={child}
+                  isSelected={selectedChildrenIds.includes(child.id)}
+                  onToggle={handleChildToggle}
+                  getGenderIcon={getGenderIcon}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Navigation flottante fixe en bas */}
