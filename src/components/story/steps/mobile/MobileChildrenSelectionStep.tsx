@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Plus } from 'lucide-react';
 import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
 import { useNavigate } from 'react-router-dom';
@@ -61,7 +60,7 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
   const getGenderIcon = (gender: string) => {
     switch (gender) {
       case 'boy': return '👦';
-      case 'girl': return '👧';
+      case 'girl': return '👧'; 
       case 'pet': return '🐾';
       default: return '👤';
     }
@@ -69,53 +68,58 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-primary/5 to-accent/5">
-      {/* En-tête condensé */}
-      <div className="px-4 pt-6 pb-4 bg-white/80 backdrop-blur-sm border-b border-border/20">
-        <h1 className="text-xl font-bold text-foreground mb-1">
+      {/* En-tête ultra-condensé */}
+      <div className="px-4 pt-4 pb-3">
+        <h1 className="text-lg font-semibold text-foreground">
           Créer une histoire
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Sélectionnez vos enfants ou animaux
-        </p>
       </div>
 
-      {/* Zone de sélection active */}
+      {/* Zone de sélection active intégrée */}
       {selectedChildren.length > 0 && (
-        <div className="px-4 py-3 bg-primary/10 border-b border-primary/20">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-primary">Sélectionnés:</span>
-            {selectedChildren.map(child => (
-              <Badge 
-                key={child.id} 
-                variant="default" 
-                className="bg-primary text-primary-foreground text-xs px-2 py-1"
-              >
-                {getGenderIcon(child.gender)} {child.name}
-              </Badge>
-            ))}
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+            <span className="text-xs font-medium text-primary flex-shrink-0">Sélectionnés:</span>
+            <div className="flex gap-1 flex-wrap">
+              {selectedChildren.map(child => (
+                <div 
+                  key={child.id} 
+                  className="flex items-center gap-1 bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs"
+                >
+                  <span className="text-xs">{getGenderIcon(child.gender)}</span>
+                  <span className="font-medium">{child.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Grille des enfants - zone principale */}
-      <div className="flex-1 px-4 py-4 overflow-y-auto">
+      {/* Grille des enfants - zone principale compacte */}
+      <div className="flex-1 px-4 min-h-0">
         {children.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="text-4xl mb-4">👶</div>
-            <p className="text-muted-foreground mb-4">
+            <div className="text-4xl mb-3">👶</div>
+            <p className="text-muted-foreground mb-4 text-sm">
               Aucun enfant n'a été ajouté
             </p>
             <Button 
               variant="outline" 
               onClick={() => navigate('/children')}
               className="gap-2"
+              size="sm"
             >
               <Plus className="h-4 w-4" />
               Ajouter un enfant
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className={cn(
+            "grid gap-3 h-fit",
+            children.length <= 2 ? "grid-cols-2" :
+            children.length <= 4 ? "grid-cols-2" :
+            children.length <= 6 ? "grid-cols-3" : "grid-cols-3"
+          )}>
             {children.map(child => (
               <MobileChildCard
                 key={child.id}
@@ -129,13 +133,14 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
         )}
       </div>
 
-      {/* Navigation fixe en bas */}
-      <div className="px-4 py-4 bg-white/95 backdrop-blur-sm border-t border-border/20 pb-safe">
+      {/* Navigation flottante fixe en bas */}
+      <div className="px-4 py-4 bg-background/95 backdrop-blur-sm border-t border-border/20">
         <div className="flex gap-3">
           <Button 
             variant="outline" 
             onClick={() => navigate('/')}
             className="flex-1"
+            size="lg"
           >
             Annuler
           </Button>
@@ -143,6 +148,7 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
             onClick={handleContinue} 
             disabled={selectedChildrenIds.length === 0}
             className="flex-1 gap-2"
+            size="lg"
           >
             Continuer
             <ArrowRight className="w-4 h-4" />
@@ -173,39 +179,34 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
     <div
       onClick={() => onToggle(child.id)}
       className={cn(
-        "relative p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-98",
-        "bg-white/80 backdrop-blur-sm",
+        "relative aspect-square p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
+        "bg-white/90 backdrop-blur-sm",
         isSelected 
-          ? 'border-primary bg-primary/10 shadow-soft ring-2 ring-primary/20' 
-          : 'border-border/30 hover:border-primary/40 hover:shadow-soft'
+          ? 'border-primary bg-primary/10 shadow-lg ring-2 ring-primary/30' 
+          : 'border-border/40 hover:border-primary/50 hover:shadow-md'
       )}
     >
-      {/* Indicateur de sélection */}
+      {/* Indicateur de sélection ultra-compact */}
       {isSelected && (
-        <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-primary flex items-center justify-center">
-          <div className="h-2 w-2 rounded-full bg-white"></div>
+        <div className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
+          <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
         </div>
       )}
       
-      {/* Contenu principal */}
-      <div className="text-center space-y-2">
-        {/* Icône et nom */}
-        <div className="text-2xl">{getGenderIcon(child.gender)}</div>
-        <div>
-          <h3 className="font-semibold text-sm text-foreground truncate">
-            {child.name}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {age} an{age > 1 ? 's' : ''}
-          </p>
-        </div>
+      {/* Contenu principal centré et compact */}
+      <div className="flex flex-col items-center justify-center h-full text-center space-y-1">
+        {/* Icône */}
+        <div className="text-3xl mb-1">{getGenderIcon(child.gender)}</div>
         
-        {/* Doudou si présent */}
-        {child.teddyName && (
-          <div className="text-xs text-muted-foreground truncate">
-            🧸 {child.teddyName}
-          </div>
-        )}
+        {/* Nom */}
+        <h3 className="font-semibold text-sm text-foreground truncate w-full leading-tight">
+          {child.name}
+        </h3>
+        
+        {/* Âge - plus discret */}
+        <p className="text-xs text-muted-foreground/80">
+          {age} an{age > 1 ? 's' : ''}
+        </p>
       </div>
     </div>
   );
