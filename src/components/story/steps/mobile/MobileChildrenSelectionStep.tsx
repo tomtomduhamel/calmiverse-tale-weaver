@@ -97,7 +97,7 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
 
       {/* Grille des enfants - zone principale avec scroll et espacement sécurisé */}
       <div className="flex-1 px-4 min-h-0 overflow-y-auto">
-        <div className="pb-6"> {/* Espacement sécurisé en bas pour éviter la superposition */}
+        <div className="pb-24"> {/* Espacement plus large en bas pour éviter la superposition avec les boutons */}
           {children.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
               <div className="text-4xl mb-3">👶</div>
@@ -181,7 +181,7 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
     <div
       onClick={() => onToggle(child.id)}
       className={cn(
-        "relative aspect-square p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
+        "relative aspect-square p-2 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
         "bg-white/90 backdrop-blur-sm",
         isSelected 
           ? 'border-primary bg-primary/10 shadow-lg ring-2 ring-primary/30' 
@@ -196,17 +196,17 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
       )}
       
       {/* Contenu principal centré et compact */}
-      <div className="flex flex-col items-center justify-center h-full text-center space-y-1">
+      <div className="flex flex-col items-center justify-center h-full text-center space-y-0.5">
         {/* Icône */}
-        <div className="text-3xl mb-1">{getGenderIcon(child.gender)}</div>
+        <div className="text-2xl">{getGenderIcon(child.gender)}</div>
         
-        {/* Nom */}
-        <h3 className="font-semibold text-sm text-foreground truncate w-full leading-tight">
+        {/* Nom - plus visible et prioritaire */}
+        <h3 className="font-semibold text-xs text-foreground truncate w-full leading-tight px-1">
           {child.name}
         </h3>
         
-        {/* Âge - plus discret */}
-        <p className="text-xs text-muted-foreground/80">
+        {/* Âge - encore plus discret */}
+        <p className="text-[10px] text-muted-foreground/70">
           {age} an{age > 1 ? 's' : ''}
         </p>
       </div>
