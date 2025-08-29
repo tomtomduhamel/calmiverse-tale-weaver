@@ -67,9 +67,9 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-primary/5 to-accent/5">
-      {/* En-tête avec navigation compacte */}
-      <div className="px-4 pt-4 pb-3">
+    <div className="bg-gradient-to-b from-primary/5 to-accent/5 min-h-screen">
+      {/* En-tête avec navigation compacte - fixe */}
+      <div className="sticky top-0 z-10 bg-gradient-to-b from-primary/5 to-accent/5 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-foreground">
             Créer une histoire
@@ -95,66 +95,64 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
             </Button>
           </div>
         </div>
-      </div>
 
-      {/* Zone de sélection active intégrée */}
-      {selectedChildren.length > 0 && (
-        <div className="px-4 pb-3">
-          <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-            <span className="text-xs font-medium text-primary flex-shrink-0">Sélectionnés:</span>
-            <div className="flex gap-1 flex-wrap">
-              {selectedChildren.map(child => (
-                <div 
-                  key={child.id} 
-                  className="flex items-center gap-1 bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs"
-                >
-                  <span className="text-xs">{getGenderIcon(child.gender)}</span>
-                  <span className="font-medium">{child.name}</span>
-                </div>
-              ))}
+        {/* Zone de sélection active intégrée */}
+        {selectedChildren.length > 0 && (
+          <div className="mt-3">
+            <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+              <span className="text-xs font-medium text-primary flex-shrink-0">Sélectionnés:</span>
+              <div className="flex gap-1 flex-wrap">
+                {selectedChildren.map(child => (
+                  <div 
+                    key={child.id} 
+                    className="flex items-center gap-1 bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs"
+                  >
+                    <span className="text-xs">{getGenderIcon(child.gender)}</span>
+                    <span className="font-medium">{child.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Grille des enfants - zone principale avec scroll uniquement pour les enfants */}
-      <div className="flex-1 px-4 min-h-0 overflow-y-auto">
-        <div>
-          {children.length === 0 ? (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-              <div className="text-4xl mb-3">👶</div>
-              <p className="text-muted-foreground mb-4 text-sm">
-                Aucun enfant n'a été ajouté
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/children')}
-                className="gap-2"
-                size="sm"
-              >
-                <Plus className="h-4 w-4" />
-                Ajouter un enfant
-              </Button>
-            </div>
-          ) : (
-            <div className={cn(
-              "grid gap-3 pb-4",
-              children.length <= 2 ? "grid-cols-2" :
-              children.length <= 4 ? "grid-cols-2" :
-              children.length <= 6 ? "grid-cols-3" : "grid-cols-3"
-            )}>
-              {children.map(child => (
-                <MobileChildCard
-                  key={child.id}
-                  child={child}
-                  isSelected={selectedChildrenIds.includes(child.id)}
-                  onToggle={handleChildToggle}
-                  getGenderIcon={getGenderIcon}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Grille des enfants - scroll naturel de la page */}
+      <div className="px-4 pb-4">
+        {children.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+            <div className="text-4xl mb-3">👶</div>
+            <p className="text-muted-foreground mb-4 text-sm">
+              Aucun enfant n'a été ajouté
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/children')}
+              className="gap-2"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter un enfant
+            </Button>
+          </div>
+        ) : (
+          <div className={cn(
+            "grid gap-3",
+            children.length <= 2 ? "grid-cols-2" :
+            children.length <= 4 ? "grid-cols-2" :
+            children.length <= 6 ? "grid-cols-3" : "grid-cols-3"
+          )}>
+            {children.map(child => (
+              <MobileChildCard
+                key={child.id}
+                child={child}
+                isSelected={selectedChildrenIds.includes(child.id)}
+                onToggle={handleChildToggle}
+                getGenderIcon={getGenderIcon}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
