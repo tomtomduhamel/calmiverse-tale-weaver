@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Plus } from 'lucide-react';
 import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
 import { calculateAge } from '@/utils/age';
 import { cn } from '@/lib/utils';
+import { useChildrenStoriesCount } from '@/hooks/useChildrenStoriesCount';
 
 interface MobileChildrenSelectionStepProps {
   children: Child[];
@@ -25,6 +26,7 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
   } = usePersistedStoryCreation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { storiesCount } = useChildrenStoriesCount();
 
   // Effect pour présélectionner un enfant si spécifié
   useEffect(() => {
@@ -55,7 +57,16 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
     navigate('/create-story/step-2');
   }, [selectedChildrenIds, navigate, toast]);
 
-  const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
+  // Trier les enfants par nombre d'histoires (plus populaires en premier)
+  const sortedChildren = useMemo(() => {
+    return [...children].sort((a, b) => {
+      const aCount = storiesCount[a.id] || 0;
+      const bCount = storiesCount[b.id] || 0;
+      return bCount - aCount; // Tri décroissant
+    });
+  }, [children, storiesCount]);
+
+  const selectedChildren = sortedChildren.filter(child => selectedChildrenIds.includes(child.id));
 
   const getGenderIcon = (gender: string) => {
     switch (gender) {
@@ -138,11 +149,11 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
         ) : (
           <div className={cn(
             "grid gap-3",
-            children.length <= 2 ? "grid-cols-2" :
-            children.length <= 4 ? "grid-cols-2" :
-            children.length <= 6 ? "grid-cols-3" : "grid-cols-3"
+            sortedChildren.length <= 2 ? "grid-cols-2" :
+            sortedChildren.length <= 4 ? "grid-cols-2" :
+            sortedChildren.length <= 6 ? "grid-cols-3" : "grid-cols-3"
           )}>
-            {children.map(child => (
+            {sortedChildren.map(child => (
               <MobileChildCard
                 key={child.id}
                 child={child}
