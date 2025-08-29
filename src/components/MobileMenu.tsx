@@ -26,7 +26,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   const menuItems = [
     { icon: Home, title: "Accueil", view: "home" as ViewType, action: navigateToHome },
     { icon: Library, title: "Bibliothèque", view: "library" as ViewType, action: navigateToLibrary },
-    { icon: PenSquare, title: "Créer", view: "create" as ViewType, action: navigateToCreate },
+    { icon: PenSquare, title: "Créer", view: "create" as ViewType, action: () => {
+      console.log("[MobileMenu] CLIC BOUTON CRÉER - Redirection forcée vers /create-story-titles");
+      navigate('/create-story-titles');
+    }},
     { icon: Users, title: "Enfants", view: "profiles" as ViewType, action: navigateToProfiles },
     { icon: Settings, title: "Paramètres", view: "settings" as ViewType, action: navigateToSettings }
   ];
