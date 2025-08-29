@@ -69,7 +69,7 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
   return (
     <div className="bg-gradient-to-b from-primary/5 to-accent/5 min-h-screen">
       {/* En-tête avec navigation compacte - fixe */}
-      <div className="sticky top-0 z-10 bg-gradient-to-b from-primary/5 to-accent/5 px-4 pt-4 pb-3">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/20 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-foreground">
             Créer une histoire
