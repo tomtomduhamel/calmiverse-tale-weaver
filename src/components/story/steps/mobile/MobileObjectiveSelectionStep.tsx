@@ -25,6 +25,7 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
 
   const objectives = [
+    { value: 'sleep', label: 'Endormissement', icon: '🌙', description: 'Histoire pour s\'endormir' },
     { value: 'focus', label: 'Concentration', icon: '🧠', description: 'Histoire stimulante et éducative' },
     { value: 'relax', label: 'Relaxation', icon: '🌸', description: 'Histoire douce pour se détendre' },
     { value: 'fun', label: 'Amusement', icon: '🎉', description: 'Histoire joyeuse et divertissante' }
@@ -75,11 +76,8 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
         </div>
 
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-foreground">
-            Choix de l'objectif
-          </h1>
           {/* Boutons de navigation compacts en haut */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 ml-auto">
             <Button 
               variant="ghost" 
               onClick={handleBack}
@@ -123,25 +121,15 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
 
       {/* Contenu principal */}
       <div className="px-4 py-6">
-        {/* Titre et description épurés */}
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-semibold text-foreground mb-2">
-            Choisissez l'objectif de l'histoire
-          </h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Quel est le but de cette histoire ? Cela nous aidera à créer le contenu parfait pour vos enfants
-          </p>
-        </div>
-
-        {/* Grille des objectifs - design épuré */}
-        <div className="space-y-3 max-w-sm mx-auto">
+        {/* Grille des objectifs 2x2 */}
+        <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto">
           {objectives.map(objective => (
             <div 
               key={objective.value}
               onClick={() => handleObjectiveSelect(objective.value)}
               className={cn(
-                "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
-                "bg-white/90 backdrop-blur-sm",
+                "relative p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
+                "bg-white/90 backdrop-blur-sm aspect-square flex flex-col items-center justify-center text-center",
                 selectedObjective === objective.value 
                   ? 'border-primary bg-primary/10 shadow-lg ring-2 ring-primary/30' 
                   : 'border-border/40 hover:border-primary/50 hover:shadow-md'
@@ -149,26 +137,18 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
             >
               {/* Indicateur de sélection */}
               {selectedObjective === objective.value && (
-                <div className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
                   <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
                 </div>
               )}
               
-              {/* Contenu principal centré */}
-              <div className="flex items-center space-x-3">
-                {/* Icône */}
-                <div className="text-2xl flex-shrink-0">{objective.icon}</div>
-                
-                {/* Texte */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-base text-foreground">
-                    {objective.label}
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-                    {objective.description}
-                  </p>
-                </div>
-              </div>
+              {/* Icône */}
+              <div className="text-3xl mb-2">{objective.icon}</div>
+              
+              {/* Titre */}
+              <h3 className="font-semibold text-sm text-foreground leading-tight">
+                {objective.label}
+              </h3>
             </div>
           ))}
         </div>
