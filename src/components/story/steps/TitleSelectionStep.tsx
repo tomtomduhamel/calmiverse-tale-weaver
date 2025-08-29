@@ -11,6 +11,8 @@ import { useRealtimeStoryMonitor } from '@/hooks/stories/useRealtimeStoryMonitor
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import TitleSelector from '@/components/story/title/TitleSelector';
+import MobileTitleSelectionStep from './mobile/MobileTitleSelectionStep';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import type { Child } from '@/types/child';
 import type { StoryDurationMinutes } from '@/types/story';
 
@@ -20,6 +22,14 @@ interface TitleSelectionStepProps {
 }
 
 const TitleSelectionStep: React.FC<TitleSelectionStepProps> = ({ children, onStoryCreated }) => {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  // Rendu conditionnel pour mobile
+  if (isMobile) {
+    return <MobileTitleSelectionStep children={children} onStoryCreated={onStoryCreated} />;
+  }
+
+  // Logique desktop existante
   const {
     currentStep,
     selectedChildrenIds,

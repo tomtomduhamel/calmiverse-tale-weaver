@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { STORY_DURATION_OPTIONS, StoryDurationMinutes } from '@/types/story';
+import MobileTitleSelector from './mobile/MobileTitleSelector';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 interface GeneratedTitle {
   id: string;
@@ -27,6 +29,21 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
   isCreatingStory,
   isRegenerating = false,
 }) => {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  // Rendu conditionnel pour mobile
+  if (isMobile) {
+    return (
+      <MobileTitleSelector
+        titles={titles}
+        onSelectTitle={onSelectTitle}
+        onRegenerateTitles={onRegenerateTitles}
+        canRegenerate={canRegenerate}
+        isCreatingStory={isCreatingStory}
+        isRegenerating={isRegenerating}
+      />
+    );
+  }
   if (titles.length === 0) {
     return (
       <div className="text-center py-8">
