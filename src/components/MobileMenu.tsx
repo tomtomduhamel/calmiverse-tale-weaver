@@ -33,6 +33,15 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
 
   const handleNavigation = (view: ViewType, action: () => void) => {
     console.log("[MobileMenu] Navigation vers", { view });
+    
+    // Pour la création d'histoires, forcer la navigation directe
+    if (view === "create") {
+      console.log("[MobileMenu] Redirection forcée vers /create-story-titles");
+      navigate('/create-story-titles');
+      onViewChange(view);
+      return;
+    }
+    
     action();
     onViewChange(view);
   };
