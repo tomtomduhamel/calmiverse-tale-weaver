@@ -17,7 +17,17 @@ interface ObjectiveSelectionStepProps {
 
 const ObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ children }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
-  
+
+  // Rendu conditionnel basé sur la taille d'écran
+  if (isMobile) {
+    return <MobileObjectiveSelectionStep children={children} />;
+  }
+
+  // Version desktop - hooks appelés uniquement ici
+  return <DesktopObjectiveSelectionStep children={children} />;
+};
+
+const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ children }) => {
   const {
     selectedChildrenIds,
     selectedObjective,
@@ -27,11 +37,6 @@ const ObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ childre
   
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Rendu conditionnel basé sur la taille d'écran
-  if (isMobile) {
-    return <MobileObjectiveSelectionStep children={children} />;
-  }
 
   // Version desktop (code existant)
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
