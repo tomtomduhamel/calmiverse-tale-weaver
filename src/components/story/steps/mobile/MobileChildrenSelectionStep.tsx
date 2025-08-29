@@ -68,11 +68,33 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-primary/5 to-accent/5">
-      {/* En-tête ultra-condensé */}
+      {/* En-tête avec navigation compacte */}
       <div className="px-4 pt-4 pb-3">
-        <h1 className="text-lg font-semibold text-foreground">
-          Créer une histoire
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-foreground">
+            Créer une histoire
+          </h1>
+          {/* Boutons de navigation compacts en haut */}
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/')}
+              size="sm"
+              className="text-xs px-3"
+            >
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleContinue} 
+              disabled={selectedChildrenIds.length === 0}
+              size="sm"
+              className="gap-1 text-xs px-3"
+            >
+              Continuer
+              <ArrowRight className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Zone de sélection active intégrée */}
@@ -95,9 +117,9 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
         </div>
       )}
 
-      {/* Grille des enfants - zone principale avec scroll et espacement sécurisé */}
+      {/* Grille des enfants - zone principale avec scroll uniquement pour les enfants */}
       <div className="flex-1 px-4 min-h-0 overflow-y-auto">
-        <div className="pb-24"> {/* Espacement plus large en bas pour éviter la superposition avec les boutons */}
+        <div>
           {children.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
               <div className="text-4xl mb-3">👶</div>
@@ -116,7 +138,7 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
             </div>
           ) : (
             <div className={cn(
-              "grid gap-3",
+              "grid gap-3 pb-4",
               children.length <= 2 ? "grid-cols-2" :
               children.length <= 4 ? "grid-cols-2" :
               children.length <= 6 ? "grid-cols-3" : "grid-cols-3"
@@ -132,29 +154,6 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
               ))}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Navigation flottante fixe en bas */}
-      <div className="px-4 py-4 bg-background/95 backdrop-blur-sm border-t border-border/20">
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/')}
-            className="flex-1"
-            size="lg"
-          >
-            Annuler
-          </Button>
-          <Button 
-            onClick={handleContinue} 
-            disabled={selectedChildrenIds.length === 0}
-            className="flex-1 gap-2"
-            size="lg"
-          >
-            Continuer
-            <ArrowRight className="w-4 h-4" />
-          </Button>
         </div>
       </div>
     </div>
