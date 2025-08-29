@@ -24,12 +24,7 @@ interface TitleSelectionStepProps {
 const TitleSelectionStep: React.FC<TitleSelectionStepProps> = ({ children, onStoryCreated }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  // Rendu conditionnel pour mobile
-  if (isMobile) {
-    return <MobileTitleSelectionStep children={children} onStoryCreated={onStoryCreated} />;
-  }
-
-  // Logique desktop existante
+  // Tous les hooks doivent être appelés avant le rendu conditionnel
   const {
     currentStep,
     selectedChildrenIds,
@@ -63,6 +58,40 @@ const TitleSelectionStep: React.FC<TitleSelectionStepProps> = ({ children, onSto
     },
     timeoutMs: 120000 // 2 minutes
   });
+
+  // Rendu conditionnel pour mobile APRÈS tous les hooks
+  if (isMobile) {
+    return <MobileTitleSelectionStep 
+      children={children} 
+      onStoryCreated={onStoryCreated}
+      // Passer les hooks comme props
+      persistedStoryCreation={{
+        currentStep,
+        selectedChildrenIds,
+        selectedObjective,
+        generatedTitles,
+        selectedTitle,
+        updateCurrentStep,
+        updateSelectedTitle,
+        updateSelectedDuration,
+        updateGeneratedTitles,
+        incrementRegeneration
+      }}
+      titleGeneration={{
+        generateTitles,
+        generateAdditionalTitles,
+        isGeneratingTitles,
+        canRegenerate
+      }}
+      storyFromTitle={{
+        createStoryFromTitle,
+        isCreatingStory
+      }}
+      storyMonitor={{
+        startMonitoring
+      }}
+    />;
+  }
 
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
 
