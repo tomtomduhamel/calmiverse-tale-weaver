@@ -8,12 +8,16 @@ import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCrea
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import MobileObjectiveSelectionStep from './mobile/MobileObjectiveSelectionStep';
 
 interface ObjectiveSelectionStepProps {
   children: Child[];
 }
 
 const ObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ children }) => {
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  
   const {
     selectedChildrenIds,
     selectedObjective,
@@ -24,6 +28,12 @@ const ObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ childre
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Rendu conditionnel basé sur la taille d'écran
+  if (isMobile) {
+    return <MobileObjectiveSelectionStep children={children} />;
+  }
+
+  // Version desktop (code existant)
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
 
   const objectives = [
