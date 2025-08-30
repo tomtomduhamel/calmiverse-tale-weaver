@@ -184,95 +184,107 @@ const MobileTitleSelectionStep: React.FC<MobileTitleSelectionStepProps> = ({
   // État de création en cours
   if (currentStep === 'creating') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        {/* Header minimaliste */}
-        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b px-4 py-3">
-          <Progress value={100} className="h-1.5" />
+      <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        {/* Header avec barre de progression */}
+        <div className="flex-none bg-white dark:bg-gray-900 border-b px-4 py-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBack}
+              disabled={isCreatingStory}
+              className="h-8 w-8 p-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="text-sm font-medium text-muted-foreground">Étape 4 sur 4</div>
+          </div>
+          <Progress value={100} className="h-2" />
         </div>
 
-        {/* Contenu de création */}
-        <div className="px-4 py-8">
-          <div className="max-w-sm mx-auto">
-            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
-              <CardContent className="pt-8 pb-6">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Création en cours
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {selectedTitle}
-                    </p>
-                  </div>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleBack} 
-                    disabled={isCreatingStory}
-                    className="mt-4"
-                  >
-                    <ArrowLeft className="w-3 h-3 mr-1" />
-                    Retour
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+        {/* Résumé de sélection */}
+        <div className="flex-none px-4 py-4 bg-muted/30 border-b">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {selectedChildren.map(child => (
+              <Badge key={child.id} variant="secondary" className="text-xs px-2 py-1">
+                {getGenderIcon(child.gender)} {child.name}
+              </Badge>
+            ))}
+            {selectedObjectiveData && (
+              <Badge variant="outline" className="text-xs px-2 py-1">
+                {selectedObjectiveData.icon} {selectedObjectiveData.label}
+              </Badge>
+            )}
           </div>
+        </div>
+
+        {/* Contenu de création - centré verticalement */}
+        <div className="flex-1 flex items-center justify-center px-4">
+          <Card className="w-full max-w-sm">
+            <CardContent className="pt-8 pb-6">
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Génération en cours
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed px-2">
+                    Création de titres pour {selectedChildren.map(c => c.name).join(', ')}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Header compact */}
-      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b px-4 py-3">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleBack}
-              className="h-8 w-8 p-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </div>
+    <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Header avec navigation et progression */}
+      <div className="flex-none bg-white dark:bg-gray-900 border-b px-4 py-4">
+        <div className="flex items-center gap-3 mb-3">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleBack}
+            className="h-8 w-8 p-0"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="text-sm font-medium text-muted-foreground">Étape 3 sur 4</div>
         </div>
-        
-        <Progress value={75} className="h-1.5" />
+        <Progress value={75} className="h-2" />
       </div>
 
-      {/* Résumé compact */}
-      <div className="px-4 py-4 border-b bg-white/60 dark:bg-gray-900/60">
-        <div className="flex items-center justify-center gap-4 text-sm">
-          <div className="flex gap-1">
-            {selectedChildren.map(child => (
-              <Badge key={child.id} variant="secondary" className="text-xs h-6">
-                {getGenderIcon(child.gender)} {child.name}
-              </Badge>
-            ))}
-          </div>
+      {/* Résumé de sélection */}
+      <div className="flex-none px-4 py-4 bg-muted/30 border-b">
+        <div className="flex flex-wrap gap-2 justify-center">
+          {selectedChildren.map(child => (
+            <Badge key={child.id} variant="secondary" className="text-xs px-2 py-1">
+              {getGenderIcon(child.gender)} {child.name}
+            </Badge>
+          ))}
           {selectedObjectiveData && (
-            <Badge variant="outline" className="text-xs h-6">
+            <Badge variant="outline" className="text-xs px-2 py-1">
               {selectedObjectiveData.icon} {selectedObjectiveData.label}
             </Badge>
           )}
         </div>
       </div>
 
-      {/* État de génération des titres */}
-      {isGeneratingTitles && generatedTitles.length === 0 && (
-        <div className="px-4 py-8">
-          <div className="max-w-sm mx-auto">
-            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+      {/* Contenu principal scrollable */}
+      <div className="flex-1 overflow-y-auto">
+        {/* État de génération des titres */}
+        {isGeneratingTitles && generatedTitles.length === 0 && (
+          <div className="flex items-center justify-center min-h-full px-4">
+            <Card className="w-full max-w-sm">
               <CardContent className="pt-8 pb-6">
-                <div className="flex flex-col items-center text-center space-y-4">
+                <div className="flex flex-col items-center text-center space-y-6">
                   <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
@@ -281,7 +293,7 @@ const MobileTitleSelectionStep: React.FC<MobileTitleSelectionStepProps> = ({
                     <h3 className="text-lg font-semibold text-foreground">
                       Génération en cours
                     </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed px-2">
                       Création de titres pour {selectedChildren.map(c => c.name).join(', ')}
                     </p>
                   </div>
@@ -289,22 +301,49 @@ const MobileTitleSelectionStep: React.FC<MobileTitleSelectionStepProps> = ({
               </CardContent>
             </Card>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Sélecteur de titres */}
-      {generatedTitles.length > 0 && (
-        <div className="px-4 py-6">
-          <TitleSelector
-            titles={generatedTitles}
-            onSelectTitle={handleCreateStory}
-            onRegenerateTitles={canRegenerate ? handleRegenerateTitles : undefined}
-            canRegenerate={canRegenerate}
-            isCreatingStory={isCreatingStory}
-            isRegenerating={isGeneratingTitles}
-          />
-        </div>
-      )}
+        {/* Sélecteur de titres */}
+        {generatedTitles.length > 0 && (
+          <div className="px-4 py-6">
+            <TitleSelector
+              titles={generatedTitles}
+              onSelectTitle={handleCreateStory}
+              onRegenerateTitles={canRegenerate ? handleRegenerateTitles : undefined}
+              canRegenerate={canRegenerate}
+              isCreatingStory={isCreatingStory}
+              isRegenerating={isGeneratingTitles}
+            />
+          </div>
+        )}
+
+        {/* Bouton de génération manuelle si aucun titre */}
+        {generatedTitles.length === 0 && !isGeneratingTitles && selectedObjective && selectedChildrenIds.length > 0 && (
+          <div className="flex items-center justify-center min-h-full px-4">
+            <Card className="w-full max-w-sm">
+              <CardContent className="pt-8 pb-6">
+                <div className="flex flex-col items-center text-center space-y-6">
+                  <RefreshCw className="h-12 w-12 text-muted-foreground" />
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">Génération des titres</h3>
+                    <p className="text-sm text-muted-foreground px-2">
+                      Les titres n'ont pas pu être générés automatiquement.
+                    </p>
+                    <Button 
+                      onClick={handleAutoGenerateTitles} 
+                      disabled={isGeneratingTitles}
+                      className="w-full"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Générer les titres
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
