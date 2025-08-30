@@ -4,7 +4,7 @@ import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import LoadingStory from "@/components/LoadingStory";
-import TitleSelectionStep from "@/components/story/steps/TitleSelectionStep";
+import TitleSelectionStepWrapper from "@/components/story/steps/TitleSelectionStepWrapper";
 
 const CreateStoryStep3: React.FC = () => {
   const { user, loading: authLoading } = useSupabaseAuth();
@@ -38,7 +38,7 @@ const CreateStoryStep3: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
-        <TitleSelectionStep children={children} onStoryCreated={handleStoryCreated} />
+        <TitleSelectionStepWrapper children={children} onStoryCreated={handleStoryCreated} />
       </div>
     </div>
   );
