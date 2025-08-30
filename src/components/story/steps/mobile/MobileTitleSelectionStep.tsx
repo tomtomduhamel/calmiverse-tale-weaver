@@ -17,20 +17,13 @@ import type { StoryDurationMinutes } from '@/types/story';
 interface MobileTitleSelectionStepProps {
   children: Child[];
   onStoryCreated: (storyId: string) => void;
-  persistedStoryCreation: any;
-  titleGeneration: any;
-  storyFromTitle: any;
-  storyMonitor: any;
 }
 
 const MobileTitleSelectionStep: React.FC<MobileTitleSelectionStepProps> = ({ 
   children, 
-  onStoryCreated,
-  persistedStoryCreation,
-  titleGeneration,
-  storyFromTitle,
-  storyMonitor
+  onStoryCreated
 }) => {
+  // Appeler tous les hooks nécessaires
   const {
     currentStep,
     selectedChildrenIds,
@@ -42,11 +35,24 @@ const MobileTitleSelectionStep: React.FC<MobileTitleSelectionStepProps> = ({
     updateSelectedDuration,
     updateGeneratedTitles,
     incrementRegeneration
-  } = persistedStoryCreation;
+  } = usePersistedStoryCreation();
   
-  const { generateTitles, generateAdditionalTitles, isGeneratingTitles, canRegenerate } = titleGeneration;
-  const { createStoryFromTitle, isCreatingStory } = storyFromTitle;
-  const { startMonitoring } = storyMonitor;
+  const { generateTitles, generateAdditionalTitles, isGeneratingTitles, canRegenerate } = useN8nTitleGeneration(
+    generatedTitles,
+    updateGeneratedTitles
+  );
+  const { createStoryFromTitle, isCreatingStory } = useN8nStoryFromTitle();
+  const { startMonitoring } = useRealtimeStoryMonitor({
+    onStoryCreated: story => {
+      console.log('[MobileTitleSelectionStep] Histoire détectée par Realtime:', story.id);
+      onStoryCreated(story.id);
+    },
+    onTimeout: () => {
+      console.log('[MobileTitleSelectionStep] Timeout du monitoring, redirection vers bibliothèque');
+      onStoryCreated('timeout');
+    },
+    timeoutMs: 120000 // 2 minutes
+  });
   
   const navigate = useNavigate();
   const { toast } = useToast();
