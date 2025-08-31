@@ -10,10 +10,18 @@ const firebaseConfig = {
   appId: "1:123456789:web:demo"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase safely
+let app;
+let messaging;
 
-// Initialize Firebase Cloud Messaging and get a reference to the service
-export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
+try {
+  if (typeof window !== 'undefined') {
+    app = initializeApp(firebaseConfig);
+    messaging = getMessaging(app);
+  }
+} catch (error) {
+  console.warn('Firebase initialization failed:', error);
+  messaging = null;
+}
 
-export { getToken, onMessage };
+export { messaging, getToken, onMessage };

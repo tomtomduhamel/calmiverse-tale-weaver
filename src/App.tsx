@@ -30,7 +30,7 @@ import { PWANotificationPrompt } from "@/components/PWANotificationPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { usePreloadRoutes } from "@/hooks/usePreloadRoutes";
 function App() {
-  usePreloadRoutes();
+  // Commented out for testing - usePreloadRoutes();
   
   return (
     <Router>

@@ -28,18 +28,22 @@ export const useNotifications = () => {
       }));
 
       if (isSupported && messaging) {
-        // Listen for foreground messages
-        onMessage(messaging, (payload) => {
-          console.log('Foreground message received:', payload);
-          
-          // Show custom in-app notification
-          if (payload.notification) {
-            new Notification(payload.notification.title || 'Calmi', {
-              body: payload.notification.body,
-              icon: '/icon-192.png'
-            });
-          }
-        });
+        try {
+          // Listen for foreground messages
+          onMessage(messaging, (payload) => {
+            console.log('Foreground message received:', payload);
+            
+            // Show custom in-app notification
+            if (payload.notification) {
+              new Notification(payload.notification.title || 'Calmi', {
+                body: payload.notification.body,
+                icon: '/icon-192.png'
+              });
+            }
+          });
+        } catch (error) {
+          console.warn('Firebase messaging setup failed:', error);
+        }
       }
     };
 
@@ -56,18 +60,24 @@ export const useNotifications = () => {
       const permission = await Notification.requestPermission();
       
       if (permission === 'granted') {
-        const token = await getToken(messaging, {
-          vapidKey: 'demo-vapid-key' // Replace with actual VAPID key
-        });
-        
-        setState(prev => ({
-          ...prev,
-          permission,
-          token
-        }));
-        
-        console.log('Notification token:', token);
-        return true;
+        try {
+          const token = await getToken(messaging, {
+            vapidKey: 'demo-vapid-key' // Replace with actual VAPID key
+          });
+          
+          setState(prev => ({
+            ...prev,
+            permission,
+            token
+          }));
+          
+          console.log('Notification token:', token);
+          return true;
+        } catch (tokenError) {
+          console.warn('Could not get FCM token:', tokenError);
+          setState(prev => ({ ...prev, permission }));
+          return true; // Permission still granted even if token fails
+        }
       } else {
         setState(prev => ({ ...prev, permission }));
         return false;
