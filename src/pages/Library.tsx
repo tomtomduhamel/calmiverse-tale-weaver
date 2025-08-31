@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import StoryLibrary from "@/components/StoryLibrary";
 import LoadingStory from "@/components/LoadingStory";
+import { PWAGestures } from "@/components/PWAGestures";
 const Library: React.FC = () => {
   const {
     user,
@@ -156,40 +157,44 @@ const Library: React.FC = () => {
     navigate("/auth");
     return null;
   }
-  return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        {/* En-tête avec bouton retour */}
-        <div className="mb-8">
-          
-          
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Bibliothèque d'histoires
-            </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Retrouvez toutes vos histoires personnalisées et découvrez de nouvelles aventures
-            </p>
+  return (
+    <PWAGestures onPullToRefresh={fetchStories} className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 pwa-safe-area">
+        <div className="container mx-auto px-4 py-8">
+          {/* En-tête avec bouton retour */}
+          <div className="mb-8">
+            
+            
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Bibliothèque d'histoires
+              </h1>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Retrouvez toutes vos histoires personnalisées et découvrez de nouvelles aventures
+              </p>
+            </div>
+          </div>
+
+          {/* Composant de bibliothèque d'histoires */}
+          <div className="max-w-6xl mx-auto">
+            <StoryLibrary 
+              stories={stories} 
+              onSelectStory={handleSelectStory} 
+              onDeleteStory={handleDeleteStory} 
+              onRetryStory={handleRetryStory} 
+              onToggleFavorite={handleToggleFavorite}
+              onMarkAsRead={handleMarkAsRead}
+              onSequelCreated={handleSequelCreated}
+              onForceRefresh={fetchStories} 
+              onCreateStory={handleCreateStory} 
+              isDeletingId={isDeletingId}
+              isUpdatingReadStatus={isUpdatingReadStatus}
+              isUpdatingFavorite={isUpdatingFavorite}
+            />
           </div>
         </div>
-
-        {/* Composant de bibliothèque d'histoires */}
-        <div className="max-w-6xl mx-auto">
-          <StoryLibrary 
-            stories={stories} 
-            onSelectStory={handleSelectStory} 
-            onDeleteStory={handleDeleteStory} 
-            onRetryStory={handleRetryStory} 
-            onToggleFavorite={handleToggleFavorite}
-            onMarkAsRead={handleMarkAsRead}
-            onSequelCreated={handleSequelCreated}
-            onForceRefresh={fetchStories} 
-            onCreateStory={handleCreateStory} 
-            isDeletingId={isDeletingId}
-            isUpdatingReadStatus={isUpdatingReadStatus}
-            isUpdatingFavorite={isUpdatingFavorite}
-          />
-        </div>
       </div>
-    </div>;
+    </PWAGestures>
+  );
 };
 export default Library;

@@ -1,0 +1,56 @@
+{
+  "name": "Calmi - Histoires personnalisées pour enfants",
+  "short_name": "Calmi",
+  "description": "Créez des histoires personnalisées pour vos enfants avec l'intelligence artificielle",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#A8DADC",
+  "background_color": "#F1FAEE",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["education", "kids", "stories"],
+  "shortcuts": [
+    {
+      "name": "Créer une histoire",
+      "short_name": "Nouvelle histoire",
+      "description": "Créer une nouvelle histoire personnalisée",
+      "url": "/story/age",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Ma bibliothèque",
+      "short_name": "Bibliothèque",
+      "description": "Accéder à votre bibliothèque d'histoires",
+      "url": "/library",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "lang": "fr",
+  "dir": "ltr"
+}

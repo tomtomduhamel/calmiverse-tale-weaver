@@ -23,7 +23,10 @@ import StoryReaderPage from "./pages/StoryReaderPage";
 import Shell from "./components/Shell";
 import PromptAdmin from './pages/admin/PromptAdmin';
 import AdminGuard from './components/admin/AdminGuard';
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 function App() {
   return (
     <Router>
@@ -58,6 +61,9 @@ function App() {
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
       <Toaster />
+      <PWAInstallPrompt />
+      <PWAUpdateNotification />
+      <OfflineIndicator />
     </Router>
   );
 }
