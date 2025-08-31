@@ -47,7 +47,6 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
               </div>
             </div>
           </div>}
-        <ReactMarkdown className="text-2xl font-bold">{story.title}</ReactMarkdown>
         {story.childrenNames && story.childrenNames.length > 0 && <p className={`mt-1 ${isDarkMode ? "text-gray-300" : "text-muted-foreground"}`}>
             Histoire personnalisée pour {story.childrenNames.join(", ")}
           </p>}
