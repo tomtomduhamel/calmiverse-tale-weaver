@@ -65,70 +65,59 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
 
   return (
     <div className="bg-gradient-to-b from-primary/5 to-accent/5 min-h-screen">
-      {/* En-tête avec navigation compacte */}
+      {/* En-tête avec progression et navigation */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/20 px-4 pt-4 pb-3">
-        {/* Indicateur de progression minimaliste */}
-        <div className="flex items-center gap-1 mb-3 justify-center">
-          <div className="w-6 h-1 bg-primary rounded-full"></div>
-          <div className="w-6 h-1 bg-primary rounded-full"></div>
-          <div className="w-6 h-1 bg-muted rounded-full"></div>
-          <div className="w-6 h-1 bg-muted rounded-full"></div>
+        {/* Navigation avec flèche retour et titre d'étape */}
+        <div className="flex items-center justify-between mb-4">
+          <Button 
+            variant="ghost" 
+            onClick={handleBack}
+            size="sm"
+            className="p-1"
+          >
+            <ArrowLeft className="w-5 h-5 text-primary" />
+          </Button>
+          
+          <h2 className="text-lg font-semibold text-primary">
+            Étape 2 sur 4
+          </h2>
+          
+          <div className="w-9"></div> {/* Spacer pour centrer le titre */}
         </div>
 
-        <div className="flex items-center justify-between">
-          {/* Boutons de navigation compacts en haut */}
-          <div className="flex gap-2 ml-auto">
-            <Button 
-              variant="ghost" 
-              onClick={handleBack}
-              size="sm"
-              className="text-xs px-3"
-            >
-              Retour
-            </Button>
-            <Button 
-              onClick={handleContinueToTitles} 
-              disabled={!selectedObjective}
-              size="sm"
-              className="gap-1 text-xs px-3"
-            >
-              Continuer
-              <ArrowRight className="w-3 h-3" />
-            </Button>
+        {/* Barre de progression */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+            <div className="w-1/2 h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"></div>
           </div>
         </div>
 
-        {/* Zone des enfants sélectionnés compacte */}
+        {/* Zone des enfants sélectionnés */}
         {selectedChildren.length > 0 && (
-          <div className="mt-3">
-            <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-lg border border-primary/20">
-              <span className="text-xs font-medium text-primary flex-shrink-0">Enfants:</span>
-              <div className="flex gap-1 flex-wrap">
-                {selectedChildren.map(child => (
-                  <div 
-                    key={child.id} 
-                    className="flex items-center gap-1 bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs"
-                  >
-                    <span className="text-xs">{getGenderIcon(child.gender)}</span>
-                    <span className="font-medium">{child.name}</span>
-                  </div>
-                ))}
+          <div className="flex gap-2 flex-wrap">
+            {selectedChildren.map(child => (
+              <div 
+                key={child.id} 
+                className="flex items-center gap-1 bg-primary text-primary-foreground rounded-full px-3 py-1.5 text-sm"
+              >
+                <span className="text-sm">{getGenderIcon(child.gender)}</span>
+                <span className="font-medium">{child.name}</span>
               </div>
-            </div>
+            ))}
           </div>
         )}
       </div>
 
       {/* Contenu principal */}
-      <div className="px-4 py-6">
+      <div className="px-4 py-6 pb-20">
         {/* Grille des objectifs 2x2 */}
-        <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto">
+        <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
           {objectives.map(objective => (
             <div 
               key={objective.value}
               onClick={() => handleObjectiveSelect(objective.value)}
               className={cn(
-                "relative p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
+                "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
                 "bg-white/90 backdrop-blur-sm aspect-square flex flex-col items-center justify-center text-center",
                 selectedObjective === objective.value 
                   ? 'border-primary bg-primary/10 shadow-lg ring-2 ring-primary/30' 
@@ -143,7 +132,7 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
               )}
               
               {/* Icône */}
-              <div className="text-3xl mb-2">{objective.icon}</div>
+              <div className="text-4xl mb-3">{objective.icon}</div>
               
               {/* Titre */}
               <h3 className="font-semibold text-sm text-foreground leading-tight">
@@ -151,6 +140,19 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
               </h3>
             </div>
           ))}
+        </div>
+
+        {/* Bouton Continuer fixe en bas */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border/20">
+          <Button 
+            onClick={handleContinueToTitles} 
+            disabled={!selectedObjective}
+            className="w-full gap-2"
+            size="lg"
+          >
+            Continuer
+            <ArrowRight className="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </div>
