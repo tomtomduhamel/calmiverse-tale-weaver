@@ -227,14 +227,14 @@ const MobileTitleSelectionStep: React.FC<MobileTitleSelectionStepProps> = ({
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
                 
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Génération en cours
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed px-2">
-                    Création de titres pour {selectedChildren.map(c => c.name).join(', ')}
-                  </p>
-                </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Génération en cours
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed px-2">
+                      Création de l'histoire pour {selectedChildren.map(c => c.name).join(', ')}
+                    </p>
+                  </div>
               </div>
             </CardContent>
           </Card>
