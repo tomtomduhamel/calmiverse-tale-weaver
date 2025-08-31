@@ -41,6 +41,7 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB limit
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -87,5 +88,20 @@ export default defineConfig(({ mode }) => ({
   },
   css: {
     postcss: './postcss.config.js',
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-openai': ['openai'],
+          'vendor-utils': ['date-fns', 'clsx', 'lucide-react'],
+          'epub-services': ['jszip', 'epubjs']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
   }
 }));
