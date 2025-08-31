@@ -50,13 +50,6 @@ export const StoryImageModal: React.FC<StoryImageModalProps> = ({
               }}
             />
           </div>
-
-          {/* Titre optionnel */}
-          <div className={`px-6 pb-6 text-center ${
-            isDarkMode ? 'text-gray-200' : 'text-gray-700'
-          }`}>
-            <h3 className="text-lg font-medium">{title}</h3>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
