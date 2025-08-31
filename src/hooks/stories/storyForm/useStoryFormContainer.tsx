@@ -5,7 +5,7 @@ import { useStoryForm } from "@/hooks/stories/storyForm";
 import { useChildFormLogic } from "@/components/story/useChildFormLogic";
 import { useStoryProgress } from "@/components/story/form/hooks/useStoryProgress";
 import { useStoryFormAuth } from "@/hooks/useStoryFormAuth";
-import { useNotifications } from "@/hooks/useNotifications";
+import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Child } from "@/types/child";
 import type { Story } from "@/types/story";
@@ -32,7 +32,7 @@ export const useStoryFormContainer = (
   const { user, authLoading } = useStoryFormAuth(setFormError);
   
   // Hook de notifications
-  const { toast } = useNotifications();
+  const { toast } = useToast();
   
   // Hook de formulaire principal
   const { 

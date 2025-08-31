@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { usePWAAnalytics } from '@/hooks/usePWAAnalytics';
 
 interface PWAState {
   isInstalled: boolean;
@@ -8,6 +9,7 @@ interface PWAState {
 }
 
 export const usePWA = () => {
+  const { track } = usePWAAnalytics();
   const [state, setState] = useState<PWAState>({
     isInstalled: false,
     isOnline: navigator.onLine,
@@ -28,13 +30,20 @@ export const usePWA = () => {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           setState(prev => ({ ...prev, updateAvailable: true }));
+          track('pwa_update_available');
         });
       }
     };
 
     // Online/offline status
-    const handleOnline = () => setState(prev => ({ ...prev, isOnline: true }));
-    const handleOffline = () => setState(prev => ({ ...prev, isOnline: false }));
+    const handleOnline = () => {
+      setState(prev => ({ ...prev, isOnline: true }));
+      track('pwa_online');
+    };
+    const handleOffline = () => {
+      setState(prev => ({ ...prev, isOnline: false }));
+      track('pwa_offline');
+    };
 
     // BeforeInstallPrompt event
     const handleBeforeInstallPrompt = (e: Event) => {

@@ -42,6 +42,8 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB limit
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/_/, /\/api\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -74,6 +76,28 @@ export default defineConfig(({ mode }) => ({
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 5 // 5 minutes
+              }
+            }
+          },
+          {
+            urlPattern: /\/api\/.*\.(png|jpg|jpeg|svg|gif)/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'api-images',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              }
+            }
+          },
+          {
+            urlPattern: /\/(library|create-story|kids)/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'app-pages',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 // 1 day
               }
             }
           }

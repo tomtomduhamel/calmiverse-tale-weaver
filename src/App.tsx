@@ -26,8 +26,12 @@ import AdminGuard from './components/admin/AdminGuard';
 import { Toaster } from "@/components/ui/toaster";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
+import { PWANotificationPrompt } from "@/components/PWANotificationPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { usePreloadRoutes } from "@/hooks/usePreloadRoutes";
 function App() {
+  usePreloadRoutes();
+  
   return (
     <Router>
       <Routes>
@@ -63,6 +67,7 @@ function App() {
       <Toaster />
       <PWAInstallPrompt />
       <PWAUpdateNotification />
+      <PWANotificationPrompt />
       <OfflineIndicator />
     </Router>
   );
