@@ -218,26 +218,24 @@ const MobileTitleSelectionStep: React.FC<MobileTitleSelectionStepProps> = ({
           </div>
         </div>
 
-        {/* Contenu de création - centré verticalement */}
-        <div className="flex-1 flex items-center justify-center px-4">
-          <Card className="w-full max-w-sm">
-            <CardContent className="pt-8 pb-6">
-              <div className="flex flex-col items-center text-center space-y-6">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-                
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Génération en cours
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed px-2">
-                      Création de l'histoire pour {selectedChildren.map(c => c.name).join(', ')}
-                    </p>
-                  </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Contenu de création - optimisé mobile */}
+        <div className="flex-1 flex flex-col px-4 pt-6">
+          {/* Textes de génération - positionnés en haut */}
+          <div className="text-center space-y-2 mb-8">
+            <h3 className="text-lg font-semibold text-foreground">
+              Génération en cours
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Création de l'histoire pour {selectedChildren.map(c => c.name).join(', ')}
+            </p>
+          </div>
+          
+          {/* Spinner centré */}
+          <div className="flex justify-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -279,27 +277,25 @@ const MobileTitleSelectionStep: React.FC<MobileTitleSelectionStepProps> = ({
 
       {/* Contenu principal scrollable */}
       <div className="flex-1 overflow-y-auto">
-        {/* État de génération des titres */}
+        {/* État de génération des titres - optimisé mobile */}
         {isGeneratingTitles && generatedTitles.length === 0 && (
-          <div className="flex items-center justify-center min-h-full px-4">
-            <Card className="w-full max-w-sm">
-              <CardContent className="pt-8 pb-6">
-                <div className="flex flex-col items-center text-center space-y-6">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Génération en cours
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed px-2">
-                      Création de titres pour {selectedChildren.map(c => c.name).join(', ')}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="px-4 pt-6">
+            {/* Textes de génération - positionnés en haut */}
+            <div className="text-center space-y-2 mb-8">
+              <h3 className="text-lg font-semibold text-foreground">
+                Génération en cours
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Création de titres pour {selectedChildren.map(c => c.name).join(', ')}
+              </p>
+            </div>
+            
+            {/* Spinner centré */}
+            <div className="flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            </div>
           </div>
         )}
 
