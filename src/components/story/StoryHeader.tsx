@@ -47,6 +47,11 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
               </div>
             </div>
           </div>}
+        
+        {/* Titre de l'histoire */}
+        <h1 className={`text-lg font-semibold mb-2 leading-tight ${isDarkMode ? "text-white" : "text-foreground"}`}>
+          {story.title}
+        </h1>
         {story.childrenNames && story.childrenNames.length > 0 && <p className={`mt-1 ${isDarkMode ? "text-gray-300" : "text-muted-foreground"}`}>
             Histoire personnalisée pour {story.childrenNames.join(", ")}
           </p>}
