@@ -143,12 +143,16 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
         </div>
 
         {/* Bouton Continuer fixe en bas */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border/20">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-background/95 backdrop-blur-sm border-t border-border/20 shadow-2xl">
           <Button 
             onClick={handleContinueToTitles} 
             disabled={!selectedObjective}
-            className="w-full gap-2"
-            size="lg"
+            className={cn(
+              "w-full gap-2 h-12 text-base font-semibold rounded-xl transition-all duration-200",
+              selectedObjective 
+                ? "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl active:scale-[0.98]" 
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            )}
           >
             Continuer
             <ArrowRight className="w-4 h-4" />
