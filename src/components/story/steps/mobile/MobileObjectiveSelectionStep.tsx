@@ -109,7 +109,7 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
       </div>
 
       {/* Contenu principal */}
-      <div className="px-4 py-6 pb-20">
+      <div className="px-4 py-6 pb-24">
         {/* Grille des objectifs 2x2 */}
         <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
           {objectives.map(objective => (
@@ -141,23 +141,23 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Bouton Continuer fixe en bas */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-background/95 backdrop-blur-sm border-t border-border/20 shadow-2xl">
-          <Button 
-            onClick={handleContinueToTitles} 
-            disabled={!selectedObjective}
-            className={cn(
-              "w-full gap-2 h-12 text-base font-semibold rounded-xl transition-all duration-200",
-              selectedObjective 
-                ? "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl active:scale-[0.98]" 
-                : "bg-muted text-muted-foreground cursor-not-allowed"
-            )}
-          >
-            Continuer
-            <ArrowRight className="w-4 h-4" />
-          </Button>
-        </div>
+      {/* Bouton Continuer fixe en bas */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-background/95 backdrop-blur-sm border-t border-border/20 shadow-2xl z-50">
+        <Button 
+          onClick={handleContinueToTitles} 
+          disabled={!selectedObjective}
+          className={cn(
+            "w-full gap-2 h-12 text-base font-semibold rounded-xl transition-all duration-200",
+            selectedObjective 
+              ? "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl active:scale-[0.98]" 
+              : "bg-muted text-muted-foreground cursor-not-allowed"
+          )}
+        >
+          Continuer
+          <ArrowRight className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );
