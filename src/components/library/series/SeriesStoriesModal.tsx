@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { BookOpen, X, Star, Plus, Clock, ChevronDown, ChevronUp, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { getStoryImageUrl } from '@/utils/supabaseImageUtils';
@@ -42,6 +43,9 @@ export const SeriesStoriesModal: React.FC<SeriesStoriesModalProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [showFullDescription, setShowFullDescription] = useState(false);
+  
+  // Verrouiller le scroll du body quand le modal est ouvert sur mobile
+  useBodyScrollLock(isOpen && isMobile);
   
   const {
     series,

@@ -39,21 +39,18 @@ const DialogContent = React.forwardRef<
       }}
       onEscapeKeyDown={(e) => {
         props.onEscapeKeyDown?.(e);
-        document.body.style.overflow = 'auto';
+        // Scroll management will be handled by useBodyScrollLock hook
       }}
       onOpenAutoFocus={(e) => {
         props.onOpenAutoFocus?.(e);
-        document.body.style.overflow = 'hidden';
+        // Scroll management will be handled by useBodyScrollLock hook
       }}
       onAnimationEnd={(e) => {
-        // Restore scroll when dialog closes
-        if (e.animationName.includes('fade-out') || e.animationName.includes('zoom-out')) {
-          document.body.style.overflow = 'auto';
-        }
+        // Animation handling without direct scroll manipulation
+        props.onAnimationEnd?.(e);
       }}
       onInteractOutside={(e) => {
-        // Restore scroll when clicking outside to close
-        document.body.style.overflow = 'auto';
+        // Interaction handling without direct scroll manipulation
         props.onInteractOutside?.(e);
       }}
       className={cn(
