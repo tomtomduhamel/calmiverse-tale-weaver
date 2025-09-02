@@ -29,10 +29,10 @@ export const useAppNavigation = () => {
     navigate('/library');
   }, [navigate, toast]);
 
-  // Navigation vers la création d'histoire (choix des titres)
+  // Navigation vers la création d'histoire (processus étape par étape)
   const navigateToCreate = useCallback(() => {
-    console.log('[AppNavigation] Navigation vers le choix des titres');
-    navigate('/create-story-titles');
+    console.log('[AppNavigation] Navigation vers la création d\'histoire');
+    navigate('/create-story/step-1');
   }, [navigate]);
 
   // Navigation vers les profils
