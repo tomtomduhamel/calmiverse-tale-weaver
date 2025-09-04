@@ -28,7 +28,9 @@ export const useStories = (children: any[] = []) => {
     setLastError,
     setIsRetrying,
     setCurrentStory,
-    supabaseStories.fetchStories
+    async () => {
+      await supabaseStories.fetchStories();
+    }
   );
 
   const handleRetryFailedStory = async (storyId: string) => {

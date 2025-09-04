@@ -60,15 +60,32 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   const [currentPage, setCurrentPage] = React.useState(1);
   const storiesPerPage = isMobile ? 8 : 6;
 
-  // Fonction pour vérifier si une histoire est récente (dernières 24h)
-  const isRecentStory = (story: Story): boolean => {
+  // Fonction memoized pour vérifier si une histoire est récente (dernières 24h)
+  const isRecentStory = React.useCallback((story: Story): boolean => {
     const now = new Date();
     const storyDate = new Date(story.createdAt);
     const hoursDiff = (now.getTime() - storyDate.getTime()) / (1000 * 60 * 60);
     return hoursDiff <= 24;
-  };
+  }, []);
 
-  // Filtrage et tri amélioré des éléments de la bibliothèque
+  // Callbacks stabilisés pour éviter les re-renders
+  const stableOnSelectStory = React.useCallback((story: Story) => {
+    onSelectStory(story);
+  }, [onSelectStory]);
+
+  const stableOnDeleteStory = React.useCallback((storyId: string) => {
+    onDeleteStory?.(storyId);
+  }, [onDeleteStory]);
+
+  const stableOnRetryStory = React.useCallback((storyId: string) => {
+    onRetryStory?.(storyId);
+  }, [onRetryStory]);
+
+  const stableOnToggleFavorite = React.useCallback((storyId: string, currentFavoriteStatus: boolean) => {
+    onToggleFavorite?.(storyId, currentFavoriteStatus);
+  }, [onToggleFavorite]);
+
+  // Filtrage et tri optimisé des éléments de la bibliothèque
   const filteredItems = React.useMemo(() => {
     return libraryItems
       .filter(item => {
@@ -224,12 +241,12 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
 
         <StoryGrid
           items={currentItems}
-          onDelete={onDeleteStory}
-          onRetry={onRetryStory}
-          onToggleFavorite={onToggleFavorite}
+          onDelete={stableOnDeleteStory}
+          onRetry={stableOnRetryStory}
+          onToggleFavorite={stableOnToggleFavorite}
           onMarkAsRead={onMarkAsRead}
           onSequelCreated={onSequelCreated}
-          onCardClick={onSelectStory}
+          onCardClick={stableOnSelectStory}
           isRetrying={isRetrying}
           isDeletingId={isDeletingId}
           isUpdatingFavorite={isUpdatingFavorite}

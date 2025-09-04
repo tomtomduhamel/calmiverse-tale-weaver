@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { useStoriesQuery } from './useStoriesQuery';
+import { useOptimizedStoriesQuery as useStoriesQuery } from './useOptimizedStoriesQuery';
 import { useStoryCreation } from './useStoryCreation';
 import { useStoryDeletion } from './useStoryDeletion';
 import { useStoryUpdate } from './useStoryUpdate';
@@ -20,7 +20,7 @@ export const useSupabaseStories = () => {
   const { user } = useSupabaseAuth();
   
   // Utilisation des hooks spécialisés
-  const { stories, isLoading, error, fetchStories } = useStoriesQuery();
+  const { stories, isLoading, error, fetchStories, forceRefresh } = useStoriesQuery();
   const { createStory } = useStoryCreation();
   const { deleteStory } = useStoryDeletion();
   const { updateStoryStatus } = useStoryUpdate();
@@ -30,11 +30,11 @@ export const useSupabaseStories = () => {
   // Surveillance améliorée des histoires en attente (fallback)
   const pendingMonitor = usePendingStoryMonitor({
     stories,
-    fetchStories,
+    fetchStories: forceRefresh, // Use forceRefresh for pending monitor
     onStoryCompleted: (story) => {
       console.log(`[SupabaseStories] Histoire complétée: ${story.id}`);
       // Rafraîchir les données pour s'assurer d'avoir la dernière version
-      fetchStories();
+      forceRefresh();
     }
   });
 
@@ -42,7 +42,7 @@ export const useSupabaseStories = () => {
   const realtimeMonitor = useRealtimeStoryMonitor({
     onStoryCreated: (story) => {
       console.log(`[SupabaseStories] Histoire créée détectée en temps réel: ${story.id}`);
-      // Rafraîchir immédiatement les données
+      // Use debounced fetch for real-time updates
       fetchStories();
     },
     enabled: true
@@ -52,8 +52,8 @@ export const useSupabaseStories = () => {
   const handleToggleFavorite = useCallback(async (storyId: string, currentFavoriteStatus: boolean): Promise<boolean> => {
     const success = await toggleFavorite(storyId, currentFavoriteStatus);
     if (success) {
-      // Rafraîchir la liste des histoires pour refléter le changement
-      await fetchStories();
+      // Use debounced refresh for favorites
+      fetchStories();
     }
     return success;
   }, [toggleFavorite, fetchStories]);
@@ -100,10 +100,10 @@ export const useSupabaseStories = () => {
   }, [user, createStory, toast, pendingMonitor, realtimeMonitor]);
 
   // Fonction pour forcer le rafraîchissement avec vérification de santé
-  const forceRefresh = useCallback(async () => {
+  const handleForceRefresh = useCallback(async () => {
     console.log('[SupabaseStories] Force refresh des histoires');
     try {
-      await fetchStories();
+      forceRefresh(); // Use the optimized force refresh
       toast({
         title: "Actualisation",
         description: "La liste des histoires a été mise à jour",
@@ -116,14 +116,14 @@ export const useSupabaseStories = () => {
         variant: "destructive",
       });
     }
-  }, [fetchStories, toast]);
+  }, [forceRefresh, toast]);
 
   return {
     stories,
     isLoading,
     error,
     fetchStories,
-    forceRefresh,
+    forceRefresh: handleForceRefresh,
     createStory: handleCreateStory,
     deleteStory,
     updateStoryStatus,
