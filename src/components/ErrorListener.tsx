@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { useNotificationCenter } from "@/hooks/useNotificationCenter";
 import { errorManager } from "@/utils/errorHandling/errorNotificationManager";
+import { logger } from "@/utils/logger";
 
 /**
  * Composant pour écouter et afficher les erreurs globales de manière centralisée
@@ -13,12 +14,12 @@ export function ErrorListener() {
   const errorCountRef = useRef({ validation: 0, other: 0 });
   
   useEffect(() => {
-    console.log("[ErrorListener] 🔄 Initialisation à", mountTimeRef.current.toISOString());
+    logger.debug("[ErrorListener] 🔄 Initialisation à", mountTimeRef.current.toISOString());
     
     // Configurer le gestionnaire d'erreurs global avec notre système de notification
     errorManager.initWithNotificationCenter(notify);
     
-    console.log("[ErrorListener] ✅ Gestionnaire d'erreurs initialisé avec le centre de notification");
+    logger.info("[ErrorListener] ✅ Gestionnaire d'erreurs initialisé avec le centre de notification");
     
     // Écouter les erreurs spécifiques au formulaire d'histoire
     const handleStoryFormError = (event: CustomEvent) => {
@@ -32,7 +33,7 @@ export function ErrorListener() {
         notifyError("Erreur", message);
       }
       
-      console.log("[ErrorListener] ❌ Erreur de formulaire d'histoire traitée:", {
+      logger.warn("[ErrorListener] ❌ Erreur de formulaire d'histoire traitée:", {
         type,
         message,
         source: source || 'non spécifié',
@@ -48,7 +49,7 @@ export function ErrorListener() {
     // Nettoyer lors du démontage
     return () => {
       document.removeEventListener('story-form-error', handleStoryFormError as EventListener);
-      console.log("[ErrorListener] 🧹 Nettoyage - gestionnaire d'erreurs démonté après", {
+      logger.debug("[ErrorListener] 🧹 Nettoyage - gestionnaire d'erreurs démonté après", {
         duréeVieMs: new Date().getTime() - mountTimeRef.current.getTime(),
         erreursValidation: errorCountRef.current.validation,
         autresErreurs: errorCountRef.current.other

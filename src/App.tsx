@@ -8,6 +8,9 @@ import KidsProfile from './pages/KidsProfile';
 import Settings from './pages/Settings';
 import MinimalStoryPage from './pages/MinimalStoryPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import { TermsOfService } from './pages/legal/TermsOfService';
+import { PrivacyPolicy as NewPrivacyPolicy } from './pages/legal/PrivacyPolicy';
+import { CookiePolicy } from './pages/legal/CookiePolicy';
 import SharedStory from './pages/SharedStory';
 import PublicStory from './pages/PublicStory';
 import NotFound from './pages/NotFound';
@@ -38,6 +41,9 @@ function App() {
         {/* Routes publiques */}
         <Route path="/auth" element={<Auth />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/privacy-policy" element={<NewPrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/cookies" element={<CookiePolicy />} />
         <Route path="/shared/:token" element={<SharedStory />} />
         <Route path="/story/:id" element={<PublicStory />} />
         <Route path="/404" element={<NotFound />} />
