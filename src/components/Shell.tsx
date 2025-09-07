@@ -5,7 +5,9 @@ import Navigation from './navigation/Navigation';
 import { SidebarProvider } from './ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileMenu from './MobileMenu';
+import { Footer } from './Footer';
 import { useViewManagement } from '@/hooks/useViewManagement';
+import { logger } from '@/utils/logger';
 
 interface ShellProps {
   children?: ReactNode;
@@ -20,7 +22,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   // Ne pas l'afficher si nous sommes sur la route du lecteur d'histoire
   const showMobileMenu = isMobile && !location.pathname.startsWith('/reader/');
   
-  console.log("[Shell] DEBUG: Configuration du menu mobile", {
+  logger.debug("[Shell] Configuration du menu mobile", {
     isMobile,
     pathname: location.pathname,
     showMobileMenu
@@ -36,6 +38,9 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
         <div className={`flex-1 w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-16' : 'pb-4'}`}>
           {children || <Outlet />}
         </div>
+        
+        {/* Footer */}
+        <Footer />
         
         {/* Afficher le menu mobile uniquement si nous ne sommes pas dans le lecteur */}
         {showMobileMenu && (

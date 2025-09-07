@@ -31,12 +31,15 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { PWANotificationPrompt } from "@/components/PWANotificationPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { ErrorListener } from "@/components/ErrorListener";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { usePreloadRoutes } from "@/hooks/usePreloadRoutes";
 function App() {
   // Commented out for testing - usePreloadRoutes();
   
   return (
-    <Router>
+    <ErrorBoundary>
+      <Router>
       <Routes>
         {/* Routes publiques */}
         <Route path="/auth" element={<Auth />} />
@@ -70,12 +73,14 @@ function App() {
         {/* Route de fallback */}
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
+      <ErrorListener />
       <Toaster />
       <PWAInstallPrompt />
       <PWAUpdateNotification />
       <PWANotificationPrompt />
       <OfflineIndicator />
     </Router>
+    </ErrorBoundary>
   );
 }
 
