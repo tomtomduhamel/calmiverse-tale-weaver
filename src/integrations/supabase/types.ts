@@ -186,31 +186,79 @@ export type Database = {
       }
       rate_limits: {
         Row: {
+          action_type: string | null
+          blocked_until: string | null
           created_at: string
           endpoint: string
           id: string
           ip_address: unknown | null
           request_count: number
+          severity: string | null
+          user_agent: string | null
           user_id: string | null
           window_start: string
         }
         Insert: {
+          action_type?: string | null
+          blocked_until?: string | null
           created_at?: string
           endpoint: string
           id?: string
           ip_address?: unknown | null
           request_count?: number
+          severity?: string | null
+          user_agent?: string | null
           user_id?: string | null
           window_start?: string
         }
         Update: {
+          action_type?: string | null
+          blocked_until?: string | null
           created_at?: string
           endpoint?: string
           id?: string
           ip_address?: unknown | null
           request_count?: number
+          severity?: string | null
+          user_agent?: string | null
           user_id?: string | null
           window_start?: string
+        }
+        Relationships: []
+      }
+      security_audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          reason: string | null
+          resource: string | null
+          result: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          reason?: string | null
+          resource?: string | null
+          result: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          reason?: string | null
+          resource?: string | null
+          result?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -549,6 +597,17 @@ export type Database = {
       }
     }
     Functions: {
+      check_enhanced_rate_limit: {
+        Args: {
+          p_action_type?: string
+          p_ip_address?: unknown
+          p_max_requests?: number
+          p_severity?: string
+          p_user_id?: string
+          p_window_minutes?: number
+        }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           p_endpoint?: string
@@ -599,6 +658,18 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          p_action?: string
+          p_ip_address?: unknown
+          p_metadata?: Json
+          p_reason?: string
+          p_resource?: string
+          p_result?: string
+          p_user_id?: string
+        }
+        Returns: undefined
       }
       next_template_version: {
         Args: { p_template_id: string }
