@@ -34,6 +34,10 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ErrorListener } from "@/components/ErrorListener";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { usePreloadRoutes } from "@/hooks/usePreloadRoutes";
+import { ContactPage } from "@/pages/support/ContactPage";
+import { DocumentationPage } from "@/pages/support/DocumentationPage";
+import { ServiceStatusPage } from "@/pages/support/ServiceStatusPage";
+import { AboutPage } from "@/pages/AboutPage";
 function App() {
   // Commented out for testing - usePreloadRoutes();
   
@@ -47,6 +51,10 @@ function App() {
         <Route path="/privacy-policy" element={<NewPrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/cookies" element={<CookiePolicy />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/documentation" element={<DocumentationPage />} />
+        <Route path="/status" element={<ServiceStatusPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/shared/:token" element={<SharedStory />} />
         <Route path="/story/:id" element={<PublicStory />} />
         <Route path="/404" element={<NotFound />} />
