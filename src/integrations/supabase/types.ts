@@ -226,6 +226,27 @@ export type Database = {
         }
         Relationships: []
       }
+      role_modification_cooldown: {
+        Row: {
+          created_at: string
+          id: string
+          last_modification: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_modification?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_modification?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_audit_logs: {
         Row: {
           action: string
