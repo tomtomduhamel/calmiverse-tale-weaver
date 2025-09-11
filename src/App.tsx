@@ -6,7 +6,7 @@ import Index from './pages/Index';
 import ChildrenListPage from './pages/ChildrenListPage';
 import KidsProfile from './pages/KidsProfile';
 import Settings from './pages/Settings';
-import MinimalStoryPage from './pages/MinimalStoryPage';
+
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import { TermsOfService } from './pages/legal/TermsOfService';
 import { PrivacyPolicy as NewPrivacyPolicy } from './pages/legal/PrivacyPolicy';
@@ -67,7 +67,7 @@ function App() {
           <Route path="settings" element={<Settings />} />
           <Route path="library" element={<Library />} />
           <Route path="reader/:id" element={<StoryReaderPage />} />
-          <Route path="create-story-simple" element={<MinimalStoryPage />} />
+          {/* Route obsolète supprimée - utiliser /create-story/step-1 */}
           <Route path="create-story-n8n" element={<CreateStoryN8n />} />
           <Route path="create-story-titles" element={<CreateStoryTitles />} />
           <Route path="create-story/step-1" element={<CreateStoryStep1 />} />

@@ -83,7 +83,9 @@ const KidsProfile = () => {
   };
 
   const handleCreateStory = () => {
-    navigate('/create-story-simple');
+    // Navigation vers la nouvelle route avec enfant présélectionné
+    console.log('[KidsProfile] Navigation vers création d\'histoire avec enfant:', child?.id);
+    navigate(`/create-story/step-1?childId=${child?.id}`);
   };
 
   if (loading || !child) {

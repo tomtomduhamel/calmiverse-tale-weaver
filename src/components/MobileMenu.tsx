@@ -32,7 +32,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   ];
 
   const handleNavigation = (view: ViewType, action: () => void) => {
-    console.log("[MobileMenu] Navigation vers", { view });
+    console.log("[MobileMenu] Navigation vers", { view, currentPath: location.pathname });
     action();
     onViewChange(view);
   };
