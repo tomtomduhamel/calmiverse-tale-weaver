@@ -16,7 +16,7 @@ import PublicStory from './pages/PublicStory';
 import NotFound from './pages/NotFound';
 import TestConnection from "./pages/TestConnection";
 import DiagnosticConnection from "./pages/DiagnosticConnection";
-import CreateStoryN8n from "./pages/CreateStoryN8n";
+
 import CreateStoryTitles from "./pages/CreateStoryTitles";
 import CreateStoryStep1 from "./pages/CreateStoryStep1";
 import CreateStoryStep2 from "./pages/CreateStoryStep2";
@@ -68,7 +68,8 @@ function App() {
           <Route path="library" element={<Library />} />
           <Route path="reader/:id" element={<StoryReaderPage />} />
           {/* Route obsolète supprimée - utiliser /create-story/step-1 */}
-          <Route path="create-story-n8n" element={<CreateStoryN8n />} />
+          {/* Redirection de l'ancienne route vers la nouvelle */}
+          <Route path="create-story-n8n" element={<Navigate to="/create-story/step-1" replace />} />
           <Route path="create-story-titles" element={<CreateStoryTitles />} />
           <Route path="create-story/step-1" element={<CreateStoryStep1 />} />
           <Route path="create-story/step-2" element={<CreateStoryStep2 />} />

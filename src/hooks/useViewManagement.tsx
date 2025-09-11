@@ -11,7 +11,7 @@ export const useViewManagement = () => {
     if (location.pathname === "/settings") return "settings";
     if (location.pathname === "/children") return "profiles";
     if (location.pathname === "/library") return "library";
-    if (location.pathname === "/create-story-n8n") return "create";
+    if (location.pathname === "/create-story/step-1") return "create";
     return "home";
   });
   const [showGuide, setShowGuide] = useState<boolean>(false);
@@ -31,7 +31,7 @@ export const useViewManagement = () => {
       setCurrentViewState("profiles");
     } else if (location.pathname === "/library") {
       setCurrentViewState("library");
-    } else if (location.pathname === "/create-story-n8n") {
+    } else if (location.pathname === "/create-story/step-1") {
       setCurrentViewState("create");
     }
     
@@ -52,7 +52,7 @@ export const useViewManagement = () => {
         navigate("/");
         break;
       case "create":
-        navigate("/create-story-n8n");
+        navigate("/create-story/step-1");
         break;
       case "profiles":
         navigate("/children");
