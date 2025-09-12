@@ -33,6 +33,30 @@ export const APP_CONFIG = {
     MAX_UPLOAD_SIZE: 5 * 1024 * 1024 // 5MB
   },
 
+  // Subscription tiers configuration
+  SUBSCRIPTION_TIERS: {
+    CALMINI: {
+      name: 'Calmini',
+      monthlyPrice: 2.00,
+      features: ['10 histoires/mois', '5 enfants max', 'Support standard']
+    },
+    CALMIDIUM: {
+      name: 'Calmidium', 
+      monthlyPrice: 5.00,
+      features: ['30 histoires/mois', '10 enfants max', 'Suites d\'histoires', 'Support prioritaire']
+    },
+    CALMIX: {
+      name: 'Calmix',
+      monthlyPrice: 10.00,
+      features: ['50 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', '1 audio/mois', 'Accès priorité', 'Communauté Calmos']
+    },
+    CALMIXXL: {
+      name: 'Calmixxl',
+      monthlyPrice: 20.00,
+      features: ['100 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', '4 audio/mois', 'Accès priorité', 'Communauté Calmos']
+    }
+  },
+
   // Security settings
   SECURITY: {
     MAX_LOGIN_ATTEMPTS: 5,

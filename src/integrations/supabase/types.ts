@@ -488,6 +488,54 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_limits: {
+        Row: {
+          annual_price_usd: number
+          audio_generations_per_month: number
+          created_at: string
+          has_background_music: boolean
+          has_community_access: boolean
+          has_priority_access: boolean
+          has_story_series: boolean
+          id: string
+          max_children: number | null
+          monthly_price_usd: number
+          stories_per_month: number
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+        }
+        Insert: {
+          annual_price_usd: number
+          audio_generations_per_month?: number
+          created_at?: string
+          has_background_music?: boolean
+          has_community_access?: boolean
+          has_priority_access?: boolean
+          has_story_series?: boolean
+          id?: string
+          max_children?: number | null
+          monthly_price_usd: number
+          stories_per_month: number
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+        }
+        Update: {
+          annual_price_usd?: number
+          audio_generations_per_month?: number
+          created_at?: string
+          has_background_music?: boolean
+          has_community_access?: boolean
+          has_priority_access?: boolean
+          has_story_series?: boolean
+          id?: string
+          max_children?: number | null
+          monthly_price_usd?: number
+          stories_per_month?: number
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -544,6 +592,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          audio_generations_used_this_period: number
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          id: string
+          is_annual: boolean
+          status: string
+          stories_used_this_period: number
+          stripe_subscription_id: string | null
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audio_generations_used_this_period?: number
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          is_annual?: boolean
+          status?: string
+          stories_used_this_period?: number
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audio_generations_used_this_period?: number
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          is_annual?: boolean
+          status?: string
+          stories_used_this_period?: number
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {
@@ -648,6 +749,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_user_quota: {
+        Args: { p_quota_type: string; p_user_id: string }
+        Returns: Json
+      }
       cleanup_expired_sessions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -669,11 +774,19 @@ export type Database = {
         Args: { p_series_id: string }
         Returns: number
       }
+      has_feature_access: {
+        Args: { p_feature: string; p_user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      increment_usage: {
+        Args: { p_usage_type: string; p_user_id: string }
         Returns: boolean
       }
       is_admin: {
@@ -696,9 +809,14 @@ export type Database = {
         Args: { p_template_id: string }
         Returns: number
       }
+      reset_monthly_quotas: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      subscription_tier: "calmini" | "calmidium" | "calmix" | "calmixxl"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -827,6 +945,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      subscription_tier: ["calmini", "calmidium", "calmix", "calmixxl"],
     },
   },
 } as const

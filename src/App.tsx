@@ -26,6 +26,8 @@ import StoryReaderPage from "./pages/StoryReaderPage";
 import Shell from "./components/Shell";
 import PromptAdmin from './pages/admin/PromptAdmin';
 import AdminGuard from './components/admin/AdminGuard';
+import Pricing from './pages/Pricing';
+import Subscription from './pages/Subscription';
 import { Toaster } from "@/components/ui/toaster";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
@@ -74,6 +76,8 @@ function App() {
           <Route path="create-story/step-1" element={<CreateStoryStep1 />} />
           <Route path="create-story/step-2" element={<CreateStoryStep2 />} />
           <Route path="create-story/step-3" element={<CreateStoryStep3 />} />
+          <Route path="pricing" element={<Pricing />} />
+          <Route path="subscription" element={<Subscription />} />
           <Route path="test-connection" element={<TestConnection />} />
           <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
           <Route path="admin/prompts" element={<AdminGuard><PromptAdmin /></AdminGuard>} />
