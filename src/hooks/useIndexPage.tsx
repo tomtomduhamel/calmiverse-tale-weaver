@@ -36,7 +36,7 @@ export const useIndexPage = () => {
       setCurrentView("create");
       return childId;
     } catch (error) {
-      console.error("Error creating child:", error);
+      
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création du profil enfant",
@@ -53,7 +53,7 @@ export const useIndexPage = () => {
       const storyId = await stories.createStory(formData, children);
       
       if (storyId) {
-        console.log("Story being created, ID:", storyId);
+        
         setCurrentView("library");
         
         toast({
@@ -64,7 +64,7 @@ export const useIndexPage = () => {
       
       return storyId;
     } catch (error) {
-      console.error("Story creation error:", error);
+      
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de l'histoire",
@@ -78,7 +78,7 @@ export const useIndexPage = () => {
 
   // Gestion de la sélection d'histoires avec navigation appropriée
   const handleSelectStory = (story: any) => {
-    console.log("[useIndexPage] Sélection d'histoire - navigation vers /reader/", story.id);
+    
     // Utiliser React Router pour une navigation SPA fluide
     setCurrentView('library'); // Préserver l'état de vue actuel
     // La navigation sera gérée par le composant parent via useAppNavigation
@@ -86,7 +86,7 @@ export const useIndexPage = () => {
 
   // Gestionnaires d'événements
   const handleStoryCreated = (story: any) => {
-    console.log("[useIndexPage] Histoire créée:", story.id);
+    
     setCurrentView("library");
   };
 
@@ -95,7 +95,7 @@ export const useIndexPage = () => {
       await stories.updateStoryStatus(storyId, "read");
       return true;
     } catch (error) {
-      console.error("[useIndexPage] Erreur lors du marquage comme lu:", error);
+      
       return false;
     }
   };
@@ -105,7 +105,7 @@ export const useIndexPage = () => {
       await stories.deleteStory(storyId);
       return true;
     } catch (error) {
-      console.error("[useIndexPage] Erreur lors de la suppression:", error);
+      
       return false;
     }
   };
@@ -116,7 +116,7 @@ export const useIndexPage = () => {
       await stories.retryStoryGeneration(storyId);
       return true;
     } catch (error) {
-      console.error("[useIndexPage] Erreur lors de la relance:", error);
+      
       return false;
     } finally {
       setIsRetrying(false);

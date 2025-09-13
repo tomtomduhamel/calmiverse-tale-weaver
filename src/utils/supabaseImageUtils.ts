@@ -9,7 +9,7 @@
  */
 export const getStoryImageUrl = (imagePath?: string | null): string | null => {
   if (!imagePath) {
-    console.log('[getStoryImageUrl] Pas d\'image path fourni:', imagePath);
+    
     return null;
   }
   
@@ -21,7 +21,7 @@ export const getStoryImageUrl = (imagePath?: string | null): string | null => {
     : imagePath;
   
   const imageUrl = `${supabaseUrl}/storage/v1/object/public/storyimages/${cleanPath}`;
-  console.log('[getStoryImageUrl] URL générée:', imageUrl, 'pour le chemin original:', imagePath, 'chemin nettoyé:', cleanPath);
+  
   return imageUrl;
 };
 

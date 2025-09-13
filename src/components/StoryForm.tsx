@@ -32,23 +32,13 @@ const StoryForm: React.FC<StoryFormProps> = ({
     { id: "fun", label: "S'amuser", value: "fun" },
   ];
   
-  console.log("[StoryForm] Rendu avec", {
-    childrenCount: children?.length || 0,
-    hasOnSubmit: !!onSubmit,
-    hasOnCreateChild: !!onCreateChild,
-    hasOnStoryCreated: !!onStoryCreated,
-    selectedChildrenIds,
-    selectedObjective,
-    formError,
-    objectivesLoaded: objectives?.length || 0
-  });
 
   // Réinitialiser l'erreur quand la sélection change
   useEffect(() => {
     if (formError) {
       if ((formError.toLowerCase().includes('enfant') && selectedChildrenIds.length > 0) ||
           (formError.toLowerCase().includes('objectif') && selectedObjective)) {
-        console.log("[StoryForm] Effacement d'erreur suite à modification de sélection");
+        
         setFormError(null);
       }
     }
@@ -68,31 +58,22 @@ const StoryForm: React.FC<StoryFormProps> = ({
   
   // Gérer la sélection d'un enfant
   const handleChildSelect = (childId: string) => {
-    console.log("[StoryForm] Sélection d'enfant:", childId, "État actuel:", selectedChildrenIds);
-    
     setSelectedChildrenIds(prev => {
       const isAlreadySelected = prev.includes(childId);
-      const newSelection = isAlreadySelected 
+      return isAlreadySelected 
         ? prev.filter(id => id !== childId) 
         : [...prev, childId];
-        
-      console.log("[StoryForm] Nouvelle sélection:", newSelection);
-      return newSelection;
     });
   };
   
   // Gérer la sélection d'un objectif
   const handleObjectiveSelect = (objective: string) => {
-    console.log("[StoryForm] Sélection d'objectif:", objective);
+    
     setSelectedObjective(objective);
   };
   
   // Valider le formulaire
   const validateForm = () => {
-    console.log("[StoryForm] Validation du formulaire:", {
-      selectedChildrenIds, 
-      selectedObjective
-    });
     
     if (!selectedChildrenIds || selectedChildrenIds.length === 0) {
       return { isValid: false, error: "Veuillez sélectionner au moins un enfant pour créer une histoire" };
@@ -108,10 +89,10 @@ const StoryForm: React.FC<StoryFormProps> = ({
   // Gérer la soumission du formulaire
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[StoryForm] Soumission du formulaire");
+    
     
     if (isSubmitting) {
-      console.log("[StoryForm] Soumission déjà en cours");
+      
       return;
     }
     
@@ -126,17 +107,13 @@ const StoryForm: React.FC<StoryFormProps> = ({
       setIsSubmitting(true);
       setFormError(null);
       
-      console.log("[StoryForm] Appel de onSubmit avec:", {
-        childrenIds: selectedChildrenIds,
-        objective: selectedObjective
-      });
       
       const storyId = await onSubmit({
         childrenIds: selectedChildrenIds,
         objective: selectedObjective
       });
       
-      console.log("[StoryForm] Histoire créée avec succès, ID:", storyId);
+      
       
       // Appeler le callback de succès
       if (storyId && onStoryCreated) {
