@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import StoryForm from "../StoryForm";
 import StoryReader from "../StoryReader";
 import StoryLibrary from "../StoryLibrary";
-import LoadingStory from "../LoadingStory";
+import LoadingStory from "@/components/LoadingStory";
 import type { Story } from "@/types/story";
 import type { ViewType } from "@/types/views";
 import { useStories } from "@/hooks/useStories";

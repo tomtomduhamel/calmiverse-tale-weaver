@@ -6,6 +6,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import type { Child } from "@/types/child";
 import type { Story } from "@/types/story";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
+import { useNonBlockingStorySubmission } from "@/hooks/stories/useNonBlockingStorySubmission";
 
 interface SimplifiedUnifiedCreatorProps {
   onSubmit: (formData: { childrenIds: string[]; objective: string }) => Promise<string>;
@@ -27,8 +28,33 @@ const SimplifiedUnifiedCreator: React.FC<SimplifiedUnifiedCreatorProps> = ({
   // États simples et directs
   const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
   const [selectedObjective, setSelectedObjective] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Hook pour soumission non-bloquante
+  const { submitStory, isSubmitting } = useNonBlockingStorySubmission({
+    onSubmit,
+    onSuccess: (storyId) => {
+      // Créer une histoire temporaire pour le callback
+      const tempStory: Story = {
+        id: storyId,
+        title: "Histoire en cours de génération",
+        preview: "Génération en cours...",
+        childrenIds: selectedChildIds,
+        createdAt: new Date(),
+        status: 'pending',
+        content: "",
+        story_summary: "",
+        objective: selectedObjective
+      };
+      onStoryCreated(tempStory);
+      
+      // Réinitialiser le formulaire
+      setSelectedChildIds([]);
+      setSelectedObjective("");
+      setError(null);
+    },
+    redirectToLibrary: true
+  });
   
   // Chargement des objectifs
   const { objectives, isLoading: loadingObjectives } = useStoryObjectives();
@@ -93,103 +119,37 @@ const SimplifiedUnifiedCreator: React.FC<SimplifiedUnifiedCreatorProps> = ({
     });
   };
   
-  // Soumission du formulaire avec bypass de validation
+  // Soumission du formulaire simplifié et non-bloquant
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[SimplifiedUnifiedCreator] Tentative de soumission avec:", {
-      selectedChildIds,
-      selectedObjective
-    });
     
-    // Empêcher les soumissions multiples
-    if (isSubmitting) {
-      console.log("[SimplifiedUnifiedCreator] Soumission déjà en cours, ignorée");
-      return;
-    }
-    
-    // Validation minimale
+    // Validation minimale avec correction automatique
     let validIds = selectedChildIds;
     let validObjective = selectedObjective;
     
-    // Correction automatique: si aucun enfant n'est sélectionné, prendre le premier
     if (!validIds || validIds.length === 0) {
       if (children && children.length > 0) {
         validIds = [children[0].id];
-        console.log("[SimplifiedUnifiedCreator] Correction automatique: sélection du premier enfant:", validIds);
+        setSelectedChildIds(validIds);
       } else {
         setError("Aucun enfant disponible. Veuillez d'abord créer un profil enfant.");
         return;
       }
     }
     
-    // Correction automatique: si aucun objectif n'est sélectionné, prendre le premier
     if (!validObjective && activeObjectives && activeObjectives.length > 0) {
       validObjective = activeObjectives[0].value;
-      console.log("[SimplifiedUnifiedCreator] Correction automatique: sélection du premier objectif:", validObjective);
+      setSelectedObjective(validObjective);
     }
     
     try {
-      setIsSubmitting(true);
       setError(null);
-      
-      console.log("[SimplifiedUnifiedCreator] Soumission du formulaire avec données corrigées:", {
+      await submitStory({
         childrenIds: validIds,
         objective: validObjective
       });
-      
-      // Notification à l'utilisateur
-      toast({
-        title: "Création en cours",
-        description: "Nous préparons votre histoire personnalisée...",
-      });
-      
-      // Appel à l'API de création
-      const storyId = await onSubmit({
-        childrenIds: validIds,
-        objective: validObjective
-      });
-      
-      console.log("[SimplifiedUnifiedCreator] Histoire créée avec succès, ID:", storyId);
-      
-      // Notifier du succès
-      toast({
-        title: "Histoire créée",
-        description: "Votre histoire est en cours de génération et sera bientôt disponible.",
-      });
-      
-      // Informer le parent du succès
-      if (storyId) {
-        // Créer une histoire temporaire pendant la génération
-        const tempStory: Story = {
-          id: storyId,
-          title: "Histoire en cours de génération",
-          preview: "Génération en cours...",
-          childrenIds: validIds,
-          createdAt: new Date(),
-          status: 'pending',
-          content: "", // CORRECTION: utiliser 'content' au lieu de 'story_text'
-          story_summary: "",
-          objective: validObjective
-        };
-        
-        onStoryCreated(tempStory);
-      }
-      
-      // Réinitialiser le formulaire après succès
-      setSelectedChildIds([]);
-      setSelectedObjective("");
-      
     } catch (error: any) {
-      console.error("[SimplifiedUnifiedCreator] Erreur lors de la soumission:", error);
       setError(error?.message || "Une erreur est survenue lors de la création de l'histoire");
-      
-      toast({
-        title: "Erreur",
-        description: error?.message || "Une erreur est survenue lors de la création de l'histoire",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
     }
   };
   

@@ -3,6 +3,7 @@ import React, { useCallback } from "react";
 import StoryLibrary from "@/components/StoryLibrary";
 import type { Story } from "@/types/story";
 import type { ViewType } from "@/types/views";
+import { BackgroundGenerationIndicator } from "@/components/stories/BackgroundGenerationIndicator";
 
 interface LibraryViewProps {
   stories: Story[];
@@ -31,7 +32,8 @@ export const LibraryView: React.FC<LibraryViewProps> = React.memo(({
   }, [onSelectStory]);
   
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in space-y-4">
+      <BackgroundGenerationIndicator />
       <StoryLibrary
         stories={stories}
         onSelectStory={handleSelectStory}
