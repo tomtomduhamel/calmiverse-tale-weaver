@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
 import { useStoryForm } from "@/hooks/stories/storyForm";
 import { useChildFormLogic } from "@/components/story/useChildFormLogic";
-import { useStoryProgress } from "@/components/story/form/hooks/useStoryProgress";
 import { useStoryFormAuth } from "@/hooks/useStoryFormAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -94,8 +93,8 @@ export const useStoryFormContainer = (
     }
   }, [childName, childAge, onCreateChild, resetChildForm, setShowChildForm, toast, user?.id]);
 
-  // Indicateur de progression
-  const { progress } = useStoryProgress(formIsSubmitting);
+  // Indicateur de progression simple
+  const progress = formIsSubmitting ? 75 : 0;
 
   // Gestionnaires d'événements stabilisés
   const handleCreationModeSwitch = useCallback(() => {

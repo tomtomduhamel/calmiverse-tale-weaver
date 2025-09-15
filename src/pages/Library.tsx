@@ -11,7 +11,6 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import StoryLibrary from "@/components/StoryLibrary";
-import LoadingStory from "@/components/LoadingStory";
 import { PWAGestures } from "@/components/PWAGestures";
 const Library: React.FC = () => {
   const {
@@ -151,7 +150,14 @@ const Library: React.FC = () => {
     }
   };
   if (authLoading || childrenLoading || storiesLoading) {
-    return <LoadingStory />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
   }
   if (!user) {
     navigate("/auth");

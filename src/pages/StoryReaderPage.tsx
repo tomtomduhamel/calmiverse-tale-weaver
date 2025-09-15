@@ -5,7 +5,6 @@ import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useStoryFavorites } from "@/hooks/stories/useStoryFavorites";
 import StoryReader from "@/components/StoryReader";
-import LoadingStory from "@/components/LoadingStory";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import type { Story } from "@/types/story";
@@ -113,7 +112,14 @@ const StoryReaderPage: React.FC = () => {
 
   // État de chargement
   if (isLoading) {
-    return <LoadingStory />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement de l'histoire...</p>
+        </div>
+      </div>
+    );
   }
 
   // État d'erreur

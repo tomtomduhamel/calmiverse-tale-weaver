@@ -3,7 +3,6 @@ import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import LoadingStory from "@/components/LoadingStory";
 import TitleSelectionStepWrapper from "@/components/story/steps/TitleSelectionStepWrapper";
 
 const CreateStoryStep3: React.FC = () => {
@@ -27,7 +26,14 @@ const CreateStoryStep3: React.FC = () => {
   };
 
   if (authLoading || childrenLoading) {
-    return <LoadingStory />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {

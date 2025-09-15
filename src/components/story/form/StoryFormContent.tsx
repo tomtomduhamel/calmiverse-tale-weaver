@@ -3,7 +3,7 @@ import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { default as StoryObjectives } from "../StoryObjectives";
 import { StoryError } from "./StoryError";
-import { StoryProgress } from "./StoryProgress";
+
 import SimpleChildSelector from "./SimpleChildSelector";
 import GenerateStoryButton from "./GenerateStoryButton";
 import StoryFormHeader from "./StoryFormHeader";
@@ -113,7 +113,12 @@ export const StoryFormContent = React.memo(({
             />
           </div>
 
-          {isSubmitting && <StoryProgress progress={progress} isSubmitting={isSubmitting} />}
+          {isSubmitting && (
+            <div className="flex items-center justify-center space-x-2 p-4 bg-primary/5 rounded-lg">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              <span className="text-sm text-muted-foreground">Génération en cours...</span>
+            </div>
+          )}
           
           <div className="mt-6">
             <GenerateStoryButton 
