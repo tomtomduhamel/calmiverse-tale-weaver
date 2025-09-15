@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePWA } from '@/hooks/usePWA';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNativePWANotifications } from '@/hooks/notifications/useNativePWANotifications';
 import { usePWAMetrics } from '@/components/PWAMetrics';
 
 interface PWAStatus {
@@ -18,7 +18,7 @@ interface PWAStatus {
 
 export const usePWAStatus = (): PWAStatus => {
   const { isInstalled, isOnline, updateAvailable } = usePWA();
-  const { permission, isSupported } = useNotifications();
+  const { permission, isSupported } = useNativePWANotifications();
   const { metrics } = usePWAMetrics();
 
   const [status, setStatus] = useState<PWAStatus>({

@@ -48,7 +48,7 @@ export const useBackgroundStoryGeneration = () => {
   }, []);
 
   // Marquer une génération comme terminée
-  const completeGeneration = useCallback((storyId: string, story?: Story) => {
+  const completeGeneration = useCallback(async (storyId: string, story?: Story) => {
     setState(prev => ({
       ...prev,
       activeGenerations: prev.activeGenerations.map(gen =>
@@ -58,15 +58,19 @@ export const useBackgroundStoryGeneration = () => {
       )
     }));
 
-    // Afficher une notification native
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Histoire prête !', {
-        body: story?.title || 'Votre histoire personnalisée est maintenant disponible',
-        icon: '/icon-192.png',
-        tag: `story-${storyId}`,
-        data: { storyId, action: 'read' }
-      });
-    } else {
+    // Utiliser le service de notifications PWA natif
+    try {
+      const { notificationService } = await import('@/services/notifications/NotificationService');
+      if (story?.title) {
+        await notificationService.notifyStoryReady(story.title, storyId);
+      } else {
+        await notificationService.notifyGeneralUpdate(
+          '✨ Histoire terminée !',
+          'Votre histoire personnalisée est maintenant disponible'
+        );
+      }
+    } catch (error) {
+      console.warn('Notification failed, using toast fallback:', error);
       // Fallback avec toast
       toast({
         title: "✨ Histoire terminée !",

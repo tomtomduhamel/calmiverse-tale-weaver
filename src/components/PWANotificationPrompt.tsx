@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, BellOff, X } from 'lucide-react';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNativePWANotifications } from '@/hooks/notifications/useNativePWANotifications';
 import { usePWAAnalytics } from '@/hooks/usePWAAnalytics';
 
 export const PWANotificationPrompt: React.FC = () => {
-  const { permission, isSupported, requestPermission, sendTestNotification } = useNotifications();
+  const { permission, isSupported, requestPermission, notifyGeneralUpdate } = useNativePWANotifications();
   const { track } = usePWAAnalytics();
   const [showPrompt, setShowPrompt] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -38,7 +38,7 @@ export const PWANotificationPrompt: React.FC = () => {
       
       // Send welcome notification
       setTimeout(() => {
-        sendTestNotification();
+        notifyGeneralUpdate('Bienvenue !', 'Vous recevrez maintenant des notifications pour vos histoires');
       }, 1000);
     } else {
       track('notification_permission_denied');
