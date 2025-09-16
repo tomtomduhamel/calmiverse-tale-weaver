@@ -13,6 +13,12 @@ import Pagination from "./Pagination";
 import StoryCleaner from "./StoryCleaner";
 import { extractObjectiveValue } from "@/utils/objectiveUtils";
 import { useSeriesGrouping } from "@/hooks/stories/useSeriesGrouping";
+import { useBackgroundStoryGeneration } from "@/hooks/stories/useBackgroundStoryGeneration";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Clock, CheckCircle, XCircle } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface LibraryContainerProps {
   stories: Story[];
@@ -48,6 +54,7 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
   onCreateStory
 }) => {
   const isMobile = useIsMobile();
+  const { activeGenerations, totalActiveCount } = useBackgroundStoryGeneration();
   
   // Grouper les histoires en séries
   const { libraryItems } = useSeriesGrouping(stories);
@@ -208,6 +215,65 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
         isZenMode={isZenMode}
         onZenModeToggle={() => setIsZenMode(!isZenMode)}
       />
+
+      {/* Section générations en cours */}
+      {totalActiveCount > 0 && (
+        <Card className="border-l-4 border-l-primary bg-gradient-to-r from-primary/5 to-transparent">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              Générations en cours ({totalActiveCount})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {activeGenerations.slice(0, 4).map((generation) => (
+                <div 
+                  key={generation.id} 
+                  className="flex items-center justify-between text-xs p-2 rounded bg-muted/30"
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {generation.status === 'pending' && (
+                      <Clock className="h-3 w-3 text-orange-500 flex-shrink-0" />
+                    )}
+                    {generation.status === 'completed' && (
+                      <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                    )}
+                    {generation.status === 'error' && (
+                      <XCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
+                    )}
+                    <span className="truncate">{generation.title}</span>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                    {generation.status === 'completed' && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800 h-4 text-xs">
+                        Prête
+                      </Badge>
+                    )}
+                    {generation.status === 'error' && (
+                      <Badge variant="destructive" className="h-4 text-xs">
+                        Erreur
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground/70">
+                      {formatDistanceToNow(generation.startTime, { 
+                        addSuffix: true, 
+                        locale: fr 
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              
+              {activeGenerations.length > 4 && (
+                <div className="text-xs text-muted-foreground text-center py-2 col-span-full">
+                  +{activeGenerations.length - 4} autre{activeGenerations.length - 4 > 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <LibraryErrorAlert 
         errorStories={errorStories}

@@ -7,6 +7,8 @@ import {
   Settings,
   PenSquare
 } from "lucide-react";
+import { Badge } from '@/components/ui/badge';
+import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStoryGeneration';
 import { cn } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { ViewType } from "@/types/views";
@@ -21,6 +23,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
   const location = useLocation();
   const navigate = useNavigate();
   const { navigateToHome, navigateToLibrary, navigateToCreate, navigateToProfiles, navigateToSettings } = useAppNavigation();
+  const { totalActiveCount } = useBackgroundStoryGeneration();
   
   // Items for the bottom navigation
   const menuItems = [
@@ -64,7 +67,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
             )}
             aria-label={item.title}
           >
-            <item.icon className="h-4 w-4" />
+            <div className="relative">
+              <item.icon className="h-4 w-4" />
+              {item.view === 'library' && totalActiveCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-3 w-3 p-0 text-[8px] bg-primary text-primary-foreground">
+                  {totalActiveCount}
+                </Badge>
+              )}
+            </div>
             <span className="text-[10px] mt-0.5 leading-tight">{item.title}</span>
           </button>
         ))}

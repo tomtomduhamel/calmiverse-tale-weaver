@@ -2,7 +2,10 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
-import { Home, BookOpen, Users, Settings, LogOut, Menu } from 'lucide-react';
+import { Home, BookOpen, Users, Settings, LogOut, Menu, Bell } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStoryGeneration';
+import { NotificationHistoryModal } from '@/components/notifications/NotificationHistoryModal';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 const Navigation = () => {
@@ -13,6 +16,7 @@ const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { totalActiveCount } = useBackgroundStoryGeneration();
   const handleLogout = async () => {
     try {
       await logout();
@@ -58,7 +62,26 @@ const Navigation = () => {
             {navItems.map(item => <Link key={item.path} to={item.path} className={`flex items-center px-3 py-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-primary-foreground/20 font-medium' : 'hover:bg-primary-foreground/10'}`}>
                 <item.icon className="w-4 h-4 mr-2" />
                 {item.label}
+                {item.path === '/library' && totalActiveCount > 0 && (
+                  <Badge className="ml-2 bg-accent text-accent-foreground text-xs min-w-[1.2rem] h-5 px-1">
+                    {totalActiveCount}
+                  </Badge>
+                )}
               </Link>)}
+            
+            {/* Badge notifications */}
+            <NotificationHistoryModal 
+              trigger={
+                <Button variant="ghost" size="sm" className="relative hover:bg-primary-foreground/10">
+                  <Bell className="h-4 w-4" />
+                  {totalActiveCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-accent text-accent-foreground">
+                      {totalActiveCount}
+                    </Badge>
+                  )}
+                </Button>
+              }
+            />
           </div>
           
           <div className="hidden md:block">

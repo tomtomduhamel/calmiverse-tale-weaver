@@ -7,6 +7,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useStoriesState } from "@/hooks/stories/useStoriesState";
 import { useAuthRedirection } from "@/hooks/app/useAuthRedirection";
 import { useToast } from "@/hooks/use-toast";
+import { useNonBlockingStorySubmission } from "@/hooks/stories/useNonBlockingStorySubmission";
+import { useBackgroundStoryGeneration } from "@/hooks/stories/useBackgroundStoryGeneration";
+import { useNotificationHandlers } from "@/hooks/notifications/useNotificationHandlers";
+import { StoryCompletionActions } from "@/services/stories/StoryCompletionActions";
 import type { Child } from "@/types/child";
 
 export const useIndexPage = () => {
@@ -16,6 +20,39 @@ export const useIndexPage = () => {
   const { currentView, setCurrentView, showGuide } = useViewManagement();
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  
+  // Nouveaux hooks pour la Phase 3
+  const { startGeneration } = useBackgroundStoryGeneration();
+  const { handleStoryReady, handleStoryError, saveNotificationToHistory } = useNotificationHandlers();
+  
+  const { submitStory, isSubmitting } = useNonBlockingStorySubmission({
+    onSubmit: async (formData) => {
+      // Utiliser la logique existante de création d'histoire
+      const storyId = await stories.createStory(formData, children);
+      
+      // Démarrer le suivi en arrière-plan
+      startGeneration(storyId, 'Nouvelle histoire en cours...');
+      
+      return storyId;
+    },
+    onSuccess: (storyId) => {
+      setCurrentView('library');
+    }
+  });
+  
+  // Actions post-génération intégrées
+  const completionActions = new StoryCompletionActions({
+    onNotification: (title, message, storyId) => {
+      saveNotificationToHistory(title, message, 'story_ready', storyId);
+      toast({ title, description: message });
+    },
+    onNavigate: (path) => {
+      window.location.href = path;
+    },
+    onRefresh: () => {
+      stories.forceRefresh();
+    }
+  });
   
   // Gérer l'état des histoires (currentStory supprimé car géré par StoryReaderPage)
   const {
@@ -46,33 +83,25 @@ export const useIndexPage = () => {
     }
   };
 
-  // Gestion de la soumission d'histoires
+  // Gestionnaire de soumission d'histoire amélioré avec nouveau workflow
   const handleStorySubmitWrapper = async (formData: any): Promise<string> => {
     try {
-      setIsRetrying(true);
-      const storyId = await stories.createStory(formData, children);
+      console.log("[useIndexPage] Soumission histoire avec nouveau workflow:", formData);
       
-      if (storyId) {
-        
-        setCurrentView("library");
-        
-        toast({
-          title: "Histoire en cours de création",
-          description: "Nous préparons votre histoire, vous serez notifié(e) une fois terminée.",
-        });
-      }
+      // Utiliser le système non-bloquant de Phase 3
+      const storyId = await submitStory(formData);
+      
+      console.log("[useIndexPage] Histoire soumise avec succès:", storyId);
       
       return storyId;
-    } catch (error) {
+    } catch (error: any) {
+      console.error("[useIndexPage] Erreur soumission:", error);
       
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la création de l'histoire",
-        variant: "destructive",
-      });
+      // Notifier l'erreur via le système de notifications
+      handleStoryError('unknown', error.message);
+      
+      // Relancer l'erreur pour que le composant parent puisse la gérer
       throw error;
-    } finally {
-      setIsRetrying(false);
     }
   };
 
@@ -131,7 +160,7 @@ export const useIndexPage = () => {
     currentView,
     showGuide,
     pendingStoryId: stories.pendingStoryId,
-    isRetrying,
+    isRetrying: isSubmitting, // Utiliser le nouveau état de soumission
     isLoading,
     stories,
     children,
