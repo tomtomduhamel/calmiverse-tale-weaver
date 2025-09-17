@@ -20,7 +20,6 @@ import DiagnosticConnection from "./pages/DiagnosticConnection";
 import CreateStoryTitles from "./pages/CreateStoryTitles";
 import CreateStoryStep1 from "./pages/CreateStoryStep1";
 import CreateStoryStep2 from "./pages/CreateStoryStep2";
-import CreateStoryStep3 from "./pages/CreateStoryStep3";
 import Library from "./pages/Library";
 import StoryReaderPage from "./pages/StoryReaderPage";
 import Shell from "./components/Shell";
@@ -75,7 +74,7 @@ function App() {
           <Route path="create-story-titles" element={<CreateStoryTitles />} />
           <Route path="create-story/step-1" element={<CreateStoryStep1 />} />
           <Route path="create-story/step-2" element={<CreateStoryStep2 />} />
-          <Route path="create-story/step-3" element={<CreateStoryStep3 />} />
+          {/* Routes step-3 supprimée - génération en arrière-plan */}
           <Route path="pricing" element={<Pricing />} />
           <Route path="subscription" element={<Subscription />} />
           <Route path="test-connection" element={<TestConnection />} />
