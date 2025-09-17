@@ -30,7 +30,7 @@ import Subscription from './pages/Subscription';
 import { Toaster } from "@/components/ui/toaster";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
-import { PWANotificationPrompt } from "@/components/PWANotificationPrompt";
+
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ErrorListener } from "@/components/ErrorListener";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -89,7 +89,7 @@ function App() {
       <Toaster />
       <PWAInstallPrompt />
       <PWAUpdateNotification />
-      <PWANotificationPrompt />
+      
       <OfflineIndicator />
     </Router>
     </ErrorBoundary>
