@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
 import { cn } from '@/lib/utils';
+import { useStoryGenerationManager } from '@/services/stories/StoryGenerationManager';
 
 interface MobileObjectiveSelectionStepProps {
   children: Child[];
@@ -16,11 +17,13 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
     selectedChildrenIds,
     selectedObjective,
     updateSelectedObjective,
-    updateCurrentStep
+    updateCurrentStep,
+    clearPersistedState
   } = usePersistedStoryCreation();
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { generateStoryInBackground } = useStoryGenerationManager();
 
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
 
@@ -35,7 +38,7 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
     updateSelectedObjective(objective);
   }, [updateSelectedObjective]);
 
-  const handleContinueToTitles = useCallback(() => {
+  const handleContinueToTitles = useCallback(async () => {
     if (!selectedObjective) {
       toast({
         title: "Objectif requis",
@@ -45,9 +48,39 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
       return;
     }
 
-    updateCurrentStep('titles');
-    navigate('/create-story/step-3');
-  }, [selectedObjective, updateCurrentStep, navigate, toast]);
+    try {
+      console.log('[MobileObjectiveSelectionStep] Déclenchement génération avec:', {
+        childrenIds: selectedChildrenIds,
+        objective: selectedObjective
+      });
+
+      // Déclencher la génération en arrière-plan
+      await generateStoryInBackground({
+        childrenIds: selectedChildrenIds,
+        objective: selectedObjective,
+        title: 'Histoire personnalisée'
+      });
+
+      // Nettoyer l'état persisté
+      clearPersistedState();
+
+      // Afficher un message de succès
+      toast({
+        title: "✨ Génération lancée !",
+        description: "Votre histoire sera bientôt prête. Vous pouvez naviguer librement.",
+      });
+
+      // Naviguer vers la bibliothèque
+      navigate('/library');
+    } catch (error) {
+      console.error('[MobileObjectiveSelectionStep] Erreur génération:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de démarrer la génération. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    }
+  }, [selectedObjective, selectedChildrenIds, generateStoryInBackground, clearPersistedState, navigate, toast]);
 
   const handleBack = useCallback(() => {
     navigate('/create-story/step-1');
@@ -79,7 +112,7 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
           </Button>
           
           <h2 className="text-lg font-semibold text-primary">
-            Étape 2 sur 4
+            Étape 2 sur 3
           </h2>
           
           <Button 

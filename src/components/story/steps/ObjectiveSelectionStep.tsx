@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import MobileObjectiveSelectionStep from './mobile/MobileObjectiveSelectionStep';
+import { cn } from '@/lib/utils';
+import { useStoryGenerationManager } from '@/services/stories/StoryGenerationManager';
 
 interface ObjectiveSelectionStepProps {
   children: Child[];
@@ -32,11 +34,13 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
     selectedChildrenIds,
     selectedObjective,
     updateSelectedObjective,
-    updateCurrentStep
+    updateCurrentStep,
+    clearPersistedState
   } = usePersistedStoryCreation();
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { generateStoryInBackground } = useStoryGenerationManager();
 
   // Version desktop (code existant)
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
@@ -52,7 +56,7 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
     updateSelectedObjective(objective);
   }, [updateSelectedObjective]);
 
-  const handleContinueToTitles = useCallback(() => {
+  const handleContinueToTitles = useCallback(async () => {
     if (!selectedObjective) {
       toast({
         title: "Objectif requis",
@@ -62,10 +66,39 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
       return;
     }
 
-    console.log('[ObjectiveSelectionStep] Navigation vers la sélection de titres, objectif:', selectedObjective);
-    updateCurrentStep('titles');
-    navigate('/create-story/step-3');
-  }, [selectedObjective, updateCurrentStep, navigate, toast]);
+    try {
+      console.log('[ObjectiveSelectionStep] Déclenchement génération avec:', {
+        childrenIds: selectedChildrenIds,
+        objective: selectedObjective
+      });
+
+      // Déclencher la génération en arrière-plan
+      await generateStoryInBackground({
+        childrenIds: selectedChildrenIds,
+        objective: selectedObjective,
+        title: 'Histoire personnalisée'
+      });
+
+      // Nettoyer l'état persisté
+      clearPersistedState();
+
+      // Afficher un message de succès
+      toast({
+        title: "✨ Génération lancée !",
+        description: "Votre histoire sera bientôt prête. Vous pouvez naviguer librement.",
+      });
+
+      // Naviguer vers la bibliothèque
+      navigate('/library');
+    } catch (error) {
+      console.error('[ObjectiveSelectionStep] Erreur génération:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de démarrer la génération. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    }
+  }, [selectedObjective, selectedChildrenIds, generateStoryInBackground, clearPersistedState, navigate, toast]);
 
   const handleBack = useCallback(() => {
     navigate('/create-story/step-1');
