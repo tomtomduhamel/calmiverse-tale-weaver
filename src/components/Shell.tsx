@@ -8,6 +8,8 @@ import MobileMenu from './MobileMenu';
 import { Footer } from './Footer';
 import { useViewManagement } from '@/hooks/useViewManagement';
 import { logger } from '@/utils/logger';
+import { OfflineSyncIndicator } from './OfflineSyncIndicator';
+import { OfflineIndicator } from './OfflineIndicator';
 
 interface ShellProps {
   children?: ReactNode;
@@ -41,6 +43,10 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
         
         {/* Footer */}
         <Footer />
+        
+        {/* Indicateurs PWA et synchronisation */}
+        <OfflineIndicator />
+        <OfflineSyncIndicator />
         
         {/* Afficher le menu mobile uniquement si nous ne sommes pas dans le lecteur */}
         {showMobileMenu && (

@@ -6,6 +6,7 @@ import { clientsClaim } from 'workbox-core';
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { StaleWhileRevalidate, NetworkFirst, CacheFirst } from 'workbox-strategies';
+import { swNotificationHandler } from './services/sw-notification-handler';
 
 // Important: point d'injection du manifeste Workbox
 // self.__WB_MANIFEST sera remplacé à la build par la liste des assets à pré-cacher
@@ -48,52 +49,29 @@ registerRoute(
   new StaleWhileRevalidate({ cacheName: 'app-pages' })
 );
 
-// Gestion des clics sur les notifications
+// Gestion avancée des notifications avec persistance
 self.addEventListener('notificationclick', (event: any) => {
-  event.notification.close();
-  const data = event.notification?.data || {};
-  const action = event.action || data.action || 'home';
-
-  let url = '/';
-  switch (action) {
-    case 'read':
-      url = data.storyId ? `/reader/${data.storyId}` : '/library';
-      break;
-    case 'library':
-      url = '/library';
-      break;
-    case 'create':
-      url = '/create-story/step-1';
-      break;
-    case 'home':
-    default:
-      url = '/';
-  }
-
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((clientList: any[]) => {
-      for (const client of clientList) {
-        if (client.url.includes(url.split('/')[1]) && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(url);
-      }
-    })
-  );
+  event.waitUntil(swNotificationHandler.handleNotificationClick(event));
 });
 
-self.addEventListener('notificationclose', (event: any) => {
-  // Optionnel: analytics
-});
-
-self.addEventListener('message', (event: any) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
-
+// Gestion de la synchronisation en arrière-plan
 self.addEventListener('sync', (event: any) => {
-  // Placeholder pour futures syncs
+  event.waitUntil(swNotificationHandler.handleBackgroundSync(event));
+});
+
+// Gestion des messages depuis l'app principale
+self.addEventListener('message', (event: any) => {
+  if (event.data && event.data.type) {
+    switch (event.data.type) {
+      case 'SHOW_NOTIFICATION':
+        event.waitUntil(swNotificationHandler.showNotification(event.data.payload));
+        break;
+      case 'SCHEDULE_SYNC':
+        event.waitUntil(swNotificationHandler.scheduleBackgroundSync());
+        break;
+      case 'SKIP_WAITING':
+        self.skipWaiting();
+        break;
+    }
+  }
 });
