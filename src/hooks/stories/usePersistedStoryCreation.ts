@@ -23,15 +23,43 @@ export const usePersistedStoryCreation = () => {
   const [state, setState] = useState<PersistedStoryCreationState>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
+      if (stored && stored.trim()) {
         const parsed = JSON.parse(stored);
-        // Check if not expired
-        if (Date.now() - parsed.timestamp < EXPIRATION_TIME) {
-          return parsed;
+        
+        // Validation des données restaurées
+        if (parsed && typeof parsed === 'object' && parsed.timestamp) {
+          // Check if not expired
+          if (Date.now() - parsed.timestamp < EXPIRATION_TIME) {
+            console.log('[usePersistedStoryCreation] Session restaurée:', {
+              step: parsed.currentStep,
+              childrenCount: parsed.selectedChildrenIds?.length || 0,
+              age: Math.round((Date.now() - parsed.timestamp) / 1000 / 60) // minutes
+            });
+            
+            return {
+              currentStep: parsed.currentStep || 'children',
+              selectedChildrenIds: Array.isArray(parsed.selectedChildrenIds) ? parsed.selectedChildrenIds : [],
+              selectedObjective: parsed.selectedObjective || '',
+              generatedTitles: Array.isArray(parsed.generatedTitles) ? parsed.generatedTitles : [],
+              selectedTitle: parsed.selectedTitle || '',
+              selectedDuration: parsed.selectedDuration || null,
+              timestamp: parsed.timestamp,
+              regenerationUsed: parsed.regenerationUsed || 0
+            };
+          } else {
+            console.log('[usePersistedStoryCreation] Session expirée, nettoyage');
+            localStorage.removeItem(STORAGE_KEY);
+          }
         }
       }
     } catch (error) {
-      console.warn('Failed to restore story creation state:', error);
+      console.warn('[usePersistedStoryCreation] Erreur lors de la restauration:', error);
+      // Nettoyer les données corrompues
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (cleanupError) {
+        console.warn('[usePersistedStoryCreation] Impossible de nettoyer localStorage:', cleanupError);
+      }
     }
     
     // Return default state
@@ -54,15 +82,28 @@ export const usePersistedStoryCreation = () => {
         ...state,
         timestamp: Date.now()
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-      console.log('[usePersistedStoryCreation] Session sauvegardée:', {
-        step: state.currentStep,
-        childrenCount: state.selectedChildrenIds.length,
-        objective: state.selectedObjective,
-        titlesCount: state.generatedTitles.length
-      });
+      
+      const serialized = JSON.stringify(stateToSave);
+      if (serialized && typeof Storage !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, serialized);
+        console.log('[usePersistedStoryCreation] Session sauvegardée:', {
+          step: state.currentStep,
+          childrenCount: state.selectedChildrenIds.length,
+          objective: state.selectedObjective,
+          titlesCount: state.generatedTitles.length
+        });
+      }
     } catch (error) {
-      console.warn('Failed to save story creation state:', error);
+      console.warn('[usePersistedStoryCreation] Erreur lors de la sauvegarde:', error);
+      // En cas d'erreur de stockage, continuer sans crasher
+      if (error instanceof Error && error.message.includes('QuotaExceededError')) {
+        console.warn('[usePersistedStoryCreation] Quota localStorage dépassé, nettoyage...');
+        try {
+          localStorage.clear();
+        } catch (clearError) {
+          console.warn('[usePersistedStoryCreation] Impossible de nettoyer localStorage:', clearError);
+        }
+      }
     }
   }, [state]);
 

@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { calculateAge } from '@/utils/age';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileChildrenSelectionStep from './mobile/MobileChildrenSelectionStep';
+import StoryCreationErrorBoundary from '@/components/ui/StoryCreationErrorBoundary';
 interface ChildrenSelectionStepProps {
   children: Child[];
   preSelectedChildId?: string;
@@ -93,10 +94,12 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
   // Rediriger vers la version mobile si sur mobile
   if (isMobile) {
     return (
-      <MobileChildrenSelectionStep 
-        children={children} 
-        preSelectedChildId={preSelectedChildId} 
-      />
+      <StoryCreationErrorBoundary>
+        <MobileChildrenSelectionStep 
+          children={children} 
+          preSelectedChildId={preSelectedChildId} 
+        />
+      </StoryCreationErrorBoundary>
     );
   }
 
@@ -104,7 +107,8 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
   const maxVisibleCards = 10;
   const needsScrolling = children.length > maxVisibleCards;
   
-  return <div className="space-y-6 max-w-6xl mx-auto">
+  return <StoryCreationErrorBoundary>
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Notification de session récupérée */}
       {hasPersistedSession()}
 
@@ -189,7 +193,8 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
           </Button>
         </div>
       </div>
-    </div>;
+    </div>
+  </StoryCreationErrorBoundary>;
 };
 
 // Composant pour une carte enfant individuelle

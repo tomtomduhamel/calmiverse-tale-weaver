@@ -1,13 +1,14 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { ArrowRight, Users } from 'lucide-react';
 import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
 import { calculateAge } from '@/utils/age';
-import { cn } from '@/lib/utils';
-import { useChildrenStoriesCount } from '@/hooks/useChildrenStoriesCount';
 
 interface MobileChildrenSelectionStepProps {
   children: Child[];
@@ -26,21 +27,21 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
   } = usePersistedStoryCreation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { storiesCount } = useChildrenStoriesCount();
 
   // Effect pour présélectionner un enfant si spécifié
   useEffect(() => {
     if (preSelectedChildId && children.length > 0 && !hasPersistedSession()) {
       const childExists = children.find(child => child.id === preSelectedChildId);
       if (childExists && !selectedChildrenIds.includes(preSelectedChildId)) {
+        console.log('[MobileChildrenSelectionStep] Présélection de l\'enfant:', childExists.name);
         updateSelectedChildren([preSelectedChildId]);
       }
     }
   }, [preSelectedChildId, children, hasPersistedSession, selectedChildrenIds, updateSelectedChildren]);
 
   const handleChildToggle = useCallback((childId: string) => {
-    const newSelection = selectedChildrenIds.includes(childId) 
-      ? selectedChildrenIds.filter(id => id !== childId) 
+    const newSelection = selectedChildrenIds.includes(childId)
+      ? selectedChildrenIds.filter(id => id !== childId)
       : [...selectedChildrenIds, childId];
     updateSelectedChildren(newSelection);
   }, [selectedChildrenIds, updateSelectedChildren]);
@@ -57,103 +58,51 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
     navigate('/create-story/step-2');
   }, [selectedChildrenIds, navigate, toast]);
 
-  // Trier les enfants par nombre d'histoires (plus populaires en premier)
-  const sortedChildren = useMemo(() => {
-    return [...children].sort((a, b) => {
-      const aCount = storiesCount[a.id] || 0;
-      const bCount = storiesCount[b.id] || 0;
-      return bCount - aCount; // Tri décroissant
-    });
-  }, [children, storiesCount]);
-
-  const selectedChildren = sortedChildren.filter(child => selectedChildrenIds.includes(child.id));
+  const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
 
   const getGenderIcon = (gender: string) => {
     switch (gender) {
       case 'boy': return '👦';
-      case 'girl': return '👧'; 
+      case 'girl': return '👧';
       case 'pet': return '🐾';
       default: return '👤';
     }
   };
 
   return (
-    <div className="bg-gradient-to-b from-primary/5 to-accent/5 min-h-screen">
-      {/* En-tête avec navigation compacte - fixe */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/20 px-4 pt-4 pb-3">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-foreground">
-            Créer une histoire
-          </h1>
-          {/* Boutons de navigation compacts en haut */}
-          <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/')}
-              size="sm"
-              className="text-xs px-3"
-            >
-              Annuler
-            </Button>
-            <Button 
-              onClick={handleContinue} 
-              disabled={selectedChildrenIds.length === 0}
-              size="sm"
-              className="gap-1 text-xs px-3"
-            >
-              Continuer
-              <ArrowRight className="w-3 h-3" />
-            </Button>
-          </div>
+    <div className="space-y-6 px-4">
+      {/* Indicateur de progression */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+          <span className="font-medium text-primary">Enfants</span>
+          <span>Objectif</span>
+          <span>Titre</span>
+          <span>Création</span>
         </div>
-
-        {/* Zone de sélection active intégrée */}
-        {selectedChildren.length > 0 && (
-          <div className="mt-3">
-            <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-              <span className="text-xs font-medium text-primary flex-shrink-0">Sélectionnés:</span>
-              <div className="flex gap-1 flex-wrap">
-                {selectedChildren.map(child => (
-                  <div 
-                    key={child.id} 
-                    className="flex items-center gap-1 bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs"
-                  >
-                    <span className="text-xs">{getGenderIcon(child.gender)}</span>
-                    <span className="font-medium">{child.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        <Progress value={25} className="h-2" />
       </div>
 
-      {/* Grille des enfants - scroll naturel de la page */}
-      <div className="px-4 pb-4">
-        {children.length === 0 ? (
-          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-            <div className="text-4xl mb-3">👶</div>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Aucun enfant n'a été ajouté
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/children')}
-              className="gap-2"
-              size="sm"
-            >
-              <Plus className="h-4 w-4" />
-              Ajouter un enfant
-            </Button>
-          </div>
-        ) : (
-          <div className={cn(
-            "grid gap-3",
-            sortedChildren.length <= 2 ? "grid-cols-2" :
-            sortedChildren.length <= 4 ? "grid-cols-2" :
-            sortedChildren.length <= 6 ? "grid-cols-3" : "grid-cols-3"
-          )}>
-            {sortedChildren.map(child => (
+      {/* En-tête mobile */}
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Choisissez vos enfants
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Sélectionnez les enfants pour qui créer l'histoire
+        </p>
+      </div>
+
+      {/* Liste des enfants - version mobile verticale */}
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Users className="h-5 w-5" />
+            Vos enfants ({children.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="space-y-3">
+            {children.map(child => (
               <MobileChildCard
                 key={child.id}
                 child={child}
@@ -163,13 +112,44 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
               />
             ))}
           </div>
-        )}
+        </CardContent>
+      </Card>
+
+      {/* Sélection actuelle */}
+      {selectedChildren.length > 0 && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="pt-4">
+            <div className="text-sm font-medium mb-2">Enfants sélectionnés :</div>
+            <div className="flex flex-wrap gap-2">
+              {selectedChildren.map(child => (
+                <Badge key={child.id} variant="secondary" className="text-sm">
+                  {getGenderIcon(child.gender)} {child.name}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Navigation mobile */}
+      <div className="flex gap-3 pt-4">
+        <Button variant="outline" onClick={() => navigate('/')} className="flex-1">
+          Annuler
+        </Button>
+        <Button 
+          onClick={handleContinue} 
+          disabled={selectedChildrenIds.length === 0} 
+          className="flex-1"
+        >
+          Continuer
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
       </div>
     </div>
   );
 };
 
-// Composant pour une carte enfant mobile compacte
+// Composant pour une carte enfant mobile
 interface MobileChildCardProps {
   child: Child;
   isSelected: boolean;
@@ -188,35 +168,34 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
   return (
     <div
       onClick={() => onToggle(child.id)}
-      className={cn(
-        "relative aspect-square p-2 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
-        "bg-white/90 backdrop-blur-sm",
+      className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
         isSelected 
-          ? 'border-primary bg-primary/10 shadow-lg ring-2 ring-primary/30' 
-          : 'border-border/40 hover:border-primary/50 hover:shadow-md'
-      )}
+          ? 'border-primary bg-primary/5 shadow-sm' 
+          : 'border-border hover:border-primary/50'
+      }`}
     >
-      {/* Indicateur de sélection ultra-compact */}
-      {isSelected && (
-        <div className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
-          <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">{getGenderIcon(child.gender)}</span>
+          <div>
+            <h3 className="font-semibold">{child.name}</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="outline" className="text-xs">
+                {age} an{age > 1 ? 's' : ''}
+              </Badge>
+              {child.teddyName && (
+                <span className="text-xs text-muted-foreground">
+                  🧸 {child.teddyName}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-      )}
-      
-      {/* Contenu principal centré et compact */}
-      <div className="flex flex-col items-center justify-center h-full text-center space-y-0.5">
-        {/* Icône */}
-        <div className="text-2xl">{getGenderIcon(child.gender)}</div>
-        
-        {/* Nom - plus visible et prioritaire */}
-        <h3 className="font-semibold text-xs text-foreground truncate w-full leading-tight px-1">
-          {child.name}
-        </h3>
-        
-        {/* Âge - encore plus discret */}
-        <p className="text-[10px] text-muted-foreground/70">
-          {age} an{age > 1 ? 's' : ''}
-        </p>
+        {isSelected && (
+          <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+            <div className="h-2 w-2 rounded-full bg-white"></div>
+          </div>
+        )}
       </div>
     </div>
   );
