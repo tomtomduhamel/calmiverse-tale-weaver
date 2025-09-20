@@ -17,11 +17,15 @@ export interface GeneratedTitle {
 
 export const useN8nTitleGeneration = (
   persistedTitles?: GeneratedTitle[],
-  onTitlesGenerated?: (titles: GeneratedTitle[]) => void
+  onTitlesGenerated?: (titles: GeneratedTitle[]) => void,
+  persistedRegenerationUsed?: boolean,
+  onRegenerationUsed?: () => void
 ) => {
   const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
-  const [regenerationUsed, setRegenerationUsed] = useState(false);
   const { toast } = useToast();
+
+  // Utiliser l'état de regénération persisté ou local
+  const regenerationUsed = persistedRegenerationUsed ?? false;
 
   // Utiliser les titres persistés comme source de vérité
   const generatedTitles = persistedTitles || [];
@@ -179,7 +183,7 @@ export const useN8nTitleGeneration = (
       // Placer les nouveaux titres EN PREMIER et notifier la persistance
       const updatedTitles = [...newTitles, ...generatedTitles];
       onTitlesGenerated?.(updatedTitles);
-      setRegenerationUsed(true);
+      onRegenerationUsed?.(); // Utiliser la callback de persistance
       
       toast({
         title: "Nouveaux titres générés",
@@ -255,7 +259,7 @@ export const useN8nTitleGeneration = (
       
       // Notifier la persistance des nouveaux titres
       onTitlesGenerated?.(titles);
-      setRegenerationUsed(false); // Réinitialiser la regénération pour une nouvelle session
+      // La regénération sera gérée par la persistance
       
       // Pas de toast ici - sera géré par le composant appelant
       return titles;
@@ -278,12 +282,12 @@ export const useN8nTitleGeneration = (
 
   const clearTitles = () => {
     onTitlesGenerated?.([]);
-    setRegenerationUsed(false);
+    // La réinitialisation sera gérée par la persistance
   };
 
   // Fonction pour réinitialiser l'état de regénération
   const resetRegenerationState = () => {
-    setRegenerationUsed(false);
+    // Géré par la persistance
   };
 
   return {
@@ -294,6 +298,6 @@ export const useN8nTitleGeneration = (
     generatedTitles,
     isGeneratingTitles,
     regenerationUsed,
-    canRegenerate: !regenerationUsed && generatedTitles.length === 3,
+    canRegenerate: !regenerationUsed && generatedTitles.length >= 3 && generatedTitles.length < 6,
   };
 };

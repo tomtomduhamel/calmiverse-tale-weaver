@@ -10,7 +10,7 @@ interface PersistedStoryCreationState {
   selectedTitle: string;
   selectedDuration: StoryDurationMinutes | null;
   timestamp: number;
-  regenerationUsed: number;
+  regenerationUsed: boolean;
 }
 
 const STORAGE_KEY = 'calmiverse_story_creation';
@@ -44,7 +44,7 @@ export const usePersistedStoryCreation = () => {
               selectedTitle: parsed.selectedTitle || '',
               selectedDuration: parsed.selectedDuration || null,
               timestamp: parsed.timestamp,
-              regenerationUsed: parsed.regenerationUsed || 0
+              regenerationUsed: Boolean(parsed.regenerationUsed)
             };
           } else {
             console.log('[usePersistedStoryCreation] Session expirée, nettoyage');
@@ -71,7 +71,7 @@ export const usePersistedStoryCreation = () => {
       selectedTitle: '',
       selectedDuration: null,
       timestamp: Date.now(),
-      regenerationUsed: 0
+      regenerationUsed: false
     };
   });
 
@@ -133,7 +133,7 @@ export const usePersistedStoryCreation = () => {
   }, []);
 
   const incrementRegeneration = useCallback(() => {
-    setState(prev => ({ ...prev, regenerationUsed: prev.regenerationUsed + 1 }));
+    setState(prev => ({ ...prev, regenerationUsed: true }));
   }, []);
 
   // Clear persisted state
@@ -147,7 +147,7 @@ export const usePersistedStoryCreation = () => {
       selectedTitle: '',
       selectedDuration: null,
       timestamp: Date.now(),
-      regenerationUsed: 0
+      regenerationUsed: false
     });
   }, []);
 

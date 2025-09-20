@@ -53,7 +53,12 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     resetRegenerationState,
     isGeneratingTitles,
     canRegenerate
-  } = useN8nTitleGeneration();
+  } = useN8nTitleGeneration(
+    generatedTitles,
+    updateGeneratedTitles,
+    regenerationUsed,
+    incrementRegeneration
+  );
   const {
     createStoryFromTitle,
     isCreatingStory
@@ -127,10 +132,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         childrenNames: selectedChildrenForTitles.map(c => c.name),
         childrenGenders: selectedChildrenForTitles.map(c => c.gender)
       });
-      if (newTitles && newTitles.length > 0) {
-        updateGeneratedTitles([...generatedTitles, ...newTitles]);
-        incrementRegeneration();
-      }
+      // Le hook gère déjà la mise à jour des titres et l'incrémentation
+      // via onTitlesGenerated et onRegenerationUsed
     } catch (error: any) {
       console.error("Erreur lors de la regénération:", error);
       toast({
@@ -162,7 +165,6 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       if (titles && titles.length > 0) {
         updateGeneratedTitles(titles);
         updateCurrentStep('titles');
-        resetRegenerationState();
       }
     } catch (error: any) {
       console.error('[TitleBasedStoryCreator] Erreur génération titres:', error);
