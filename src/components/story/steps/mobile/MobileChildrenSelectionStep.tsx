@@ -60,6 +60,13 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
 
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
 
+  // Trier les enfants par nombre d'histoires décroissant (plus d'histoires en haut)
+  const sortedChildren = [...children].sort((a, b) => {
+    const aStories = (a as any).storiesCount || 0;
+    const bStories = (b as any).storiesCount || 0;
+    return bStories - aStories;
+  });
+
   const getGenderIcon = (gender: string) => {
     switch (gender) {
       case 'boy': return '👦';
@@ -117,7 +124,7 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
         </CardHeader>
         <CardContent className="pt-0">
           <div className="space-y-3">
-            {children.map(child => (
+            {sortedChildren.map(child => (
               <MobileChildCard
                 key={child.id}
                 child={child}

@@ -88,8 +88,12 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
     }
   };
 
-  // Garder l'ordre original des enfants (triés par nombre d'histoires)
-  const displayChildren = children;
+  // Trier les enfants par nombre d'histoires décroissant (plus d'histoires en haut)
+  const displayChildren = [...children].sort((a, b) => {
+    const aStories = (a as any).storiesCount || 0;
+    const bStories = (b as any).storiesCount || 0;
+    return bStories - aStories;
+  });
 
   // Rediriger vers la version mobile si sur mobile
   if (isMobile) {
