@@ -67,38 +67,25 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
     }
 
     try {
-      console.log('[ObjectiveSelectionStep] Déclenchement génération avec:', {
+      console.log('[ObjectiveSelectionStep] Navigation vers sélection de titres avec:', {
         childrenIds: selectedChildrenIds,
         objective: selectedObjective
       });
 
-      // Déclencher la génération en arrière-plan
-      await generateStoryInBackground({
-        childrenIds: selectedChildrenIds,
-        objective: selectedObjective,
-        title: 'Histoire personnalisée'
-      });
+      // Mettre à jour l'étape actuelle vers 'titles' pour que TitleBasedStoryCreator démarre à la bonne étape
+      updateCurrentStep('titles');
 
-      // Nettoyer l'état persisté
-      clearPersistedState();
-
-      // Afficher un message de succès
-      toast({
-        title: "✨ Génération lancée !",
-        description: "Votre histoire sera bientôt prête. Vous pouvez naviguer librement.",
-      });
-
-      // Naviguer vers la bibliothèque
-      navigate('/library');
+      // Naviguer vers la page de sélection de titres
+      navigate('/create-story-titles');
     } catch (error) {
-      console.error('[ObjectiveSelectionStep] Erreur génération:', error);
+      console.error('[ObjectiveSelectionStep] Erreur navigation:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de démarrer la génération. Veuillez réessayer.",
+        description: "Impossible de continuer. Veuillez réessayer.",
         variant: "destructive"
       });
     }
-  }, [selectedObjective, selectedChildrenIds, generateStoryInBackground, clearPersistedState, navigate, toast]);
+  }, [selectedObjective, selectedChildrenIds, updateCurrentStep, navigate, toast]);
 
   const handleBack = useCallback(() => {
     navigate('/create-story/step-1');
