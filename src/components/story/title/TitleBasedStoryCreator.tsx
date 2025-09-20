@@ -108,6 +108,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     }
   }, [preSelectedChildId, children, hasPersistedSession, selectedChildrenIds, updateSelectedChildren]);
 
+
   const handleChildToggle = useCallback((childId: string) => {
     const newSelection = selectedChildrenIds.includes(childId) 
       ? selectedChildrenIds.filter(id => id !== childId)
@@ -173,13 +174,24 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     }
   }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateGeneratedTitles, updateCurrentStep, resetRegenerationState, toast]);
 
-  // Effect pour générer automatiquement les titres si on arrive à l'étape 'titles' avec les données nécessaires
+  // Effect pour gérer l'auto-génération des titres
   useEffect(() => {
+    console.log('[TitleBasedStoryCreator] Vérification auto-génération:', {
+      currentStep,
+      selectedChildrenCount: selectedChildrenIds.length,
+      selectedObjective,
+      generatedTitlesCount: generatedTitles.length,
+      isGeneratingTitles
+    });
+
     if (currentStep === 'titles' && selectedChildrenIds.length > 0 && selectedObjective && generatedTitles.length === 0 && !isGeneratingTitles) {
-      console.log('[TitleBasedStoryCreator] Auto-génération des titres à l\'arrivée sur l\'étape titles');
-      handleGenerateTitles();
+      console.log('[TitleBasedStoryCreator] Auto-génération des titres...');
+      // Délai pour s'assurer que le composant est monté
+      setTimeout(() => {
+        handleGenerateTitles();
+      }, 100);
     }
-  }, [currentStep, selectedChildrenIds, selectedObjective, generatedTitles.length, isGeneratingTitles, handleGenerateTitles]);
+  }, [currentStep, selectedChildrenIds.length, selectedObjective, generatedTitles.length, isGeneratingTitles, handleGenerateTitles]);
 
   const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes) => {
     if (!titleToUse) {

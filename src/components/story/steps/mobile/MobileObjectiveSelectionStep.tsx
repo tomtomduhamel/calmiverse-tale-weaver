@@ -48,16 +48,35 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
       return;
     }
 
+    if (selectedChildrenIds.length === 0) {
+      toast({
+        title: "Enfant requis",
+        description: "Veuillez d'abord sélectionner au moins un enfant",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       console.log('[MobileObjectiveSelectionStep] Navigation vers sélection de titres avec:', {
         childrenIds: selectedChildrenIds,
-        objective: selectedObjective
+        objective: selectedObjective,
+        currentStep: 'objective -> titles'
       });
 
-      // Mettre à jour l'étape actuelle vers 'titles' pour que TitleBasedStoryCreator démarre à la bonne étape
+      // S'assurer que les données sont bien sauvegardées avant navigation
+      console.log('[MobileObjectiveSelectionStep] Sauvegarde des données avant navigation...');
+      
+      // Attendre un court délai pour s'assurer que la sauvegarde est terminée
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Mettre à jour l'étape actuelle vers 'titles' 
       updateCurrentStep('titles');
+      
+      // Attendre encore un peu pour la persistance
+      await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Naviguer vers la page de sélection de titres
+      console.log('[MobileObjectiveSelectionStep] Navigation vers /create-story-titles');
       navigate('/create-story-titles');
     } catch (error) {
       console.error('[MobileObjectiveSelectionStep] Erreur navigation:', error);
