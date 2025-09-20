@@ -11,7 +11,7 @@ export const useSupabaseChildren = () => {
   const { toast } = useToast();
   const { user } = useSupabaseAuth();
 
-  // Charger les enfants depuis Supabase
+  // Charger les enfants depuis Supabase avec comptage des histoires et tri décroissant
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -21,31 +21,51 @@ export const useSupabaseChildren = () => {
     const loadChildren = async () => {
       try {
         setLoading(true);
-        
-        const { data, error } = await supabase
+
+        // Charger les enfants de l'utilisateur
+        const { data: childrenData, error: childrenError } = await supabase
           .from('children')
           .select('*')
-          .eq('authorid', user.id)
-          .order('createdat', { ascending: false });
-        
-        if (error) throw error;
-        
-        // Transformer les données pour correspondre au type Child
-        const loadedChildren = data.map(child => ({
-          id: child.id,
-          name: child.name,
-          birthDate: new Date(child.birthdate),
-          interests: child.interests || [],
-          gender: child.gender || 'unknown',
-          authorId: child.authorid,
-          teddyName: child.teddyname,
-          teddyDescription: child.teddydescription,
-          teddyPhotos: child.teddyphotos || [],
-          imaginaryWorld: child.imaginaryworld,
-          createdAt: new Date(child.createdat)
-        })) as Child[];
-        
-        setChildren(loadedChildren);
+          .eq('authorid', user.id);
+
+        if (childrenError) throw childrenError;
+
+        // Charger les histoires pour calculer le nombre par enfant
+        const { data: storiesData, error: storiesError } = await supabase
+          .from('stories')
+          .select('id, childrenids')
+          .eq('authorid', user.id);
+
+        if (storiesError) throw storiesError;
+
+        // Calculer le nombre d'histoires associées à chaque enfant
+        const storiesCountMap: Record<string, number> = {};
+        childrenData.forEach((child: any) => {
+          storiesCountMap[child.id] = (storiesData || []).filter((story: any) =>
+            (story.childrenids || []).includes(child.id)
+          ).length;
+        });
+
+        // Transformer + trier par nombre d'histoires décroissant
+        const loadedChildren = (childrenData as any[])
+          .map((child: any) => ({
+            id: child.id,
+            name: child.name,
+            birthDate: new Date(child.birthdate),
+            interests: child.interests || [],
+            gender: child.gender || 'unknown',
+            authorId: child.authorid,
+            teddyName: child.teddyname,
+            teddyDescription: child.teddydescription,
+            teddyPhotos: child.teddyphotos || [],
+            imaginaryWorld: child.imaginaryworld,
+            createdAt: new Date(child.createdat),
+            storiesCount: storiesCountMap[child.id] || 0
+          })) as any[];
+
+        loadedChildren.sort((a, b) => (b.storiesCount || 0) - (a.storiesCount || 0));
+
+        setChildren(loadedChildren as unknown as Child[]);
       } catch (error: any) {
         console.error("Erreur lors du chargement des enfants:", error);
         toast({
@@ -57,9 +77,9 @@ export const useSupabaseChildren = () => {
         setLoading(false);
       }
     };
-    
+
     loadChildren();
-    
+
     // Configurer une souscription en temps réel pour les mises à jour
     const channel = supabase
       .channel('children_changes')
@@ -68,11 +88,11 @@ export const useSupabaseChildren = () => {
         schema: 'public',
         table: 'children',
         filter: `authorid=eq.${user.id}`
-      }, (payload) => {
+      }, () => {
         loadChildren();
       })
       .subscribe();
-    
+
     return () => {
       supabase.removeChannel(channel);
     };
