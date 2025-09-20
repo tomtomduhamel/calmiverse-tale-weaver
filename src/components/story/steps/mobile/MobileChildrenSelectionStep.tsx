@@ -92,6 +92,21 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
         </p>
       </div>
 
+      {/* Navigation mobile en haut */}
+      <div className="flex gap-3 mb-6">
+        <Button variant="outline" onClick={() => navigate('/')} className="flex-1">
+          Annuler
+        </Button>
+        <Button 
+          onClick={handleContinue} 
+          disabled={selectedChildrenIds.length === 0} 
+          className="flex-1"
+        >
+          Continuer
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+      </div>
+
       {/* Liste des enfants - version mobile verticale */}
       <Card>
         <CardHeader className="pb-4">
@@ -131,20 +146,6 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
         </Card>
       )}
 
-      {/* Navigation mobile */}
-      <div className="flex gap-3 pt-4">
-        <Button variant="outline" onClick={() => navigate('/')} className="flex-1">
-          Annuler
-        </Button>
-        <Button 
-          onClick={handleContinue} 
-          disabled={selectedChildrenIds.length === 0} 
-          className="flex-1"
-        >
-          Continuer
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
-      </div>
     </div>
   );
 };

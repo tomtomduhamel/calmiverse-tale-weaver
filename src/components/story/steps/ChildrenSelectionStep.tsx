@@ -88,8 +88,8 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
     }
   };
 
-  // Optimize display: reverse order so most popular appear first (left side)
-  const displayChildren = [...children].reverse();
+  // Garder l'ordre original des enfants (triés par nombre d'histoires)
+  const displayChildren = children;
 
   // Rediriger vers la version mobile si sur mobile
   if (isMobile) {
