@@ -115,7 +115,7 @@ const StoryForm: React.FC<StoryFormProps> = ({
       
       
       
-      // Appeler le callback de succès
+      // Appeler le callback de succès avec navigation immédiate
       if (storyId && onStoryCreated) {
         onStoryCreated({
           id: storyId,
@@ -124,15 +124,18 @@ const StoryForm: React.FC<StoryFormProps> = ({
           childrenIds: selectedChildrenIds,
           createdAt: new Date(),
           status: 'pending',
-          content: "", // CORRECTION: utiliser 'content' au lieu de 'story_text'
+          content: "",
           story_summary: "",
           objective: selectedObjective
         });
       }
       
-      // Réinitialiser le formulaire
+      // Réinitialiser le formulaire pour permettre une nouvelle création
       setSelectedChildrenIds([]);
       setSelectedObjective("");
+      
+      // Ne pas attendre - la génération se fait en arrière-plan
+      console.log("[StoryForm] Soumission terminée, navigation immédiate");
       
     } catch (error: any) {
       console.error("[StoryForm] Erreur pendant la création:", error);

@@ -6,7 +6,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import type { Child } from "@/types/child";
 import type { Story } from "@/types/story";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
-import { useNonBlockingStorySubmission } from "@/hooks/stories/useNonBlockingStorySubmission";
+import { useStoryBackgroundOperations } from "@/hooks/stories/useStoryBackgroundOperations";
 
 interface SimplifiedUnifiedCreatorProps {
   onSubmit: (formData: { childrenIds: string[]; objective: string }) => Promise<string>;
@@ -30,31 +30,8 @@ const SimplifiedUnifiedCreator: React.FC<SimplifiedUnifiedCreatorProps> = ({
   const [selectedObjective, setSelectedObjective] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   
-  // Hook pour soumission non-bloquante
-  const { submitStory, isSubmitting } = useNonBlockingStorySubmission({
-    onSubmit,
-    onSuccess: (storyId) => {
-      // Créer une histoire temporaire pour le callback
-      const tempStory: Story = {
-        id: storyId,
-        title: "Histoire en cours de génération",
-        preview: "Génération en cours...",
-        childrenIds: selectedChildIds,
-        createdAt: new Date(),
-        status: 'pending',
-        content: "",
-        story_summary: "",
-        objective: selectedObjective
-      };
-      onStoryCreated(tempStory);
-      
-      // Réinitialiser le formulaire
-      setSelectedChildIds([]);
-      setSelectedObjective("");
-      setError(null);
-    },
-    redirectToLibrary: true
-  });
+  // Hook pour opérations background
+  const { createStoryInBackground, isSubmitting } = useStoryBackgroundOperations();
   
   // Chargement des objectifs
   const { objectives, isLoading: loadingObjectives } = useStoryObjectives();
@@ -119,7 +96,7 @@ const SimplifiedUnifiedCreator: React.FC<SimplifiedUnifiedCreatorProps> = ({
     });
   };
   
-  // Soumission du formulaire simplifié et non-bloquant
+  // Soumission du formulaire avec génération background
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -144,11 +121,33 @@ const SimplifiedUnifiedCreator: React.FC<SimplifiedUnifiedCreatorProps> = ({
     
     try {
       setError(null);
-      await submitStory({
+      
+      // Utiliser la génération background
+      const storyId = await createStoryInBackground(
+        { childrenIds: validIds, objective: validObjective },
+        onSubmit
+      );
+      
+      // Créer une histoire temporaire pour le callback
+      const tempStory: Story = {
+        id: storyId,
+        title: "Histoire en cours de génération",
+        preview: "Génération en cours...",
         childrenIds: validIds,
+        createdAt: new Date(),
+        status: 'pending',
+        content: "",
+        story_summary: "",
         objective: validObjective
-      });
+      };
+      onStoryCreated(tempStory);
+      
+      // Réinitialiser le formulaire
+      setSelectedChildIds([]);
+      setSelectedObjective("");
+      
     } catch (error: any) {
+      console.error('[SimplifiedUnifiedCreator] Erreur:', error);
       setError(error?.message || "Une erreur est survenue lors de la création de l'histoire");
     }
   };

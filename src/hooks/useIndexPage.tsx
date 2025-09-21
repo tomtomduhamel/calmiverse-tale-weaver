@@ -7,8 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useStoriesState } from "@/hooks/stories/useStoriesState";
 import { useAuthRedirection } from "@/hooks/app/useAuthRedirection";
 import { useToast } from "@/hooks/use-toast";
-import { useNonBlockingStorySubmission } from "@/hooks/stories/useNonBlockingStorySubmission";
-import { useBackgroundStoryGeneration } from "@/hooks/stories/useBackgroundStoryGeneration";
+import { useStoryBackgroundOperations } from "@/hooks/stories/useStoryBackgroundOperations";
 import { useNotificationHandlers } from "@/hooks/notifications/useNotificationHandlers";
 import { StoryCompletionActions } from "@/services/stories/StoryCompletionActions";
 import type { Child } from "@/types/child";
@@ -21,24 +20,11 @@ export const useIndexPage = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   
-  // Nouveaux hooks pour la Phase 3
-  const { startGeneration } = useBackgroundStoryGeneration();
+  // Hooks pour la Phase 5 - opérations background
   const { handleStoryReady, handleStoryError, saveNotificationToHistory } = useNotificationHandlers();
   
-  const { submitStory, isSubmitting } = useNonBlockingStorySubmission({
-    onSubmit: async (formData) => {
-      // Utiliser la logique existante de création d'histoire
-      const storyId = await stories.createStory(formData, children);
-      
-      // Démarrer le suivi en arrière-plan
-      startGeneration(storyId, 'Nouvelle histoire en cours...');
-      
-      return storyId;
-    },
-    onSuccess: (storyId) => {
-      setCurrentView('library');
-    }
-  });
+  // Utiliser le nouveau hook pour les opérations background
+  const { isSubmitting, createStoryInBackground } = useStoryBackgroundOperations();
   
   // Actions post-génération intégrées
   const completionActions = new StoryCompletionActions({
@@ -83,15 +69,20 @@ export const useIndexPage = () => {
     }
   };
 
-  // Gestionnaire de soumission d'histoire amélioré avec nouveau workflow
+  // Gestionnaire de soumission d'histoire avec génération background immédiate
   const handleStorySubmitWrapper = async (formData: any): Promise<string> => {
     try {
-      console.log("[useIndexPage] Soumission histoire avec nouveau workflow:", formData);
+      console.log("[useIndexPage] Soumission histoire avec génération background:", formData);
       
-      // Utiliser le système non-bloquant de Phase 3
-      const storyId = await submitStory(formData);
+      // Créer l'histoire et démarrer la génération en arrière-plan
+      const storyId = await createStoryInBackground(formData, (data) => 
+        stories.createStory(data, children)
+      );
       
-      console.log("[useIndexPage] Histoire soumise avec succès:", storyId);
+      console.log("[useIndexPage] Histoire soumise et génération démarrée:", storyId);
+      
+      // Navigation immédiate vers la bibliothèque
+      setCurrentView('library');
       
       return storyId;
     } catch (error: any) {

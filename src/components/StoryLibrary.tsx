@@ -5,6 +5,7 @@ import type { ViewType } from "@/types/views";
 import { useToast } from "@/hooks/use-toast";
 import LibraryContainer from "./library/LibraryContainer";
 import StoryRecoveryManager from "./story/StoryRecoveryManager";
+import { StoriesInProgressSection } from "./library/sections/StoriesInProgressSection";
 
 interface StoryLibraryProps {
   stories: Story[];
@@ -120,6 +121,9 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* Section des histoires en cours - Phase 5 */}
+      <StoriesInProgressSection />
+      
       {/* Gestionnaire de récupération désactivé */}
       {/* <StoryRecoveryManager 
         stories={stories}

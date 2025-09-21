@@ -1,95 +1,81 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { useSupabaseStories } from './useSupabaseStories';
+import { useState, useCallback } from 'react';
+import { useBackgroundStoryGeneration } from './useBackgroundStoryGeneration';
+import { useNotificationHandlers } from '@/hooks/notifications/useNotificationHandlers';
 import { useToast } from '@/hooks/use-toast';
+import { StoryGenerationQueue } from '@/services/stories/StoryGenerationQueue';
 
 interface StoryCreationMonitorOptions {
   onStoryCreated?: (storyId: string) => void;
   onTimeout?: () => void;
-  timeoutMs?: number;
 }
 
+/**
+ * Hook refactorisé pour le mode background
+ * Ne fait plus de polling actif mais s'appuie sur le système de notifications
+ */
 export const useStoryCreationMonitor = (options: StoryCreationMonitorOptions = {}) => {
   const [isMonitoring, setIsMonitoring] = useState(false);
-  const [monitoringStartTime, setMonitoringStartTime] = useState<number | null>(null);
-  const { stories, fetchStories } = useSupabaseStories();
+  const { startGeneration } = useBackgroundStoryGeneration();
+  const { handleStoryReady, handleStoryError } = useNotificationHandlers();
   const { toast } = useToast();
   
-  const {
-    onStoryCreated,
-    onTimeout,
-    timeoutMs = 60000 // 60 secondes par défaut
-  } = options;
+  const { onStoryCreated, onTimeout } = options;
 
-  const startMonitoring = useCallback((initialStoryCount: number) => {
-    console.log('[StoryCreationMonitor] Démarrage de la surveillance:', { initialStoryCount });
+  /**
+   * Démarre le monitoring en mode background
+   * Plus de polling actif, utilise le système de notifications
+   */
+  const startMonitoring = useCallback(async (storyId: string) => {
+    console.log('[StoryCreationMonitor] Démarrage surveillance background:', storyId);
     setIsMonitoring(true);
-    setMonitoringStartTime(Date.now());
     
-    // Commencer le polling immédiatement
-    const pollInterval = setInterval(async () => {
-      try {
-        console.log('[StoryCreationMonitor] Vérification des nouvelles histoires...');
-        await fetchStories();
-        
-        // Vérifier si une nouvelle histoire est apparue
-        if (stories.length > initialStoryCount) {
-          const newStory = stories[0]; // La plus récente
-          console.log('[StoryCreationMonitor] SUCCÈS: Nouvelle histoire détectée:', newStory.id);
-          
-          clearInterval(pollInterval);
-          setIsMonitoring(false);
-          setMonitoringStartTime(null);
-          
-          toast({
-            title: "Histoire créée avec succès",
-            description: "Votre histoire est maintenant disponible dans votre bibliothèque",
-          });
-          
-          if (onStoryCreated) {
-            onStoryCreated(newStory.id);
-          }
-          return;
-        }
-        
-        // Vérifier le timeout
-        if (monitoringStartTime && Date.now() - monitoringStartTime > timeoutMs) {
-          console.warn('[StoryCreationMonitor] TIMEOUT: Temps limite dépassé');
-          clearInterval(pollInterval);
-          setIsMonitoring(false);
-          setMonitoringStartTime(null);
-          
-          toast({
-            title: "Création en cours",
-            description: "La création prend plus de temps que prévu. Vérifiez votre bibliothèque dans quelques minutes.",
-            variant: "default",
-          });
-          
-          if (onTimeout) {
-            onTimeout();
-          }
-        }
-      } catch (error) {
-        console.error('[StoryCreationMonitor] Erreur lors du polling:', error);
-      }
-    }, 3000); // Vérifier toutes les 3 secondes
-
-    return () => {
-      clearInterval(pollInterval);
+    try {
+      // Démarrer la génération en arrière-plan
+      await startGeneration(storyId, 'Surveillance de la génération...');
+      
+      // Le système de notifications gérera le reste
+      console.log('[StoryCreationMonitor] Surveillance déléguée au système background');
+      
+    } catch (error) {
+      console.error('[StoryCreationMonitor] Erreur démarrage surveillance:', error);
       setIsMonitoring(false);
-      setMonitoringStartTime(null);
-    };
-  }, [stories, fetchStories, monitoringStartTime, timeoutMs, onStoryCreated, onTimeout, toast]);
+      
+      if (onTimeout) {
+        onTimeout();
+      }
+    }
+  }, [startGeneration, onTimeout]);
 
+  /**
+   * Arrête le monitoring
+   */
   const stopMonitoring = useCallback(() => {
-    console.log('[StoryCreationMonitor] Arrêt manuel de la surveillance');
+    console.log('[StoryCreationMonitor] Arrêt surveillance');
     setIsMonitoring(false);
-    setMonitoringStartTime(null);
   }, []);
+
+  /**
+   * Gestionnaire de notification de succès
+   */
+  const handleStoryCompleted = useCallback((storyId: string) => {
+    console.log('[StoryCreationMonitor] Histoire complétée:', storyId);
+    setIsMonitoring(false);
+    
+    toast({
+      title: "Histoire créée",
+      description: "Votre histoire est maintenant disponible dans votre bibliothèque",
+    });
+    
+    if (onStoryCreated) {
+      onStoryCreated(storyId);
+    }
+  }, [toast, onStoryCreated]);
 
   return {
     isMonitoring,
     startMonitoring,
-    stopMonitoring
+    stopMonitoring,
+    handleStoryCompleted
   };
 };
