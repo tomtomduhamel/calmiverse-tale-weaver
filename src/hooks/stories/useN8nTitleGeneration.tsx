@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
-import { fetchWithTimeout } from '@/utils/errorHandling/networkErrorHandler';
+import { fetchWithRetry, getErrorMessage } from '@/utils/retryUtils';
 
 export interface TitleGenerationData {
   objective: string;
@@ -160,12 +160,19 @@ export const useN8nTitleGeneration = (
 
       console.log('[N8nTitleGeneration] Regénération - Payload envoyé:', JSON.stringify(payload, null, 2));
 
-      const response = await fetch(webhookUrl, {
+      const response = await fetchWithRetry(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload)
+      }, {
+        maxRetries: 3,
+        timeoutMs: 300000, // 5 minutes
+        retryCondition: (error) => {
+          const msg = error?.message?.toLowerCase() || '';
+          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion');
+        }
       });
 
       if (!response.ok) {
@@ -196,11 +203,11 @@ export const useN8nTitleGeneration = (
       return newTitles;
     } catch (error: any) {
       console.error("Erreur lors de la regénération des titres:", error);
-      toast({
-        title: "Erreur de regénération",
-        description: error.message || "Impossible de générer de nouveaux titres",
-        variant: "destructive",
-      });
+        toast({
+          title: "Erreur de regénération",
+          description: getErrorMessage(error, "regénération de titres"),
+          variant: "destructive",
+        });
       return [];
     } finally {
       setIsGeneratingTitles(false);
@@ -232,13 +239,21 @@ export const useN8nTitleGeneration = (
 
       console.log('[N8nTitleGeneration] Payload envoyé:', JSON.stringify(payload, null, 2));
       
-      const response = await fetchWithTimeout(webhookUrl, {
+      const response = await fetchWithRetry(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload)
-      }, 15000); // 15 second timeout
+      }, {
+        maxRetries: 3,
+        timeoutMs: 300000, // 5 minutes
+        retryCondition: (error) => {
+          // Retry sur timeout et erreurs réseau, pas sur erreurs de données
+          const msg = error?.message?.toLowerCase() || '';
+          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion');
+        }
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -279,7 +294,7 @@ export const useN8nTitleGeneration = (
       
       toast({
         title: "Erreur de génération",
-        description: error.message || "Impossible de générer les titres d'histoires",
+        description: getErrorMessage(error, "génération de titres"),
         variant: "destructive",
       });
       

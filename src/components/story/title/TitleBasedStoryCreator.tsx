@@ -234,7 +234,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       // Toast unique pour la création
       toast({
         title: "Création lancée",
-        description: "Votre histoire est en cours de génération"
+        description: "Votre histoire est en cours de génération (5-8 min). Vous recevrez une notification quand elle sera prête."
       });
     } catch (error: any) {
       console.error('[TitleBasedStoryCreator] Erreur création histoire:', error);
@@ -352,7 +352,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
           <Button onClick={handleGenerateTitles} disabled={selectedChildrenIds.length === 0 || isGeneratingTitles} className="min-w-[200px]">
             {isGeneratingTitles ? <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Génération...
+                Génération IA... (2-3 min)
               </> : <>
                 <Sparkles className="w-4 h-4 mr-2" />
                 Générer les titres

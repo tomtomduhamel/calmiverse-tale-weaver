@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
+import { fetchWithRetry, getErrorMessage } from '@/utils/retryUtils';
 import type { Child } from '@/types/child';
 import { generateAdvancedStoryPrompt } from '@/utils/storyPromptUtils';
 import { calculateAge } from '@/utils/age';
@@ -92,12 +93,19 @@ export const useN8nStoryFromTitle = () => {
 
       console.log('[N8nStoryFromTitle] Envoi vers n8n avec payload:', payload);
 
-      const response = await fetch(webhookUrl, {
+      const response = await fetchWithRetry(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload)
+      }, {
+        maxRetries: 2, // Moins de retries pour création complète (plus longue)
+        timeoutMs: 480000, // 8 minutes pour création d'histoire complète
+        retryCondition: (error) => {
+          const msg = error?.message?.toLowerCase() || '';
+          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion');
+        }
       });
 
       if (!response.ok) {
@@ -120,7 +128,7 @@ export const useN8nStoryFromTitle = () => {
       
       toast({
         title: "Erreur de création",
-        description: error.message || "Impossible de créer l'histoire via n8n",
+        description: getErrorMessage(error, "création d'histoire"),
         variant: "destructive",
       });
       
