@@ -25,7 +25,7 @@ export const useN8nTitleGeneration = (
 ) => {
   const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
   const { toast } = useToast();
-  const { notifyTitlesReady, notifyStoryError } = useStoryNotifications();
+  const { notifyTitlesGenerated, notifyStoryError } = useStoryNotifications();
 
   // Utiliser l'état de regénération persisté ou local
   const regenerationUsed = persistedRegenerationUsed ?? false;
@@ -280,8 +280,8 @@ export const useN8nTitleGeneration = (
       
       // 🚨 NOTIFICATION NATIVE : Titres prêts
       try {
-        await notifyTitlesReady(titles[0]?.id || 'story');
-        console.log('[N8nTitleGeneration] ✅ Notification native envoyée : Titres prêts');
+        await notifyTitlesGenerated();
+        console.log('[N8nTitleGeneration] ✅ Notification native envoyée : Titres générés');
       } catch (notifError) {
         console.warn('[N8nTitleGeneration] ⚠️ Erreur notification native:', notifError);
       }

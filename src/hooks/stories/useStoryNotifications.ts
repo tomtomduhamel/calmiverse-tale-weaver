@@ -19,6 +19,20 @@ export const useStoryNotifications = () => {
     }
   }, [canNotify, checkAndRequestIfNeeded]);
 
+  const notifyTitlesGenerated = useCallback(async () => {
+    try {
+      if (!canNotify) {
+        const granted = await checkAndRequestIfNeeded();
+        if (!granted) return;
+      }
+      
+      await notificationService.notifyTitlesGenerated();
+      console.log('[useStoryNotifications] ✅ Titles generated notification sent');
+    } catch (error) {
+      console.error('[useStoryNotifications] Error sending titles generated notification:', error);
+    }
+  }, [canNotify, checkAndRequestIfNeeded]);
+
   const notifyStoryReady = useCallback(async (title: string, storyId: string) => {
     try {
       if (!canNotify) return;
@@ -54,6 +68,7 @@ export const useStoryNotifications = () => {
 
   return {
     notifyTitlesReady,
+    notifyTitlesGenerated,
     notifyStoryReady,
     notifyStoryError,
     notifyAudioReady,

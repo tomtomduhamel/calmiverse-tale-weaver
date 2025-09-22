@@ -141,23 +141,48 @@ export class NotificationService {
    * Gère les actions des notifications
    */
   private handleNotificationAction(data: CalmiNotificationData) {
+    console.log('[NotificationService] Handling notification action:', data);
+    
     switch (data.action) {
       case 'read':
-        if (data.storyId) {
+        if (data.storyId && this.isValidStoryId(data.storyId)) {
+          console.log('[NotificationService] Navigating to story:', data.storyId);
           window.location.href = `/reader/${data.storyId}`;
+        } else {
+          console.warn('[NotificationService] Invalid storyId, redirecting to library:', data.storyId);
+          window.location.href = '/library';
         }
         break;
       case 'library':
+        console.log('[NotificationService] Navigating to library');
         window.location.href = '/library';
         break;
       case 'create':
+        console.log('[NotificationService] Navigating to story creation');
         window.location.href = '/create-story/step-1';
         break;
       case 'home':
       default:
+        console.log('[NotificationService] Navigating to home');
         window.location.href = '/';
         break;
     }
+  }
+
+  /**
+   * Valide si un storyId semble être un UUID valide
+   */
+  private isValidStoryId(storyId: string): boolean {
+    if (!storyId) return false;
+    
+    // Vérifier si c'est un UUID valide (format basique)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isValidUUID = uuidRegex.test(storyId);
+    
+    // Éviter les IDs temporaires qui commencent par des patterns connus
+    const isTemporaryId = storyId.startsWith('temp-') || storyId.startsWith('title-') || storyId.length < 10;
+    
+    return isValidUUID && !isTemporaryId;
   }
   
   /**
@@ -166,12 +191,24 @@ export class NotificationService {
   
   async notifyTitleReady(storyId: string): Promise<void> {
     await this.send({
-      title: '📝 Titres d\'histoire prêts !',
-      body: '3 nouveaux titres ont été générés pour vous',
-      tag: `titles-ready-${storyId}`,
+      title: '📝 Titres générés !',
+      body: '3 nouveaux titres d\'histoire sont disponibles. Cliquez pour choisir.',
+      tag: `titles-ready-${Date.now()}`,
       data: {
-        action: 'create' as const,
-        storyId,
+        action: 'library' as const,
+        timestamp: Date.now()
+      },
+      requireInteraction: true
+    });
+  }
+
+  async notifyTitlesGenerated(): Promise<void> {
+    await this.send({
+      title: '✨ Titres créés !',
+      body: 'Vos 3 titres personnalisés sont prêts. Sélectionnez votre préféré !',
+      tag: `titles-generated-${Date.now()}`,
+      data: {
+        action: 'library' as const,
         timestamp: Date.now()
       },
       requireInteraction: true
