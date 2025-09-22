@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Auth from './pages/Auth';
 import Index from './pages/Index';
@@ -39,8 +39,24 @@ import { ContactPage } from "@/pages/support/ContactPage";
 import { DocumentationPage } from "@/pages/support/DocumentationPage";
 import { ServiceStatusPage } from "@/pages/support/ServiceStatusPage";
 import { AboutPage } from "@/pages/AboutPage";
+import { notificationService } from "@/services/notifications/NotificationService";
+
 function App() {
   // Commented out for testing - usePreloadRoutes();
+  
+  // Initialize notification system
+  useEffect(() => {
+    const initNotifications = async () => {
+      if (notificationService.isSupported()) {
+        console.log('[App] Initializing notification system...');
+        await notificationService.requestPermission();
+      } else {
+        console.warn('[App] Notifications not supported on this device');
+      }
+    };
+    
+    initNotifications();
+  }, []);
   
   return (
     <ErrorBoundary>

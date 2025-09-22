@@ -1,6 +1,8 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
+import { fetchWithTimeout } from '@/utils/errorHandling/networkErrorHandler';
 
 export interface TitleGenerationData {
   objective: string;
@@ -23,6 +25,7 @@ export const useN8nTitleGeneration = (
 ) => {
   const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
   const { toast } = useToast();
+  const { notifyTitlesReady, notifyStoryError } = useStoryNotifications();
 
   // Utiliser l'état de regénération persisté ou local
   const regenerationUsed = persistedRegenerationUsed ?? false;
@@ -228,14 +231,14 @@ export const useN8nTitleGeneration = (
       };
 
       console.log('[N8nTitleGeneration] Payload envoyé:', JSON.stringify(payload, null, 2));
-
-      const response = await fetch(webhookUrl, {
+      
+      const response = await fetchWithTimeout(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload)
-      });
+      }, 15000); // 15 second timeout
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -259,7 +262,14 @@ export const useN8nTitleGeneration = (
       
       // Notifier la persistance des nouveaux titres
       onTitlesGenerated?.(titles);
-      // La regénération sera gérée par la persistance
+      
+      // 🚨 NOTIFICATION NATIVE : Titres prêts
+      try {
+        await notifyTitlesReady(titles[0]?.id || 'story');
+        console.log('[N8nTitleGeneration] ✅ Notification native envoyée : Titres prêts');
+      } catch (notifError) {
+        console.warn('[N8nTitleGeneration] ⚠️ Erreur notification native:', notifError);
+      }
       
       // Pas de toast ici - sera géré par le composant appelant
       return titles;
@@ -272,6 +282,14 @@ export const useN8nTitleGeneration = (
         description: error.message || "Impossible de générer les titres d'histoires",
         variant: "destructive",
       });
+      
+      // 🚨 NOTIFICATION NATIVE : Erreur de génération
+      try {
+        await notifyStoryError('Génération de titres', 'generation-error');
+        console.log('[N8nTitleGeneration] ✅ Notification d\'erreur envoyée');
+      } catch (notifError) {
+        console.warn('[N8nTitleGeneration] ⚠️ Erreur notification d\'erreur:', notifError);
+      }
       
       throw error;
     } finally {

@@ -10,6 +10,8 @@ import { useN8nTitleGeneration } from '@/hooks/stories/useN8nTitleGeneration';
 import { useN8nStoryFromTitle } from '@/hooks/stories/useN8nStoryFromTitle';
 import { useRealtimeStoryMonitor } from '@/hooks/stories/useRealtimeStoryMonitor';
 import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
+import { useNativePWANotifications } from '@/hooks/notifications/useNativePWANotifications';
+import { notificationService } from '@/services/notifications/NotificationService';
 import TitleSelector from './TitleSelector';
 import type { Child } from '@/types/child';
 import type { GeneratedTitle } from '@/hooks/stories/useN8nTitleGeneration';
@@ -24,6 +26,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   onStoryCreated,
   preSelectedChildId
 }) => {
+  // Initialize native notifications
+  const nativeNotifications = useNativePWANotifications();
+  
   // Use persisted state instead of local state
   const {
     currentStep,

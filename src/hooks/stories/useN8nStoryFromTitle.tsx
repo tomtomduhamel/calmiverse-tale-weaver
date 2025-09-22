@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
 import type { Child } from '@/types/child';
 import { generateAdvancedStoryPrompt } from '@/utils/storyPromptUtils';
 import { calculateAge } from '@/utils/age';
@@ -23,6 +24,7 @@ export const useN8nStoryFromTitle = () => {
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const { user } = useSupabaseAuth();
   const { toast } = useToast();
+  const { notifyStoryReady, notifyStoryError } = useStoryNotifications();
 
   const createStoryFromTitle = async (data: StoryCreationData): Promise<string> => {
     if (!user) {
@@ -121,6 +123,14 @@ export const useN8nStoryFromTitle = () => {
         description: error.message || "Impossible de créer l'histoire via n8n",
         variant: "destructive",
       });
+      
+      // 🚨 NOTIFICATION NATIVE : Erreur de création
+      try {
+        await notifyStoryError(data.selectedTitle, 'creation-error');
+        console.log('[N8nStoryFromTitle] ✅ Notification d\'erreur envoyée');
+      } catch (notifError) {
+        console.warn('[N8nStoryFromTitle] ⚠️ Erreur notification:', notifError);
+      }
       
       throw error;
     } finally {
