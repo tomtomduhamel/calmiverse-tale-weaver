@@ -5,20 +5,6 @@ import { useNotificationPermissions } from '@/hooks/notifications/useNotificatio
 export const useStoryNotifications = () => {
   const { canNotify, checkAndRequestIfNeeded } = useNotificationPermissions();
 
-  const notifyTitlesReady = useCallback(async (storyId: string) => {
-    try {
-      if (!canNotify) {
-        const granted = await checkAndRequestIfNeeded();
-        if (!granted) return;
-      }
-      
-      await notificationService.notifyTitleReady(storyId);
-      console.log('[useStoryNotifications] ✅ Titles ready notification sent');
-    } catch (error) {
-      console.error('[useStoryNotifications] Error sending titles notification:', error);
-    }
-  }, [canNotify, checkAndRequestIfNeeded]);
-
   const notifyTitlesGenerated = useCallback(async () => {
     try {
       if (!canNotify) {
@@ -67,7 +53,6 @@ export const useStoryNotifications = () => {
   }, [canNotify]);
 
   return {
-    notifyTitlesReady,
     notifyTitlesGenerated,
     notifyStoryReady,
     notifyStoryError,

@@ -188,19 +188,6 @@ export class NotificationService {
   /**
    * Notifications prédéfinies pour Calmi
    */
-  
-  async notifyTitleReady(storyId: string): Promise<void> {
-    await this.send({
-      title: '📝 Titres générés !',
-      body: '3 nouveaux titres d\'histoire sont disponibles. Cliquez pour choisir.',
-      tag: `titles-ready-${Date.now()}`,
-      data: {
-        action: 'library' as const,
-        timestamp: Date.now()
-      },
-      requireInteraction: true
-    });
-  }
 
   async notifyTitlesGenerated(): Promise<void> {
     await this.send({

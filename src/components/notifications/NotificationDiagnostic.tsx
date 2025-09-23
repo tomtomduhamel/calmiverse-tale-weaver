@@ -16,7 +16,7 @@ export const NotificationDiagnostic: React.FC = () => {
   } = useNotificationPermissions();
   
   const { 
-    notifyTitlesReady, 
+    notifyTitlesGenerated, 
     notifyStoryReady, 
     notifyStoryError, 
     notifyAudioReady 
@@ -38,7 +38,7 @@ export const NotificationDiagnostic: React.FC = () => {
 
   const testNotifications = async () => {
     try {
-      await notifyTitlesReady('test-story');
+      await notifyTitlesGenerated();
       await new Promise(resolve => setTimeout(resolve, 1000));
       await notifyStoryReady('Histoire de test', 'test-story');
       await new Promise(resolve => setTimeout(resolve, 1000));

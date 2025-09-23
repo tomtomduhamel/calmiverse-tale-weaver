@@ -55,10 +55,6 @@ export const useNativePWANotifications = () => {
     await notificationService.notifyStoryError(storyTitle, storyId);
   }, []);
 
-  const notifyTitleReady = useCallback(async (storyId: string) => {
-    await notificationService.notifyTitleReady(storyId);
-  }, []);
-
   const notifyAudioReady = useCallback(async (storyTitle: string, storyId: string) => {
     await notificationService.notifyAudioReady(storyTitle, storyId);
   }, []);
@@ -72,7 +68,6 @@ export const useNativePWANotifications = () => {
     requestPermission,
     notifyStoryReady,
     notifyStoryError,
-    notifyTitleReady,
     notifyAudioReady,
     notifyGeneralUpdate
   };
