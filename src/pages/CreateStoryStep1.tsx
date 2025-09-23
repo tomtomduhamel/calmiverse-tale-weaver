@@ -3,34 +3,65 @@ import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ChildrenSelectionStep from "@/components/story/steps/ChildrenSelectionStep";
+import LoadingWithTimeout from "@/components/ui/LoadingWithTimeout";
 
 const CreateStoryStep1: React.FC = () => {
-  const { user, loading: authLoading } = useSupabaseAuth();
-  const { children, loading: childrenLoading } = useSupabaseChildren();
+  const { user, loading: authLoading, error: authError, timeoutReached: authTimeout, retryAuth } = useSupabaseAuth();
+  const { children, loading: childrenLoading, error: childrenError, timeoutReached: childrenTimeout, retryLoadChildren } = useSupabaseChildren();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
   // Récupérer l'ID de l'enfant présélectionné depuis l'URL
   const preSelectedChildId = searchParams.get('childId') || undefined;
 
-  if (authLoading || childrenLoading) {
+  // PHASE 1: Gestion avancée des états de chargement avec timeouts
+  const isLoading = authLoading || childrenLoading;
+  const hasTimedOut = authTimeout || childrenTimeout;
+  const hasError = authError || childrenError;
+  
+  // Fonction de retry globale
+  const handleRetry = () => {
+    if (authError || authTimeout) {
+      retryAuth?.();
+    }
+    if (childrenError || childrenTimeout) {
+      retryLoadChildren?.();
+    }
+  };
+
+  // Navigation vers mode simple/bibliothèque
+  const handleFallback = () => {
+    navigate("/library");
+  };
+
+  // Gestion de l'état de chargement/erreur avec timeout
+  if (isLoading || hasTimedOut || hasError) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
+      <LoadingWithTimeout
+        isLoading={isLoading}
+        hasTimedOut={hasTimedOut}
+        error={hasError}
+        onRetry={handleRetry}
+        onFallbackAction={handleFallback}
+        fallbackActionLabel="Voir mes histoires"
+        loadingMessage="Préparation de la création d'histoire..."
+        timeoutMessage="La connexion est lente, mais nous continuons d'essayer"
+      />
     );
   }
 
+  // Redirection si pas d'utilisateur
   if (!user) {
     navigate("/auth");
     return null;
   }
 
+  // Affichage normal - PHASE 1: Permettre l'affichage même avec peu d'enfants
   return (
-    <ChildrenSelectionStep children={children} preSelectedChildId={preSelectedChildId} />
+    <ChildrenSelectionStep 
+      children={children} 
+      preSelectedChildId={preSelectedChildId} 
+    />
   );
 };
 

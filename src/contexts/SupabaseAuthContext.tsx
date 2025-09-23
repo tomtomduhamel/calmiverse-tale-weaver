@@ -9,6 +9,8 @@ interface SupabaseAuthContextType {
   session: Session | null;
   loading: boolean;
   error: AuthError | null;
+  timeoutReached?: boolean;
+  retryAuth?: () => void;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -19,7 +21,7 @@ const SupabaseAuthContext = createContext<SupabaseAuthContextType | null>(null);
 
 export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [error, setError] = useState<AuthError | null>(null);
-  const { user, session, loading } = useAuthSession();
+  const { user, session, loading, timeoutReached, retryAuth } = useAuthSession();
   const { signInWithEmail: authSignInWithEmail, 
           signUpWithEmail: authSignUpWithEmail, 
           signInWithGoogle: authSignInWithGoogle, 
@@ -80,6 +82,8 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
       session,
       loading,
       error,
+      timeoutReached,
+      retryAuth,
       signInWithEmail,
       signUpWithEmail,
       signInWithGoogle,

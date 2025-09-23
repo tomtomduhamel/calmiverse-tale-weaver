@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,8 +8,22 @@ export const useAuthSession = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
+    // PHASE 1: Timeout de sécurité de 10 secondes pour éviter le chargement infini
+    const authTimeout = setTimeout(() => {
+      if (loading) {
+        console.warn("⚠️ Timeout d'authentification atteint (10s) - forçage de l'arrêt du loading");
+        setLoading(false);
+        setTimeoutReached(true);
+        setError("Timeout de connexion - veuillez réessayer");
+      }
+    }, 10000);
+
+    const cleanup = () => {
+      clearTimeout(authTimeout);
+    };
     console.log("Initialisation sécurisée de l'authentification Supabase");
     
     // 1. Configurer le listener d'état d'authentification
@@ -92,6 +106,7 @@ export const useAuthSession = () => {
 
     return () => {
       console.log("Nettoyage sécurisé du listener d'authentification");
+      cleanup();
       subscription.unsubscribe();
     };
   }, []);
@@ -103,10 +118,38 @@ export const useAuthSession = () => {
     }
   }, [user, loading, error]);
 
+  // Fonction de retry pour l'utilisateur
+  const retryAuth = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    setTimeoutReached(false);
+    
+    // Relancer la vérification de session
+    supabase.auth.getSession().then(({ data: { session: currentSession }, error }) => {
+      if (error) {
+        setError('Erreur de session');
+        setLoading(false);
+      } else if (currentSession) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+        setError(null);
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
+    }).catch((err) => {
+      console.error('Erreur retry auth:', err);
+      setError('Erreur de reconnexion');
+      setLoading(false);
+    });
+  }, []);
+
   return {
     user,
     session,
     loading,
-    error
+    error,
+    timeoutReached,
+    retryAuth
   };
 };
