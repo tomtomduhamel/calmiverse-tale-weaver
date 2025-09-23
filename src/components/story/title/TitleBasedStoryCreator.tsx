@@ -363,6 +363,49 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
   // Étape 2: Sélection du titre
   if (currentStep === 'titles') {
+    // Si les titres sont en cours de génération, afficher l'état de chargement
+    if (isGeneratingTitles && generatedTitles.length === 0) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">
+                ✨ Calmi crée vos 3 titres personnalisés
+              </h3>
+              <p className="text-muted-foreground">
+                Nos petits lutins magiques travaillent à créer des titres uniques pour {selectedChildren.map(c => c.name).join(', ')}. 
+                Vous serez prévenu dès qu'ils seront prêts !
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                clearTitles();
+                updateCurrentStep('objective');
+              }}
+            >
+              Annuler la création des titres
+            </Button>
+            <Button 
+              variant="secondary"
+              onClick={() => {
+                window.location.href = '/library';
+              }}
+            >
+              Parcourir la bibliothèque d'histoires
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    // Si les titres sont générés, afficher le sélecteur
     return (
       <div className="space-y-6">
         <TitleSelector
