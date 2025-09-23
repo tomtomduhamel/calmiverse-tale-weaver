@@ -216,7 +216,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       const cleanupMonitoring = startMonitoring();
 
       // Créer l'histoire via n8n avec les données complètes des enfants et la durée
-      await createStoryFromTitle({
+      const processId = await createStoryFromTitle({
         selectedTitle: titleToUse,
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
@@ -226,11 +226,15 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         durationMinutes,
       });
 
-      // Toast unique pour la création
+      // Toast et redirection immédiate vers bibliothèque
       toast({
-        title: "Création lancée",
-        description: "Votre histoire est en cours de génération (5-8 min). Vous recevrez une notification quand elle sera prête."
+        title: "✨ Création lancée !",
+        description: "Vous pouvez naviguer librement. Vous recevrez une notification quand votre histoire sera prête (5-8 min)."
       });
+
+      // Effacer l'état persisté et rediriger immédiatement vers la bibliothèque
+      clearPersistedState();
+      onStoryCreated('library'); // Signal spécial pour aller à la bibliothèque
     } catch (error: any) {
       console.error('[TitleBasedStoryCreator] Erreur création histoire:', error);
       updateCurrentStep('titles');
@@ -379,32 +383,14 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     );
   }
 
-  // Étape 3: Création en cours avec monitoring temps réel
+  // Étape 3: Supprimée - Plus d'écran bloquant
+  // L'utilisateur est redirigé immédiatement vers la bibliothèque
   if (currentStep === 'creating') {
-    return <div className="space-y-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Création de votre histoire en cours</h3>
-                <p className="text-muted-foreground mb-4">
-                  Titre sélectionné : <span className="font-medium">"{selectedTitle}"</span>
-                </p>
-                <div className="space-y-2 text-sm">
-                  
-                  <p className="text-muted-foreground">Vous serez automatiquement redirigé vers votre histoire dès qu'elle sera prête</p>
-                  {isMonitoring}
-                </div>
-              </div>
-              
-              <Button variant="outline" onClick={handleBack} disabled={isCreatingStory}>
-                Retour aux titres
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>;
+    // Cette étape ne devrait plus jamais être atteinte
+    console.warn('[TitleBasedStoryCreator] Étape "creating" atteinte - redirection vers bibliothèque');
+    clearPersistedState();
+    onStoryCreated('library');
+    return null;
   }
   return null;
 };

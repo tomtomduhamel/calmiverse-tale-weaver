@@ -100,8 +100,8 @@ export const useN8nStoryFromTitle = () => {
         },
         body: JSON.stringify(payload)
       }, {
-        maxRetries: 2, // Moins de retries pour création complète (plus longue)
-        timeoutMs: 480000, // 8 minutes pour création d'histoire complète
+        maxRetries: 3, // Plus de retries pour robustesse
+        timeoutMs: 900000, // 15 minutes - timeout augmenté pour permettre la création complète
         retryCondition: (error) => {
           const msg = error?.message?.toLowerCase() || '';
           return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion');

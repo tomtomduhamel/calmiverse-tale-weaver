@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useN8nCompletionCallback } from './useN8nCompletionCallback';
+import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
 import type { Story } from '@/types/story';
 
 interface RealtimeStoryMonitorOptions {
@@ -19,11 +20,12 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
   const [lastDetectedStory, setLastDetectedStory] = useState<Story | null>(null);
   const { user } = useSupabaseAuth();
   const { toast } = useToast();
+  const { notifyStoryReady } = useStoryNotifications();
   
   const {
     onStoryCreated,
     onTimeout,
-    timeoutMs = 120000, // 2 minutes par défaut
+    timeoutMs = 600000, // 10 minutes par défaut - augmenté pour correspondre au temps de création
     enabled = true
   } = options;
 
@@ -101,7 +103,10 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
           setIsMonitoring(false);
           setMonitoringStartTime(null);
 
-          // Pas de toast ici - sera géré par le composant appelant ou autre mécanisme
+          // 🚨 NOTIFICATION NATIVE : Histoire créée
+          notifyStoryReady(formattedStory.title, formattedStory.id)
+            .then(() => console.log('[RealtimeStoryMonitor] ✅ Notification native envoyée'))
+            .catch(error => console.warn('[RealtimeStoryMonitor] ⚠️ Erreur notification:', error));
 
           if (onStoryCreated) {
             onStoryCreated(formattedStory);
@@ -145,7 +150,10 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
             setIsMonitoring(false);
             setMonitoringStartTime(null);
 
-            // Pas de toast ici - sera géré par le composant appelant
+            // 🚨 NOTIFICATION NATIVE : Histoire complétée
+            notifyStoryReady(formattedStory.title, formattedStory.id)
+              .then(() => console.log('[RealtimeStoryMonitor] ✅ Notification native envoyée (UPDATE)'))
+              .catch(error => console.warn('[RealtimeStoryMonitor] ⚠️ Erreur notification (UPDATE):', error));
 
             if (onStoryCreated) {
               onStoryCreated(formattedStory);

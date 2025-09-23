@@ -7,6 +7,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import MobileMenu from './MobileMenu';
 import { Footer } from './Footer';
 import { useViewManagement } from '@/hooks/useViewManagement';
+import { useBackgroundStoryMonitor } from '@/hooks/stories/useBackgroundStoryMonitor';
 import { logger } from '@/utils/logger';
 import { OfflineSyncIndicator } from './OfflineSyncIndicator';
 import { OfflineIndicator } from './OfflineIndicator';
@@ -20,6 +21,10 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   const location = useLocation();
   const { currentView, setCurrentView } = useViewManagement();
   
+  // 🚨 MONITORING ARRIÈRE-PLAN : Surveillar les nouvelles histoires créées
+  // Ce hook fonctionne en permanence tant que l'utilisateur est authentifié
+  const { isMonitoring } = useBackgroundStoryMonitor();
+  
   // Déterminer si le menu mobile doit être affiché
   // Ne pas l'afficher si nous sommes sur la route du lecteur d'histoire
   const showMobileMenu = isMobile && !location.pathname.startsWith('/reader/');
@@ -27,7 +32,8 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   logger.debug("[Shell] Configuration du menu mobile", {
     isMobile,
     pathname: location.pathname,
-    showMobileMenu
+    showMobileMenu,
+    backgroundMonitoring: isMonitoring
   });
   
   return (

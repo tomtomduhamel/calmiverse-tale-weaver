@@ -32,6 +32,10 @@ const CreateStoryTitles: React.FC = () => {
         description: "Votre histoire est en cours de génération. Vérifiez votre bibliothèque dans quelques minutes."
       });
       navigate("/library");
+    } else if (storyId === "library") {
+      // Nouveau cas : Création lancée, redirection immédiate vers bibliothèque
+      console.log("[CreateStoryTitles] Redirection immédiate vers bibliothèque après lancement création");
+      navigate("/library");
     } else {
       // Succès normal - rediriger directement vers l'histoire créée
       console.log("[CreateStoryTitles] Redirection vers l'histoire créée:", storyId);
