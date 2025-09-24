@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -10,35 +10,35 @@ const CreateStoryStep1: React.FC = () => {
   const { children, loading: childrenLoading, error: childrenError, timeoutReached: childrenTimeout, retryLoadChildren } = useSupabaseChildren();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
-  // Récupérer l'ID de l'enfant présélectionné depuis l'URL
-  const preSelectedChildId = searchParams.get('childId') || undefined;
+  const preSelectedChildId = searchParams.get("childId") || undefined;
+  const [currentStep, setCurrentStep] = useState(0);
 
-  // PHASE 1: Gestion avancée des états de chargement avec timeouts
+  // PHASE 3: Gestion des étapes de progression
+  React.useEffect(() => {
+    if (!authLoading && user) setCurrentStep(1);
+    if (!childrenLoading && !childrenError) setCurrentStep(2);
+  }, [authLoading, user, childrenLoading, childrenError]);
+
+  // États combinés pour interface unifiée
   const isLoading = authLoading || childrenLoading;
   const hasTimedOut = authTimeout || childrenTimeout;
-  const hasError = authError || childrenError;
-  
-  // Fonction de retry globale
+  const errorMessage = authError || childrenError || null;
+
+  // Actions de récupération
   const handleRetry = () => {
-    if (authError || authTimeout) {
-      retryAuth?.();
-    }
-    if (childrenError || childrenTimeout) {
-      retryLoadChildren?.();
-    }
+    if (authError) retryAuth();
+    if (childrenError) retryLoadChildren();
   };
 
-  // Navigation vers mode simple/bibliothèque
   const handleFallback = () => {
     navigate("/library");
   };
 
-  // Convert errors to strings
-  const errorMessage = authError ? (typeof authError === 'string' ? authError : authError.message) : 
-                      childrenError ? childrenError : null;
+  const handleQuickCreate = () => {
+    navigate("/kids-profile");
+  };
 
-  // Gestion de l'état de chargement/erreur avec timeout
+  // PHASE 3: Affichage optimiste - permet l'affichage même avec des données partielles
   if (isLoading || hasTimedOut || errorMessage) {
     return (
       <LoadingWithTimeout
@@ -48,19 +48,16 @@ const CreateStoryStep1: React.FC = () => {
         onRetry={handleRetry}
         onFallbackAction={handleFallback}
         fallbackActionLabel="Voir mes histoires"
-        loadingMessage="Préparation de la création d'histoire..."
-        timeoutMessage="La connexion est lente, mais nous continuons d'essayer"
+        loadingMessage={authLoading ? "Connexion en cours..." : "Chargement des profils..."}
+        onQuickCreate={handleQuickCreate}
+        canContinueWithoutData={children.length === 0}
+        progressSteps={["Authentification", "Profils enfants", "Création"]}
+        currentStep={currentStep}
       />
     );
   }
 
-  // Redirection si pas d'utilisateur
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
-
-  // Affichage normal - PHASE 1: Permettre l'affichage même avec peu d'enfants
+  // Affichage normal avec mode optimiste
   return (
     <ChildrenSelectionStep 
       children={children} 
