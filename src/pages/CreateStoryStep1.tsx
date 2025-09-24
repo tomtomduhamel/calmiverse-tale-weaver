@@ -34,13 +34,17 @@ const CreateStoryStep1: React.FC = () => {
     navigate("/library");
   };
 
+  // Convert errors to strings
+  const errorMessage = authError ? (typeof authError === 'string' ? authError : authError.message) : 
+                      childrenError ? childrenError : null;
+
   // Gestion de l'état de chargement/erreur avec timeout
-  if (isLoading || hasTimedOut || hasError) {
+  if (isLoading || hasTimedOut || errorMessage) {
     return (
       <LoadingWithTimeout
         isLoading={isLoading}
         hasTimedOut={hasTimedOut}
-        error={hasError}
+        error={errorMessage}
         onRetry={handleRetry}
         onFallbackAction={handleFallback}
         fallbackActionLabel="Voir mes histoires"

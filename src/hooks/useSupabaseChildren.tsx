@@ -43,22 +43,22 @@ export const useSupabaseChildren = () => {
         ).length || 0;
       });
       
-      const loadedChildren = childrenData
-        .map(child => ({
-          id: child.id,
-          name: child.name,
-          birthDate: new Date(child.birthdate),
-          interests: child.interests || [],
-          gender: child.gender || 'unknown',
-          authorId: child.authorid,
-          teddyName: child.teddyname || '',
-          teddyDescription: child.teddydescription || '',
-          teddyPhotos: child.teddyphotos || [],
-          imaginaryWorld: child.imaginaryworld || '',
-          createdAt: new Date(child.createdat),
-          storiesCount: storiesCountMap[child.id] || 0
-        })) as (Child & { storiesCount: number })[]
-        .sort((a, b) => b.storiesCount - a.storiesCount);
+      const mappedChildren = childrenData.map(child => ({
+        id: child.id,
+        name: child.name,
+        birthDate: new Date(child.birthdate),
+        interests: child.interests || [],
+        gender: child.gender || 'unknown',
+        authorId: child.authorid,
+        teddyName: child.teddyname || '',
+        teddyDescription: child.teddydescription || '',
+        teddyPhotos: child.teddyphotos || [],
+        imaginaryWorld: child.imaginaryworld || '',
+        createdAt: new Date(child.createdat),
+        storiesCount: storiesCountMap[child.id] || 0
+      })) as (Child & { storiesCount: number })[];
+      
+      const loadedChildren = mappedChildren.sort((a, b) => b.storiesCount - a.storiesCount);
       
       console.log("[useSupabaseChildren] Enfants chargés:", loadedChildren.length);
       setChildren(loadedChildren);
