@@ -38,7 +38,7 @@ export const useBackgroundStoryMonitor = () => {
       console.error('[BackgroundStoryMonitor] Exception comptage histoires:', error);
       return lastKnownStoryCount;
     }
-  }, [user, lastKnownStoryCount]);
+  }, [user]);
 
   /**
    * Vérifie s'il y a de nouvelles histoires et envoie des notifications
@@ -160,7 +160,7 @@ export const useBackgroundStoryMonitor = () => {
     monitoringRef.current.intervalId = intervalId;
 
     console.log('[BackgroundStoryMonitor] ✅ Monitoring actif (Realtime + Polling)');
-  }, [user, isMonitoring, getCurrentStoryCount, checkForNewStories, notifyStoryReady]);
+  }, [user]);
 
   /**
    * Arrête le monitoring
