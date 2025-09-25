@@ -27,6 +27,8 @@ interface StoryGenerationManagerProps {
  */
 export const StoryGenerationManager: React.FC<StoryGenerationManagerProps> = ({ children }) => {
   const { user } = useSupabaseAuth();
+  
+  // Ne pas initialiser les hooks si l'utilisateur n'est pas connecté
   const {
     activeGenerations,
     totalActiveCount,

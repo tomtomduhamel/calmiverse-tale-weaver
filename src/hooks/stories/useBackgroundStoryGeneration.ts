@@ -72,10 +72,14 @@ export const useBackgroundStoryGeneration = () => {
     } catch (error) {
       console.warn('Notification failed, using toast fallback:', error);
       // Fallback avec toast
-      toast({
-        title: "✨ Histoire terminée !",
-        description: story?.title || 'Votre histoire est maintenant disponible'
-      });
+      try {
+        toast({
+          title: "✨ Histoire terminée !",
+          description: story?.title || 'Votre histoire est maintenant disponible'
+        });
+      } catch (toastError) {
+        console.warn('Toast fallback also failed:', toastError);
+      }
     }
 
     console.log('[useBackgroundStoryGeneration] Génération terminée:', storyId);
@@ -120,39 +124,55 @@ export const useBackgroundStoryGeneration = () => {
     if (!user || !supabase) return;
 
     console.log('[useBackgroundStoryGeneration] Démarrage de la surveillance temps réel');
+    
+    let channel: any = null;
 
-    const channel = supabase
-      .channel('stories_realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'stories',
-          filter: `authorid=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('[useBackgroundStoryGeneration] Changement détecté:', payload);
-          
-          const story = payload.new as Story;
-          if (!story) return;
+    try {
+      channel = supabase
+        .channel('stories_realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'stories',
+            filter: `authorid=eq.${user.id}`
+          },
+          (payload) => {
+            try {
+              console.log('[useBackgroundStoryGeneration] Changement détecté:', payload);
+              
+              const story = payload.new as Story;
+              if (!story) return;
 
-          // Vérifier si c'est une histoire que nous suivons
-          const isTracked = state.activeGenerations.some(gen => gen.id === story.id);
-          
-          if (isTracked) {
-            if (story.status === 'completed') {
-              completeGeneration(story.id, story);
-            } else if (story.status === 'error') {
-              failGeneration(story.id, story.error);
+              // Vérifier si c'est une histoire que nous suivons
+              const isTracked = state.activeGenerations.some(gen => gen.id === story.id);
+              
+              if (isTracked) {
+                if (story.status === 'completed') {
+                  completeGeneration(story.id, story);
+                } else if (story.status === 'error') {
+                  failGeneration(story.id, story.error);
+                }
+              }
+            } catch (error) {
+              console.warn('[useBackgroundStoryGeneration] Erreur traitement changement:', error);
             }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    } catch (error) {
+      console.warn('[useBackgroundStoryGeneration] Erreur subscription Supabase:', error);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      try {
+        if (channel) {
+          supabase.removeChannel(channel);
+        }
+      } catch (error) {
+        console.warn('[useBackgroundStoryGeneration] Erreur cleanup channel:', error);
+      }
     };
   }, [user, supabase, state.activeGenerations, completeGeneration, failGeneration]);
 

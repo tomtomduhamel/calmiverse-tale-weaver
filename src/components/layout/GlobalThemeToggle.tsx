@@ -1,5 +1,5 @@
 import React from 'react';
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { SimpleThemeToggle } from "@/components/ui/SimpleThemeToggle";
 
 /**
  * Composant de toggle de thème global pour l'application Calmiverse
@@ -8,10 +8,9 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 export const GlobalThemeToggle: React.FC = () => {
   return (
     <div className="flex items-center">
-      <ThemeToggle 
+      <SimpleThemeToggle 
         variant="ghost" 
         size="sm"
-        showLabels={false}
       />
     </div>
   );

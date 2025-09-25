@@ -20,9 +20,7 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
-      strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.ts',
+      strategies: 'generateSW',
       manifest: {
         name: 'Calmi - Histoires personnalisées pour enfants',
         short_name: 'Calmi',
@@ -47,11 +45,33 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
-      injectManifest: {
+      workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        swSrc: 'src/sw.ts',
-        swDest: 'dist/sw.js'
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'supabase-storage-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // <== 30 days
+              }
+            }
+          }
+        ]
       }
     }),
   ].filter(Boolean),
