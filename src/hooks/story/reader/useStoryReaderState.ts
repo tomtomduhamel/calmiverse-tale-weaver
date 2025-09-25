@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import type { Story } from '@/types/story';
 
 interface UseStoryReaderStateProps {
@@ -9,9 +10,11 @@ interface UseStoryReaderStateProps {
 export const useStoryReaderState = ({ initialStory }: UseStoryReaderStateProps) => {
   const [story, setStory] = useState<Story | null>(initialStory);
   const [fontSize, setFontSize] = useState(16);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false);
+
+  // Utiliser le système de thème global au lieu de l'état local
+  const { isDarkMode, setDarkMode } = useAppTheme();
 
   // Mettre à jour l'état local quand initialStory change
   useEffect(() => {
@@ -26,7 +29,7 @@ export const useStoryReaderState = ({ initialStory }: UseStoryReaderStateProps) 
     fontSize,
     setFontSize,
     isDarkMode,
-    setIsDarkMode,
+    setIsDarkMode: setDarkMode,
     showSummary,
     setShowSummary,
     isUpdatingFavorite,

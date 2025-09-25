@@ -43,10 +43,10 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
       console.log("[StoryReaderHeader] DEBUG: onToggleFavorite n'est pas défini");
     }
   };
-  return <header className={`sticky top-0 z-10 border-b p-4 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+    return <header className="sticky top-0 z-10 border-b p-4 bg-background">
       <div className="flex items-center justify-between max-w-4xl mx-auto">
         {/* Bouton retour */}
-        <Button variant="ghost" size="sm" onClick={onClose} className={`${isDarkMode ? 'text-white hover:bg-gray-800' : ''}`}>
+        <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour
         </Button>
@@ -69,7 +69,7 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
               variant="ghost" 
               size="sm" 
               onClick={() => setIsDarkMode(!isDarkMode)} 
-              className={`${isDarkMode ? 'text-white hover:bg-gray-800' : ''}`}
+              className="text-muted-foreground hover:text-foreground"
               aria-label={isDarkMode ? 'Activer le mode clair' : 'Activer le mode sombre'}
             >
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -81,7 +81,7 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
           
           {/* Bouton info */}
           {setShowSummary && (
-            <Button variant="ghost" size="sm" onClick={() => setShowSummary(true)} className={`${isDarkMode ? 'text-white hover:bg-gray-800' : ''}`}>
+            <Button variant="ghost" size="sm" onClick={() => setShowSummary(true)} className="text-muted-foreground hover:text-foreground">
               <Info className="h-4 w-4" />
             </Button>
           )}
@@ -124,7 +124,7 @@ const AutoScrollHeaderButton: React.FC<{
       return {
         icon: <ArrowDown className="h-4 w-4" />,
         tooltip: "Démarrer le défilement",
-        className: isDarkMode ? "text-white hover:bg-gray-800" : ""
+        className: "text-muted-foreground hover:text-foreground"
       };
     }
   };

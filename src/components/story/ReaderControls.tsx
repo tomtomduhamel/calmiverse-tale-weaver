@@ -70,7 +70,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
 
             {/* 2. Musique d'ambiance */}
             <div className="flex items-center gap-3">
-              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <span className="text-sm font-medium text-muted-foreground">
                 Musique d'ambiance
               </span>
               <BackgroundSoundButton 
@@ -83,7 +83,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
 
             {/* 3. Histoire lue */}
             <div className="flex items-center gap-3">
-              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <span className="text-sm font-medium text-muted-foreground">
                 {isRead ? 'Marquer comme non lue' : 'Marquer comme lue'}
               </span>
               <MarkAsReadButton 
@@ -112,7 +112,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             <div className="grid grid-cols-2 gap-4">
               {/* Musique d'ambiance - compact */}
               <div className="flex flex-col items-center gap-2 p-2 rounded-lg border border-border/50">
-                <span className={`text-xs font-medium text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <span className="text-xs font-medium text-center text-muted-foreground">
                   Musique
                 </span>
                 <BackgroundSoundButton 
@@ -125,7 +125,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
 
               {/* Histoire lue - compact */}
               <div className="flex flex-col items-center gap-2 p-2 rounded-lg border border-border/50">
-                <span className={`text-xs font-medium text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <span className="text-xs font-medium text-center text-muted-foreground">
                   {isRead ? 'Non lue' : 'Lue'}
                 </span>
                 <MarkAsReadButton 

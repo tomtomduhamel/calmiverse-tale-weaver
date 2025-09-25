@@ -30,11 +30,7 @@ export const CollapsibleControls: React.FC<CollapsibleControlsProps> = ({
       onMouseLeave={onMouseLeave}
     >
       <div className={`
-        border-t p-4 backdrop-blur-sm
-        ${isDarkMode 
-          ? 'bg-gray-900/95 border-gray-700' 
-          : 'bg-white/95 border-gray-200'
-        }
+        border-t p-4 backdrop-blur-sm bg-background/95
       `}>
         <div className="max-w-4xl mx-auto">
           {children}
@@ -42,13 +38,7 @@ export const CollapsibleControls: React.FC<CollapsibleControlsProps> = ({
       </div>
       
       {/* Indicateur visuel discret */}
-      <div className={`
-        absolute -top-1 left-1/2 transform -translate-x-1/2
-        w-12 h-1 rounded-full
-        ${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'}
-        transition-opacity duration-200
-        ${isVisible ? 'opacity-100' : 'opacity-0'}
-      `} />
+      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-12 h-1 rounded-full bg-muted-foreground/30 transition-opacity duration-200" />
     </div>
   );
 };

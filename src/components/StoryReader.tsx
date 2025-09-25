@@ -72,7 +72,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const readingTimeString = calculateReadingTime(story.content);
 
   return (
-    <StoryReaderLayout isDarkMode={isDarkMode} scrollAreaRef={scrollAreaRef}>
+    <StoryReaderLayout scrollAreaRef={scrollAreaRef}>
         <StoryReaderHeader
           story={story}
           onClose={handleBack}

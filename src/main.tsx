@@ -12,9 +12,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider 
       attribute="class" 
-      defaultTheme="light" 
-      forcedTheme="light" 
-      enableSystem={false}
+      defaultTheme="system" 
+      enableSystem={true}
     >
       <SupabaseAuthProvider>
         <StoryGenerationManager>

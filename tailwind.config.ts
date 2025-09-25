@@ -16,50 +16,41 @@ export default {
       scale: {
         '98': '0.98',
       },
-      colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "#A8DADC",
-          foreground: "#1A1F2C",
-          dark: "#457B9D",
-        },
-        secondary: {
-          DEFAULT: "#457B9D",
-          foreground: "#FFFFFF",
-          dark: "#2C3E50",
-        },
-        accent: {
-          DEFAULT: "#B7E4C7",
-          foreground: "#1A1F2C",
-          dark: "#2C5F3F",
-        },
-        muted: {
-          DEFAULT: "#F1FAEE",
-          foreground: "#457B9D",
-          dark: "#1A2238",
-        },
-        destructive: {
-          DEFAULT: "#FF6B6B",
-          foreground: "#FFFFFF",
-        },
-        neutral: {
-          DEFAULT: "#E5E5E5",
-          foreground: "#1A1F2C",
-          dark: "#2C2C2C",
-        },
-        card: {
-          start: "#D6EAF8",
-          end: "#B7CFEA",
-          hover: {
-            start: "#C9E4DE",
-            end: "#F1FAEE",
+        colors: {
+          border: "hsl(var(--border))",
+          input: "hsl(var(--input))",
+          ring: "hsl(var(--ring))",
+          background: "hsl(var(--background))",
+          foreground: "hsl(var(--foreground))",
+          primary: {
+            DEFAULT: "hsl(var(--primary))",
+            foreground: "hsl(var(--primary-foreground))",
+          },
+          secondary: {
+            DEFAULT: "hsl(var(--secondary))",
+            foreground: "hsl(var(--secondary-foreground))",
+          },
+          destructive: {
+            DEFAULT: "hsl(var(--destructive))",
+            foreground: "hsl(var(--destructive-foreground))",
+          },
+          muted: {
+            DEFAULT: "hsl(var(--muted))",
+            foreground: "hsl(var(--muted-foreground))",
+          },
+          accent: {
+            DEFAULT: "hsl(var(--accent))",
+            foreground: "hsl(var(--accent-foreground))",
+          },
+          popover: {
+            DEFAULT: "hsl(var(--popover))",
+            foreground: "hsl(var(--popover-foreground))",
+          },
+          card: {
+            DEFAULT: "hsl(var(--card))",
+            foreground: "hsl(var(--card-foreground))",
           },
         },
-      },
       backgroundImage: {
         'gradient-serene': 'linear-gradient(135deg, #D6EAF8, #B7CFEA)',
         'gradient-hero': 'linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #F1FAEE 100%)',

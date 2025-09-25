@@ -30,7 +30,7 @@ export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
       ref={scrollAreaRef} 
       className="flex-1 pr-4"
     >
-      <Card className={`p-6 transition-all duration-300 mb-6 ${isDarkMode ? "bg-gray-800" : "bg-white"} animate-fade-in`}>
+      <Card className="p-6 transition-all duration-300 mb-6 bg-card animate-fade-in">
         <StoryHeader
           story={story}
           childName={childName}

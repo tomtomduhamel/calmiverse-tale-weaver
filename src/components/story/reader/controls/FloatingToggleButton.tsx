@@ -51,10 +51,6 @@ export const FloatingToggleButton: React.FC<FloatingToggleButtonProps> = ({
         shadow-lg border-2
         transition-all duration-300 ease-in-out
         hover:scale-110 active:scale-95
-        ${isDarkMode 
-          ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700' 
-          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-        }
         ${isVisible ? 'translate-y-0' : 'translate-y-2'}
       `}
       style={positionStyles}

@@ -8,6 +8,7 @@ import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStory
 import { NotificationHistoryModal } from '@/components/notifications/NotificationHistoryModal';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { GlobalThemeToggle } from '@/components/layout/GlobalThemeToggle';
 const Navigation = () => {
   const {
     user,
@@ -50,20 +51,20 @@ const Navigation = () => {
   const isActive = (path: string) => {
     return location.pathname === path;
   };
-  return <nav className="bg-primary text-white shadow-md sticky top-0 z-40">
+  return <nav className="bg-background border-b shadow-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="font-bold text-xl">Calmi</Link>
+            <Link to="/" className="font-bold text-xl text-primary">Calmi</Link>
           </div>
           
           {/* Navigation desktop */}
           <div className="hidden md:flex items-center space-x-4">
-            {navItems.map(item => <Link key={item.path} to={item.path} className={`flex items-center px-3 py-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-primary-foreground/20 font-medium' : 'hover:bg-primary-foreground/10'}`}>
+            {navItems.map(item => <Link key={item.path} to={item.path} className={`flex items-center px-3 py-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'}`}>
                 <item.icon className="w-4 h-4 mr-2" />
                 {item.label}
                 {item.path === '/library' && totalActiveCount > 0 && (
-                  <Badge className="ml-2 bg-accent text-accent-foreground text-xs min-w-[1.2rem] h-5 px-1">
+                  <Badge className="ml-2 bg-primary text-primary-foreground text-xs min-w-[1.2rem] h-5 px-1">
                     {totalActiveCount}
                   </Badge>
                 )}
@@ -72,20 +73,23 @@ const Navigation = () => {
             {/* Badge notifications */}
             <NotificationHistoryModal 
               trigger={
-                <Button variant="ghost" size="sm" className="relative hover:bg-primary-foreground/10">
+                <Button variant="ghost" size="sm" className="relative text-muted-foreground hover:text-foreground hover:bg-accent/50">
                   <Bell className="h-4 w-4" />
                   {totalActiveCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-accent text-accent-foreground">
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-primary text-primary-foreground">
                       {totalActiveCount}
                     </Badge>
                   )}
                 </Button>
               }
             />
+
+            {/* Toggle de thème global */}
+            <GlobalThemeToggle />
           </div>
           
           <div className="hidden md:block">
-            <Button variant="ghost" onClick={handleLogout} className="flex items-center hover:bg-primary-foreground/10">
+            <Button variant="ghost" onClick={handleLogout} className="flex items-center text-muted-foreground hover:text-foreground hover:bg-accent/50">
               <LogOut className="w-4 h-4 mr-2" />
               Déconnexion
             </Button>
@@ -98,12 +102,19 @@ const Navigation = () => {
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[250px] bg-white dark:bg-background">
+            <SheetContent side="right" className="w-[250px] bg-background">
               <div className="flex flex-col space-y-4 mt-8">
                 {navItems.map(item => <Link key={item.path} to={item.path} className={`flex items-center py-2 px-4 rounded-md ${isActive(item.path) ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}>
                     <item.icon className="w-5 h-5 mr-3" />
                     {item.label}
                   </Link>)}
+                
+                {/* Toggle de thème dans le menu mobile */}
+                <div className="flex items-center justify-between py-2 px-4">
+                  <span className="text-foreground">Thème</span>
+                  <GlobalThemeToggle />
+                </div>
+                
                 <Button variant="ghost" onClick={handleLogout} className="flex items-center justify-start w-full px-4 text-destructive hover:bg-muted">
                   <LogOut className="w-5 h-5 mr-3" />
                   Déconnexion

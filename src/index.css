@@ -39,35 +39,36 @@
   }
  
   .dark {
+    /* Variables sombres améliorées pour Calmiverse */
     --background: 224 71% 4%;
     --foreground: 213 31% 91%;
- 
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
- 
+
+    --muted: 217 32% 8%;
+    --muted-foreground: 215.4 16.3% 65%;
+
     --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
- 
-    --card: 224 71% 4%;
+    --popover-foreground: 215 20.2% 85%;
+
+    --card: 217 32% 8%;
     --card-foreground: 213 31% 91%;
- 
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
- 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 1.2%;
- 
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
- 
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
- 
+
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
+
+    --primary: 195 100% 80%;
+    --primary-foreground: 224 71% 4%;
+
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 213 31% 91%;
+
+    --accent: 217 32% 17%;
+    --accent-foreground: 195 100% 80%;
+
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
- 
-    --ring: 216 34% 17%;
- 
+
+    --ring: 217 32% 17%;
+
     --radius: 0.5rem;
   }
 }
