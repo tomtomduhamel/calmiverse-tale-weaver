@@ -47,12 +47,11 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
-      // Pour injectManifest, pas de config workbox ici
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit pour éviter l'erreur
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         swSrc: 'src/sw.ts',
-        swDest: 'sw.mjs'
+        swDest: 'dist/sw.js'
       }
     }),
   ].filter(Boolean),
