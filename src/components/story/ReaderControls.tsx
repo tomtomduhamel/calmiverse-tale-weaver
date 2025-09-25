@@ -56,7 +56,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
     }
   };
   return <>
-      <div className={`${isDarkMode ? 'bg-gray-900/95' : 'bg-white/95'} border-t transition-colors duration-300`}>
+      <div className={`${isDarkMode ? 'bg-card/95' : 'bg-card/95'} border-t transition-colors duration-300`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           
           {/* Layout responsive : horizontal sur desktop, grille sur mobile */}

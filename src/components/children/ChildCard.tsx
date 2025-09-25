@@ -31,7 +31,7 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
     <Card 
       className={cn(
         "relative transition-all duration-300 shadow-soft hover:shadow-soft-lg active:scale-98",
-        "bg-gradient-to-br from-card-start to-card-end hover:from-card-hover-start hover:to-card-hover-end",
+        "bg-card hover:bg-card/80",
         isMobile ? "p-3" : "p-4"
       )}
     >
@@ -39,7 +39,7 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 bg-white/80 hover:bg-white/90 text-secondary hover:text-primary"
+          className="h-8 w-8 bg-card/80 hover:bg-card/90 text-muted-foreground hover:text-primary"
           onClick={() => onEdit(child)}
         >
           <Edit className="h-4 w-4" />
@@ -47,7 +47,7 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 bg-white/80 hover:bg-white/90 text-secondary hover:text-destructive"
+          className="h-8 w-8 bg-card/80 hover:bg-card/90 text-muted-foreground hover:text-destructive"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(child.id);
@@ -58,7 +58,7 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
       </div>
       
       <div className={cn("pt-8", isMobile ? "pt-10" : "pt-8")}>
-        <h3 className="text-lg font-semibold text-secondary-dark">{child.name}</h3>
+        <h3 className="text-lg font-semibold text-card-foreground">{child.name}</h3>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger>
@@ -74,7 +74,7 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
         
         {child.teddyName && (
           <div className="mt-2">
-            <p className="text-sm font-medium text-secondary-dark">
+            <p className="text-sm font-medium text-card-foreground">
               Doudou : {child.teddyName}
             </p>
             {child.teddyDescription && (

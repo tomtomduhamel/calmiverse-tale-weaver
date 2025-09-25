@@ -29,7 +29,7 @@ const LibraryHeader = ({ isZenMode, onZenModeToggle }: LibraryHeaderProps) => {
             variant="outline"
             size="icon"
             onClick={onZenModeToggle}
-            className={`${isZenMode ? 'bg-primary text-white' : ''}`}
+            className={`${isZenMode ? 'bg-primary text-primary-foreground' : ''}`}
           >
             <Eye className="h-4 w-4" />
           </Button>

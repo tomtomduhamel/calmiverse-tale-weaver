@@ -35,7 +35,7 @@ const ChildItem = React.memo(({
         "flex items-center space-x-3 p-3 rounded-lg transition-colors",
         isSelected 
           ? "bg-primary/10 hover:bg-primary/20" 
-          : "hover:bg-muted/50 dark:hover:bg-muted-dark/50"
+          : "hover:bg-muted/50"
       )}
       onClick={onToggle}
       data-testid={`child-item-${child.id}`}
@@ -86,7 +86,7 @@ const AddChildButton = React.memo(({
     onClick={onClick}
     variant="outline"
     className={cn(
-      "w-full flex items-center justify-center gap-2 py-4 sm:py-6 border-dashed border-2 hover:border-primary dark:hover:border-primary-dark transition-colors",
+      "w-full flex items-center justify-center gap-2 py-4 sm:py-6 border-dashed border-2 hover:border-primary transition-colors",
       hasError ? "border-destructive/50 hover:border-destructive" : ""
     )}
   >
@@ -110,7 +110,7 @@ const ChildrenSelection = React.memo(({
   return (
     <div className="space-y-4">
       <Label className={cn(
-        "text-secondary dark:text-white text-lg font-medium",
+        "text-foreground text-lg font-medium",
         hasError ? "text-destructive" : ""
       )}>
         Pour qui est cette histoire ?

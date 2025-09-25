@@ -52,9 +52,9 @@ export default {
           },
         },
       backgroundImage: {
-        'gradient-serene': 'linear-gradient(135deg, #D6EAF8, #B7CFEA)',
-        'gradient-hero': 'linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #F1FAEE 100%)',
-        'gradient-night': 'linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 33%, #B7CFEA 66%, #1A2238 100%)',
+        'gradient-serene': 'linear-gradient(135deg, hsl(var(--primary)/0.2), hsl(var(--secondary)/0.2))',
+        'gradient-hero': 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 33%, hsl(var(--primary)/0.1) 66%, hsl(var(--background)) 100%)',
+        'gradient-night': 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 33%, hsl(var(--card)) 66%, hsl(var(--background)) 100%)',
       },
       animation: {
         'slide-down': 'slideDown 0.2s ease-out',

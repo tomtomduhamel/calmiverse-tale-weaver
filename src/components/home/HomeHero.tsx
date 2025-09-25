@@ -46,43 +46,42 @@ const HomeHero: React.FC<HomeHeroProps> = ({
       
       {/* Contenu principal optimisé mobile */}
       <div className="max-w-6xl mx-auto w-full h-full flex flex-col z-10 justify-between">
-        {/* En-tête ultra-compact mobile */}
-        <div className="text-center space-y-1 flex-shrink-0 pt-2 pb-1">
-          <div className="inline-flex items-center justify-center">
-            <div className="rounded-full bg-primary/20 px-2 py-0.5">
-              <span className="text-xs font-medium text-primary-dark flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
-                Histoires personnalisées
-              </span>
+          <div className="text-center space-y-1 flex-shrink-0 pt-2 pb-1">
+            <div className="inline-flex items-center justify-center">
+              <div className="rounded-full bg-primary/20 px-2 py-0.5">
+                <span className="text-xs font-medium text-primary flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  Histoires personnalisées
+                </span>
+              </div>
             </div>
+            
+            <h1 className="text-lg sm:text-3xl md:text-5xl font-bold text-foreground">
+              Bienvenue sur Calmi
+            </h1>
+            
+            <p className="text-xs sm:text-base text-muted-foreground max-w-xl mx-auto px-2 leading-tight">
+              Créez des histoires personnalisées pour accompagner vos enfants
+            </p>
           </div>
-          
-          <h1 className="text-lg sm:text-3xl md:text-5xl font-bold text-primary-dark">
-            Bienvenue sur Calmi
-          </h1>
-          
-          <p className="text-xs sm:text-base text-muted-foreground max-w-xl mx-auto px-2 leading-tight">
-            Créez des histoires personnalisées pour accompagner vos enfants
-          </p>
-        </div>
 
         {/* Cartes ultra-compactes mobile */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6 flex-1 min-h-0 pb-14 md:pb-4">
           {/* Création d'histoire */}
-          <Card className="border border-primary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift h-full">
+          <Card className="border border-primary/20 bg-card hover:shadow-md transition-all duration-300 hover-lift h-full">
             <CardContent className="p-2 sm:p-4 flex flex-col items-center text-center h-full justify-between">
               <div className="flex flex-col items-center space-y-1 flex-grow">
                 <div className="p-1.5 bg-primary/20 w-7 h-7 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center">
-                  <BookOpen className="h-3 w-3 sm:h-5 sm:w-5 text-primary-dark" />
+                  <BookOpen className="h-3 w-3 sm:h-5 sm:w-5 text-primary" />
                 </div>
-                <h3 className="text-sm sm:text-lg font-semibold text-primary-dark">Créer une histoire</h3>
+                <h3 className="text-sm sm:text-lg font-semibold text-card-foreground">Créer une histoire</h3>
                 <p className="text-muted-foreground text-xs leading-tight flex-grow">
                   Choisissez parmi 3 titres générés
                 </p>
               </div>
               <Button 
                 onClick={handleTitleStoryClick} 
-                className="w-full bg-primary hover:bg-primary-dark text-primary-foreground h-7 sm:h-11 text-xs sm:text-sm mt-1"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-7 sm:h-11 text-xs sm:text-sm mt-1"
               >
                 Commencer
               </Button>
@@ -90,19 +89,19 @@ const HomeHero: React.FC<HomeHeroProps> = ({
           </Card>
 
           {/* Univers des enfants */}
-          <Card className="border border-secondary/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift h-full">
+          <Card className="border border-secondary/20 bg-card hover:shadow-md transition-all duration-300 hover-lift h-full">
             <CardContent className="p-2 sm:p-4 flex flex-col items-center text-center h-full justify-between">
               <div className="flex flex-col items-center space-y-1 flex-grow">
                 <div className="p-1.5 bg-secondary/20 w-7 h-7 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center">
-                  <Users className="h-3 w-3 sm:h-5 sm:w-5 text-secondary" />
+                  <Users className="h-3 w-3 sm:h-5 sm:w-5 text-secondary-foreground" />
                 </div>
-                <h3 className="text-sm sm:text-lg font-semibold text-secondary-dark">Univers des enfants</h3>
+                <h3 className="text-sm sm:text-lg font-semibold text-card-foreground">Univers des enfants</h3>
                 <p className="text-muted-foreground text-xs leading-tight flex-grow">
                   Gérez les profils de vos enfants
                 </p>
               </div>
               <Link to="/children" className="w-full mt-1">
-                <Button className="w-full bg-secondary hover:bg-secondary-dark text-secondary-foreground h-7 sm:h-11 text-xs sm:text-sm">
+                <Button className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground h-7 sm:h-11 text-xs sm:text-sm">
                   Explorer
                 </Button>
               </Link>
@@ -110,7 +109,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({
           </Card>
 
           {/* Bibliothèque */}
-          <Card className="border border-muted/20 bg-white/80 hover:shadow-md transition-all duration-300 hover-lift h-full">
+          <Card className="border border-muted/20 bg-card hover:shadow-md transition-all duration-300 hover-lift h-full">
             <CardContent className="p-2 sm:p-4 flex flex-col items-center text-center h-full justify-between">
               <div className="flex flex-col items-center space-y-1 flex-grow">
                 <div className="p-1.5 bg-muted/20 w-7 h-7 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center">
