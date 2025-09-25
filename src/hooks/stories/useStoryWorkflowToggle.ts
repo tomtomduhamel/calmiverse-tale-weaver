@@ -151,15 +151,15 @@ export const useStoryWorkflowToggle = () => {
   const getWorkflowHooks = useCallback(() => {
     if (state.useBackgroundGeneration) {
       return {
-        useStoryOperations: () => import('@/hooks/stories/useStoryBackgroundOperations'),
-        useNotifications: () => import('@/hooks/notifications/useNotificationHandlers'),
-        useMonitoring: () => import('@/hooks/stories/useBackgroundStoryGeneration')
+        useStoryOperations: 'useStoryBackgroundOperations',
+        useNotifications: 'useNotificationHandlers',
+        useMonitoring: 'useBackgroundStoryGeneration'
       };
     } else {
       return {
-        useStoryOperations: () => import('@/hooks/stories/useStoryOperations'),
-        useNotifications: () => import('@/hooks/use-toast'),
-        useMonitoring: () => import('@/hooks/stories/useStoryCreationMonitor')
+        useStoryOperations: 'useStoryOperations',
+        useNotifications: 'useToast',
+        useMonitoring: 'useStoryCreationMonitor'
       };
     }
   }, [state.useBackgroundGeneration]);

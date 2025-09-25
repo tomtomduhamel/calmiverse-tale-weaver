@@ -47,69 +47,12 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
-      workbox: {
+      // Pour injectManifest, pas de config workbox ici
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB limit
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/_/, /\/api\//],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/ioeihnoxvtpxtqhxklpw\.supabase\.co\/storage\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'supabase-storage-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/ioeihnoxvtpxtqhxklpw\.supabase\.co\/rest\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api-cache',
-              networkTimeoutSeconds: 3,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutes
-              }
-            }
-          },
-          {
-            urlPattern: /\/api\/.*\.(png|jpg|jpeg|svg|gif)/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'api-images',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              }
-            }
-          },
-          {
-            urlPattern: /\/(library|create-story|kids)/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'app-pages',
-              expiration: {
-                maxEntries: 20,
-                maxAgeSeconds: 60 * 60 * 24 // 1 day
-              }
-            }
-          }
-        ]
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit pour éviter l'erreur
+        swSrc: 'src/sw.ts',
+        swDest: 'sw.mjs'
       }
     }),
   ].filter(Boolean),
@@ -124,16 +67,54 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
-          'vendor-supabase': ['@supabase/supabase-js'],
-          'vendor-openai': ['openai'],
-          'vendor-utils': ['date-fns', 'clsx', 'lucide-react'],
-          'epub-services': ['jszip', 'epubjs']
+        manualChunks: (id) => {
+          // Séparer les vendors principaux
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('@supabase/supabase-js')) {
+              return 'vendor-supabase';
+            }
+            if (id.includes('openai')) {
+              return 'vendor-openai';
+            }
+            if (id.includes('date-fns') || id.includes('clsx') || id.includes('lucide-react')) {
+              return 'vendor-utils';
+            }
+            if (id.includes('jszip') || id.includes('epubjs')) {
+              return 'epub-services';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query';
+            }
+            return 'vendor-misc';
+          }
+          
+          // Séparer les hooks/services lourds
+          if (id.includes('src/hooks/stories') || id.includes('src/services/stories')) {
+            return 'story-services';
+          }
+          if (id.includes('src/hooks/notifications') || id.includes('src/services/notifications')) {
+            return 'notification-services';
+          }
+          if (id.includes('src/components/story/')) {
+            return 'story-components';
+          }
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1500,
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: false,
+        drop_debugger: true
+      }
+    }
   }
 }));
