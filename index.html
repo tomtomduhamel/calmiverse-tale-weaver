@@ -25,7 +25,44 @@
     <link href="./src/App.css" rel="stylesheet">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Fallback loading screen shown before React mounts -->
+      <div id="initial-loading" style="
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(180deg, #F1FAEE 0%, #A8DADC 100%);
+        color: #2c3e50;
+        font-family: system-ui, -apple-system, sans-serif;
+      ">
+        <div style="text-align: center;">
+          <div style="
+            width: 40px;
+            height: 40px;
+            border: 3px solid #A8DADC;
+            border-top: 3px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+          "></div>
+          <h1 style="margin-bottom: 0.5rem; font-size: 1.5rem;">✨ Calmi</h1>
+          <p style="color: #666; font-size: 0.875rem; margin: 0;">
+            Préparation de vos histoires magiques...
+          </p>
+        </div>
+      </div>
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        /* Hide initial loading once React mounts */
+        .react-mounted #initial-loading {
+          display: none;
+        }
+      </style>
+    </div>
     <!-- GPT Engineer script must be loaded before main application script -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>

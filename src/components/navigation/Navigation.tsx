@@ -8,7 +8,7 @@ import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStory
 import { NotificationHistoryModal } from '@/components/notifications/NotificationHistoryModal';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { GlobalThemeToggle } from '@/components/layout/GlobalThemeToggle';
+import { GlobalThemeToggle } from '@/components/ui/GlobalThemeToggle';
 const Navigation = () => {
   const {
     user,

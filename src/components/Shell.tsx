@@ -11,6 +11,8 @@ import { useBackgroundStoryMonitor } from '@/hooks/stories/useBackgroundStoryMon
 import { logger } from '@/utils/logger';
 import { OfflineSyncIndicator } from './OfflineSyncIndicator';
 import { OfflineIndicator } from './OfflineIndicator';
+import { StoryGenerationManager } from '@/services/stories/StoryGenerationManager';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 interface ShellProps {
   children?: ReactNode;
@@ -20,6 +22,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const location = useLocation();
   const { currentView, setCurrentView } = useViewManagement();
+  const { user } = useSupabaseAuth();
   
   // 🚨 MONITORING ARRIÈRE-PLAN : Surveillar les nouvelles histoires créées
   // Ce hook fonctionne en permanence tant que l'utilisateur est authentifié
@@ -33,10 +36,12 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
     isMobile,
     pathname: location.pathname,
     showMobileMenu,
-    backgroundMonitoring: isMonitoring
+    backgroundMonitoring: isMonitoring,
+    userAuthenticated: !!user
   });
-  
-  return (
+
+  // Only render StoryGenerationManager if user is authenticated
+  const content = (
     <SidebarProvider>
       <div className="flex flex-col min-h-screen w-full relative">
         {/* Only show top navigation on desktop and not on reader pages */}
@@ -64,6 +69,17 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
       </div>
     </SidebarProvider>
   );
+
+  // Wrap with StoryGenerationManager only if user is authenticated
+  if (user) {
+    return (
+      <StoryGenerationManager>
+        {content}
+      </StoryGenerationManager>
+    );
+  }
+
+  return content;
 };
 
 export default Shell;
