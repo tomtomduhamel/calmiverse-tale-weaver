@@ -38,26 +38,31 @@ const CreateStoryStep1: React.FC = () => {
     navigate("/kids-profile");
   };
 
-  // PHASE 3: Affichage optimiste - permet l'affichage même avec des données partielles
-  if (isLoading || hasTimedOut || errorMessage) {
+  // PHASE 3: Affichage optimiste - permettre l'affichage même après timeout si données disponibles
+  // CORRECTION CRITIQUE : Ne pas bloquer l'affichage si on a des enfants
+  const shouldShowLoading = isLoading && children.length === 0;
+  const shouldShowTimeout = hasTimedOut && children.length === 0;
+  const shouldShowError = errorMessage && children.length === 0;
+
+  if (shouldShowLoading || shouldShowTimeout || shouldShowError) {
     return (
       <LoadingWithTimeout
-        isLoading={isLoading}
-        hasTimedOut={hasTimedOut}
-        error={errorMessage}
+        isLoading={shouldShowLoading}
+        hasTimedOut={shouldShowTimeout}
+        error={shouldShowError ? errorMessage : null}
         onRetry={handleRetry}
         onFallbackAction={handleFallback}
         fallbackActionLabel="Voir mes histoires"
         loadingMessage={authLoading ? "Connexion en cours..." : "Chargement des profils..."}
         onQuickCreate={handleQuickCreate}
-        canContinueWithoutData={children.length === 0}
+        canContinueWithoutData={false}
         progressSteps={["Authentification", "Profils enfants", "Création"]}
         currentStep={currentStep}
       />
     );
   }
 
-  // Affichage normal avec mode optimiste
+  // Affichage normal - même avec timeout si des enfants sont chargés
   return (
     <ChildrenSelectionStep 
       children={children} 

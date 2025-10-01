@@ -53,10 +53,10 @@ export const useSupabaseChildren = () => {
   const [timeoutReached, setTimeoutReached] = useState(false);
   const { toast } = useToast();
 
-  // PHASE 2: Chargement indépendant et avec cache
+  // PHASE 1 & 2: Chargement OPTIMISÉ (24 requêtes → 2 requêtes) avec cache
   const loadChildren = useCallback(async (useCache = true) => {
     try {
-      console.log("[useSupabaseChildren] Début du chargement des enfants");
+      console.log("[useSupabaseChildren] ⚡ Chargement optimisé des enfants (1 requête au lieu de 24)");
       
       // PHASE 2: Essayer le cache d'abord
       if (useCache) {
@@ -82,7 +82,7 @@ export const useSupabaseChildren = () => {
         return;
       }
       
-      // Chargement des enfants avec leurs compteurs d'histoires
+      // REQUÊTE 1/2: Chargement des enfants
       console.log("[useSupabaseChildren] Récupération des enfants depuis Supabase");
       const { data: childrenData, error: childrenError } = await supabase
         .from('children')
@@ -94,21 +94,22 @@ export const useSupabaseChildren = () => {
         throw new Error(`Erreur lors de la récupération des enfants: ${childrenError.message}`);
       }
 
-      // Chargement en parallèle des compteurs d'histoires
-      const storiesCountPromises = (childrenData || []).map(async (child) => {
-        const { count } = await supabase
-          .from('stories')
-          .select('*', { count: 'exact', head: true })
-          .eq('authorid', session.user.id)
-          .contains('childrenids', [child.id]);
-        return { childId: child.id, count: count || 0 };
-      });
+      // REQUÊTE 2/2: OPTIMISATION RADICALE - Une seule requête agrégée pour TOUS les compteurs
+      console.log("[useSupabaseChildren] ⚡ Comptage optimisé avec fonction PostgreSQL");
+      const { data: storiesCountData, error: countError } = await supabase
+        .rpc('get_stories_count_by_children', { p_user_id: session.user.id });
 
-      const storiesCountResults = await Promise.all(storiesCountPromises);
-      const storiesCountMap = storiesCountResults.reduce((acc, { childId, count }) => {
-        acc[childId] = count;
-        return acc;
-      }, {} as Record<string, number>);
+      if (countError) {
+        console.warn("[useSupabaseChildren] Erreur comptage (continuera sans):", countError);
+      }
+
+      // Créer un Map pour accès O(1) aux compteurs
+      const storiesCountMap = new Map<string, number>();
+      if (storiesCountData) {
+        storiesCountData.forEach((item: { child_id: string; story_count: number }) => {
+          storiesCountMap.set(item.child_id, Number(item.story_count));
+        });
+      }
       
       const mappedChildren = (childrenData || []).map(child => ({
         id: child.id,
@@ -122,12 +123,12 @@ export const useSupabaseChildren = () => {
         teddyPhotos: child.teddyphotos || [],
         imaginaryWorld: child.imaginaryworld || '',
         createdAt: new Date(child.createdat),
-        storiesCount: storiesCountMap[child.id] || 0
+        storiesCount: storiesCountMap.get(child.id) || 0
       })) as (Child & { storiesCount: number })[];
       
       const loadedChildren = mappedChildren.sort((a, b) => b.storiesCount - a.storiesCount);
       
-      console.log("[useSupabaseChildren] Enfants chargés:", loadedChildren.length);
+      console.log("[useSupabaseChildren] ✅ Enfants chargés en 2 requêtes:", loadedChildren.length);
       setChildren(loadedChildren);
       setLoading(false);
       setError(null);

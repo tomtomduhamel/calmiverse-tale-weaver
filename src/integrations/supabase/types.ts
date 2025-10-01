@@ -774,6 +774,13 @@ export type Database = {
         Args: { p_series_id: string }
         Returns: number
       }
+      get_stories_count_by_children: {
+        Args: { p_user_id: string }
+        Returns: {
+          child_id: string
+          story_count: number
+        }[]
+      }
       has_feature_access: {
         Args: { p_feature: string; p_user_id: string }
         Returns: boolean
