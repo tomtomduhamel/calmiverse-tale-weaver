@@ -56,11 +56,9 @@ const Index = () => {
 
   return (
     <div className="h-full w-full overflow-x-hidden">
-      <LoadingErrorHandler isLoading={isLoading} error={error}>
-        <div className={`index-container max-w-7xl mx-auto p-2 sm:p-4 ${isMobile ? 'pb-32' : 'mb-20'}`}>
-          <ContentView {...contentViewProps} />
-        </div>
-      </LoadingErrorHandler>
+      <div className={`index-container max-w-7xl mx-auto p-2 sm:p-4 ${isMobile ? 'pb-32' : 'mb-20'}`}>
+        <ContentView {...contentViewProps} />
+      </div>
     </div>
   );
 };
