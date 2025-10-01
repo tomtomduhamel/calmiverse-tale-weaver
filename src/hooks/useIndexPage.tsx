@@ -66,8 +66,8 @@ export const useIndexPage = () => {
     clearError
   } = useStoriesState(stories);
 
-  // Redirection automatique pour les utilisateurs non connectés
-  useAuthRedirection();
+  // ❌ SUPPRIMÉ : useAuthRedirection() - géré par AuthGuard dans Shell
+  // Évite les doubles vérifications d'authentification qui bloquaient l'app
 
   // Gestion de la création d'enfant depuis l'interface de création d'histoire
   const handleCreateChildFromStory = async (child: Omit<Child, "id">): Promise<string> => {

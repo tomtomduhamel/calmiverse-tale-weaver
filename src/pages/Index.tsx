@@ -26,14 +26,9 @@ const Index = () => {
     user: user?.id
   });
 
-  // Gérer l'état de chargement et d'erreur
-  const error = stories.error;
-  
-  // Si l'utilisateur n'est pas connecté, afficher un état de chargement
-  // (useAuthRedirection gère déjà la redirection)
-  if (!user) {
-    return <LoadingErrorHandler isLoading={true} error={null} children={null} />;
-  }
+  // ✅ PHASE 4 COMPLET: Plus de blocage ici - AuthGuard gère l'auth
+  // Affichage optimiste : on affiche immédiatement si on a un user
+  // Le loader n'est affiché que brièvement si les données ne sont pas encore là
 
   // Mappage explicite des props pour ContentView (currentView/onViewChange supprimés)
   const contentViewProps = {

@@ -21,13 +21,14 @@ export const WhiteScreenProtector: React.FC<WhiteScreenProtectorProps> = ({ chil
       console.log('📱 WhiteScreenProtector: App is ready');
     }, 100);
 
-    // If the app takes too long, show fallback
+    // PHASE 4 OPTIMISÉ: Timeout augmenté à 15s (sync avec auth 10s + marge)
+    // AuthGuard gère maintenant la redirection auth, donc on peut être plus patient
     const fallbackTimer = setTimeout(() => {
       if (!isAppReady) {
         console.warn('⚠️ WhiteScreenProtector: App taking too long, showing fallback');
         setShowFallback(true);
       }
-    }, 5000);
+    }, 15000);
 
     return () => {
       clearTimeout(mountTimer);
