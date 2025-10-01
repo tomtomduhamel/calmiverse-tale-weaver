@@ -6,13 +6,11 @@ import type { Story } from "@/types/story";
 import type { Child } from "@/types/child";
 
 interface ContentViewProps {
-  currentView: ViewType;
   showGuide: boolean;
   stories: Story[];
   children: Child[];
   pendingStoryId: string | null;
   isRetrying: boolean;
-  onViewChange: (view: ViewType) => void;
   onAddChild: (child: Omit<Child, "id">) => Promise<string>;
   onUpdateChild: (childId: string, updatedChild: Partial<Child>) => Promise<void>;
   onDeleteChild: (childId: string) => Promise<void>;
@@ -26,8 +24,8 @@ interface ContentViewProps {
 }
 
 /**
- * Composant conteneur principal pour le contenu de l'application
- * Note: Le reader a maintenant sa propre route /reader/:id
+ * PHASE 2: ContentView simplifié - plus de currentView
+ * Le routage est géré par React Router dans ContentRouter
  */
 const ContentView: React.FC<ContentViewProps> = (props) => {
   return <ContentRouter {...props} />;

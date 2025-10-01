@@ -2,7 +2,7 @@
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
-import { useViewManagement } from "@/hooks/useViewManagement";
+import { useAppNavigation } from "@/hooks/navigation/useAppNavigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useStoriesState } from "@/hooks/stories/useStoriesState";
 import { useAuthRedirection } from "@/hooks/app/useAuthRedirection";
@@ -12,13 +12,26 @@ import { useNotificationHandlers } from "@/hooks/notifications/useNotificationHa
 import { StoryCompletionActions } from "@/services/stories/StoryCompletionActions";
 import { useStoryWorkflowToggle } from "@/hooks/stories/useStoryWorkflowToggle";
 import type { Child } from "@/types/child";
+import { useState, useEffect } from "react";
 
+/**
+ * PHASE 2: useIndexPage refactorisé pour utiliser useAppNavigation
+ * Plus de useViewManagement - navigation unifiée via React Router
+ */
 export const useIndexPage = () => {
   const { user } = useSupabaseAuth();
   const { children, handleAddChild, handleUpdateChild, handleDeleteChild } = useSupabaseChildren();
   const stories = useSupabaseStories();
-  const { currentView, setCurrentView, showGuide } = useViewManagement();
+  const { navigateToLibrary, navigateToCreate } = useAppNavigation();
   const isMobile = useIsMobile();
+  
+  // Guide local state (remplace showGuide de useViewManagement)
+  const [showGuide, setShowGuide] = useState<boolean>(false);
+  
+  useEffect(() => {
+    const hideGuide = localStorage.getItem('calmi-hide-guide') === 'true';
+    setShowGuide(!hideGuide);
+  }, []);
   const { toast } = useToast();
   
   // Phase 6 - Gestion des feature flags et workflow
@@ -60,7 +73,7 @@ export const useIndexPage = () => {
   const handleCreateChildFromStory = async (child: Omit<Child, "id">): Promise<string> => {
     try {
       const childId = await handleAddChild(child);
-      setCurrentView("create");
+      navigateToCreate();
       return childId;
     } catch (error) {
       
@@ -91,7 +104,7 @@ export const useIndexPage = () => {
         console.log("[useIndexPage] Histoire soumise (background) et génération démarrée:", storyId);
         
         // Navigation immédiate vers la bibliothèque
-        setCurrentView('library');
+        navigateToLibrary();
         
         workflow.logUserAction('story_submission_background_success');
         return storyId;
@@ -100,7 +113,7 @@ export const useIndexPage = () => {
         console.log("[useIndexPage] Utilisation ancien workflow (blocking)");
         const storyId = await stories.createStory(formData, children);
         
-        setCurrentView('library');
+        navigateToLibrary();
         workflow.logUserAction('story_submission_blocking_success');
         return storyId;
       }
@@ -127,16 +140,14 @@ export const useIndexPage = () => {
 
   // Gestion de la sélection d'histoires avec navigation appropriée
   const handleSelectStory = (story: any) => {
-    
-    // Utiliser React Router pour une navigation SPA fluide
-    setCurrentView('library'); // Préserver l'état de vue actuel
     // La navigation sera gérée par le composant parent via useAppNavigation
+    console.log("[useIndexPage] Histoire sélectionnée:", story.id);
   };
 
   // Gestionnaires d'événements
   const handleStoryCreated = (story: any) => {
-    
-    setCurrentView("library");
+    console.log("[useIndexPage] Histoire créée:", story.id);
+    navigateToLibrary();
   };
 
   const handleMarkAsRead = async (storyId: string): Promise<boolean> => {
@@ -177,7 +188,6 @@ export const useIndexPage = () => {
 
   return {
     // États
-    currentView,
     showGuide,
     pendingStoryId: stories.pendingStoryId,
     isRetrying: isSubmitting, // Utiliser le nouveau état de soumission
@@ -192,7 +202,6 @@ export const useIndexPage = () => {
     workflow,
     
     // Actions
-    setCurrentView,
     handleAddChild,
     handleUpdateChild,
     handleDeleteChild,

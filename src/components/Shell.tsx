@@ -6,12 +6,10 @@ import { SidebarProvider } from './ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileMenu from './MobileMenu';
 import { Footer } from './Footer';
-import { useViewManagement } from '@/hooks/useViewManagement';
 import { useBackgroundStoryMonitor } from '@/hooks/stories/useBackgroundStoryMonitor';
 import { logger } from '@/utils/logger';
 import { OfflineSyncIndicator } from './OfflineSyncIndicator';
 import { OfflineIndicator } from './OfflineIndicator';
-import { StoryGenerationManager } from '@/services/stories/StoryGenerationManager';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 interface ShellProps {
@@ -21,10 +19,9 @@ interface ShellProps {
 export const Shell: React.FC<ShellProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const location = useLocation();
-  const { currentView, setCurrentView } = useViewManagement();
   const { user } = useSupabaseAuth();
   
-  // 🚨 MONITORING ARRIÈRE-PLAN : Surveillar les nouvelles histoires créées
+  // 🚨 MONITORING ARRIÈRE-PLAN : Surveillance des nouvelles histoires créées
   // Ce hook fonctionne en permanence tant que l'utilisateur est authentifié
   const { isMonitoring } = useBackgroundStoryMonitor();
   
@@ -32,7 +29,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   // Ne pas l'afficher si nous sommes sur la route du lecteur d'histoire
   const showMobileMenu = isMobile && !location.pathname.startsWith('/reader/');
   
-  logger.debug("[Shell] Configuration du menu mobile", {
+  logger.debug("[Shell] Configuration", {
     isMobile,
     pathname: location.pathname,
     showMobileMenu,
@@ -40,8 +37,9 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
     userAuthenticated: !!user
   });
 
-  // Only render StoryGenerationManager if user is authenticated
-  const content = (
+  // PHASE 4: StoryGenerationManager retiré du chemin critique
+  // Il sera monté uniquement quand nécessaire dans les pages qui en ont besoin
+  return (
     <SidebarProvider>
       <div className="flex flex-col min-h-screen w-full relative">
         {/* Only show top navigation on desktop and not on reader pages */}
@@ -60,26 +58,10 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
         <OfflineSyncIndicator />
         
         {/* Afficher le menu mobile uniquement si nous ne sommes pas dans le lecteur */}
-        {showMobileMenu && (
-          <MobileMenu 
-            currentView={currentView} 
-            onViewChange={setCurrentView} 
-          />
-        )}
+        {showMobileMenu && <MobileMenu />}
       </div>
     </SidebarProvider>
   );
-
-  // Wrap with StoryGenerationManager only if user is authenticated
-  if (user) {
-    return (
-      <StoryGenerationManager>
-        {content}
-      </StoryGenerationManager>
-    );
-  }
-
-  return content;
 };
 
 export default Shell;

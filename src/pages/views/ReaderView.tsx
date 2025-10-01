@@ -2,9 +2,8 @@
 import React, { useEffect, useState } from "react";
 import StoryReader from "@/components/StoryReader";
 import type { Story } from "@/types/story";
-import { useViewManagement } from "@/hooks/useViewManagement";
+import { useAppNavigation } from "@/hooks/navigation/useAppNavigation";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useNavigate } from "react-router-dom";
 
 interface ReaderViewProps {
   story: Story;
@@ -12,19 +11,20 @@ interface ReaderViewProps {
   onMarkAsRead?: (storyId: string) => Promise<boolean>;
 }
 
+/**
+ * PHASE 2: ReaderView refactorisé pour utiliser useAppNavigation
+ * Plus de useViewManagement - navigation unifiée
+ */
 export const ReaderView: React.FC<ReaderViewProps> = ({ story: initialStory, onClose, onMarkAsRead }) => {
-  const { setCurrentView } = useViewManagement();
-  const navigate = useNavigate();
+  const { navigateToLibrary } = useAppNavigation();
   const isMobile = useIsMobile();
   const [story, setStory] = useState<Story>(initialStory);
 
   // Force le retour à la vue de la bibliothèque lors de la fermeture
   const handleClose = () => {
-    console.log("[ReaderView] DEBUG: Fermeture du lecteur et retour à la bibliothèque");
+    console.log("[ReaderView] Fermeture du lecteur et retour à la bibliothèque");
     onClose();
-    // Navigation directe vers la bibliothèque
-    navigate("/library");
-    setCurrentView("library");
+    navigateToLibrary();
   };
 
   // Mettre à jour l'état local si l'histoire change

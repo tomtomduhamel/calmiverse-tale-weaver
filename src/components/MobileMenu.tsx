@@ -10,47 +10,39 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStoryGeneration';
 import { cn } from "@/lib/utils";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import type { ViewType } from "@/types/views";
 import { useAppNavigation } from "@/hooks/navigation/useAppNavigation";
 
-interface MobileMenuProps {
-  currentView: ViewType;
-  onViewChange: (view: ViewType) => void;
-}
-
-const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) => {
+/**
+ * PHASE 2: MobileMenu simplifié - utilise uniquement useAppNavigation
+ * Plus de props currentView/onViewChange - tout est géré par React Router
+ */
+const MobileMenu: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { navigateToHome, navigateToLibrary, navigateToCreate, navigateToProfiles, navigateToSettings } = useAppNavigation();
   const { totalActiveCount } = useBackgroundStoryGeneration();
   
   // Items for the bottom navigation
   const menuItems = [
-    { icon: Home, title: "Accueil", view: "home" as ViewType, action: navigateToHome },
-    { icon: Library, title: "Bibliothèque", view: "library" as ViewType, action: navigateToLibrary },
-    { icon: PenSquare, title: "Créer", view: "create" as ViewType, action: navigateToCreate },
-    { icon: Users, title: "Enfants", view: "profiles" as ViewType, action: navigateToProfiles },
-    { icon: Settings, title: "Paramètres", view: "settings" as ViewType, action: navigateToSettings }
+    { icon: Home, title: "Accueil", path: "/", action: navigateToHome },
+    { icon: Library, title: "Bibliothèque", path: "/library", action: navigateToLibrary },
+    { icon: PenSquare, title: "Créer", path: "/create-story/step-1", action: navigateToCreate },
+    { icon: Users, title: "Enfants", path: "/children", action: navigateToProfiles },
+    { icon: Settings, title: "Paramètres", path: "/settings", action: navigateToSettings }
   ];
 
-  const handleNavigation = (view: ViewType, action: () => void) => {
-    console.log("[MobileMenu] Navigation vers", { view, currentPath: location.pathname });
+  const handleNavigation = (action: () => void, path: string) => {
+    console.log("[MobileMenu] Navigation vers", path);
     action();
-    onViewChange(view);
   };
 
-  // Déterminer la vue active en fonction du chemin actuel
-  const getActiveView = (): ViewType => {
-    if (location.pathname === "/library") return "library";
-    if (location.pathname === "/settings") return "settings";
-    if (location.pathname === "/children") return "profiles";
-    if (location.pathname.startsWith("/create-story")) return "create";
-    if (location.pathname === "/") return "home";
-    return currentView;
+  // Déterminer la route active en fonction du chemin actuel
+  const isActive = (path: string): boolean => {
+    if (path === "/" && location.pathname === "/") return true;
+    if (path !== "/" && location.pathname.startsWith(path)) return true;
+    return false;
   };
-
-  const activeView = getActiveView();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md shadow-lg border-t border-border z-[100]">
@@ -58,10 +50,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
         {menuItems.map((item) => (
           <button
             key={item.title}
-            onClick={() => handleNavigation(item.view, item.action)}
+            onClick={() => handleNavigation(item.action, item.path)}
             className={cn(
               "flex flex-col items-center justify-center w-full p-1 rounded-lg transition-all duration-200 min-h-[44px]",
-              activeView === item.view
+              isActive(item.path)
                 ? "text-primary bg-primary/10"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
             )}
@@ -69,7 +61,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ currentView, onViewChange }) =>
           >
             <div className="relative">
               <item.icon className="h-4 w-4" />
-              {item.view === 'library' && totalActiveCount > 0 && (
+              {item.path === '/library' && totalActiveCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-3 w-3 p-0 text-[8px] bg-primary text-primary-foreground">
                   {totalActiveCount}
                 </Badge>

@@ -11,15 +11,15 @@ export const useAuthSession = () => {
   const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
-    // PHASE 1: Timeout de sécurité de 10 secondes pour éviter le chargement infini
+    // PHASE 3: Timeout réduit à 5s pour éviter les blocages prolongés
     const authTimeout = setTimeout(() => {
       if (loading) {
-        console.warn("⚠️ Timeout d'authentification atteint (10s) - forçage de l'arrêt du loading");
+        console.warn("⚠️ Timeout d'authentification atteint (5s) - forçage de l'arrêt du loading");
         setLoading(false);
         setTimeoutReached(true);
-        setError("Timeout de connexion - veuillez réessayer");
+        setError("Délai d'attente dépassé - veuillez réessayer");
       }
-    }, 10000);
+    }, 5000);
 
     const cleanup = () => {
       clearTimeout(authTimeout);

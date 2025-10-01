@@ -8,12 +8,14 @@ import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import type { Child } from "@/types/child";
 
 interface HomeHeroProps {
-  onViewChange: (view: ViewType) => void;
   children?: Child[];
 }
 
+/**
+ * PHASE 2: HomeHero simplifié - plus de onViewChange
+ * Utilise React Router directement pour la navigation
+ */
 const HomeHero: React.FC<HomeHeroProps> = ({
-  onViewChange,
   children = []
 }) => {
   const navigate = useNavigate();

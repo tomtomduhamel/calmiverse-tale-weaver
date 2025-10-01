@@ -8,12 +8,15 @@ import { ActiveGenerationsCard } from '@/components/home/ActiveGenerationsCard';
 import { PWANotificationBanner } from '@/components/notifications/PWANotificationBanner';
 
 interface HomeViewProps {
-  onViewChange: (view: ViewType) => void;
   showGuide?: boolean;
   children?: Child[];
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ onViewChange, showGuide, children }) => {
+/**
+ * PHASE 2: HomeView simplifié - plus de onViewChange
+ * La navigation est gérée par les composants enfants via useAppNavigation
+ */
+const HomeView: React.FC<HomeViewProps> = ({ showGuide, children }) => {
   // Debug: Vérifier la transmission des enfants dans HomeView
   console.log('[HomeView] Props reçues:', {
     childrenCount: children?.length || 0,
@@ -28,7 +31,6 @@ const HomeView: React.FC<HomeViewProps> = ({ onViewChange, showGuide, children }
         <ActiveGenerationsCard />
       </div>
       <HomeHero 
-        onViewChange={onViewChange} 
         children={children || []} 
       />
     </div>

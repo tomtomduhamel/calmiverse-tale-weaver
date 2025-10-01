@@ -1,18 +1,18 @@
 
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   HomeView,
   CreateStoryView,
   ProfilesView,
   LibraryView
 } from "@/pages/views";
-import type { ViewType } from "@/types/views";
 import type { Story } from "@/types/story";
 import type { Child } from "@/types/child";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAppNavigation } from "@/hooks/navigation/useAppNavigation";
 
 interface ViewHandlers {
-  onViewChange: (view: ViewType) => void;
   onAddChild: (child: Omit<Child, "id">) => Promise<string>;
   onUpdateChild: (childId: string, updatedChild: Partial<Child>) => Promise<void>;
   onDeleteChild: (childId: string) => Promise<void>;
@@ -26,7 +26,6 @@ interface ViewHandlers {
 }
 
 interface ContentRouterProps extends ViewHandlers {
-  currentView: ViewType;
   showGuide: boolean;
   stories: Story[];
   children: Child[];
@@ -35,17 +34,15 @@ interface ContentRouterProps extends ViewHandlers {
 }
 
 /**
- * Composant de routage déclaratif pour les différentes vues de l'application
- * Note: Le reader n'est plus géré ici, il a sa propre route /reader/:id
+ * PHASE 2: ContentRouter refactorisé - utilise location au lieu de currentView
+ * La navigation est gérée par React Router uniquement
  */
 const ContentRouter: React.FC<ContentRouterProps> = ({
-  currentView,
   showGuide,
   stories,
   children,
   pendingStoryId,
   isRetrying,
-  onViewChange,
   onAddChild,
   onUpdateChild,
   onDeleteChild,
@@ -58,71 +55,84 @@ const ContentRouter: React.FC<ContentRouterProps> = ({
   onMarkAsRead
 }) => {
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const { navigateToCreate } = useAppNavigation();
   
   // Validation pour débogage
   useEffect(() => {
-    console.log("[ContentRouter] DEBUG: Rendu avec currentView =", currentView);
-    console.log("[ContentRouter] DEBUG: children transmis =", {
-      children: children,
+    console.log("[ContentRouter] Rendu avec pathname =", location.pathname);
+    console.log("[ContentRouter] children transmis =", {
       childrenCount: children?.length || 0,
       childrenIds: children?.map(c => c.id) || []
     });
-  }, [currentView, children]);
+  }, [location.pathname, children]);
   
-  // Mapping des vues à des composants (reader supprimé)
-  const viewComponents = {
-    home: (
+  // Mapping des routes à des composants (basé sur location.pathname)
+  const renderView = () => {
+    // Page d'accueil
+    if (location.pathname === "/") {
+      return (
+        <HomeView 
+          showGuide={showGuide} 
+          children={children}
+        />
+      );
+    }
+    
+    // Page de création d'histoire
+    if (location.pathname.startsWith("/create-story")) {
+      return (
+        <CreateStoryView
+          onSubmit={onSubmitStory}
+          children={children}
+          onCreateChild={onCreateChildFromStory}
+          onStoryCreated={onStoryCreated}
+        />
+      );
+    }
+    
+    // Page de profils enfants
+    if (location.pathname === "/children") {
+      return (
+        <ProfilesView
+          children={children}
+          onAddChild={onAddChild}
+          onUpdateChild={onUpdateChild}
+          onDeleteChild={onDeleteChild}
+          onCreateStory={(childId) => {
+            navigateToCreate();
+          }}
+        />
+      );
+    }
+    
+    // Page bibliothèque
+    if (location.pathname === "/library") {
+      return (
+        <LibraryView
+          stories={stories}
+          onSelectStory={onSelectStory}
+          onDeleteStory={onDeleteStory}
+          onRetryStory={onRetryStory}
+          isRetrying={isRetrying}
+          pendingStoryId={pendingStoryId}
+        />
+      );
+    }
+    
+    // Default: Home
+    return (
       <HomeView 
-        onViewChange={onViewChange} 
         showGuide={showGuide} 
         children={children}
       />
-    ),
-    
-    create: (
-      <CreateStoryView
-        onSubmit={onSubmitStory}
-        children={children}
-        onCreateChild={onCreateChildFromStory}
-        onStoryCreated={onStoryCreated}
-      />
-    ),
-    
-    profiles: (
-      <ProfilesView
-        children={children}
-        onAddChild={onAddChild}
-        onUpdateChild={onUpdateChild}
-        onDeleteChild={onDeleteChild}
-        onCreateStory={(childId) => {
-          if (childId) {
-            // Navigate to create story with pre-selected child
-            window.location.href = `/create-story/step-1?childId=${childId}`;
-          } else {
-            onViewChange("create");
-          }
-        }}
-      />
-    ),
-    
-    library: (
-      <LibraryView
-        stories={stories}
-        onSelectStory={onSelectStory}
-        onDeleteStory={onDeleteStory}
-        onRetryStory={onRetryStory}
-        onViewChange={onViewChange}
-        isRetrying={isRetrying}
-        pendingStoryId={pendingStoryId}
-      />
-    )
+    );
   };
   
-  // Affichage des vues (reader n'est plus inclus)
-  console.log("[ContentRouter] DEBUG: Affichage de la vue:", currentView);
+  console.log("[ContentRouter] Affichage de la route:", location.pathname);
   return (
     <div className={isMobile ? "pb-16" : ""}>
-      {viewComponents[currentView as keyof typeof viewComponents]}
+      {renderView()}
     </div>
   );
 };

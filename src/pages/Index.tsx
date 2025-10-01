@@ -35,15 +35,13 @@ const Index = () => {
     return <LoadingErrorHandler isLoading={true} error={null} children={null} />;
   }
 
-  // Mappage explicite des props pour ContentView (reader supprimé)
+  // Mappage explicite des props pour ContentView (currentView/onViewChange supprimés)
   const contentViewProps = {
-    currentView: indexPageProps.currentView,
     showGuide: indexPageProps.showGuide,
     stories: stories.stories || [],
     children: children || [], // S'assurer que children est toujours un tableau
     pendingStoryId: indexPageProps.pendingStoryId,
     isRetrying: indexPageProps.isRetrying,
-    onViewChange: indexPageProps.setCurrentView,
     onAddChild: indexPageProps.handleAddChild,
     onUpdateChild: indexPageProps.handleUpdateChild,
     onDeleteChild: indexPageProps.handleDeleteChild,

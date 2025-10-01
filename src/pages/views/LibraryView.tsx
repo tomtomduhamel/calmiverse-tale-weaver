@@ -9,17 +9,19 @@ interface LibraryViewProps {
   stories: Story[];
   onSelectStory: (story: Story) => void;
   onDeleteStory: (storyId: string) => void;
-  onViewChange: (view: ViewType) => void;
   onRetryStory?: (storyId: string) => Promise<boolean>;
   isRetrying?: boolean;
   pendingStoryId?: string | null;
 }
 
+/**
+ * PHASE 2: LibraryView simplifié - plus de onViewChange
+ * La navigation est gérée par les composants enfants via useAppNavigation
+ */
 export const LibraryView: React.FC<LibraryViewProps> = React.memo(({
   stories,
   onSelectStory,
   onDeleteStory,
-  onViewChange,
   onRetryStory,
   isRetrying,
   pendingStoryId
@@ -39,7 +41,6 @@ export const LibraryView: React.FC<LibraryViewProps> = React.memo(({
         onSelectStory={handleSelectStory}
         onDeleteStory={onDeleteStory}
         onRetryStory={onRetryStory}
-        onViewChange={onViewChange}
         isRetrying={isRetrying}
         pendingStoryId={pendingStoryId}
       />
