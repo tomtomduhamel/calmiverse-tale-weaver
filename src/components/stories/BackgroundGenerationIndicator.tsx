@@ -6,6 +6,7 @@ import { Loader2, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStoryGeneration';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Indicateur discret des générations d'histoires en arrière-plan
@@ -13,6 +14,7 @@ import { fr } from 'date-fns/locale';
  */
 export const BackgroundGenerationIndicator: React.FC = () => {
   const { activeGenerations, totalActiveCount } = useBackgroundStoryGeneration();
+  const navigate = useNavigate();
 
   // Ne rien afficher s'il n'y a pas de générations actives
   if (totalActiveCount === 0) {
@@ -55,7 +57,7 @@ export const BackgroundGenerationIndicator: React.FC = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => window.location.href = '/library'}
+            onClick={() => navigate('/library')}
           >
             <Eye className="h-4 w-4 mr-1" />
             Voir tout

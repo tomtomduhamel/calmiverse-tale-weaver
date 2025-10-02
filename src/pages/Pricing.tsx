@@ -10,12 +10,13 @@ import { APP_CONFIG } from '@/lib/config';
 import { useState, useEffect } from 'react';
 import { SubscriptionLimits } from '@/types/subscription';
 import { supabase } from '@/integrations/supabase/client';
-
+import { useNavigate } from 'react-router-dom';
 const Pricing: React.FC = () => {
   const { user } = useSupabaseAuth();
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const [limits, setLimits] = useState<SubscriptionLimits[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchLimits = async () => {
@@ -35,7 +36,7 @@ const Pricing: React.FC = () => {
   const handleUpgrade = async (tier: string) => {
     if (!user) {
       // Rediriger vers la page d'authentification
-      window.location.href = '/auth';
+      navigate('/auth');
       return;
     }
 

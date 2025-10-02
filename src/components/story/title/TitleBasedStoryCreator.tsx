@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles, Users, RefreshCw } from 'lucide-react';
@@ -24,6 +25,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   onStoryCreated,
   preSelectedChildId
 }) => {
+  const navigate = useNavigate();
   // Use persisted state instead of local state
   const {
     currentStep,
@@ -395,7 +397,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
             <Button 
               variant="secondary"
               onClick={() => {
-                window.location.href = '/library';
+                navigate('/library');
               }}
             >
               Parcourir la bibliothèque d'histoires

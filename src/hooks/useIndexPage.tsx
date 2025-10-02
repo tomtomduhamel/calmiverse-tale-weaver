@@ -13,7 +13,7 @@ import { StoryCompletionActions } from "@/services/stories/StoryCompletionAction
 import { useStoryWorkflowToggle } from "@/hooks/stories/useStoryWorkflowToggle";
 import type { Child } from "@/types/child";
 import { useState, useEffect } from "react";
-
+import { useNavigate } from 'react-router-dom';
 /**
  * PHASE 2: useIndexPage refactorisé pour utiliser useAppNavigation
  * Plus de useViewManagement - navigation unifiée via React Router
@@ -24,6 +24,7 @@ export const useIndexPage = () => {
   const stories = useSupabaseStories();
   const { navigateToLibrary, navigateToCreate } = useAppNavigation();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   // Guide local state (remplace showGuide de useViewManagement)
   const [showGuide, setShowGuide] = useState<boolean>(false);
@@ -50,7 +51,7 @@ export const useIndexPage = () => {
       toast({ title, description: message });
     },
     onNavigate: (path) => {
-      window.location.href = path;
+      navigate(path);
     },
     onRefresh: () => {
       stories.forceRefresh();
