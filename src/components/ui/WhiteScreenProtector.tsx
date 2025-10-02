@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { markAppAsStuck } from '@/utils/serviceWorkerReset';
 
 interface WhiteScreenProtectorProps {
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export const WhiteScreenProtector: React.FC<WhiteScreenProtectorProps> = ({ chil
     const fallbackTimer = setTimeout(() => {
       if (!isAppReady) {
         console.warn('⚠️ WhiteScreenProtector: App taking too long, showing fallback');
+        markAppAsStuck(); // Marquer pour reset au prochain lancement
         setShowFallback(true);
       }
     }, 15000);

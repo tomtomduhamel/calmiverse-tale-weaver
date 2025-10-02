@@ -8,6 +8,7 @@ import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext.tsx'
 import { ThemeProvider } from 'next-themes'
 import CriticalErrorBoundary from './components/CriticalErrorBoundary.tsx'
 import WhiteScreenProtector from './components/ui/WhiteScreenProtector.tsx'
+import { forceServiceWorkerReset, clearStuckMarker } from './utils/serviceWorkerReset'
 
 // PHASE 1: Service Worker Cleanup Radical avec flag localStorage
 const cleanupOldServiceWorker = async () => {
@@ -53,32 +54,38 @@ const cleanupOldServiceWorker = async () => {
 // Initialize app with white screen protection
 console.log('🚀 [Calmi] Initializing main application...');
 
-console.log('📱 [Calmi] Mounting React application...');
+// Force Service Worker reset si nécessaire (premier lancement ou version changée)
+forceServiceWorkerReset().then(() => {
+  console.log('📱 [Calmi] Mounting React application...');
 
-// Hide initial loading screen immediately
-document.body.classList.add('react-mounted');
+  // Hide initial loading screen immediately
+  document.body.classList.add('react-mounted');
+  
+  // Clear stuck marker une fois que l'app est prête
+  clearStuckMarker();
 
-// Mount React app immediately
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <CriticalErrorBoundary>
-      <WhiteScreenProtector>
-        <ThemeProvider 
-          attribute="class" 
-          defaultTheme="system" 
-          enableSystem={true}
-          storageKey="calmi-theme"
-        >
-          <SupabaseAuthProvider>
-            <App />
-          </SupabaseAuthProvider>
-        </ThemeProvider>
-      </WhiteScreenProtector>
-    </CriticalErrorBoundary>
-  </React.StrictMode>,
-);
+  // Mount React app immediately
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <CriticalErrorBoundary>
+        <WhiteScreenProtector>
+          <ThemeProvider 
+            attribute="class" 
+            defaultTheme="system" 
+            enableSystem={true}
+            storageKey="calmi-theme"
+          >
+            <SupabaseAuthProvider>
+              <App />
+            </SupabaseAuthProvider>
+          </ThemeProvider>
+        </WhiteScreenProtector>
+      </CriticalErrorBoundary>
+    </React.StrictMode>,
+  );
 
-// Run cleanup in background (may trigger one-time reload)
-cleanupOldServiceWorker().catch((e) => {
-  console.warn('[SW-Cleanup] Background cleanup failed:', e);
+  // Run cleanup in background (may trigger one-time reload)
+  cleanupOldServiceWorker().catch((e) => {
+    console.warn('[SW-Cleanup] Background cleanup failed:', e);
+  });
 });
