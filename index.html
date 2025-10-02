@@ -63,6 +63,14 @@
         }
       </style>
     </div>
+    <script>
+      // Fallback: hide initial loading quickly even if React fails to mount
+      (function(){
+        try {
+          setTimeout(function(){ document.body.classList.add('react-mounted'); }, 2000);
+        } catch (e) {}
+      })();
+    </script>
     <!-- GPT Engineer script must be loaded before main application script -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>

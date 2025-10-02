@@ -53,28 +53,32 @@ const cleanupOldServiceWorker = async () => {
 // Initialize app with white screen protection
 console.log('🚀 [Calmi] Initializing main application...');
 
-cleanupOldServiceWorker().then(() => {
-  console.log('📱 [Calmi] Mounting React application...');
-  
-  // Hide initial loading screen
-  document.body.classList.add('react-mounted');
-  
-  ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-      <CriticalErrorBoundary>
-        <WhiteScreenProtector>
-          <ThemeProvider 
-            attribute="class" 
-            defaultTheme="system" 
-            enableSystem={true}
-            storageKey="calmi-theme"
-          >
-            <SupabaseAuthProvider>
-              <App />
-            </SupabaseAuthProvider>
-          </ThemeProvider>
-        </WhiteScreenProtector>
-      </CriticalErrorBoundary>
-    </React.StrictMode>,
-  );
+console.log('📱 [Calmi] Mounting React application...');
+
+// Hide initial loading screen immediately
+document.body.classList.add('react-mounted');
+
+// Mount React app immediately
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <CriticalErrorBoundary>
+      <WhiteScreenProtector>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="system" 
+          enableSystem={true}
+          storageKey="calmi-theme"
+        >
+          <SupabaseAuthProvider>
+            <App />
+          </SupabaseAuthProvider>
+        </ThemeProvider>
+      </WhiteScreenProtector>
+    </CriticalErrorBoundary>
+  </React.StrictMode>,
+);
+
+// Run cleanup in background (may trigger one-time reload)
+cleanupOldServiceWorker().catch((e) => {
+  console.warn('[SW-Cleanup] Background cleanup failed:', e);
 });
