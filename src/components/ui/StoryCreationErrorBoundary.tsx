@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -72,9 +72,12 @@ export class StoryCreationErrorBoundary extends React.Component<
       error: null,
       errorInfo: null
     });
-    
-    // Forcer le rechargement si nécessaire
-    window.location.reload();
+  };
+
+  handleGoHome = () => {
+    // Navigation via événement custom pour éviter reload
+    const navEvent = new CustomEvent('calmi-navigate', { detail: { path: '/' } });
+    window.dispatchEvent(navEvent);
   };
 
   render() {
@@ -118,10 +121,11 @@ export class StoryCreationErrorBoundary extends React.Component<
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    onClick={() => window.location.href = '/'}
+                    onClick={this.handleGoHome}
                     className="flex-1"
                   >
-                    Retour à l'accueil
+                    <Home className="w-4 h-4 mr-2" />
+                    Accueil
                   </Button>
                   <Button onClick={this.handleRetry} className="flex-1">
                     <RefreshCw className="w-4 h-4 mr-2" />

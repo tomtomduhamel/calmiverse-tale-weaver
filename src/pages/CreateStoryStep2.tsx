@@ -3,7 +3,6 @@ import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useNavigate } from "react-router-dom";
 import ObjectiveSelectionStep from "@/components/story/steps/ObjectiveSelectionStep";
-import { StoryGenerationManager } from "@/services/stories/StoryGenerationManager";
 
 const CreateStoryStep2: React.FC = () => {
   const { user, loading: authLoading } = useSupabaseAuth();
@@ -27,13 +26,11 @@ const CreateStoryStep2: React.FC = () => {
   }
 
   return (
-    <StoryGenerationManager>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-4 py-8">
-          <ObjectiveSelectionStep children={children} />
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-8">
+        <ObjectiveSelectionStep children={children} />
       </div>
-    </StoryGenerationManager>
+    </div>
   );
 };
 

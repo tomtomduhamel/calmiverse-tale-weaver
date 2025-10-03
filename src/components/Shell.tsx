@@ -12,6 +12,8 @@ import { OfflineSyncIndicator } from './OfflineSyncIndicator';
 import { OfflineIndicator } from './OfflineIndicator';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { AuthGuard } from './auth/AuthGuard';
+import { StoryGenerationManager } from '@/services/stories/StoryGenerationManager';
+import { useNavigate } from 'react-router-dom';
 
 interface ShellProps {
   children?: ReactNode;
@@ -21,6 +23,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const location = useLocation();
   const { user } = useSupabaseAuth();
+  const navigate = useNavigate();
   
   // 🚨 MONITORING ARRIÈRE-PLAN : Surveillance des nouvelles histoires créées
   // Ce hook fonctionne en permanence tant que l'utilisateur est authentifié
@@ -38,7 +41,16 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
     userAuthenticated: !!user
   });
 
-  // PHASE 4 COMPLETE: AuthGuard intégré + StoryGenerationManager retiré du chemin critique
+  // Écouter les événements de navigation des notifications
+  React.useEffect(() => {
+    const handleNavigationEvent = (event: CustomEvent<{ path: string }>) => {
+      navigate(event.detail.path);
+    };
+    
+    window.addEventListener('calmi-navigate' as any, handleNavigationEvent);
+    return () => window.removeEventListener('calmi-navigate' as any, handleNavigationEvent);
+  }, [navigate]);
+
   return (
     <AuthGuard>
       <SidebarProvider>
@@ -48,7 +60,9 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
           
           {/* Main content with optimized mobile spacing */}
           <div className={`flex-1 w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-16' : 'pb-4'}`}>
-            {children || <Outlet />}
+            <StoryGenerationManager>
+              {children || <Outlet />}
+            </StoryGenerationManager>
           </div>
           
           {/* Footer */}

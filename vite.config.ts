@@ -17,7 +17,9 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
-    VitePWA({
+    // PWA temporairement désactivé pour stabiliser l'application
+    // Sera réactivé une fois la stabilité confirmée
+    ...(false ? [VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
       strategies: 'generateSW',
@@ -73,7 +75,7 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       }
-    }),
+    })] : []),
   ].filter(Boolean),
   resolve: {
     alias: {

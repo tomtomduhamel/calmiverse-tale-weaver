@@ -7,7 +7,6 @@ import './styles/scrollbar.css'
 import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext.tsx'
 import { ThemeProvider } from 'next-themes'
 import CriticalErrorBoundary from './components/CriticalErrorBoundary.tsx'
-import WhiteScreenProtector from './components/ui/WhiteScreenProtector.tsx'
 import { forceServiceWorkerReset, clearStuckMarker } from './utils/serviceWorkerReset'
 
 // PHASE 1: Service Worker Cleanup Radical avec flag localStorage
@@ -68,18 +67,16 @@ forceServiceWorkerReset().then(() => {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <CriticalErrorBoundary>
-        <WhiteScreenProtector>
-          <ThemeProvider 
-            attribute="class" 
-            defaultTheme="system" 
-            enableSystem={true}
-            storageKey="calmi-theme"
-          >
-            <SupabaseAuthProvider>
-              <App />
-            </SupabaseAuthProvider>
-          </ThemeProvider>
-        </WhiteScreenProtector>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="system" 
+          enableSystem={true}
+          storageKey="calmi-theme"
+        >
+          <SupabaseAuthProvider>
+            <App />
+          </SupabaseAuthProvider>
+        </ThemeProvider>
       </CriticalErrorBoundary>
     </React.StrictMode>,
   );

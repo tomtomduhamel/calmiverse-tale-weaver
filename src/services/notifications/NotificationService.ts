@@ -138,35 +138,41 @@ export class NotificationService {
   }
   
   /**
-   * Gère les actions des notifications
+   * Gère les actions des notifications via événements custom (évite les reloads)
    */
   private handleNotificationAction(data: CalmiNotificationData) {
     console.log('[NotificationService] Handling notification action:', data);
+    
+    let path = '/';
     
     switch (data.action) {
       case 'read':
         if (data.storyId && this.isValidStoryId(data.storyId)) {
           console.log('[NotificationService] Navigating to story:', data.storyId);
-          window.location.href = `/reader/${data.storyId}`;
+          path = `/reader/${data.storyId}`;
         } else {
           console.warn('[NotificationService] Invalid storyId, redirecting to library:', data.storyId);
-          window.location.href = '/library';
+          path = '/library';
         }
         break;
       case 'library':
         console.log('[NotificationService] Navigating to library');
-        window.location.href = '/library';
+        path = '/library';
         break;
       case 'create':
         console.log('[NotificationService] Navigating to story creation');
-        window.location.href = '/create-story/step-1';
+        path = '/create-story/step-1';
         break;
       case 'home':
       default:
         console.log('[NotificationService] Navigating to home');
-        window.location.href = '/';
+        path = '/';
         break;
     }
+    
+    // Émettre un événement custom pour navigation SPA (écouté par Shell.tsx)
+    const navEvent = new CustomEvent('calmi-navigate', { detail: { path } });
+    window.dispatchEvent(navEvent);
   }
 
   /**

@@ -49,6 +49,13 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     );
   }
 
-  // Sinon, ne rien afficher (redirection en cours)
-  return null;
+  // Si pas de user après chargement, afficher loader pendant redirection
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+        <p className="text-sm text-muted-foreground">Redirection...</p>
+      </div>
+    </div>
+  );
 };
