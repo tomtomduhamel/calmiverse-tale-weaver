@@ -5,11 +5,18 @@
 
 const SW_RESET_KEY = 'calmi-sw-reset-done';
 const SW_VERSION_KEY = 'calmi-sw-version';
-const CURRENT_VERSION = '2.0.0'; // Incrémentez pour forcer un reset
+const CURRENT_VERSION = '2.0.3'; // Incrémentez pour forcer un reset
 
-export async function forceServiceWorkerReset(): Promise<void> {
+export interface ResetResult {
+  didCleanup: boolean;
+  needsReload: boolean;
+}
+
+export async function forceServiceWorkerReset(): Promise<ResetResult> {
   console.log('[SW-Reset] 🔄 Vérification reset Service Worker...');
   
+  // Safe mode: ne jamais indiquer de reload nécessaire
+  const safeMode = localStorage.getItem('calmi_safe_mode') === '1';
   const lastVersion = localStorage.getItem(SW_VERSION_KEY);
   const resetDone = localStorage.getItem(SW_RESET_KEY);
   
@@ -18,10 +25,13 @@ export async function forceServiceWorkerReset(): Promise<void> {
     console.log('[SW-Reset] 🧹 Nettoyage complet détecté nécessaire');
     
     try {
+      let swCount = 0;
+      
       // 1. Unregister tous les Service Workers
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
-        console.log(`[SW-Reset] Désactivation de ${registrations.length} Service Worker(s)...`);
+        swCount = registrations.length;
+        console.log(`[SW-Reset] Désactivation de ${swCount} Service Worker(s)...`);
         
         await Promise.all(
           registrations.map(registration => registration.unregister())
@@ -45,23 +55,23 @@ export async function forceServiceWorkerReset(): Promise<void> {
       
       console.log('[SW-Reset] ✅ Reset complet terminé');
       
-      // 4. Si on était bloqué, reload pour repartir propre
-      const wasStuck = sessionStorage.getItem('calmi-was-stuck');
-      if (wasStuck || lastVersion !== CURRENT_VERSION) {
-        console.log('[SW-Reset] 🔄 Rechargement pour appliquer les changements...');
-        sessionStorage.removeItem('calmi-was-stuck');
-        
-        // Attendre un peu pour que tout soit bien enregistré
-        await new Promise(resolve => setTimeout(resolve, 500));
-        window.location.reload();
+      // 4. NE JAMAIS RELOADER AUTOMATIQUEMENT
+      // Retourner un indicateur pour que l'appelant décide
+      const needsReload = !safeMode && (swCount > 0 || lastVersion !== CURRENT_VERSION);
+      
+      if (needsReload) {
+        console.log('[SW-Reset] ℹ️ Un rechargement serait bénéfique (mais pas forcé)');
       }
+      
+      return { didCleanup: true, needsReload };
       
     } catch (error) {
       console.error('[SW-Reset] ❌ Erreur pendant le reset:', error);
-      // On continue quand même l'exécution
+      return { didCleanup: false, needsReload: false };
     }
   } else {
     console.log('[SW-Reset] ✅ Déjà à jour (version', CURRENT_VERSION + ')');
+    return { didCleanup: false, needsReload: false };
   }
 }
 

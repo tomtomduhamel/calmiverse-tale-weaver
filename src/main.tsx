@@ -53,36 +53,47 @@ const cleanupOldServiceWorker = async () => {
 // Initialize app with white screen protection
 console.log('🚀 [Calmi] Initializing main application...');
 
-// Force Service Worker reset si nécessaire (premier lancement ou version changée)
-forceServiceWorkerReset().then(() => {
-  console.log('📱 [Calmi] Mounting React application...');
+// CRITICAL: Mount React app IMMEDIATELY - never block on async operations
+console.log('📱 [Calmi] Mounting React application NOW...');
 
-  // Hide initial loading screen immediately
-  document.body.classList.add('react-mounted');
-  
-  // Clear stuck marker une fois que l'app est prête
-  clearStuckMarker();
+// Hide initial loading screen immediately
+document.body.classList.add('react-mounted');
 
-  // Mount React app immediately
-  ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-      <CriticalErrorBoundary>
-        <ThemeProvider 
-          attribute="class" 
-          defaultTheme="system" 
-          enableSystem={true}
-          storageKey="calmi-theme"
-        >
-          <SupabaseAuthProvider>
-            <App />
-          </SupabaseAuthProvider>
-        </ThemeProvider>
-      </CriticalErrorBoundary>
-    </React.StrictMode>,
-  );
+// Clear stuck marker une fois que l'app est prête
+clearStuckMarker();
+
+// Mount React app immediately - NON BLOQUANT
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <CriticalErrorBoundary>
+      <ThemeProvider 
+        attribute="class" 
+        defaultTheme="system" 
+        enableSystem={true}
+        storageKey="calmi-theme"
+      >
+        <SupabaseAuthProvider>
+          <App />
+        </SupabaseAuthProvider>
+      </ThemeProvider>
+    </CriticalErrorBoundary>
+  </React.StrictMode>,
+);
+
+// Run Service Worker reset in background (non-blocking)
+setTimeout(() => {
+  forceServiceWorkerReset().then((result) => {
+    if (result.needsReload) {
+      console.log('[Calmi] 💡 Mise à jour disponible - Reload conseillé (mais pas forcé)');
+      // Optionnel: dispatch un event pour afficher un banner de mise à jour
+      window.dispatchEvent(new CustomEvent('calmi-update-available'));
+    }
+  }).catch((e) => {
+    console.warn('[SW-Reset] Background reset failed:', e);
+  });
 
   // Run cleanup in background (may trigger one-time reload)
   cleanupOldServiceWorker().catch((e) => {
     console.warn('[SW-Cleanup] Background cleanup failed:', e);
   });
-});
+}, 0);
