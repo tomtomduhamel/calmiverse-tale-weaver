@@ -9,6 +9,15 @@ import { ThemeProvider } from 'next-themes'
 import CriticalErrorBoundary from './components/CriticalErrorBoundary.tsx'
 import { forceServiceWorkerReset, clearStuckMarker } from './utils/serviceWorkerReset'
 
+// Helper to detect Lovable preview iframe
+const isPreviewIframe = (): boolean => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+};
+
 // PHASE 1: Service Worker Cleanup Radical avec flag localStorage
 const cleanupOldServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
@@ -21,9 +30,16 @@ const cleanupOldServiceWorker = async () => {
       return;
     }
     
+    // Skip SW cleanup in preview iframe to avoid reload loops
+    if (isPreviewIframe()) {
+      localStorage.setItem(SW_CLEANUP_FLAG, 'true');
+      console.log('🧪 [SW-Cleanup] Preview iframe détecté – on saute le nettoyage');
+      return;
+    }
+
     try {
       const registrations = await navigator.serviceWorker.getRegistrations();
-      
+
       if (registrations.length > 0) {
         console.log('🔧 [SW-Cleanup] Désinstallation COMPLÈTE de tous les Service Workers...');
         
@@ -31,11 +47,9 @@ const cleanupOldServiceWorker = async () => {
           await registration.unregister();
         }
         
-        // Marquer comme nettoyé AVANT le rechargement
+        // Marquer comme nettoyé sans rechargement automatique
         localStorage.setItem(SW_CLEANUP_FLAG, 'true');
-        
-        console.log('♻️ [SW-Cleanup] Rechargement pour activer la navigation client-side...');
-        window.location.reload();
+        console.log('✅ [SW-Cleanup] SW désinstallés, pas de reload auto (preview-safe)');
         return;
       } else {
         // Pas de SW, marquer comme nettoyé
@@ -82,6 +96,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 // Run Service Worker reset in background (non-blocking)
 setTimeout(() => {
+  if (isPreviewIframe()) {
+    try { localStorage.setItem('calmi_safe_mode','1'); } catch {}
+    console.log('[Calmi] 🧪 Preview iframe: skip SW reset/cleanup (safe mode on)');
+    return;
+  }
   forceServiceWorkerReset().then((result) => {
     if (result.needsReload) {
       console.log('[Calmi] 💡 Mise à jour disponible - Reload conseillé (mais pas forcé)');
@@ -92,7 +111,6 @@ setTimeout(() => {
     console.warn('[SW-Reset] Background reset failed:', e);
   });
 
-  // Run cleanup in background (may trigger one-time reload)
   cleanupOldServiceWorker().catch((e) => {
     console.warn('[SW-Cleanup] Background cleanup failed:', e);
   });

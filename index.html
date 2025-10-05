@@ -23,6 +23,46 @@
     
     <link href="./src/index.css" rel="stylesheet">
     <link href="./src/App.css" rel="stylesheet">
+    <script>
+      (function(){
+        try {
+          var inIframe = window.self !== window.top;
+          if (inIframe) localStorage.setItem('calmi_safe_mode','1');
+        } catch(e){}
+        function showSafeOverlay(){
+          if (document.getElementById('calmi-safe-overlay')) return;
+          var d=document.createElement('div');
+          d.id='calmi-safe-overlay';
+          d.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:999999';
+          d.innerHTML='\x3cdiv style="background:white;padding:16px;border-radius:12px;max-width:520px;font-family:system-ui,sans-serif;line-height:1.4"\x3e\x3ch2 style="margin:0 0 8px"\x3eCalmi: récupération\x3c/h2\x3e\x3cp style="margin:0 0 12px"\x3eL’interface tarde à apparaître. Vous pouvez activer le Safe Mode pour nettoyer le cache et redémarrer proprement.\x3c/p\x3e\x3cdiv style="display:flex;gap:8px;justify-content:flex-end"\x3e\x3cbutton id="calmi-safe-retry" style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;background:#f6f6f6"\x3eAttendre\x3c/button\x3e\x3cbutton id="calmi-safe-mode" style="padding:8px 12px;border-radius:8px;border:0;background:#457B9D;color:white"\x3eActiver Safe Mode\x3c/button\x3e\x3c/div\x3e\x3c/div\x3e';
+          document.body.appendChild(d);
+          var r=document.getElementById('calmi-safe-retry');
+          if (r) r.addEventListener('click',function(){ d.remove(); });
+          var b=document.getElementById('calmi-safe-mode');
+          if (b) b.addEventListener('click', async function(){
+            try {
+              localStorage.setItem('calmi_safe_mode','1');
+              if ('caches' in window) {
+                var names = await caches.keys();
+                await Promise.all(names.map(function(n){ return caches.delete(n); }));
+              }
+              if ('serviceWorker' in navigator) {
+                var regs = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(regs.map(function(r){ return r.unregister(); }));
+              }
+            } catch(e){}
+            location.reload();
+          });
+        }
+        window.addEventListener('load', function(){
+          setTimeout(function(){
+            var root = document.getElementById('root');
+            var hasMounted = root && root.children && root.children.length>0;
+            if (!hasMounted) showSafeOverlay();
+          }, 3000);
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
