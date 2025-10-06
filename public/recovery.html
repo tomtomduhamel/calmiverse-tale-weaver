@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calmi - Récupération PWA</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 50%, #F1FAEE 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #457B9D;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+    
+    p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    
+    .warning {
+      background: #FFF3CD;
+      border-left: 4px solid #FFC107;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      color: #856404;
+    }
+    
+    .info-box {
+      background: #E3F2FD;
+      border-left: 4px solid #2196F3;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      color: #0D47A1;
+    }
+    
+    .sw-list {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .sw-item {
+      padding: 8px;
+      margin: 4px 0;
+      background: white;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: monospace;
+      word-break: break-all;
+    }
+    
+    .no-sw {
+      color: #28a745;
+      font-weight: 600;
+    }
+    
+    button {
+      background: #A8DADC;
+      color: #1A2238;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-right: 12px;
+      margin-bottom: 12px;
+    }
+    
+    button:hover {
+      background: #457B9D;
+      color: white;
+      transform: translateY(-2px);
+    }
+    
+    button.danger {
+      background: #FF6B6B;
+      color: white;
+    }
+    
+    button.danger:hover {
+      background: #d63031;
+    }
+    
+    button.secondary {
+      background: #e9ecef;
+      color: #495057;
+    }
+    
+    button.secondary:hover {
+      background: #dee2e6;
+      color: #212529;
+      transform: translateY(-2px);
+    }
+    
+    .status {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .status.show {
+      display: block;
+    }
+    
+    .status.success {
+      background: #D4EDDA;
+      color: #155724;
+    }
+    
+    .status.error {
+      background: #F8D7DA;
+      color: #721C24;
+    }
+    
+    .status.info {
+      background: #D1ECF1;
+      color: #0C5460;
+    }
+    
+    .build-info {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e9ecef;
+      font-size: 12px;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Réparation Calmi</h1>
+    
+    <p>Cette page permet de diagnostiquer et résoudre les problèmes de Service Worker et de cache qui peuvent causer des écrans blancs sur l'application PWA.</p>
+    
+    <div class="warning">
+      <strong>⚠️ Attention :</strong> Cette opération va supprimer tous les caches et désinstaller tous les Service Workers. L'application se rechargera automatiquement après le nettoyage.
+    </div>
+    
+    <div class="info-box">
+      <strong>📋 Service Workers détectés :</strong>
+      <div class="sw-list" id="sw-list">
+        <div class="sw-item">Chargement...</div>
+      </div>
+    </div>
+    
+    <div>
+      <button class="danger" id="unregister-all">🔥 Nettoyer et Redémarrer</button>
+      <button class="secondary" onclick="window.location.href='/'">← Retour à l'app</button>
+      <button class="secondary" id="refresh-list">🔄 Actualiser la liste</button>
+    </div>
+    
+    <div class="status" id="status"></div>
+    
+    <div class="build-info">
+      <div><strong>Build ID:</strong> <span id="build-id">N/A</span></div>
+      <div><strong>User Agent:</strong> <span id="user-agent">N/A</span></div>
+      <div><strong>Navigation type:</strong> <span id="nav-type">N/A</span></div>
+    </div>
+  </div>
+  
+  <script src="/recovery.js"></script>
+</body>
+</html>
