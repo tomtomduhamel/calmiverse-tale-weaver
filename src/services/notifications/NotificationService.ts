@@ -82,6 +82,25 @@ export class NotificationService {
     }
     
     try {
+      // Importer le helper de détection preview
+      const { isPreviewIframe } = await import('@/utils/previewDetection');
+      
+      // En preview, toujours utiliser notification directe (pas de SW)
+      if (isPreviewIframe()) {
+        console.log('[NotificationService] Preview mode: using direct notification');
+        const notification = new Notification(options.title, {
+          body: options.body,
+          icon: options.icon || '/icon-192.png',
+          tag: options.tag,
+          data: options.data,
+          requireInteraction: options.requireInteraction || false,
+          silent: options.silent || false
+        });
+        
+        this.setupNotificationHandlers(notification);
+        return notification;
+      }
+      
       // Utiliser le Service Worker si disponible, sinon notification directe
       const registration = await navigator.serviceWorker.getRegistration();
       

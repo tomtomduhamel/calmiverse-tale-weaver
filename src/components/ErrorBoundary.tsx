@@ -54,10 +54,13 @@ const DefaultErrorFallback: React.FC<{ error: Error; retry: () => void }> = ({ e
           Réessayer
         </button>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            const navEvent = new CustomEvent('calmi-navigate', { detail: { path: '/' } });
+            window.dispatchEvent(navEvent);
+          }}
           className="w-full bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90 transition-colors"
         >
-          Recharger la page
+          Retour à l'accueil
         </button>
       </div>
       {import.meta.env.DEV && (

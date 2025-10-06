@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePWAAnalytics } from '@/hooks/usePWAAnalytics';
+import { isPreviewIframe } from '@/utils/previewDetection';
 
 interface PWAState {
   isInstalled: boolean;
@@ -27,6 +28,12 @@ export const usePWA = () => {
 
     // Check for update availability
     const checkForUpdates = () => {
+      // Skip SW operations in preview iframe
+      if (isPreviewIframe()) {
+        console.log('[usePWA] Preview mode: skipping SW update checks');
+        return;
+      }
+      
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           setState(prev => ({ ...prev, updateAvailable: true }));
@@ -66,6 +73,7 @@ export const usePWA = () => {
   }, []);
 
   const reloadApp = () => {
+    console.warn('[usePWA] Manual reload requested by user');
     window.location.reload();
   };
 

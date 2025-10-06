@@ -30,6 +30,15 @@ export class SWNotificationHandler {
 
   async showNotification(data: PWANotificationData): Promise<void> {
     try {
+      // Importer le helper de détection preview
+      const { isPreviewIframe } = await import('@/utils/previewDetection');
+      
+      // Skip SW operations in preview
+      if (isPreviewIframe()) {
+        console.log('[SWNotificationHandler] Preview mode: skipping notification');
+        return;
+      }
+      
       // Enregistrer dans la persistance locale
       await this.notificationPersistence.addNotification({
         id: crypto.randomUUID(),
@@ -162,6 +171,15 @@ export class SWNotificationHandler {
 
   async scheduleBackgroundSync(): Promise<void> {
     try {
+      // Importer le helper de détection preview
+      const { isPreviewIframe } = await import('@/utils/previewDetection');
+      
+      // Skip SW operations in preview
+      if (isPreviewIframe()) {
+        console.log('[SWNotificationHandler] Preview mode: skipping background sync');
+        return;
+      }
+      
       if ('serviceWorker' in navigator && 'sync' in (window as any).ServiceWorkerRegistration.prototype) {
         const registration = await navigator.serviceWorker.ready;
         await (registration as any).sync.register('story-generation-sync');

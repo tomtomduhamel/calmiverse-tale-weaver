@@ -235,14 +235,9 @@ export const AdvancedRecoveryPanel: React.FC = () => {
       }
       
       toast({
-        title: "Application réinitialisée",
-        description: "Rechargement de la page...",
+        title: "Application réinitialisée avec succès",
+        description: "Les caches ont été vidés. Vous pouvez continuer à utiliser l'application.",
       });
-      
-      // Recharger la page
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
       
     } catch (error: any) {
       toast({

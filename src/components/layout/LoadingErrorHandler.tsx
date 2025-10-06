@@ -19,7 +19,15 @@ const LoadingErrorHandler: React.FC<LoadingErrorHandlerProps> = ({
   }
 
   if (error) {
-    return <ErrorDisplay message={error.message} onRetry={() => window.location.reload()} />;
+    return (
+      <ErrorDisplay 
+        message={error.message} 
+        onRetry={() => {
+          const navEvent = new CustomEvent('calmi-navigate', { detail: { path: '/' } });
+          window.dispatchEvent(navEvent);
+        }} 
+      />
+    );
   }
 
   return <>{children}</>;
