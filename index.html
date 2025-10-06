@@ -25,6 +25,24 @@
     <link href="./src/App.css" rel="stylesheet">
     <script>
       (function(){
+        // Early error logging pour diagnostic écran blanc
+        window.addEventListener('error', function(e){
+          try {
+            var logs = JSON.parse(localStorage.getItem('calmi_early_errors') || '[]');
+            logs.push({t:Date.now(),m:e.message,f:e.filename,l:e.lineno});
+            if (logs.length > 10) logs = logs.slice(-10);
+            localStorage.setItem('calmi_early_errors',JSON.stringify(logs));
+          } catch(err){}
+        });
+        window.addEventListener('unhandledrejection', function(e){
+          try {
+            var logs = JSON.parse(localStorage.getItem('calmi_early_errors') || '[]');
+            logs.push({t:Date.now(),m:'Unhandled Promise: '+(e.reason?.message||e.reason)});
+            if (logs.length > 10) logs = logs.slice(-10);
+            localStorage.setItem('calmi_early_errors',JSON.stringify(logs));
+          } catch(err){}
+        });
+        
         try {
           var inIframe = window.self !== window.top;
           if (inIframe) localStorage.setItem('calmi_safe_mode','1');

@@ -1,114 +1,115 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calmi - Hors ligne</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(180deg, #F1FAEE 0%, #A8DADC 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #1A1F2C;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 400px;
-            padding: 40px 20px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            background: #A8DADC;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-        }
-        
-        h1 {
-            font-size: 24px;
-            margin-bottom: 12px;
-            color: #1A1F2C;
-        }
-        
-        p {
-            font-size: 16px;
-            line-height: 1.5;
-            color: #457B9D;
-            margin-bottom: 24px;
-        }
-        
-        .retry-button {
-            background: #A8DADC;
-            color: #1A1F2C;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .retry-button:hover {
-            background: #89C5C8;
-            transform: translateY(-2px);
-        }
-        
-        .features {
-            margin-top: 30px;
-            text-align: left;
-        }
-        
-        .feature {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            font-size: 14px;
-            color: #457B9D;
-        }
-        
-        .feature::before {
-            content: "✓";
-            margin-right: 8px;
-            color: #B7E4C7;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calmi - Hors ligne</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 50%, #F1FAEE 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      color: #457B9D;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+    
+    p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    
+    button {
+      background: #A8DADC;
+      color: #1A2238;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    button:hover {
+      background: #457B9D;
+      color: white;
+      transform: translateY(-2px);
+    }
+    
+    .status {
+      margin-top: 20px;
+      padding: 12px;
+      background: #FFF3CD;
+      border-radius: 8px;
+      color: #856404;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="icon">📚</div>
-        <h1>Mode hors ligne</h1>
-        <p>Vous êtes actuellement hors ligne, mais vous pouvez toujours profiter de vos histoires déjà téléchargées.</p>
-        
-        <button class="retry-button" onclick="window.location.reload()">
-            Réessayer
-        </button>
-        
-        <div class="features">
-            <div class="feature">Lecture de vos histoires sauvegardées</div>
-            <div class="feature">Navigation dans votre bibliothèque</div>
-            <div class="feature">Synchronisation automatique au retour en ligne</div>
-        </div>
+  <div class="container">
+    <div class="icon">🌙</div>
+    <h1>Vous êtes hors ligne</h1>
+    <p>Calmi nécessite une connexion internet pour fonctionner. Veuillez vérifier votre connexion et réessayer.</p>
+    <button onclick="window.location.reload()">Réessayer</button>
+    
+    <div class="status" id="status">
+      Vérification de la connexion...
     </div>
+  </div>
+  
+  <script>
+    // Vérifier régulièrement la connexion
+    function checkConnection() {
+      const status = document.getElementById('status');
+      
+      if (navigator.onLine) {
+        status.style.background = '#D4EDDA';
+        status.style.color = '#155724';
+        status.textContent = '✓ Connexion rétablie ! Cliquez sur Réessayer.';
+      } else {
+        status.style.background = '#FFF3CD';
+        status.style.color = '#856404';
+        status.textContent = '⚠️ Toujours hors ligne...';
+      }
+    }
+    
+    // Vérifier au chargement et toutes les 3 secondes
+    checkConnection();
+    setInterval(checkConnection, 3000);
+    
+    // Écouter les événements online/offline
+    window.addEventListener('online', checkConnection);
+    window.addEventListener('offline', checkConnection);
+  </script>
 </body>
 </html>

@@ -129,7 +129,7 @@ export default defineConfig(({ mode }) => ({
       }
     },
     chunkSizeWarningLimit: 1500,
-    target: 'esnext',
+    target: 'es2020', // Meilleure compatibilité Android WebView
     minify: 'terser',
     terserOptions: {
       compress: {
