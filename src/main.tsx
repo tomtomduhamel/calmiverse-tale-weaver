@@ -67,6 +67,10 @@ const cleanupOldServiceWorker = async () => {
 // Initialize app with white screen protection
 console.log('🚀 [Calmi] Initializing main application...');
 
+// PHASE CRITIQUE: Marquer le début du montage React
+(window as any).__CALMI_MAIN_START = Date.now();
+console.log('📱 [Calmi] BOOT_STAGE: main.tsx loaded, React about to mount');
+
 // CRITICAL: Mount React app IMMEDIATELY - never block on async operations
 console.log('📱 [Calmi] Mounting React application NOW...');
 
@@ -93,6 +97,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </CriticalErrorBoundary>
   </React.StrictMode>,
 );
+
+// Marquer le succès du premier render
+setTimeout(() => {
+  try {
+    localStorage.setItem('calmi_boot_ok', '1');
+    console.log('✅ [Calmi] BOOT_STAGE: React mounted successfully, boot flag set');
+  } catch (e) {
+    console.warn('[Calmi] Could not set boot flag:', e);
+  }
+}, 100);
 
 // Run Service Worker reset in background (non-blocking)
 setTimeout(() => {

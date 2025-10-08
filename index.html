@@ -52,17 +52,41 @@
           var inIframe = window.self !== window.top;
           if (inIframe) localStorage.setItem('calmi_safe_mode','1');
         } catch(e){}
+        
         function showSafeOverlay(){
+          // Ne jamais afficher sur recovery.html
+          if (window.location.pathname === '/recovery.html') {
+            console.log('[Boot] Sur recovery.html – pas d\'overlay');
+            return;
+          }
+          
+          // Ne pas afficher si flag boot OK présent
+          try {
+            var bootOk = localStorage.getItem('calmi_boot_ok');
+            if (bootOk === '1') {
+              console.log('[Boot] Flag boot_ok présent – app OK, pas d\'overlay');
+              return;
+            }
+          } catch(e){}
+          
           if (document.getElementById('calmi-safe-overlay')) return;
+          console.warn('[Boot] OVERLAY: App non montée après 8s');
+          
           var d=document.createElement('div');
           d.id='calmi-safe-overlay';
           d.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:999999';
           d.innerHTML='\x3cdiv style="background:white;padding:20px;border-radius:12px;max-width:520px;font-family:system-ui,sans-serif;line-height:1.4"\x3e\x3ch2 style="margin:0 0 8px"\x3e🔧 Calmi: récupération\x3c/h2\x3e\x3cp style="margin:0 0 12px"\x3eL\u2019interface tarde à apparaître. Cela peut être causé par un cache ou Service Worker corrompu.\x3c/p\x3e\x3cdiv style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"\x3e\x3cbutton id="calmi-safe-retry" style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;background:#f6f6f6"\x3eAttendre\x3c/button\x3e\x3cbutton id="calmi-safe-repair" style="padding:8px 12px;border-radius:8px;border:0;background:#FF6B6B;color:white;font-weight:600"\x3eRéparer maintenant\x3c/button\x3e\x3cbutton id="calmi-safe-mode" style="padding:8px 12px;border-radius:8px;border:0;background:#457B9D;color:white"\x3eSafe Mode\x3c/button\x3e\x3c/div\x3e\x3c/div\x3e';
           document.body.appendChild(d);
+          
           var r=document.getElementById('calmi-safe-retry');
           if (r) r.addEventListener('click',function(){ d.remove(); });
+          
           var repair=document.getElementById('calmi-safe-repair');
-          if (repair) repair.addEventListener('click',function(){ window.location.href='/recovery.html'; });
+          if (repair) repair.addEventListener('click',function(){ 
+            console.log('[Boot] Redirection vers recovery.html via location.replace');
+            location.replace('/recovery.html'); 
+          });
+          
           var b=document.getElementById('calmi-safe-mode');
           if (b) b.addEventListener('click', async function(){
             try {
@@ -79,12 +103,13 @@
             location.reload();
           });
         }
+        
         window.addEventListener('load', function(){
           setTimeout(function(){
             var root = document.getElementById('root');
             var hasMounted = root && root.children && root.children.length>0;
             if (!hasMounted) showSafeOverlay();
-          }, 3000);
+          }, 8000);
         });
       })();
     </script>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -24,39 +24,60 @@ export const useBackgroundStoryGeneration = () => {
     totalActiveCount: 0
   });
   
+  // Ref pour lire l'état actuel sans déclencher de re-renders
+  const activeGenerationsRef = useRef<Array<{
+    id: string;
+    title: string;
+    startTime: Date;
+    status: 'pending' | 'completed' | 'error';
+  }>>([]);
+  
   // Utilisation du client Supabase global
   const { user } = useSupabaseAuth();
   const { toast } = useToast();
 
   // Démarrer le suivi d'une nouvelle génération
   const startGeneration = useCallback((storyId: string, title: string = 'Histoire en cours') => {
-    setState(prev => ({
-      ...prev,
-      activeGenerations: [
-        ...prev.activeGenerations,
-        {
-          id: storyId,
-          title,
-          startTime: new Date(),
-          status: 'pending'
-        }
-      ],
-      totalActiveCount: prev.totalActiveCount + 1
-    }));
+    setState(prev => {
+      const newGen = {
+        id: storyId,
+        title,
+        startTime: new Date(),
+        status: 'pending' as const
+      };
+      
+      const updated = [...prev.activeGenerations, newGen];
+      
+      // Sync ref
+      activeGenerationsRef.current = updated;
+      
+      return {
+        ...prev,
+        activeGenerations: updated,
+        totalActiveCount: prev.totalActiveCount + 1
+      };
+    });
     
     console.log('[useBackgroundStoryGeneration] Génération démarrée:', storyId);
   }, []);
 
   // Marquer une génération comme terminée
   const completeGeneration = useCallback(async (storyId: string, story?: Story) => {
-    setState(prev => ({
-      ...prev,
-      activeGenerations: prev.activeGenerations.map(gen =>
+    setState(prev => {
+      const updated = prev.activeGenerations.map(gen =>
         gen.id === storyId 
-          ? { ...gen, status: 'completed' }
+          ? { ...gen, status: 'completed' as const }
           : gen
-      )
-    }));
+      );
+      
+      // Sync ref
+      activeGenerationsRef.current = updated;
+      
+      return {
+        ...prev,
+        activeGenerations: updated
+      };
+    });
 
     // Utiliser le service de notifications PWA natif
     try {
@@ -87,14 +108,21 @@ export const useBackgroundStoryGeneration = () => {
 
   // Marquer une génération comme échouée
   const failGeneration = useCallback((storyId: string, error?: string) => {
-    setState(prev => ({
-      ...prev,
-      activeGenerations: prev.activeGenerations.map(gen =>
+    setState(prev => {
+      const updated = prev.activeGenerations.map(gen =>
         gen.id === storyId 
-          ? { ...gen, status: 'error' }
+          ? { ...gen, status: 'error' as const }
           : gen
-      )
-    }));
+      );
+      
+      // Sync ref
+      activeGenerationsRef.current = updated;
+      
+      return {
+        ...prev,
+        activeGenerations: updated
+      };
+    });
 
     toast({
       title: "Erreur de génération",
@@ -110,21 +138,33 @@ export const useBackgroundStoryGeneration = () => {
     const now = new Date();
     const maxAge = 5 * 60 * 1000; // 5 minutes
 
-    setState(prev => ({
-      ...prev,
-      activeGenerations: prev.activeGenerations.filter(gen => {
+    setState(prev => {
+      const updated = prev.activeGenerations.filter(gen => {
         const age = now.getTime() - gen.startTime.getTime();
         return gen.status === 'pending' || age < maxAge;
-      })
-    }));
+      });
+      
+      if (updated.length === prev.activeGenerations.length) {
+        return prev;
+      }
+      
+      // Sync ref
+      activeGenerationsRef.current = updated;
+      
+      return {
+        ...prev,
+        activeGenerations: updated
+      };
+    });
   }, []);
 
-  // Surveillance en temps réel des histoires via Supabase
+  // Surveillance en temps réel des histoires via Supabase - SANS state.activeGenerations dans les dépendances
   useEffect(() => {
     if (!user || !supabase) return;
 
     console.log('[useBackgroundStoryGeneration] Démarrage de la surveillance temps réel');
     
+    let isSubscribed = true;
     let channel: any = null;
 
     try {
@@ -139,14 +179,16 @@ export const useBackgroundStoryGeneration = () => {
             filter: `authorid=eq.${user.id}`
           },
           (payload) => {
+            if (!isSubscribed) return;
+            
             try {
               console.log('[useBackgroundStoryGeneration] Changement détecté:', payload);
               
               const story = payload.new as Story;
               if (!story) return;
 
-              // Vérifier si c'est une histoire que nous suivons
-              const isTracked = state.activeGenerations.some(gen => gen.id === story.id);
+              // Utiliser la ref pour lire l'état actuel sans déclencher de re-renders
+              const isTracked = activeGenerationsRef.current.some(gen => gen.id === story.id);
               
               if (isTracked) {
                 if (story.status === 'completed') {
@@ -166,6 +208,8 @@ export const useBackgroundStoryGeneration = () => {
     }
 
     return () => {
+      console.log('[useBackgroundStoryGeneration] Cleanup de la surveillance');
+      isSubscribed = false;
       try {
         if (channel) {
           supabase.removeChannel(channel);
@@ -174,7 +218,7 @@ export const useBackgroundStoryGeneration = () => {
         console.warn('[useBackgroundStoryGeneration] Erreur cleanup channel:', error);
       }
     };
-  }, [user, supabase, state.activeGenerations, completeGeneration, failGeneration]);
+  }, [user, completeGeneration, failGeneration]);
 
   // Nettoyage périodique
   useEffect(() => {
