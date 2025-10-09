@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { Story } from '@/types/story';
+import { isMobilePreviewSafeMode, logSafeMode } from '@/utils/safeMode';
 
 interface BackgroundStoryGenerationState {
   activeGenerations: Array<{
@@ -161,6 +162,12 @@ export const useBackgroundStoryGeneration = () => {
   // Surveillance en temps réel des histoires via Supabase - SANS state.activeGenerations dans les dépendances
   useEffect(() => {
     if (!user || !supabase) return;
+
+    // Skip realtime in mobile preview safe mode to avoid boot blocking
+    if (isMobilePreviewSafeMode()) {
+      logSafeMode('Skipping Realtime subscription in mobile preview');
+      return;
+    }
 
     console.log('[useBackgroundStoryGeneration] Démarrage de la surveillance temps réel');
     

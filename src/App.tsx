@@ -40,12 +40,18 @@ import { DocumentationPage } from "@/pages/support/DocumentationPage";
 import { ServiceStatusPage } from "@/pages/support/ServiceStatusPage";
 import { AboutPage } from "@/pages/AboutPage";
 import { notificationService } from "@/services/notifications/NotificationService";
+import { isMobilePreviewSafeMode, logSafeMode } from '@/utils/safeMode';
 
 function App() {
   // Commented out for testing - usePreloadRoutes();
   
-  // Initialize notification system
+  // Initialize notification system (skip in mobile preview safe mode)
   useEffect(() => {
+    if (isMobilePreviewSafeMode()) {
+      logSafeMode('Skipping notification initialization in mobile preview');
+      return;
+    }
+    
     const initNotifications = async () => {
       if (notificationService.isSupported()) {
         console.log('[App] Initializing notification system...');

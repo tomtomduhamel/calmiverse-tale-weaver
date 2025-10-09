@@ -1,13 +1,33 @@
-
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
 import './index.css'
 import './styles/scrollbar.css'
 import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext.tsx'
 import { ThemeProvider } from 'next-themes'
 import CriticalErrorBoundary from './components/CriticalErrorBoundary.tsx'
 import { forceServiceWorkerReset, clearStuckMarker } from './utils/serviceWorkerReset'
+import { isMobilePreviewSafeMode, logSafeMode } from './utils/safeMode'
+
+// Lazy load App for mobile preview performance
+const App = React.lazy(() => import('./App.tsx'))
+
+// Minimal fallback loader
+const SuspenseFallback = () => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100vh',
+    background: 'linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 50%, #F1FAEE 100%)',
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+    color: '#457B9D'
+  }}>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>✨</div>
+      <div>Chargement de Calmi...</div>
+    </div>
+  </div>
+)
 
 // Helper to detect Lovable preview iframe
 const isPreviewIframe = (): boolean => {
@@ -66,6 +86,7 @@ const cleanupOldServiceWorker = async () => {
 
 // Initialize app with white screen protection
 console.log('🚀 [Calmi] Initializing main application...');
+logSafeMode('Mobile Preview Safe Mode ACTIVE');
 
 // PHASE CRITIQUE: Marquer le début du montage React
 (window as any).__CALMI_MAIN_START = Date.now();
@@ -80,7 +101,7 @@ document.body.classList.add('react-mounted');
 // Clear stuck marker une fois que l'app est prête
 clearStuckMarker();
 
-// Mount React app immediately - NON BLOQUANT
+// Mount React app immediately with Suspense fallback for mobile preview
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <CriticalErrorBoundary>
@@ -91,7 +112,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         storageKey="calmi-theme"
       >
         <SupabaseAuthProvider>
-          <App />
+          <React.Suspense fallback={<SuspenseFallback />}>
+            <App />
+          </React.Suspense>
         </SupabaseAuthProvider>
       </ThemeProvider>
     </CriticalErrorBoundary>
