@@ -191,7 +191,7 @@ export type Database = {
           created_at: string
           endpoint: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           request_count: number
           severity: string | null
           user_agent: string | null
@@ -204,7 +204,7 @@ export type Database = {
           created_at?: string
           endpoint: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           request_count?: number
           severity?: string | null
           user_agent?: string | null
@@ -217,7 +217,7 @@ export type Database = {
           created_at?: string
           endpoint?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           request_count?: number
           severity?: string | null
           user_agent?: string | null
@@ -252,7 +252,7 @@ export type Database = {
           action: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           metadata: Json | null
           reason: string | null
           resource: string | null
@@ -263,7 +263,7 @@ export type Database = {
           action: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           reason?: string | null
           resource?: string | null
@@ -274,7 +274,7 @@ export type Database = {
           action?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           reason?: string | null
           resource?: string | null
@@ -562,7 +562,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           is_active: boolean
           last_activity: string
           session_token: string
@@ -573,7 +573,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean
           last_activity?: string
           session_token: string
@@ -584,7 +584,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean
           last_activity?: string
           session_token?: string
@@ -753,14 +753,8 @@ export type Database = {
         Args: { p_quota_type: string; p_user_id: string }
         Returns: Json
       }
-      cleanup_expired_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      delete_user: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_sessions: { Args: never; Returns: undefined }
+      delete_user: { Args: never; Returns: undefined }
       generate_deduplication_key: {
         Args: {
           p_authorid: string
@@ -770,10 +764,7 @@ export type Database = {
         }
         Returns: string
       }
-      get_next_tome_number: {
-        Args: { p_series_id: string }
-        Returns: number
-      }
+      get_next_tome_number: { Args: { p_series_id: string }; Returns: number }
       get_stories_count_by_children: {
         Args: { p_user_id: string }
         Returns: {
@@ -796,10 +787,7 @@ export type Database = {
         Args: { p_usage_type: string; p_user_id: string }
         Returns: boolean
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
       log_security_event: {
         Args: {
           p_action?: string
@@ -816,10 +804,7 @@ export type Database = {
         Args: { p_template_id: string }
         Returns: number
       }
-      reset_monthly_quotas: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      reset_monthly_quotas: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
