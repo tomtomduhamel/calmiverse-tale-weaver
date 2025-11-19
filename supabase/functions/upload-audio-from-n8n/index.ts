@@ -1,20 +1,21 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-secret',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
 }
 
-interface N8nUploadPayload {
-  requestId: string;
-  storyId: string;
-  audioFile: File;
-  voiceId?: string;
-  duration?: number;
-}
+// Validation schema pour FormData
+const UploadFormDataSchema = z.object({
+  requestId: z.string().min(1, "requestId requis"),
+  storyId: z.string().uuid("storyId invalide"),
+  voiceId: z.string().optional(),
+  duration: z.number().positive().optional()
+});
 
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
@@ -40,6 +41,23 @@ serve(async (req) => {
   }
 
   try {
+    // Vérification du secret webhook
+    const webhookSecret = req.headers.get('x-webhook-secret');
+    const expectedSecret = Deno.env.get('N8N_WEBHOOK_SECRET');
+    
+    if (!webhookSecret || webhookSecret !== expectedSecret) {
+      console.error(`❌ [upload-audio-from-n8n-${requestId}] Secret webhook invalide ou manquant`);
+      return new Response(
+        JSON.stringify({ error: 'Authentification webhook invalide' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    console.log(`✅ [upload-audio-from-n8n-${requestId}] Secret webhook validé`);
+
     // Vérifier les variables d'environnement
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -87,7 +105,30 @@ serve(async (req) => {
     const storyId = formData.get('storyId') as string;
     const audioFile = formData.get('audioFile') as File;
     const voiceId = formData.get('voiceId') as string || '9BWtsMINqrJLrRacOk9x';
-    const duration = formData.get('duration') ? parseInt(formData.get('duration') as string) : null;
+    const durationStr = formData.get('duration') as string;
+    const duration = durationStr ? parseInt(durationStr) : null;
+
+    // Validation Zod des champs texte
+    const validationResult = UploadFormDataSchema.safeParse({
+      requestId: webhookId,
+      storyId: storyId,
+      voiceId: voiceId,
+      duration: duration || undefined
+    });
+
+    if (!validationResult.success) {
+      console.error(`❌ [upload-audio-from-n8n-${requestId}] Validation échouée:`, validationResult.error.issues);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Données invalides',
+          details: validationResult.error.issues 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     console.log(`📥 [upload-audio-from-n8n-${requestId}] FormData keys:`, Array.from(formData.keys()));
     console.log(`📥 [upload-audio-from-n8n-${requestId}] Données reçues:`, {

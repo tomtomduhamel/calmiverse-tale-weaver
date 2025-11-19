@@ -1,12 +1,30 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-secret',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
 }
+
+// Validation schema
+const StoryPayloadSchema = z.object({
+  title: z.string().min(1, "Titre requis").max(200),
+  content: z.string().min(100, "Contenu trop court").max(100000, "Contenu trop long"),
+  summary: z.string().min(10, "Résumé trop court").max(1000),
+  preview: z.string().min(10, "Preview trop court").max(500),
+  objective: z.string().min(1, "Objectif requis"),
+  childrenNames: z.array(z.string()).min(1, "Au moins un enfant requis"),
+  userId: z.string().uuid("userId invalide"),
+  childrenIds: z.array(z.string().uuid()).optional().default([]),
+  status: z.enum(['pending', 'completed', 'error']).optional().default('completed'),
+  tags: z.array(z.string()).optional().default([]),
+  isFavorite: z.boolean().optional().default(false),
+  sound_id: z.string().uuid().nullable().optional(),
+  story_analysis: z.any().optional()
+});
 
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
@@ -28,6 +46,23 @@ serve(async (req) => {
   }
 
   try {
+    // Vérification du secret webhook
+    const webhookSecret = req.headers.get('x-webhook-secret');
+    const expectedSecret = Deno.env.get('N8N_WEBHOOK_SECRET');
+    
+    if (!webhookSecret || webhookSecret !== expectedSecret) {
+      console.error(`❌ [n8n-webhook-${requestId}] Secret webhook invalide ou manquant`);
+      return new Response(
+        JSON.stringify({ error: 'Authentification webhook invalide' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    console.log(`✅ [n8n-webhook-${requestId}] Secret webhook validé`);
+
     // Initialiser le client Supabase avec la clé service
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -39,11 +74,25 @@ serve(async (req) => {
       }
     });
 
-    // Lire le corps de la requête
+    // Lire et valider le corps de la requête
     const body = await req.json();
     console.log(`📥 [n8n-webhook-${requestId}] Données reçues:`, body);
 
-    // Validation des données obligatoires
+    const validationResult = StoryPayloadSchema.safeParse(body);
+    if (!validationResult.success) {
+      console.error(`❌ [n8n-webhook-${requestId}] Validation échouée:`, validationResult.error.issues);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Données invalides',
+          details: validationResult.error.issues 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     const { 
       title, 
       content, 
@@ -52,17 +101,11 @@ serve(async (req) => {
       objective, 
       childrenNames,
       userId,
-      childrenIds = [],
-      status = 'completed',
-      tags = [],
-      isFavorite = false,
-      sound_id = null,
-      story_analysis = null
-    } = body;
-
-    if (!title || !content || !summary || !preview || !objective || !childrenNames || !userId) {
-      throw new Error('Données obligatoires manquantes');
-    }
+      childrenIds,
+      status,
+      sound_id,
+      story_analysis
+    } = validationResult.data;
 
     // Vérifier que l'utilisateur existe
     const { data: user, error: userError } = await supabase.auth.admin.getUserById(userId);
