@@ -1,0 +1,208 @@
+
+// Interface pour les données d'enfants dans les Edge Functions
+interface ChildData {
+  id: string;
+  name: string;
+  gender: 'boy' | 'girl' | 'pet';
+  birthDate: string;
+  age: number;
+}
+
+const LOVABLE_AI_GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+const DEFAULT_MODEL = 'google/gemini-2.5-flash';
+
+// Génération de l'histoire avec Lovable AI en utilisant les données complètes des enfants
+export const generateStoryText = async (
+  apiKey: string, 
+  objective: string, 
+  childrenData: ChildData[] = [], 
+  storyPrompt?: string,
+  isRetry = false
+) => {
+  console.log(`Génération du texte de l'histoire avec l'objectif: ${objective} pour:`, childrenData.map(c => `${c.name} (${c.gender}, ${c.age} ans)`));
+  
+  try {
+    const retryText = isRetry ? "Ceci est une nouvelle tentative, alors essaie une approche différente." : "";
+    
+    // Si un prompt personnalisé est fourni (venant de n8n), l'utiliser directement
+    let userPrompt = "";
+    if (storyPrompt) {
+      userPrompt = `${storyPrompt}\n\n${retryText}`;
+    } else {
+      // Sinon, générer un prompt basique avec les noms seulement (fallback)
+      const childrenNames = childrenData.map(c => c.name);
+      userPrompt = `Je souhaite créer une histoire personnalisée pour ${childrenNames.join(', ')} avec l'objectif suivant : ${objective}. 
+      L'histoire doit suivre la structure donnée tout en restant fluide et naturelle, sans découpage visible en parties.
+      Assure-toi que l'histoire soit captivante dès le début pour maintenir l'attention des enfants.
+      ${retryText}`;
+    }
+
+    const response = await fetch(LOVABLE_AI_GATEWAY, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: DEFAULT_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: `Tu es un expert en création d'histoires pour enfants. 
+            
+FORMAT DE L'HISTOIRE :
+- Longueur : 6000-10000 mots
+- Structure narrative fluide et continue, sans découpage visible
+- Pas de titre explicite
+
+RÈGLES FONDAMENTALES POUR PERSONNAGES MULTIPLES :
+- Adapte le langage à l'âge du plus jeune enfant présent
+- Crée des personnages mémorables et appropriés à chaque genre et âge
+- Utilise des dialogues engageants adaptés aux capacités linguistiques
+- Ajoute des répétitions et des onomatopées pour les très jeunes enfants
+- Intègre harmonieusement les animaux de compagnie comme personnages à part entière
+- Évite absolument tout contenu effrayant ou angoissant
+- Termine toujours sur une note positive et rassurante
+- Respecte les différences de genre sans tomber dans les stéréotypes
+- Favorise la coopération et l'amitié entre tous les personnages`
+          },
+          {
+            role: 'user',
+            content: userPrompt
+          }
+        ],
+        temperature: isRetry ? 0.8 : 0.7,
+        max_tokens: 3500,
+      }),
+    });
+
+    // Vérification de la réponse HTTP
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Erreur Lovable AI (HTTP):', response.status, response.statusText, errorData);
+      
+      // Gestion des erreurs spécifiques Lovable AI
+      if (response.status === 429) {
+        throw new Error('Limite de débit Lovable AI atteinte. Veuillez réessayer dans quelques instants.');
+      }
+      if (response.status === 402) {
+        throw new Error('Crédits Lovable AI insuffisants. Veuillez ajouter des crédits dans Settings → Workspace → Usage.');
+      }
+      
+      throw new Error(`Erreur API Lovable AI (${response.status}): ${JSON.stringify(errorData)}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data || !data.choices || data.choices.length === 0) {
+      console.error('Réponse Lovable AI invalide:', data);
+      throw new Error('Format de réponse Lovable AI inattendu');
+    }
+    
+    const storyText = data.choices[0].message?.content;
+    
+    if (!storyText) {
+      throw new Error('Aucune histoire générée par Lovable AI');
+    }
+
+    console.log('✅ Histoire générée avec succès via Lovable AI (longueur):', storyText.length);
+    return storyText;
+  } catch (error) {
+    console.error('❌ Erreur lors de la génération du texte:', error);
+    throw new Error(`Erreur lors de la génération de l'histoire: ${error.message || 'Erreur inconnue'}`);
+  }
+};
+
+// Génération de résumé avec Lovable AI
+export const generateSummary = async (apiKey: string, storyText: string) => {
+  try {
+    console.log('Génération du résumé de l\'histoire via Lovable AI...');
+    
+    const response = await fetch(LOVABLE_AI_GATEWAY, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: DEFAULT_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: 'Tu es un assistant qui résume des histoires pour enfants de manière concise.'
+          },
+          {
+            role: 'user',
+            content: `Résume cette histoire en 3-4 phrases : ${storyText.substring(0, 2000)}...`
+          }
+        ],
+        temperature: 0.5,
+        max_tokens: 300,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Erreur Lovable AI (résumé):', response.status, response.statusText, errorData);
+      throw new Error(`Erreur API Lovable AI pour le résumé (${response.status})`);
+    }
+
+    const data = await response.json();
+    const summary = data.choices[0].message?.content || "Résumé non disponible";
+    
+    console.log('✅ Résumé généré avec succès via Lovable AI (longueur):', summary.length);
+    return summary;
+  } catch (error) {
+    console.error('❌ Erreur lors de la génération du résumé:', error);
+    // En cas d'erreur de résumé, on retourne un résumé par défaut plutôt que d'échouer tout le processus
+    return "Un résumé n'a pas pu être généré. L'histoire contient une aventure captivante pour enfants.";
+  }
+};
+
+// Génération de titre avec Lovable AI
+export const generateTitle = async (apiKey: string, storyText: string, childrenData: ChildData[] = []) => {
+  try {
+    console.log('Génération du titre de l\'histoire via Lovable AI...');
+    
+    const response = await fetch(LOVABLE_AI_GATEWAY, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: DEFAULT_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: 'Tu es un assistant qui crée des titres captivants pour des histoires pour enfants.'
+          },
+          {
+            role: 'user',
+            content: `Crée un titre court et captivant pour cette histoire : ${storyText.substring(0, 1000)}...`
+          }
+        ],
+        temperature: 0.8,
+        max_tokens: 50,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Erreur Lovable AI (titre):', response.status, response.statusText, errorData);
+      throw new Error(`Erreur API Lovable AI pour le titre (${response.status})`);
+    }
+
+    const data = await response.json();
+    const childrenNames = childrenData.map(c => c.name);
+    const title = data.choices[0].message?.content?.replace(/["']/g, '') || `Histoire pour ${childrenNames.join(' et ')}`;
+    
+    console.log('✅ Titre généré avec succès via Lovable AI:', title);
+    return title;
+  } catch (error) {
+    console.error('❌ Erreur lors de la génération du titre:', error);
+    // En cas d'erreur de titre, on retourne un titre par défaut plutôt que d'échouer tout le processus
+    const childrenNames = childrenData.map(c => c.name);
+    return `Histoire pour ${childrenNames.join(' et ')}`;
+  }
+};

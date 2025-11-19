@@ -1,7 +1,7 @@
 
 import { 
   corsHeaders, 
-  initializeOpenAI, 
+  initializeLovableAI,
   initializeSupabase,
   validateInput,
   generateStoryText,
@@ -145,28 +145,28 @@ export async function generateStoryContent(
     error: null
   });
   
-  // Get the OpenAI API key
-  const openAIApiKey = initializeOpenAI();
+  // Get the Lovable AI API key
+  const lovableAIApiKey = initializeLovableAI();
   
   try {
-    console.log("Début de la génération du texte de l'histoire avec contexte avancé...");
+    console.log("Début de la génération du texte de l'histoire avec Lovable AI (google/gemini-2.5-flash)...");
     
     // Generate the main story text with advanced context
     const storyText = await generateStoryText(
-      openAIApiKey, 
+      lovableAIApiKey, 
       objective as string, 
       childrenData || [], 
       storyPrompt
     );
-    console.log(`Texte généré avec succès (${storyText.length} caractères)`);
+    console.log(`Texte généré avec succès via Lovable AI (${storyText.length} caractères)`);
     
     // Generate the summary
-    console.log("Génération du résumé...");
-    const summary = await generateSummary(openAIApiKey, storyText);
+    console.log("Génération du résumé via Lovable AI...");
+    const summary = await generateSummary(lovableAIApiKey, storyText);
     
     // Generate a title with children data
-    console.log("Génération du titre...");
-    const title = await generateTitle(openAIApiKey, storyText, childrenData || []);
+    console.log("Génération du titre via Lovable AI...");
+    const title = await generateTitle(lovableAIApiKey, storyText, childrenData || []);
     
     // Create a preview from the beginning of the story
     const preview = storyText.substring(0, 200) + "...";
