@@ -89,53 +89,131 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Séparer les vendors principaux
+          // Vendors React - chunk critique chargé en priorité
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'vendor-react';
+            if (id.includes('react/') || id.includes('react-dom/')) {
+              return 'vendor-react-core';
+            }
+            if (id.includes('react-router')) {
+              return 'vendor-react-router';
+            }
+            
+            // UI libraries - séparées pour un meilleur cache
+            if (id.includes('@radix-ui/react-dialog') || id.includes('@radix-ui/react-dropdown')) {
+              return 'vendor-ui-core';
             }
             if (id.includes('@radix-ui')) {
-              return 'vendor-ui';
+              return 'vendor-ui-extended';
             }
-            if (id.includes('@supabase/supabase-js')) {
+            
+            // Backend & Data
+            if (id.includes('@supabase')) {
               return 'vendor-supabase';
-            }
-            if (id.includes('openai')) {
-              return 'vendor-openai';
-            }
-            if (id.includes('date-fns') || id.includes('clsx') || id.includes('lucide-react')) {
-              return 'vendor-utils';
-            }
-            if (id.includes('jszip') || id.includes('epubjs')) {
-              return 'epub-services';
             }
             if (id.includes('@tanstack/react-query')) {
               return 'vendor-query';
             }
+            
+            // AI & Media - lazy loaded
+            if (id.includes('openai') || id.includes('@11labs')) {
+              return 'vendor-ai';
+            }
+            
+            // Utils fréquemment utilisés - petit chunk
+            if (id.includes('date-fns') || id.includes('clsx') || id.includes('tailwind-merge')) {
+              return 'vendor-utils-core';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            
+            // Features lourdes - lazy loaded
+            if (id.includes('jszip') || id.includes('epubjs')) {
+              return 'feature-epub';
+            }
+            if (id.includes('react-markdown')) {
+              return 'feature-markdown';
+            }
+            
+            // Autres vendors moins critiques
             return 'vendor-misc';
           }
           
-          // Séparer les hooks/services lourds
-          if (id.includes('src/hooks/stories') || id.includes('src/services/stories')) {
-            return 'story-services';
+          // App chunks - séparation logique par feature
+          if (id.includes('src/')) {
+            // Services lourds par feature
+            if (id.includes('hooks/stories') || id.includes('services/stories')) {
+              return 'app-stories';
+            }
+            if (id.includes('hooks/subscription') || id.includes('services/subscription')) {
+              return 'app-subscription';
+            }
+            if (id.includes('hooks/notifications') || id.includes('services/notifications')) {
+              return 'app-notifications';
+            }
+            
+            // Composants lourds par section
+            if (id.includes('components/story/') || id.includes('components/reader/')) {
+              return 'app-story-ui';
+            }
+            if (id.includes('components/library/')) {
+              return 'app-library-ui';
+            }
+            if (id.includes('components/subscription/')) {
+              return 'app-subscription-ui';
+            }
+            
+            // Composants UI réutilisables - chunk partagé
+            if (id.includes('components/ui/')) {
+              return 'app-ui-shared';
+            }
           }
-          if (id.includes('src/hooks/notifications') || id.includes('src/services/notifications')) {
-            return 'notification-services';
+        },
+        // Optimisation des noms de chunks pour le cache
+        chunkFileNames: (chunkInfo) => {
+          const name = chunkInfo.name;
+          // Chunks vendors avec hash court pour stabilité du cache
+          if (name.startsWith('vendor-')) {
+            return 'assets/[name].[hash:8].js';
           }
-          if (id.includes('src/components/story/')) {
-            return 'story-components';
+          // Chunks app avec hash complet
+          return 'assets/[name].[hash].js';
+        },
+        // Séparation des assets
+        assetFileNames: (assetInfo) => {
+          const name = assetInfo.name || '';
+          if (name.endsWith('.css')) {
+            return 'assets/styles/[name].[hash:8][extname]';
           }
+          if (/\.(png|jpe?g|svg|gif|webp)$/.test(name)) {
+            return 'assets/images/[name].[hash:8][extname]';
+          }
+          if (/\.(woff2?|eot|ttf|otf)$/.test(name)) {
+            return 'assets/fonts/[name].[hash:8][extname]';
+          }
+          return 'assets/[name].[hash:8][extname]';
         }
-      }
+      },
+      // Optimisation des imports externes
+      external: [],
     },
-    chunkSizeWarningLimit: 1500,
-    target: 'es2020', // Meilleure compatibilité Android WebView
+    chunkSizeWarningLimit: 1000, // Limite plus stricte pour forcer la modularité
+    target: 'es2020',
     minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: false,
-        drop_debugger: true
+        drop_debugger: true,
+        pure_funcs: ['console.log'], // Enlever console.log en prod
+        passes: 2 // Double passe pour meilleure compression
+      },
+      format: {
+        comments: false // Enlever tous les commentaires
       }
-    }
+    },
+    // Optimisations supplémentaires
+    cssCodeSplit: true, // Split CSS par chunk
+    sourcemap: false, // Pas de sourcemap en prod pour réduire la taille
+    reportCompressedSize: false, // Plus rapide sans calcul de taille compressée
   }
 }));
