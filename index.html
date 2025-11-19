@@ -109,7 +109,7 @@
             var root = document.getElementById('root');
             var hasMounted = root && root.children && root.children.length>0;
             if (!hasMounted) showSafeOverlay();
-          }, 8000);
+          }, 15000); // Augmenté de 8s à 15s pour laisser plus de temps au boot
         });
       })();
     </script>
