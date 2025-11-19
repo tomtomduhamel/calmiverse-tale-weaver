@@ -2,16 +2,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.5";
 import { corsHeaders } from "./cors-config.ts";
 
-// Configuration et initialisation d'OpenAI
-export const initializeOpenAI = () => {
-  const OPENAI_API_KEY = Deno.env.get('Calmi OpenAI');
+// Configuration et initialisation de Lovable AI
+export const initializeLovableAI = () => {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
-  if (!OPENAI_API_KEY) {
-    throw new Error("La clé API OpenAI n'est pas configurée sur le serveur (Calmi OpenAI)");
+  if (!LOVABLE_API_KEY) {
+    throw new Error("La clé API Lovable AI n'est pas configurée sur le serveur");
   }
   
-  return OPENAI_API_KEY;
+  return LOVABLE_API_KEY;
 };
+
+// DEPRECATED: Garder pour compatibilité temporaire
+export const initializeOpenAI = initializeLovableAI;
 
 // Initialisation du client Supabase
 export const initializeSupabase = () => {

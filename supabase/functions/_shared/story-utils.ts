@@ -1,7 +1,7 @@
 
 // Fichier principal d'export pour les utilitaires d'histoire
 import { corsHeaders } from "./cors-config.ts";
-import { initializeSupabase, initializeOpenAI } from "./clients.ts";
+import { initializeSupabase, initializeLovableAI, initializeOpenAI } from "./clients.ts";
 import { validateInput } from "./validation.ts";
 import { 
   fetchStoryDataFromDb,
@@ -12,13 +12,14 @@ import {
   generateStoryText,
   generateSummary,
   generateTitle
-} from "./openai-operations.ts";
+} from "./ai-operations.ts";
 
 // Exporter toutes les fonctions et constantes
 export {
   corsHeaders,
   initializeSupabase,
-  initializeOpenAI,
+  initializeLovableAI,
+  initializeOpenAI, // Keep for backward compatibility
   validateInput,
   fetchStoryDataFromDb,
   checkStoryExists,
