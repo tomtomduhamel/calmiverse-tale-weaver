@@ -1,6 +1,16 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, initializeSupabase } from "../_shared/story-utils.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+
+// Validation schema
+const CompletionCallbackSchema = z.object({
+  storyId: z.string().uuid("storyId invalide"),
+  userId: z.string().uuid("userId invalide"),
+  status: z.string().min(1, "Status requis"),
+  title: z.string().optional(),
+  timestamp: z.string().optional()
+});
 
 serve(async (req) => {
   console.log(`[n8n-story-completion-callback] ${req.method} ${req.url}`);
@@ -11,8 +21,6 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = initializeSupabase();
-    
     if (req.method !== 'POST') {
       return new Response(
         JSON.stringify({ error: 'Method not allowed' }),
@@ -23,22 +31,45 @@ serve(async (req) => {
       );
     }
 
+    // Vérification du secret webhook
+    const webhookSecret = req.headers.get('x-webhook-secret');
+    const expectedSecret = Deno.env.get('N8N_WEBHOOK_SECRET');
+    
+    if (!webhookSecret || webhookSecret !== expectedSecret) {
+      console.error(`[n8n-story-completion-callback] Secret webhook invalide ou manquant`);
+      return new Response(
+        JSON.stringify({ error: 'Authentification webhook invalide' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    console.log(`[n8n-story-completion-callback] Secret webhook validé`);
+
+    const supabase = initializeSupabase();
+    
     const body = await req.json();
     console.log('[n8n-story-completion-callback] Received callback:', body);
 
-    const { storyId, userId, status, title, timestamp } = body;
-
-    // Validation des données requises
-    if (!storyId || !userId || !status) {
-      console.error('[n8n-story-completion-callback] Missing required fields:', { storyId, userId, status });
+    // Validation Zod
+    const validationResult = CompletionCallbackSchema.safeParse(body);
+    if (!validationResult.success) {
+      console.error('[n8n-story-completion-callback] Validation échouée:', validationResult.error.issues);
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: storyId, userId, status' }),
+        JSON.stringify({ 
+          error: 'Données invalides',
+          details: validationResult.error.issues 
+        }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
+
+    const { storyId, userId, status, title, timestamp } = validationResult.data;
 
     // Vérifier que l'histoire existe et appartient à l'utilisateur
     const { data: story, error: storyError } = await supabase
