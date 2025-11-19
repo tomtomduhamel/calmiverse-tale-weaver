@@ -38,52 +38,6 @@ const isPreviewIframe = (): boolean => {
   }
 };
 
-// PHASE 1: Service Worker Cleanup Radical avec flag localStorage
-const cleanupOldServiceWorker = async () => {
-  if ('serviceWorker' in navigator) {
-    const SW_CLEANUP_FLAG = 'calmi-sw-cleaned-v2';
-    const hasBeenCleaned = localStorage.getItem(SW_CLEANUP_FLAG);
-    
-    // Ne nettoyer qu'une seule fois pour éviter les boucles infinies
-    if (hasBeenCleaned === 'true') {
-      console.log('✅ [SW-Cleanup] Service Worker déjà nettoyé');
-      return;
-    }
-    
-    // Skip SW cleanup in preview iframe to avoid reload loops
-    if (isPreviewIframe()) {
-      localStorage.setItem(SW_CLEANUP_FLAG, 'true');
-      console.log('🧪 [SW-Cleanup] Preview iframe détecté – on saute le nettoyage');
-      return;
-    }
-
-    try {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-
-      if (registrations.length > 0) {
-        console.log('🔧 [SW-Cleanup] Désinstallation COMPLÈTE de tous les Service Workers...');
-        
-        for (let registration of registrations) {
-          await registration.unregister();
-        }
-        
-        // Marquer comme nettoyé sans rechargement automatique
-        localStorage.setItem(SW_CLEANUP_FLAG, 'true');
-        console.log('✅ [SW-Cleanup] SW désinstallés, pas de reload auto (preview-safe)');
-        return;
-      } else {
-        // Pas de SW, marquer comme nettoyé
-        localStorage.setItem(SW_CLEANUP_FLAG, 'true');
-        console.log('✅ [SW-Cleanup] Aucun Service Worker détecté');
-      }
-    } catch (error) {
-      console.warn('[SW-Cleanup] Erreur lors du nettoyage:', error);
-      // En cas d'erreur, marquer quand même comme nettoyé pour éviter le blocage
-      localStorage.setItem(SW_CLEANUP_FLAG, 'true');
-    }
-  }
-};
-
 // Initialize app with white screen protection
 console.log('🚀 [Calmi] Initializing main application...');
 logSafeMode('Mobile Preview Safe Mode ACTIVE');
@@ -100,6 +54,10 @@ document.body.classList.add('react-mounted');
 
 // Clear stuck marker une fois que l'app est prête
 clearStuckMarker();
+
+// CRITICAL: Set boot OK flag BEFORE React mount to prevent recovery overlay
+localStorage.setItem('calmi_boot_ok', '1');
+console.log('✅ [Calmi] Boot flag set before React mount');
 
 // Mount React app immediately with Suspense fallback for mobile preview
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -121,34 +79,23 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 );
 
-// Marquer le succès du premier render
+// ============================================================================
+// POST-MOUNT OPERATIONS: Cleanup asynchrone après le montage de React
+// ============================================================================
 setTimeout(() => {
-  try {
-    localStorage.setItem('calmi_boot_ok', '1');
-    console.log('✅ [Calmi] BOOT_STAGE: React mounted successfully, boot flag set');
-  } catch (e) {
-    console.warn('[Calmi] Could not set boot flag:', e);
-  }
-}, 100);
-
-// Run Service Worker reset in background (non-blocking)
-setTimeout(() => {
+  const bootEndTime = Date.now();
+  const bootDuration = bootEndTime - (window as any).__CALMI_MAIN_START;
+  console.log(`⏱️ [Calmi] React mounted in ${bootDuration}ms`);
+  
+  // Skip SW reset in preview iframe
   if (isPreviewIframe()) {
     try { localStorage.setItem('calmi_safe_mode','1'); } catch {}
-    console.log('[Calmi] 🧪 Preview iframe: skip SW reset/cleanup (safe mode on)');
+    console.log('🧪 [Calmi] Preview iframe detected - skipping SW reset');
     return;
   }
-  forceServiceWorkerReset().then((result) => {
-    if (result.needsReload) {
-      console.log('[Calmi] 💡 Mise à jour disponible - Reload conseillé (mais pas forcé)');
-      // Optionnel: dispatch un event pour afficher un banner de mise à jour
-      window.dispatchEvent(new CustomEvent('calmi-update-available'));
-    }
-  }).catch((e) => {
-    console.warn('[SW-Reset] Background reset failed:', e);
-  });
 
-  cleanupOldServiceWorker().catch((e) => {
-    console.warn('[SW-Cleanup] Background cleanup failed:', e);
+  // Execute SW reset in background (non-blocking, fire-and-forget)
+  forceServiceWorkerReset().catch(e => {
+    console.warn('[SW-Reset] Background reset failed:', e);
   });
 }, 0);
