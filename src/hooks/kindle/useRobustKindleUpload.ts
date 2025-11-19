@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { clientEpubGenerator } from '@/services/clientEpubGenerator';
 import { robustStorageUpload } from '@/services/robustStorageUpload';
 import { kindleSharingService } from '@/services/kindleSharingService';
+import { supabase } from '@/integrations/supabase/client';
 import type { Story } from '@/types/story';
 
 interface RobustUploadProgress {
@@ -102,28 +103,25 @@ export const useRobustKindleUpload = () => {
         bucketUsed: uploadResult.bucketUsed
       });
 
-      // 5. Préparer les données pour le webhook
-      const objectiveText = typeof story.objective === 'string' 
-        ? story.objective 
-        : story.objective?.name || story.objective?.value || '';
-
-      // Utiliser le nom de fichier propre pour le webhook Kindle
+      // 5. Envoyer via Edge Function sécurisée
       const kindleFilename = uploadResult.cleanFilename || filename;
 
-      const webhookData = {
-        firstname: userData.firstname || "",
-        lastname: userData.lastname || "",
-        title: story.title,
-        content: story.content,
-        childrennames: story.childrenNames || [],
-        objective: objectiveText,
-        kindleEmail: userData.kindle_email,
-        epubUrl: uploadResult.url,
-        epubFilename: kindleFilename
-      };
-
-      // 6. Envoyer au webhook N8N
-      await kindleSharingService.sendToKindleWebhook(webhookData);
+      console.log('📤 [RobustKindle] Appel Edge Function send-to-kindle');
+      
+      const { data: webhookResponse, error: webhookError } = await supabase.functions.invoke('send-to-kindle', {
+        body: { 
+          storyId,
+          epubUrl: uploadResult.url,
+          epubFilename: kindleFilename
+        }
+      });
+      
+      if (webhookError) {
+        console.error('❌ [RobustKindle] Erreur Edge Function:', webhookError);
+        throw new Error(webhookError.message || 'Erreur lors de l\'envoi vers Kindle');
+      }
+      
+      console.log('✅ [RobustKindle] Réponse Edge Function:', webhookResponse);
 
       updateProgress({
         step: 'completed',

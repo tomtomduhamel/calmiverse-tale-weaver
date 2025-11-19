@@ -96,3 +96,6 @@ verify_jwt = true
 
 [functions.create-story-sequel]
 verify_jwt = true
+
+[functions.send-to-kindle]
+verify_jwt = true
