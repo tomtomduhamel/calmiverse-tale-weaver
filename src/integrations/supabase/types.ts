@@ -754,6 +754,7 @@ export type Database = {
         Returns: Json
       }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
+      cleanup_old_storage_files: { Args: never; Returns: undefined }
       delete_user: { Args: never; Returns: undefined }
       generate_deduplication_key: {
         Args: {
@@ -765,6 +766,10 @@ export type Database = {
         Returns: string
       }
       get_next_tome_number: { Args: { p_series_id: string }; Returns: number }
+      get_signed_url: {
+        Args: { bucket_name: string; expires_in?: number; file_path: string }
+        Returns: string
+      }
       get_stories_count_by_children: {
         Args: { p_user_id: string }
         Returns: {
