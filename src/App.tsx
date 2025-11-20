@@ -14,7 +14,6 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { notificationService } from "@/services/notifications/NotificationService";
-import { isMobilePreviewSafeMode, logSafeMode } from '@/utils/safeMode';
 
 // OPTIMIZED: Lazy loading pour toutes les routes secondaires
 const ChildrenListPage = lazy(() => import('./pages/ChildrenListPage'));
@@ -59,13 +58,8 @@ const PageLoader = () => (
 function App() {
   // Commented out for testing - usePreloadRoutes();
   
-  // Initialize notification system (skip in mobile preview safe mode)
+  // Initialize notification system
   useEffect(() => {
-    if (isMobilePreviewSafeMode()) {
-      logSafeMode('Skipping notification initialization in mobile preview');
-      return;
-    }
-    
     const initNotifications = async () => {
       if (notificationService.isSupported()) {
         console.log('[App] Initializing notification system...');

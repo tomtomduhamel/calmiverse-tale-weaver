@@ -6,7 +6,6 @@ import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext.tsx'
 import { ThemeProvider } from 'next-themes'
 import CriticalErrorBoundary from './components/CriticalErrorBoundary.tsx'
 import { forceServiceWorkerReset, clearStuckMarker } from './utils/serviceWorkerReset'
-import { isMobilePreviewSafeMode, logSafeMode } from './utils/safeMode'
 
 // Lazy load App for mobile preview performance
 const App = React.lazy(() => import('./App.tsx'))
@@ -40,7 +39,6 @@ const isPreviewIframe = (): boolean => {
 
 // Initialize app with white screen protection
 console.log('🚀 [Calmi] Initializing main application...');
-logSafeMode('Mobile Preview Safe Mode ACTIVE');
 
 // PHASE CRITIQUE: Marquer le début du montage React
 (window as any).__CALMI_MAIN_START = Date.now();
