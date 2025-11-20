@@ -4,9 +4,23 @@
  */
 
 export function isMobileDevice(): boolean {
-  // Détection fiable mobile (pas juste screen width)
+  // Détection fiable mobile avec exclusions desktop explicites
   const ua = navigator.userAgent;
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+  
+  // Exclusions explicites desktop (Windows, Mac, Linux, Chrome OS)
+  if (/Windows NT|Macintosh|Mac OS X|Linux x86_64|CrOS/i.test(ua)) {
+    return false;
+  }
+  
+  // Détection mobile positive
+  const isMobileUA = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  
+  // Validation supplémentaire : écran petit OU support tactile
+  const hasSmallScreen = window.innerWidth <= 768;
+  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  // Mobile = UA mobile ET (petit écran OU tactile)
+  return isMobileUA && (hasSmallScreen || hasTouchScreen);
 }
 
 export function isLovableIframe(): boolean {
@@ -25,9 +39,21 @@ export function shouldUseFastBoot(): boolean {
 
 export function logBootMode() {
   const fastBoot = shouldUseFastBoot();
+  const isMobile = isMobileDevice();
+  const isIframe = isLovableIframe();
+  
   console.log(`[BootOptimizer] Mode: ${fastBoot ? '🚀 FAST MOBILE' : '🖥️ STANDARD'}`, {
-    isMobile: isMobileDevice(),
-    isIframe: isLovableIframe(),
-    userAgent: navigator.userAgent.slice(0, 50)
+    isMobile,
+    isIframe,
+    fastBootEnabled: fastBoot,
+    userAgent: navigator.userAgent.slice(0, 80),
+    screen: `${window.innerWidth}x${window.innerHeight}`,
+    touchSupport: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+    hostname: window.location.hostname
   });
+  
+  // Warning si détection incohérente
+  if (isMobile && window.innerWidth > 1024) {
+    console.warn('[BootOptimizer] ⚠️ Mobile détecté mais large écran - vérifier détection');
+  }
 }

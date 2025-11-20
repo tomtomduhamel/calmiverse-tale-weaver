@@ -31,22 +31,35 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const fastBootMode = shouldUseFastBoot();
 
   useEffect(() => {
-    bootMonitor.log('AuthGuard: Check auth state');
+    console.log('[AuthGuard] Check auth state', { 
+      user: !!user, 
+      loading, 
+      timeoutReached, 
+      fastBootMode 
+    });
+    bootMonitor.log(`AuthGuard: Check - User:${!!user} Loading:${loading} Timeout:${timeoutReached} FastBoot:${fastBootMode}`);
     
-    // MODE MOBILE IFRAME : Tolérance maximale
+    // MODE MOBILE IFRAME : Tolérance maximale mais avec fallback redirection
     if (fastBootMode) {
       if (timeoutReached && !user) {
-        console.log('[AuthGuard] 🚀 Mobile mode - activation mode hors ligne');
+        console.log('[AuthGuard] 🚀 Mobile mode - activation mode hors ligne tolérant');
         bootMonitor.log('AuthGuard: Offline mode activated (mobile)');
         setShowOfflineMode(true);
-        return; // Pas de redirection - laisser l'utilisateur naviguer
+        // Note: On n'empêche pas la redirection si vraiment nécessaire
+        // mais on montre le contenu d'abord
       }
-      return; // En mode mobile, on ne redirige jamais
+      // En mode mobile, on ne redirige que si vraiment pas d'espoir
+      if (!loading && !user && timeoutReached) {
+        console.log('[AuthGuard] 🚀 Mobile mode - timeout définitif, redirection vers /auth');
+        bootMonitor.log('AuthGuard: Final timeout, redirecting to /auth (mobile)');
+        navigate('/auth', { state: { from: location.pathname } });
+      }
+      return;
     }
     
     // MODE DESKTOP : Comportement strict standard
     if ((!loading && !user) || (timeoutReached && !user)) {
-      console.log('[AuthGuard] Desktop mode - redirection vers /auth');
+      console.log('[AuthGuard] 🖥️ Desktop mode - redirection vers /auth');
       bootMonitor.log('AuthGuard: Redirecting to /auth (desktop)');
       navigate('/auth', { state: { from: location.pathname } });
     }
