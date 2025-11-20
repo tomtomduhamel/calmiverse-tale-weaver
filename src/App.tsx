@@ -1,5 +1,5 @@
 
-import React, { useEffect, lazy, Suspense } from "react";
+import React, { useEffect, lazy, Suspense, useState } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
 // CRITICAL: Imports synchrones pour le boot initial uniquement
@@ -14,6 +14,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { notificationService } from "@/services/notifications/NotificationService";
+import { bootMonitor } from "@/utils/bootMonitor";
 
 // OPTIMIZED: Lazy loading pour toutes les routes secondaires
 const ChildrenListPage = lazy(() => import('./pages/ChildrenListPage'));
@@ -41,28 +42,109 @@ const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m
 const TestConnection = lazy(() => import("./pages/TestConnection"));
 const DiagnosticConnection = lazy(() => import("./pages/DiagnosticConnection"));
 
-// Fallback minimaliste pour Suspense
-const PageLoader = () => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    background: 'var(--background)',
-    color: 'var(--foreground)'
-  }}>
-    <div>Chargement...</div>
-  </div>
-);
+// PageLoader avec détection de timeout et retry
+const PageLoader = () => {
+  const [showError, setShowError] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    bootMonitor.log('PageLoader: Started');
+    
+    // Compteur de temps écoulé
+    const interval = setInterval(() => {
+      setElapsed(prev => prev + 1);
+    }, 1000);
+
+    // Timeout pour détecter chunks qui ne loadent pas
+    const timer = setTimeout(() => {
+      console.warn('[PageLoader] ⚠️ Chunk loading timeout (15s)');
+      bootMonitor.log('PageLoader: Timeout reached');
+      setShowError(true);
+    }, 15000);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, []);
+
+  if (showError) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: 'hsl(var(--background))',
+        color: 'hsl(var(--foreground))',
+        padding: '2rem',
+        textAlign: 'center'
+      }}>
+        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+          Chargement lent détecté
+        </div>
+        <div style={{ marginBottom: '1.5rem', opacity: 0.7 }}>
+          Le chargement prend plus de temps que prévu
+        </div>
+        <button 
+          onClick={() => {
+            bootMonitor.log('PageLoader: Manual reload');
+            window.location.reload();
+          }}
+          style={{
+            padding: '0.75rem 1.5rem',
+            background: 'hsl(var(--primary))',
+            color: 'hsl(var(--primary-foreground))',
+            border: 'none',
+            borderRadius: '0.5rem',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            fontWeight: '500'
+          }}
+        >
+          Recharger l'application
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      background: 'hsl(var(--background))',
+      color: 'hsl(var(--foreground))'
+    }}>
+      <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>✨</div>
+      <div style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>
+        Chargement de Calmi...
+      </div>
+      <div style={{ fontSize: '0.875rem', opacity: 0.6 }}>
+        {elapsed > 0 && `${elapsed}s écoulées`}
+      </div>
+      <div style={{ marginTop: '1rem', fontSize: '0.875rem', opacity: 0.5 }}>
+        Cela peut prendre quelques instants sur mobile
+      </div>
+    </div>
+  );
+};
 
 function App() {
-  // Commented out for testing - usePreloadRoutes();
-  
+  useEffect(() => {
+    bootMonitor.log('App: Component mounted');
+  }, []);
+
   // Initialize notification system
   useEffect(() => {
     const initNotifications = async () => {
       if (notificationService.isSupported()) {
         console.log('[App] Initializing notification system...');
+        bootMonitor.log('App: Init notifications');
         await notificationService.requestPermission();
       } else {
         console.warn('[App] Notifications not supported on this device');
@@ -71,7 +153,7 @@ function App() {
     
     initNotifications();
   }, []);
-  
+
   return (
     <ErrorBoundary>
       <Router>

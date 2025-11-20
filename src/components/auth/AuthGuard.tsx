@@ -1,40 +1,77 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Loader2 } from 'lucide-react';
+import { shouldUseFastBoot } from '@/utils/mobileBootOptimizer';
+import { bootMonitor } from '@/utils/bootMonitor';
 
 interface AuthGuardProps {
   children: React.ReactNode;
 }
 
 /**
- * 🔐 GARDE D'AUTHENTIFICATION CENTRALISÉE
+ * 🔐 GARDE D'AUTHENTIFICATION CENTRALISÉE - TURBO MOBILE
  * 
- * Ce composant protège les routes authentifiées de manière optimiste :
+ * Mode Desktop (strict) :
  * - Affiche immédiatement le contenu si l'utilisateur est déjà chargé
  * - Montre un loader uniquement si loading = true ET pas encore d'utilisateur
  * - Redirige vers /auth uniquement après timeout si pas d'utilisateur
- * - Évite les doubles vérifications d'auth dans les pages
+ * 
+ * Mode Mobile Iframe (tolérant) :
+ * - Timeout plus long (30s)
+ * - Pas de redirection immédiate
+ * - Affiche contenu avec banner "Connexion en cours" si timeout atteint
+ * - Permet navigation même sans auth complète
  */
 export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { user, loading, timeoutReached } = useSupabaseAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [showOfflineMode, setShowOfflineMode] = useState(false);
+  const fastBootMode = shouldUseFastBoot();
 
   useEffect(() => {
-    // Redirection uniquement si :
-    // 1. On n'est pas en train de charger
-    // 2. Pas d'utilisateur
-    // 3. OU timeout atteint sans utilisateur
+    bootMonitor.log('AuthGuard: Check auth state');
+    
+    // MODE MOBILE IFRAME : Tolérance maximale
+    if (fastBootMode) {
+      if (timeoutReached && !user) {
+        console.log('[AuthGuard] 🚀 Mobile mode - activation mode hors ligne');
+        bootMonitor.log('AuthGuard: Offline mode activated (mobile)');
+        setShowOfflineMode(true);
+        return; // Pas de redirection - laisser l'utilisateur naviguer
+      }
+      return; // En mode mobile, on ne redirige jamais
+    }
+    
+    // MODE DESKTOP : Comportement strict standard
     if ((!loading && !user) || (timeoutReached && !user)) {
-      console.log('[AuthGuard] Redirection vers /auth - user absent');
+      console.log('[AuthGuard] Desktop mode - redirection vers /auth');
+      bootMonitor.log('AuthGuard: Redirecting to /auth (desktop)');
       navigate('/auth', { state: { from: location.pathname } });
     }
-  }, [user, loading, timeoutReached, navigate, location]);
+  }, [user, loading, timeoutReached, navigate, location, fastBootMode]);
 
   // Affichage optimiste : si on a un user, on affiche immédiatement
   if (user) {
+    bootMonitor.log('AuthGuard: User authenticated, render children');
     return <>{children}</>;
+  }
+
+  // MODE OFFLINE MOBILE : Afficher contenu avec banner informatif
+  if (showOfflineMode && fastBootMode) {
+    console.log('[AuthGuard] Rendering in offline mode with banner');
+    return (
+      <>
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 p-3 text-center">
+          <div className="flex items-center justify-center gap-2 text-sm text-yellow-800 dark:text-yellow-200">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>⚠️ Connexion en cours... L'application fonctionne en mode hors ligne</span>
+          </div>
+        </div>
+        {children}
+      </>
+    );
   }
 
   // Si loading ET pas encore de user, afficher un loader minimal
@@ -43,7 +80,9 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-sm text-muted-foreground">Chargement...</p>
+          <p className="text-sm text-muted-foreground">
+            {fastBootMode ? 'Chargement mobile (cela peut prendre jusqu\'à 30s)...' : 'Chargement...'}
+          </p>
         </div>
       </div>
     );

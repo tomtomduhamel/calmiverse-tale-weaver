@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { shouldUseFastBoot } from '@/utils/mobileBootOptimizer';
+import { bootMonitor } from '@/utils/bootMonitor';
 
 export const useAuthSession = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -11,16 +13,23 @@ export const useAuthSession = () => {
   const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
-    // PHASE 4 OPTIMISÉ: Timeout augmenté à 10s pour permettre chargement complet
-    // avec fallback AuthGuard pour éviter les blocages UI
+    bootMonitor.log('useAuthSession: Init');
+    
+    // MOBILE BOOT TURBO: Timeout adaptatif selon contexte
+    const timeoutDuration = shouldUseFastBoot() ? 30000 : 10000; // 30s mobile iframe, 10s desktop
+    const bootMode = shouldUseFastBoot() ? 'MOBILE IFRAME' : 'DESKTOP';
+    
+    console.log(`[Auth] Initialisation avec timeout ${timeoutDuration/1000}s (Mode: ${bootMode})`);
+    
     const authTimeout = setTimeout(() => {
       if (loading) {
-        console.warn("⚠️ Timeout d'authentification atteint (10s) - forçage de l'arrêt du loading");
+        console.warn(`⚠️ Timeout d'authentification atteint (${timeoutDuration/1000}s) - Mode: ${bootMode}`);
+        bootMonitor.log(`Auth timeout reached (${timeoutDuration/1000}s)`);
         setLoading(false);
         setTimeoutReached(true);
         setError("Délai d'attente dépassé - veuillez réessayer");
       }
-    }, 10000);
+    }, timeoutDuration);
 
     const cleanup = () => {
       clearTimeout(authTimeout);
@@ -29,14 +38,15 @@ export const useAuthSession = () => {
     
     // 1. Configurer le listener d'état d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log('Changement d\'état d\'authentification:', event, currentSession?.user?.id || 'Déconnecté');
+      console.log('[Auth] Changement d\'état:', event, currentSession?.user?.id || 'Déconnecté');
+      bootMonitor.log(`Auth state change: ${event}`);
       
       try {
         if (currentSession) {
           // Validation de sécurité de la session
           const now = Math.floor(Date.now() / 1000);
           if (currentSession.expires_at && currentSession.expires_at < now) {
-            console.warn('Session expirée détectée');
+            console.warn('[Auth] Session expirée détectée');
             await supabase.auth.signOut();
             setSession(null);
             setUser(null);
@@ -44,30 +54,33 @@ export const useAuthSession = () => {
             return;
           }
           
-          console.log('Session valide trouvée:', currentSession.user.id);
+          console.log('[Auth] ✅ Session valide:', currentSession.user.id);
+          bootMonitor.log('Auth: Session valide trouvée');
           setSession(currentSession);
           setUser(currentSession.user);
           setError(null);
         } else {
-          console.log('Aucune session trouvée');
+          console.log('[Auth] Aucune session trouvée');
           setSession(null);
           setUser(null);
           setError(null);
         }
       } catch (err) {
-        console.error('Erreur lors du traitement de l\'état d\'authentification:', err);
+        console.error('[Auth] Erreur traitement état:', err);
         setError('Erreur d\'authentification');
         setSession(null);
         setUser(null);
       } finally {
         setLoading(false);
+        bootMonitor.log('Auth: Loading terminé');
       }
     });
 
     // 2. Vérifier la session existante avec gestion d'erreur
     const checkExistingSession = async () => {
       try {
-        console.log("Vérification sécurisée de la session existante");
+        bootMonitor.log('Auth: Vérification session existante');
+        console.log("[Auth] Vérification session existante");
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
         if (error) {
