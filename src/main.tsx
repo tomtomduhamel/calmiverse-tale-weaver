@@ -6,6 +6,8 @@ import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext.tsx'
 import { ThemeProvider } from 'next-themes'
 import CriticalErrorBoundary from './components/CriticalErrorBoundary.tsx'
 import { forceServiceWorkerReset, clearStuckMarker } from './utils/serviceWorkerReset'
+import { bootMonitor } from './utils/bootMonitor'
+import { logBootMode } from './utils/mobileBootOptimizer'
 
 // Lazy load App for mobile preview performance
 const App = React.lazy(() => import('./App.tsx'))
@@ -38,10 +40,13 @@ const isPreviewIframe = (): boolean => {
 };
 
 // Initialize app with white screen protection
+bootMonitor.log('main.tsx: Starting');
+logBootMode();
 console.log('🚀 [Calmi] Initializing main application...');
 
 // PHASE CRITIQUE: Marquer le début du montage React
 (window as any).__CALMI_MAIN_START = Date.now();
+bootMonitor.log('main.tsx: React about to mount');
 console.log('📱 [Calmi] BOOT_STAGE: main.tsx loaded, React about to mount');
 
 // CRITICAL: Mount React app IMMEDIATELY - never block on async operations
@@ -75,6 +80,7 @@ ReactDOM.createRoot(rootElement).render(
 );
 
 // React est monté avec succès
+bootMonitor.log('React: Mounted successfully');
 console.log('✅ [Calmi] React application mounted successfully');
 
 // ============================================================================
@@ -83,7 +89,11 @@ console.log('✅ [Calmi] React application mounted successfully');
 setTimeout(() => {
   const bootEndTime = Date.now();
   const bootDuration = bootEndTime - (window as any).__CALMI_MAIN_START;
+  bootMonitor.log(`React mount completed (${bootDuration}ms)`);
   console.log(`⏱️ [Calmi] React mounted in ${bootDuration}ms`);
+  
+  // Afficher le rapport de boot complet
+  bootMonitor.report();
   
   // Skip SW reset in preview iframe
   if (isPreviewIframe()) {

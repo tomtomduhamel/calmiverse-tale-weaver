@@ -4,6 +4,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- Preconnect pour Supabase (optimisation mobile) -->
+    <link rel="preconnect" href="https://ioeihnoxvtpxtqhxklpw.supabase.co" crossorigin />
+    
     <title>Calmi</title>
     <meta name="description" content="Calmi - Histoires personnalisées pour enfants" />
     <meta name="author" content="Calmi" />
@@ -25,38 +29,76 @@
     
     <script>
       (function(){
-        // BUILD ID pour tracking de version
-        var BUILD_ID = 'BUILD_' + Date.now();
-        localStorage.setItem('calmi_build_id', BUILD_ID);
-        console.log('[Calmi Boot] BUILD_ID:', BUILD_ID);
+        // 🚀 MOBILE BOOT TURBO - Détection ultra-précoce
+        var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+        var inIframe = false;
+        try { 
+          inIframe = window.self !== window.top; 
+        } catch(e) { 
+          inIframe = true; 
+        }
         
-        // Early error logging pour diagnostic écran blanc
-        window.addEventListener('error', function(e){
-          try {
-            var logs = JSON.parse(localStorage.getItem('calmi_early_errors') || '[]');
-            logs.push({t:Date.now(),m:e.message,f:e.filename,l:e.lineno});
-            if (logs.length > 10) logs = logs.slice(-10);
-            localStorage.setItem('calmi_early_errors',JSON.stringify(logs));
-          } catch(err){}
-        });
-        window.addEventListener('unhandledrejection', function(e){
-          try {
-            var logs = JSON.parse(localStorage.getItem('calmi_early_errors') || '[]');
-            logs.push({t:Date.now(),m:'Unhandled Promise: '+(e.reason?.message||e.reason)});
-            if (logs.length > 10) logs = logs.slice(-10);
-            localStorage.setItem('calmi_early_errors',JSON.stringify(logs));
-          } catch(err){}
-        });
+        var fastBootMode = isMobile && inIframe;
         
+        if (fastBootMode) {
+          console.log('🚀 [Boot] MOBILE IFRAME MODE - Fast boot enabled');
+          window.__CALMI_FAST_BOOT = true;
+          
+          // Skip localStorage operations lourdes en mode mobile iframe
+          // pour éviter les blocages cross-origin
+          try {
+            sessionStorage.setItem('calmi_fast_boot', '1');
+          } catch(e) {
+            console.warn('[Boot] SessionStorage not available in iframe');
+          }
+        } else {
+          console.log('🖥️ [Boot] DESKTOP MODE - Standard boot');
+        }
+        
+        // BUILD ID pour tracking de version (simplifié en mobile)
         try {
-          var inIframe = window.self !== window.top;
-          if (inIframe) localStorage.setItem('calmi_safe_mode','1');
-        } catch(e){}
+          var BUILD_ID = 'BUILD_' + Date.now();
+          if (!fastBootMode) {
+            localStorage.setItem('calmi_build_id', BUILD_ID);
+          }
+          console.log('[Boot] BUILD_ID:', BUILD_ID);
+        } catch(e) {
+          console.warn('[Boot] localStorage not available');
+        }
+        
+        // Early error logging simplifié
+        window.addEventListener('error', function(e){
+          console.error('[Early Error]', e.message, e.filename, e.lineno);
+          if (!fastBootMode) {
+            try {
+              var logs = JSON.parse(localStorage.getItem('calmi_early_errors') || '[]');
+              logs.push({t:Date.now(),m:e.message,f:e.filename,l:e.lineno});
+              if (logs.length > 10) logs = logs.slice(-10);
+              localStorage.setItem('calmi_early_errors',JSON.stringify(logs));
+            } catch(err){}
+          }
+        });
+        
+        window.addEventListener('unhandledrejection', function(e){
+          console.error('[Early Promise Rejection]', e.reason);
+          if (!fastBootMode) {
+            try {
+              var logs = JSON.parse(localStorage.getItem('calmi_early_errors') || '[]');
+              logs.push({t:Date.now(),m:'Unhandled Promise: '+(e.reason?.message||e.reason)});
+              if (logs.length > 10) logs = logs.slice(-10);
+              localStorage.setItem('calmi_early_errors',JSON.stringify(logs));
+            } catch(err){}
+          }
+        });
         
         // Marquer boot OK quand le DOM est complètement chargé
         window.addEventListener('load', function(){
-          localStorage.setItem('calmi_boot_ok', 'true');
           console.log('✅ [Boot] DOM loaded - boot OK');
+          if (!fastBootMode) {
+            try {
+              localStorage.setItem('calmi_boot_ok', 'true');
+            } catch(e) {}
+          }
         });
       })();
     </script>
@@ -70,7 +112,7 @@
         var stamp = document.getElementById('calmi-boot-stamp');
         var buildId = localStorage.getItem('calmi_build_id') || 'UNKNOWN';
         if (stamp) stamp.textContent = buildId;
-        console.log('[Calmi Boot] Stage: DOM Ready, BUILD_ID:', buildId);
+        console.log('[Boot] Stage: DOM Ready, BUILD_ID:', buildId);
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
