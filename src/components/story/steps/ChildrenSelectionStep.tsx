@@ -145,36 +145,51 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
             Vos enfants et animaux ({children.length})
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          {needsScrolling ? <div className="relative group">
+        <CardContent className="px-0">
+          {needsScrolling ? (
+            <div className="space-y-3">
               {/* Message contextuel */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between px-6">
                 <p className="text-sm text-muted-foreground">
                   🏆 Les plus populaires en premier
                 </p>
-                <p className="text-xs text-muted-foreground md:hidden">
+                <p className="text-xs text-muted-foreground">
                   Glissez horizontalement →
                 </p>
               </div>
               
               {/* Conteneur de scroll horizontal optimisé */}
-              <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide scroll-smooth" style={{
-            scrollSnapType: 'x mandatory',
-            WebkitOverflowScrolling: 'touch'
-          }}>
-                {displayChildren.map(child => <div key={child.id} className="flex-none w-44 sm:w-48" style={{
-              scrollSnapAlign: 'start'
-            }}>
-                    <ChildCard child={child} isSelected={selectedChildrenIds.includes(child.id)} onToggle={handleChildToggle} getGenderIcon={getGenderIcon} />
-                  </div>)}
+              <div 
+                className="flex gap-3 overflow-x-auto px-6 pb-4 scrollbar-hide scroll-smooth snap-x snap-mandatory"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
+                {displayChildren.map(child => (
+                  <div key={child.id} className="flex-none w-44 snap-start">
+                    <ChildCard 
+                      child={child} 
+                      isSelected={selectedChildrenIds.includes(child.id)} 
+                      onToggle={handleChildToggle} 
+                      getGenderIcon={getGenderIcon} 
+                    />
+                  </div>
+                ))}
               </div>
-              
-              {/* Indicateurs visuels de scroll */}
-              <div className="absolute left-0 top-12 bottom-4 w-6 bg-gradient-to-r from-background to-transparent pointer-events-none opacity-50"></div>
-              <div className="absolute right-0 top-12 bottom-4 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none opacity-50"></div>
-            </div> : <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
-              {displayChildren.map(child => <ChildCard key={child.id} child={child} isSelected={selectedChildrenIds.includes(child.id)} onToggle={handleChildToggle} getGenderIcon={getGenderIcon} />)}
-            </div>}
+            </div>
+          ) : (
+            <div className="px-6">
+              <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {displayChildren.map(child => (
+                  <ChildCard 
+                    key={child.id} 
+                    child={child} 
+                    isSelected={selectedChildrenIds.includes(child.id)} 
+                    onToggle={handleChildToggle} 
+                    getGenderIcon={getGenderIcon} 
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -222,44 +237,71 @@ const ChildCard: React.FC<ChildCardProps> = ({
   // Determine popularity level for visual indicators
   const isTopPerformer = storiesCount >= 3;
   const isPopular = storiesCount > 5;
-  return <div onClick={() => onToggle(child.id)} className={`relative p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 ${isSelected ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-primary/50'} ${isPopular ? 'ring-1 ring-primary/20' : ''}`}>
-      {/* Top badges */}
-      {isTopPerformer && <div className="absolute -top-2 -right-2 z-10">
-          {isPopular ? <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-black font-bold text-xs px-2 py-1">
-              🏆 TOP
-            </Badge> : <Badge variant="secondary" className="text-xs px-2 py-1 bg-primary/10">
-              ⭐
-            </Badge>}
-        </div>}
+  return (
+    <div 
+      onClick={() => onToggle(child.id)} 
+      className={`
+        relative p-4 rounded-xl border-2 cursor-pointer 
+        transition-all duration-300 ease-in-out
+        hover:shadow-lg hover:-translate-y-0.5
+        ${isSelected 
+          ? 'border-primary bg-primary/5 shadow-md' 
+          : 'border-border/50 hover:border-primary/60 bg-card'
+        }
+      `}
+    >
+      {/* Top badge - minimaliste */}
+      {isTopPerformer && (
+        <div className="absolute -top-2 -right-2 z-10">
+          <Badge 
+            className={`
+              text-xs px-2.5 py-1 font-semibold shadow-sm
+              ${isPopular 
+                ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300' 
+                : 'bg-secondary text-secondary-foreground'
+              }
+            `}
+          >
+            {isPopular ? '🏆 TOP' : '⭐'}
+          </Badge>
+        </div>
+      )}
       
-      {/* Main content - more compact layout */}
-      <div className="space-y-2">
-        {/* Name and icon row */}
-        <div className="flex items-center justify-between">
+      {/* Main content */}
+      <div className="space-y-3">
+        {/* Name and selection indicator */}
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="text-lg flex-shrink-0">{getGenderIcon(child.gender)}</span>
-            <h3 className="font-semibold text-sm truncate">{child.name}</h3>
+            <span className="text-xl flex-shrink-0">{getGenderIcon(child.gender)}</span>
+            <h3 className="font-semibold text-base truncate">{child.name}</h3>
           </div>
-          {isSelected && <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-              <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
-            </div>}
+          {isSelected && (
+            <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+              <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+            </div>
+          )}
         </div>
         
         {/* Age and stories count */}
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs px-2 py-0.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-muted-foreground">
             {age} an{age > 1 ? 's' : ''}
-          </Badge>
-          {storiesCount > 0 && <Badge variant="secondary" className="text-xs px-2 py-0.5">
+          </span>
+          {storiesCount > 0 && (
+            <span className="text-xs text-muted-foreground">
               📚 {storiesCount}
-            </Badge>}
+            </span>
+          )}
         </div>
         
-        {/* Teddy name - more compact */}
-        {child.teddyName && <div className="text-xs text-muted-foreground truncate">
+        {/* Teddy name */}
+        {child.teddyName && (
+          <div className="text-xs text-muted-foreground truncate pt-1 border-t border-border/30">
             🧸 {child.teddyName}
-          </div>}
+          </div>
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
 export default ChildrenSelectionStep;
