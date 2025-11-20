@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
 import type { Story } from '@/types/story';
-import { isMobilePreviewSafeMode, logSafeMode } from '@/utils/safeMode';
 
 /**
  * Hook pour surveiller en permanence les nouvelles histoires créées
@@ -89,12 +88,6 @@ export const useBackgroundStoryMonitor = () => {
    */
   const startBackgroundMonitoring = useCallback(async () => {
     if (!user || isMonitoring) return;
-
-    // Skip in mobile preview safe mode to avoid boot blocking
-    if (isMobilePreviewSafeMode()) {
-      logSafeMode('Skipping background story monitoring in mobile preview');
-      return;
-    }
 
     console.log('[BackgroundStoryMonitor] 🚀 Démarrage monitoring background');
     setIsMonitoring(true);
