@@ -53,6 +53,15 @@
           if (inIframe) localStorage.setItem('calmi_safe_mode','1');
         } catch(e){}
         
+        // Variable pour tracker si React a signalé qu'il est prêt
+        var reactAppReady = false;
+        
+        // Écouter le signal explicite de React
+        window.addEventListener('calmi-app-ready', function() {
+          reactAppReady = true;
+          console.log('✅ [Boot] Signal app-ready reçu - app montée avec succès');
+        });
+        
         function showSafeOverlay(){
           // Ne jamais afficher sur recovery.html
           if (window.location.pathname === '/recovery.html') {
@@ -60,17 +69,14 @@
             return;
           }
           
-          // Ne pas afficher si flag boot OK présent
-          try {
-            var bootOk = localStorage.getItem('calmi_boot_ok');
-            if (bootOk === '1') {
-              console.log('[Boot] Flag boot_ok présent – app OK, pas d\'overlay');
-              return;
-            }
-          } catch(e){}
+          // Vérifier si React a envoyé le signal
+          if (reactAppReady) {
+            console.log('[Boot] Signal app-ready reçu – app OK, pas d\'overlay');
+            return;
+          }
           
           if (document.getElementById('calmi-safe-overlay')) return;
-          console.warn('[Boot] OVERLAY: App non montée après 8s');
+          console.warn('[Boot] OVERLAY: Aucun signal app-ready reçu après 30s');
           
           var d=document.createElement('div');
           d.id='calmi-safe-overlay';
@@ -104,12 +110,14 @@
           });
         }
         
+        // Attendre le signal explicite de React avec timeout de 30s
         window.addEventListener('load', function(){
           setTimeout(function(){
-            var root = document.getElementById('root');
-            var hasMounted = root && root.children && root.children.length>0;
-            if (!hasMounted) showSafeOverlay();
-          }, 15000); // Augmenté de 8s à 15s pour laisser plus de temps au boot
+            if (!reactAppReady) {
+              console.warn('[Boot] Timeout 30s atteint sans signal app-ready');
+              showSafeOverlay();
+            }
+          }, 30000); // 30 secondes pour laisser le temps au boot complet
         });
       })();
     </script>

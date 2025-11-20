@@ -55,12 +55,9 @@ document.body.classList.add('react-mounted');
 // Clear stuck marker une fois que l'app est prête
 clearStuckMarker();
 
-// CRITICAL: Set boot OK flag BEFORE React mount to prevent recovery overlay
-localStorage.setItem('calmi_boot_ok', '1');
-console.log('✅ [Calmi] Boot flag set before React mount');
-
 // Mount React app immediately with Suspense fallback for mobile preview
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root')!;
+ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <CriticalErrorBoundary>
       <ThemeProvider 
@@ -78,6 +75,19 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </CriticalErrorBoundary>
   </React.StrictMode>,
 );
+
+// CRITICAL: Envoyer le signal explicite que React est monté
+// Attendre un tick pour que le DOM soit bien hydraté
+setTimeout(() => {
+  const appReadyEvent = new CustomEvent('calmi-app-ready', { 
+    detail: { timestamp: Date.now() } 
+  });
+  window.dispatchEvent(appReadyEvent);
+  console.log('✅ [Calmi] Signal app-ready envoyé - React complètement monté');
+  
+  // Backup: set flag pour compatibilité
+  localStorage.setItem('calmi_boot_ok', '1');
+}, 100);
 
 // ============================================================================
 // POST-MOUNT OPERATIONS: Cleanup asynchrone après le montage de React
