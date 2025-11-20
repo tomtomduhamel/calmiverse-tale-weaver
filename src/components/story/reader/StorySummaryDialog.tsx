@@ -38,7 +38,20 @@ export const StorySummaryDialog: React.FC<StorySummaryDialogProps> = ({
             
             <TabsContent value="summary" className="space-y-4 mt-6">
               <div>
-                <ReactMarkdown className="text-sm text-muted-foreground">{story.story_summary}</ReactMarkdown>
+                {story.story_summary ? (
+                  <ReactMarkdown className="text-sm text-muted-foreground leading-relaxed">
+                    {story.story_summary}
+                  </ReactMarkdown>
+                ) : (
+                  <div className="text-center py-8 space-y-3">
+                    <p className="text-muted-foreground text-sm">
+                      Le résumé de cette histoire n'est pas encore disponible.
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">
+                      Cette histoire a peut-être été créée avec une version antérieure qui ne générait pas de résumés automatiquement.
+                    </p>
+                  </div>
+                )}
               </div>
               {story.tags && story.tags.length > 0 && (
                 <div>
