@@ -76,18 +76,8 @@ ReactDOM.createRoot(rootElement).render(
   </React.StrictMode>,
 );
 
-// CRITICAL: Envoyer le signal explicite que React est monté
-// Attendre un tick pour que le DOM soit bien hydraté
-setTimeout(() => {
-  const appReadyEvent = new CustomEvent('calmi-app-ready', { 
-    detail: { timestamp: Date.now() } 
-  });
-  window.dispatchEvent(appReadyEvent);
-  console.log('✅ [Calmi] Signal app-ready envoyé - React complètement monté');
-  
-  // Backup: set flag pour compatibilité
-  localStorage.setItem('calmi_boot_ok', '1');
-}, 100);
+// React est monté avec succès
+console.log('✅ [Calmi] React application mounted successfully');
 
 // ============================================================================
 // POST-MOUNT OPERATIONS: Cleanup asynchrone après le montage de React

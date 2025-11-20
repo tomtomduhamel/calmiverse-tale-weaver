@@ -53,71 +53,10 @@
           if (inIframe) localStorage.setItem('calmi_safe_mode','1');
         } catch(e){}
         
-        // Variable pour tracker si React a signalé qu'il est prêt
-        var reactAppReady = false;
-        
-        // Écouter le signal explicite de React
-        window.addEventListener('calmi-app-ready', function() {
-          reactAppReady = true;
-          console.log('✅ [Boot] Signal app-ready reçu - app montée avec succès');
-        });
-        
-        function showSafeOverlay(){
-          // Ne jamais afficher sur recovery.html
-          if (window.location.pathname === '/recovery.html') {
-            console.log('[Boot] Sur recovery.html – pas d\'overlay');
-            return;
-          }
-          
-          // Vérifier si React a envoyé le signal
-          if (reactAppReady) {
-            console.log('[Boot] Signal app-ready reçu – app OK, pas d\'overlay');
-            return;
-          }
-          
-          if (document.getElementById('calmi-safe-overlay')) return;
-          console.warn('[Boot] OVERLAY: Aucun signal app-ready reçu après 30s');
-          
-          var d=document.createElement('div');
-          d.id='calmi-safe-overlay';
-          d.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:999999';
-          d.innerHTML='\x3cdiv style="background:white;padding:20px;border-radius:12px;max-width:520px;font-family:system-ui,sans-serif;line-height:1.4"\x3e\x3ch2 style="margin:0 0 8px"\x3e🔧 Calmi: récupération\x3c/h2\x3e\x3cp style="margin:0 0 12px"\x3eL\u2019interface tarde à apparaître. Cela peut être causé par un cache ou Service Worker corrompu.\x3c/p\x3e\x3cdiv style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"\x3e\x3cbutton id="calmi-safe-retry" style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;background:#f6f6f6"\x3eAttendre\x3c/button\x3e\x3cbutton id="calmi-safe-repair" style="padding:8px 12px;border-radius:8px;border:0;background:#FF6B6B;color:white;font-weight:600"\x3eRéparer maintenant\x3c/button\x3e\x3cbutton id="calmi-safe-mode" style="padding:8px 12px;border-radius:8px;border:0;background:#457B9D;color:white"\x3eSafe Mode\x3c/button\x3e\x3c/div\x3e\x3c/div\x3e';
-          document.body.appendChild(d);
-          
-          var r=document.getElementById('calmi-safe-retry');
-          if (r) r.addEventListener('click',function(){ d.remove(); });
-          
-          var repair=document.getElementById('calmi-safe-repair');
-          if (repair) repair.addEventListener('click',function(){ 
-            console.log('[Boot] Redirection vers recovery.html via location.replace');
-            location.replace('/recovery.html'); 
-          });
-          
-          var b=document.getElementById('calmi-safe-mode');
-          if (b) b.addEventListener('click', async function(){
-            try {
-              localStorage.setItem('calmi_safe_mode','1');
-              if ('caches' in window) {
-                var names = await caches.keys();
-                await Promise.all(names.map(function(n){ return caches.delete(n); }));
-              }
-              if ('serviceWorker' in navigator) {
-                var regs = await navigator.serviceWorker.getRegistrations();
-                await Promise.all(regs.map(function(r){ return r.unregister(); }));
-              }
-            } catch(e){}
-            location.reload();
-          });
-        }
-        
-        // Attendre le signal explicite de React avec timeout de 30s
+        // Marquer boot OK quand le DOM est complètement chargé
         window.addEventListener('load', function(){
-          setTimeout(function(){
-            if (!reactAppReady) {
-              console.warn('[Boot] Timeout 30s atteint sans signal app-ready');
-              showSafeOverlay();
-            }
-          }, 30000); // 30 secondes pour laisser le temps au boot complet
+          localStorage.setItem('calmi_boot_ok', 'true');
+          console.log('✅ [Boot] DOM loaded - boot OK');
         });
       })();
     </script>
