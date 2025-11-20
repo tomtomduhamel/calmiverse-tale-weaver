@@ -16,7 +16,7 @@ export const useAuthSession = () => {
     bootMonitor.log('useAuthSession: Init');
     
     // MOBILE BOOT TURBO: Timeout adaptatif selon contexte
-    const timeoutDuration = shouldUseFastBoot() ? 30000 : 10000; // 30s mobile iframe, 10s desktop
+    const timeoutDuration = shouldUseFastBoot() ? 30000 : 8000; // 30s mobile iframe, 8s desktop
     const bootMode = shouldUseFastBoot() ? 'MOBILE IFRAME' : 'DESKTOP';
     
     console.log(`[Auth] Initialisation avec timeout ${timeoutDuration/1000}s (Mode: ${bootMode})`);
