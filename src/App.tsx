@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { DemoBanner } from "@/components/DemoBanner";
 import { notificationService } from "@/services/notifications/NotificationService";
 import { bootMonitor } from "@/utils/bootMonitor";
 
@@ -135,9 +136,14 @@ const PageLoader = () => {
 };
 
 function App() {
+  const isDemoMode = (window as any).__CALMI_DEMO_MODE === true;
+  
   useEffect(() => {
     bootMonitor.log('App: Component mounted');
-  }, []);
+    if (isDemoMode) {
+      console.log('🎭 [App] Mode démo actif - Fonctionnalités limitées');
+    }
+  }, [isDemoMode]);
 
   // Initialize notification system
   useEffect(() => {
@@ -156,8 +162,10 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <Router>
-        <Suspense fallback={<PageLoader />}>
+      {isDemoMode && <DemoBanner />}
+      <div className={isDemoMode ? "pt-[60px]" : ""}>
+        <Router>
+          <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Routes publiques */}
             <Route path="/auth" element={<Auth />} />
@@ -207,6 +215,7 @@ function App() {
       <PWAInstallPrompt />
       <PWAUpdateNotification />
       <OfflineIndicator />
+      </div>
     </ErrorBoundary>
   );
 }

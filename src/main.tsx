@@ -26,10 +26,22 @@ bootMonitor.log('main.tsx: Starting');
 logBootMode();
 console.log('🚀 [Calmi] Initializing main application...');
 
+// PHASE 5: Détecter le mode démo
+const urlParams = new URLSearchParams(window.location.search);
+const isDemoMode = urlParams.get('demo') === '1';
+if (isDemoMode) {
+  (window as any).__CALMI_DEMO_MODE = true;
+  console.log('🎭 [Calmi] MODE DÉMO ACTIVÉ - Données d\'exemple uniquement');
+}
+
 // PHASE CRITIQUE: Marquer le début du montage React
 (window as any).__CALMI_MAIN_START = Date.now();
 bootMonitor.log('main.tsx: React about to mount');
 console.log('📱 [Calmi] BOOT_STAGE: main.tsx loaded, React about to mount');
+
+if (isDemoMode) {
+  console.log('🎭 [Calmi] Mode démo - Skip auth & use mock data');
+}
 
 // CRITICAL: Mount React app IMMEDIATELY - never block on async operations
 console.log('📱 [Calmi] Mounting React application NOW...');
