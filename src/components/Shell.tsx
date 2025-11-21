@@ -28,6 +28,8 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   const navigate = useNavigate();
   const previewMode = isPreviewMode();
   
+  logger.debug("[Shell] Mode detection:", { previewMode, isMobile });
+  
   // 🚨 MONITORING ARRIÈRE-PLAN : Surveillance des nouvelles histoires créées
   // Ce hook fonctionne en permanence tant que l'utilisateur est authentifié
   const { isMonitoring } = useBackgroundStoryMonitor();
@@ -55,41 +57,11 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
     return () => window.removeEventListener('calmi-navigate' as any, handleNavigationEvent);
   }, [navigate]);
 
-  // 🎭 MODE PREVIEW : Affichage sans authentification pour mobile Lovable Preview
-  if (previewMode) {
-    logger.debug("[Shell] 🎭 Mode Preview activé - pas d'authentification requise");
-    return (
-      <SidebarProvider>
-        <div className="flex flex-col min-h-screen w-full relative">
-          <PreviewBanner />
-          
-          {/* Only show top navigation on desktop and not on reader pages */}
-          {!isMobile && !location.pathname.startsWith('/reader/') && <Navigation />}
-          
-          {/* Main content with optimized mobile spacing */}
-          <div className={`flex-1 w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-16' : 'pb-4'}`}>
-            <StoryGenerationManager>
-              {children || <Outlet />}
-            </StoryGenerationManager>
-          </div>
-          
-          {/* Footer */}
-          <Footer />
-          
-          {/* Indicateurs PWA et synchronisation */}
-          <OfflineIndicator />
-          <OfflineSyncIndicator />
-          
-          {/* Afficher le menu mobile uniquement si nous ne sommes pas dans le lecteur */}
-          {showMobileMenu && <MobileMenu />}
-        </div>
-      </SidebarProvider>
-    );
-  }
-
-  // 🔐 MODE STANDARD : Authentification requise pour desktop et mobile production
+  // 🎭 MODE UNIFIÉ : AuthGuard avec mode preview tolérant ou mode standard
+  logger.debug(`[Shell] Mode ${previewMode ? '🎭 Preview avec auth tolérante' : '🔐 Standard avec auth stricte'}`);
+  
   return (
-    <AuthGuard>
+    <AuthGuard previewMode={previewMode}>
       <SidebarProvider>
         <div className="flex flex-col min-h-screen w-full relative">
           {/* Only show top navigation on desktop and not on reader pages */}
