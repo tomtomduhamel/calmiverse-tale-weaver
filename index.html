@@ -83,6 +83,31 @@
       .emergency-btn:hover {
         background: #3a6a8a;
       }
+      
+      .emergency-btn-secondary {
+        margin-top: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: #B7E4C7;
+        color: #2d3748;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      
+      .emergency-btn-secondary:hover {
+        background: #95d5b2;
+      }
+      
+      .emergency-info {
+        font-size: 0.8rem;
+        margin-top: 1rem;
+        opacity: 0.7;
+        padding: 0.5rem;
+        background: rgba(255,255,255,0.3);
+        border-radius: 4px;
+      }
     </style>
     
     <script>
@@ -170,25 +195,38 @@
           }
         });
         
-        // PHASE 2: TIMEOUT D'URGENCE - Détecter si React ne monte pas
+        // PHASE 4: TIMEOUT D'URGENCE ADAPTATIF - 30s mobile preview, 10s desktop
+        var timeoutDuration = isPreviewMode ? 30000 : 10000;
+        var bootStartTime = Date.now();
+        
+        console.log('[Boot] Emergency timeout configuré:', timeoutDuration/1000 + 's', isPreviewMode ? '(Mobile Preview)' : '(Desktop)');
+        
         setTimeout(function(){
           var loader = document.getElementById('emergency-loader');
           if (loader && loader.style.display !== 'none') {
-            console.error('❌ [Emergency] React n\'a pas monté dans les 8 secondes');
+            var elapsed = Math.round((Date.now() - bootStartTime) / 1000);
+            console.error('❌ [Emergency] React n\'a pas monté dans les ' + elapsed + ' secondes');
             
-            // Afficher message d'erreur
+            // Afficher message d'erreur avec diagnostic
             var spinner = document.querySelector('.emergency-spinner');
             var errorDiv = document.querySelector('.emergency-error');
             
             if (spinner) spinner.style.display = 'none';
             if (errorDiv) {
               errorDiv.style.display = 'block';
+              
+              // PHASE 5: Ajouter bouton Mode Démo
+              var modeInfo = isPreviewMode ? 'Preview Mobile' : 'Desktop';
+              var hasDemo = window.location.search.indexOf('demo=1') === -1;
+              
               errorDiv.innerHTML = '<p><strong>Problème de chargement détecté</strong></p>' +
                 '<p style="font-size:0.9rem;margin-top:0.5rem;">L\'application ne répond pas.</p>' +
-                '<button class="emergency-btn" onclick="window.location.href=\'/?force-clean=1\'">Forcer le rechargement</button>';
+                '<div class="emergency-info">Mode: ' + modeInfo + ' | Temps écoulé: ' + elapsed + 's</div>' +
+                '<button class="emergency-btn" onclick="window.location.href=\'/?force-clean=1\'">Forcer le rechargement</button>' +
+                (hasDemo ? '<button class="emergency-btn-secondary" onclick="window.location.href=\'/?demo=1\'">🎭 Continuer en mode démo</button>' : '');
             }
           }
-        }, 8000); // 8 secondes timeout
+        }, timeoutDuration);
       })();
     </script>
   </head>
