@@ -9,27 +9,8 @@ import { forceServiceWorkerReset, clearStuckMarker } from './utils/serviceWorker
 import { bootMonitor } from './utils/bootMonitor'
 import { logBootMode } from './utils/mobileBootOptimizer'
 import { safeStorage } from './utils/safeStorage'
+import App from './App.tsx'
 
-// Lazy load App for mobile preview performance
-const App = React.lazy(() => import('./App.tsx'))
-
-// Minimal fallback loader
-const SuspenseFallback = () => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    background: 'linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 50%, #F1FAEE 100%)',
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-    color: '#457B9D'
-  }}>
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>✨</div>
-      <div>Chargement de Calmi...</div>
-    </div>
-  </div>
-)
 
 // Helper to detect Lovable preview iframe
 const isPreviewIframe = (): boolean => {
@@ -56,10 +37,7 @@ console.log('📱 [Calmi] Mounting React application NOW...');
 // Hide initial loading screen immediately
 document.body.classList.add('react-mounted');
 
-// Clear stuck marker une fois que l'app est prête
-clearStuckMarker();
-
-// Mount React app immediately with Suspense fallback for mobile preview
+// Mount React app immediately (synchronous App.tsx for instant boot)
 const rootElement = document.getElementById('root')!;
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
@@ -71,9 +49,7 @@ ReactDOM.createRoot(rootElement).render(
         storageKey="calmi-theme"
       >
         <SupabaseAuthProvider>
-          <React.Suspense fallback={<SuspenseFallback />}>
-            <App />
-          </React.Suspense>
+          <App />
         </SupabaseAuthProvider>
       </ThemeProvider>
     </CriticalErrorBoundary>
@@ -90,6 +66,9 @@ if (emergencyLoader) {
   emergencyLoader.remove();
   console.log('✅ [Emergency] Loader supprimé - React monté avec succès');
 }
+
+// CRITICAL: Clear stuck marker AFTER React is mounted (safe storage access)
+clearStuckMarker();
 
 // ============================================================================
 // POST-MOUNT OPERATIONS: Cleanup asynchrone après le montage de React

@@ -3,7 +3,7 @@
  * Force l'application à repartir proprement en cas de blocage
  */
 
-import { safeStorage } from './safeStorage';
+import { safeStorage, safeSessionStorage } from './safeStorage';
 
 const SW_RESET_KEY = 'calmi-sw-reset-done';
 const SW_VERSION_KEY = 'calmi-sw-version';
@@ -87,14 +87,14 @@ export async function forceServiceWorkerReset(): Promise<ResetResult> {
  * Marquer l'app comme potentiellement bloquée si elle ne monte pas
  */
 export function markAppAsStuck(): void {
-  sessionStorage.setItem('calmi-was-stuck', 'true');
+  safeSessionStorage.setItem('calmi-was-stuck', 'true');
 }
 
 /**
  * Effacer le marqueur de blocage une fois que l'app a bien monté
  */
 export function clearStuckMarker(): void {
-  sessionStorage.removeItem('calmi-was-stuck');
+  safeSessionStorage.removeItem('calmi-was-stuck');
 }
 
 /**
