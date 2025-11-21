@@ -51,8 +51,10 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
     return () => window.removeEventListener('calmi-navigate' as any, handleNavigationEvent);
   }, [navigate]);
 
+  // 🧪 TEST DIAGNOSTIC PHASE 1 : AuthGuard temporairement désactivé
+  // pour confirmer qu'il est la cause du problème de chargement
   return (
-    <AuthGuard>
+    // <AuthGuard>
       <SidebarProvider>
         <div className="flex flex-col min-h-screen w-full relative">
           {/* Only show top navigation on desktop and not on reader pages */}
@@ -76,7 +78,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
           {showMobileMenu && <MobileMenu />}
         </div>
       </SidebarProvider>
-    </AuthGuard>
+    // </AuthGuard>
   );
 };
 
