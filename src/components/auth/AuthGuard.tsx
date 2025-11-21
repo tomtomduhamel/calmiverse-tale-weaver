@@ -1,76 +1,41 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Loader2 } from 'lucide-react';
-import { shouldUseFastBoot, isPreviewMode } from '@/utils/mobileBootOptimizer';
+import { shouldUseFastBoot } from '@/utils/mobileBootOptimizer';
 import { bootMonitor } from '@/utils/bootMonitor';
-import { PreviewAuthBanner } from '@/components/PreviewAuthBanner';
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  previewMode?: boolean;
 }
 
 /**
- * 🔐 GARDE D'AUTHENTIFICATION CENTRALISÉE - TURBO MOBILE + PREVIEW
+ * 🔐 GARDE D'AUTHENTIFICATION STANDARD
  * 
- * Mode Desktop (strict) :
+ * Mode Desktop/Mobile (strict) :
  * - Affiche immédiatement le contenu si l'utilisateur est déjà chargé
  * - Montre un loader uniquement si loading = true ET pas encore d'utilisateur
- * - Redirige vers /auth uniquement après timeout si pas d'utilisateur
+ * - Redirige vers /auth si pas d'utilisateur après timeout
  * 
- * Mode Preview Mobile (tolérant avec authentification) :
- * - Timeout augmenté à 45s pour localStorage dans iframe
- * - Affiche TOUJOURS le contenu immédiatement (pas d'écran blanc)
- * - Ne redirige JAMAIS vers /auth automatiquement
- * - Banner informative montrant l'état d'authentification
- * - Tentative d'auth en arrière-plan
- * - Fallback gracieux vers contenu visible si auth échoue
+ * Note: En mode preview mobile, ce composant est complètement bypassé dans Shell.tsx
  */
-export const AuthGuard: React.FC<AuthGuardProps> = ({ children, previewMode: previewModeProp }) => {
+export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { user, loading, timeoutReached } = useSupabaseAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [authBannerStatus, setAuthBannerStatus] = useState<'loading' | 'authenticated' | 'demo'>('loading');
-  
-  // Détection du mode preview (passé en prop ou auto-détecté)
-  const previewMode = previewModeProp !== undefined ? previewModeProp : isPreviewMode();
   const fastBootMode = shouldUseFastBoot();
-
-  // Gestion de l'état du banner en fonction de l'authentification
-  useEffect(() => {
-    if (previewMode) {
-      if (user) {
-        setAuthBannerStatus('authenticated');
-      } else if (loading && !timeoutReached) {
-        setAuthBannerStatus('loading');
-      } else {
-        setAuthBannerStatus('demo');
-      }
-    }
-  }, [user, loading, timeoutReached, previewMode]);
 
   useEffect(() => {
     console.log('[AuthGuard] Check auth state', { 
       user: !!user, 
       loading, 
-      timeoutReached, 
-      previewMode,
+      timeoutReached,
       fastBootMode 
     });
-    bootMonitor.log(`AuthGuard: Check - User:${!!user} Loading:${loading} Timeout:${timeoutReached} Preview:${previewMode} FastBoot:${fastBootMode}`);
+    bootMonitor.log(`AuthGuard: Check - User:${!!user} Loading:${loading} Timeout:${timeoutReached} FastBoot:${fastBootMode}`);
     
-    // MODE PREVIEW : Tolérance maximale, pas de redirection automatique
-    if (previewMode) {
-      console.log('[AuthGuard] 🎭 Preview mode - affichage contenu immédiat avec banner');
-      bootMonitor.log('AuthGuard: Preview mode activated - no auto redirect');
-      // En mode preview, on n'effectue JAMAIS de redirection automatique
-      // L'utilisateur peut cliquer sur "Se connecter" dans le banner s'il le souhaite
-      return;
-    }
-    
-    // MODE MOBILE NON-PREVIEW : Tolérance mais avec fallback redirection
-    if (fastBootMode && !previewMode) {
+    // MODE MOBILE : Tolérance mais avec fallback redirection
+    if (fastBootMode) {
       if (!loading && !user && timeoutReached) {
         console.log('[AuthGuard] 🚀 Mobile mode - timeout définitif, redirection vers /auth');
         bootMonitor.log('AuthGuard: Final timeout, redirecting to /auth (mobile)');
@@ -85,21 +50,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children, previewMode: pre
       bootMonitor.log('AuthGuard: Redirecting to /auth (desktop)');
       navigate('/auth', { state: { from: location.pathname } });
     }
-  }, [user, loading, timeoutReached, navigate, location, previewMode, fastBootMode]);
-
-  // MODE PREVIEW : Affichage immédiat avec banner d'état
-  if (previewMode) {
-    bootMonitor.log('AuthGuard: Preview mode - render with auth banner');
-    return (
-      <>
-        <PreviewAuthBanner 
-          status={authBannerStatus}
-          userEmail={user?.email}
-        />
-        {children}
-      </>
-    );
-  }
+  }, [user, loading, timeoutReached, navigate, location, fastBootMode]);
 
   // Affichage optimiste : si on a un user, on affiche immédiatement
   if (user) {
