@@ -3,6 +3,8 @@
  * Force l'application à repartir proprement en cas de blocage
  */
 
+import { safeStorage } from './safeStorage';
+
 const SW_RESET_KEY = 'calmi-sw-reset-done';
 const SW_VERSION_KEY = 'calmi-sw-version';
 const CURRENT_VERSION = '2.0.3'; // Incrémentez pour forcer un reset
@@ -15,10 +17,16 @@ export interface ResetResult {
 export async function forceServiceWorkerReset(): Promise<ResetResult> {
   console.log('[SW-Reset] 🔄 Vérification reset Service Worker...');
   
+  // PHASE 3: Skip complètement en mode preview
+  if ((window as any).__CALMI_PREVIEW_MODE) {
+    console.log('[SW-Reset] ⏭️ Preview mode - skip SW reset');
+    return { didCleanup: false, needsReload: false };
+  }
+  
   // Safe mode: ne jamais indiquer de reload nécessaire
-  const safeMode = localStorage.getItem('calmi_safe_mode') === '1';
-  const lastVersion = localStorage.getItem(SW_VERSION_KEY);
-  const resetDone = localStorage.getItem(SW_RESET_KEY);
+  const safeMode = safeStorage.getItem('calmi_safe_mode') === '1';
+  const lastVersion = safeStorage.getItem(SW_VERSION_KEY);
+  const resetDone = safeStorage.getItem(SW_RESET_KEY);
   
   // Si la version a changé ou si jamais fait de reset, on force
   if (lastVersion !== CURRENT_VERSION || !resetDone) {
@@ -49,9 +57,9 @@ export async function forceServiceWorkerReset(): Promise<ResetResult> {
       }
       
       // 3. Marquer le reset comme fait
-      localStorage.setItem(SW_VERSION_KEY, CURRENT_VERSION);
-      localStorage.setItem(SW_RESET_KEY, 'true');
-      localStorage.setItem('calmi-last-reset', new Date().toISOString());
+      safeStorage.setItem(SW_VERSION_KEY, CURRENT_VERSION);
+      safeStorage.setItem(SW_RESET_KEY, 'true');
+      safeStorage.setItem('calmi-last-reset', new Date().toISOString());
       
       console.log('[SW-Reset] ✅ Reset complet terminé');
       
@@ -94,6 +102,6 @@ export function clearStuckMarker(): void {
  */
 export async function manualReset(): Promise<void> {
   console.log('[SW-Reset] 🔧 Reset manuel forcé');
-  localStorage.removeItem(SW_RESET_KEY);
+  safeStorage.removeItem(SW_RESET_KEY);
   await forceServiceWorkerReset();
 }

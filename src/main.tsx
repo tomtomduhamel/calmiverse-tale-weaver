@@ -8,6 +8,7 @@ import CriticalErrorBoundary from './components/CriticalErrorBoundary.tsx'
 import { forceServiceWorkerReset, clearStuckMarker } from './utils/serviceWorkerReset'
 import { bootMonitor } from './utils/bootMonitor'
 import { logBootMode } from './utils/mobileBootOptimizer'
+import { safeStorage } from './utils/safeStorage'
 
 // Lazy load App for mobile preview performance
 const App = React.lazy(() => import('./App.tsx'))
@@ -83,6 +84,13 @@ ReactDOM.createRoot(rootElement).render(
 bootMonitor.log('React: Mounted successfully');
 console.log('✅ [Calmi] React application mounted successfully');
 
+// PHASE 2: Supprimer emergency loader une fois React monté
+const emergencyLoader = document.getElementById('emergency-loader');
+if (emergencyLoader) {
+  emergencyLoader.remove();
+  console.log('✅ [Emergency] Loader supprimé - React monté avec succès');
+}
+
 // ============================================================================
 // POST-MOUNT OPERATIONS: Cleanup asynchrone après le montage de React
 // ============================================================================
@@ -95,10 +103,10 @@ setTimeout(() => {
   // Afficher le rapport de boot complet
   bootMonitor.report();
   
-  // Skip SW reset in preview iframe
-  if (isPreviewIframe()) {
-    try { localStorage.setItem('calmi_safe_mode','1'); } catch {}
-    console.log('🧪 [Calmi] Preview iframe detected - skipping SW reset');
+  // Skip SW reset in preview iframe or preview mode
+  if (isPreviewIframe() || (window as any).__CALMI_PREVIEW_MODE) {
+    safeStorage.setItem('calmi_safe_mode', '1');
+    console.log('🧪 [Calmi] Preview mode detected - skipping SW reset');
     return;
   }
 

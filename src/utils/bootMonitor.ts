@@ -1,6 +1,7 @@
 /**
  * 🔍 BOOT MONITOR
  * Logger et diagnostiquer chaque étape du boot de l'application
+ * PHASE 3: Utilise mémoire uniquement en mode preview
  */
 
 interface BootStage {
@@ -11,6 +12,15 @@ interface BootStage {
 class BootMonitor {
   private stages: BootStage[] = [];
   private startTime: number = Date.now();
+  private isPreviewMode: boolean = false;
+
+  constructor() {
+    // Détecter mode preview
+    this.isPreviewMode = (window as any).__CALMI_PREVIEW_MODE || false;
+    if (this.isPreviewMode) {
+      console.log('[BootMonitor] Mode preview - stockage mémoire uniquement');
+    }
+  }
 
   log(stage: string) {
     const now = Date.now();
