@@ -27,9 +27,67 @@
     
     <link href="./src/index.css" rel="stylesheet">
     
+    <style>
+      /* Emergency Loader - Visible par défaut, supprimé par React */
+      #emergency-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 50%, #F1FAEE 100%);
+        z-index: 9999;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      
+      #emergency-content {
+        text-align: center;
+        color: #457B9D;
+      }
+      
+      .emergency-spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #A8DADC;
+        border-top-color: #457B9D;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      .emergency-error {
+        display: none;
+        color: #FF6B6B;
+        margin-top: 1rem;
+      }
+      
+      .emergency-btn {
+        margin-top: 1rem;
+        padding: 0.75rem 1.5rem;
+        background: #457B9D;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      
+      .emergency-btn:hover {
+        background: #3a6a8a;
+      }
+    </style>
+    
     <script>
       (function(){
-        // 🚀 MOBILE BOOT TURBO - Détection ultra-précoce
+        // 🚀 PHASE 3: DETECTION PREVIEW MODE ULTRA-PRECOCE
         var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
         var inIframe = false;
         try { 
@@ -38,55 +96,68 @@
           inIframe = true; 
         }
         
-        var fastBootMode = isMobile && inIframe;
+        var isPreviewMode = isMobile && inIframe;
+        window.__CALMI_PREVIEW_MODE = isPreviewMode;
+        window.__CALMI_FAST_BOOT = isPreviewMode;
         
-        if (fastBootMode) {
-          console.log('🚀 [Boot] MOBILE IFRAME MODE - Fast boot enabled');
-          window.__CALMI_FAST_BOOT = true;
-          
-          // Skip localStorage operations lourdes en mode mobile iframe
-          // pour éviter les blocages cross-origin
-          try {
-            sessionStorage.setItem('calmi_fast_boot', '1');
-          } catch(e) {
-            console.warn('[Boot] SessionStorage not available in iframe');
-          }
+        if (isPreviewMode) {
+          console.log('🚀 [Boot] PREVIEW MODE - Ultra-tolérant activé');
         } else {
-          console.log('🖥️ [Boot] DESKTOP MODE - Standard boot');
+          console.log('🖥️ [Boot] STANDARD MODE');
         }
         
-        // BUILD ID pour tracking de version (simplifié en mobile)
+        // SAFE STORAGE WRAPPER - Phase 1
+        function safeLocalStorageGet(key) {
+          if (isPreviewMode) return null; // Pas de localStorage en preview
+          try {
+            return localStorage.getItem(key);
+          } catch(e) {
+            return null;
+          }
+        }
+        
+        function safeLocalStorageSet(key, value) {
+          if (isPreviewMode) return false; // Pas de localStorage en preview
+          try {
+            localStorage.setItem(key, value);
+            return true;
+          } catch(e) {
+            return false;
+          }
+        }
+        
+        // BUILD ID pour tracking de version
         try {
           var BUILD_ID = 'BUILD_' + Date.now();
-          if (!fastBootMode) {
-            localStorage.setItem('calmi_build_id', BUILD_ID);
+          if (!isPreviewMode) {
+            safeLocalStorageSet('calmi_build_id', BUILD_ID);
           }
           console.log('[Boot] BUILD_ID:', BUILD_ID);
         } catch(e) {
-          console.warn('[Boot] localStorage not available');
+          console.warn('[Boot] BUILD_ID failed');
         }
         
-        // Early error logging simplifié
+        // Early error logging
         window.addEventListener('error', function(e){
           console.error('[Early Error]', e.message, e.filename, e.lineno);
-          if (!fastBootMode) {
+          if (!isPreviewMode) {
             try {
-              var logs = JSON.parse(localStorage.getItem('calmi_early_errors') || '[]');
+              var logs = JSON.parse(safeLocalStorageGet('calmi_early_errors') || '[]');
               logs.push({t:Date.now(),m:e.message,f:e.filename,l:e.lineno});
               if (logs.length > 10) logs = logs.slice(-10);
-              localStorage.setItem('calmi_early_errors',JSON.stringify(logs));
+              safeLocalStorageSet('calmi_early_errors',JSON.stringify(logs));
             } catch(err){}
           }
         });
         
         window.addEventListener('unhandledrejection', function(e){
           console.error('[Early Promise Rejection]', e.reason);
-          if (!fastBootMode) {
+          if (!isPreviewMode) {
             try {
-              var logs = JSON.parse(localStorage.getItem('calmi_early_errors') || '[]');
+              var logs = JSON.parse(safeLocalStorageGet('calmi_early_errors') || '[]');
               logs.push({t:Date.now(),m:'Unhandled Promise: '+(e.reason?.message||e.reason)});
               if (logs.length > 10) logs = logs.slice(-10);
-              localStorage.setItem('calmi_early_errors',JSON.stringify(logs));
+              safeLocalStorageSet('calmi_early_errors',JSON.stringify(logs));
             } catch(err){}
           }
         });
@@ -94,25 +165,57 @@
         // Marquer boot OK quand le DOM est complètement chargé
         window.addEventListener('load', function(){
           console.log('✅ [Boot] DOM loaded - boot OK');
-          if (!fastBootMode) {
-            try {
-              localStorage.setItem('calmi_boot_ok', 'true');
-            } catch(e) {}
+          if (!isPreviewMode) {
+            safeLocalStorageSet('calmi_boot_ok', 'true');
           }
         });
+        
+        // PHASE 2: TIMEOUT D'URGENCE - Détecter si React ne monte pas
+        setTimeout(function(){
+          var loader = document.getElementById('emergency-loader');
+          if (loader && loader.style.display !== 'none') {
+            console.error('❌ [Emergency] React n\'a pas monté dans les 8 secondes');
+            
+            // Afficher message d'erreur
+            var spinner = document.querySelector('.emergency-spinner');
+            var errorDiv = document.querySelector('.emergency-error');
+            
+            if (spinner) spinner.style.display = 'none';
+            if (errorDiv) {
+              errorDiv.style.display = 'block';
+              errorDiv.innerHTML = '<p><strong>Problème de chargement détecté</strong></p>' +
+                '<p style="font-size:0.9rem;margin-top:0.5rem;">L\'application ne répond pas.</p>' +
+                '<button class="emergency-btn" onclick="window.location.href=\'/?force-clean=1\'">Forcer le rechargement</button>';
+            }
+          }
+        }, 8000); // 8 secondes timeout
       })();
     </script>
   </head>
   <body>
+    <!-- PHASE 2: Emergency Loader - Visible par défaut -->
+    <div id="emergency-loader">
+      <div id="emergency-content">
+        <div class="emergency-spinner"></div>
+        <div style="font-size:1.2rem;font-weight:500;">Chargement de Calmi...</div>
+        <div style="font-size:0.9rem;margin-top:0.5rem;opacity:0.8;">✨ Préparation de vos histoires</div>
+        <div class="emergency-error"></div>
+      </div>
+    </div>
+    
     <div id="root"></div>
     <div id="calmi-boot-stamp" style="display:none;"></div>
     <script>
       // Injecter BUILD_ID dans le DOM pour recovery.js
       (function(){
         var stamp = document.getElementById('calmi-boot-stamp');
-        var buildId = localStorage.getItem('calmi_build_id') || 'UNKNOWN';
-        if (stamp) stamp.textContent = buildId;
-        console.log('[Boot] Stage: DOM Ready, BUILD_ID:', buildId);
+        try {
+          var buildId = localStorage.getItem('calmi_build_id') || 'UNKNOWN';
+          if (stamp) stamp.textContent = buildId;
+          console.log('[Boot] Stage: DOM Ready, BUILD_ID:', buildId);
+        } catch(e) {
+          if (stamp) stamp.textContent = 'UNKNOWN';
+        }
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
