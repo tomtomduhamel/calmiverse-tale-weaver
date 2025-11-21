@@ -37,6 +37,14 @@ export function shouldUseFastBoot(): boolean {
   return isMobileDevice() && isLovableIframe();
 }
 
+/**
+ * 🎭 MODE PREVIEW DETECTION
+ * Détecte si on est en mode preview Lovable mobile (sans auth nécessaire)
+ */
+export function isPreviewMode(): boolean {
+  return isMobileDevice() && isLovableIframe();
+}
+
 export function logBootMode() {
   const fastBoot = shouldUseFastBoot();
   const isMobile = isMobileDevice();
