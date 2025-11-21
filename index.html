@@ -152,19 +152,40 @@
         }
         
         // BUILD ID pour tracking de version
+        var bootLogs = []; // PHASE 6: Capturer tous les logs de boot
+        
+        function logBoot(msg) {
+          var now = Date.now();
+          var entry = { t: now, msg: msg };
+          bootLogs.push(entry);
+          console.log('[Boot] ' + msg);
+        }
+        
+        logBoot('Début initialisation HTML');
+        
         try {
           var BUILD_ID = 'BUILD_' + Date.now();
           if (!isPreviewMode) {
             safeLocalStorageSet('calmi_build_id', BUILD_ID);
           }
-          console.log('[Boot] BUILD_ID:', BUILD_ID);
+          logBoot('BUILD_ID: ' + BUILD_ID);
         } catch(e) {
-          console.warn('[Boot] BUILD_ID failed');
+          logBoot('BUILD_ID failed: ' + e.message);
         }
         
+        // Exposer les logs globalement pour l'UI d'urgence
+        window.__CALMI_BOOT_LOGS = bootLogs;
+        
+        logBoot('Configuration storage terminée');
+        
         // Early error logging
+        logBoot('Configuration error handlers');
+        
         window.addEventListener('error', function(e){
-          console.error('[Early Error]', e.message, e.filename, e.lineno);
+          var msg = '[Error] ' + e.message + ' at ' + e.filename + ':' + e.lineno;
+          console.error(msg);
+          logBoot(msg);
+          
           if (!isPreviewMode) {
             try {
               var logs = JSON.parse(safeLocalStorageGet('calmi_early_errors') || '[]');
@@ -176,7 +197,10 @@
         });
         
         window.addEventListener('unhandledrejection', function(e){
-          console.error('[Early Promise Rejection]', e.reason);
+          var msg = '[Promise Rejection] ' + (e.reason?.message || e.reason);
+          console.error(msg);
+          logBoot(msg);
+          
           if (!isPreviewMode) {
             try {
               var logs = JSON.parse(safeLocalStorageGet('calmi_early_errors') || '[]');
@@ -189,6 +213,7 @@
         
         // Marquer boot OK quand le DOM est complètement chargé
         window.addEventListener('load', function(){
+          logBoot('DOM complètement chargé');
           console.log('✅ [Boot] DOM loaded - boot OK');
           if (!isPreviewMode) {
             safeLocalStorageSet('calmi_boot_ok', 'true');
@@ -199,12 +224,14 @@
         var timeoutDuration = isPreviewMode ? 30000 : 10000;
         var bootStartTime = Date.now();
         
+        logBoot('Configuration timeout: ' + (timeoutDuration/1000) + 's');
         console.log('[Boot] Emergency timeout configuré:', timeoutDuration/1000 + 's', isPreviewMode ? '(Mobile Preview)' : '(Desktop)');
         
         setTimeout(function(){
           var loader = document.getElementById('emergency-loader');
           if (loader && loader.style.display !== 'none') {
             var elapsed = Math.round((Date.now() - bootStartTime) / 1000);
+            logBoot('TIMEOUT atteint après ' + elapsed + 's');
             console.error('❌ [Emergency] React n\'a pas monté dans les ' + elapsed + ' secondes');
             
             // Afficher message d'erreur avec diagnostic
@@ -219,9 +246,19 @@
               var modeInfo = isPreviewMode ? 'Preview Mobile' : 'Desktop';
               var hasDemo = window.location.search.indexOf('demo=1') === -1;
               
+              // PHASE 6: Afficher les derniers logs
+              var lastLogs = bootLogs.slice(-10);
+              var logsHtml = '<div style="margin-top:1rem;padding:0.75rem;background:rgba(0,0,0,0.1);border-radius:4px;font-size:0.75rem;text-align:left;max-height:150px;overflow-y:auto;">';
+              logsHtml += '<strong>Derniers logs:</strong><br>';
+              lastLogs.forEach(function(log){
+                logsHtml += '• ' + log.msg + '<br>';
+              });
+              logsHtml += '</div>';
+              
               errorDiv.innerHTML = '<p><strong>Problème de chargement détecté</strong></p>' +
                 '<p style="font-size:0.9rem;margin-top:0.5rem;">L\'application ne répond pas.</p>' +
                 '<div class="emergency-info">Mode: ' + modeInfo + ' | Temps écoulé: ' + elapsed + 's</div>' +
+                logsHtml +
                 '<button class="emergency-btn" onclick="window.location.href=\'/?force-clean=1\'">Forcer le rechargement</button>' +
                 (hasDemo ? '<button class="emergency-btn-secondary" onclick="window.location.href=\'/?demo=1\'">🎭 Continuer en mode démo</button>' : '');
             }
