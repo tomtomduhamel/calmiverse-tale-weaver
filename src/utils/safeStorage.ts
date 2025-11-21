@@ -137,8 +137,118 @@ class SafeStorage {
   }
 }
 
-// Export singleton
+// SafeSessionStorage - Même protection pour sessionStorage
+class SafeSessionStorage {
+  private memoryStorage: MemoryStorage = {};
+  private isSessionStorageAvailable: boolean = false;
+  private isPreviewMode: boolean = false;
+
+  constructor() {
+    this.isPreviewMode = this.detectPreviewMode();
+    this.isSessionStorageAvailable = this.testSessionStorage();
+    
+    if (!this.isSessionStorageAvailable) {
+      console.warn('[SafeSessionStorage] sessionStorage bloqué - utilisation mémoire uniquement');
+    }
+    
+    if (this.isPreviewMode) {
+      console.log('[SafeSessionStorage] Mode preview détecté - stockage mémoire');
+    }
+  }
+
+  private detectPreviewMode(): boolean {
+    try {
+      const inIframe = window.self !== window.top;
+      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      return inIframe && isMobile;
+    } catch {
+      return true;
+    }
+  }
+
+  private testSessionStorage(): boolean {
+    try {
+      const testKey = '__calmi_session_test__';
+      sessionStorage.setItem(testKey, 'test');
+      sessionStorage.removeItem(testKey);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  getItem(key: string): string | null {
+    if (this.isPreviewMode) {
+      return this.memoryStorage[key] || null;
+    }
+
+    if (this.isSessionStorageAvailable) {
+      try {
+        return sessionStorage.getItem(key);
+      } catch {
+        this.isSessionStorageAvailable = false;
+      }
+    }
+    
+    return this.memoryStorage[key] || null;
+  }
+
+  setItem(key: string, value: string): boolean {
+    if (this.isPreviewMode) {
+      this.memoryStorage[key] = value;
+      return true;
+    }
+
+    if (this.isSessionStorageAvailable) {
+      try {
+        sessionStorage.setItem(key, value);
+        return true;
+      } catch {
+        this.isSessionStorageAvailable = false;
+      }
+    }
+    
+    this.memoryStorage[key] = value;
+    return false;
+  }
+
+  removeItem(key: string): void {
+    if (this.isPreviewMode) {
+      delete this.memoryStorage[key];
+      return;
+    }
+
+    if (this.isSessionStorageAvailable) {
+      try {
+        sessionStorage.removeItem(key);
+      } catch {
+        this.isSessionStorageAvailable = false;
+      }
+    }
+    
+    delete this.memoryStorage[key];
+  }
+
+  clear(): void {
+    this.memoryStorage = {};
+    
+    if (this.isSessionStorageAvailable && !this.isPreviewMode) {
+      try {
+        sessionStorage.clear();
+      } catch {
+        this.isSessionStorageAvailable = false;
+      }
+    }
+  }
+
+  isUsingSessionStorage(): boolean {
+    return this.isSessionStorageAvailable && !this.isPreviewMode;
+  }
+}
+
+// Export singletons
 export const safeStorage = new SafeStorage();
+export const safeSessionStorage = new SafeSessionStorage();
 
 // Helper functions pour compatibilité
 export const safeGetItem = (key: string): string | null => safeStorage.getItem(key);
