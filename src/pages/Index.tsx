@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useIndexPage } from "@/hooks/useIndexPage";
-import { useRealtimeSequelStatus } from "@/hooks/stories/monitoring/useRealtimeSequelStatus";
+import { useRealtimeSequelStatus, useAutomaticStoryRecovery } from "@/hooks/stories/monitoring";
 import ContentView from "@/components/layout/ContentView";
 import LoadingErrorHandler from "@/components/layout/LoadingErrorHandler";
 
@@ -28,6 +28,14 @@ const Index = () => {
       // On pourrait ajouter une logique supplémentaire ici si nécessaire
     },
     enabled: !!user // Activer seulement si l'utilisateur est connecté
+  });
+
+  // ✅ PHASE 6: Récupération automatique des histoires bloquées
+  useAutomaticStoryRecovery(stories.stories || [], {
+    enabled: !!user,
+    checkIntervalMs: 60000, // Vérifier toutes les minutes
+    zombieThresholdMs: 180000, // 3 minutes = zombie
+    maxAutoRetries: 2 // Maximum 2 tentatives automatiques
   });
 
   // Debug: Afficher les informations sur les enfants au niveau Index
