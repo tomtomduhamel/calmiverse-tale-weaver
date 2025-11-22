@@ -9,21 +9,32 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Plus, BookOpen, Clock } from 'lucide-react';
 import { useStorySeries } from '@/hooks/stories/useStorySeries';
 import { SequelCreationProgress } from './SequelCreationProgress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { Story, SequelData, StoryDurationMinutes } from '@/types/story';
 import { STORY_DURATION_OPTIONS } from '@/types/story';
+
 interface CreateSequelButtonProps {
   story: Story;
   onSequelCreated?: (storyId: string) => void;
   disabled?: boolean;
   variant?: 'default' | 'ghost' | 'outline';
   size?: 'default' | 'sm' | 'lg';
+  seriesStories?: Story[]; // Pour détecter les suites en cours
+  maxSequelsReached?: boolean;
 }
 export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
   story,
   onSequelCreated,
   disabled = false,
   variant = 'outline',
-  size = 'sm'
+  size = 'sm',
+  seriesStories = [],
+  maxSequelsReached = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [seriesTitle, setSeriesTitle] = useState(story.series?.title || `Les aventures de ${story.childrenNames?.[0] || 'nos héros'}`);
@@ -39,6 +50,69 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
     createSequel,
     isCreating
   } = useStorySeries();
+
+  // Détecter les suites en cours
+  const pendingStories = seriesStories.filter(s => s.status === 'pending');
+  const hasPendingSequel = pendingStories.length > 0;
+
+  /**
+   * Déterminer l'état intelligent du bouton
+   */
+  const getButtonState = () => {
+    if (disabled) {
+      return {
+        disabled: true,
+        label: 'Créer une suite',
+        tooltip: 'Action temporairement indisponible',
+        buttonVariant: 'outline' as const
+      };
+    }
+
+    if (maxSequelsReached) {
+      return {
+        disabled: true,
+        label: 'Limite atteinte',
+        tooltip: 'Vous avez atteint la limite de suites pour cette série.',
+        buttonVariant: 'outline' as const
+      };
+    }
+    
+    if (hasPendingSequel) {
+      return {
+        disabled: true,
+        label: `Suite en cours (${pendingStories.length})`,
+        tooltip: `${pendingStories.length} suite${pendingStories.length > 1 ? 's' : ''} en cours de génération. Attendez qu'elle${pendingStories.length > 1 ? 's' : ''} soi${pendingStories.length > 1 ? 'ent' : 't'} terminée${pendingStories.length > 1 ? 's' : ''}.`,
+        buttonVariant: 'secondary' as const
+      };
+    }
+    
+    if (story.status === 'error') {
+      return {
+        disabled: true,
+        label: 'Histoire en erreur',
+        tooltip: 'Corrigez d\'abord l\'erreur de cette histoire.',
+        buttonVariant: 'destructive' as const
+      };
+    }
+    
+    if (story.status === 'pending') {
+      return {
+        disabled: true,
+        label: 'Histoire en cours',
+        tooltip: 'Attendez que cette histoire soit générée.',
+        buttonVariant: 'secondary' as const
+      };
+    }
+    
+    return {
+      disabled: false,
+      label: 'Créer une suite',
+      tooltip: 'Créer une nouvelle suite qui continue cette histoire.',
+      buttonVariant: variant
+    };
+  };
+
+  const buttonState = getButtonState();
 
   // Ne pas afficher le bouton si l'histoire n'est pas terminée ou en erreur
   const canCreateSequel = story.status === 'ready' || story.status === 'read';
@@ -71,12 +145,26 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
     setCreatedStoryId(null);
   };
   return <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant={variant} size={size} disabled={disabled} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Créer une suite
-        </Button>
-      </DialogTrigger>
+      <TooltipProvider>
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button 
+                variant={buttonState.buttonVariant} 
+                size={size} 
+                disabled={buttonState.disabled} 
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                {buttonState.label}
+              </Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs text-center" sideOffset={5}>
+            <p className="text-sm">{buttonState.tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       
       <DialogContent className="max-w-md">
         <DialogHeader>
