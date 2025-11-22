@@ -163,6 +163,15 @@
         
         logBoot('Début initialisation HTML');
         
+        // 🔍 PHASE 1: DIAGNOSTIC MASSIF - User Agent complet
+        logBoot('User Agent: ' + navigator.userAgent);
+        logBoot('Screen: ' + window.innerWidth + 'x' + window.innerHeight);
+        logBoot('Touch: ' + ('ontouchstart' in window));
+        logBoot('MaxTouchPoints: ' + (navigator.maxTouchPoints || 0));
+        logBoot('isMobile détecté: ' + isMobile);
+        logBoot('inIframe détecté: ' + inIframe);
+        logBoot('isPreviewMode: ' + isPreviewMode);
+        
         try {
           var BUILD_ID = 'BUILD_' + Date.now();
           if (!isPreviewMode) {
@@ -200,7 +209,14 @@
         // Early error logging
         logBoot('Configuration error handlers');
         
+        // 🔍 PHASE 1: Intercepter les erreurs de chargement de scripts
         window.addEventListener('error', function(e){
+          if (e.target && e.target.tagName === 'SCRIPT') {
+            var scriptError = '[SCRIPT FAILED] ' + (e.target.src || '(inline)');
+            console.error(scriptError);
+            logBoot(scriptError);
+          }
+          
           var msg = '[Error] ' + e.message + ' at ' + e.filename + ':' + e.lineno;
           console.error(msg);
           logBoot(msg);
@@ -249,6 +265,20 @@
         logBoot('Configuration timeout: ' + (timeoutDuration/1000) + 's');
         console.log('[Boot] Emergency timeout configuré:', timeoutDuration/1000 + 's', isPreviewMode ? '(Mobile Preview)' : '(Desktop)');
         
+        // 🔍 PHASE 1: Vérifier état de React/ReactDOM toutes les 500ms
+        var reactCheckInterval = setInterval(function() {
+          var reactStatus = typeof window.React !== 'undefined';
+          var reactDOMStatus = typeof window.ReactDOM !== 'undefined';
+          
+          if (reactStatus || reactDOMStatus) {
+            logBoot('✅ React détecté: React=' + reactStatus + ', ReactDOM=' + reactDOMStatus);
+            if (reactStatus && window.React.version) {
+              logBoot('React version: ' + window.React.version);
+            }
+            clearInterval(reactCheckInterval);
+          }
+        }, 500);
+        
         setTimeout(function(){
           var loader = document.getElementById('emergency-loader');
           if (loader && loader.style.display !== 'none') {
@@ -264,9 +294,12 @@
             if (errorDiv) {
               errorDiv.style.display = 'block';
               
-              // PHASE 5: Ajouter bouton Mode Démo
-              var modeInfo = isPreviewMode ? 'Preview Mobile' : 'Desktop';
+              // 🔍 PHASE 1: Corriger le mode affiché
+              var modeInfo = isMobile ? (inIframe ? 'Mobile Preview' : 'Mobile Production') : 'Desktop';
               var hasDemo = window.location.search.indexOf('demo=1') === -1;
+              
+              // 🔍 PHASE 1: Arrêter l'interval de check React
+              clearInterval(reactCheckInterval);
               
               // PHASE 6: Afficher les derniers logs
               var lastLogs = bootLogs.slice(-10);
@@ -288,12 +321,36 @@
                 logsHtml += '</div>';
               }
               
-              errorDiv.innerHTML = '<p><strong>Problème de chargement détecté</strong></p>' +
+              // 🔍 PHASE 1: Lister TOUS les scripts du DOM
+              var allScripts = document.querySelectorAll('script');
+              logsHtml += '<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(100,100,255,0.1);border-radius:4px;font-size:0.7rem;">';
+              logsHtml += '<strong>Scripts dans le DOM (' + allScripts.length + '):</strong><br>';
+              for (var i = 0; i < allScripts.length; i++) {
+                var scriptSrc = allScripts[i].src || '(inline)';
+                var scriptName = scriptSrc.split('/').pop() || '(inline-' + i + ')';
+                logsHtml += '• ' + scriptName + '<br>';
+              }
+              logsHtml += '</div>';
+              
+              // 🔍 PHASE 1: État de React au timeout
+              var reactStatusAtTimeout = typeof window.React !== 'undefined';
+              var reactDOMStatusAtTimeout = typeof window.ReactDOM !== 'undefined';
+              logsHtml += '<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(255,0,0,0.1);border-radius:4px;font-size:0.7rem;">';
+              logsHtml += '<strong>État au timeout:</strong><br>';
+              logsHtml += '• window.React: ' + reactStatusAtTimeout + '<br>';
+              logsHtml += '• window.ReactDOM: ' + reactDOMStatusAtTimeout + '<br>';
+              if (reactStatusAtTimeout && window.React.version) {
+                logsHtml += '• React.version: ' + window.React.version + '<br>';
+              }
+              logsHtml += '</div>';
+              
+              errorDiv.innerHTML = '<p><strong>🔍 Diagnostic de chargement</strong></p>' +
                 '<p style="font-size:0.9rem;margin-top:0.5rem;">L\'application ne répond pas.</p>' +
                 '<div class="emergency-info">Mode: ' + modeInfo + ' | Temps écoulé: ' + elapsed + 's</div>' +
                 logsHtml +
                 '<button class="emergency-btn" onclick="window.location.href=\'/?force-clean=1\'">Forcer le rechargement</button>' +
-                (hasDemo ? '<button class="emergency-btn-secondary" onclick="window.location.href=\'/?demo=1\'">🎭 Continuer en mode démo</button>' : '');
+                '<button class="emergency-btn-secondary" onclick="window.location.href=\'/?safe-mode=1\'">🛡️ Mode sans thème</button>' +
+                (hasDemo ? '<button class="emergency-btn-secondary" onclick="window.location.href=\'/?demo=1\'">🎭 Mode démo</button>' : '');
             }
           }
         }, timeoutDuration);
