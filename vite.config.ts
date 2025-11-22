@@ -88,69 +88,14 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // 🚀 PHASE 2: CHUNKING SIMPLIFIÉ - Bundle React Monolithique
-          if (id.includes('node_modules')) {
-            // ✅ CRITICAL: UN SEUL BUNDLE REACT pour éliminer toutes les race conditions
-            if (
-              id.includes('react') ||        // react, react-dom, react-router, react-hook-form, etc.
-              id.includes('next-themes') ||  // Utilise React.createContext et useLayoutEffect
-              id.includes('scheduler') ||    // Dépendance interne de React
-              id.includes('@radix-ui')       // Tous les composants Radix utilisent React
-            ) {
-              return 'vendor-react-bundle';  // UN SEUL GROS CHUNK STABLE
-            }
-            
-            // Backend & Data - séparé mais stable
-            if (id.includes('@supabase') || id.includes('@tanstack/react-query')) {
-              return 'vendor-backend';
-            }
-            
-            // Tout le reste - misc
-            return 'vendor-misc';
-          }
-          
-          // App chunks - séparation logique par feature
-          if (id.includes('src/')) {
-            // Services lourds par feature
-            if (id.includes('hooks/stories') || id.includes('services/stories')) {
-              return 'app-stories';
-            }
-            if (id.includes('hooks/subscription') || id.includes('services/subscription')) {
-              return 'app-subscription';
-            }
-            if (id.includes('hooks/notifications') || id.includes('services/notifications')) {
-              return 'app-notifications';
-            }
-            
-            // Composants lourds par section
-            if (id.includes('components/story/') || id.includes('components/reader/')) {
-              return 'app-story-ui';
-            }
-            if (id.includes('components/library/')) {
-              return 'app-library-ui';
-            }
-            if (id.includes('components/subscription/')) {
-              return 'app-subscription-ui';
-            }
-            
-            // Composants UI réutilisables - chunk partagé
-            if (id.includes('components/ui/')) {
-              return 'app-ui-shared';
-            }
-          }
-        },
-        // Optimisation des noms de chunks pour le cache
-        chunkFileNames: (chunkInfo) => {
-          const name = chunkInfo.name;
-          // Chunks vendors avec hash court pour stabilité du cache
-          if (name.startsWith('vendor-')) {
-            return 'assets/[name].[hash:8].js';
-          }
-          // Chunks app avec hash complet
-          return 'assets/[name].[hash].js';
-        },
-        // Séparation des assets
+        // 🚀 PHASE 5: BUILD MONOLITHIQUE COMPLET (zéro code splitting)
+        // Désactive complètement le chunking pour garantir un ordre de chargement fiable sur mobile
+        manualChunks: undefined, // ❌ PAS de chunking du tout - un seul bundle
+        
+        // Optimisation des noms de fichiers pour le cache
+        chunkFileNames: 'assets/[name].[hash].js',
+        
+        // Séparation des assets uniquement
         assetFileNames: (assetInfo) => {
           const name = assetInfo.name || '';
           if (name.endsWith('.css')) {
@@ -168,7 +113,7 @@ export default defineConfig(({ mode }) => ({
       // Optimisation des imports externes
       external: [],
     },
-    chunkSizeWarningLimit: 1000, // Limite plus stricte pour forcer la modularité
+    chunkSizeWarningLimit: 5000, // Limite plus élevée pour le bundle monolithique
     target: 'es2020',
     minify: 'terser',
     terserOptions: {
