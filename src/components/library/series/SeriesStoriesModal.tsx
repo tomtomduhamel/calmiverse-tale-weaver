@@ -13,6 +13,7 @@ import { fr } from 'date-fns/locale';
 import { getStoryImageUrl } from '@/utils/supabaseImageUtils';
 import type { SeriesGroup, Story } from '@/types/story';
 import { SeriesStoryCard } from './SeriesStoryCard';
+import { SeriesTimeline } from './SeriesTimeline';
 
 interface SeriesStoriesModalProps {
   isOpen: boolean;
@@ -279,22 +280,17 @@ export const SeriesStoriesModal: React.FC<SeriesStoriesModalProps> = ({
               </Button>
             </div>
             
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {stories.map((story, index) => (
-                <SeriesStoryCard 
-                  key={story.id} 
-                  story={story} 
-                  onClick={() => handleStorySelect(story)} 
-                  onToggleFavorite={onToggleFavorite} 
-                  onDelete={onDeleteStory} 
-                  onRetry={onRetryStory} 
-                  isUpdatingFavorite={isUpdatingFavorite} 
-                  isDeleting={isDeletingId === story.id} 
-                  isRetrying={isRetrying && pendingStoryId === story.id} 
-                  isNextRecommended={index === readStories && story.status !== 'read'}
-                />
-              ))}
-            </div>
+            {/* Timeline visuelle pour la progression dans la série */}
+            <SeriesTimeline
+              stories={stories}
+              onSelectStory={handleStorySelect}
+              onToggleFavorite={onToggleFavorite}
+              onDeleteStory={onDeleteStory}
+              onRetryStory={onRetryStory}
+              isUpdatingFavorite={isUpdatingFavorite}
+              isDeletingId={isDeletingId}
+              isRetrying={isRetrying}
+            />
           </div>
         </ScrollArea>
       </DialogContent>
