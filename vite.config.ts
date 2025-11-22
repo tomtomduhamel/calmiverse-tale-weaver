@@ -17,17 +17,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
-    // Plugin pour preload des chunks critiques (PHASE 2)
-    {
-      name: 'preload-critical-chunks',
-      transformIndexHtml(html: string) {
-        // Injecter modulepreload pour vendor-react-core
-        return html.replace(
-          '</head>',
-          '<link rel="modulepreload" href="/assets/vendor-react-core.js" as="script">\n    </head>'
-        );
-      }
-    },
     // PWA temporairement désactivé pour stabiliser l'application
     // Sera réactivé une fois la stabilité confirmée
     ...(false ? [VitePWA({
@@ -100,59 +89,24 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Vendors React - chunk critique chargé en priorité
+          // 🚀 PHASE 2: CHUNKING SIMPLIFIÉ - Bundle React Monolithique
           if (id.includes('node_modules')) {
-            // CRITICAL: Tout ce qui dépend de React DOIT être avec React pour éviter race conditions
+            // ✅ CRITICAL: UN SEUL BUNDLE REACT pour éliminer toutes les race conditions
             if (
-              id.includes('react/') || 
-              id.includes('react-dom/') ||
-              id.includes('next-themes') ||  // Utilise React.createContext
-              id.includes('scheduler')       // Dépendance interne de React
+              id.includes('react') ||        // react, react-dom, react-router, react-hook-form, etc.
+              id.includes('next-themes') ||  // Utilise React.createContext et useLayoutEffect
+              id.includes('scheduler') ||    // Dépendance interne de React
+              id.includes('@radix-ui')       // Tous les composants Radix utilisent React
             ) {
-              return 'vendor-react-core';
-            }
-            if (id.includes('react-router')) {
-              return 'vendor-react-router';
+              return 'vendor-react-bundle';  // UN SEUL GROS CHUNK STABLE
             }
             
-            // UI libraries - séparées pour un meilleur cache
-            if (id.includes('@radix-ui/react-dialog') || id.includes('@radix-ui/react-dropdown')) {
-              return 'vendor-ui-core';
-            }
-            if (id.includes('@radix-ui')) {
-              return 'vendor-ui-extended';
+            // Backend & Data - séparé mais stable
+            if (id.includes('@supabase') || id.includes('@tanstack/react-query')) {
+              return 'vendor-backend';
             }
             
-            // Backend & Data
-            if (id.includes('@supabase')) {
-              return 'vendor-supabase';
-            }
-            if (id.includes('@tanstack/react-query')) {
-              return 'vendor-query';
-            }
-            
-            // AI & Media - lazy loaded
-            if (id.includes('openai') || id.includes('@11labs')) {
-              return 'vendor-ai';
-            }
-            
-            // Utils fréquemment utilisés - petit chunk
-            if (id.includes('date-fns') || id.includes('clsx') || id.includes('tailwind-merge')) {
-              return 'vendor-utils-core';
-            }
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            
-            // Features lourdes - lazy loaded
-            if (id.includes('jszip') || id.includes('epubjs')) {
-              return 'feature-epub';
-            }
-            if (id.includes('react-markdown')) {
-              return 'feature-markdown';
-            }
-            
-            // Autres vendors moins critiques
+            // Tout le reste - misc
             return 'vendor-misc';
           }
           
