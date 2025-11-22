@@ -7,6 +7,7 @@ import StoryCardTags from "./card/StoryCardTags";
 import { FavoriteButton } from "../story/FavoriteButton";
 import { MarkAsReadButton } from "../story/reader/MarkAsReadButton";
 import { SeriesIndicator } from "../story/series/SeriesIndicator";
+import { SeriesStoryCardStatus } from "./series/SeriesStoryCardStatus";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
@@ -26,6 +27,7 @@ interface StoryCardProps {
   isPending?: boolean;
   isUpdatingFavorite?: boolean;
   isUpdatingReadStatus?: boolean;
+  isInSeries?: boolean; // NOUVEAU: Indique si la carte fait partie d'une vue de série
 }
 
 const StoryCard: React.FC<StoryCardProps> = ({
@@ -41,6 +43,7 @@ const StoryCard: React.FC<StoryCardProps> = ({
   isPending = false,
   isUpdatingFavorite = false,
   isUpdatingReadStatus = false,
+  isInSeries = false,
 }) => {
   // Toutes les histoires sont maintenant cliquables
   const isClickable = true;
@@ -55,16 +58,22 @@ const StoryCard: React.FC<StoryCardProps> = ({
 
   const isRecent = isRecentStory();
   
+  // Styles différents pour les cartes en série vs cartes standalone
   const cardStyles = [
     "transition-all duration-300 hover:shadow-md relative",
-    isClickable ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01] bg-green-50/30 border-green-300" : "",
-    // Masquer le style d'erreur car les erreurs peuvent être obsolètes
-    // story.status === "error" ? "border-red-200 bg-red-50" : "",
-    story.status === "pending" || isPending ? "border-amber-200 bg-amber-50" : "",
-    story.status === "read" ? "border-green-200 bg-green-50" : "",
-    story.isFavorite && story.status !== "read" ? "border-amber-200" : "",
-    story.isFavorite && story.status === "read" ? "border-green-200" : "",
-    isRecent ? "border-blue-300 bg-blue-50/50" : "", // Style pour les histoires récentes
+    isInSeries 
+      ? "bg-background border-border hover:border-primary/40" // Design épuré pour série
+      : isClickable 
+        ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01] bg-card border-border" 
+        : "",
+    // Style subtil pour pending (évite transparence bizarre)
+    story.status === "pending" || isPending 
+      ? "bg-gradient-to-br from-amber-50/30 to-background dark:from-amber-500/5 dark:to-background border-amber-300/50 dark:border-amber-500/30" 
+      : "",
+    story.status === "read" ? "border-green-200 bg-green-50/30 dark:bg-green-500/5" : "",
+    story.isFavorite && story.status !== "read" ? "border-amber-200 dark:border-amber-500/30" : "",
+    story.isFavorite && story.status === "read" ? "border-green-200 dark:border-green-500/30" : "",
+    isRecent && !isInSeries ? "border-blue-300 bg-blue-50/30 dark:bg-blue-500/5" : "",
   ].join(" ");
 
   const getTimeAgo = (date: Date) => {
@@ -141,6 +150,16 @@ const StoryCard: React.FC<StoryCardProps> = ({
           </div>
         )}
         
+        {/* Statut visuel pour les cartes en série */}
+        {isInSeries && (
+          <div className="mb-3">
+            <SeriesStoryCardStatus 
+              status={story.status}
+              tomeNumber={story.tome_number}
+            />
+          </div>
+        )}
+        
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2 flex-1">
             <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
@@ -192,16 +211,28 @@ const StoryCard: React.FC<StoryCardProps> = ({
         )}
       </CardContent>
       <CardFooter className="flex justify-between pt-2 pb-4">
-        <span className="text-xs text-gray-500">
-          {story.status === "pending" || isPending ? (
-            <span className="flex items-center">
-              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              En génération...
-            </span>
+        <span className="text-xs text-muted-foreground">
+          {/* Affichage différent pour les cartes en série */}
+          {isInSeries ? (
+            story.status === "pending" || isPending ? (
+              <span className="flex items-center text-amber-600 dark:text-amber-400">
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                Génération en cours
+              </span>
+            ) : (
+              <span>{getTimeAgo(story.createdAt)}</span>
+            )
           ) : (
-            <span className={isRecent ? "text-blue-600 font-medium" : ""}>
-              {getTimeAgo(story.createdAt)}
-            </span>
+            story.status === "pending" || isPending ? (
+              <span className="flex items-center">
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                En génération...
+              </span>
+            ) : (
+              <span className={isRecent ? "text-blue-600 font-medium dark:text-blue-400" : ""}>
+                {getTimeAgo(story.createdAt)}
+              </span>
+            )
           )}
         </span>
         <StoryCardActions 

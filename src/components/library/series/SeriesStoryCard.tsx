@@ -2,14 +2,12 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SeriesStoryCardStatus } from './SeriesStoryCardStatus';
 import { 
   Star, 
   Trash2, 
   RotateCcw, 
   BookOpen,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
   Loader2
 } from 'lucide-react';
 import type { Story } from '@/types/story';
@@ -43,32 +41,6 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
   className = ""
 }) => {
   const timeAgo = formatDistanceToNow(story.createdAt, { addSuffix: true, locale: fr });
-  
-  const getStatusIcon = () => {
-    switch (story.status) {
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      case 'error':
-        return <AlertTriangle className="w-4 h-4 text-red-500" />;
-      default:
-        return <BookOpen className="w-4 h-4 text-muted-foreground" />;
-    }
-  };
-
-  const getStatusBadge = () => {
-    switch (story.status) {
-      case 'completed':
-        return <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">Prête</Badge>;
-      case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-200">En cours</Badge>;
-      case 'error':
-        return <Badge variant="destructive">Erreur</Badge>;
-      default:
-        return null;
-    }
-  };
 
   return (
     <Card 
@@ -99,15 +71,14 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
           )}
           
           <div className="flex-1 min-w-0 space-y-2">
-            {/* Header avec tome et actions */}
+            {/* Header avec tome */}
             <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex items-center gap-2">
                 {story.tome_number && (
                   <Badge variant="outline" className="text-xs whitespace-nowrap">
                     Tome {story.tome_number}
                   </Badge>
                 )}
-                {getStatusIcon()}
               </div>
               
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -182,9 +153,12 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
               )}
             </div>
             
-            {/* Métadonnées */}
+            {/* Statut visuel avec le nouveau composant */}
             <div className="flex items-center justify-between gap-2">
-              {getStatusBadge()}
+              <SeriesStoryCardStatus 
+                status={story.status}
+                tomeNumber={story.tome_number}
+              />
               <span className="text-xs text-muted-foreground">
                 {timeAgo}
               </span>
