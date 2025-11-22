@@ -91,7 +91,13 @@ export default defineConfig(({ mode }) => ({
         manualChunks: (id) => {
           // Vendors React - chunk critique chargé en priorité
           if (id.includes('node_modules')) {
-            if (id.includes('react/') || id.includes('react-dom/')) {
+            // CRITICAL: Tout ce qui dépend de React DOIT être avec React pour éviter race conditions
+            if (
+              id.includes('react/') || 
+              id.includes('react-dom/') ||
+              id.includes('next-themes') ||  // Utilise React.createContext
+              id.includes('scheduler')       // Dépendance interne de React
+            ) {
               return 'vendor-react-core';
             }
             if (id.includes('react-router')) {
