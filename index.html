@@ -178,6 +178,25 @@
         
         logBoot('Configuration storage terminée');
         
+        // PHASE 3: Tracker les scripts qui se chargent
+        var scriptsLoading = [];
+        try {
+          var observer = new PerformanceObserver(function(list) {
+            list.getEntries().forEach(function(entry) {
+              if (entry.initiatorType === 'script') {
+                scriptsLoading.push({
+                  name: entry.name.split('/').pop(),
+                  duration: Math.round(entry.duration)
+                });
+              }
+            });
+          });
+          observer.observe({ entryTypes: ['resource'] });
+          logBoot('PerformanceObserver activé');
+        } catch(e) {
+          logBoot('PerformanceObserver non disponible: ' + e.message);
+        }
+        
         // Early error logging
         logBoot('Configuration error handlers');
         
@@ -220,8 +239,11 @@
           }
         });
         
-        // PHASE 4: TIMEOUT D'URGENCE ADAPTATIF - 30s mobile preview, 10s desktop
-        var timeoutDuration = isPreviewMode ? 30000 : 10000;
+        // PHASE 4: TIMEOUT D'URGENCE ADAPTATIF
+        // - 30s pour mobile réel (connexions instables)
+        // - 20s pour mobile preview (Lovable iframe)
+        // - 10s pour desktop (connexions rapides)
+        var timeoutDuration = isPreviewMode ? 20000 : (isMobile ? 30000 : 10000);
         var bootStartTime = Date.now();
         
         logBoot('Configuration timeout: ' + (timeoutDuration/1000) + 's');
@@ -254,6 +276,17 @@
                 logsHtml += '• ' + log.msg + '<br>';
               });
               logsHtml += '</div>';
+              
+              // PHASE 3: Afficher les scripts chargés
+              if (scriptsLoading.length > 0) {
+                logsHtml += '<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(255,165,0,0.1);border-radius:4px;font-size:0.7rem;">';
+                logsHtml += '<strong>Scripts chargés (' + scriptsLoading.length + '):</strong><br>';
+                var lastScripts = scriptsLoading.slice(-5);
+                lastScripts.forEach(function(s){
+                  logsHtml += '• ' + s.name + ' (' + s.duration + 'ms)<br>';
+                });
+                logsHtml += '</div>';
+              }
               
               errorDiv.innerHTML = '<p><strong>Problème de chargement détecté</strong></p>' +
                 '<p style="font-size:0.9rem;margin-top:0.5rem;">L\'application ne répond pas.</p>' +
