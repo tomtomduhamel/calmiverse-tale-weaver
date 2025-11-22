@@ -28,7 +28,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [seriesTitle, setSeriesTitle] = useState(story.series?.title || `Les aventures de ${story.childrenNames?.[0] || 'nos héros'}`);
   const [duration, setDuration] = useState<StoryDurationMinutes>(10);
-  const [isCreatingSequel, setIsCreatingSequel] = useState(false);
+  const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
   const [sequelInstructions, setSequelInstructions] = useState({
     maintainCharacterConsistency: true,
     referenceToEvents: true,
@@ -44,8 +44,6 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
   const canCreateSequel = story.status === 'ready' || story.status === 'read';
   if (!canCreateSequel) return null;
   const handleCreateSequel = async () => {
-    setIsCreatingSequel(true);
-    
     const sequelData: SequelData = {
       previousStoryId: story.id,
       childrenIds: story.childrenIds,
@@ -58,16 +56,19 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
     
     const newStoryId = await createSequel(sequelData);
     if (newStoryId) {
-      // Ne pas fermer immédiatement - laisser SequelCreationProgress gérer
+      setCreatedStoryId(newStoryId);
       onSequelCreated?.(newStoryId);
-    } else {
-      setIsCreatingSequel(false);
     }
   };
 
   const handleProgressComplete = () => {
-    setIsCreatingSequel(false);
+    setCreatedStoryId(null);
     setIsOpen(false);
+  };
+
+  const handleProgressError = (error: string) => {
+    console.error('[CreateSequelButton] Erreur génération:', error);
+    setCreatedStoryId(null);
   };
   return <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -86,10 +87,11 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
         </DialogHeader>
         
         <div className="space-y-4">
-          {isCreatingSequel ? (
+          {createdStoryId ? (
             <SequelCreationProgress 
-              isCreating={isCreatingSequel} 
+              storyId={createdStoryId} 
               onComplete={handleProgressComplete}
+              onError={handleProgressError}
             />
           ) : (
             <>
