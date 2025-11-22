@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 import './styles/scrollbar.css'
 import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext.tsx'
-import { ThemeProvider } from 'next-themes'
+import { SafeThemeProvider } from './components/SafeThemeProvider.tsx'
 import CriticalErrorBoundary from './components/CriticalErrorBoundary.tsx'
 import { forceServiceWorkerReset, clearStuckMarker } from './utils/serviceWorkerReset'
 import { bootMonitor } from './utils/bootMonitor'
@@ -11,6 +11,15 @@ import { logBootMode } from './utils/mobileBootOptimizer'
 import { safeStorage } from './utils/safeStorage'
 import App from './App.tsx'
 
+
+// 🔧 PHASE 3: Diagnostic des chunks chargés
+console.log('🔧 [Boot] Chunks loaded:', {
+  react: typeof React !== 'undefined',
+  reactDOM: typeof ReactDOM !== 'undefined',
+  safeThemeProvider: typeof SafeThemeProvider !== 'undefined',
+  timestamp: Date.now(),
+  userAgent: navigator.userAgent.slice(0, 80)
+});
 
 // Helper to detect Lovable preview iframe
 const isPreviewIframe = (): boolean => {
@@ -54,16 +63,11 @@ const rootElement = document.getElementById('root')!;
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <CriticalErrorBoundary>
-      <ThemeProvider 
-        attribute="class" 
-        defaultTheme="system" 
-        enableSystem={true}
-        storageKey="calmi-theme"
-      >
+      <SafeThemeProvider>
         <SupabaseAuthProvider>
           <App />
         </SupabaseAuthProvider>
-      </ThemeProvider>
+      </SafeThemeProvider>
     </CriticalErrorBoundary>
   </React.StrictMode>,
 );

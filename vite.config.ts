@@ -17,6 +17,17 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
+    // Plugin pour preload des chunks critiques (PHASE 2)
+    {
+      name: 'preload-critical-chunks',
+      transformIndexHtml(html: string) {
+        // Injecter modulepreload pour vendor-react-core
+        return html.replace(
+          '</head>',
+          '<link rel="modulepreload" href="/assets/vendor-react-core.js" as="script">\n    </head>'
+        );
+      }
+    },
     // PWA temporairement désactivé pour stabiliser l'application
     // Sera réactivé une fois la stabilité confirmée
     ...(false ? [VitePWA({
@@ -208,10 +219,9 @@ export default defineConfig(({ mode }) => ({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: false,
+        drop_console: false, // Garder console pour debug mobile
         drop_debugger: true,
-        pure_funcs: ['console.log'], // Enlever console.log en prod
-        passes: 2 // Double passe pour meilleure compression
+        passes: 1 // Une seule passe pour build plus stable
       },
       format: {
         comments: false // Enlever tous les commentaires
