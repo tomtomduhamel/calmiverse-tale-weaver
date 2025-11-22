@@ -35,9 +35,16 @@ bootMonitor.log('main.tsx: Starting');
 logBootMode();
 console.log('🚀 [Calmi] Initializing main application...');
 
-// PHASE 5: Détecter le mode démo
+// PHASE 4: Détecter le mode safe et le mode démo
 const urlParams = new URLSearchParams(window.location.search);
+const isSafeMode = urlParams.get('safe-mode') === '1';
 const isDemoMode = urlParams.get('demo') === '1';
+
+if (isSafeMode) {
+  (window as any).__CALMI_SAFE_MODE = true;
+  console.log('🛡️ [Calmi] MODE SAFE ACTIVÉ - Pas de ThemeProvider');
+}
+
 if (isDemoMode) {
   (window as any).__CALMI_DEMO_MODE = true;
   console.log('🎭 [Calmi] MODE DÉMO ACTIVÉ - Données d\'exemple uniquement');
@@ -60,17 +67,33 @@ document.body.classList.add('react-mounted');
 
 // Mount React app immediately (synchronous App.tsx for instant boot)
 const rootElement = document.getElementById('root')!;
-ReactDOM.createRoot(rootElement).render(
-  <React.StrictMode>
-    <CriticalErrorBoundary>
-      <SafeThemeProvider>
+
+// 🛡️ PHASE 4: Rendu conditionnel selon le mode safe
+if (isSafeMode) {
+  console.log('🛡️ [Calmi] Rendu sans ThemeProvider (mode safe)');
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <CriticalErrorBoundary>
         <SupabaseAuthProvider>
           <App />
         </SupabaseAuthProvider>
-      </SafeThemeProvider>
-    </CriticalErrorBoundary>
-  </React.StrictMode>,
-);
+      </CriticalErrorBoundary>
+    </React.StrictMode>,
+  );
+} else {
+  console.log('🎨 [Calmi] Rendu normal avec SafeThemeProvider');
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <CriticalErrorBoundary>
+        <SafeThemeProvider>
+          <SupabaseAuthProvider>
+            <App />
+          </SupabaseAuthProvider>
+        </SafeThemeProvider>
+      </CriticalErrorBoundary>
+    </React.StrictMode>,
+  );
+}
 
 // React est monté avec succès
 bootMonitor.log('React: Mounted successfully');
