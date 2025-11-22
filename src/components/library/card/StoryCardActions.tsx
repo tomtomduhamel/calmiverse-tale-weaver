@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Trash2, RefreshCw } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Story } from "@/types/story";
 import { Loader2 } from "lucide-react";
@@ -14,6 +14,7 @@ interface StoryCardActionsProps {
   isRetrying?: boolean;
   isDeleting?: boolean;
   onSequelCreated?: (storyId: string) => void;
+  seriesStories?: Story[];
 }
 
 const StoryCardActions: React.FC<StoryCardActionsProps> = ({ 
@@ -22,7 +23,8 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
   onRetry,
   isRetrying = false,
   isDeleting = false,
-  onSequelCreated
+  onSequelCreated,
+  seriesStories = []
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -41,29 +43,24 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
     setShowDeleteDialog(false);
   }, [onDelete, story.id]);
 
-  const handleRetry = React.useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onRetry) onRetry();
-  }, [onRetry]);
-
   const handleCloseDialog = React.useCallback(() => {
     if (!isDeleting) {
       setShowDeleteDialog(false);
     }
   }, [isDeleting]);
 
-  // Déterminer si on peut créer une suite (histoire terminée et pas déjà une suite en cours)
+  // Déterminer si on peut créer une suite
   const canCreateSequel = (story.status === 'ready' || story.status === 'read' || story.status === 'completed') && !story.next_story_id;
 
   return (
     <>
       <div className="flex flex-col gap-1">
-        {/* Bouton créer une suite - affiché au-dessus des autres actions si disponible */}
+        {/* Bouton créer une suite intelligent */}
         {canCreateSequel && onSequelCreated && (
           <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
             <CreateSequelButton 
               story={story}
+              seriesStories={seriesStories}
               onSequelCreated={onSequelCreated}
               disabled={isDeleting || isRetrying}
               variant="ghost"
