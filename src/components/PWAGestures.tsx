@@ -25,8 +25,10 @@ export const PWAGestures: React.FC<PWAGesturesProps> = ({
     if (!container || !onPullToRefresh) return;
 
     let refreshTriggered = false;
-    const PULL_THRESHOLD = 80; // Increased from 60px
-    const MIN_PULL_DURATION = 200; // Minimum pull duration in ms
+    let listenersActive = false;
+    const PULL_THRESHOLD = 80;
+    const MIN_PULL_DURATION = 200;
+    const SCROLL_TOP_THRESHOLD = 10; // Seuil pour activer pull-to-refresh
 
     const handleTouchStart = (e: TouchEvent) => {
       if (container.scrollTop === 0) {
@@ -103,14 +105,45 @@ export const PWAGestures: React.FC<PWAGesturesProps> = ({
       refreshTriggered = false;
     };
 
-    container.addEventListener('touchstart', handleTouchStart, { passive: false });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd);
+    // ⚡ NOUVEAU : Gestion dynamique des listeners
+    const updateListeners = () => {
+      const isNearTop = container.scrollTop <= SCROLL_TOP_THRESHOLD;
+      
+      if (isNearTop && !listenersActive) {
+        // Activer les listeners seulement en haut
+        container.addEventListener('touchstart', handleTouchStart, { passive: false });
+        container.addEventListener('touchmove', handleTouchMove, { passive: false });
+        container.addEventListener('touchend', handleTouchEnd);
+        listenersActive = true;
+        console.log('[PWAGestures] Listeners activés');
+      } else if (!isNearTop && listenersActive) {
+        // Désactiver les listeners ailleurs
+        container.removeEventListener('touchstart', handleTouchStart);
+        container.removeEventListener('touchmove', handleTouchMove);
+        container.removeEventListener('touchend', handleTouchEnd);
+        listenersActive = false;
+        console.log('[PWAGestures] Listeners désactivés');
+      }
+    };
+
+    // Initialiser les listeners si on est en haut
+    updateListeners();
+
+    // Écouter les changements de scroll pour activer/désactiver
+    const handleScroll = () => {
+      updateListeners();
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
+      // Cleanup
+      container.removeEventListener('scroll', handleScroll);
+      if (listenersActive) {
+        container.removeEventListener('touchstart', handleTouchStart);
+        container.removeEventListener('touchmove', handleTouchMove);
+        container.removeEventListener('touchend', handleTouchEnd);
+      }
       
       // Cleanup debounce timeout
       if (debounceTimeoutRef.current) {
