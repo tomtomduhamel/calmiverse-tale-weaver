@@ -127,9 +127,9 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
   const timeAgo = formatDistanceToNow(story.createdAt, { addSuffix: true, locale: fr });
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-hidden rounded-lg">
       {/* Bouton de suppression en arrière-plan */}
-      <div className="absolute right-0 top-0 h-full w-20 bg-red-500 flex items-center justify-center">
+      <div className="absolute right-0 top-0 h-full w-20 bg-red-500 rounded-r-lg flex items-center justify-center">
         <button
           onClick={handleDelete}
           disabled={isDeleting}
