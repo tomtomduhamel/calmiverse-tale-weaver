@@ -30,7 +30,9 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
   const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startX = useRef(0);
+  const startY = useRef(0);
   const currentX = useRef(0);
+  const currentY = useRef(0);
   const cardRef = useRef<HTMLDivElement>(null);
   const isRecentStory = (): boolean => {
     const now = new Date();
@@ -80,21 +82,45 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
 
   // Gestion du swipe pour la suppression
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (isDragging || isDeleting) return;
+    if (isDeleting) return;
     
     startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
     currentX.current = startX.current;
-    setIsDragging(true);
-  }, [isDragging, isDeleting]);
+    currentY.current = startY.current;
+    // Ne pas activer isDragging immédiatement, attendre de détecter la direction
+  }, [isDeleting]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging || isDeleting) return;
+    if (isDeleting) return;
     
     currentX.current = e.touches[0].clientX;
-    const deltaX = currentX.current - startX.current;
+    currentY.current = e.touches[0].clientY;
     
-    // Permettre seulement le swipe vers la gauche
-    if (deltaX < 0) {
+    const deltaX = currentX.current - startX.current;
+    const deltaY = currentY.current - startY.current;
+    
+    // Détecter la direction dominante du mouvement
+    const isVerticalMovement = Math.abs(deltaY) > Math.abs(deltaX);
+    
+    // Si le mouvement est vertical, laisser le scroll natif fonctionner
+    if (isVerticalMovement) {
+      // Reset le swipe si on détecte un scroll vertical
+      if (isDragging) {
+        setIsDragging(false);
+        setTranslateX(0);
+      }
+      return; // Ne rien faire, laisser le scroll natif
+    }
+    
+    // Seulement activer le swipe si mouvement horizontal détecté avec un seuil minimal
+    if (!isDragging && Math.abs(deltaX) > 10) {
+      setIsDragging(true);
+    }
+    
+    // Si c'est un swipe horizontal confirmé, gérer le swipe
+    if (isDragging && deltaX < 0) {
+      e.preventDefault(); // Bloquer le scroll SEULEMENT pour le swipe horizontal
       setTranslateX(Math.max(deltaX, -80)); // Limiter le swipe à 80px
     }
   }, [isDragging, isDeleting]);
