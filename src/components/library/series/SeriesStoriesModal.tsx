@@ -4,7 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, X, Star, Plus, Clock, ChevronDown, ChevronUp, CheckCircle, AlertTriangle } from 'lucide-react';
+import { BookOpen, X, Star, Plus, Clock, ChevronDown, ChevronUp, CheckCircle, AlertTriangle, BookCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
@@ -183,6 +183,12 @@ export const SeriesStoriesModal: React.FC<SeriesStoriesModalProps> = ({
                         
                         {/* Métadonnées compactes */}
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {story.status === 'read' && (
+                            <div className="flex items-center text-green-600">
+                              <BookCheck className="h-3 w-3 mr-1" />
+                              <span className="font-medium">Lu</span>
+                            </div>
+                          )}
                           {story.status === 'completed' && (
                             <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 px-1.5 py-0 h-4 text-xs">
                               Prête
