@@ -33,7 +33,10 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
   const startY = useRef(0);
   const currentX = useRef(0);
   const currentY = useRef(0);
+  const hasDetectedDirection = useRef(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  
+  const DETECTION_THRESHOLD = 5; // Seuil minimum pour détecter un mouvement
   const isRecentStory = (): boolean => {
     const now = new Date();
     const storyDate = new Date(story.createdAt);
@@ -88,11 +91,11 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
     startY.current = e.touches[0].clientY;
     currentX.current = startX.current;
     currentY.current = startY.current;
-    // Ne pas activer isDragging immédiatement, attendre de détecter la direction
+    hasDetectedDirection.current = false; // Reset la détection de direction
   }, [isDeleting]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (isDeleting) return;
+    if (isDeleting || hasDetectedDirection.current) return; // ⚡ Early exit optimisé
     
     currentX.current = e.touches[0].clientX;
     currentY.current = e.touches[0].clientY;
@@ -100,20 +103,28 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
     const deltaX = currentX.current - startX.current;
     const deltaY = currentY.current - startY.current;
     
+    // Attendre un mouvement minimum avant de détecter la direction
+    if (Math.abs(deltaX) < DETECTION_THRESHOLD && Math.abs(deltaY) < DETECTION_THRESHOLD) {
+      return; // Mouvement trop petit, attendre
+    }
+    
     // Détecter la direction dominante du mouvement
     const isVerticalMovement = Math.abs(deltaY) > Math.abs(deltaX);
     
-    // Si le mouvement est vertical, laisser le scroll natif fonctionner
+    // Si le mouvement est vertical, marquer comme détecté et laisser le scroll natif
     if (isVerticalMovement) {
-      // Reset le swipe si on détecte un scroll vertical
+      hasDetectedDirection.current = true; // ⚡ Direction détectée = scroll vertical
       if (isDragging) {
         setIsDragging(false);
         setTranslateX(0);
       }
-      return; // Ne rien faire, laisser le scroll natif
+      return; // Laisser le scroll natif fonctionner
     }
     
-    // Seulement activer le swipe si mouvement horizontal détecté avec un seuil minimal
+    // Mouvement horizontal confirmé
+    hasDetectedDirection.current = true;
+    
+    // Activer le swipe si mouvement horizontal détecté avec un seuil minimal
     if (!isDragging && Math.abs(deltaX) > 10) {
       setIsDragging(true);
     }
@@ -123,7 +134,7 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
       e.preventDefault(); // Bloquer le scroll SEULEMENT pour le swipe horizontal
       setTranslateX(Math.max(deltaX, -80)); // Limiter le swipe à 80px
     }
-  }, [isDragging, isDeleting]);
+  }, [isDragging, isDeleting, DETECTION_THRESHOLD]);
 
   const handleTouchEnd = useCallback(() => {
     if (!isDragging) return;
