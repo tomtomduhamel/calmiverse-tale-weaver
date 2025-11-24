@@ -153,7 +153,7 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
   const timeAgo = formatDistanceToNow(story.createdAt, { addSuffix: true, locale: fr });
 
   return (
-    <div className="relative overflow-hidden rounded-lg">
+    <div className="relative overflow-hidden rounded-lg" style={{ touchAction: 'pan-y' }}>
       {/* Bouton de suppression en arrière-plan */}
       <div className="absolute right-0 top-0 h-full w-20 bg-red-500 rounded-r-lg flex items-center justify-center">
         <button
