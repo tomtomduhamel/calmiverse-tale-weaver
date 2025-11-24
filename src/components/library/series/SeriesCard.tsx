@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, Clock, Star } from 'lucide-react';
+import { BookOpen, Clock, Star, BookCheck } from 'lucide-react';
 import type { SeriesGroup } from '@/types/story';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -64,10 +64,18 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({
                 <h3 className="font-bold text-foreground text-xl leading-tight group-hover:text-primary transition-colors duration-200">
                   {series.title}
                 </h3>
-                {/* Badge série */}
-                <Badge variant="secondary" className="mt-2 text-xs">
-                  Série d'histoires
-                </Badge>
+                {/* Badge série et statut lecture */}
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="text-xs">
+                    Série d'histoires
+                  </Badge>
+                  {readStories === totalStories && totalStories > 0 && (
+                    <div className="flex items-center text-green-600 text-xs">
+                      <BookCheck className="h-3 w-3 mr-1" />
+                      <span className="font-medium">Série terminée</span>
+                    </div>
+                  )}
+                </div>
               </div>
               {hasFavorites && (
                 <div className="flex-shrink-0 mt-1">
