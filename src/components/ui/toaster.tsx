@@ -24,12 +24,12 @@ export function Toaster() {
           >
             <div className="grid gap-2">
               {title && (
-                <ToastTitle className="text-lg font-semibold text-primary dark:text-primary-foreground">
+                <ToastTitle className="text-lg font-semibold text-gray-900 dark:text-white">
                   {title}
                 </ToastTitle>
               )}
               {description && (
-                <ToastDescription className="text-sm text-muted-foreground">
+                <ToastDescription className="text-sm text-gray-700 dark:text-gray-200">
                   {description}
                 </ToastDescription>
               )}
