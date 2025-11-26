@@ -122,6 +122,7 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 
 **Audio/TTS :**
 - `tts-elevenlabs` - Génération audio ElevenLabs
+- `get-tts-config` - Configuration dynamique provider TTS (ElevenLabs/Speechify)
 - `n8n-audio-callback` - Callback audio n8n
 - `upload-audio-from-n8n` - Upload audio depuis n8n
 
@@ -131,11 +132,22 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - `delete-user` - Suppression compte
 - `upload-epub` - Export EPUB histoires
 
-### ElevenLabs Text-to-Speech
-- **Voice ID** : '9BWtsMINqrJLrRacOk9x' (défaut)
+### Système TTS Multi-Provider (ElevenLabs / Speechify)
+- **Providers supportés** : ElevenLabs (défaut) et Speechify
+- **Switch dynamique** : Via secret Supabase `TTS_PROVIDER` ('elevenlabs' ou 'speechify')
+- **Edge Function** : `get-tts-config` retourne configuration active (webhookUrl, provider, voiceId)
+- **Voice ID** : '9BWtsMINqrJLrRacOk9x' (défaut ElevenLabs)
 - **React Hook** : @11labs/react pour conversations AI
-- **Workflow** : Génération asynchrone via n8n webhooks
+- **Workflow** : Génération asynchrone via n8n webhooks (URL dynamique selon provider)
 - **Stockage** : Bucket Supabase `audio-files`
+- **Hook frontend** : `useN8nAudioGeneration` avec appel automatique `get-tts-config`
+
+#### Configuration Provider
+1. **Secret `TTS_PROVIDER`** : Définir 'elevenlabs' ou 'speechify' dans Supabase Dashboard
+2. **Secret `N8N_ELEVENLABS_WEBHOOK_URL`** : URL webhook n8n pour ElevenLabs
+3. **Secret `N8N_SPEECHIFY_WEBHOOK_URL`** : URL webhook n8n pour Speechify
+4. **Sélection automatique** : L'Edge Function `get-tts-config` lit `TTS_PROVIDER` et retourne la bonne config
+5. **Fallback** : Si `TTS_PROVIDER` non défini, utilise ElevenLabs par défaut
 
 ### Webhooks n8n
 - **Email** : Partage histoires par email
@@ -268,11 +280,14 @@ VITE_EMAIL_WEBHOOK_URL=[n8n webhook email]
 VITE_KINDLE_WEBHOOK_URL=[n8n webhook kindle]
 ```
 
-### Secrets Supabase (8 secrets)
+### Secrets Supabase (11 secrets)
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 - `LOVABLE_API_KEY` - Clé Lovable AI
-- `ELEVENLABS_API_KEY` - Text-to-Speech
-- `N8N_SEQUEL_WEBHOOK_URL` - Webhooks n8n
+- `ELEVENLABS_API_KEY` - Text-to-Speech ElevenLabs
+- `N8N_SEQUEL_WEBHOOK_URL` - Webhooks n8n séries
+- `TTS_PROVIDER` - Provider TTS actif ('elevenlabs' ou 'speechify')
+- `N8N_ELEVENLABS_WEBHOOK_URL` - Webhook n8n ElevenLabs
+- `N8N_SPEECHIFY_WEBHOOK_URL` - Webhook n8n Speechify
 - `OPENAI_API_KEY` - Legacy (non utilisé, garder pour compatibilité)
 
 ### Développement local
@@ -345,12 +360,16 @@ docs/
 - **Reset** : Automatique à date anniversaire abonnement
 - **Upgrade** : Proposé dynamiquement si limite atteinte
 
-### Génération Audio ElevenLabs
-- **Voice** : ID '9BWtsMINqrJLrRacOk9x'
-- **Workflow** : Asynchrone via n8n webhooks
+### Génération Audio Multi-Provider (ElevenLabs / Speechify)
+- **Providers** : ElevenLabs (défaut) et Speechify
+- **Switch** : Via secret `TTS_PROVIDER` dans Supabase Dashboard
+- **Voice** : ID '9BWtsMINqrJLrRacOk9x' (ElevenLabs par défaut)
+- **Workflow** : Asynchrone via n8n webhooks (URL dynamique selon provider)
+- **Edge Function** : `get-tts-config` retourne configuration active
 - **Status** : pending → completed/error
 - **Stockage** : Bucket Supabase `audio-files`
 - **Player** : Intégré dans StoryReader avec contrôles
+- **Hook** : `useN8nAudioGeneration` appelle automatiquement `get-tts-config`
 
 ### Export & Partage
 - **EPUB** : Génération Edge Function `upload-epub`

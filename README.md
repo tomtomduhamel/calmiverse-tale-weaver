@@ -24,7 +24,7 @@ Calmiverse est une plateforme complète qui permet aux parents de créer des his
 ### Backend & Services
 - Supabase (Auth, PostgreSQL, Storage, Edge Functions, Realtime)
 - Lovable AI (GPT-4o-mini) pour génération histoires
-- ElevenLabs Text-to-Speech pour audio
+- Système TTS multi-provider : ElevenLabs / Speechify (switch dynamique)
 - n8n webhooks pour automation
 
 ### Features
@@ -69,9 +69,12 @@ npm install
    
    - Configurez les secrets Supabase (via Dashboard):
      - `LOVABLE_API_KEY` - Clé Lovable AI
-     - `ELEVENLABS_API_KEY` - Text-to-Speech
+     - `ELEVENLABS_API_KEY` - Text-to-Speech ElevenLabs
      - `SUPABASE_SERVICE_ROLE_KEY` - Clé service
-     - `N8N_SEQUEL_WEBHOOK_URL` - Webhooks n8n
+     - `N8N_SEQUEL_WEBHOOK_URL` - Webhooks n8n séries
+     - `TTS_PROVIDER` - Provider TTS ('elevenlabs' ou 'speechify')
+     - `N8N_ELEVENLABS_WEBHOOK_URL` - Webhook n8n ElevenLabs
+     - `N8N_SPEECHIFY_WEBHOOK_URL` - Webhook n8n Speechify
 
 4. Lancez le serveur de développement:
 ```sh
@@ -135,8 +138,8 @@ docs/                 # Documentation complète
 
 ✅ Génération histoires IA personnalisées (Lovable AI)  
 ✅ 4 tiers d'abonnement avec quotas  
-✅ Audio ElevenLabs avec génération asynchrone  
-✅ Bibliothèque avec filtres avancés  
+✅ Audio multi-provider (ElevenLabs/Speechify) avec switch dynamique  
+✅ Bibliothèque avec filtres avancés
 ✅ Swipe-to-delete sur mobile  
 ✅ Thème sombre/clair dans paramètres  
 ✅ Export EPUB et envoi Kindle  
