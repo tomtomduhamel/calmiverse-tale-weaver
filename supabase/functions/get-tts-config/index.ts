@@ -15,22 +15,34 @@ serve(async (req) => {
     // Récupérer le provider TTS configuré (elevenlabs ou speechify)
     const ttsProvider = Deno.env.get('TTS_PROVIDER') || 'elevenlabs';
     
+    console.log(`[get-tts-config] Checking TTS configuration for provider: ${ttsProvider}`);
+    
     let webhookUrl: string;
     let voiceId: string | null = null;
     
     // Sélectionner l'URL webhook selon le provider
-    if (ttsProvider === 'speechify') {
-      webhookUrl = Deno.env.get('N8N_SPEECHIFY_WEBHOOK_URL') || '';
+    if (ttsProvider === 'speechify' || ttsProvider === 'Speechify') {
+      const speechifyUrl = Deno.env.get('N8N_SPEECHIFY_WEBHOOK_URL');
+      console.log(`[get-tts-config] Speechify webhook URL check: ${speechifyUrl ? 'FOUND' : 'NOT FOUND'}`);
+      webhookUrl = speechifyUrl || '';
       // Speechify gère le voice_id dans n8n
       voiceId = null;
     } else {
       // Par défaut ou si 'elevenlabs'
-      webhookUrl = Deno.env.get('N8N_WEBHOOK_URL') || '';
+      const elevenlabsUrl = Deno.env.get('N8N_WEBHOOK_URL');
+      console.log(`[get-tts-config] ElevenLabs webhook URL check: ${elevenlabsUrl ? 'FOUND' : 'NOT FOUND'}`);
+      webhookUrl = elevenlabsUrl || '';
       voiceId = '9BWtsMINqrJLrRacOk9x'; // Voice ID ElevenLabs par défaut
     }
     
     if (!webhookUrl) {
-      throw new Error(`Webhook URL not configured for provider: ${ttsProvider}`);
+      const availableSecrets = {
+        TTS_PROVIDER: Deno.env.get('TTS_PROVIDER') ? 'SET' : 'NOT SET',
+        N8N_WEBHOOK_URL: Deno.env.get('N8N_WEBHOOK_URL') ? 'SET' : 'NOT SET',
+        N8N_SPEECHIFY_WEBHOOK_URL: Deno.env.get('N8N_SPEECHIFY_WEBHOOK_URL') ? 'SET' : 'NOT SET'
+      };
+      console.error(`[get-tts-config] Missing webhook URL. Current secrets status:`, availableSecrets);
+      throw new Error(`Webhook URL not configured for provider: ${ttsProvider}. Please verify that ${ttsProvider === 'speechify' ? 'N8N_SPEECHIFY_WEBHOOK_URL' : 'N8N_WEBHOOK_URL'} is set in Supabase Secrets.`);
     }
     
     console.log(`TTS Config requested - Provider: ${ttsProvider}, URL: ${webhookUrl.substring(0, 30)}...`);
