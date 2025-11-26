@@ -24,7 +24,6 @@ interface N8nWebhookPayload {
   requestId: string;
 }
 
-const N8N_WEBHOOK_URL = 'https://n8n.srv856374.hstgr.cloud/webhook/d2d88f5d-78c0-49c1-83b8-096d4b21190c';
 const TIMEOUT_DURATION = 300000; // 5 minutes timeout (pour textes longs)
 
 export const useN8nAudioGeneration = () => {
@@ -177,7 +176,24 @@ export const useN8nAudioGeneration = () => {
     let checkInterval: NodeJS.Timeout;
 
     try {
-      console.log('🎙️ [N8nAudio] Génération audio via n8n:', { storyId, textLength: text.length, voiceId, requestId });
+      // Récupérer la configuration TTS dynamique (ElevenLabs ou Speechify)
+      const { data: ttsConfig, error: configError } = await supabase.functions.invoke('get-tts-config');
+      
+      if (configError || !ttsConfig?.webhookUrl) {
+        throw new Error('Impossible de récupérer la configuration TTS');
+      }
+
+      const webhookUrl = ttsConfig.webhookUrl;
+      const provider = ttsConfig.provider || 'elevenlabs';
+      const dynamicVoiceId = ttsConfig.voiceId || voiceId; // Utiliser voiceId de la config ou celui passé en param
+
+      console.log(`🎙️ [N8nAudio] Génération audio via ${provider}:`, { 
+        storyId, 
+        textLength: text.length, 
+        voiceId: dynamicVoiceId, 
+        requestId,
+        provider 
+      });
 
       // 1. Créer l'entrée en base
       const { data: audioFile, error: insertError } = await supabase
@@ -187,7 +203,7 @@ export const useN8nAudioGeneration = () => {
           text_content: text,
           status: 'pending',
           webhook_id: requestId,
-          voice_id: voiceId
+          voice_id: dynamicVoiceId
         })
         .select()
         .single();
@@ -277,13 +293,13 @@ export const useN8nAudioGeneration = () => {
       const payload: N8nWebhookPayload = {
         text: text,
         storyId,
-        voiceId,
+        voiceId: dynamicVoiceId,
         requestId
       };
 
-      console.log('📤 [N8nAudio] Envoi vers n8n:', payload);
+      console.log(`📤 [N8nAudio] Envoi vers ${provider} (n8n):`, { ...payload, webhookUrl: webhookUrl.substring(0, 40) + '...' });
 
-      const response = await fetch(N8N_WEBHOOK_URL, {
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -305,7 +321,7 @@ export const useN8nAudioGeneration = () => {
         .eq('id', audioFile.id);
 
       toast({
-        title: "🎵 Génération audio lancée",
+        title: `🎵 Génération audio lancée (${provider})`,
         description: "Votre audio est en cours de génération...",
       });
 
