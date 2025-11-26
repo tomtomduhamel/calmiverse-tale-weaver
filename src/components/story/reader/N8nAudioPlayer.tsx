@@ -153,9 +153,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
           </div>;
       }
       if (pendingAudioFile.status === 'processing') {
-        return <div className={`text-xs text-center ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            ⚙️ Génération audio en cours via n8n (timeout: 60s)
-          </div>;
+        return <div className={`text-xs text-center ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>⚙️ Génération audio en cours</div>;
       }
     }
     if (recoverableAudioFile) {
