@@ -185,7 +185,15 @@ serve(async (req) => {
 
     // Créer un nom de fichier unique
     const timestamp = Date.now();
-    const fileExtension = audioFile.name.split('.').pop() || 'mp3';
+    // Forcer l'extension correcte selon le type MIME pour éviter les extensions invalides (.stream)
+    let fileExtension = audioFile.name.split('.').pop() || 'mp3';
+    if (audioFile.type === 'audio/mpeg' || audioFile.type === 'audio/mp3') {
+      fileExtension = 'mp3';
+    } else if (audioFile.type === 'audio/wav') {
+      fileExtension = 'wav';
+    } else if (audioFile.type === 'audio/ogg') {
+      fileExtension = 'ogg';
+    }
     const fileName = `${storyId}/${webhookId}-${timestamp}.${fileExtension}`;
 
     console.log(`📤 [upload-audio-from-n8n-${requestId}] Upload vers Storage:`, fileName);
