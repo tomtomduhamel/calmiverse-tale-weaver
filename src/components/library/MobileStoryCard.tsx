@@ -33,7 +33,7 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
   const startY = useRef(0);
   const currentX = useRef(0);
   const currentY = useRef(0);
-  const hasDetectedDirection = useRef(false);
+  const detectedDirection = useRef<'none' | 'vertical' | 'horizontal'>('none');
   const cardRef = useRef<HTMLDivElement>(null);
   
   const DETECTION_THRESHOLD = 5; // Seuil minimum pour détecter un mouvement
@@ -91,11 +91,14 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
     startY.current = e.touches[0].clientY;
     currentX.current = startX.current;
     currentY.current = startY.current;
-    hasDetectedDirection.current = false; // Reset la détection de direction
+    detectedDirection.current = 'none'; // Reset la direction détectée
   }, [isDeleting]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (isDeleting || hasDetectedDirection.current) return; // ⚡ Early exit optimisé
+    if (isDeleting) return;
+    
+    // Si direction verticale déjà détectée, laisser le scroll natif
+    if (detectedDirection.current === 'vertical') return;
     
     currentX.current = e.touches[0].clientX;
     currentY.current = e.touches[0].clientY;
@@ -103,51 +106,47 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
     const deltaX = currentX.current - startX.current;
     const deltaY = currentY.current - startY.current;
     
-    // Attendre un mouvement minimum avant de détecter la direction
-    if (Math.abs(deltaX) < DETECTION_THRESHOLD && Math.abs(deltaY) < DETECTION_THRESHOLD) {
-      return; // Mouvement trop petit, attendre
-    }
-    
-    // Détecter la direction dominante du mouvement
-    const isVerticalMovement = Math.abs(deltaY) > Math.abs(deltaX);
-    
-    // Si le mouvement est vertical, marquer comme détecté et laisser le scroll natif
-    if (isVerticalMovement) {
-      hasDetectedDirection.current = true; // ⚡ Direction détectée = scroll vertical
-      if (isDragging) {
-        setIsDragging(false);
-        setTranslateX(0);
+    // Détecter la direction seulement si pas encore détectée
+    if (detectedDirection.current === 'none') {
+      // Attendre un mouvement minimum avant de détecter
+      if (Math.abs(deltaX) < DETECTION_THRESHOLD && Math.abs(deltaY) < DETECTION_THRESHOLD) {
+        return;
       }
-      return; // Laisser le scroll natif fonctionner
-    }
-    
-    // Mouvement horizontal confirmé
-    hasDetectedDirection.current = true;
-    
-    // Activer le swipe si mouvement horizontal détecté avec un seuil minimal
-    if (!isDragging && Math.abs(deltaX) > 10) {
+      
+      const isVerticalMovement = Math.abs(deltaY) > Math.abs(deltaX);
+      
+      if (isVerticalMovement) {
+        detectedDirection.current = 'vertical';
+        return; // Laisser le scroll natif
+      }
+      
+      // Mouvement horizontal confirmé
+      detectedDirection.current = 'horizontal';
       setIsDragging(true);
     }
     
-    // Si c'est un swipe horizontal confirmé, gérer le swipe
-    if (isDragging && deltaX < 0) {
-      e.preventDefault(); // Bloquer le scroll SEULEMENT pour le swipe horizontal
-      setTranslateX(Math.max(deltaX, -80)); // Limiter le swipe à 80px
+    // CONTINUER à traiter les mouvements horizontaux après détection
+    if (detectedDirection.current === 'horizontal' && deltaX < 0) {
+      e.preventDefault();
+      setTranslateX(Math.max(deltaX, -80));
     }
-  }, [isDragging, isDeleting, DETECTION_THRESHOLD]);
+  }, [isDeleting, DETECTION_THRESHOLD]);
 
   const handleTouchEnd = useCallback(() => {
-    if (!isDragging) return;
+    if (detectedDirection.current !== 'horizontal') {
+      setIsDragging(false);
+      return;
+    }
     
     setIsDragging(false);
     
-    // Si le swipe dépasse 40px, maintenir la position de suppression
-    if (translateX < -40) {
+    const deltaX = currentX.current - startX.current;
+    if (deltaX < -40) {
       setTranslateX(-80);
     } else {
       setTranslateX(0);
     }
-  }, [isDragging, translateX]);
+  }, []);
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
