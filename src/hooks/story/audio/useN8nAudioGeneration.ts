@@ -196,6 +196,7 @@ export const useN8nAudioGeneration = () => {
       });
 
       // 1. Créer l'entrée en base
+      const startTime = Date.now(); // Métriques : démarrage
       const { data: audioFile, error: insertError } = await supabase
         .from('audio_files')
         .insert({
@@ -224,6 +225,15 @@ export const useN8nAudioGeneration = () => {
             clearTimeout(timeoutId);
             clearInterval(checkInterval);
             setIsGenerating(false);
+            
+            // Métriques : Temps total et infos
+            const generationTime = Math.round((Date.now() - startTime) / 1000);
+            console.log('📊 [TTS Metrics]', {
+              provider,
+              generationTime: `${generationTime}s`,
+              fileSize: updatedFile.file_size ? `${Math.round(updatedFile.file_size / 1024)}KB` : 'N/A',
+              duration: updatedFile.duration ? `${updatedFile.duration}s` : 'N/A',
+            });
             
             toast({
               title: "🎉 Audio généré !",

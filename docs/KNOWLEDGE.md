@@ -126,6 +126,11 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - `n8n-audio-callback` - Callback audio n8n
 - `upload-audio-from-n8n` - Upload audio depuis n8n
 
+**Admin & Interface TTS :**
+- Interface admin `/admin/tts-config` - Gestion provider TTS et métriques
+- Hook `useTtsConfig` - Récupération config et métriques TTS
+- Composants `TtsConfigPanel` et `TtsMetrics` - Dashboard admin TTS
+
 **Utilitaires :**
 - `connectivity-test` - Test connectivité
 - `testConnection` - Diagnostic connexion
@@ -370,6 +375,8 @@ docs/
 - **Stockage** : Bucket Supabase `audio-files`
 - **Player** : Intégré dans StoryReader avec contrôles
 - **Hook** : `useN8nAudioGeneration` appelle automatiquement `get-tts-config`
+- **Métriques** : Temps de génération, taille fichier, taux de succès automatiquement trackés
+- **Interface Admin** : `/admin/tts-config` pour visualiser config et dashboard métriques
 
 ### Export & Partage
 - **EPUB** : Génération Edge Function `upload-epub`

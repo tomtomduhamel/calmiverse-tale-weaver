@@ -33,6 +33,7 @@ const CreateStoryStep2 = lazy(() => import("./pages/CreateStoryStep2"));
 const Library = lazy(() => import("./pages/Library"));
 const StoryReaderPage = lazy(() => import("./pages/StoryReaderPage"));
 const PromptAdmin = lazy(() => import('./pages/admin/PromptAdmin'));
+const TtsConfig = lazy(() => import('./pages/admin/TtsConfig'));
 const AdminGuard = lazy(() => import('./components/admin/AdminGuard'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Subscription = lazy(() => import('./pages/Subscription'));
@@ -201,6 +202,7 @@ function App() {
           <Route path="test-connection" element={<TestConnection />} />
           <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
           <Route path="admin/prompts" element={<AdminGuard><PromptAdmin /></AdminGuard>} />
+          <Route path="admin/tts-config" element={<AdminGuard><TtsConfig /></AdminGuard>} />
         </Route>
 
             {/* Route de fallback */}
