@@ -25,8 +25,7 @@ serve(async (req) => {
       const speechifyUrl = Deno.env.get('N8N_SPEECHIFY_WEBHOOK_URL');
       console.log(`[get-tts-config] Speechify webhook URL check: ${speechifyUrl ? 'FOUND' : 'NOT FOUND'}`);
       webhookUrl = speechifyUrl || '';
-      // Speechify gère le voice_id dans n8n
-      voiceId = null;
+      voiceId = 'b09ef0e3-8257-4a43-8431-a104f81561c2'; // Voice ID Speechify par défaut
     } else {
       // Par défaut ou si 'elevenlabs'
       const elevenlabsUrl = Deno.env.get('N8N_WEBHOOK_URL');
