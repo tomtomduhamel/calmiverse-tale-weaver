@@ -41,15 +41,16 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
     loadAndCleanup();
   }, [storyId, fetchAudioFiles, cleanupStuckFiles, recoverErrorFiles]);
 
-  // Trouver le fichier audio prêt pour ce texte
-  const readyAudioFile = audioFiles.find(file => file.status === 'ready' && file.audio_url && file.text_content.substring(0, 100) === text.substring(0, 100));
-  const pendingAudioFile = audioFiles.find(file => (file.status === 'pending' || file.status === 'processing') && file.text_content.substring(0, 100) === text.substring(0, 100));
+  // Trouver les fichiers audio pour cette histoire (déjà filtré par story_id dans le hook)
+  // On prend le fichier le plus récent pour chaque statut
+  const readyAudioFile = audioFiles.find(file => file.status === 'ready' && file.audio_url);
+  const pendingAudioFile = audioFiles.find(file => (file.status === 'pending' || file.status === 'processing'));
 
   // Fichier en erreur SANS URL (vraie erreur)
-  const errorAudioFile = audioFiles.find(file => file.status === 'error' && !file.audio_url && file.text_content.substring(0, 100) === text.substring(0, 100));
+  const errorAudioFile = audioFiles.find(file => file.status === 'error' && !file.audio_url);
 
   // Fichier récupérable (en erreur mais avec URL)
-  const recoverableAudioFile = audioFiles.find(file => file.status === 'error' && file.audio_url && file.text_content.substring(0, 100) === text.substring(0, 100));
+  const recoverableAudioFile = audioFiles.find(file => file.status === 'error' && file.audio_url);
 
   // Gérer la lecture audio
   const handlePlayPause = async () => {
