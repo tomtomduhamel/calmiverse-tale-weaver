@@ -139,6 +139,7 @@ docs/                 # Documentation complète
 ✅ Génération histoires IA personnalisées (Lovable AI)  
 ✅ 4 tiers d'abonnement avec quotas  
 ✅ Audio multi-provider (ElevenLabs/Speechify) avec switch dynamique  
+✅ Interface admin TTS avec dashboard métriques et gestion provider
 ✅ Bibliothèque avec filtres avancés
 ✅ Swipe-to-delete sur mobile  
 ✅ Thème sombre/clair dans paramètres  
