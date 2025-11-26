@@ -31,6 +31,12 @@ export const PWAGestures: React.FC<PWAGesturesProps> = ({
     const SCROLL_TOP_THRESHOLD = 10; // Seuil pour activer pull-to-refresh
 
     const handleTouchStart = (e: TouchEvent) => {
+      // Ne pas intercepter si on touche une carte (laisser le swipe horizontal fonctionner)
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-swipe-card]')) {
+        return;
+      }
+      
       if (container.scrollTop === 0) {
         startY.current = e.touches[0].clientY;
         startX.current = e.touches[0].clientX;

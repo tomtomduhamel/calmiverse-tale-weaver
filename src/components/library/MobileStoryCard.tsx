@@ -182,6 +182,7 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
 
       {/* Carte principale */}
       <Card 
+        data-swipe-card
         ref={cardRef}
         className={`
           cursor-pointer border-l-4 ${getStatusColor()} bg-background
