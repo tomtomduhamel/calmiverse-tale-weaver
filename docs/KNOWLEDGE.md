@@ -1,8 +1,8 @@
 
-# Knowledges pour Calmi
+# Base de Connaissances Technique Complète - Calmiverse
 
 ## 1. Vue d'ensemble du projet
-Calmi est une application web qui génère des histoires personnalisées pour enfants à l'aide de l'intelligence artificielle. L'application permet aux parents de créer des profils pour leurs enfants avec leurs caractéristiques personnelles, puis de générer des histoires adaptées à chaque enfant. Ces histoires peuvent être lues en ligne, partagées ou envoyées sur Kindle.
+Calmiverse est une Progressive Web App (PWA) de génération d'histoires personnalisées pour enfants utilisant l'intelligence artificielle. L'application permet aux parents de créer des profils détaillés pour leurs enfants, puis de générer des histoires adaptées avec objectifs pédagogiques, génération audio (ElevenLabs), et système d'abonnements premium.
 
 ## 2. Personas utilisateurs
 - **Parents modernes (30-45 ans)** : Cherchent des contenus éducatifs et personnalisés pour leurs enfants.
@@ -11,62 +11,512 @@ Calmi est une application web qui génère des histoires personnalisées pour en
 - **Parents d'enfants avec besoins spécifiques** : Recherchent des histoires qui abordent des situations particulières (anxiété, peurs, etc.).
 
 ## 3. Spécifications des fonctionnalités
-- **Gestion des profils enfants** : Création et modification de profils avec nom, date de naissance, description du doudou et monde imaginaire.
-- **Génération d'histoires** : Création d'histoires personnalisées basées sur les profils des enfants et des objectifs pédagogiques/éducatifs.
-- **Bibliothèque d'histoires** : Stockage et organisation des histoires générées avec système de filtrage et recherche.
-- **Lecteur d'histoires** : Interface de lecture adaptée aux enfants avec contrôles simples et texte-à-parole.
-- **Partage d'histoires** : Options pour partager les histoires par email ou les envoyer sur Kindle.
 
-## 4. Ressources de design
-- **Palette de couleurs** : Tons pastels apaisants avec accents vifs pour les éléments interactifs.
-- **Typographie** : Police principale accessible et ludique pour l'interface utilisateur, police de lecture confortable pour les histoires.
-- **Composants UI** : Utilisation de shadcn-ui avec personnalisation pour une apparence douce et accueillante.
-- **Iconographie** : Ensemble cohérent d'icônes arrondies et amicales représentant les concepts d'enfance et d'histoires.
+### Gestion des profils enfants
+- Création et modification avec nom, date de naissance, genre, centres d'intérêt
+- Description du doudou avec photos (stockage Supabase Storage)
+- Monde imaginaire personnalisé
+- Limitation selon tier d'abonnement (2 à illimité)
 
-## 5. Documentation API
-- **API OpenAI** : Utilisation pour la génération du contenu des histoires avec paramètres optimisés pour les contenus enfants.
-- **API Supabase** : Authentification, stockage des profils enfants, histoires et préférences utilisateurs.
-- **Edge Functions Supabase** : Points de terminaison pour la génération d'histoires, le traitement asynchrone et les notifications.
-- **Webhooks email** : Intégration pour le partage d'histoires par email.
-- **Intégration Kindle** : Documentation sur le processus d'envoi des histoires au format compatible Kindle.
+### Génération d'histoires
+- IA Lovable AI (GPT-4o-mini) pour contenu adapté enfants
+- 4 objectifs pédagogiques : Sommeil, Concentration, Détente, Amusement
+- Histoires 6000-10000 mots avec structure narrative complète
+- Génération titre + résumé automatique
+- Système de séries avec tomes numérotés
+- Déduplication automatique (évite doublons)
+- Quotas mensuels selon abonnement
 
-## 6. Schéma de base de données
-- **Table users** : Informations utilisateur, préférences et paramètres de notification.
-- **Table children** : Profils des enfants avec détails personnels et préférences.
-- **Table stories** : Histoires générées avec contenu, métadonnées et relations avec les enfants.
-- **Relations** : Utilisateur → Enfants (one-to-many), Enfants → Histoires (many-to-many).
+### Bibliothèque d'histoires
+- Filtrage avancé : enfants, objectifs, favoris, statuts
+- Recherche textuelle dans titres et contenu
+- Swipe-to-delete sur mobile avec détection direction intelligente
+- Pagination (configurable dans APP_CONFIG)
+- Export EPUB et envoi Kindle
 
-## 7. Configuration de l'environnement
-- **Prérequis** : Node.js 20+, npm 9+, compte Supabase et OpenAI.
-- **Variables d'environnement** : Configuration pour Supabase, OpenAI et webhooks.
-- **Développement local** : Instructions pour installer les dépendances et démarrer le serveur de développement.
-- **Structure du projet** : Organisation des dossiers principales (components, hooks, pages, utils).
+### Lecteur d'histoires
+- Interface immersive avec mode plein écran
+- Audio ElevenLabs intégré avec contrôles
+- Musique de fond par objectif (optionnel)
+- Auto-scroll configurable
+- Thème sombre/clair avec préférences utilisateur
+- Taille de police ajustable
+- Support Markdown avec ReactMarkdown
 
-## 8. Directives de test
-- **Tests unitaires** : Pour les fonctions d'utilitaires et les hooks avec Vitest.
-- **Tests d'intégration** : Pour les workflows critiques comme la création de profil et la génération d'histoires.
-- **Tests d'accessibilité** : S'assurer que l'interface est accessible aux utilisateurs de tous âges.
-- **Tests de performance** : Benchmarks pour la génération d'histoires et le temps de chargement des pages.
+### Partage et Export
+- Partage via lien sécurisé avec token
+- Export EPUB pour Kindle
+- Envoi direct par email (webhook n8n)
+- Contrôle d'accès granulaire
 
-## 9. Instructions de déploiement
-- **Environnement de développement** : Configuration pour les tests locaux.
-- **Environnement de staging** : Déploiement automatique via GitHub Actions pour tests pré-production.
-- **Environnement de production** : Déploiement sur Supabase et services associés via GitHub Actions avec vérifications de sécurité.
-- **Procédures de rollback** : Comment restaurer une version précédente en cas de problème.
+### Système d'abonnements
+- 4 tiers : Calmini, Calmidium, Calmix, Calmixxl
+- Trial automatique 1 mois pour nouveaux utilisateurs
+- Quotas mensuels : histoires, audios, enfants
+- Features premium : séries, communauté, musique, priorité
+- Remise annuelle 20%
+- Guards React : SubscriptionGuard, useQuotaChecker, useFeatureAccess
 
-## 10. Pratiques de gestion de version
-- **Stratégie de branches** : Utilisation de main pour la production, develop pour l'intégration continue, branches de fonctionnalités pour le développement.
-- **Conventions de commit** : Format type(scope): description (ex: feat(stories): ajout du partage via WhatsApp).
-- **Revue de code** : Critères de qualité et checklist pour les pull requests.
+### Paramètres utilisateur
+- Gestion compte et sécurité
+- Préférences lecture (vitesse, auto-scroll)
+- Notifications granulaires (email, in-app, système)
+- Thème apparence (clair/sombre)
+- Musique de fond activable
+- Email Kindle pour envoi
 
-## 11. Pratiques de sécurité
-- **Gestion des clés API** : Stockage sécurisé des clés OpenAI et autres services externes dans les secrets Supabase.
-- **Authentification** : Meilleures pratiques pour l'authentification Supabase.
-- **Filtrage de contenu** : Mesures pour garantir que les histoires générées sont adaptées aux enfants.
-- **RGPD** : Considérations spécifiques pour la gestion des données personnelles des enfants.
+## 4. Stack technique et Architecture
 
-## 12. Exigences de conformité
-- **RGPD** : Conformité avec les réglementations européennes sur la protection des données.
-- **COPPA** : Considérations pour la conformité avec la loi américaine sur la protection de la vie privée des enfants.
-- **Standards d'accessibilité** : Conformité avec WCAG 2.1 pour garantir l'accessibilité de l'interface.
-- **Sécurité du contenu** : Filtres et vérifications pour assurer que le contenu généré est approprié pour les enfants.
+### Frontend Core
+- **React** 18.3.1 avec Hooks avancés et Context API
+- **TypeScript** 5.5.3 pour type safety
+- **Vite** 5.0.12 comme bundler avec optimisations PWA
+- **React Router DOM** 6.26.2 pour navigation SPA
+- **TanStack React Query** 5.56.2 pour data fetching et cache
+- **React Hook Form** 7.53.0 + Zod 3.23.8 pour formulaires
+
+### UI/UX Stack
+- **Design System** : shadcn/ui avec Radix UI primitives
+- **Styling** : Tailwind CSS 3.4.11 avec tokens sémantiques (index.css)
+- **Thème** : next-themes 0.3.0 (dark/light/system)
+- **Icons** : Lucide React 0.462.0
+- **Toast** : Sonner 1.5.0
+- **Animations** : tailwindcss-animate + CSS custom
+
+### Backend & Services
+- **BaaS** : Supabase (Auth, Database PostgreSQL, Storage, Edge Functions, Realtime)
+- **AI** : Lovable AI (GPT-4o-mini) via gateway
+- **TTS** : ElevenLabs Text-to-Speech + @11labs/react
+- **Automation** : n8n webhooks pour workflows audio
+- **Storage** : 6 buckets Supabase (audio, EPUB, images, teddy photos, sounds)
+
+### PWA & Performance
+- **PWA** : vite-plugin-pwa 1.0.3 avec Workbox
+- **Service Worker** : Cache stratégique par ressource
+- **Offline** : Support offline avec fallback pages
+- **Gestures** : PWAGestures custom pour swipe/scroll mobile
+- **Bundle** : Code splitting vendor (React, Supabase, OpenAI)
+
+### Sécurité
+- **RLS** : Row Level Security sur toutes tables
+- **Rate Limiting** : Système avancé par user/IP/endpoint
+- **Audit** : security_audit_logs pour actions sensibles
+- **Validation** : Zod schemas côté client et serveur
+- **Secrets** : Stockage sécurisé Supabase (8 secrets)
+
+## 5. API et Intégrations
+
+### Lovable AI Gateway
+- **Endpoint** : Gateway Lovable AI pour modèles OpenAI
+- **Modèle** : gpt-4o-mini (coût-efficace, optimisé enfants)
+- **Opérations** : generateStoryText, generateSummary, generateTitle
+- **Fichiers** : `/supabase/functions/_shared/ai-operations.ts`
+- **Config** : temperature: 0.7, max_tokens: 3500
+
+### Supabase Edge Functions (13 fonctions)
+**Génération histoires :**
+- `generateStory` - Création histoire complète
+- `regenerateStory` - Régénération avec settings custom
+- `retry-story` - Relance génération échouée
+- `create-story-sequel` - Suite histoire série
+
+**Audio/TTS :**
+- `tts-elevenlabs` - Génération audio ElevenLabs
+- `n8n-audio-callback` - Callback audio n8n
+- `upload-audio-from-n8n` - Upload audio depuis n8n
+
+**Utilitaires :**
+- `connectivity-test` - Test connectivité
+- `testConnection` - Diagnostic connexion
+- `delete-user` - Suppression compte
+- `upload-epub` - Export EPUB histoires
+
+### ElevenLabs Text-to-Speech
+- **Voice ID** : '9BWtsMINqrJLrRacOk9x' (défaut)
+- **React Hook** : @11labs/react pour conversations AI
+- **Workflow** : Génération asynchrone via n8n webhooks
+- **Stockage** : Bucket Supabase `audio-files`
+
+### Webhooks n8n
+- **Email** : Partage histoires par email
+- **Kindle** : Envoi EPUB vers Kindle
+- **Audio** : Callbacks génération audio
+- **Séries** : Création suites automatiques
+
+## 6. Schéma de base de données PostgreSQL
+
+### Tables Principales
+
+**users** - Profils utilisateurs
+- `id` (uuid, PK, ref auth.users)
+- `email`, `firstname`, `lastname`
+- `language` (default 'fr'), `timezone` (default 'Europe/Paris')
+- `reading_speed` (integer, default 125 mots/min)
+- `kindle_email`, notifications (email, inapp, story, system)
+- `background_music_enabled`, `auto_scroll_enabled`
+
+**children** - Profils enfants
+- `id` (uuid, PK), `authorid` (FK users.id)
+- `name`, `birthdate`, `gender` (boy/girl/pet)
+- `interests` (text[]), `imaginaryworld` (text)
+- `teddyname`, `teddydescription`, `teddyphotos` (jsonb)
+
+**stories** - Histoires générées
+- `id` (uuid, PK), `authorid` (FK users.id)
+- `title`, `content` (6000-10000 mots), `summary`, `preview`
+- `status` (pending/completed/read/error)
+- `childrenids` (text[]), `childrennames` (text[])
+- `objective` (sleep/focus/relax/fun)
+- `series_id` (FK story_series), `tome_number`
+- `sound_id` (FK sound_backgrounds)
+- `image_path`, `story_analysis` (jsonb)
+- `is_favorite`, `deduplication_key`
+- `sharing` (jsonb), `error` (text)
+
+**user_subscriptions** - Abonnements
+- `id` (uuid, PK), `user_id` (FK users.id)
+- `tier` (ENUM: calmini/calmidium/calmix/calmixxl)
+- `status` (active/trial/expired/cancelled)
+- `current_period_start/end` (timestamps)
+- `stories_used_this_period`, `audio_generations_used_this_period`
+- `is_annual`, `stripe_subscription_id`
+
+**subscription_limits** - Limites par tier
+- `tier` (PK), `stories_per_month`, `audio_generations_per_month`
+- `max_children` (NULL = illimité)
+- `has_story_series`, `has_background_music`, `has_priority_access`, `has_community_access`
+- `monthly_price_usd`, `annual_price_usd`
+
+**audio_files** - Audio ElevenLabs
+- `id` (uuid, PK), `story_id` (FK stories.id)
+- `text_content`, `audio_url`, `status`
+- `voice_id`, `webhook_id`, `file_size`, `duration`
+
+**story_series** - Séries histoires
+- `id` (uuid, PK), `author_id`, `title`, `description`
+- `total_tomes`, `is_active`, `image_path`
+
+### Tables Sécurité & Admin
+
+**user_roles** - Rôles (admin/moderator/user)
+**security_audit_logs** - Logs sécurité complets
+**rate_limits** - Limitation de débit avancée
+**user_sessions** - Gestion sessions
+**story_access_logs** - Logs accès histoires
+**prompt_templates** + **prompt_template_versions** - Gestion prompts IA
+**sound_backgrounds** - Musiques de fond par objectif
+
+### Fonctions PostgreSQL Clés
+- `check_user_quota(user_id, quota_type)` - Vérification quotas
+- `increment_usage(user_id, usage_type)` - Incrémentation usage
+- `has_feature_access(user_id, feature)` - Contrôle accès features
+- `reset_monthly_quotas()` - Reset automatique quotas
+- `check_story_duplicate()` - Prévention doublons
+- `get_stories_count_by_children()` - Statistiques enfants
+
+## 7. Routes & Navigation
+
+### Architecture Navigation
+- **Système centralisé** : `useAppNavigation` hook (UNIQUE source)
+- **Router** : React Router DOM 6 avec Shell pattern
+- **Source de vérité** : `location.pathname` (pas d'état local)
+- **Documentation** : `/docs/NAVIGATION_RULES.md`
+
+### Routes Publiques
+- `/auth` - Authentification (login/signup)
+- `/privacy`, `/terms`, `/cookies` - Pages légales
+- `/contact`, `/documentation`, `/status` - Support
+- `/shared/:token` - Partage histoires public
+- `/story/:id` - Lecture publique
+- `/404` - Page not found
+- `/recovery.html`, `/offline.html` - PWA fallback
+
+### Routes Authentifiées (Shell Layout)
+- `/` - Accueil (Index) - Création rapide
+- `/children` - Gestion profils enfants
+- `/kids-profile` - Édition profil enfant
+- `/library` - Bibliothèque avec filtres avancés
+- `/reader/:id` - Lecteur immersif
+- `/create-story/step-1,2,3` - Création guidée 3 étapes
+- `/pricing` - Page tarification
+- `/subscription` - Gestion abonnement
+- `/settings` - Paramètres utilisateur (avec ThemeSection)
+- `/admin/prompts` - Administration prompts (AdminGuard)
+
+### Navigation Adaptive
+- **Desktop** : Navigation top + menu latéral
+- **Mobile** : Menu bottom 4 icônes + PWAGestures
+- **Reader Mode** : Plein écran sans navigation
+- **Components** : `<Navigation>` (desktop), `<MobileMenu>` (mobile)
+
+## 8. Configuration de l'environnement
+
+### Prérequis
+- Node.js 20+, npm 9+
+- Compte Supabase (BaaS)
+- Clé Lovable AI
+- Clé ElevenLabs (TTS)
+
+### Variables d'environnement
+```bash
+# Supabase
+VITE_SUPABASE_URL=https://[projet].supabase.co
+VITE_SUPABASE_ANON_KEY=[clé publique]
+
+# Webhooks (optionnel)
+VITE_EMAIL_WEBHOOK_URL=[n8n webhook email]
+VITE_KINDLE_WEBHOOK_URL=[n8n webhook kindle]
+```
+
+### Secrets Supabase (8 secrets)
+- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- `LOVABLE_API_KEY` - Clé Lovable AI
+- `ELEVENLABS_API_KEY` - Text-to-Speech
+- `N8N_SEQUEL_WEBHOOK_URL` - Webhooks n8n
+- `OPENAI_API_KEY` - Legacy (non utilisé, garder pour compatibilité)
+
+### Développement local
+```bash
+npm install
+npm run dev  # Port 8080
+```
+
+### Structure du projet
+```
+src/
+├── components/
+│   ├── auth/          # AuthGuard, SupabaseAuthProvider
+│   ├── library/       # MobileStoryCard (swipe-to-delete)
+│   ├── navigation/    # Navigation desktop/mobile
+│   ├── settings/      # ThemeSection, ReadingPreferences
+│   ├── story/         # StoryContent, StoryReader
+│   └── ui/            # shadcn components
+├── hooks/
+│   ├── navigation/    # useAppNavigation (CENTRAL)
+│   ├── settings/      # useUserSettings
+│   └── subscription/  # useSubscription, useQuotaChecker
+├── pages/             # Routes principales
+├── contexts/          # SupabaseAuthContext, AppThemeContext
+├── integrations/      # Supabase types auto-générés
+└── utils/             # Helpers, config, constants
+
+supabase/
+├── functions/         # 13 Edge Functions Deno
+│   └── _shared/       # ai-operations, clients, database-ops
+└── migrations/        # Migrations SQL (RLS, triggers, functions)
+
+docs/
+├── KNOWLEDGE.md                 # Ce fichier
+├── ARCHITECTURE_AUTH_FIX.md     # Fix auth centralisé
+├── STORY_CREATION_FIX.md        # Fix performance création
+├── NAVIGATION_RULES.md          # Règles navigation SPA
+└── PWA_ACTIVATION.md            # Guide activation PWA
+```
+
+## 9. Fonctionnalités Avancées
+
+### PWA (Progressive Web App)
+- **Status actuel** : Désactivée en dev (`vite.config.ts` ligne 22)
+- **Activation** : Changer `false` en `true` avant prod
+- **Features** : Installation écran accueil, mode offline, notifications push
+- **Service Worker** : Cache stratégique (Supabase NetworkFirst, Fonts StaleWhileRevalidate, Images CacheFirst)
+- **Gestures** : `PWAGestures.tsx` pour swipe/scroll mobile
+- **Documentation** : `/docs/PWA_ACTIVATION.md`
+
+### Swipe-to-Delete Mobile
+- **Component** : `MobileStoryCard.tsx`
+- **Logique** : Détection direction intelligente (vertical = scroll, horizontal = swipe)
+- **États** : `detectedDirection` ref ('none'|'vertical'|'horizontal')
+- **Seuils** : 10px détection, 40px validation, 80px max swipe
+- **Attribution** : `data-swipe-card` pour éviter conflit PWAGestures
+
+### Thème Sombre/Clair
+- **Hook** : `useAppTheme()` wrapper next-themes
+- **Modes** : light, dark, system
+- **Components** : `ThemeToggle`, `SimpleThemeToggle`, `ThemeSection`
+- **Persistance** : localStorage automatique
+- **Localisation** : Settings page + Reader
+- **Design System** : Tokens sémantiques dans `index.css`
+
+### Système de Quotas
+- **Hook** : `useQuotaChecker()` temps réel
+- **Guards** : `SubscriptionGuard` pour routes premium
+- **Fonction** : `check_user_quota(user_id, quota_type)` PostgreSQL
+- **Reset** : Automatique à date anniversaire abonnement
+- **Upgrade** : Proposé dynamiquement si limite atteinte
+
+### Génération Audio ElevenLabs
+- **Voice** : ID '9BWtsMINqrJLrRacOk9x'
+- **Workflow** : Asynchrone via n8n webhooks
+- **Status** : pending → completed/error
+- **Stockage** : Bucket Supabase `audio-files`
+- **Player** : Intégré dans StoryReader avec contrôles
+
+### Export & Partage
+- **EPUB** : Génération Edge Function `upload-epub`
+- **Kindle** : Envoi via webhook n8n
+- **Partage** : Token sécurisé route `/shared/:token`
+- **Email** : Webhook n8n avec template HTML
+
+## 10. Sécurité & Conformité
+
+### Row Level Security (RLS)
+- **Status** : Activé sur TOUTES les tables
+- **Politique** : Isolation stricte par utilisateur
+- **Fonctions** : SECURITY DEFINER avec search_path sécurisé
+- **Admin** : Contournement RLS avec SERVICE_ROLE_KEY
+
+### Rate Limiting
+- **Table** : `rate_limits` avec tracking user/IP/endpoint
+- **Fonction** : `check_enhanced_rate_limit()` PostgreSQL
+- **Seuils** : Configurables par endpoint et action
+- **Blocage** : Temporaire avec `blocked_until` timestamp
+
+### Audit & Logs
+- **Table** : `security_audit_logs` pour actions sensibles
+- **Contenu** : action, user_id, ip_address, metadata, result
+- **Fonction** : `log_security_event()` PostgreSQL
+- **Monitoring** : Supabase Analytics + logs
+
+### Conformité
+- **RGPD** : Gestion données personnelles enfants
+- **COPPA** : Conformité protection enfants US
+- **WCAG 2.1** : Accessibilité interface
+- **Filtres IA** : Contenu approprié enfants
+
+### Validation
+- **Client** : Zod schemas pour formulaires
+- **Serveur** : Validation Edge Functions
+- **Types** : TypeScript strict mode
+- **Sanitization** : Protection XSS/injection
+
+## 11. Performance & Optimisation
+
+### Bundle Optimization
+- **Code Splitting** : Chunks vendor séparés (React, Supabase, OpenAI)
+- **Lazy Loading** : Routes et composants lourds
+- **Tree Shaking** : Import sélectif librairies
+- **Size Warning** : 1000KB threshold rollup
+
+### Data Fetching
+- **TanStack Query** : Cache automatique avec staleTime
+- **Optimistic Updates** : UI instantané avec rollback
+- **Pagination** : Configurable via `APP_CONFIG.pagination`
+- **Prefetching** : Données anticipées pour routes suivantes
+
+### Caching Strategy
+- **localStorage** : Cache 5min pour children (Story Creation Fix)
+- **React Query** : Cache mémoire avec invalidation
+- **Service Worker** : Cache réseau par stratégie
+- **CDN** : Assets statiques via Supabase Storage
+
+### Monitoring
+- **Logs structurés** : `logger.debug()` avec métadonnées
+- **Supabase Analytics** : Auth, DB, Edge Functions, Storage
+- **Error Boundary** : Capture erreurs React
+- **Audit Logs** : Actions sensibles trackées
+
+## 12. Déploiement & CI/CD
+
+### Environnements
+- **Développement** : Local avec hot reload
+- **Staging** : Lovable hosting avec Supabase dev
+- **Production** : [calmi-99482.web.app](https://calmi-99482.web.app) + Supabase prod
+
+### Déploiement Frontend
+- **Platform** : Lovable hosting + Firebase legacy
+- **Build** : `npm run build` → optimisé + PWA
+- **Deploy** : Automatique via GitHub Actions sur `main`
+- **Update** : Cliquer "Update" dans publish dialog
+
+### Déploiement Backend
+- **Edge Functions** : Déploiement immédiat et automatique
+- **Migrations** : `supabase db push` ou via Supabase Dashboard
+- **Secrets** : Gérés via Supabase Dashboard
+- **Rollback** : Restauration versions précédentes Supabase
+
+### Checks pré-déploiement
+- [ ] Tests Vitest passés
+- [ ] Build production réussi
+- [ ] RLS policies validées
+- [ ] Rate limits configurés
+- [ ] Secrets Supabase à jour
+- [ ] Edge Functions déployées
+- [ ] PWA activée (si prod finale)
+- [ ] Lighthouse score > 90
+
+## 13. Troubleshooting & Debug
+
+### Outils disponibles
+- **Console logs** : Logs structurés avec préfixes
+- **Network requests** : TanStack Query DevTools
+- **Supabase logs** : Auth, DB, Edge Functions
+- **React DevTools** : State et props inspection
+- **Lighthouse** : Performance et PWA audit
+
+### Problèmes fréquents
+
+**Authentification bloquée**
+- Vérifier `AuthGuard` centralisé (timeout 5s)
+- Nettoyer Service Worker si nécessaire
+- Flag `calmi-sw-cleaned-v2` localStorage
+
+**Navigation ne fonctionne pas**
+- Utiliser UNIQUEMENT `useAppNavigation`
+- Jamais `window.location.href` en SPA
+- Source de vérité : `location.pathname`
+
+**Quotas non mis à jour**
+- Fonction `reset_monthly_quotas()` PostgreSQL
+- Vérifier `current_period_end` dans `user_subscriptions`
+- Forcer reset manuel si nécessaire
+
+**Swipe-to-delete conflit scroll**
+- Vérifier attribut `data-swipe-card` sur carte
+- PWAGestures ignore les cartes swipables
+- Direction détectée via `detectedDirection` ref
+
+**Audio ne se génère pas**
+- Vérifier quota ElevenLabs restant
+- Logs n8n webhook callback
+- Status `audio_files` table (pending/completed/error)
+
+**Thème ne persiste pas**
+- `useAppTheme()` gère localStorage automatiquement
+- Vérifier `mounted` avant render
+- `next-themes` provider dans `main.tsx`
+
+## 14. Roadmap & Évolutions
+
+### Implémenté ✅
+- Système abonnements 4 tiers complet
+- PWA avec cache avancé (désactivée dev)
+- Génération histoires IA optimisée
+- Audio ElevenLabs asynchrone
+- Bibliothèque filtres + swipe-to-delete
+- Profils enfants détaillés
+- Sécurité RLS + rate limiting
+- Export EPUB/Kindle
+- Thème clair/sombre dans settings
+- Navigation SPA centralisée
+
+### En cours 🚧
+- Tests E2E complets
+- Monitoring Sentry production
+- Load testing capacité
+- Analytics dashboard admin
+
+### À venir 🚀
+- Community features (tiers premium)
+- Story series avancées avec UI dédiée
+- Background music integration complète
+- Notifications push PWA
+- Multilingue (i18n)
+- Amélioration UX mobile
+- A/B testing génération histoires
+
+---
+
+**Dernière mise à jour** : 2025-01-26  
+**Version** : 3.0 (Post-refactoring abonnements + thème + swipe)  
+**Statut** : Production ready avec PWA désactivée dev
