@@ -8,6 +8,7 @@ import { NotificationsSection } from '@/components/settings/NotificationsSection
 import { SecuritySection } from '@/components/settings/SecuritySection';
 import { AccountManagementSection } from '@/components/settings/AccountManagementSection';
 import { ReadingPreferencesSection } from '@/components/settings/ReadingPreferencesSection';
+import { ThemeSection } from '@/components/settings/ThemeSection';
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -167,6 +168,8 @@ const Settings = () => {
       />
 
       <AccountInfoSection user={user} />
+
+      <ThemeSection />
 
       <ReadingPreferencesSection
         userSettings={userSettings}
