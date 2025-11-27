@@ -61,9 +61,15 @@ export const generateCharacterContext = (analysis: CharacterAnalysis): string =>
   if (pets.length > 0) {
     context += "\nANIMAUX DE COMPAGNIE :\n";
     pets.forEach(pet => {
-      context += `- ${pet.name} : animal de compagnie`;
-      if (pet.teddyName) {
-        context += ` (${pet.teddyName})`;
+      let petTypeLabel = "";
+      if (pet.petType === 'dog') petTypeLabel = "chien";
+      else if (pet.petType === 'cat') petTypeLabel = "chat";
+      else if (pet.petType === 'other' && pet.petTypeCustom) petTypeLabel = pet.petTypeCustom;
+      else petTypeLabel = "animal de compagnie";
+
+      context += `- ${pet.name} : ${petTypeLabel}`;
+      if (pet.teddyDescription) {
+        context += ` (${pet.teddyDescription})`;
       }
       context += "\n";
     });
