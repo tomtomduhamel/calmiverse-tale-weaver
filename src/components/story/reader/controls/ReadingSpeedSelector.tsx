@@ -6,6 +6,7 @@ import { useReadingSpeed } from '@/contexts/ReadingSpeedContext';
 
 interface ReadingSpeedSelectorProps {
   isDarkMode?: boolean;
+  compact?: boolean;
 }
 
 const SPEED_PRESETS = [
@@ -29,7 +30,7 @@ const SPEED_PRESETS = [
   },
 ];
 
-export const ReadingSpeedSelector: React.FC<ReadingSpeedSelectorProps> = ({ isDarkMode = false }) => {
+export const ReadingSpeedSelector: React.FC<ReadingSpeedSelectorProps> = ({ isDarkMode = false, compact = false }) => {
   const { readingSpeed, setReadingSpeed } = useReadingSpeed();
 
   const handleSpeedChange = (newSpeed: number) => {
@@ -38,9 +39,11 @@ export const ReadingSpeedSelector: React.FC<ReadingSpeedSelectorProps> = ({ isDa
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-        Vitesse
-      </span>
+      {!compact && (
+        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+          Vitesse
+        </span>
+      )}
       <TooltipProvider delayDuration={300}>
         <div className="flex gap-1">
           {SPEED_PRESETS.map((preset) => {

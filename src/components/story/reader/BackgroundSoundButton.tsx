@@ -8,13 +8,15 @@ interface BackgroundSoundButtonProps {
   storyObjective?: string | null;
   isDarkMode?: boolean;
   autoPlay?: boolean;
+  compact?: boolean;
 }
 
 export const BackgroundSoundButton: React.FC<BackgroundSoundButtonProps> = ({
   soundId,
   storyObjective,
   isDarkMode = false,
-  autoPlay = false
+  autoPlay = false,
+  compact = false
 }) => {
   return (
     <SoundControlLogic

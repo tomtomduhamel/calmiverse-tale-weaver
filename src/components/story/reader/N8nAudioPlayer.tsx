@@ -7,11 +7,13 @@ interface N8nAudioPlayerProps {
   storyId: string;
   text: string;
   isDarkMode?: boolean;
+  compact?: boolean;
 }
 export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
   storyId,
   text,
-  isDarkMode = false
+  isDarkMode = false,
+  compact = false
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
@@ -170,6 +172,41 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
     }
     return null;
   };
+  // Mode compact : uniquement les icônes essentielles
+  if (compact) {
+    return (
+      <div className="flex items-center gap-1">
+        {/* Bouton principal - Play/Pause ou Générer */}
+        <Button 
+          onClick={readyAudioFile ? handlePlayPause : handleGenerateAudio} 
+          disabled={isGenerating || !!pendingAudioFile}
+          variant="outline" 
+          size="icon"
+          className="h-8 w-8"
+        >
+          {isGenerating || pendingAudioFile ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : readyAudioFile ? (
+            isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />
+          ) : (
+            <Volume2 className="h-4 w-4" />
+          )}
+        </Button>
+
+        {/* Bouton refresh - toujours visible en mode compact */}
+        <Button 
+          onClick={handleRefresh} 
+          variant="outline" 
+          size="icon"
+          className="h-8 w-8"
+        >
+          <RefreshCw className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  // Mode normal (desktop)
   return <div className="space-y-3">
       {/* Bouton principal */}
       <div className="flex gap-2">
