@@ -11,6 +11,7 @@ import { ShareStoryDialog } from "./ShareStoryDialog";
 import { useShareDialog } from "@/hooks/story/reader/useShareDialog";
 import BackgroundSoundButton from "./reader/BackgroundSoundButton";
 import { extractObjectiveValue } from "@/utils/objectiveUtils";
+import { ReadingSpeedSelector } from "./reader/controls/ReadingSpeedSelector";
 interface ReaderControlsProps {
   fontSize: number;
   setFontSize: (size: number) => void;
@@ -60,7 +61,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           
           {/* Layout responsive : horizontal sur desktop, grille sur mobile */}
-          <div className="hidden sm:flex items-center justify-between gap-8">
+          <div className="hidden sm:flex items-center justify-between gap-4">
             {/* Desktop Layout - horizontal */}
             
             {/* 1. Génération audio */}
@@ -68,10 +69,13 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
             </div>
 
-            {/* 2. Musique d'ambiance */}
+            {/* 2. Vitesse de lecture */}
+            <ReadingSpeedSelector isDarkMode={isDarkMode} />
+
+            {/* 3. Musique d'ambiance */}
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-muted-foreground">
-                Musique d'ambiance
+              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                Musique
               </span>
               <BackgroundSoundButton 
                 soundId={story.sound_id} 
@@ -81,10 +85,10 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               />
             </div>
 
-            {/* 3. Histoire lue */}
+            {/* 4. Histoire lue */}
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-muted-foreground">
-                {isRead ? 'Marquer comme non lue' : 'Marquer comme lue'}
+              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                {isRead ? 'Non lue' : 'Lue'}
               </span>
               <MarkAsReadButton 
                 storyId={storyId} 
@@ -96,7 +100,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             </div>
 
             {/* Diagnostic technique (discret) */}
-            <div className="ml-4">
+            <div className="ml-2">
               <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
             </div>
           </div>
@@ -106,6 +110,11 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             {/* Première ligne : Génération audio (pleine largeur) */}
             <div className="w-full">
               <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
+            </div>
+
+            {/* Vitesse de lecture - mobile */}
+            <div className="flex justify-center">
+              <ReadingSpeedSelector isDarkMode={isDarkMode} />
             </div>
             
             {/* Deuxième ligne : Musique d'ambiance et Histoire lue en grille 2 colonnes */}
