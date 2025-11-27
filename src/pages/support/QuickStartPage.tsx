@@ -1,21 +1,10 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  BookOpen, 
-  Users, 
-  Sparkles, 
-  Volume2, 
-  MessageSquarePlus,
-  Mail,
-  CheckCircle2,
-  ArrowRight
-} from 'lucide-react';
+import { BookOpen, Users, Sparkles, Volume2, MessageSquarePlus, Mail, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
 export const QuickStartPage: React.FC = () => {
-  return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
+  return <div className="container mx-auto py-8 px-4 max-w-4xl">
       {/* Hero Section */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">
@@ -79,10 +68,7 @@ export const QuickStartPage: React.FC = () => {
               </p>
               <div className="bg-muted/50 p-4 rounded-lg mb-3">
                 <p className="text-sm font-medium mb-2">💡 Astuce :</p>
-                <p className="text-sm text-muted-foreground">
-                  La génération prend environ 30 secondes. Vous pouvez quitter la page, 
-                  une notification vous préviendra quand l'histoire sera prête !
-                </p>
+                <p className="text-sm text-muted-foreground">La génération peut prendre 5 à 10 minutes. Une notification vous préviendra quand l'histoire sera prête !</p>
               </div>
               <Link to="/create-story/step-1">
                 <Button variant="outline" size="sm">
@@ -221,6 +207,5 @@ export const QuickStartPage: React.FC = () => {
           nous allons créer la meilleure expérience pour vos enfants.
         </p>
       </div>
-    </div>
-  );
+    </div>;
 };
