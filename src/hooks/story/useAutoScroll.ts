@@ -173,7 +173,8 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
       // Redémarrer avec la nouvelle vitesse
       startAutoScroll();
     }
-  }, [readingSpeed, scrollStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readingSpeed]);
   
   // Démarrer automatiquement si activé
   useEffect(() => {
