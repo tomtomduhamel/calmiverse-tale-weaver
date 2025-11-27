@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Snail, Turtle, Rabbit } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -34,13 +34,27 @@ const SPEED_PRESETS = [
 export const ReadingSpeedSelector: React.FC<ReadingSpeedSelectorProps> = ({ isDarkMode = false }) => {
   const { userSettings } = useUserSettings();
   const { user } = useSupabaseAuth();
-  const currentSpeed = userSettings?.readingPreferences?.readingSpeed || 125;
+  
+  // État local pour feedback immédiat
+  const [selectedSpeed, setSelectedSpeed] = useState<number>(
+    userSettings?.readingPreferences?.readingSpeed || 125
+  );
+
+  // Synchroniser avec les paramètres utilisateur
+  useEffect(() => {
+    const userSpeed = userSettings?.readingPreferences?.readingSpeed || 125;
+    setSelectedSpeed(userSpeed);
+  }, [userSettings?.readingPreferences?.readingSpeed]);
 
   const handleSpeedChange = async (newSpeed: number) => {
     if (!user) return;
     
+    // Mise à jour immédiate de l'état local pour feedback visuel instantané
+    setSelectedSpeed(newSpeed);
+    console.log(`[ReadingSpeed] Changement immédiat vers: ${newSpeed} mots/min`);
+    
     try {
-      // Mise à jour silencieuse sans notification toast
+      // Mise à jour silencieuse en base de données
       const { error } = await supabase
         .from('users')
         .update({ reading_speed: newSpeed })
@@ -48,11 +62,15 @@ export const ReadingSpeedSelector: React.FC<ReadingSpeedSelectorProps> = ({ isDa
       
       if (error) {
         console.error('[ReadingSpeed] Erreur lors du changement de vitesse:', error);
+        // Revenir à la vitesse précédente en cas d'erreur
+        setSelectedSpeed(userSettings?.readingPreferences?.readingSpeed || 125);
       } else {
-        console.log(`[ReadingSpeed] Vitesse changée: ${newSpeed} mots/min`);
+        console.log(`[ReadingSpeed] Vitesse sauvegardée: ${newSpeed} mots/min`);
       }
     } catch (error) {
       console.error('[ReadingSpeed] Erreur lors du changement de vitesse:', error);
+      // Revenir à la vitesse précédente en cas d'erreur
+      setSelectedSpeed(userSettings?.readingPreferences?.readingSpeed || 125);
     }
   };
 
@@ -65,7 +83,7 @@ export const ReadingSpeedSelector: React.FC<ReadingSpeedSelectorProps> = ({ isDa
         <div className="flex gap-1">
           {SPEED_PRESETS.map((preset) => {
             const Icon = preset.icon;
-            const isActive = currentSpeed === preset.speed;
+            const isActive = selectedSpeed === preset.speed;
             
             return (
               <Tooltip key={preset.speed}>
