@@ -119,51 +119,45 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             </div>
           </div>
 
-          {/* Mobile Layout - grille compacte optimisée */}
-          <div className="sm:hidden space-y-2.5">
-            {/* Première ligne : Génération audio (pleine largeur) */}
-            <div className="w-full">
-              <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
-            </div>
-
-            {/* Vitesse de lecture - mobile centré */}
-            <div className="flex justify-center py-1">
-              <ReadingSpeedSelector isDarkMode={isDarkMode} />
-            </div>
+          {/* Mobile Layout - Design minimaliste 2 lignes */}
+          <div className="sm:hidden flex flex-col items-center gap-2.5 py-1">
             
-            {/* Deuxième ligne : Musique d'ambiance et Histoire lue en grille 2 colonnes */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Musique d'ambiance - compact */}
-              <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-border/50 bg-background/50">
-                <span className="text-xs font-medium text-center text-muted-foreground">
-                  Musique
-                </span>
-                <BackgroundSoundButton 
-                  soundId={story.sound_id} 
-                  storyObjective={extractObjectiveValue(story.objective) || undefined} 
-                  isDarkMode={isDarkMode} 
-                  autoPlay={false} 
-                />
-              </div>
-
-              {/* Histoire lue - compact */}
-              <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-border/50 bg-background/50">
-                <span className="text-xs font-medium text-center text-muted-foreground">
-                  {isRead ? 'Non lue' : 'Lue'}
-                </span>
-                <MarkAsReadButton 
-                  storyId={storyId} 
-                  onMarkAsRead={onMarkAsRead!} 
-                  isRead={isRead} 
-                  isUpdatingReadStatus={isUpdatingReadStatus} 
-                  isDarkMode={isDarkMode} 
-                />
-              </div>
+            {/* Ligne 1 : Audio - centré */}
+            <div className="flex items-center justify-center">
+              <N8nAudioPlayer 
+                storyId={storyId} 
+                text={story.content} 
+                isDarkMode={isDarkMode}
+                compact={true}
+              />
             </div>
 
-            {/* Diagnostic technique en bas à droite - mobile */}
-            <div className="flex justify-end pt-1">
-              <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
+            {/* Ligne 2 : Vitesse + Musique + Lu - tous centrés */}
+            <div className="flex items-center justify-center gap-1.5">
+              {/* Vitesse - icônes seules */}
+              <ReadingSpeedSelector isDarkMode={isDarkMode} compact={true} />
+              
+              {/* Séparateur */}
+              <div className="h-6 w-px bg-border/50 mx-1" />
+              
+              {/* Musique - icône seule */}
+              <BackgroundSoundButton 
+                soundId={story.sound_id} 
+                storyObjective={extractObjectiveValue(story.objective) || undefined} 
+                isDarkMode={isDarkMode} 
+                autoPlay={false}
+                compact={true}
+              />
+              
+              {/* Marquer lu - icône seule */}
+              <MarkAsReadButton 
+                storyId={storyId} 
+                onMarkAsRead={onMarkAsRead!} 
+                isRead={isRead} 
+                isUpdatingReadStatus={isUpdatingReadStatus} 
+                isDarkMode={isDarkMode}
+                compact={true}
+              />
             </div>
           </div>
 
