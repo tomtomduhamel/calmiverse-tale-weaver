@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, X, Loader2, User, Heart, Cat } from "lucide-react";
+import { Plus, X, Loader2, User, Heart, Cat, Dog, Rabbit } from "lucide-react";
 import { DatePickerWithInput } from "@/components/ui/date-picker/DatePickerWithInput";
 import SupabaseTeddyPhotoUpload from "./SupabaseTeddyPhotoUpload";
 import TeddyPhotoGallery from "./TeddyPhotoGallery";
-import type { Child, ChildGender } from "@/types/child";
+import type { Child, ChildGender, PetType } from "@/types/child";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +17,8 @@ interface ChildFormProps {
   childName?: string;
   birthDate?: Date;
   gender?: ChildGender;
+  petType?: PetType;
+  petTypeCustom?: string;
   teddyName?: string;
   teddyDescription?: string;
   imaginaryWorld?: string;
@@ -30,6 +32,8 @@ interface ChildFormProps {
   onChildNameChange?: (value: string) => void;
   onBirthDateChange?: (value: Date) => void;
   onGenderChange?: (value: ChildGender) => void;
+  onPetTypeChange?: (value: PetType) => void;
+  onPetTypeCustomChange?: (value: string) => void;
   onTeddyNameChange?: (value: string) => void;
   onTeddyDescriptionChange?: (value: string) => void;
   onImaginaryWorldChange?: (value: string) => void;
@@ -42,6 +46,8 @@ const ChildForm: React.FC<ChildFormProps> = ({
   childName = "",
   birthDate = new Date(),
   gender = "boy",
+  petType,
+  petTypeCustom = "",
   teddyName = "",
   teddyDescription = "",
   imaginaryWorld = "",
@@ -55,6 +61,8 @@ const ChildForm: React.FC<ChildFormProps> = ({
   onChildNameChange,
   onBirthDateChange,
   onGenderChange,
+  onPetTypeChange,
+  onPetTypeCustomChange,
   onTeddyNameChange,
   onTeddyDescriptionChange,
   onImaginaryWorldChange,
@@ -68,6 +76,8 @@ const ChildForm: React.FC<ChildFormProps> = ({
   const [localChildName, setLocalChildName] = React.useState(initialValues?.name || childName);
   const [localBirthDate, setLocalBirthDate] = React.useState(initialValues?.birthDate || birthDate);
   const [localGender, setLocalGender] = React.useState<ChildGender>(initialValues?.gender || gender);
+  const [localPetType, setLocalPetType] = React.useState<PetType | undefined>(initialValues?.petType || petType);
+  const [localPetTypeCustom, setLocalPetTypeCustom] = React.useState(initialValues?.petTypeCustom || petTypeCustom);
   const [localTeddyName, setLocalTeddyName] = React.useState(initialValues?.teddyName || teddyName);
   const [localTeddyDescription, setLocalTeddyDescription] = React.useState(initialValues?.teddyDescription || teddyDescription);
   const [localImaginaryWorld, setLocalImaginaryWorld] = React.useState(initialValues?.imaginaryWorld || imaginaryWorld);
@@ -75,16 +85,26 @@ const ChildForm: React.FC<ChildFormProps> = ({
   // Logique conditionnelle pour masquer les champs teddy si l'enfant est un animal
   const currentGender = onGenderChange ? gender : localGender;
   const showTeddyFields = currentGender !== 'pet';
+  const showPetTypeFields = currentGender === 'pet';
+  const currentPetType = onPetTypeChange ? petType : localPetType;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Construire l'objet enfant à partir des valeurs locales ou des props
     const selectedGender = onGenderChange ? gender : localGender;
+    const selectedPetType = onPetTypeChange ? petType : localPetType;
+    const selectedPetTypeCustom = onPetTypeCustomChange ? petTypeCustom : localPetTypeCustom;
+    
     const childData: Partial<Child> = {
       name: onChildNameChange ? childName : localChildName,
       birthDate: onBirthDateChange ? birthDate : localBirthDate,
       gender: selectedGender,
+      // Champs pour les animaux
+      ...(selectedGender === 'pet' && {
+        petType: selectedPetType,
+        petTypeCustom: selectedPetType === 'other' ? selectedPetTypeCustom : undefined,
+      }),
       // Champs teddy uniquement si ce n'est pas un animal
       ...(selectedGender !== 'pet' && {
         teddyName: onTeddyNameChange ? teddyName : localTeddyName,
@@ -158,6 +178,57 @@ const ChildForm: React.FC<ChildFormProps> = ({
           </div>
         </RadioGroup>
       </div>
+
+      {showPetTypeFields && (
+        <>
+          <div className={labelSpacing}>
+            <Label>Type d'animal</Label>
+            <RadioGroup 
+              value={onPetTypeChange ? petType : localPetType}
+              onValueChange={(value: PetType) => onPetTypeChange ? onPetTypeChange(value) : setLocalPetType(value)}
+              disabled={isSubmitting}
+              className="flex flex-row gap-6"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="dog" id="dog" />
+                <Label htmlFor="dog" className="flex items-center gap-2 cursor-pointer">
+                  <Dog className="h-4 w-4 text-amber-600" />
+                  Chien
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="cat" id="cat" />
+                <Label htmlFor="cat" className="flex items-center gap-2 cursor-pointer">
+                  <Cat className="h-4 w-4 text-orange-500" />
+                  Chat
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="other" id="other-pet" />
+                <Label htmlFor="other-pet" className="flex items-center gap-2 cursor-pointer">
+                  <Rabbit className="h-4 w-4 text-gray-600" />
+                  Autre
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {currentPetType === 'other' && (
+            <div className={labelSpacing}>
+              <Label htmlFor="petTypeCustom">Quel type d'animal ?</Label>
+              <Input
+                id="petTypeCustom"
+                value={onPetTypeCustomChange ? petTypeCustom : localPetTypeCustom}
+                onChange={(e) => onPetTypeCustomChange ? onPetTypeCustomChange(e.target.value) : setLocalPetTypeCustom(e.target.value)}
+                placeholder="Ex: lapin, hamster, poisson, tortue..."
+                disabled={isSubmitting}
+                maxLength={50}
+                className={cn(isMobile && "h-12 text-base")}
+              />
+            </div>
+          )}
+        </>
+      )}
 
       {showTeddyFields && (
         <>
