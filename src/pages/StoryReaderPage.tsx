@@ -5,6 +5,7 @@ import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useStoryFavorites } from "@/hooks/stories/useStoryFavorites";
 import StoryReader from "@/components/StoryReader";
+import { ReadingSpeedProvider } from "@/contexts/ReadingSpeedContext";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import type { Story } from "@/types/story";
@@ -143,13 +144,15 @@ const StoryReaderPage: React.FC = () => {
   }
 
   return (
-    <StoryReader
-      story={currentStory}
-      onClose={handleClose}
-      onToggleFavorite={handleToggleFavorite}
-      onMarkAsRead={handleMarkAsRead}
-      childName={getChildName(currentStory.childrenIds)}
-    />
+    <ReadingSpeedProvider>
+      <StoryReader
+        story={currentStory}
+        onClose={handleClose}
+        onToggleFavorite={handleToggleFavorite}
+        onMarkAsRead={handleMarkAsRead}
+        childName={getChildName(currentStory.childrenIds)}
+      />
+    </ReadingSpeedProvider>
   );
 };
 

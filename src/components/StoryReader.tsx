@@ -12,7 +12,6 @@ import ReaderControls from "./story/ReaderControls";
 import { FloatingToggleButton } from "./story/reader/controls/FloatingToggleButton";
 import { CollapsibleControls } from "./story/reader/controls/CollapsibleControls";
 import { useStoryReader } from "@/hooks/story/reader/useStoryReader";
-import { ReadingSpeedProvider } from "@/contexts/ReadingSpeedContext";
 
 interface StoryReaderProps {
   story: Story | null;
@@ -73,8 +72,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   const readingTimeString = calculateReadingTime(story.content);
 
   return (
-    <ReadingSpeedProvider>
-      <StoryReaderLayout scrollAreaRef={scrollAreaRef}>
+    <StoryReaderLayout scrollAreaRef={scrollAreaRef}>
         <StoryReaderHeader
           story={story}
           onClose={handleBack}
@@ -139,8 +137,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         showSummary={showSummary}
         setShowSummary={setShowSummary}
       />
-      </StoryReaderLayout>
-    </ReadingSpeedProvider>
+    </StoryReaderLayout>
   );
 };
 
