@@ -58,22 +58,30 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   };
   return <>
       <div className={`${isDarkMode ? 'bg-card/95' : 'bg-card/95'} border-t transition-colors duration-300`}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3">
           
           {/* Layout responsive : horizontal sur desktop, grille sur mobile */}
-          <div className="hidden sm:flex items-center justify-between gap-4">
-            {/* Desktop Layout - horizontal */}
+          <div className="hidden sm:flex items-center gap-3">
+            {/* Desktop Layout - horizontal équilibré */}
             
-            {/* 1. Génération audio */}
-            <div className="flex-1">
+            {/* 1. Génération audio - compact */}
+            <div className="shrink-0">
               <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
             </div>
 
+            {/* Séparateur visuel */}
+            <div className="h-8 w-px bg-border/50" />
+
             {/* 2. Vitesse de lecture */}
-            <ReadingSpeedSelector isDarkMode={isDarkMode} />
+            <div className="shrink-0">
+              <ReadingSpeedSelector isDarkMode={isDarkMode} />
+            </div>
+
+            {/* Séparateur visuel */}
+            <div className="h-8 w-px bg-border/50" />
 
             {/* 3. Musique d'ambiance */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
                 Musique
               </span>
@@ -85,8 +93,11 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               />
             </div>
 
+            {/* Séparateur visuel */}
+            <div className="h-8 w-px bg-border/50" />
+
             {/* 4. Histoire lue */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
                 {isRead ? 'Non lue' : 'Lue'}
               </span>
@@ -99,28 +110,31 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               />
             </div>
 
-            {/* Diagnostic technique (discret) */}
-            <div className="ml-2">
+            {/* Spacer flexible pour pousser le diagnostic à droite */}
+            <div className="flex-1" />
+
+            {/* Diagnostic technique (discret à droite) */}
+            <div className="shrink-0">
               <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
             </div>
           </div>
 
-          {/* Mobile Layout - grille compacte */}
-          <div className="sm:hidden space-y-3">
+          {/* Mobile Layout - grille compacte optimisée */}
+          <div className="sm:hidden space-y-2.5">
             {/* Première ligne : Génération audio (pleine largeur) */}
             <div className="w-full">
               <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
             </div>
 
-            {/* Vitesse de lecture - mobile */}
-            <div className="flex justify-center">
+            {/* Vitesse de lecture - mobile centré */}
+            <div className="flex justify-center py-1">
               <ReadingSpeedSelector isDarkMode={isDarkMode} />
             </div>
             
             {/* Deuxième ligne : Musique d'ambiance et Histoire lue en grille 2 colonnes */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {/* Musique d'ambiance - compact */}
-              <div className="flex flex-col items-center gap-2 p-2 rounded-lg border border-border/50">
+              <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-border/50 bg-background/50">
                 <span className="text-xs font-medium text-center text-muted-foreground">
                   Musique
                 </span>
@@ -133,7 +147,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               </div>
 
               {/* Histoire lue - compact */}
-              <div className="flex flex-col items-center gap-2 p-2 rounded-lg border border-border/50">
+              <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-border/50 bg-background/50">
                 <span className="text-xs font-medium text-center text-muted-foreground">
                   {isRead ? 'Non lue' : 'Lue'}
                 </span>
@@ -148,7 +162,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             </div>
 
             {/* Diagnostic technique en bas à droite - mobile */}
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-1">
               <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
             </div>
           </div>
