@@ -117,6 +117,8 @@ export const useSupabaseChildren = () => {
         birthDate: new Date(child.birthdate),
         interests: child.interests || [],
         gender: child.gender || 'unknown',
+        petType: child.pet_type || undefined,
+        petTypeCustom: child.pet_type_custom || undefined,
         authorId: child.authorid,
         teddyName: child.teddyname || '',
         teddyDescription: child.teddydescription || '',
@@ -219,6 +221,8 @@ export const useSupabaseChildren = () => {
         birthdate: childData.birthDate.toISOString(),
         interests: childData.interests || [],
         gender: childData.gender || 'unknown',
+        pet_type: childData.petType || null,
+        pet_type_custom: childData.petTypeCustom || null,
         authorid: session.user.id,
         teddyname: childData.teddyName || '',
         teddydescription: childData.teddyDescription || '',
@@ -237,6 +241,8 @@ export const useSupabaseChildren = () => {
       birthDate: new Date(data.birthdate),
       interests: data.interests || [],
       gender: data.gender || 'unknown',
+      petType: data.pet_type || undefined,
+      petTypeCustom: data.pet_type_custom || undefined,
       authorId: data.authorid,
       teddyName: data.teddyname || '',
       teddyDescription: data.teddydescription || '',
@@ -264,6 +270,8 @@ export const useSupabaseChildren = () => {
     if (updatedData.birthDate !== undefined) supabaseData.birthdate = updatedData.birthDate.toISOString();
     if (updatedData.interests !== undefined) supabaseData.interests = updatedData.interests;
     if (updatedData.gender !== undefined) supabaseData.gender = updatedData.gender;
+    if (updatedData.petType !== undefined) supabaseData.pet_type = updatedData.petType;
+    if (updatedData.petTypeCustom !== undefined) supabaseData.pet_type_custom = updatedData.petTypeCustom;
     if (updatedData.teddyName !== undefined) supabaseData.teddyname = updatedData.teddyName;
     if (updatedData.teddyDescription !== undefined) supabaseData.teddydescription = updatedData.teddyDescription;
     if (updatedData.teddyPhotos !== undefined) supabaseData.teddyphotos = updatedData.teddyPhotos;
