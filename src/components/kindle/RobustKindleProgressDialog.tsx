@@ -24,14 +24,14 @@ export const RobustKindleProgressDialog: React.FC<RobustKindleProgressDialogProp
   onRetry
 }) => {
   const getStepIcon = () => {
-    if (!progress) return <Loader2 className="h-4 w-4 animate-spin" />;
+    if (!progress) return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
     switch (progress.step) {
       case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
       case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+        return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
     }
   };
   const getStepDescription = (step: string) => {
@@ -69,7 +69,7 @@ export const RobustKindleProgressDialog: React.FC<RobustKindleProgressDialogProp
                 
                 
                 
-                {progress.details && <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                {progress.details && <div className="text-xs text-muted-foreground bg-muted/50 dark:bg-muted p-3 rounded-md border border-border">
                     {progress.details}
                   </div>}
 
