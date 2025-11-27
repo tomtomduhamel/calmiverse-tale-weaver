@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect } from "react";
 import { useUserSettings } from "@/hooks/settings/useUserSettings";
+import { useReadingSpeed } from "@/contexts/ReadingSpeedContext";
 import { useAutoScrollState } from "./useAutoScrollState";
 import { useScrollDomUtils } from "./scrollDomUtils";
 import { calculateScrollSpeed, calculateScrollMetrics, calculateTargetPosition } from "./scrollCalculations";
@@ -23,9 +24,11 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
 
   const { getViewportElement, scrollToPosition } = useScrollDomUtils(scrollAreaRef);
   
-  // Récupération des paramètres utilisateur
+  // Récupération de la vitesse de lecture depuis le Context partagé
+  const { readingSpeed } = useReadingSpeed();
+  
+  // Récupération des autres paramètres utilisateur
   const { userSettings } = useUserSettings();
-  const readingSpeed = userSettings?.readingPreferences?.readingSpeed || 125;
   const autoScrollEnabled = userSettings?.readingPreferences?.autoScrollEnabled !== false;
   
   // Notifier les changements d'état de défilement
