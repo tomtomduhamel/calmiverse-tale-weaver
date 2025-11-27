@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ChildForm from "../ChildForm";
-import type { Child, ChildGender } from "@/types/child";
+import type { Child, ChildGender, PetType } from "@/types/child";
 
 interface AddChildModalProps {
   open: boolean;
@@ -15,6 +15,8 @@ interface AddChildModalProps {
   childName: string;
   birthDate: Date;
   gender: ChildGender;
+  petType?: PetType;
+  petTypeCustom?: string;
   teddyName: string;
   teddyDescription: string;
   imaginaryWorld: string;
@@ -26,6 +28,8 @@ interface AddChildModalProps {
   onChildNameChange: (value: string) => void;
   onBirthDateChange: (value: Date) => void;
   onGenderChange: (value: ChildGender) => void;
+  onPetTypeChange?: (value: PetType) => void;
+  onPetTypeCustomChange?: (value: string) => void;
   onTeddyNameChange: (value: string) => void;
   onTeddyDescriptionChange: (value: string) => void;
   onImaginaryWorldChange: (value: string) => void;
@@ -40,6 +44,8 @@ const AddChildModal: React.FC<AddChildModalProps> = ({
   childName,
   birthDate,
   gender,
+  petType,
+  petTypeCustom,
   teddyName,
   teddyDescription,
   imaginaryWorld,
@@ -51,6 +57,8 @@ const AddChildModal: React.FC<AddChildModalProps> = ({
   onChildNameChange,
   onBirthDateChange,
   onGenderChange,
+  onPetTypeChange,
+  onPetTypeCustomChange,
   onTeddyNameChange,
   onTeddyDescriptionChange,
   onImaginaryWorldChange,
@@ -83,6 +91,8 @@ const AddChildModal: React.FC<AddChildModalProps> = ({
           childName={childName}
           birthDate={birthDate}
           gender={gender}
+          petType={petType}
+          petTypeCustom={petTypeCustom}
           teddyName={teddyName}
           teddyDescription={teddyDescription}
           imaginaryWorld={imaginaryWorld}
@@ -94,6 +104,8 @@ const AddChildModal: React.FC<AddChildModalProps> = ({
           onChildNameChange={onChildNameChange}
           onBirthDateChange={onBirthDateChange}
           onGenderChange={onGenderChange}
+          onPetTypeChange={onPetTypeChange}
+          onPetTypeCustomChange={onPetTypeCustomChange}
           onTeddyNameChange={onTeddyNameChange}
           onTeddyDescriptionChange={onTeddyDescriptionChange}
           onImaginaryWorldChange={onImaginaryWorldChange}

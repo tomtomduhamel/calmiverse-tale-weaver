@@ -4,7 +4,7 @@ import ChildrenSearchBar from "./ChildrenSearchBar";
 import MobileChildrenFilters from "./MobileChildrenFilters";
 import ChildrenGridLayout from "./ChildrenGridLayout";
 import AddChildModal from "./AddChildModal";
-import type { Child, ChildGender } from "@/types/child";
+import type { Child, ChildGender, PetType } from "@/types/child";
 import { calculateAge } from "@/utils/age";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -36,6 +36,8 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   const [childName, setChildName] = useState("");
   const [birthDate, setBirthDate] = useState(new Date());
   const [gender, setGender] = useState<ChildGender>("boy");
+  const [petType, setPetType] = useState<PetType | undefined>(undefined);
+  const [petTypeCustom, setPetTypeCustom] = useState("");
   const [teddyName, setTeddyName] = useState("");
   const [teddyDescription, setTeddyDescription] = useState("");
   const [imaginaryWorld, setImaginaryWorld] = useState("");
@@ -95,6 +97,8 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
     setChildName("");
     setBirthDate(new Date());
     setGender("boy");
+    setPetType(undefined);
+    setPetTypeCustom("");
     setTeddyName("");
     setTeddyDescription("");
     setImaginaryWorld("");
@@ -116,6 +120,8 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
     setChildName(child.name);
     setBirthDate(child.birthDate);
     setGender(child.gender);
+    setPetType(child.petType);
+    setPetTypeCustom(child.petTypeCustom || "");
     setTeddyName(child.teddyName || "");
     setTeddyDescription(child.teddyDescription || "");
     setImaginaryWorld(child.imaginaryWorld || "");
@@ -132,6 +138,8 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
           name: childData.name,
           birthDate: childData.birthDate,
           gender: childData.gender,
+          petType: childData.petType,
+          petTypeCustom: childData.petTypeCustom,
           teddyName: childData.teddyName,
           teddyDescription: childData.teddyDescription,
           imaginaryWorld: childData.imaginaryWorld,
@@ -143,6 +151,8 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
           name: childData.name,
           birthDate: childData.birthDate,
           gender: childData.gender,
+          petType: childData.petType,
+          petTypeCustom: childData.petTypeCustom,
           teddyName: childData.teddyName,
           teddyDescription: childData.teddyDescription,
           imaginaryWorld: childData.imaginaryWorld,
@@ -231,6 +241,8 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
         childName={childName}
         birthDate={birthDate}
         gender={gender}
+        petType={petType}
+        petTypeCustom={petTypeCustom}
         teddyName={teddyName}
         teddyDescription={teddyDescription}
         imaginaryWorld={imaginaryWorld}
@@ -242,6 +254,8 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
         onChildNameChange={setChildName}
         onBirthDateChange={setBirthDate}
         onGenderChange={setGender}
+        onPetTypeChange={setPetType}
+        onPetTypeCustomChange={setPetTypeCustom}
         onTeddyNameChange={setTeddyName}
         onTeddyDescriptionChange={setTeddyDescription}
         onImaginaryWorldChange={setImaginaryWorld}
