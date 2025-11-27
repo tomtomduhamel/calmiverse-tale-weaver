@@ -173,7 +173,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
   return <div className="space-y-3">
       {/* Bouton principal */}
       <div className="flex gap-2">
-        <Button onClick={readyAudioFile ? handlePlayPause : handleGenerateAudio} disabled={isGenerating || !!pendingAudioFile} className={`flex-1 ${isDarkMode ? 'border-gray-600 text-white hover:bg-gray-700' : ''}`} variant="outline">
+        <Button onClick={readyAudioFile ? handlePlayPause : handleGenerateAudio} disabled={isGenerating || !!pendingAudioFile} className={`${isDarkMode ? 'border-gray-600 text-white hover:bg-gray-700' : ''}`} variant="outline" size="sm">
           {isGenerating ? <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Génération...
