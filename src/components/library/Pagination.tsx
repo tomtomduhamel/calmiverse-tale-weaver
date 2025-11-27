@@ -114,7 +114,47 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
     );
   }
 
-  // Version desktop (affichage complet)
+  // Version desktop avec ellipsis intelligent
+  const showPages = [];
+  const delta = 2; // Nombre de pages à afficher de chaque côté
+
+  if (totalPages <= 9) {
+    // Si 9 pages ou moins, on affiche tout
+    for (let i = 1; i <= totalPages; i++) {
+      showPages.push(i);
+    }
+  } else {
+    // Pour plus de 9 pages, logique avec ellipsis
+    showPages.push(1); // Toujours afficher la première page
+    
+    if (currentPage <= 4) {
+      // Début : 1, 2, 3, 4, 5, 6, ..., dernière
+      for (let i = 2; i <= Math.min(6, totalPages - 1); i++) {
+        showPages.push(i);
+      }
+      if (totalPages > 6) {
+        showPages.push('ellipsis');
+        showPages.push(totalPages);
+      }
+    } else if (currentPage >= totalPages - 3) {
+      // Fin : 1, ..., avant-dernières, dernière
+      if (totalPages > 6) {
+        showPages.push('ellipsis');
+        for (let i = Math.max(2, totalPages - 5); i <= totalPages; i++) {
+          showPages.push(i);
+        }
+      }
+    } else {
+      // Milieu : 1, ..., courante-2, courante-1, courante, courante+1, courante+2, ..., dernière
+      showPages.push('ellipsis');
+      for (let i = currentPage - delta; i <= currentPage + delta; i++) {
+        showPages.push(i);
+      }
+      showPages.push('ellipsis');
+      showPages.push(totalPages);
+    }
+  }
+
   return (
     <div className="flex justify-center gap-2 mt-6">
       {/* Bouton précédent */}
@@ -130,20 +170,31 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
       </Button>
 
       {/* Pages */}
-      <div className="flex gap-1">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <Button
-            key={page}
-            variant={currentPage === page ? "default" : "outline"}
-            size="sm"
-            onClick={() => onPageChange(page)}
-            className={`min-w-[40px] ${
-              currentPage === page ? "shadow-sm" : ""
-            }`}
-          >
-            {page}
-          </Button>
-        ))}
+      <div className="flex gap-1 items-center">
+        {showPages.map((page, index) => {
+          if (page === 'ellipsis') {
+            return (
+              <div key={`ellipsis-${index}`} className="flex items-center justify-center h-9 w-9">
+                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+              </div>
+            );
+          }
+          
+          const isActive = currentPage === page;
+          return (
+            <Button
+              key={page}
+              variant={isActive ? "default" : "outline"}
+              size="sm"
+              onClick={() => onPageChange(page as number)}
+              className={`min-w-[40px] transition-all ${
+                isActive ? "shadow-sm" : ""
+              }`}
+            >
+              {page}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Bouton suivant */}
