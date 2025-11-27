@@ -54,7 +54,9 @@ export const useN8nStoryFromTitle = () => {
         age: calculateAge(child.birthDate),
         teddyName: child.teddyName || null,
         teddyDescription: child.teddyDescription || null,
-        imaginaryWorld: child.imaginaryWorld || null
+        imaginaryWorld: child.imaginaryWorld || null,
+        petType: child.petType || null,
+        petTypeCustom: child.petTypeCustom || null
       }));
       
       // Générer le prompt avancé avec titre, durée et contexte multi-personnages
