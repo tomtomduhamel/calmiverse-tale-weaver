@@ -170,10 +170,10 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
               onClick={() => handleObjectiveSelect(objective.value)}
               className={cn(
                 "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
-                "bg-white/90 backdrop-blur-sm aspect-square flex flex-col items-center justify-center text-center",
+                "bg-card backdrop-blur-sm aspect-square flex flex-col items-center justify-center text-center",
                 selectedObjective === objective.value 
-                  ? 'border-primary bg-primary/10 shadow-lg ring-2 ring-primary/30' 
-                  : 'border-border/40 hover:border-primary/50 hover:shadow-md'
+                  ? 'border-primary bg-primary/20 shadow-lg ring-2 ring-primary/30' 
+                  : 'border-border hover:border-primary/50 hover:shadow-md'
               )}
             >
               {/* Indicateur de sélection */}
