@@ -74,6 +74,8 @@ export type Database = {
           imaginaryworld: string | null
           interests: string[] | null
           name: string
+          pet_type: string | null
+          pet_type_custom: string | null
           teddydescription: string | null
           teddyname: string | null
           teddyphotos: Json | null
@@ -87,6 +89,8 @@ export type Database = {
           imaginaryworld?: string | null
           interests?: string[] | null
           name: string
+          pet_type?: string | null
+          pet_type_custom?: string | null
           teddydescription?: string | null
           teddyname?: string | null
           teddyphotos?: Json | null
@@ -100,6 +104,8 @@ export type Database = {
           imaginaryworld?: string | null
           interests?: string[] | null
           name?: string
+          pet_type?: string | null
+          pet_type_custom?: string | null
           teddydescription?: string | null
           teddyname?: string | null
           teddyphotos?: Json | null
