@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Snail, Turtle, Rabbit } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ReadingSpeedSelectorProps {
   isDarkMode?: boolean;
@@ -30,20 +32,25 @@ const SPEED_PRESETS = [
 ];
 
 export const ReadingSpeedSelector: React.FC<ReadingSpeedSelectorProps> = ({ isDarkMode = false }) => {
-  const { userSettings, updateUserSettings } = useUserSettings();
+  const { userSettings } = useUserSettings();
+  const { user } = useSupabaseAuth();
   const currentSpeed = userSettings?.readingPreferences?.readingSpeed || 125;
 
   const handleSpeedChange = async (newSpeed: number) => {
+    if (!user) return;
+    
     try {
-      await updateUserSettings({
-        readingPreferences: {
-          ...userSettings?.readingPreferences,
-          readingSpeed: newSpeed,
-          autoScrollEnabled: userSettings?.readingPreferences?.autoScrollEnabled ?? false,
-          backgroundMusicEnabled: userSettings?.readingPreferences?.backgroundMusicEnabled ?? true,
-        }
-      });
-      console.log(`[ReadingSpeed] Vitesse changée: ${newSpeed} mots/min`);
+      // Mise à jour silencieuse sans notification toast
+      const { error } = await supabase
+        .from('users')
+        .update({ reading_speed: newSpeed })
+        .eq('id', user.id);
+      
+      if (error) {
+        console.error('[ReadingSpeed] Erreur lors du changement de vitesse:', error);
+      } else {
+        console.log(`[ReadingSpeed] Vitesse changée: ${newSpeed} mots/min`);
+      }
     } catch (error) {
       console.error('[ReadingSpeed] Erreur lors du changement de vitesse:', error);
     }
