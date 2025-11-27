@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trash2, Edit } from "lucide-react";
+import { Trash2, Edit, Heart, User, Cat, Dog, Sparkles } from "lucide-react";
 import type { Child } from "@/types/child";
 import { calculateAge, formatAge } from "@/utils/age";
 import {
@@ -26,6 +26,29 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
   const isMobile = useIsMobile();
   
   const age = calculateAge(child.birthDate);
+
+  const getGenderDisplay = (child: Child) => {
+    switch (child.gender) {
+      case 'boy':
+        return { icon: User, label: 'Garçon', color: 'text-blue-500' };
+      case 'girl':
+        return { icon: Heart, label: 'Fille', color: 'text-pink-500' };
+      case 'pet':
+        if (child.petType === 'dog') {
+          return { icon: Dog, label: 'Chien', color: 'text-orange-500' };
+        } else if (child.petType === 'cat') {
+          return { icon: Cat, label: 'Chat', color: 'text-orange-500' };
+        } else if (child.petType === 'other' && child.petTypeCustom) {
+          return { icon: Sparkles, label: child.petTypeCustom, color: 'text-orange-500' };
+        }
+        return { icon: Cat, label: 'Animal', color: 'text-orange-500' };
+      default:
+        return { icon: User, label: 'Enfant', color: 'text-gray-500' };
+    }
+  };
+
+  const genderDisplay = getGenderDisplay(child);
+  const isPet = child.gender === 'pet';
 
   return (
     <Card 
@@ -58,7 +81,10 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
       </div>
       
       <div className={cn("pt-8", isMobile ? "pt-10" : "pt-8")}>
-        <h3 className="text-lg font-semibold text-card-foreground">{child.name}</h3>
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="text-lg font-semibold text-card-foreground">{child.name}</h3>
+          <genderDisplay.icon className={cn("w-4 h-4", genderDisplay.color)} />
+        </div>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger>
@@ -75,7 +101,7 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
         {child.teddyName && (
           <div className="mt-2">
             <p className="text-sm font-medium text-card-foreground">
-              Doudou : {child.teddyName}
+              {isPet ? genderDisplay.label : 'Doudou'} : {child.teddyName}
             </p>
             {child.teddyDescription && (
               <p className="text-sm text-muted-foreground line-clamp-2">
