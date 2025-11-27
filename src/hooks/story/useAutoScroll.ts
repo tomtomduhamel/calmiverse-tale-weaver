@@ -59,7 +59,8 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
     const startTime = Date.now();
     const startPosition = viewportEl.scrollTop;
     
-    console.log(`Auto-scroll: Starting with speed ${pixelsPerSecond.toFixed(2)} pixels/second`);
+    console.log(`[AutoScroll] Paramètre utilisateur: ${readingSpeed} mots/min`);
+    console.log(`[AutoScroll] Vitesse de défilement calculée: ${pixelsPerSecond.toFixed(2)} pixels/seconde`);
     
     const performScroll = () => {
       const viewportEl = getViewportElement();
