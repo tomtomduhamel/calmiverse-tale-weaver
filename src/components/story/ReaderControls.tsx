@@ -61,8 +61,8 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
         <div className="max-w-4xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3">
           
           {/* Layout responsive : horizontal sur desktop, grille sur mobile */}
-          <div className="hidden sm:flex items-center gap-3">
-            {/* Desktop Layout - horizontal équilibré */}
+          <div className="hidden sm:flex items-center justify-center gap-3">
+            {/* Desktop Layout - tout centré en une ligne */}
             
             {/* 1. Génération audio - compact */}
             <div className="shrink-0">
@@ -110,10 +110,10 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               />
             </div>
 
-            {/* Spacer flexible pour pousser le diagnostic à droite */}
-            <div className="flex-1" />
+            {/* Séparateur visuel */}
+            <div className="h-8 w-px bg-border/50" />
 
-            {/* Diagnostic technique (discret à droite) */}
+            {/* 5. Diagnostic technique */}
             <div className="shrink-0">
               <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
             </div>
