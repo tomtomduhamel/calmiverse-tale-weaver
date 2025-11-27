@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -20,6 +21,7 @@ const LoginForm = ({ isRegister: initialIsRegister = false }: LoginFormProps) =>
   const [googleAuthError, setGoogleAuthError] = useState(false);
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useSupabaseAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,8 +30,11 @@ const LoginForm = ({ isRegister: initialIsRegister = false }: LoginFormProps) =>
     try {
       if (isLogin) {
         await signInWithEmail(email, password);
+        // La redirection vers "/" est gérée par Auth.tsx
       } else {
         await signUpWithEmail(email, password);
+        // Rediriger les nouveaux utilisateurs vers le guide de démarrage
+        navigate('/quick-start');
       }
     } catch (error: any) {
       console.error(error);
