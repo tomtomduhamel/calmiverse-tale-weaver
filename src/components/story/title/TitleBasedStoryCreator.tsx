@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -164,8 +164,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         childrenNames,
         childrenGenders: selectedChildren.map(child => child.gender)
       });
+      // Le hook useN8nTitleGeneration appelle déjà onTitlesGenerated (updateGeneratedTitles)
+      // donc pas besoin de l'appeler ici pour éviter la double mise à jour
       if (titles && titles.length > 0) {
-        updateGeneratedTitles(titles);
         updateCurrentStep('titles');
       }
     } catch (error: any) {
@@ -176,7 +177,10 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         variant: "destructive"
       });
     }
-  }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateGeneratedTitles, updateCurrentStep, resetRegenerationState, toast]);
+  }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateCurrentStep, resetRegenerationState, toast]);
+
+  // Guard pour éviter les appels multiples
+  const autoGenerateTriggered = useRef(false);
 
   // Effect pour gérer l'auto-génération des titres
   useEffect(() => {
@@ -185,15 +189,28 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       selectedChildrenCount: selectedChildrenIds.length,
       selectedObjective,
       generatedTitlesCount: generatedTitles.length,
-      isGeneratingTitles
+      isGeneratingTitles,
+      autoGenerateTriggered: autoGenerateTriggered.current
     });
 
-    if (currentStep === 'titles' && selectedChildrenIds.length > 0 && selectedObjective && generatedTitles.length === 0 && !isGeneratingTitles) {
+    if (currentStep === 'titles' && 
+        selectedChildrenIds.length > 0 && 
+        selectedObjective && 
+        generatedTitles.length === 0 && 
+        !isGeneratingTitles &&
+        !autoGenerateTriggered.current) {
+      
+      autoGenerateTriggered.current = true;
       console.log('[TitleBasedStoryCreator] Auto-génération des titres...');
       // Délai pour s'assurer que le composant est monté
       setTimeout(() => {
         handleGenerateTitles();
       }, 100);
+    }
+
+    // Reset le guard si on revient à l'étape précédente
+    if (currentStep !== 'titles') {
+      autoGenerateTriggered.current = false;
     }
   }, [currentStep, selectedChildrenIds.length, selectedObjective, generatedTitles.length, isGeneratingTitles, handleGenerateTitles]);
 
