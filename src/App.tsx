@@ -34,12 +34,14 @@ const Library = lazy(() => import("./pages/Library"));
 const StoryReaderPage = lazy(() => import("./pages/StoryReaderPage"));
 const PromptAdmin = lazy(() => import('./pages/admin/PromptAdmin'));
 const TtsConfig = lazy(() => import('./pages/admin/TtsConfig'));
+const AdminFeedback = lazy(() => import('./pages/admin/AdminFeedback'));
 const AdminGuard = lazy(() => import('./components/admin/AdminGuard'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Subscription = lazy(() => import('./pages/Subscription'));
 const ContactPage = lazy(() => import("@/pages/support/ContactPage").then(m => ({ default: m.ContactPage })));
 const DocumentationPage = lazy(() => import("@/pages/support/DocumentationPage").then(m => ({ default: m.DocumentationPage })));
 const ServiceStatusPage = lazy(() => import("@/pages/support/ServiceStatusPage").then(m => ({ default: m.ServiceStatusPage })));
+const QuickStartPage = lazy(() => import("@/pages/support/QuickStartPage").then(m => ({ default: m.QuickStartPage })));
 const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })));
 const TestConnection = lazy(() => import("./pages/TestConnection"));
 const DiagnosticConnection = lazy(() => import("./pages/DiagnosticConnection"));
@@ -177,6 +179,7 @@ function App() {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/documentation" element={<DocumentationPage />} />
             <Route path="/status" element={<ServiceStatusPage />} />
+            <Route path="/quick-start" element={<QuickStartPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/shared/:token" element={<SharedStory />} />
             <Route path="/story/:id" element={<PublicStory />} />
@@ -203,6 +206,7 @@ function App() {
           <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
           <Route path="admin/prompts" element={<AdminGuard><PromptAdmin /></AdminGuard>} />
           <Route path="admin/tts-config" element={<AdminGuard><TtsConfig /></AdminGuard>} />
+          <Route path="admin/feedback" element={<AdminGuard><AdminFeedback /></AdminGuard>} />
         </Route>
 
             {/* Route de fallback */}
