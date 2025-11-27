@@ -16,6 +16,7 @@ import { StoryGenerationManager } from '@/services/stories/StoryGenerationManage
 import { useNavigate } from 'react-router-dom';
 import { isPreviewMode } from '@/utils/mobileBootOptimizer';
 import { PreviewBanner } from './PreviewBanner';
+import { FeedbackButton } from './feedback/FeedbackButton';
 
 interface ShellProps {
   children?: ReactNode;
@@ -37,6 +38,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   // Déterminer si le menu mobile doit être affiché
   // Ne pas l'afficher si nous sommes sur la route du lecteur d'histoire
   const showMobileMenu = isMobile && !location.pathname.startsWith('/reader/');
+  const isReaderPage = location.pathname.startsWith('/reader/');
   
   logger.debug("[Shell] Configuration", {
     isMobile,
@@ -85,6 +87,9 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
           <OfflineIndicator />
           <OfflineSyncIndicator />
           
+          {/* Bouton de feedback (masqué sur le lecteur) */}
+          {!isReaderPage && <FeedbackButton />}
+          
           {/* Afficher le menu mobile uniquement si nous ne sommes pas dans le lecteur */}
           {showMobileMenu && <MobileMenu />}
         </div>
@@ -113,6 +118,9 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
           {/* Indicateurs PWA et synchronisation */}
           <OfflineIndicator />
           <OfflineSyncIndicator />
+          
+          {/* Bouton de feedback (masqué sur le lecteur) */}
+          {!isReaderPage && <FeedbackButton />}
           
           {/* Afficher le menu mobile uniquement si nous ne sommes pas dans le lecteur */}
           {showMobileMenu && <MobileMenu />}
