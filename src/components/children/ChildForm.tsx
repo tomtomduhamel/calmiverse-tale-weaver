@@ -287,9 +287,9 @@ const ChildForm: React.FC<ChildFormProps> = ({
 
       <div className={cn("flex gap-2", isMobile && "flex-col")}>
         <Button 
-          type="submit" 
+          type="submit"
+          variant="default"
           className={cn(
-            "bg-accent hover:bg-accent/90",
             isMobile ? "w-full py-6 text-base" : "flex-1"
           )}
           disabled={isSubmitting}
