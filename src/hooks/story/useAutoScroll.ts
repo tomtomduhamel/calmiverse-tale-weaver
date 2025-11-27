@@ -161,6 +161,20 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
     }
   }, [isManuallyPaused, startAutoScroll, stopAutoScroll, scrollStatusRef, setIsManuallyPaused]);
   
+  // Redémarrer le scroll quand la vitesse change (si déjà en cours)
+  useEffect(() => {
+    if (scrollStatus === 'running') {
+      console.log(`[AutoScroll] Vitesse changée en ${readingSpeed} mots/min - redémarrage du scroll`);
+      // Arrêter le scroll actuel
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      // Redémarrer avec la nouvelle vitesse
+      startAutoScroll();
+    }
+  }, [readingSpeed, scrollStatus]);
+  
   // Démarrer automatiquement si activé
   useEffect(() => {
     if (autoScrollEnabled && scrollStatus === 'idle' && !isManuallyPaused) {
