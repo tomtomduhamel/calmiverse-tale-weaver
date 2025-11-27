@@ -168,12 +168,18 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
   useEffect(() => {
     if (scrollStatusRef.current === 'running') {
       console.log(`[AutoScroll] Vitesse changée en ${readingSpeed} mots/min - redémarrage du scroll`);
-      // Arrêter le scroll actuel
+      
+      // Arrêter complètement le scroll actuel
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
       }
-      // Redémarrer avec la nouvelle vitesse
+      
+      // Réinitialiser le status de manière synchrone via la ref
+      scrollStatusRef.current = 'idle';
+      
+      // Redémarrer immédiatement avec la nouvelle vitesse
+      // startAutoScroll va maintenant fonctionner car scrollStatusRef.current n'est plus 'running'
       startAutoScroll();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
