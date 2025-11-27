@@ -34,14 +34,22 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - Pagination (configurable dans APP_CONFIG)
 - Export EPUB et envoi Kindle
 
-### Lecteur d'histoires
-- Interface immersive avec mode plein écran
-- Audio ElevenLabs intégré avec contrôles
-- Musique de fond par objectif (optionnel)
-- Auto-scroll configurable
-- Thème sombre/clair avec préférences utilisateur
-- Taille de police ajustable
-- Support Markdown avec ReactMarkdown
+### Lecteur d'histoires (StoryReader + ReaderControls)
+- **Interface immersive** avec mode plein écran
+- **Audio ElevenLabs** intégré avec contrôles (génération via N8nAudioPlayer)
+- **Musique de fond** par objectif (optionnel, désactivable)
+- **Auto-scroll intelligent** avec détection vitesse de lecture (125 mots/min par défaut)
+- **Thème adaptatif** sombre/clair avec préférences utilisateur persistantes
+- **Taille de police ajustable** (3 niveaux : petit, moyen, grand)
+- **Support Markdown** avec ReactMarkdown pour mise en forme enrichie
+- **Bandeau rétractable optimisé** (ReaderControls) :
+  - Layout horizontal centré sur desktop (une seule ligne)
+  - Séparateurs visuels entre sections pour meilleure lisibilité
+  - Compact et équilibré visuellement
+  - Responsive mobile avec grille adaptative
+  - Boutons avec tailles optimisées (sm/default selon contexte)
+  - ReadingSpeedSelector avec 4 presets (lent, normal, rapide, très rapide)
+- **Diagnostic technique** intégré pour debug (TechnicalDiagnosticButton)
 
 ### Partage et Export
 - Partage via lien sécurisé avec token
@@ -309,14 +317,16 @@ src/
 │   ├── library/       # MobileStoryCard (swipe-to-delete)
 │   ├── navigation/    # Navigation desktop/mobile
 │   ├── settings/      # ThemeSection, ReadingPreferences
-│   ├── story/         # StoryContent, StoryReader
+│   ├── story/         # StoryContent, StoryReader, ReaderControls
+│   │   └── reader/    # N8nAudioPlayer, ReadingSpeedSelector, TechnicalDiagnosticButton
 │   └── ui/            # shadcn components
 ├── hooks/
 │   ├── navigation/    # useAppNavigation (CENTRAL)
 │   ├── settings/      # useUserSettings
+│   ├── story/         # useAutoScroll, useStoryReader
 │   └── subscription/  # useSubscription, useQuotaChecker
+├── contexts/          # SupabaseAuthContext, AppThemeContext, ReadingSpeedContext
 ├── pages/             # Routes principales
-├── contexts/          # SupabaseAuthContext, AppThemeContext
 ├── integrations/      # Supabase types auto-générés
 └── utils/             # Helpers, config, constants
 
@@ -364,6 +374,16 @@ docs/
 - **Fonction** : `check_user_quota(user_id, quota_type)` PostgreSQL
 - **Reset** : Automatique à date anniversaire abonnement
 - **Upgrade** : Proposé dynamiquement si limite atteinte
+
+### Système de Vitesse de Lecture (ReadingSpeedContext)
+- **Context global** : `ReadingSpeedContext` partagé dans toute l'application
+- **Hook** : `useReadingSpeed()` pour accès et modification vitesse
+- **Persistance** : Sauvegarde automatique en BDD (table `users.reading_speed`)
+- **Synchronisation** : Mise à jour immédiate état local + BDD silencieuse
+- **Valeur par défaut** : 125 mots/minute
+- **Presets disponibles** : Lent (100), Normal (125), Rapide (175), Très rapide (250)
+- **Utilisation** : Auto-scroll, estimations temps lecture, ReadingSpeedSelector
+- **Provider** : Wrappé dans `<ReadingSpeedProvider>` au niveau racine
 
 ### Génération Audio Multi-Provider (ElevenLabs / Speechify)
 - **Providers** : ElevenLabs (défaut) et Speechify
@@ -525,6 +545,10 @@ docs/
 - Export EPUB/Kindle
 - Thème clair/sombre dans settings
 - Navigation SPA centralisée
+- **Lecteur d'histoires optimisé** avec bandeau rétractable équilibré visuellement
+- **ReadingSpeedContext** global pour synchronisation vitesse lecture
+- **Auto-scroll intelligent** avec gestion pause/reprise et restart automatique
+- **Interface réactive** avec séparateurs visuels et spacing optimisé
 
 ### En cours 🚧
 - Tests E2E complets
@@ -543,6 +567,6 @@ docs/
 
 ---
 
-**Dernière mise à jour** : 2025-01-26  
-**Version** : 3.0 (Post-refactoring abonnements + thème + swipe)  
+**Dernière mise à jour** : 2025-01-27  
+**Version** : 3.1 (Optimisations UX lecteur + bandeau rétractable équilibré)  
 **Statut** : Production ready avec PWA désactivée dev
