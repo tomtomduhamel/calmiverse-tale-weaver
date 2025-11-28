@@ -11,7 +11,10 @@ import { useN8nTitleGeneration } from '@/hooks/stories/useN8nTitleGeneration';
 import { useN8nStoryFromTitle } from '@/hooks/stories/useN8nStoryFromTitle';
 import { useRealtimeStoryMonitor } from '@/hooks/stories/useRealtimeStoryMonitor';
 import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
+import { useQuotaChecker } from '@/hooks/subscription/useQuotaChecker';
+import { useSubscription } from '@/hooks/subscription/useSubscription';
 import TitleSelector from './TitleSelector';
+import UpgradePrompt from '@/components/subscription/UpgradePrompt';
 import type { Child } from '@/types/child';
 import type { GeneratedTitle } from '@/hooks/stories/useN8nTitleGeneration';
 import type { StoryDurationMinutes } from '@/types/story';
@@ -45,9 +48,12 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     clearPersistedState,
     hasPersistedSession
   } = usePersistedStoryCreation();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const { validateAction, incrementUsage } = useQuotaChecker();
+  const { subscription } = useSubscription();
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [quotaMessage, setQuotaMessage] = useState<string>('');
+
   const {
     generateTitles,
     generateAdditionalTitles,
@@ -223,6 +229,17 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       });
       return;
     }
+
+    // ✅ Vérifier le quota AVANT de créer l'histoire
+    const validation = await validateAction('create_story');
+    
+    if (!validation.allowed) {
+      console.log('[TitleBasedStoryCreator] Quota atteint:', validation);
+      setQuotaMessage(validation.reason || 'Limite atteinte');
+      setShowUpgradePrompt(true);
+      return;
+    }
+
     try {
       const selectedChildrenForStory = children.filter(child => selectedChildrenIds.includes(child.id));
       const childrenNames = selectedChildrenForStory.map(child => child.name);
@@ -245,6 +262,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         durationMinutes,
       });
 
+      // ✅ Incrémenter le compteur d'usage APRÈS succès
+      await incrementUsage('story');
+
       // Toast et redirection immédiate vers bibliothèque
       toast({
         title: "✨ Création lancée !",
@@ -263,7 +283,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         variant: "destructive"
       });
     }
-  }, [selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, updateSelectedTitle, updateSelectedDuration, updateCurrentStep, toast]);
+  }, [selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, updateSelectedTitle, updateSelectedDuration, updateCurrentStep, validateAction, incrementUsage, toast]);
   const handleBack = useCallback(() => {
     if (currentStep === 'titles') {
       updateCurrentStep('objective');
@@ -445,15 +465,20 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     );
   }
 
-  // Étape 3: Supprimée - Plus d'écran bloquant
-  // L'utilisateur est redirigé immédiatement vers la bibliothèque
-  if (currentStep === 'creating') {
-    // Cette étape ne devrait plus jamais être atteinte
-    console.warn('[TitleBasedStoryCreator] Étape "creating" atteinte - redirection vers bibliothèque');
-    clearPersistedState();
-    onStoryCreated('library');
-    return null;
-  }
-  return null;
+  // Rendu avec UpgradePrompt
+  return (
+    <>
+      <UpgradePrompt
+        open={showUpgradePrompt}
+        onOpenChange={setShowUpgradePrompt}
+        currentTier={subscription?.tier || 'calmini'}
+        reason="stories"
+        message={quotaMessage}
+        onUpgrade={() => navigate('/pricing')}
+        onCancel={() => setShowUpgradePrompt(false)}
+      />
+    </>
+  );
 };
+
 export default TitleBasedStoryCreator;
