@@ -100,27 +100,30 @@ const BetaTesters = () => {
       if (pendingError) throw pendingError;
       setPendingUsers(pending || []);
 
-      // Charger les beta testeurs actifs avec leurs stats
+      // Charger les beta testeurs actifs (sans jointure)
       const { data: active, error: activeError } = await supabase
         .from('beta_users')
-        .select(`
-          *,
-          user_subscriptions!inner(
-            stories_used_this_period,
-            audio_generations_used_this_period
-          )
-        `)
+        .select('*')
         .eq('status', 'active')
         .order('validated_at', { ascending: false });
 
       if (activeError) throw activeError;
-      
-      // Transformer les données pour inclure les stats
-      const activeWithStats = (active || []).map(user => ({
-        ...user,
-        stories_count: user.user_subscriptions?.[0]?.stories_used_this_period || 0,
-        audio_count: user.user_subscriptions?.[0]?.audio_generations_used_this_period || 0
-      }));
+
+      // Charger les stats d'abonnement pour chaque beta user
+      const activeWithStats: BetaUserWithUsage[] = [];
+      for (const user of (active || [])) {
+        const { data: subData } = await supabase
+          .from('user_subscriptions')
+          .select('stories_used_this_period, audio_generations_used_this_period')
+          .eq('user_id', user.user_id)
+          .maybeSingle();
+        
+        activeWithStats.push({
+          ...user,
+          stories_count: subData?.stories_used_this_period || 0,
+          audio_count: subData?.audio_generations_used_this_period || 0
+        });
+      }
       setActiveUsers(activeWithStats);
 
       // Charger les codes d'invitation
