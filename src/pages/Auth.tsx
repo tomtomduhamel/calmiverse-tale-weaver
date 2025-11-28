@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useBetaInvitation } from '@/hooks/beta/useBetaInvitation';
 import { useBetaStatus } from '@/hooks/beta/useBetaStatus';
+import { useBetaRegistrationComplete } from '@/hooks/beta/useBetaRegistrationComplete';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -17,8 +18,19 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const { user, loading } = useSupabaseAuth();
   const { checkInvitationCode, storeInviteCode, status } = useBetaInvitation();
-  const { isPending, isRejected, loading: betaLoading } = useBetaStatus();
+  const { isPending, isRejected, loading: betaLoading, refreshStatus } = useBetaStatus();
   const [inviteCodeChecked, setInviteCodeChecked] = useState(false);
+  
+  // Finaliser l'inscription beta après confirmation email
+  const { isCompleted } = useBetaRegistrationComplete();
+  
+  // Rafraîchir le statut beta quand l'inscription est complétée
+  useEffect(() => {
+    if (isCompleted) {
+      console.log('[Auth] Beta registration completed, refreshing status');
+      refreshStatus();
+    }
+  }, [isCompleted, refreshStatus]);
 
   // Détecter le code d'invitation dans l'URL
   useEffect(() => {
