@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStoryGeneration';
 import { useNotificationHandlers } from '@/hooks/notifications/useNotificationHandlers';
 import { useToast } from '@/hooks/use-toast';
+import { useQuotaChecker } from '@/hooks/subscription/useQuotaChecker';
 import { StoryGenerationQueue } from '@/services/stories/StoryGenerationQueue';
 interface StoryFormData {
   childrenIds: string[];
@@ -17,6 +18,7 @@ export const useStoryBackgroundOperations = () => {
   const { startGeneration } = useBackgroundStoryGeneration();
   const { handleStoryReady, handleStoryError, saveNotificationToHistory } = useNotificationHandlers();
   const { toast } = useToast();
+  const { validateAction, incrementUsage } = useQuotaChecker();
 
   /**
    * Crée une histoire et démarre la génération en arrière-plan
@@ -28,8 +30,17 @@ export const useStoryBackgroundOperations = () => {
     try {
       setIsSubmitting(true);
 
+      // ✅ Vérifier le quota AVANT de créer
+      const validation = await validateAction('create_story');
+      if (!validation.allowed) {
+        throw new Error(validation.reason || 'Limite de quota atteinte');
+      }
+
       // Créer l'histoire dans la base de données
       const storyId = await createStoryFn(formData);
+
+      // ✅ Incrémenter le compteur APRÈS succès
+      await incrementUsage('story');
 
       // Ajouter à la queue de génération
       const queue = StoryGenerationQueue.getInstance();
@@ -70,7 +81,7 @@ export const useStoryBackgroundOperations = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [startGeneration, handleStoryError, saveNotificationToHistory, toast]);
+  }, [startGeneration, handleStoryError, saveNotificationToHistory, validateAction, incrementUsage, toast]);
 
   /**
    * Relance une histoire en erreur en arrière-plan
