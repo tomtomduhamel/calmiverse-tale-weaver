@@ -11,7 +11,7 @@ interface SupabaseAuthContextType {
   timeoutReached: boolean;
   retryAuth: () => void;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, inviteCode?: string | null) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -44,11 +44,11 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
+  const signUpWithEmail = async (email: string, password: string, inviteCode?: string | null) => {
     try {
       setError(null);
-      console.log("[SupabaseAuthContext] Tentative d'inscription pour:", email);
-      await authSignUpWithEmail(email, password);
+      console.log("[SupabaseAuthContext] Tentative d'inscription pour:", email, inviteCode ? "avec code beta" : "");
+      await authSignUpWithEmail(email, password, inviteCode);
       console.log("[SupabaseAuthContext] Inscription réussie");
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : (typeof err === 'string' ? err : 'Erreur d\'inscription');

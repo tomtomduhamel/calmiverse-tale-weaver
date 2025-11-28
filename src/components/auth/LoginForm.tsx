@@ -11,9 +11,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LoginFormProps {
   isRegister: boolean;
+  inviteCode?: string | null;
 }
 
-const LoginForm = ({ isRegister: initialIsRegister = false }: LoginFormProps) => {
+const LoginForm = ({ isRegister: initialIsRegister = false, inviteCode = null }: LoginFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(!initialIsRegister);
@@ -32,9 +33,16 @@ const LoginForm = ({ isRegister: initialIsRegister = false }: LoginFormProps) =>
         await signInWithEmail(email, password);
         // La redirection vers "/" est gérée par Auth.tsx
       } else {
-        await signUpWithEmail(email, password);
-        // Rediriger les nouveaux utilisateurs vers le guide de démarrage
-        navigate('/quick-start');
+        // Passer le code d'invitation s'il existe
+        await signUpWithEmail(email, password, inviteCode);
+        
+        // Si code d'invitation, rediriger vers beta-pending
+        if (inviteCode) {
+          navigate('/beta-pending');
+        } else {
+          // Sinon, rediriger les nouveaux utilisateurs vers le guide de démarrage
+          navigate('/quick-start');
+        }
       }
     } catch (error: any) {
       console.error(error);
