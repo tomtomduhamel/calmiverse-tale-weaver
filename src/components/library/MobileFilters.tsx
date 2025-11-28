@@ -46,8 +46,6 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
     { value: 'recent', label: 'Récents', icon: Clock },
     { value: 'unread', label: 'Non lus', icon: BookOpen },
     { value: 'read', label: 'Lus', icon: CheckCircle },
-    { value: 'pending', label: 'En cours', icon: Loader2 },
-    { value: 'error', label: 'Erreurs', icon: AlertCircle },
   ] as const;
 
 
