@@ -41,10 +41,16 @@ export const useAuthOperations = () => {
     }
   }, [toast, handleAuthError]);
 
-  const signUpWithEmail = useCallback(async (email: string, password: string) => {
+  const signUpWithEmail = useCallback(async (email: string, password: string, inviteCode?: string | null) => {
     try {
-      console.log("Tentative d'inscription avec email:", email);
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      console.log("Tentative d'inscription avec email:", email, inviteCode ? "avec code beta" : "");
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
       
       if (error) {
         throw handleAuthError(error, "Erreur d'inscription");
@@ -52,10 +58,40 @@ export const useAuthOperations = () => {
       
       console.log("Inscription réussie");
       
-      toast({
-        title: "Inscription réussie",
-        description: "Bienvenue sur Calmi ! Veuillez vérifier votre boîte mail pour confirmer votre compte.",
-      });
+      // Si code d'invitation beta, enregistrer la demande
+      if (inviteCode && data.user) {
+        console.log("[Auth] Registering beta request for user:", data.user.id);
+        
+        try {
+          const { data: betaData, error: betaError } = await supabase.rpc('register_beta_request', {
+            p_user_id: data.user.id,
+            p_email: email,
+            p_code: inviteCode
+          });
+          
+          if (betaError) {
+            console.error("[Auth] Error registering beta request:", betaError);
+            toast({
+              title: "Attention",
+              description: "Votre compte a été créé mais la demande beta a échoué. Contactez le support.",
+              variant: "destructive",
+            });
+          } else {
+            console.log("[Auth] Beta request registered:", betaData);
+            toast({
+              title: "Demande beta enregistrée",
+              description: "Votre compte est en attente de validation par notre équipe.",
+            });
+          }
+        } catch (betaErr: any) {
+          console.error("[Auth] Beta registration failed:", betaErr);
+        }
+      } else {
+        toast({
+          title: "Inscription réussie",
+          description: "Bienvenue sur Calmi ! Veuillez vérifier votre boîte mail pour confirmer votre compte.",
+        });
+      }
       
       return data;
     } catch (err: any) {

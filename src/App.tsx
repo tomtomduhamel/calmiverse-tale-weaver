@@ -45,6 +45,7 @@ const QuickStartPage = lazy(() => import("@/pages/support/QuickStartPage").then(
 const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })));
 const TestConnection = lazy(() => import("./pages/TestConnection"));
 const DiagnosticConnection = lazy(() => import("./pages/DiagnosticConnection"));
+const BetaPending = lazy(() => import("./pages/BetaPending"));
 
 // PageLoader avec détection de timeout et retry
 const PageLoader = () => {
@@ -172,6 +173,7 @@ function App() {
           <Routes>
             {/* Routes publiques */}
             <Route path="/auth" element={<Auth />} />
+            <Route path="/beta-pending" element={<BetaPending />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/privacy-policy" element={<NewPrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
