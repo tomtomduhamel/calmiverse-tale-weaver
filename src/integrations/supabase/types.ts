@@ -64,6 +64,81 @@ export type Database = {
           },
         ]
       }
+      beta_invitations: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number
+          duration_months: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          tier: Database["public"]["Enums"]["subscription_tier"]
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number
+          duration_months?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number
+          duration_months?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+        }
+        Relationships: []
+      }
+      beta_users: {
+        Row: {
+          email: string
+          id: string
+          invitation_code: string
+          rejection_reason: string | null
+          requested_at: string
+          status: string
+          subscription_expires_at: string | null
+          user_id: string
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          invitation_code: string
+          rejection_reason?: string | null
+          requested_at?: string
+          status?: string
+          subscription_expires_at?: string | null
+          user_id: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          invitation_code?: string
+          rejection_reason?: string | null
+          requested_at?: string
+          status?: string
+          subscription_expires_at?: string | null
+          user_id?: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: []
+      }
       children: {
         Row: {
           authorid: string
@@ -802,6 +877,16 @@ export type Database = {
         Returns: string
       }
       get_next_tome_number: { Args: { p_series_id: string }; Returns: number }
+      get_pending_beta_users: {
+        Args: never
+        Returns: {
+          email: string
+          id: string
+          invitation_code: string
+          requested_at: string
+          user_id: string
+        }[]
+      }
       get_signed_url: {
         Args: { bucket_name: string; expires_in?: number; file_path: string }
         Returns: string
@@ -845,7 +930,16 @@ export type Database = {
         Args: { p_template_id: string }
         Returns: number
       }
+      register_beta_request: {
+        Args: { p_code: string; p_email: string; p_user_id: string }
+        Returns: Json
+      }
+      reject_beta_user: {
+        Args: { p_beta_user_id: string; p_reason?: string }
+        Returns: Json
+      }
       reset_monthly_quotas: { Args: never; Returns: undefined }
+      validate_beta_user: { Args: { p_beta_user_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
