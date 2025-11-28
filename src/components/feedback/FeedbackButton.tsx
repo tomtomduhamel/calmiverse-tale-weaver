@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MessageSquarePlus, Star, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 export const FeedbackButton = () => {
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
   const [feedbackText, setFeedbackText] = useState('');
@@ -90,7 +92,7 @@ export const FeedbackButton = () => {
       <DialogTrigger asChild>
         <Button
           size="lg"
-          className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+          className={`fixed ${isMobile ? 'bottom-20' : 'bottom-6'} right-6 z-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105`}
         >
           <MessageSquarePlus className="h-5 w-5 mr-2" />
           Feedback
