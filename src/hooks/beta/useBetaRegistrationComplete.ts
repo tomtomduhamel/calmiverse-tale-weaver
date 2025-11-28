@@ -30,6 +30,17 @@ export const useBetaRegistrationComplete = () => {
       setIsProcessing(true);
 
       try {
+        // Récupérer la tentative d'inscription en cours
+        const { data: attemptData } = await supabase
+          .from('beta_registration_attempts')
+          .select('id')
+          .eq('email', pendingEmail)
+          .eq('invitation_code', pendingCode)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
         const { data, error } = await supabase.rpc('register_beta_request', {
           p_user_id: user.id,
           p_email: pendingEmail,
@@ -38,6 +49,19 @@ export const useBetaRegistrationComplete = () => {
 
         if (error) {
           console.error("[Beta] Error completing beta registration:", error);
+          
+          // Marquer la tentative comme échouée
+          if (attemptData?.id) {
+            await supabase
+              .from('beta_registration_attempts')
+              .update({ 
+                status: 'failed', 
+                error_message: error.message,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', attemptData.id);
+          }
+          
           toast({
             title: "Erreur d'inscription beta",
             description: "Impossible d'enregistrer votre demande beta. Contactez le support.",
@@ -45,6 +69,19 @@ export const useBetaRegistrationComplete = () => {
           });
         } else {
           console.log("[Beta] Beta registration completed:", data);
+          
+          // Marquer la tentative comme complétée
+          if (attemptData?.id) {
+            await supabase
+              .from('beta_registration_attempts')
+              .update({ 
+                status: 'completed',
+                user_id: user.id,
+                completed_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', attemptData.id);
+          }
           
           // Nettoyer localStorage
           localStorage.removeItem('pending_beta_code');
