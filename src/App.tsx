@@ -35,6 +35,7 @@ const StoryReaderPage = lazy(() => import("./pages/StoryReaderPage"));
 const PromptAdmin = lazy(() => import('./pages/admin/PromptAdmin'));
 const TtsConfig = lazy(() => import('./pages/admin/TtsConfig'));
 const AdminFeedback = lazy(() => import('./pages/admin/AdminFeedback'));
+const BetaTestersAdmin = lazy(() => import('./pages/admin/BetaTesters'));
 const AdminGuard = lazy(() => import('./components/admin/AdminGuard'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Subscription = lazy(() => import('./pages/Subscription'));
@@ -209,6 +210,7 @@ function App() {
           <Route path="admin/prompts" element={<AdminGuard><PromptAdmin /></AdminGuard>} />
           <Route path="admin/tts-config" element={<AdminGuard><TtsConfig /></AdminGuard>} />
           <Route path="admin/feedback" element={<AdminGuard><AdminFeedback /></AdminGuard>} />
+          <Route path="admin/beta-testers" element={<AdminGuard><BetaTestersAdmin /></AdminGuard>} />
         </Route>
 
             {/* Route de fallback */}
