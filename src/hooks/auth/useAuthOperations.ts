@@ -44,6 +44,14 @@ export const useAuthOperations = () => {
   const signUpWithEmail = useCallback(async (email: string, password: string, inviteCode?: string | null) => {
     try {
       console.log("Tentative d'inscription avec email:", email, inviteCode ? "avec code beta" : "");
+      
+      // Stocker le code d'invitation AVANT le signup pour l'utiliser après confirmation email
+      if (inviteCode) {
+        console.log("[Auth] Storing beta code in localStorage for post-confirmation registration");
+        localStorage.setItem('pending_beta_code', inviteCode);
+        localStorage.setItem('pending_beta_email', email);
+      }
+      
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -53,39 +61,19 @@ export const useAuthOperations = () => {
       });
       
       if (error) {
+        // Nettoyer localStorage en cas d'erreur
+        localStorage.removeItem('pending_beta_code');
+        localStorage.removeItem('pending_beta_email');
         throw handleAuthError(error, "Erreur d'inscription");
       }
       
       console.log("Inscription réussie");
       
-      // Si code d'invitation beta, enregistrer la demande
-      if (inviteCode && data.user) {
-        console.log("[Auth] Registering beta request for user:", data.user.id);
-        
-        try {
-          const { data: betaData, error: betaError } = await supabase.rpc('register_beta_request', {
-            p_user_id: data.user.id,
-            p_email: email,
-            p_code: inviteCode
-          });
-          
-          if (betaError) {
-            console.error("[Auth] Error registering beta request:", betaError);
-            toast({
-              title: "Attention",
-              description: "Votre compte a été créé mais la demande beta a échoué. Contactez le support.",
-              variant: "destructive",
-            });
-          } else {
-            console.log("[Auth] Beta request registered:", betaData);
-            toast({
-              title: "Demande beta enregistrée",
-              description: "Votre compte est en attente de validation par notre équipe.",
-            });
-          }
-        } catch (betaErr: any) {
-          console.error("[Auth] Beta registration failed:", betaErr);
-        }
+      if (inviteCode) {
+        toast({
+          title: "Inscription réussie",
+          description: "Veuillez confirmer votre email. Votre demande beta sera enregistrée après confirmation.",
+        });
       } else {
         toast({
           title: "Inscription réussie",
