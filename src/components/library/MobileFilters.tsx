@@ -97,11 +97,11 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
           </Button>
         </CollapsibleTrigger>
         
-        <CollapsibleContent className="space-y-4 pt-3">
+        <CollapsibleContent className="space-y-3 pt-3">
           {/* Filtres de statut */}
-          <div>
-            <h4 className="text-sm font-medium mb-2">Statut</h4>
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col items-center">
+            <h4 className="text-xs font-medium text-muted-foreground mb-2">Statut</h4>
+            <div className="flex flex-wrap justify-center gap-1.5">
               {statusOptions.map((option) => {
                 const Icon = option.icon;
                 const isActive = statusFilter === option.value;
@@ -112,9 +112,9 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
                     variant={isActive ? "default" : "outline"}
                     size="sm"
                     onClick={() => onStatusChange(option.value)}
-                    className="h-8 px-3 text-xs"
+                    className="h-8 px-2.5 text-xs"
                   >
-                    <Icon className="h-3 w-3 mr-1" />
+                    <Icon className="h-3.5 w-3.5 mr-1.5" />
                     {option.label}
                   </Button>
                 );
@@ -123,9 +123,9 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
           </div>
 
           {/* Filtres d'objectifs */}
-          <div>
-            <h4 className="text-sm font-medium mb-2">Objectifs</h4>
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col items-center">
+            <h4 className="text-xs font-medium text-muted-foreground mb-2">Objectifs</h4>
+            <div className="flex justify-center gap-1.5">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -139,7 +139,7 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Tous les objectifs</p>
+                    <p>Tous</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -175,18 +175,20 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
 
           {/* Bouton de reset */}
           {activeFiltersCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                onStatusChange('all');
-                onObjectiveChange(null);
-              }}
-              className="w-full h-8 text-xs"
-            >
-              <X className="h-3 w-3 mr-1" />
-              Réinitialiser les filtres
-            </Button>
+            <div className="flex justify-center pt-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  onStatusChange('all');
+                  onObjectiveChange(null);
+                }}
+                className="h-7 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Réinitialiser
+              </Button>
+            </div>
           )}
         </CollapsibleContent>
       </Collapsible>
