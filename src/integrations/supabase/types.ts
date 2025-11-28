@@ -100,6 +100,42 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_registration_attempts: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          email: string
+          error_message: string | null
+          id: string
+          invitation_code: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          email: string
+          error_message?: string | null
+          id?: string
+          invitation_code: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          email?: string
+          error_message?: string | null
+          id?: string
+          invitation_code?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       beta_users: {
         Row: {
           email: string
@@ -896,6 +932,17 @@ export type Database = {
         Returns: {
           child_id: string
           story_count: number
+        }[]
+      }
+      get_user_beta_registration_attempt: {
+        Args: { p_user_id: string }
+        Returns: {
+          completed_at: string
+          created_at: string
+          email: string
+          id: string
+          invitation_code: string
+          status: string
         }[]
       }
       has_feature_access: {

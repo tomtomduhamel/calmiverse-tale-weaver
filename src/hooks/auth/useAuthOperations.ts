@@ -50,6 +50,25 @@ export const useAuthOperations = () => {
         console.log("[Auth] Storing beta code in localStorage for post-confirmation registration");
         localStorage.setItem('pending_beta_code', inviteCode);
         localStorage.setItem('pending_beta_email', email);
+        
+        // Créer une tentative d'inscription beta en base de données
+        try {
+          const { error: attemptError } = await supabase
+            .from('beta_registration_attempts')
+            .insert({
+              email,
+              invitation_code: inviteCode,
+              status: 'pending'
+            });
+          
+          if (attemptError) {
+            console.error("[Auth] Error creating beta registration attempt:", attemptError);
+          } else {
+            console.log("[Auth] Beta registration attempt created in database");
+          }
+        } catch (attemptErr) {
+          console.error("[Auth] Failed to create beta registration attempt:", attemptErr);
+        }
       }
       
       const { data, error } = await supabase.auth.signUp({ 
