@@ -18,6 +18,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { STORY_OBJECTIVES } from "@/utils/objectiveUtils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MobileFiltersProps {
   searchTerm: string;
@@ -48,14 +50,6 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
     { value: 'error', label: 'Erreurs', icon: AlertCircle },
   ] as const;
 
-  const objectives = [
-    'Calmer avant le coucher',
-    'Gérer les peurs',
-    'Développer la confiance',
-    'Encourager la créativité',
-    'Apprendre les émotions',
-    'Favoriser l\'amitié',
-  ];
 
   const getActiveFiltersCount = () => {
     let count = 0;
@@ -134,27 +128,50 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
           <div>
             <h4 className="text-sm font-medium mb-2">Objectifs</h4>
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant={!selectedObjective ? "default" : "outline"}
-                size="sm"
-                onClick={() => onObjectiveChange(null)}
-                className="h-8 px-3 text-xs"
-              >
-                Tous
-              </Button>
-              {objectives.map((objective) => (
-                <Button
-                  key={objective}
-                  variant={selectedObjective === objective ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onObjectiveChange(
-                    selectedObjective === objective ? null : objective
-                  )}
-                  className="h-8 px-3 text-xs"
-                >
-                  {objective}
-                </Button>
-              ))}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={!selectedObjective ? "default" : "outline"}
+                      size="icon"
+                      onClick={() => onObjectiveChange(null)}
+                      className="h-9 w-9"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Tous les objectifs</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              {STORY_OBJECTIVES.map((objective) => {
+                const IconComponent = objective.icon;
+                const isActive = selectedObjective === objective.value;
+                
+                return (
+                  <TooltipProvider key={objective.id}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={isActive ? "default" : "outline"}
+                          size="icon"
+                          onClick={() => onObjectiveChange(
+                            isActive ? null : objective.value
+                          )}
+                          className="h-9 w-9"
+                        >
+                          <IconComponent className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{objective.label}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })}
             </div>
           </div>
 
