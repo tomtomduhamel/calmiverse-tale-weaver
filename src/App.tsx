@@ -37,6 +37,7 @@ const TtsConfig = lazy(() => import('./pages/admin/TtsConfig'));
 const AdminFeedback = lazy(() => import('./pages/admin/AdminFeedback'));
 const BetaTestersAdmin = lazy(() => import('./pages/admin/BetaTesters'));
 const AdminGuard = lazy(() => import('./components/admin/AdminGuard'));
+const BetaGuard = lazy(() => import('./components/beta/BetaGuard'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Subscription = lazy(() => import('./pages/Subscription'));
 const ContactPage = lazy(() => import("@/pages/support/ContactPage").then(m => ({ default: m.ContactPage })));
@@ -188,8 +189,8 @@ function App() {
             <Route path="/story/:id" element={<PublicStory />} />
             <Route path="/404" element={<NotFound />} />
 
-        {/* Routes avec authentification */}
-        <Route path="/" element={<Shell />}>
+        {/* Routes avec authentification et vérification beta */}
+        <Route path="/" element={<BetaGuard><Shell /></BetaGuard>}>
           <Route index element={<Index />} />
           <Route path="children" element={<ChildrenListPage />} />
           <Route path="kids-profile" element={<KidsProfile />} />
