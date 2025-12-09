@@ -81,7 +81,11 @@ const Auth = () => {
   }, [user, loading, betaLoading, attemptLoading, isProcessing, isPending, isRejected, hasPendingAttempt, betaInfo, navigate]);
 
   // Afficher le loader pendant le chargement initial ou le traitement de l'inscription beta
-  if (loading || isProcessing) {
+  // Note: Pour les utilisateurs non connectés, on n'attend pas betaLoading/attemptLoading
+  const isAuthLoading = loading;
+  const needsBetaCheck = user && (betaLoading || attemptLoading);
+  
+  if (isAuthLoading || isProcessing || needsBetaCheck) {
     return <SimpleLoader />;
   }
 
