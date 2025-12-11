@@ -20,7 +20,7 @@ export const useSupabaseStories = () => {
   const { user } = useSupabaseAuth();
   
   // Utilisation des hooks spécialisés
-  const { stories, isLoading, error, fetchStories, forceRefresh } = useStoriesQuery();
+  const { stories, isLoading, error, fetchStories, forceRefresh, removeStoryFromList } = useStoriesQuery();
   const { createStory } = useStoryCreation();
   const { deleteStory } = useStoryDeletion();
   const { updateStoryStatus } = useStoryUpdate();
@@ -128,6 +128,8 @@ export const useSupabaseStories = () => {
     deleteStory,
     updateStoryStatus,
     retryStoryGeneration,
+    // Mise à jour optimiste pour suppression
+    removeStoryFromList,
     // Nouvelles fonctionnalités de favoris
     toggleFavorite: handleToggleFavorite,
     getFavoriteStories,
