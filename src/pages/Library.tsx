@@ -24,7 +24,8 @@ const Library: React.FC = () => {
   const {
     stories,
     isLoading: storiesLoading,
-    fetchStories
+    fetchStories,
+    removeStoryFromList
   } = useSupabaseStories();
   const {
     deleteStory
@@ -57,17 +58,16 @@ const Library: React.FC = () => {
       setIsDeletingId(storyId);
       console.log("[Library] DEBUG: Appel de deleteStory avec ID:", storyId);
       await deleteStory(storyId);
-      console.log("[Library] DEBUG: Suppression réussie, rafraîchissement de la liste");
-      // Rafraîchir la liste des histoires après suppression
-      await fetchStories();
+      console.log("[Library] DEBUG: Suppression réussie, mise à jour immédiate de l'UI");
+      
+      // Mise à jour optimiste immédiate de l'UI
+      removeStoryFromList(storyId);
+      
       toast({
         title: "Histoire supprimée",
         description: "L'histoire a été supprimée avec succès de votre bibliothèque"
       });
       console.log("[Library] DEBUG: Suppression terminée avec succès");
-      
-      // Rediriger vers la bibliothèque après suppression réussie
-      navigate("/library");
     } catch (error: any) {
       console.error("[Library] ERROR: Erreur lors de la suppression:", error);
       toast({

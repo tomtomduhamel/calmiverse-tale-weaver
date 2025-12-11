@@ -203,11 +203,23 @@ export const useOptimizedStoriesQuery = () => {
     fetchStories(true);
   }, [fetchStories]);
 
+  // Remove story from list (optimistic update after deletion)
+  const removeStoryFromList = useCallback((storyId: string) => {
+    setStories(prev => prev.filter(story => story.id !== storyId));
+    if (cacheRef.current) {
+      cacheRef.current = {
+        data: cacheRef.current.data.filter(story => story.id !== storyId),
+        timestamp: Date.now()
+      };
+    }
+  }, []);
+
   return { 
     stories, 
     isLoading, 
     error, 
     fetchStories: debouncedFetchStories,
-    forceRefresh 
+    forceRefresh,
+    removeStoryFromList
   };
 };
