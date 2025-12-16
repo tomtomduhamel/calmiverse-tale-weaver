@@ -455,6 +455,7 @@ export type Database = {
           summary: string | null
           title: string
           tome_number: number | null
+          total_token_story: number | null
           updatedat: string
         }
         Insert: {
@@ -481,6 +482,7 @@ export type Database = {
           summary?: string | null
           title: string
           tome_number?: number | null
+          total_token_story?: number | null
           updatedat?: string
         }
         Update: {
@@ -507,6 +509,7 @@ export type Database = {
           summary?: string | null
           title?: string
           tome_number?: number | null
+          total_token_story?: number | null
           updatedat?: string
         }
         Relationships: [

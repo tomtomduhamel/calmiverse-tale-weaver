@@ -235,6 +235,12 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     
     if (!validation.allowed) {
       console.log('[TitleBasedStoryCreator] Quota atteint:', validation);
+      // ✅ Toast immédiat pour feedback
+      toast({
+        title: "Limite atteinte",
+        description: validation.reason || "Vous avez atteint votre quota mensuel d'histoires",
+        variant: "destructive"
+      });
       setQuotaMessage(validation.reason || 'Limite atteinte');
       setShowUpgradePrompt(true);
       return;
@@ -306,7 +312,18 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
   // Étape 1: Configuration
   if (currentStep === 'children') {
-    return <div className="space-y-6">
+    return (
+      <>
+        <UpgradePrompt
+          open={showUpgradePrompt}
+          onOpenChange={setShowUpgradePrompt}
+          currentTier={subscription?.tier || 'calmini'}
+          reason="stories"
+          message={quotaMessage}
+          onUpgrade={() => navigate('/pricing')}
+          onCancel={() => setShowUpgradePrompt(false)}
+        />
+        <div className="space-y-6">
         {/* Notification de session récupérée */}
         {hasPersistedSession() && (
           <Alert className="mb-6">
@@ -397,7 +414,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
               </>}
           </Button>
         </div>
-      </div>;
+        </div>
+      </>
+    );
   }
 
   // Étape 2: Sélection du titre
@@ -446,22 +465,33 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
     // Si les titres sont générés, afficher le sélecteur
     return (
-      <div className="space-y-6">
-        <TitleSelector
-          titles={generatedTitles}
-          onSelectTitle={handleCreateStory}
-          onRegenerateTitles={canRegenerate ? handleRegenerateTitles : undefined}
-          canRegenerate={canRegenerate}
-          isCreatingStory={isCreatingStory}
-          isRegenerating={isGeneratingTitles}
+      <>
+        <UpgradePrompt
+          open={showUpgradePrompt}
+          onOpenChange={setShowUpgradePrompt}
+          currentTier={subscription?.tier || 'calmini'}
+          reason="stories"
+          message={quotaMessage}
+          onUpgrade={() => navigate('/pricing')}
+          onCancel={() => setShowUpgradePrompt(false)}
         />
-        
-        <div className="flex justify-center">
-          <Button variant="outline" onClick={handleBack}>
-            Retour à la configuration
-          </Button>
+        <div className="space-y-6">
+          <TitleSelector
+            titles={generatedTitles}
+            onSelectTitle={handleCreateStory}
+            onRegenerateTitles={canRegenerate ? handleRegenerateTitles : undefined}
+            canRegenerate={canRegenerate}
+            isCreatingStory={isCreatingStory}
+            isRegenerating={isGeneratingTitles}
+          />
+          
+          <div className="flex justify-center">
+            <Button variant="outline" onClick={handleBack}>
+              Retour à la configuration
+            </Button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
