@@ -37,10 +37,13 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
 
   const handleConfirmDelete = React.useCallback(async () => {
     console.log("[StoryCardActions] DEBUG: Confirmation de suppression pour histoire:", story.id);
+    // Fermer le dialog AVANT la suppression pour éviter toute propagation d'événement
+    setShowDeleteDialog(false);
     if (onDelete) {
+      // Petit délai pour s'assurer que le dialog est fermé avant la suppression
+      await new Promise(resolve => setTimeout(resolve, 50));
       await onDelete();
     }
-    setShowDeleteDialog(false);
   }, [onDelete, story.id]);
 
   const handleCloseDialog = React.useCallback(() => {
