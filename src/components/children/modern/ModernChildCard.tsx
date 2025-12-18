@@ -4,9 +4,10 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Edit, Trash2, BookOpen, Calendar, Heart, Sparkles, User, Cat, Dog } from "lucide-react";
-import type { Child, ChildGender, PetType } from "@/types/child";
+import { Edit, Trash2, BookOpen, Calendar } from "lucide-react";
+import type { Child } from "@/types/child";
 import { calculateAge, formatAge } from "@/utils/age";
+import { getCategoryDisplay } from "@/utils/profileCategory";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -32,28 +33,8 @@ const ModernChildCard: React.FC<ModernChildCardProps> = ({
   const teddyPhoto = child.teddyPhotos?.[0]?.url;
   const initials = child.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-  // Helper function to get gender icon and label
-  const getGenderDisplay = (child: Child) => {
-    switch (child.gender) {
-      case 'boy':
-        return { icon: User, label: 'Garçon', color: 'text-blue-500' };
-      case 'girl':
-        return { icon: Heart, label: 'Fille', color: 'text-pink-500' };
-      case 'pet':
-        if (child.petType === 'dog') {
-          return { icon: Dog, label: 'Chien', color: 'text-orange-500' };
-        } else if (child.petType === 'cat') {
-          return { icon: Cat, label: 'Chat', color: 'text-orange-500' };
-        } else if (child.petType === 'other' && child.petTypeCustom) {
-          return { icon: Sparkles, label: child.petTypeCustom, color: 'text-orange-500' };
-        }
-        return { icon: Cat, label: 'Animal', color: 'text-orange-500' };
-      default:
-        return { icon: User, label: 'Enfant', color: 'text-gray-500' };
-    }
-  };
-
-  const genderDisplay = getGenderDisplay(child);
+  // Get category display (icon, label, color) based on profile category
+  const categoryDisplay = getCategoryDisplay(child);
 
   return (
     <Card className="group relative overflow-hidden bg-gradient-to-br from-background/50 to-background/80 backdrop-blur-sm border-border/50 hover:border-primary/20 hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
@@ -127,9 +108,9 @@ const ModernChildCard: React.FC<ModernChildCardProps> = ({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <genderDisplay.icon className={cn("w-4 h-4", genderDisplay.color)} />
+                  <categoryDisplay.icon className={cn("w-4 h-4", categoryDisplay.color)} />
                 </TooltipTrigger>
-                <TooltipContent>{genderDisplay.label}</TooltipContent>
+                <TooltipContent>{categoryDisplay.label}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>

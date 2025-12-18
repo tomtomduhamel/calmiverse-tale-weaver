@@ -2,10 +2,10 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, BookOpen, Calendar, Heart, User, Cat, Dog, Sparkles } from "lucide-react";
-import type { Child, ChildGender, PetType } from "@/types/child";
+import { Edit, Trash2, BookOpen, Calendar } from "lucide-react";
+import type { Child } from "@/types/child";
 import { calculateAge, formatAge } from "@/utils/age";
+import { getCategoryDisplay } from "@/utils/profileCategory";
 import { cn } from "@/lib/utils";
 
 interface MobileChildCardProps {
@@ -27,27 +27,8 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
   const teddyPhoto = child.teddyPhotos?.[0]?.url;
   const initials = child.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-  const getGenderDisplay = (child: Child) => {
-    switch (child.gender) {
-      case 'boy':
-        return { icon: User, color: 'text-blue-500' };
-      case 'girl':
-        return { icon: Heart, color: 'text-pink-500' };
-      case 'pet':
-        if (child.petType === 'dog') {
-          return { icon: Dog, color: 'text-orange-500' };
-        } else if (child.petType === 'cat') {
-          return { icon: Cat, color: 'text-orange-500' };
-        } else if (child.petType === 'other') {
-          return { icon: Sparkles, color: 'text-orange-500' };
-        }
-        return { icon: Cat, color: 'text-orange-500' };
-      default:
-        return { icon: User, color: 'text-gray-500' };
-    }
-  };
-
-  const genderDisplay = getGenderDisplay(child);
+  // Get category display (icon, label, color) based on profile category
+  const categoryDisplay = getCategoryDisplay(child);
 
   return (
     <Card className="bg-background/80 border-border/50 hover:border-primary/30 transition-all duration-200 active:scale-[0.98]">
@@ -96,7 +77,7 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
                   <Calendar className="w-3 h-3" />
                   <span>{formatAge(age)}</span>
                 </div>
-                <genderDisplay.icon className={cn("w-3 h-3", genderDisplay.color)} />
+                <categoryDisplay.icon className={cn("w-3 h-3", categoryDisplay.color)} />
               </div>
               
               {storiesCount > 0 && (

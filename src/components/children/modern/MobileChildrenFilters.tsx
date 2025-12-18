@@ -9,6 +9,8 @@ import {
   User, 
   Heart, 
   Cat,
+  UserCircle,
+  Baby,
   ChevronDown,
   Calendar,
   SortAsc,
@@ -19,6 +21,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import type { ProfileCategory } from "@/utils/profileCategory";
 
 interface MobileChildrenFiltersProps {
   searchTerm: string;
@@ -29,8 +32,10 @@ interface MobileChildrenFiltersProps {
   onSortOrderChange: (value: 'asc' | 'desc') => void;
   ageFilter: 'all' | 'toddler' | 'preschool' | 'school';
   onAgeFilterChange: (value: 'all' | 'toddler' | 'preschool' | 'school') => void;
-  genderFilter: 'all' | 'boy' | 'girl' | 'pet';
-  onGenderFilterChange: (value: 'all' | 'boy' | 'girl' | 'pet') => void;
+  categoryFilter: 'all' | ProfileCategory;
+  onCategoryFilterChange: (value: 'all' | ProfileCategory) => void;
+  childGenderFilter: 'all' | 'boy' | 'girl';
+  onChildGenderFilterChange: (value: 'all' | 'boy' | 'girl') => void;
 }
 
 const MobileChildrenFilters: React.FC<MobileChildrenFiltersProps> = ({
@@ -42,15 +47,22 @@ const MobileChildrenFilters: React.FC<MobileChildrenFiltersProps> = ({
   onSortOrderChange,
   ageFilter,
   onAgeFilterChange,
-  genderFilter,
-  onGenderFilterChange,
+  categoryFilter,
+  onCategoryFilterChange,
+  childGenderFilter,
+  onChildGenderFilterChange,
 }) => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
-  const genderOptions = [
+  const categoryOptions = [
+    { value: 'child', label: 'Enfants', icon: Baby, color: 'text-blue-500' },
+    { value: 'adult', label: 'Adultes', icon: UserCircle, color: 'text-purple-500' },
+    { value: 'pet', label: 'Animaux', icon: Cat, color: 'text-orange-500' },
+  ] as const;
+
+  const childGenderOptions = [
     { value: 'boy', label: 'Garçons', icon: User, color: 'text-blue-500' },
     { value: 'girl', label: 'Filles', icon: Heart, color: 'text-pink-500' },
-    { value: 'pet', label: 'Animaux', icon: Cat, color: 'text-orange-500' },
   ] as const;
 
   const ageOptions = [
@@ -67,7 +79,8 @@ const MobileChildrenFilters: React.FC<MobileChildrenFiltersProps> = ({
 
   const getActiveFiltersCount = () => {
     let count = 0;
-    if (genderFilter !== 'all') count++;
+    if (categoryFilter !== 'all') count++;
+    if (childGenderFilter !== 'all') count++;
     if (ageFilter !== 'all') count++;
     if (sortBy !== 'name' || sortOrder !== 'asc') count++;
     return count;
@@ -75,13 +88,20 @@ const MobileChildrenFilters: React.FC<MobileChildrenFiltersProps> = ({
 
   const activeFiltersCount = getActiveFiltersCount();
 
+  const handleCategoryChange = (value: 'all' | ProfileCategory) => {
+    onCategoryFilterChange(value);
+    if (value !== 'child') {
+      onChildGenderFilterChange('all');
+    }
+  };
+
   return (
     <div className="space-y-3 px-2">
       {/* Barre de recherche */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Rechercher un enfant..."
+          placeholder="Rechercher un profil..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-10 h-10 bg-background/80 border-border/50"
@@ -116,31 +136,31 @@ const MobileChildrenFilters: React.FC<MobileChildrenFiltersProps> = ({
         </CollapsibleTrigger>
         
         <CollapsibleContent className="space-y-4 pt-3">
-          {/* Filtres de genre */}
+          {/* Category Filter (Primary) */}
           <div>
             <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
               <User className="h-4 w-4" />
-              Type
+              Catégorie
             </h4>
             <div className="flex flex-wrap gap-2">
               <Button
-                variant={genderFilter === 'all' ? "default" : "outline"}
+                variant={categoryFilter === 'all' ? "default" : "outline"}
                 size="sm"
-                onClick={() => onGenderFilterChange('all')}
+                onClick={() => handleCategoryChange('all')}
                 className="h-8 px-3 text-xs"
               >
                 Tous
               </Button>
-              {genderOptions.map((option) => {
+              {categoryOptions.map((option) => {
                 const Icon = option.icon;
-                const isActive = genderFilter === option.value;
+                const isActive = categoryFilter === option.value;
                 
                 return (
                   <Button
                     key={option.value}
                     variant={isActive ? "default" : "outline"}
                     size="sm"
-                    onClick={() => onGenderFilterChange(option.value)}
+                    onClick={() => handleCategoryChange(option.value)}
                     className="h-8 px-3 text-xs"
                   >
                     <Icon className={`h-3 w-3 mr-1 ${option.color}`} />
@@ -150,6 +170,43 @@ const MobileChildrenFilters: React.FC<MobileChildrenFiltersProps> = ({
               })}
             </div>
           </div>
+
+          {/* Child Gender Filter (Secondary) - Only when category is 'child' */}
+          {categoryFilter === 'child' && (
+            <div className="pl-4 border-l-2 border-primary/30">
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Heart className="h-4 w-4" />
+                Genre
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={childGenderFilter === 'all' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onChildGenderFilterChange('all')}
+                  className="h-8 px-3 text-xs"
+                >
+                  Tous
+                </Button>
+                {childGenderOptions.map((option) => {
+                  const Icon = option.icon;
+                  const isActive = childGenderFilter === option.value;
+                  
+                  return (
+                    <Button
+                      key={option.value}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => onChildGenderFilterChange(option.value)}
+                      className="h-8 px-3 text-xs"
+                    >
+                      <Icon className={`h-3 w-3 mr-1 ${option.color}`} />
+                      {option.label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Filtres d'âge */}
           <div>
@@ -223,7 +280,8 @@ const MobileChildrenFilters: React.FC<MobileChildrenFiltersProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => {
-                onGenderFilterChange('all');
+                onCategoryFilterChange('all');
+                onChildGenderFilterChange('all');
                 onAgeFilterChange('all');
                 onSortChange('name');
                 onSortOrderChange('asc');

@@ -6,6 +6,7 @@ import ChildrenGridLayout from "./ChildrenGridLayout";
 import AddChildModal from "./AddChildModal";
 import type { Child, ChildGender, PetType } from "@/types/child";
 import { calculateAge } from "@/utils/age";
+import { getProfileCategory, countByCategory, ProfileCategory } from "@/utils/profileCategory";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ModernChildrenProfilesProps {
@@ -49,7 +50,10 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   const [sortBy, setSortBy] = useState<'name' | 'age' | 'created'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [ageFilter, setAgeFilter] = useState<'all' | 'toddler' | 'preschool' | 'school'>('all');
-  const [genderFilter, setGenderFilter] = useState<'all' | 'boy' | 'girl' | 'pet'>('all');
+  
+  // Nouveaux filtres à deux niveaux
+  const [categoryFilter, setCategoryFilter] = useState<'all' | ProfileCategory>('all');
+  const [childGenderFilter, setChildGenderFilter] = useState<'all' | 'boy' | 'girl'>('all');
 
   // Filter and sort children
   const filteredAndSortedChildren = useMemo(() => {
@@ -59,6 +63,16 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
                            child.teddyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            child.imaginaryWorld?.toLowerCase().includes(searchTerm.toLowerCase());
 
+      // Category filter (primary)
+      const category = getProfileCategory(child);
+      const matchesCategory = categoryFilter === 'all' || category === categoryFilter;
+
+      // Child gender filter (secondary) - only applies when category is 'child'
+      let matchesChildGender = true;
+      if (categoryFilter === 'child' && childGenderFilter !== 'all') {
+        matchesChildGender = child.gender === childGenderFilter;
+      }
+
       // Age filter
       const age = calculateAge(child.birthDate);
       let matchesAge = true;
@@ -67,10 +81,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
       else if (ageFilter === 'preschool') matchesAge = age >= 3 && age <= 5;
       else if (ageFilter === 'school') matchesAge = age >= 6;
 
-      // Gender filter
-      const matchesGender = genderFilter === 'all' || child.gender === genderFilter;
-
-      return matchesSearch && matchesAge && matchesGender;
+      return matchesSearch && matchesCategory && matchesChildGender && matchesAge;
     });
 
     // Sort
@@ -91,7 +102,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
     });
 
     return filtered;
-  }, [children, searchTerm, sortBy, sortOrder, ageFilter, genderFilter]);
+  }, [children, searchTerm, sortBy, sortOrder, ageFilter, categoryFilter, childGenderFilter]);
 
   const resetForm = () => {
     setChildName("");
@@ -175,13 +186,11 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   };
 
   const handleCreateStoryForChild = (childId: string) => {
-    // Pass the specific child ID to story creation
     onCreateStory?.(childId);
   };
 
-  // Séparer les enfants des animaux de compagnie
-  const actualChildren = children.filter(child => child.gender !== 'pet');
-  const pets = children.filter(child => child.gender === 'pet');
+  // Compter par catégorie
+  const categoryCounts = useMemo(() => countByCategory(children), [children]);
 
   return (
     <div className={`${isMobile ? 'space-y-4' : 'space-y-8'}`}>
@@ -189,8 +198,9 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
       <ProfilesHeaderV2
         onShowForm={handleShowForm}
         onCreateStory={onCreateStory}
-        childrenCount={actualChildren.length}
-        petsCount={pets.length}
+        childrenCount={categoryCounts.children}
+        adultsCount={categoryCounts.adults}
+        petsCount={categoryCounts.pets}
         totalStories={totalStories || 0}
       />
 
@@ -206,8 +216,10 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
             onSortOrderChange={setSortOrder}
             ageFilter={ageFilter}
             onAgeFilterChange={setAgeFilter}
-            genderFilter={genderFilter}
-            onGenderFilterChange={setGenderFilter}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            childGenderFilter={childGenderFilter}
+            onChildGenderFilterChange={setChildGenderFilter}
           />
         ) : (
           <ChildrenSearchBar
@@ -219,8 +231,10 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
             onSortOrderChange={setSortOrder}
             ageFilter={ageFilter}
             onAgeFilterChange={setAgeFilter}
-            genderFilter={genderFilter}
-            onGenderFilterChange={setGenderFilter}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            childGenderFilter={childGenderFilter}
+            onChildGenderFilterChange={setChildGenderFilter}
           />
         )
       )}

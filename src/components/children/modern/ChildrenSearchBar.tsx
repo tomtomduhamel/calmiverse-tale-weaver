@@ -2,8 +2,9 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, SortAsc, SortDesc, Filter, User, Heart, Cat } from "lucide-react";
+import { Search, SortAsc, SortDesc, Filter, User, Heart, Cat, UserCircle, Baby } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { ProfileCategory } from "@/utils/profileCategory";
 
 interface ChildrenSearchBarProps {
   searchTerm: string;
@@ -14,8 +15,10 @@ interface ChildrenSearchBarProps {
   onSortOrderChange: (value: 'asc' | 'desc') => void;
   ageFilter: 'all' | 'toddler' | 'preschool' | 'school';
   onAgeFilterChange: (value: 'all' | 'toddler' | 'preschool' | 'school') => void;
-  genderFilter: 'all' | 'boy' | 'girl' | 'pet';
-  onGenderFilterChange: (value: 'all' | 'boy' | 'girl' | 'pet') => void;
+  categoryFilter: 'all' | ProfileCategory;
+  onCategoryFilterChange: (value: 'all' | ProfileCategory) => void;
+  childGenderFilter: 'all' | 'boy' | 'girl';
+  onChildGenderFilterChange: (value: 'all' | 'boy' | 'girl') => void;
 }
 
 const ChildrenSearchBar: React.FC<ChildrenSearchBarProps> = ({
@@ -27,8 +30,10 @@ const ChildrenSearchBar: React.FC<ChildrenSearchBarProps> = ({
   onSortOrderChange,
   ageFilter,
   onAgeFilterChange,
-  genderFilter,
-  onGenderFilterChange,
+  categoryFilter,
+  onCategoryFilterChange,
+  childGenderFilter,
+  onChildGenderFilterChange,
 }) => {
   const isMobile = useIsMobile();
 
@@ -38,15 +43,15 @@ const ChildrenSearchBar: React.FC<ChildrenSearchBarProps> = ({
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
-          placeholder="Rechercher un enfant..."
+          placeholder="Rechercher un profil..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-10 bg-background/50 border-border/50 focus:border-primary/50"
         />
       </div>
 
-      {/* Filters */}
-      <div className={`flex gap-2 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+      {/* Primary Filters Row */}
+      <div className={`flex gap-2 ${isMobile ? 'flex-col' : 'flex-row items-center'}`}>
         {/* Age Filter */}
         <Select value={ageFilter} onValueChange={onAgeFilterChange}>
           <SelectTrigger className={`bg-background/50 border-border/50 ${isMobile ? 'w-full' : 'w-40'}`}>
@@ -61,31 +66,51 @@ const ChildrenSearchBar: React.FC<ChildrenSearchBarProps> = ({
           </SelectContent>
         </Select>
 
-        {/* Gender Filter with Icons */}
+        {/* Category Filter (Primary) */}
         <div className="flex gap-1">
           <Button
-            variant={genderFilter === 'boy' ? 'default' : 'outline'}
+            variant={categoryFilter === 'all' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onGenderFilterChange(genderFilter === 'boy' ? 'all' : 'boy')}
+            onClick={() => {
+              onCategoryFilterChange('all');
+              onChildGenderFilterChange('all');
+            }}
+            className="bg-background/50 border-border/50"
+          >
+            Tous
+          </Button>
+          <Button
+            variant={categoryFilter === 'child' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onCategoryFilterChange(categoryFilter === 'child' ? 'all' : 'child')}
             className="bg-background/50 border-border/50 hover:bg-blue-100"
           >
-            <User className="h-4 w-4 text-blue-500" />
+            <Baby className="h-4 w-4 text-blue-500" />
+            {!isMobile && <span className="ml-1">Enfants</span>}
           </Button>
           <Button
-            variant={genderFilter === 'girl' ? 'default' : 'outline'}
+            variant={categoryFilter === 'adult' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onGenderFilterChange(genderFilter === 'girl' ? 'all' : 'girl')}
-            className="bg-background/50 border-border/50 hover:bg-pink-100"
+            onClick={() => {
+              onCategoryFilterChange(categoryFilter === 'adult' ? 'all' : 'adult');
+              onChildGenderFilterChange('all');
+            }}
+            className="bg-background/50 border-border/50 hover:bg-purple-100"
           >
-            <Heart className="h-4 w-4 text-pink-500" />
+            <UserCircle className="h-4 w-4 text-purple-500" />
+            {!isMobile && <span className="ml-1">Adultes</span>}
           </Button>
           <Button
-            variant={genderFilter === 'pet' ? 'default' : 'outline'}
+            variant={categoryFilter === 'pet' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onGenderFilterChange(genderFilter === 'pet' ? 'all' : 'pet')}
+            onClick={() => {
+              onCategoryFilterChange(categoryFilter === 'pet' ? 'all' : 'pet');
+              onChildGenderFilterChange('all');
+            }}
             className="bg-background/50 border-border/50 hover:bg-orange-100"
           >
             <Cat className="h-4 w-4 text-orange-500" />
+            {!isMobile && <span className="ml-1">Animaux</span>}
           </Button>
         </div>
 
@@ -116,6 +141,41 @@ const ChildrenSearchBar: React.FC<ChildrenSearchBarProps> = ({
           {!isMobile && <span className="ml-2">{sortOrder === 'asc' ? 'Croissant' : 'Décroissant'}</span>}
         </Button>
       </div>
+
+      {/* Secondary Filter Row - Only visible when "Enfants" is selected */}
+      {categoryFilter === 'child' && (
+        <div className="flex items-center gap-2 pt-2 border-t border-border/30">
+          <span className="text-sm text-muted-foreground">Genre :</span>
+          <div className="flex gap-1">
+            <Button
+              variant={childGenderFilter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onChildGenderFilterChange('all')}
+              className="bg-background/50 border-border/50"
+            >
+              Tous
+            </Button>
+            <Button
+              variant={childGenderFilter === 'boy' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onChildGenderFilterChange(childGenderFilter === 'boy' ? 'all' : 'boy')}
+              className="bg-background/50 border-border/50 hover:bg-blue-100"
+            >
+              <User className="h-4 w-4 text-blue-500" />
+              {!isMobile && <span className="ml-1">Garçons</span>}
+            </Button>
+            <Button
+              variant={childGenderFilter === 'girl' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onChildGenderFilterChange(childGenderFilter === 'girl' ? 'all' : 'girl')}
+              className="bg-background/50 border-border/50 hover:bg-pink-100"
+            >
+              <Heart className="h-4 w-4 text-pink-500" />
+              {!isMobile && <span className="ml-1">Filles</span>}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
