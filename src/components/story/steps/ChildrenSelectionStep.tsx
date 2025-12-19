@@ -1,23 +1,25 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { RefreshCw, Users, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, ArrowRight } from 'lucide-react';
 import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { calculateAge } from '@/utils/age';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileChildrenSelectionStep from './mobile/MobileChildrenSelectionStep';
 import StoryCreationErrorBoundary from '@/components/ui/StoryCreationErrorBoundary';
+import CharacterCategoryFilter from './CharacterCategoryFilter';
+import { getProfileCategory, getCategoryDisplay, countByCategory, type ProfileCategory } from '@/utils/profileCategory';
+
 interface ChildrenSelectionStepProps {
   children: Child[];
   preSelectedChildId?: string;
 }
+
 const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
   children,
   preSelectedChildId
@@ -30,15 +32,11 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
     hasPersistedSession
   } = usePersistedStoryCreation();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
-  // Ajout d'une option de reset automatique pour éviter les blocages
-  // useEffect(() => {
-  //   // Décommentez pour reset automatique à chaque arrivée sur l'étape 1
-  //   clearPersistedState();
-  // }, [clearPersistedState]);
+  // États des filtres
+  const [categoryFilter, setCategoryFilter] = useState<'all' | ProfileCategory>('all');
+  const [childGenderFilter, setChildGenderFilter] = useState<'all' | 'boy' | 'girl'>('all');
 
   // Effect pour présélectionner un enfant si spécifié et pas déjà de session
   useEffect(() => {
@@ -50,10 +48,14 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
       }
     }
   }, [preSelectedChildId, children, hasPersistedSession, selectedChildrenIds, updateSelectedChildren]);
+
   const handleChildToggle = useCallback((childId: string) => {
-    const newSelection = selectedChildrenIds.includes(childId) ? selectedChildrenIds.filter(id => id !== childId) : [...selectedChildrenIds, childId];
+    const newSelection = selectedChildrenIds.includes(childId) 
+      ? selectedChildrenIds.filter(id => id !== childId) 
+      : [...selectedChildrenIds, childId];
     updateSelectedChildren(newSelection);
   }, [selectedChildrenIds, updateSelectedChildren]);
+
   const handleContinue = useCallback(() => {
     if (selectedChildrenIds.length === 0) {
       toast({
@@ -65,6 +67,7 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
     }
     navigate('/create-story/step-2');
   }, [selectedChildrenIds, navigate, toast]);
+
   const handleRestart = useCallback(() => {
     clearPersistedState();
     toast({
@@ -72,28 +75,38 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
       description: "Vous pouvez recommencer la création d'histoire."
     });
   }, [clearPersistedState, toast]);
+
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
 
-  // Helper function to get gender icon
-  const getGenderIcon = (gender: string) => {
-    switch (gender) {
-      case 'boy':
-        return '👦';
-      case 'girl':
-        return '👧';
-      case 'pet':
-        return '🐾';
-      default:
-        return '👤';
-    }
-  };
+  // Compteurs par catégorie
+  const categoryCounts = useMemo(() => countByCategory(children), [children]);
 
-  // Trier les enfants par nombre d'histoires décroissant (plus d'histoires en haut)
-  const displayChildren = [...children].sort((a, b) => {
-    const aStories = (a as any).storiesCount || 0;
-    const bStories = (b as any).storiesCount || 0;
-    return bStories - aStories;
-  });
+  // Filtrage et tri des enfants
+  const displayChildren = useMemo(() => {
+    return [...children]
+      .filter(child => {
+        const category = getProfileCategory(child);
+        
+        // Filtre par catégorie principale
+        if (categoryFilter !== 'all' && category !== categoryFilter) {
+          return false;
+        }
+        
+        // Filtre par genre (seulement pour les enfants)
+        if (categoryFilter === 'child' && childGenderFilter !== 'all') {
+          if (child.gender !== childGenderFilter) {
+            return false;
+          }
+        }
+        
+        return true;
+      })
+      .sort((a, b) => {
+        const aStories = (a as any).storiesCount || 0;
+        const bStories = (b as any).storiesCount || 0;
+        return bStories - aStories;
+      });
+  }, [children, categoryFilter, childGenderFilter]);
 
   // Rediriger vers la version mobile si sur mobile
   if (isMobile) {
@@ -139,14 +152,27 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
 
       {/* Carte de sélection des enfants */}
       <Card>
-        <CardHeader>
+        <CardHeader className="space-y-4">
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Vos enfants et animaux ({children.length})
+            Vos personnages ({children.length})
           </CardTitle>
+          
+          {/* Filtres de catégorie */}
+          <CharacterCategoryFilter
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            childGenderFilter={childGenderFilter}
+            onChildGenderFilterChange={setChildGenderFilter}
+            counts={categoryCounts}
+          />
         </CardHeader>
         <CardContent className="px-0">
-          {needsScrolling ? (
+          {displayChildren.length === 0 ? (
+            <div className="px-6 py-8 text-center text-muted-foreground">
+              Aucun personnage ne correspond aux filtres sélectionnés
+            </div>
+          ) : needsScrolling ? (
             <div className="space-y-3">
               {/* Message contextuel */}
               <div className="flex items-center justify-between px-6">
@@ -168,8 +194,7 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
                     <ChildCard 
                       child={child} 
                       isSelected={selectedChildrenIds.includes(child.id)} 
-                      onToggle={handleChildToggle} 
-                      getGenderIcon={getGenderIcon} 
+                      onToggle={handleChildToggle}
                     />
                   </div>
                 ))}
@@ -183,8 +208,7 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
                     key={child.id} 
                     child={child} 
                     isSelected={selectedChildrenIds.includes(child.id)} 
-                    onToggle={handleChildToggle} 
-                    getGenderIcon={getGenderIcon} 
+                    onToggle={handleChildToggle}
                   />
                 ))}
               </div>
@@ -196,10 +220,16 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
       {/* Sélection actuelle et navigation */}
       <div className="flex justify-between items-center">
         <div className="flex flex-wrap gap-2">
-          {selectedChildren.map(child => <Badge key={child.id} variant="secondary" className="text-sm">
-              {getGenderIcon(child.gender)} {child.name}
-            </Badge>)}
-          {selectedChildren.length === 0 && <span className="text-muted-foreground text-sm">Aucun enfant sélectionné</span>}
+          {selectedChildren.map(child => {
+            const { icon: Icon, color } = getCategoryDisplay(child);
+            return (
+              <Badge key={child.id} variant="secondary" className="text-sm gap-1.5">
+                <Icon className={`h-3.5 w-3.5 ${color}`} />
+                {child.name}
+              </Badge>
+            );
+          })}
+          {selectedChildren.length === 0 && <span className="text-muted-foreground text-sm">Aucun personnage sélectionné</span>}
         </div>
         
         <div className="flex gap-3">
@@ -223,20 +253,21 @@ interface ChildCardProps {
   };
   isSelected: boolean;
   onToggle: (childId: string) => void;
-  getGenderIcon: (gender: string) => string;
 }
+
 const ChildCard: React.FC<ChildCardProps> = ({
   child,
   isSelected,
-  onToggle,
-  getGenderIcon
+  onToggle
 }) => {
   const age = calculateAge(child.birthDate);
   const storiesCount = (child as any).storiesCount || 0;
+  const { icon: CategoryIcon, color } = getCategoryDisplay(child);
 
   // Determine popularity level for visual indicators
   const isTopPerformer = storiesCount >= 3;
   const isPopular = storiesCount > 5;
+
   return (
     <div 
       onClick={() => onToggle(child.id)} 
@@ -272,7 +303,7 @@ const ChildCard: React.FC<ChildCardProps> = ({
         {/* Name and selection indicator */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="text-xl flex-shrink-0">{getGenderIcon(child.gender)}</span>
+            <CategoryIcon className={`h-5 w-5 flex-shrink-0 ${color}`} />
             <h3 className="font-semibold text-base truncate">{child.name}</h3>
           </div>
           {isSelected && (
@@ -304,4 +335,5 @@ const ChildCard: React.FC<ChildCardProps> = ({
     </div>
   );
 };
+
 export default ChildrenSelectionStep;
