@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
 import { calculateAge } from '@/utils/age';
+import CharacterCategoryFilter from '../CharacterCategoryFilter';
+import { getProfileCategory, getCategoryDisplay, countByCategory, type ProfileCategory } from '@/utils/profileCategory';
 
 interface MobileChildrenSelectionStepProps {
   children: Child[];
@@ -27,6 +29,10 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
   } = usePersistedStoryCreation();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // États des filtres
+  const [categoryFilter, setCategoryFilter] = useState<'all' | ProfileCategory>('all');
+  const [childGenderFilter, setChildGenderFilter] = useState<'all' | 'boy' | 'girl'>('all');
 
   // Effect pour présélectionner un enfant si spécifié
   useEffect(() => {
@@ -60,21 +66,35 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
 
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
 
-  // Trier les enfants par nombre d'histoires décroissant (plus d'histoires en haut)
-  const sortedChildren = [...children].sort((a, b) => {
-    const aStories = (a as any).storiesCount || 0;
-    const bStories = (b as any).storiesCount || 0;
-    return bStories - aStories;
-  });
+  // Compteurs par catégorie
+  const categoryCounts = useMemo(() => countByCategory(children), [children]);
 
-  const getGenderIcon = (gender: string) => {
-    switch (gender) {
-      case 'boy': return '👦';
-      case 'girl': return '👧';
-      case 'pet': return '🐾';
-      default: return '👤';
-    }
-  };
+  // Filtrage et tri des enfants
+  const displayChildren = useMemo(() => {
+    return [...children]
+      .filter(child => {
+        const category = getProfileCategory(child);
+        
+        // Filtre par catégorie principale
+        if (categoryFilter !== 'all' && category !== categoryFilter) {
+          return false;
+        }
+        
+        // Filtre par genre (seulement pour les enfants)
+        if (categoryFilter === 'child' && childGenderFilter !== 'all') {
+          if (child.gender !== childGenderFilter) {
+            return false;
+          }
+        }
+        
+        return true;
+      })
+      .sort((a, b) => {
+        const aStories = (a as any).storiesCount || 0;
+        const bStories = (b as any).storiesCount || 0;
+        return bStories - aStories;
+      });
+  }, [children, categoryFilter, childGenderFilter]);
 
   return (
     <div className="space-y-6 px-4">
@@ -92,10 +112,10 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
       {/* En-tête mobile */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Choisissez vos enfants
+          Choisissez vos personnages
         </h1>
         <p className="text-muted-foreground text-sm">
-          Sélectionnez les enfants pour qui créer l'histoire
+          Sélectionnez les personnages pour qui créer l'histoire
         </p>
       </div>
 
@@ -116,24 +136,39 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
 
       {/* Liste des enfants - version mobile verticale */}
       <Card>
-        <CardHeader className="pb-4">
+        <CardHeader className="pb-4 space-y-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
-            Vos enfants ({children.length})
+            Vos personnages ({children.length})
           </CardTitle>
+          
+          {/* Filtres de catégorie - version compacte pour mobile */}
+          <CharacterCategoryFilter
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            childGenderFilter={childGenderFilter}
+            onChildGenderFilterChange={setChildGenderFilter}
+            counts={categoryCounts}
+            compact
+          />
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="space-y-3">
-            {sortedChildren.map(child => (
-              <MobileChildCard
-                key={child.id}
-                child={child}
-                isSelected={selectedChildrenIds.includes(child.id)}
-                onToggle={handleChildToggle}
-                getGenderIcon={getGenderIcon}
-              />
-            ))}
-          </div>
+          {displayChildren.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Aucun personnage ne correspond aux filtres
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {displayChildren.map(child => (
+                <MobileChildCard
+                  key={child.id}
+                  child={child}
+                  isSelected={selectedChildrenIds.includes(child.id)}
+                  onToggle={handleChildToggle}
+                />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -141,18 +176,21 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
       {selectedChildren.length > 0 && (
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="pt-4">
-            <div className="text-sm font-medium mb-2">Enfants sélectionnés :</div>
+            <div className="text-sm font-medium mb-2">Personnages sélectionnés :</div>
             <div className="flex flex-wrap gap-2">
-              {selectedChildren.map(child => (
-                <Badge key={child.id} variant="secondary" className="text-sm">
-                  {getGenderIcon(child.gender)} {child.name}
-                </Badge>
-              ))}
+              {selectedChildren.map(child => {
+                const { icon: Icon, color } = getCategoryDisplay(child);
+                return (
+                  <Badge key={child.id} variant="secondary" className="text-sm gap-1.5">
+                    <Icon className={`h-3.5 w-3.5 ${color}`} />
+                    {child.name}
+                  </Badge>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
       )}
-
     </div>
   );
 };
@@ -162,16 +200,15 @@ interface MobileChildCardProps {
   child: Child;
   isSelected: boolean;
   onToggle: (childId: string) => void;
-  getGenderIcon: (gender: string) => string;
 }
 
 const MobileChildCard: React.FC<MobileChildCardProps> = ({
   child,
   isSelected,
-  onToggle,
-  getGenderIcon
+  onToggle
 }) => {
   const age = calculateAge(child.birthDate);
+  const { icon: CategoryIcon, color } = getCategoryDisplay(child);
 
   return (
     <div
@@ -184,7 +221,7 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{getGenderIcon(child.gender)}</span>
+          <CategoryIcon className={`h-6 w-6 ${color}`} />
           <div>
             <h3 className="font-semibold">{child.name}</h3>
             <div className="flex items-center gap-2 mt-1">
