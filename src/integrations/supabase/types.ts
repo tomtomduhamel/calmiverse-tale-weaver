@@ -608,6 +608,83 @@ export type Database = {
         }
         Relationships: []
       }
+      story_shares: {
+        Row: {
+          character_mapping: Json | null
+          copied_story_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          message: string | null
+          recipient_email: string
+          recipient_id: string
+          responded_at: string | null
+          sender_id: string
+          status: string
+          story_id: string
+          updated_at: string
+        }
+        Insert: {
+          character_mapping?: Json | null
+          copied_story_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          recipient_email: string
+          recipient_id: string
+          responded_at?: string | null
+          sender_id: string
+          status?: string
+          story_id: string
+          updated_at?: string
+        }
+        Update: {
+          character_mapping?: Json | null
+          copied_story_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          recipient_email?: string
+          recipient_id?: string
+          responded_at?: string | null
+          sender_id?: string
+          status?: string
+          story_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_shares_copied_story_id_fkey"
+            columns: ["copied_story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_shares_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_shares_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_shares_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_limits: {
         Row: {
           annual_price_usd: number
@@ -685,6 +762,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          is_read: boolean
+          message: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -869,6 +987,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_story_share: {
+        Args: { p_character_mapping?: Json; p_share_id: string }
+        Returns: Json
+      }
       check_enhanced_rate_limit: {
         Args: {
           p_action_type?: string
@@ -926,6 +1048,22 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_pending_story_shares: {
+        Args: never
+        Returns: {
+          created_at: string
+          expires_at: string
+          message: string
+          sender_email: string
+          sender_id: string
+          sender_name: string
+          share_id: string
+          story_children_names: string[]
+          story_id: string
+          story_preview: string
+          story_title: string
+        }[]
+      }
       get_signed_url: {
         Args: { bucket_name: string; expires_in?: number; file_path: string }
         Returns: string
@@ -937,6 +1075,7 @@ export type Database = {
           story_count: number
         }[]
       }
+      get_unread_notifications_count: { Args: never; Returns: number }
       get_user_beta_registration_attempt: {
         Args: { p_user_id: string }
         Returns: {
@@ -988,7 +1127,16 @@ export type Database = {
         Args: { p_beta_user_id: string; p_reason?: string }
         Returns: Json
       }
+      reject_story_share: { Args: { p_share_id: string }; Returns: Json }
       reset_monthly_quotas: { Args: never; Returns: undefined }
+      share_story_with_user: {
+        Args: {
+          p_message?: string
+          p_recipient_email: string
+          p_story_id: string
+        }
+        Returns: Json
+      }
       validate_beta_user: { Args: { p_beta_user_id: string }; Returns: Json }
     }
     Enums: {
