@@ -2,13 +2,14 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
-import { Home, BookOpen, Users, Settings, LogOut, Menu, Bell } from 'lucide-react';
+import { Home, BookOpen, Users, Settings, LogOut, Menu } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStoryGeneration';
-import { NotificationHistoryModal } from '@/components/notifications/NotificationHistoryModal';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { GlobalThemeToggle } from '@/components/ui/GlobalThemeToggle';
+import { usePendingShares } from '@/hooks/stories/useStorySharing';
 const Navigation = () => {
   const {
     user,
@@ -18,6 +19,7 @@ const Navigation = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const { totalActiveCount } = useBackgroundStoryGeneration();
+  const { pendingCount } = usePendingShares();
   const handleLogout = async () => {
     try {
       await logout();
@@ -70,19 +72,8 @@ const Navigation = () => {
                 )}
               </Link>)}
             
-            {/* Badge notifications */}
-            <NotificationHistoryModal 
-              trigger={
-                <Button variant="ghost" size="sm" className="relative text-muted-foreground hover:text-foreground hover:bg-accent/50">
-                  <Bell className="h-4 w-4" />
-                  {totalActiveCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-primary text-primary-foreground">
-                      {totalActiveCount}
-                    </Badge>
-                  )}
-                </Button>
-              }
-            />
+            {/* Badge notifications in-app */}
+            <NotificationBell />
 
             {/* Toggle de thème global */}
             <GlobalThemeToggle />
