@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
-import { ShareStoryDialog } from "../ShareStoryDialog";
+import { ShareStoryManager } from "../ShareStoryManager";
 
 interface ShareStoryButtonProps {
   storyId: string;
@@ -27,7 +27,7 @@ export const ShareStoryButton: React.FC<ShareStoryButtonProps> = ({
         <Share2 className="h-4 w-4" />
       </Button>
 
-      <ShareStoryDialog
+      <ShareStoryManager
         storyId={storyId}
         isOpen={showShareDialog}
         onClose={() => setShowShareDialog(false)}
