@@ -7,7 +7,7 @@ import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share } from "lucide-r
 import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 import { MarkAsReadButton } from "./reader/MarkAsReadButton";
-import { ShareStoryDialog } from "./ShareStoryDialog";
+import { ShareStoryManager } from "./ShareStoryManager";
 import { useShareDialog } from "@/hooks/story/reader/useShareDialog";
 import BackgroundSoundButton from "./reader/BackgroundSoundButton";
 import { extractObjectiveValue } from "@/utils/objectiveUtils";
@@ -165,7 +165,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
       </div>
 
       {/* Dialog de partage */}
-      <ShareStoryDialog storyId={storyId} isOpen={showShareDialog} onClose={closeShareDialog} />
+      <ShareStoryManager storyId={storyId} isOpen={showShareDialog} onClose={closeShareDialog} />
     </>;
 };
 export default ReaderControls;
