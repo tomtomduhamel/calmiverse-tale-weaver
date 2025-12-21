@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
@@ -6,13 +6,20 @@ import { useStoryDeletion } from "@/hooks/stories/useStoryDeletion";
 import { useStoryUpdate } from "@/hooks/stories/useStoryUpdate";
 import { useStorySeries } from "@/hooks/stories/useStorySeries";
 import { useStoryFavorites } from "@/hooks/stories/useStoryFavorites";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, BookOpen, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import StoryLibrary from "@/components/StoryLibrary";
 import { PWAGestures } from "@/components/PWAGestures";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PendingSharesList from "@/components/story/share/PendingSharesList";
+import { usePendingShares } from "@/hooks/stories/useStorySharing";
+import { Badge } from "@/components/ui/badge";
 const Library: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "stories";
+  
   const {
     user,
     loading: authLoading
@@ -41,6 +48,10 @@ const Library: React.FC = () => {
     isUpdating: isUpdatingFavorite
   } = useStoryFavorites();
   const {
+    pendingCount,
+    refetch: refetchPendingShares
+  } = usePendingShares();
+  const {
     toast
   } = useToast();
   const navigate = useNavigate();
@@ -48,6 +59,38 @@ const Library: React.FC = () => {
   // États locaux pour gérer les actions
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [isUpdatingReadStatus, setIsUpdatingReadStatus] = useState(false);
+
+  // Gestion de l'événement de navigation depuis les notifications
+  useEffect(() => {
+    const handleCalmiNavigate = (event: CustomEvent) => {
+      const { path, tab } = event.detail || {};
+      if (path === "/library" && tab === "shared") {
+        setSearchParams({ tab: "shared" });
+      }
+    };
+
+    window.addEventListener("calmi-navigate", handleCalmiNavigate as EventListener);
+    return () => {
+      window.removeEventListener("calmi-navigate", handleCalmiNavigate as EventListener);
+    };
+  }, [setSearchParams]);
+
+  const handleTabChange = (value: string) => {
+    if (value === "stories") {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab: value });
+    }
+  };
+
+  const handleShareAccepted = async () => {
+    // Rafraîchir les histoires et les partages en attente
+    await Promise.all([fetchStories(), refetchPendingShares()]);
+    toast({
+      title: "Histoire ajoutée",
+      description: "L'histoire partagée a été ajoutée à votre bibliothèque"
+    });
+  };
   const handleSelectStory = (story: any) => {
     console.log("[Library] Navigation vers le lecteur:", story.id);
     navigate(`/reader/${story.id}`);
@@ -167,10 +210,8 @@ const Library: React.FC = () => {
     <PWAGestures onPullToRefresh={fetchStories} className="min-h-screen">
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 pwa-safe-area">
         <div className="container mx-auto px-4 py-8">
-          {/* En-tête avec bouton retour */}
+          {/* En-tête */}
           <div className="mb-8">
-            
-            
             <div className="text-center">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 Bibliothèque d'histoires
@@ -181,22 +222,46 @@ const Library: React.FC = () => {
             </div>
           </div>
 
-          {/* Composant de bibliothèque d'histoires */}
+          {/* Onglets Mes histoires / Partagées avec moi */}
           <div className="max-w-6xl mx-auto">
-            <StoryLibrary 
-              stories={stories} 
-              onSelectStory={handleSelectStory} 
-              onDeleteStory={handleDeleteStory} 
-              onRetryStory={handleRetryStory} 
-              onToggleFavorite={handleToggleFavorite}
-              onMarkAsRead={handleMarkAsRead}
-              onSequelCreated={handleSequelCreated}
-              onForceRefresh={fetchStories} 
-              onCreateStory={handleCreateStory} 
-              isDeletingId={isDeletingId}
-              isUpdatingReadStatus={isUpdatingReadStatus}
-              isUpdatingFavorite={isUpdatingFavorite}
-            />
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+                <TabsTrigger value="stories" className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  Mes histoires
+                </TabsTrigger>
+                <TabsTrigger value="shared" className="flex items-center gap-2 relative">
+                  <Share2 className="w-4 h-4" />
+                  Partagées
+                  {pendingCount > 0 && (
+                    <Badge className="ml-1 bg-primary text-primary-foreground text-xs min-w-[1.2rem] h-5 px-1">
+                      {pendingCount}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="stories">
+                <StoryLibrary 
+                  stories={stories} 
+                  onSelectStory={handleSelectStory} 
+                  onDeleteStory={handleDeleteStory} 
+                  onRetryStory={handleRetryStory} 
+                  onToggleFavorite={handleToggleFavorite}
+                  onMarkAsRead={handleMarkAsRead}
+                  onSequelCreated={handleSequelCreated}
+                  onForceRefresh={fetchStories} 
+                  onCreateStory={handleCreateStory} 
+                  isDeletingId={isDeletingId}
+                  isUpdatingReadStatus={isUpdatingReadStatus}
+                  isUpdatingFavorite={isUpdatingFavorite}
+                />
+              </TabsContent>
+
+              <TabsContent value="shared">
+                <PendingSharesList onShareAccepted={handleShareAccepted} />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
