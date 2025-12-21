@@ -46,7 +46,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
   // Trouver les fichiers audio pour cette histoire (déjà filtré par story_id dans le hook)
   // On prend le fichier le plus récent pour chaque statut
   const readyAudioFile = audioFiles.find(file => file.status === 'ready' && file.audio_url);
-  const pendingAudioFile = audioFiles.find(file => (file.status === 'pending' || file.status === 'processing'));
+  const pendingAudioFile = audioFiles.find(file => file.status === 'pending' || file.status === 'processing');
 
   // Fichier en erreur SANS URL (vraie erreur)
   const errorAudioFile = audioFiles.find(file => file.status === 'error' && !file.audio_url);
@@ -174,36 +174,17 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
   };
   // Mode compact : uniquement les icônes essentielles
   if (compact) {
-    return (
-      <div className="flex items-center gap-1">
+    return <div className="flex items-center gap-1">
         {/* Bouton principal - Play/Pause ou Générer */}
-        <Button 
-          onClick={readyAudioFile ? handlePlayPause : handleGenerateAudio} 
-          disabled={isGenerating || !!pendingAudioFile}
-          variant="outline" 
-          size="icon"
-          className="h-8 w-8"
-        >
-          {isGenerating || pendingAudioFile ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : readyAudioFile ? (
-            isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />
-          ) : (
-            <Volume2 className="h-4 w-4" />
-          )}
+        <Button onClick={readyAudioFile ? handlePlayPause : handleGenerateAudio} disabled={isGenerating || !!pendingAudioFile} variant="outline" size="icon" className="h-8 w-8">
+          {isGenerating || pendingAudioFile ? <Loader2 className="h-4 w-4 animate-spin" /> : readyAudioFile ? isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </Button>
 
         {/* Bouton refresh - toujours visible en mode compact */}
-        <Button 
-          onClick={handleRefresh} 
-          variant="outline" 
-          size="icon"
-          className="h-8 w-8"
-        >
+        <Button onClick={handleRefresh} variant="outline" size="icon" className="h-8 w-8">
           <RefreshCw className="h-4 w-4" />
         </Button>
-      </div>
-    );
+      </div>;
   }
 
   // Mode normal (desktop)
@@ -227,9 +208,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
         </Button>
 
         {/* Bouton refresh */}
-        <Button onClick={handleRefresh} variant="outline" size="icon" className={isDarkMode ? 'border-gray-600 text-white hover:bg-gray-700' : ''}>
-          <RefreshCw className="h-4 w-4" />
-        </Button>
+        
 
         {/* Bouton récupérer fichier en erreur avec URL */}
         {recoverableAudioFile && <Button onClick={handleRecoverFile} variant="outline" size="icon" className={`text-green-500 hover:text-green-600 ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : ''}`} title="Récupérer le fichier audio">
