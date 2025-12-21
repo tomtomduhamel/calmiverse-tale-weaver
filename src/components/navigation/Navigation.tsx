@@ -65,9 +65,9 @@ const Navigation = () => {
             {navItems.map(item => <Link key={item.path} to={item.path} className={`flex items-center px-3 py-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'}`}>
                 <item.icon className="w-4 h-4 mr-2" />
                 {item.label}
-                {item.path === '/library' && totalActiveCount > 0 && (
+                {item.path === '/library' && (totalActiveCount > 0 || pendingCount > 0) && (
                   <Badge className="ml-2 bg-primary text-primary-foreground text-xs min-w-[1.2rem] h-5 px-1">
-                    {totalActiveCount}
+                    {totalActiveCount + pendingCount}
                   </Badge>
                 )}
               </Link>)}
@@ -98,6 +98,11 @@ const Navigation = () => {
                 {navItems.map(item => <Link key={item.path} to={item.path} className={`flex items-center py-2 px-4 rounded-md ${isActive(item.path) ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}>
                     <item.icon className="w-5 h-5 mr-3" />
                     {item.label}
+                    {item.path === '/library' && (totalActiveCount > 0 || pendingCount > 0) && (
+                      <Badge className="ml-auto bg-primary text-primary-foreground text-xs min-w-[1.2rem] h-5 px-1">
+                        {totalActiveCount + pendingCount}
+                      </Badge>
+                    )}
                   </Link>)}
                 
                 {/* Toggle de thème dans le menu mobile */}
