@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
 import { fetchWithRetry, getErrorMessage } from '@/utils/retryUtils';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 export interface TitleGenerationData {
   objective: string;
@@ -26,6 +27,7 @@ export const useN8nTitleGeneration = (
   const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
   const { toast } = useToast();
   const { notifyTitlesGenerated, notifyStoryError } = useStoryNotifications();
+  const { user } = useSupabaseAuth();
 
   // Utiliser l'état de regénération persisté ou local
   const regenerationUsed = persistedRegenerationUsed ?? false;
@@ -155,7 +157,8 @@ export const useN8nTitleGeneration = (
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         childrenGenders: data.childrenGenders,
-        requestType: 'title_regeneration'
+        requestType: 'title_regeneration',
+        userId: user?.id
       };
 
       console.log('[N8nTitleGeneration] Regénération - Payload envoyé:', JSON.stringify(payload, null, 2));
@@ -234,7 +237,8 @@ export const useN8nTitleGeneration = (
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         childrenGenders: data.childrenGenders,
-        requestType: 'title_generation'
+        requestType: 'title_generation',
+        userId: user?.id
       };
 
       console.log('[N8nTitleGeneration] Payload envoyé:', JSON.stringify(payload, null, 2));
