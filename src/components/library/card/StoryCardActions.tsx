@@ -1,11 +1,11 @@
-
 import React, { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, BookCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Story } from "@/types/story";
 import { Loader2 } from "lucide-react";
 import DeleteStoryDialog from "../DeleteStoryDialog";
 import { CreateSequelButton } from "../../story/series/CreateSequelButton";
+import { Badge } from "@/components/ui/badge";
 
 interface StoryCardActionsProps {
   story: Story;
@@ -16,7 +16,6 @@ interface StoryCardActionsProps {
   onSequelCreated?: (storyId: string) => void;
   seriesStories?: Story[];
 }
-
 const StoryCardActions: React.FC<StoryCardActionsProps> = ({ 
   story, 
   onDelete, 
@@ -72,16 +71,22 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
           </div>
         )}
         
-        <div className="flex space-x-1 justify-end">
+        <div className="flex items-center space-x-2 justify-end">
+          {/* Badge Lu à côté de la poubelle (desktop) */}
+          {story.status === 'read' && (
+            <Badge variant="outline" className="hidden md:flex text-green-600 border-green-200 bg-green-50 dark:bg-green-500/10 dark:border-green-500/30">
+              <BookCheck className="h-3 w-3 mr-1" />
+              Lu
+            </Badge>
+          )}
+          
           <TooltipProvider>
-            {/* Bouton retry supprimé */}
-
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={handleDeleteClick}
                   disabled={isDeleting || isRetrying}
-                  className={`p-1.5 rounded-full text-red-600 hover:bg-red-100 ${
+                  className={`p-1.5 rounded-full text-red-600 hover:bg-red-100 dark:hover:bg-red-500/20 ${
                     isDeleting ? "cursor-not-allowed opacity-50" : ""
                   }`}
                   aria-label="Supprimer l'histoire"
