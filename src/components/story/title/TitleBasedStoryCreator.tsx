@@ -262,6 +262,39 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     };
   }, [isGeneratingTitles, setGenerationInProgress]);
 
+  // Nettoyer les flags orphelins au montage
+  useEffect(() => {
+    if (!isGeneratingTitles) {
+      const flagData = localStorage.getItem(GENERATION_FLAG_KEY);
+      if (flagData) {
+        try {
+          const data = JSON.parse(flagData);
+          const ageMs = Date.now() - data.timestamp;
+          // Si le flag a plus de 2 minutes et qu'aucune génération n'est active, le supprimer
+          if (ageMs > 2 * 60 * 1000) {
+            console.log('[TitleBasedStoryCreator] Nettoyage flag orphelin');
+            localStorage.removeItem(GENERATION_FLAG_KEY);
+          }
+        } catch {
+          localStorage.removeItem(GENERATION_FLAG_KEY);
+        }
+      }
+    }
+  }, []); // Uniquement au montage
+
+  // Récupération d'état incohérent : sur l'étape "titles" sans titres générés
+  useEffect(() => {
+    if (currentStep === 'titles' && generatedTitles.length === 0 && !isGeneratingTitles) {
+      console.log('[TitleBasedStoryCreator] État incohérent détecté: étape titles sans titres');
+      // Revenir à l'étape de configuration pour permettre une nouvelle génération
+      updateCurrentStep('children');
+      toast({
+        title: "Session expirée",
+        description: "Les titres de votre session précédente ont expiré. Veuillez relancer la génération.",
+      });
+    }
+  }, [currentStep, generatedTitles.length, isGeneratingTitles, updateCurrentStep, toast]);
+
   // Effect pour logger l'état (debug uniquement)
   useEffect(() => {
     console.log('[TitleBasedStoryCreator] État génération titres:', {
