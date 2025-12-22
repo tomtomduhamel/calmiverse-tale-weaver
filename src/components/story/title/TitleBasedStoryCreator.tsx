@@ -280,6 +280,32 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     }
   }, []); // Uniquement au montage
 
+  // CORRECTION CRITIQUE: Gérer l'état incohérent (step=titles mais pas de titres)
+  // Cet effet se déclenche SEULEMENT après le montage initial et vérifie l'état de persistance
+  const hasTriedRecovery = useRef(false);
+  
+  useEffect(() => {
+    // Ne pas interférer si une génération est en cours
+    if (isGeneratingTitles) {
+      console.log('[TitleBasedStoryCreator] Génération en cours, pas de récupération');
+      return;
+    }
+    
+    // Si on est sur l'étape "titles" mais sans titres, revenir à "children"
+    if (currentStep === 'titles' && generatedTitles.length === 0 && !hasTriedRecovery.current) {
+      console.log('[TitleBasedStoryCreator] État incohérent détecté: titles sans titres, retour à children');
+      hasTriedRecovery.current = true;
+      
+      // Nettoyer la session corrompue
+      clearPersistedState();
+      
+      toast({
+        title: "Session expirée",
+        description: "Vos titres ont expiré. Veuillez recommencer la sélection.",
+      });
+    }
+  }, [currentStep, generatedTitles.length, isGeneratingTitles, clearPersistedState, toast]);
+
   // Effect pour logger l'état (debug uniquement)
   useEffect(() => {
     console.log('[TitleBasedStoryCreator] État génération titres:', {
@@ -495,8 +521,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
   // Étape 2: Sélection du titre
   if (currentStep === 'titles') {
-    // Si les titres sont en cours de génération, afficher l'état de chargement
-    if (isGeneratingTitles && generatedTitles.length === 0) {
+    // Si les titres sont en cours de génération OU pas encore disponibles, afficher le loader
+    if (isGeneratingTitles || generatedTitles.length === 0) {
       return (
         <div className="space-y-6">
           <div className="text-center space-y-4">
@@ -508,8 +534,12 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
                 ✨ Calmi crée vos 3 titres personnalisés
               </h3>
               <p className="text-muted-foreground">
-                Nos petits lutins magiques travaillent à créer des titres uniques pour {selectedChildren.map(c => c.name).join(', ')}. 
-                Vous serez prévenu dès qu'ils seront prêts !
+                {selectedChildren.length > 0 
+                  ? `Nos petits lutins magiques travaillent à créer des titres uniques pour ${selectedChildren.map(c => c.name).join(', ')}.`
+                  : "Génération des titres en cours..."
+                }
+                <br />
+                Vous serez prévenu dès qu'ils seront prêts ! (2-3 min)
               </p>
             </div>
           </div>
@@ -519,10 +549,11 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
               variant="outline" 
               onClick={() => {
                 clearTitles();
-                updateCurrentStep('objective');
+                setGenerationInProgress(false);
+                clearPersistedState();
               }}
             >
-              Annuler la création des titres
+              Annuler et recommencer
             </Button>
             <Button 
               variant="secondary"
@@ -530,7 +561,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
                 navigate('/library');
               }}
             >
-              Parcourir la bibliothèque d'histoires
+              Parcourir la bibliothèque
             </Button>
           </div>
         </div>
