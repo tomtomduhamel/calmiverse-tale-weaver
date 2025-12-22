@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -8,6 +7,7 @@ import type { Child } from '@/types/child';
 import { generateAdvancedStoryPrompt } from '@/utils/storyPromptUtils';
 import { calculateAge } from '@/utils/age';
 import { estimateWordCountForDuration, StoryDurationMinutes } from '@/types/story';
+import type { TitleCostData } from '@/hooks/stories/useN8nTitleGeneration';
 
 interface StoryCreationData {
   selectedTitle: string;
@@ -17,6 +17,7 @@ interface StoryCreationData {
   childrenGenders: string[];
   children?: Child[]; // Nouvellement ajouté pour avoir accès aux données complètes
   durationMinutes?: StoryDurationMinutes;
+  titleGenerationCost?: TitleCostData | null; // Coût de génération des titres
 }
 
 // Ancienne fonction remplacée par generateAdvancedStoryPrompt dans storyPromptUtils.ts
@@ -89,6 +90,8 @@ export const useN8nStoryFromTitle = () => {
         userId: user.id,
         userEmail: user.email,
         storyPrompt, // Prompt essentiel pour la génération
+        // 🆕 Coût de génération des titres pour calcul du coût total
+        titleGenerationCost: data.titleGenerationCost || null,
         timestamp: new Date().toISOString(),
         requestId: `story-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       };

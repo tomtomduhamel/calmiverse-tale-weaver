@@ -16,7 +16,7 @@ import { useSubscription } from '@/hooks/subscription/useSubscription';
 import TitleSelector from './TitleSelector';
 import UpgradePrompt from '@/components/subscription/UpgradePrompt';
 import type { Child } from '@/types/child';
-import type { GeneratedTitle } from '@/hooks/stories/useN8nTitleGeneration';
+import type { GeneratedTitle, TitleCostData } from '@/hooks/stories/useN8nTitleGeneration';
 import type { StoryDurationMinutes } from '@/types/story';
 interface TitleBasedStoryCreatorProps {
   children: Child[];
@@ -38,6 +38,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     selectedTitle,
     selectedDuration,
     regenerationUsed,
+    titleGenerationCost,
     updateCurrentStep,
     updateSelectedChildren,
     updateSelectedObjective,
@@ -45,6 +46,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     updateSelectedTitle,
     updateSelectedDuration,
     incrementRegeneration,
+    updateTitleGenerationCost,
     clearPersistedState,
     hasPersistedSession
   } = usePersistedStoryCreation();
@@ -53,6 +55,15 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   const { subscription } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [quotaMessage, setQuotaMessage] = useState<string>('');
+
+  // Callback pour gérer les titres générés avec leur coût
+  const handleTitlesGeneratedWithCost = useCallback((titles: GeneratedTitle[], costData?: TitleCostData) => {
+    updateGeneratedTitles(titles);
+    if (costData) {
+      console.log('[TitleBasedStoryCreator] Coût de génération des titres reçu:', costData);
+      updateTitleGenerationCost(costData);
+    }
+  }, [updateGeneratedTitles, updateTitleGenerationCost]);
 
   const {
     generateTitles,
@@ -63,7 +74,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     canRegenerate
   } = useN8nTitleGeneration(
     generatedTitles,
-    updateGeneratedTitles,
+    handleTitlesGeneratedWithCost,
     regenerationUsed,
     incrementRegeneration
   );
@@ -257,7 +268,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       // Démarrer le monitoring en temps réel AVANT de créer l'histoire
       const cleanupMonitoring = startMonitoring();
 
-      // Créer l'histoire via n8n avec les données complètes des enfants et la durée
+      // Créer l'histoire via n8n avec les données complètes des enfants, la durée et le coût des titres
+      console.log('[TitleBasedStoryCreator] Envoi du coût de génération des titres:', titleGenerationCost);
       const processId = await createStoryFromTitle({
         selectedTitle: titleToUse,
         objective: selectedObjective,
@@ -266,6 +278,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         childrenGenders: selectedChildrenForStory.map(child => child.gender),
         children: selectedChildrenForStory, // Passer les données complètes des enfants
         durationMinutes,
+        titleGenerationCost, // 🆕 Passer le coût de génération des titres
       });
 
       // ✅ Incrémenter le compteur d'usage APRÈS succès

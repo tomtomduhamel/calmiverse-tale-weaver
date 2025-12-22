@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { GeneratedTitle } from '@/hooks/stories/useN8nTitleGeneration';
+import type { GeneratedTitle, TitleCostData } from '@/hooks/stories/useN8nTitleGeneration';
 import type { StoryDurationMinutes } from '@/types/story';
 
 interface PersistedStoryCreationState {
@@ -11,6 +11,7 @@ interface PersistedStoryCreationState {
   selectedDuration: StoryDurationMinutes | null;
   timestamp: number;
   regenerationUsed: boolean;
+  titleGenerationCost: TitleCostData | null;
 }
 
 const STORAGE_KEY = 'calmiverse_story_creation';
@@ -44,7 +45,8 @@ export const usePersistedStoryCreation = () => {
               selectedTitle: parsed.selectedTitle || '',
               selectedDuration: parsed.selectedDuration || null,
               timestamp: parsed.timestamp,
-              regenerationUsed: Boolean(parsed.regenerationUsed)
+              regenerationUsed: Boolean(parsed.regenerationUsed),
+              titleGenerationCost: parsed.titleGenerationCost || null
             };
           } else {
             console.log('[usePersistedStoryCreation] Session expirée, nettoyage');
@@ -71,7 +73,8 @@ export const usePersistedStoryCreation = () => {
       selectedTitle: '',
       selectedDuration: null,
       timestamp: Date.now(),
-      regenerationUsed: false
+      regenerationUsed: false,
+      titleGenerationCost: null
     };
   });
 
@@ -136,6 +139,10 @@ export const usePersistedStoryCreation = () => {
     setState(prev => ({ ...prev, regenerationUsed: true }));
   }, []);
 
+  const updateTitleGenerationCost = useCallback((cost: TitleCostData | null) => {
+    setState(prev => ({ ...prev, titleGenerationCost: cost }));
+  }, []);
+
   // Clear persisted state
   const clearPersistedState = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
@@ -147,7 +154,8 @@ export const usePersistedStoryCreation = () => {
       selectedTitle: '',
       selectedDuration: null,
       timestamp: Date.now(),
-      regenerationUsed: false
+      regenerationUsed: false,
+      titleGenerationCost: null
     });
   }, []);
 
@@ -190,6 +198,7 @@ export const usePersistedStoryCreation = () => {
     selectedTitle: state.selectedTitle,
     selectedDuration: state.selectedDuration,
     regenerationUsed: state.regenerationUsed,
+    titleGenerationCost: state.titleGenerationCost,
     
     // Actions
     updateCurrentStep,
@@ -199,6 +208,7 @@ export const usePersistedStoryCreation = () => {
     updateSelectedTitle,
     updateSelectedDuration,
     incrementRegeneration,
+    updateTitleGenerationCost,
     clearPersistedState,
     hasPersistedSession,
     hasValidSession,

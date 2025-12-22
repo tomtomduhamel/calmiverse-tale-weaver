@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
@@ -18,9 +17,24 @@ export interface GeneratedTitle {
   description?: string;
 }
 
+// Interface pour les données de coût de génération des titres
+export interface TitleCostData {
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_cost_usd: number;
+  details_par_noeud?: Array<{
+    nodeName: string;
+    model_llm?: string;
+    cost_total_usd: number;
+    input_tokens?: number;
+    output_tokens?: number;
+  }>;
+  timestamp: string;
+}
+
 export const useN8nTitleGeneration = (
   persistedTitles?: GeneratedTitle[],
-  onTitlesGenerated?: (titles: GeneratedTitle[]) => void,
+  onTitlesGenerated?: (titles: GeneratedTitle[], costData?: TitleCostData) => void,
   persistedRegenerationUsed?: boolean,
   onRegenerationUsed?: () => void
 ) => {
@@ -276,11 +290,22 @@ export const useN8nTitleGeneration = (
         throw new Error('Aucun titre reçu de n8n - format de réponse non reconnu');
       }
 
+      // Extraire les données de coût de la réponse n8n
+      const rawResult = Array.isArray(result) ? result[0] : result;
+      const costData: TitleCostData | undefined = rawResult?.total_cost_usd !== undefined ? {
+        total_input_tokens: rawResult.total_input_tokens || 0,
+        total_output_tokens: rawResult.total_output_tokens || 0,
+        total_cost_usd: rawResult.total_cost_usd || 0,
+        details_par_noeud: rawResult.details_par_noeud,
+        timestamp: rawResult.timestamp || new Date().toISOString()
+      } : undefined;
+
       console.log('[N8nTitleGeneration] SUCCÈS: Titres finaux extraits:', titles);
+      console.log('[N8nTitleGeneration] Données de coût extraites:', costData);
       console.log('[N8nTitleGeneration] ===== FIN GÉNÉRATION TITRES - SUCCÈS =====');
       
-      // Notifier la persistance des nouveaux titres
-      onTitlesGenerated?.(titles);
+      // Notifier la persistance des nouveaux titres avec le coût
+      onTitlesGenerated?.(titles, costData);
       
       // 🚨 NOTIFICATION NATIVE : Titres prêts
       try {
