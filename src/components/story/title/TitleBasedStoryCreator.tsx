@@ -140,6 +140,38 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     updateSelectedChildren(newSelection);
   }, [selectedChildrenIds, updateSelectedChildren]);
 
+  // Guard pour éviter les appels multiples - persisté dans localStorage
+  const GENERATION_FLAG_KEY = 'calmi_title_generation_in_progress';
+  
+  const isGenerationInProgress = useCallback(() => {
+    try {
+      const flag = localStorage.getItem(GENERATION_FLAG_KEY);
+      if (!flag) return false;
+      const data = JSON.parse(flag);
+      // Le flag expire après 5 minutes pour éviter les blocages
+      const isExpired = Date.now() - data.timestamp > 5 * 60 * 1000;
+      if (isExpired) {
+        localStorage.removeItem(GENERATION_FLAG_KEY);
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const setGenerationInProgress = useCallback((inProgress: boolean) => {
+    if (inProgress) {
+      localStorage.setItem(GENERATION_FLAG_KEY, JSON.stringify({
+        timestamp: Date.now(),
+        objective: selectedObjective,
+        childrenIds: selectedChildrenIds
+      }));
+    } else {
+      localStorage.removeItem(GENERATION_FLAG_KEY);
+    }
+  }, [selectedObjective, selectedChildrenIds]);
+
   // Regénérer 3 titres supplémentaires
   const handleRegenerateTitles = useCallback(async () => {
     if (!selectedObjective || selectedChildrenIds.length === 0) return;
@@ -162,6 +194,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       });
     }
   }, [selectedObjective, selectedChildrenIds, children, generateAdditionalTitles, generatedTitles, updateGeneratedTitles, incrementRegeneration, toast]);
+
   const handleGenerateTitles = useCallback(async () => {
     if (selectedChildrenIds.length === 0) {
       toast({
@@ -171,7 +204,21 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       });
       return;
     }
+
+    // Vérifier si une génération est déjà en cours (persisté)
+    if (isGenerationInProgress()) {
+      console.log('[TitleBasedStoryCreator] Génération déjà en cours, ignoré');
+      toast({
+        title: "Génération en cours",
+        description: "Les titres sont déjà en cours de génération, veuillez patienter.",
+      });
+      return;
+    }
+
     try {
+      // Marquer la génération comme en cours
+      setGenerationInProgress(true);
+      
       const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
       console.log('[TitleBasedStoryCreator] Génération de titres pour:', childrenNames);
@@ -185,51 +232,47 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       // donc pas besoin de l'appeler ici pour éviter la double mise à jour
       if (titles && titles.length > 0) {
         updateCurrentStep('titles');
+        setGenerationInProgress(false); // Succès, nettoyer le flag
       }
     } catch (error: any) {
       console.error('[TitleBasedStoryCreator] Erreur génération titres:', error);
+      setGenerationInProgress(false); // Erreur, nettoyer le flag
       toast({
         title: "Erreur",
         description: error.message || "Impossible de générer les titres",
         variant: "destructive"
       });
     }
-  }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateCurrentStep, resetRegenerationState, toast]);
+  }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateCurrentStep, resetRegenerationState, toast, isGenerationInProgress, setGenerationInProgress]);
 
-  // Guard pour éviter les appels multiples
-  const autoGenerateTriggered = useRef(false);
-
-  // Effect pour gérer l'auto-génération des titres
+  // Nettoyer le flag quand les titres sont générés avec succès
   useEffect(() => {
-    console.log('[TitleBasedStoryCreator] Vérification auto-génération:', {
+    if (generatedTitles.length > 0) {
+      setGenerationInProgress(false);
+    }
+  }, [generatedTitles.length, setGenerationInProgress]);
+
+  // Nettoyer le flag quand on quitte le composant
+  useEffect(() => {
+    return () => {
+      // Ne pas nettoyer si une génération est vraiment en cours
+      if (!isGeneratingTitles) {
+        setGenerationInProgress(false);
+      }
+    };
+  }, [isGeneratingTitles, setGenerationInProgress]);
+
+  // Effect pour logger l'état (debug uniquement)
+  useEffect(() => {
+    console.log('[TitleBasedStoryCreator] État génération titres:', {
       currentStep,
       selectedChildrenCount: selectedChildrenIds.length,
       selectedObjective,
       generatedTitlesCount: generatedTitles.length,
       isGeneratingTitles,
-      autoGenerateTriggered: autoGenerateTriggered.current
+      isGenerationInProgress: isGenerationInProgress()
     });
-
-    if (currentStep === 'titles' && 
-        selectedChildrenIds.length > 0 && 
-        selectedObjective && 
-        generatedTitles.length === 0 && 
-        !isGeneratingTitles &&
-        !autoGenerateTriggered.current) {
-      
-      autoGenerateTriggered.current = true;
-      console.log('[TitleBasedStoryCreator] Auto-génération des titres...');
-      // Délai pour s'assurer que le composant est monté
-      setTimeout(() => {
-        handleGenerateTitles();
-      }, 100);
-    }
-
-    // Reset le guard si on revient à l'étape précédente
-    if (currentStep !== 'titles') {
-      autoGenerateTriggered.current = false;
-    }
-  }, [currentStep, selectedChildrenIds.length, selectedObjective, generatedTitles.length, isGeneratingTitles, handleGenerateTitles]);
+  }, [currentStep, selectedChildrenIds.length, selectedObjective, generatedTitles.length, isGeneratingTitles, isGenerationInProgress]);
 
   const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes) => {
     if (!titleToUse) {
