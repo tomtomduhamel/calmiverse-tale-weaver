@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Story } from "@/types/story";
 import { supabase } from '@/integrations/supabase/client';
 import StoryReader from "@/components/StoryReader";
@@ -12,6 +12,7 @@ import { formatStoryFromSupabase } from "@/hooks/stories/storyFormatters";
 const SharedStory = () => {
   const [story, setStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { token } = useParams<{ token: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -46,9 +47,9 @@ const SharedStory = () => {
   useEffect(() => {
     const fetchSharedStory = async () => {
       try {
+        // Token vient de l'URL path via useParams, storyId des query params
         const params = new URLSearchParams(location.search);
         const storyId = params.get("id");
-        const token = params.get("token");
 
         if (!storyId || !token) {
           toast({
@@ -112,7 +113,7 @@ const SharedStory = () => {
     };
 
     fetchSharedStory();
-  }, [location.search, navigate, toast]);
+  }, [location.search, navigate, toast, token]);
 
   const handleClose = () => {
     navigate("/");

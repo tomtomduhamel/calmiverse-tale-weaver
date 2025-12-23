@@ -158,7 +158,7 @@ export const useStorySharing = (storyId: string) => {
 
       if (updateError) throw updateError;
 
-      const shareUrl = `${window.location.origin}/shared-story?id=${storyId}&token=${token}`;
+      const shareUrl = `${window.location.origin}/shared/${token}?id=${storyId}`;
       
       toast({
         title: "Histoire partagée",
@@ -218,7 +218,7 @@ export const useStorySharing = (storyId: string) => {
 
       if (updateError) throw updateError;
 
-      const shareUrl = `${window.location.origin}/shared-story?id=${storyId}&token=${token}`;
+      const shareUrl = `${window.location.origin}/shared/${token}?id=${storyId}`;
       
       toast({
         title: "Lien de partage créé",
