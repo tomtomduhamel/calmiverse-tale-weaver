@@ -26,6 +26,7 @@ const TermsOfService = lazy(() => import('./pages/legal/TermsOfService').then(m 
 const NewPrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
 const CookiePolicy = lazy(() => import('./pages/legal/CookiePolicy').then(m => ({ default: m.CookiePolicy })));
 const SharedStory = lazy(() => import('./pages/SharedStory'));
+const SharedStoryRedirect = lazy(() => import('./pages/SharedStoryRedirect'));
 const PublicStory = lazy(() => import('./pages/PublicStory'));
 const CreateStoryTitles = lazy(() => import("./pages/CreateStoryTitles"));
 const CreateStoryStep1 = lazy(() => import("./pages/CreateStoryStep1"));
@@ -186,6 +187,7 @@ function App() {
             <Route path="/quick-start" element={<QuickStartPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/shared/:token" element={<SharedStory />} />
+            <Route path="/shared-story" element={<SharedStoryRedirect />} />
             <Route path="/story/:id" element={<PublicStory />} />
             <Route path="/404" element={<NotFound />} />
 
