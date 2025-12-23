@@ -171,7 +171,7 @@ const PublicStoryReader: React.FC<PublicStoryReaderProps> = ({ story, onClose })
         {/* Footer */}
         <footer className={`mt-12 pt-6 border-t text-center ${isDarkMode ? "border-gray-700" : "border-border"}`}>
           <p className={`text-sm ${isDarkMode ? "text-gray-400" : "text-muted-foreground"}`}>
-            Histoire créée avec Calmiverse
+            Histoire créée avec Calmi
           </p>
         </footer>
       </main>
