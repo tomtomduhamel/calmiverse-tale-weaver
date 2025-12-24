@@ -162,7 +162,34 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       });
     }
   }, [selectedObjective, selectedChildrenIds, children, generateAdditionalTitles, generatedTitles, updateGeneratedTitles, incrementRegeneration, toast]);
+  // Guards synchrones pour éviter les appels multiples
+  const isGeneratingRef = useRef(false);
+  const autoGenerateTriggered = useRef(false);
+  const lastGenerationTimeRef = useRef<number>(0);
+  const GENERATION_COOLDOWN_MS = 5000; // 5 secondes minimum entre 2 appels
+
+  // Ref stable pour les données nécessaires à la génération
+  const generationParamsRef = useRef({ selectedChildrenIds, selectedObjective, children });
+
+  // Mettre à jour la ref quand les données changent
+  useEffect(() => {
+    generationParamsRef.current = { selectedChildrenIds, selectedObjective, children };
+  }, [selectedChildrenIds, selectedObjective, children]);
+
   const handleGenerateTitles = useCallback(async () => {
+    // Guard synchrone AVANT tout le reste
+    if (isGeneratingRef.current) {
+      console.log('[TitleBasedStoryCreator] Génération déjà en cours (guard ref), appel ignoré');
+      return;
+    }
+
+    // Throttle: éviter les appels trop rapprochés
+    const now = Date.now();
+    if (now - lastGenerationTimeRef.current < GENERATION_COOLDOWN_MS) {
+      console.log('[TitleBasedStoryCreator] Cooldown actif, appel ignoré');
+      return;
+    }
+
     if (selectedChildrenIds.length === 0) {
       toast({
         title: "Sélection requise",
@@ -171,6 +198,11 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       });
       return;
     }
+
+    // Marquer comme en cours SYNCHRONIQUEMENT
+    isGeneratingRef.current = true;
+    lastGenerationTimeRef.current = now;
+
     try {
       const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
       const childrenNames = selectedChildren.map(child => child.name);
@@ -193,43 +225,74 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         description: error.message || "Impossible de générer les titres",
         variant: "destructive"
       });
-    }
-  }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateCurrentStep, resetRegenerationState, toast]);
-
-  // Guard pour éviter les appels multiples
-  const autoGenerateTriggered = useRef(false);
-
-  // Effect pour gérer l'auto-génération des titres
-  useEffect(() => {
-    console.log('[TitleBasedStoryCreator] Vérification auto-génération:', {
-      currentStep,
-      selectedChildrenCount: selectedChildrenIds.length,
-      selectedObjective,
-      generatedTitlesCount: generatedTitles.length,
-      isGeneratingTitles,
-      autoGenerateTriggered: autoGenerateTriggered.current
-    });
-
-    if (currentStep === 'titles' && 
-        selectedChildrenIds.length > 0 && 
-        selectedObjective && 
-        generatedTitles.length === 0 && 
-        !isGeneratingTitles &&
-        !autoGenerateTriggered.current) {
-      
-      autoGenerateTriggered.current = true;
-      console.log('[TitleBasedStoryCreator] Auto-génération des titres...');
-      // Délai pour s'assurer que le composant est monté
+    } finally {
+      // Libérer le guard après un délai pour éviter les appels rebond
       setTimeout(() => {
-        handleGenerateTitles();
-      }, 100);
+        isGeneratingRef.current = false;
+      }, 1000);
+    }
+  }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateCurrentStep, toast]);
+
+  // Effect pour gérer l'auto-génération des titres - dépendances MINIMALES
+  useEffect(() => {
+    // Vérifications préliminaires
+    if (currentStep !== 'titles') {
+      // Reset le guard si on revient à l'étape précédente
+      autoGenerateTriggered.current = false;
+      return;
     }
 
-    // Reset le guard si on revient à l'étape précédente
-    if (currentStep !== 'titles') {
-      autoGenerateTriggered.current = false;
+    // Conditions pour éviter les appels multiples
+    if (autoGenerateTriggered.current || isGeneratingRef.current || isGeneratingTitles || generatedTitles.length > 0) {
+      console.log('[TitleBasedStoryCreator] Auto-génération bloquée:', {
+        autoGenerateTriggered: autoGenerateTriggered.current,
+        isGeneratingRef: isGeneratingRef.current,
+        isGeneratingTitles,
+        generatedTitlesCount: generatedTitles.length
+      });
+      return;
     }
-  }, [currentStep, selectedChildrenIds.length, selectedObjective, generatedTitles.length, isGeneratingTitles, handleGenerateTitles]);
+
+    // Récupérer les données depuis la ref stable
+    const { selectedChildrenIds: ids, selectedObjective: obj, children: childrenList } = generationParamsRef.current;
+
+    if (ids.length === 0 || !obj) {
+      console.log('[TitleBasedStoryCreator] Données insuffisantes pour auto-génération');
+      return;
+    }
+
+    // Marquer comme déclenché AVANT l'appel
+    autoGenerateTriggered.current = true;
+    isGeneratingRef.current = true;
+    lastGenerationTimeRef.current = Date.now();
+
+    console.log('[TitleBasedStoryCreator] Auto-génération des titres...');
+    
+    // Appel direct avec les données de la ref (pas de dépendance à handleGenerateTitles)
+    const selectedChildrenForGen = childrenList.filter(child => ids.includes(child.id));
+    
+    generateTitles({
+      objective: obj,
+      childrenIds: ids,
+      childrenNames: selectedChildrenForGen.map(c => c.name),
+      childrenGenders: selectedChildrenForGen.map(c => c.gender)
+    }).then(titles => {
+      if (titles && titles.length > 0) {
+        updateCurrentStep('titles');
+      }
+    }).catch(error => {
+      console.error('[TitleBasedStoryCreator] Erreur auto-génération:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de générer les titres",
+        variant: "destructive"
+      });
+    }).finally(() => {
+      setTimeout(() => {
+        isGeneratingRef.current = false;
+      }, 1000);
+    });
+  }, [currentStep, generatedTitles.length, isGeneratingTitles, generateTitles, updateCurrentStep, toast]);
 
   const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes) => {
     if (!titleToUse) {
