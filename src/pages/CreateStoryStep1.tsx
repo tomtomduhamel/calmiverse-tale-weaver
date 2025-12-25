@@ -4,6 +4,9 @@ import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ChildrenSelectionStep from "@/components/story/steps/ChildrenSelectionStep";
 import LoadingWithTimeout from "@/components/ui/LoadingWithTimeout";
+import CreationModeToggle from "@/components/story/chat/CreationModeToggle";
+import ChatStoryCreator from "@/components/story/chat/ChatStoryCreator";
+import type { CreationMode } from "@/types/chatbot";
 
 const CreateStoryStep1: React.FC = () => {
   const { user, loading: authLoading, error: authError, timeoutReached: authTimeout, retryAuth } = useSupabaseAuth();
@@ -12,6 +15,7 @@ const CreateStoryStep1: React.FC = () => {
   const [searchParams] = useSearchParams();
   const preSelectedChildId = searchParams.get("childId") || undefined;
   const [currentStep, setCurrentStep] = useState(0);
+  const [creationMode, setCreationMode] = useState<CreationMode>('guided');
 
   // PHASE 3: Gestion des étapes de progression
   React.useEffect(() => {
@@ -36,6 +40,10 @@ const CreateStoryStep1: React.FC = () => {
 
   const handleQuickCreate = () => {
     navigate("/kids-profile");
+  };
+
+  const handleBackToGuided = () => {
+    setCreationMode('guided');
   };
 
   // PHASE 3: Affichage optimiste - permettre l'affichage même après timeout si données disponibles
@@ -64,10 +72,23 @@ const CreateStoryStep1: React.FC = () => {
 
   // Affichage normal - même avec timeout si des enfants sont chargés
   return (
-    <ChildrenSelectionStep 
-      children={children} 
-      preSelectedChildId={preSelectedChildId} 
-    />
+    <div className="container mx-auto px-4 py-6">
+      {/* Toggle de mode de création */}
+      <CreationModeToggle mode={creationMode} onModeChange={setCreationMode} />
+
+      {/* Rendu conditionnel selon le mode */}
+      {creationMode === 'guided' ? (
+        <ChildrenSelectionStep 
+          children={children} 
+          preSelectedChildId={preSelectedChildId} 
+        />
+      ) : (
+        <ChatStoryCreator 
+          children={children} 
+          onBack={handleBackToGuided} 
+        />
+      )}
+    </div>
   );
 };
 
