@@ -105,8 +105,9 @@ export const useN8nChatbotStory = () => {
 
     try {
       const payload: ChatbotInitPayload = {
+        chatInput: "Bonjour ! Je souhaite créer une histoire personnalisée pour mes enfants.",
+        sessionId: conversationIdRef.current,
         userId,
-        conversationId: conversationIdRef.current,
         action: 'init',
         children: children.map(mapChildToInfo),
       };
@@ -136,10 +137,10 @@ export const useN8nChatbotStory = () => {
 
     try {
       const payload: ChatbotMessagePayload = {
-        conversationId: conversationIdRef.current,
+        chatInput: message,
+        sessionId: conversationIdRef.current,
         userId,
         action: 'message',
-        message,
       };
 
       const response = await sendToWebhook(payload);
