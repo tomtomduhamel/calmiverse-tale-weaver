@@ -19,17 +19,18 @@ export interface ChatbotChildInfo {
 }
 
 export interface ChatbotInitPayload {
+  chatInput: string;
+  sessionId: string;
   userId: string;
-  conversationId: string;
   action: 'init';
   children: ChatbotChildInfo[];
 }
 
 export interface ChatbotMessagePayload {
-  conversationId: string;
+  chatInput: string;
+  sessionId: string;
   userId: string;
   action: 'message';
-  message: string;
 }
 
 export type ChatbotPayload = ChatbotInitPayload | ChatbotMessagePayload;
