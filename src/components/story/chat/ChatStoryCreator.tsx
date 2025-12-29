@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bot, ArrowLeft, Sparkles } from 'lucide-react';
+import { Bot, ArrowLeft, Sparkles, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -29,7 +29,18 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
     isInitialized,
     initConversation,
     sendMessage,
+    resetConversation,
   } = useN8nChatbotStory();
+
+  const handleReset = () => {
+    resetConversation();
+    // Réinitialiser avec les mêmes enfants
+    if (user && children.length > 0) {
+      setTimeout(() => {
+        initConversation(user.id, children);
+      }, 100);
+    }
+  };
 
   // Initialiser la conversation au montage
   useEffect(() => {
@@ -96,13 +107,23 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
                 {isLoading ? 'En train d\'écrire...' : 'Assistant de création d\'histoires'}
               </p>
             </div>
-            {storyId && (
-              <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              {storyId && (
                 <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded-full">
                   ✓ Histoire créée
                 </span>
-              </div>
-            )}
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                disabled={isLoading}
+                className="text-muted-foreground hover:text-foreground"
+                title="Recommencer la conversation"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
