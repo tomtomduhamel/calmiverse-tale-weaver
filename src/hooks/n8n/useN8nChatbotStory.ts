@@ -107,7 +107,18 @@ export const useN8nChatbotStory = () => {
 
       console.log('[useN8nChatbotStory] Retry réussi');
     } catch (err) {
-      console.error('[useN8nChatbotStory] Erreur retry:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      const isAbortError = err instanceof Error && (
+        err.name === 'AbortError' || 
+        errorMessage.includes('aborted') ||
+        errorMessage.includes('signal')
+      );
+      
+      if (isAbortError) {
+        console.log('[useN8nChatbotStory] Retry interrompu (abort) - réessai au retour');
+      } else {
+        console.error('[useN8nChatbotStory] Erreur retry:', errorMessage);
+      }
       // Ne pas effacer le pending en cas d'erreur, l'utilisateur peut réessayer manuellement
     } finally {
       setIsLoading(false);
@@ -347,10 +358,22 @@ export const useN8nChatbotStory = () => {
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
-      console.error('[useN8nChatbotStory] Erreur message:', errorMessage);
-      setError(errorMessage);
-      // NE PAS effacer le pending en cas d'erreur - permet le retry
-      addMessage('assistant', "Désolé, je n'ai pas pu traiter votre message. Veuillez réessayer.");
+      const isAbortError = err instanceof Error && (
+        err.name === 'AbortError' || 
+        errorMessage.includes('aborted') ||
+        errorMessage.includes('signal')
+      );
+      
+      if (isAbortError) {
+        // Erreur d'abort (mise en veille, changement d'onglet) - ne pas afficher d'erreur
+        console.log('[useN8nChatbotStory] Requête interrompue - retry automatique au retour');
+        // Le pending reste actif pour le retry automatique
+      } else {
+        // Erreur réseau réelle - afficher le message
+        console.error('[useN8nChatbotStory] Erreur message:', errorMessage);
+        setError(errorMessage);
+        addMessage('assistant', "Désolé, je n'ai pas pu traiter votre message. Veuillez réessayer.");
+      }
     } finally {
       setIsLoading(false);
     }
