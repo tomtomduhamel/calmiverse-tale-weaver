@@ -9,6 +9,8 @@ interface PersistedChatbotState {
   storyId: string | null;
   childrenIds: string[];
   timestamp: number;
+  pendingMessageId: string | null;  // ID du message user en attente de réponse
+  pendingMessageTimestamp: number | null;  // Timestamp pour détecter timeout
 }
 
 // Messages sérialisés (Date → string)
@@ -44,7 +46,9 @@ const getDefaultState = (): PersistedChatbotState => ({
   isInitialized: false,
   storyId: null,
   childrenIds: [],
-  timestamp: Date.now()
+  timestamp: Date.now(),
+  pendingMessageId: null,
+  pendingMessageTimestamp: null
 });
 
 /**
@@ -150,6 +154,29 @@ export const usePersistedChatbotState = () => {
     setState(prev => ({ ...prev, childrenIds }));
   }, []);
 
+  const setPendingMessage = useCallback((messageId: string | null) => {
+    setState(prev => ({
+      ...prev,
+      pendingMessageId: messageId,
+      pendingMessageTimestamp: messageId ? Date.now() : null
+    }));
+  }, []);
+
+  const clearPendingMessage = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      pendingMessageId: null,
+      pendingMessageTimestamp: null
+    }));
+  }, []);
+
+  const hasPendingMessage = useCallback(() => {
+    if (!state.pendingMessageId || !state.pendingMessageTimestamp) return false;
+    // Message en attente depuis moins de 5 minutes
+    const PENDING_TIMEOUT = 5 * 60 * 1000;
+    return Date.now() - state.pendingMessageTimestamp < PENDING_TIMEOUT;
+  }, [state.pendingMessageId, state.pendingMessageTimestamp]);
+
   const resetSession = useCallback(() => {
     console.log('[usePersistedChatbotState] Reset session');
     safeStorage.removeItem(STORAGE_KEY);
@@ -171,6 +198,7 @@ export const usePersistedChatbotState = () => {
     isInitialized: state.isInitialized,
     storyId: state.storyId,
     childrenIds: state.childrenIds,
+    pendingMessageId: state.pendingMessageId,
     
     // Actions
     setMessages,
@@ -178,6 +206,9 @@ export const usePersistedChatbotState = () => {
     setInitialized,
     setStoryId,
     setChildrenIds,
+    setPendingMessage,
+    clearPendingMessage,
+    hasPendingMessage,
     resetSession,
     forceSave,
     hasValidSession
