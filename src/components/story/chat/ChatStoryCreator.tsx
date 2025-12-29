@@ -122,10 +122,11 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
                 size="sm"
                 onClick={handleReset}
                 disabled={isLoading}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-primary/70 hover:text-primary hover:bg-primary/10 gap-1.5"
                 title="Recommencer la conversation"
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-5 w-5" />
+                <span className="hidden sm:inline text-xs">Recommencer</span>
               </Button>
             </div>
           </div>
