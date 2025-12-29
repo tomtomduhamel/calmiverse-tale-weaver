@@ -40,7 +40,7 @@ const CreationModeToggle: React.FC<CreationModeToggleProps> = ({ mode, onModeCha
           `}
         >
           <MessageCircle className="h-4 w-4" />
-          <span>Discuter avec Calmi</span>
+          <span>BETA - Discuter avec Calmi</span>
         </button>
       </div>
     </div>
