@@ -137,6 +137,7 @@ docs/                 # Documentation complète
 ## Fonctionnalités principales
 
 ✅ Génération histoires IA personnalisées (Lovable AI)  
+✅ **Chatbot interactif n8n** avec boutons de choix dynamiques  
 ✅ 4 tiers d'abonnement avec quotas  
 ✅ Audio multi-provider (ElevenLabs/Speechify) avec switch dynamique  
 ✅ Interface admin TTS avec dashboard métriques et gestion provider
@@ -147,6 +148,7 @@ docs/                 # Documentation complète
 ✅ PWA avec mode offline (désactivée dev)  
 ✅ Sécurité RLS + rate limiting  
 ✅ Navigation SPA optimisée  
+✅ Gestion erreurs réseau avec retry automatique
 
 ## License
 
