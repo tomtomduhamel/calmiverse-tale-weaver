@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { Child } from '@/types/child';
 import type { 
   ChatbotMessage, 
@@ -45,6 +45,9 @@ export const useN8nChatbotStory = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Verrou synchrone pour empêcher les appels multiples à initConversation
+  const isInitializingRef = useRef(false);
 
   // Sauvegarder quand la page devient invisible
   usePageVisibility({
@@ -123,12 +126,20 @@ export const useN8nChatbotStory = () => {
   }, []);
 
   const initConversation = useCallback(async (userId: string, children: Child[]) => {
+    // VERROU SYNCHRONE - empêche les appels multiples simultanés
+    if (isInitializingRef.current) {
+      console.log('[useN8nChatbotStory] Initialisation déjà en cours, skip');
+      return;
+    }
+    
     // Si session déjà valide, ne pas réinitialiser
     if (isInitialized && hasValidSession()) {
       console.log('[useN8nChatbotStory] Session valide existante, skip init');
       return;
     }
 
+    // Poser le verrou AVANT toute opération async
+    isInitializingRef.current = true;
     console.log('[useN8nChatbotStory] Initialisation conversation pour', children.length, 'enfants');
     setIsLoading(true);
     setError(null);
@@ -155,6 +166,7 @@ export const useN8nChatbotStory = () => {
       addMessage('assistant', "Désolé, je n'arrive pas à me connecter. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
+      isInitializingRef.current = false;
     }
   }, [isInitialized, hasValidSession, conversationId, sendToWebhook, handleResponse, addMessage, setInitialized, setChildrenIds]);
 
