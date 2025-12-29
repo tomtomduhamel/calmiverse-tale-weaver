@@ -42,13 +42,17 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
     }
   };
 
-  // Initialiser la conversation au montage
+  // Ref stable pour initConversation (évite les re-renders en boucle)
+  const initConversationRef = useRef(initConversation);
+  initConversationRef.current = initConversation;
+
+  // Initialiser la conversation au montage (une seule fois)
   useEffect(() => {
     if (user && children.length > 0 && !isInitialized) {
       console.log('[ChatStoryCreator] Initialisation avec', children.length, 'enfants');
-      initConversation(user.id, children);
+      initConversationRef.current(user.id, children);
     }
-  }, [user, children, isInitialized, initConversation]);
+  }, [user, children.length, isInitialized]); // PAS initConversation dans les deps
 
   // Auto-scroll vers le bas quand de nouveaux messages arrivent
   useEffect(() => {
