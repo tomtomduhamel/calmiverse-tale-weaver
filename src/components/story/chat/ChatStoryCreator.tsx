@@ -30,6 +30,8 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
     initConversation,
     sendMessage,
     resetConversation,
+    selectChoice,
+    confirmChoices,
   } = useN8nChatbotStory();
 
   const handleReset = () => {
@@ -79,6 +81,12 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
   const handleSend = (message: string) => {
     if (user) {
       sendMessage(message, user.id);
+    }
+  };
+
+  const handleConfirmChoices = (messageId: string) => {
+    if (user) {
+      confirmChoices(messageId, user.id);
     }
   };
 
@@ -145,7 +153,13 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
             )}
             
             {messages.map((message) => (
-              <ChatMessageBubble key={message.id} message={message} />
+              <ChatMessageBubble 
+                key={message.id} 
+                message={message}
+                onSelectChoice={selectChoice}
+                onConfirmChoices={handleConfirmChoices}
+                disabled={isLoading}
+              />
             ))}
             
             {isLoading && <TypingIndicator />}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { safeStorage } from '@/utils/safeStorage';
-import type { ChatbotMessage } from '@/types/chatbot';
+import type { ChatbotMessage, ChatbotChoice } from '@/types/chatbot';
 
 interface PersistedChatbotState {
   conversationId: string;
@@ -9,16 +9,20 @@ interface PersistedChatbotState {
   storyId: string | null;
   childrenIds: string[];
   timestamp: number;
-  pendingMessageId: string | null;  // ID du message user en attente de réponse
-  pendingMessageTimestamp: number | null;  // Timestamp pour détecter timeout
+  pendingMessageId: string | null;
+  pendingMessageTimestamp: number | null;
 }
 
-// Messages sérialisés (Date → string)
+// Messages sérialisés (Date → string, avec champs choix)
 interface SerializedMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  choices?: ChatbotChoice[];
+  choiceType?: 'single' | 'multiple';
+  selectedChoices?: string[];
+  choicesConfirmed?: boolean;
 }
 
 const STORAGE_KEY = 'calmiverse_chatbot_session';
@@ -28,15 +32,27 @@ const generateId = () => crypto.randomUUID();
 
 const serializeMessages = (messages: ChatbotMessage[]): SerializedMessage[] => {
   return messages.map(msg => ({
-    ...msg,
-    timestamp: msg.timestamp.toISOString()
+    id: msg.id,
+    role: msg.role,
+    content: msg.content,
+    timestamp: msg.timestamp.toISOString(),
+    choices: msg.choices,
+    choiceType: msg.choiceType,
+    selectedChoices: msg.selectedChoices,
+    choicesConfirmed: msg.choicesConfirmed,
   }));
 };
 
 const deserializeMessages = (messages: SerializedMessage[]): ChatbotMessage[] => {
   return messages.map(msg => ({
-    ...msg,
-    timestamp: new Date(msg.timestamp)
+    id: msg.id,
+    role: msg.role,
+    content: msg.content,
+    timestamp: new Date(msg.timestamp),
+    choices: msg.choices,
+    choiceType: msg.choiceType,
+    selectedChoices: msg.selectedChoices,
+    choicesConfirmed: msg.choicesConfirmed,
   }));
 };
 
@@ -136,9 +152,34 @@ export const usePersistedChatbotState = () => {
     setState(prev => ({
       ...prev,
       messages: [...prev.messages, {
-        ...message,
-        timestamp: message.timestamp.toISOString()
+        id: message.id,
+        role: message.role,
+        content: message.content,
+        timestamp: message.timestamp.toISOString(),
+        choices: message.choices,
+        choiceType: message.choiceType,
+        selectedChoices: message.selectedChoices,
+        choicesConfirmed: message.choicesConfirmed,
       }]
+    }));
+  }, []);
+
+  // Mettre à jour un message existant (pour les choix)
+  const updateMessage = useCallback((messageId: string, updates: Partial<ChatbotMessage>) => {
+    setState(prev => ({
+      ...prev,
+      messages: prev.messages.map(msg =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              ...updates,
+              // Garder le timestamp en string
+              timestamp: updates.timestamp 
+                ? updates.timestamp.toISOString() 
+                : msg.timestamp
+            }
+          : msg
+      )
     }));
   }, []);
 
@@ -203,6 +244,7 @@ export const usePersistedChatbotState = () => {
     // Actions
     setMessages,
     addMessage,
+    updateMessage,
     setInitialized,
     setStoryId,
     setChildrenIds,
