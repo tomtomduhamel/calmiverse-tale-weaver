@@ -26,6 +26,7 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - Système de séries avec tomes numérotés
 - Déduplication automatique (évite doublons)
 - Quotas mensuels selon abonnement
+- **Mode chatbot interactif** : Création guidée via conversation n8n avec boutons de choix
 
 ### Bibliothèque d'histoires
 - Filtrage avancé : enfants, objectifs, favoris, statuts
@@ -161,6 +162,29 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 3. **Secret `N8N_SPEECHIFY_WEBHOOK_URL`** : URL webhook n8n pour Speechify
 4. **Sélection automatique** : L'Edge Function `get-tts-config` lit `TTS_PROVIDER` et retourne la bonne config
 5. **Fallback** : Si `TTS_PROVIDER` non défini, utilise ElevenLabs par défaut
+
+### Chatbot Interactif n8n (Création Guidée)
+- **Webhook** : `https://n8n.srv856374.hstgr.cloud/webhook/[id]`
+- **Hook** : `useN8nChatbotStory` - Gestion conversation complète
+- **Persistance** : `usePersistedChatbotState` - Session localStorage avec retry automatique
+- **Types** : `ChatbotMessage`, `ChatbotResponse`, `ChatbotChoice`
+- **Format réponse n8n** :
+  ```json
+  {
+    "type": "message_with_choices",
+    "content": "Question à l'utilisateur",
+    "choiceType": "single" | "multiple",
+    "choices": [
+      { "id": "...", "label": "...", "value": "...", "icon": "Moon" }
+    ]
+  }
+  ```
+- **Composants** :
+  - `ChatStoryCreator` : Interface principale chatbot
+  - `ChatMessageBubble` : Affichage messages avec choix intégrés
+  - `ChatChoiceButtons` : Boutons de sélection (single/multiple) avec icônes Lucide
+- **Gestion erreurs** : AbortController silencieux avec retry automatique au retour page
+- **Icônes supportées** : Moon, Brain, Heart, Sparkles, Star, Wand2, TreePine, Castle, Ship, Rocket, User
 
 ### Webhooks n8n
 - **Email** : Partage histoires par email
@@ -318,15 +342,18 @@ src/
 │   ├── navigation/    # Navigation desktop/mobile
 │   ├── settings/      # ThemeSection, ReadingPreferences
 │   ├── story/         # StoryContent, StoryReader, ReaderControls
+│   │   ├── chat/      # ChatStoryCreator, ChatMessageBubble, ChatChoiceButtons
 │   │   └── reader/    # N8nAudioPlayer, ReadingSpeedSelector, TechnicalDiagnosticButton
 │   └── ui/            # shadcn components
 ├── hooks/
+│   ├── n8n/           # useN8nChatbotStory, usePersistedChatbotState
 │   ├── navigation/    # useAppNavigation (CENTRAL)
 │   ├── settings/      # useUserSettings
 │   ├── story/         # useAutoScroll, useStoryReader
 │   └── subscription/  # useSubscription, useQuotaChecker
 ├── contexts/          # SupabaseAuthContext, AppThemeContext, ReadingSpeedContext
 ├── pages/             # Routes principales
+├── types/             # chatbot.ts, child.ts, etc.
 ├── integrations/      # Supabase types auto-générés
 └── utils/             # Helpers, config, constants
 
@@ -549,6 +576,8 @@ docs/
 - **ReadingSpeedContext** global pour synchronisation vitesse lecture
 - **Auto-scroll intelligent** avec gestion pause/reprise et restart automatique
 - **Interface réactive** avec séparateurs visuels et spacing optimisé
+- **Chatbot interactif n8n** avec boutons de choix dynamiques (single/multiple)
+- **Gestion erreurs AbortController** silencieuse avec retry automatique
 
 ### En cours 🚧
 - Tests E2E complets
@@ -567,6 +596,6 @@ docs/
 
 ---
 
-**Dernière mise à jour** : 2025-01-27  
-**Version** : 3.1 (Optimisations UX lecteur + bandeau rétractable équilibré)  
+**Dernière mise à jour** : 2025-12-29  
+**Version** : 3.2 (Chatbot interactif n8n avec boutons de choix)  
 **Statut** : Production ready avec PWA désactivée dev
