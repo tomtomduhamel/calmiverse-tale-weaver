@@ -33,11 +33,15 @@ export const useN8nChatbotStory = () => {
     messages,
     isInitialized,
     storyId,
+    pendingMessageId,
     setMessages,
     addMessage: addPersistedMessage,
     setInitialized,
     setStoryId: setPersistedStoryId,
     setChildrenIds,
+    setPendingMessage,
+    clearPendingMessage,
+    hasPendingMessage,
     resetSession,
     forceSave,
     hasValidSession
@@ -45,15 +49,90 @@ export const useN8nChatbotStory = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
   
   // Verrou synchrone pour empêcher les appels multiples à initConversation
   const isInitializingRef = useRef(false);
+  // Ref pour stocker userId pour le retry
+  const userIdRef = useRef<string | null>(null);
 
-  // Sauvegarder quand la page devient invisible
+  // Fonction de retry du dernier message
+  const retryLastMessage = useCallback(async () => {
+    if (!hasPendingMessage() || !userIdRef.current) return;
+    
+    // Trouver le dernier message user
+    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+    if (!lastUserMessage) {
+      clearPendingMessage();
+      return;
+    }
+
+    console.log('[useN8nChatbotStory] Retry automatique message:', lastUserMessage.content.substring(0, 50));
+    setIsRetrying(true);
+    setIsLoading(true);
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000);
+
+      const payload: ChatbotMessagePayload = {
+        chatInput: lastUserMessage.content,
+        sessionId: conversationId,
+        userId: userIdRef.current,
+        action: 'message',
+      };
+
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.content || data.chatInput;
+
+      // Effacer le pending AVANT d'ajouter la réponse
+      clearPendingMessage();
+
+      // Ajouter la réponse
+      const newMessage: ChatbotMessage = {
+        id: generateId(),
+        role: 'assistant',
+        content: content || JSON.stringify(data),
+        timestamp: new Date(),
+      };
+      addPersistedMessage(newMessage);
+
+      if (data.type === 'story_complete' && data.storyId) {
+        setPersistedStoryId(data.storyId);
+      }
+
+      console.log('[useN8nChatbotStory] Retry réussi');
+    } catch (err) {
+      console.error('[useN8nChatbotStory] Erreur retry:', err);
+      // Ne pas effacer le pending en cas d'erreur, l'utilisateur peut réessayer manuellement
+    } finally {
+      setIsLoading(false);
+      setIsRetrying(false);
+    }
+  }, [hasPendingMessage, messages, conversationId, clearPendingMessage, addPersistedMessage, setPersistedStoryId]);
+
+  // Sauvegarder quand la page devient invisible + retry au retour
   usePageVisibility({
     onHide: forceSave,
     onShow: () => {
-      console.log('[useN8nChatbotStory] Page visible - session valide:', hasValidSession());
+      console.log('[useN8nChatbotStory] Page visible - session valide:', hasValidSession(), 'pending:', hasPendingMessage());
+      // Retry automatique si message en attente
+      if (hasPendingMessage() && !isLoading) {
+        retryLastMessage();
+      }
     }
   });
 
@@ -175,12 +254,22 @@ export const useN8nChatbotStory = () => {
 
     console.log('[useN8nChatbotStory] Envoi message:', message);
     
+    // Sauvegarder userId pour le retry
+    userIdRef.current = userId;
+    
     // Ajouter le message utilisateur immédiatement
-    addMessage('user', message);
+    const userMessage = addMessage('user', message);
+    
+    // Marquer comme en attente de réponse
+    setPendingMessage(userMessage.id);
+    
     setIsLoading(true);
     setError(null);
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000);
+
       const payload: ChatbotMessagePayload = {
         chatInput: message,
         sessionId: conversationId,
@@ -188,17 +277,54 @@ export const useN8nChatbotStory = () => {
         action: 'message',
       };
 
-      const response = await sendToWebhook(payload);
-      handleResponse(response);
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('[useN8nChatbotStory] Réponse brute n8n:', data);
+
+      // Effacer le pending AVANT d'ajouter la réponse
+      clearPendingMessage();
+
+      // Traiter la réponse
+      const content = data.content || data.chatInput;
+      
+      if (data.type === 'error') {
+        setError(content);
+        addMessage('assistant', content);
+        return;
+      }
+
+      if (data.type === 'story_complete' && data.storyId) {
+        console.log('[useN8nChatbotStory] Histoire créée:', data.storyId);
+        addMessage('assistant', content);
+        setPersistedStoryId(data.storyId);
+        return;
+      }
+
+      // Message normal
+      addMessage('assistant', content || JSON.stringify(data));
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
       console.error('[useN8nChatbotStory] Erreur message:', errorMessage);
       setError(errorMessage);
+      // NE PAS effacer le pending en cas d'erreur - permet le retry
       addMessage('assistant', "Désolé, je n'ai pas pu traiter votre message. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, sendToWebhook, handleResponse, addMessage]);
+  }, [conversationId, addMessage, setPendingMessage, clearPendingMessage, setPersistedStoryId]);
 
   const resetConversation = useCallback(() => {
     console.log('[useN8nChatbotStory] Reset conversation');
@@ -209,14 +335,17 @@ export const useN8nChatbotStory = () => {
   return {
     messages,
     isLoading,
+    isRetrying,
     error,
     storyId,
     isInitialized,
     conversationId,
     hasValidSession,
+    hasPendingMessage,
     initConversation,
     sendMessage,
     resetConversation,
+    retryLastMessage,
   };
 };
 
