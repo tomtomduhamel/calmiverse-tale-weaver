@@ -81,15 +81,22 @@ export const useN8nChatbotStory = () => {
     const data = await response.json();
     console.log('[useN8nChatbotStory] Réponse brute n8n:', data);
 
+    // n8n peut renvoyer "chatInput" au lieu de "content"
+    const content = data.content || data.chatInput;
+
     // Si n8n renvoie directement le bon format
-    if (data.type && data.content) {
-      return data as ChatbotResponse;
+    if (data.type && content) {
+      return {
+        type: data.type,
+        content,
+        storyId: data.storyId,
+      } as ChatbotResponse;
     }
 
     // Fallback si format différent
     return {
       type: 'message',
-      content: typeof data === 'string' ? data : JSON.stringify(data),
+      content: typeof data === 'string' ? data : (content || JSON.stringify(data)),
     };
   }, []);
 
