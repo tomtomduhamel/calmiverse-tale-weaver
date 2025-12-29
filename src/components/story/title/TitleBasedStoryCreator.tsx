@@ -39,6 +39,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     selectedDuration,
     regenerationUsed,
     titleGenerationCost,
+    generationInterrupted,
     updateCurrentStep,
     updateSelectedChildren,
     updateSelectedObjective,
@@ -47,8 +48,11 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     updateSelectedDuration,
     incrementRegeneration,
     updateTitleGenerationCost,
+    setIsGeneratingTitles,
+    clearGenerationInterrupted,
     clearPersistedState,
-    hasPersistedSession
+    hasPersistedSession,
+    forceSave
   } = usePersistedStoryCreation();
   const { toast } = useToast();
   const { validateAction, incrementUsage } = useQuotaChecker();
@@ -199,9 +203,11 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       return;
     }
 
-    // Marquer comme en cours SYNCHRONIQUEMENT
+    // Marquer comme en cours SYNCHRONIQUEMENT + persister
     isGeneratingRef.current = true;
     lastGenerationTimeRef.current = now;
+    setIsGeneratingTitles(true);
+    forceSave(); // Sauvegarder immédiatement l'état de génération
 
     try {
       const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
@@ -226,12 +232,13 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         variant: "destructive"
       });
     } finally {
+      setIsGeneratingTitles(false);
       // Libérer le guard après un délai pour éviter les appels rebond
       setTimeout(() => {
         isGeneratingRef.current = false;
       }, 1000);
     }
-  }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateCurrentStep, toast]);
+  }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateCurrentStep, setIsGeneratingTitles, forceSave, toast]);
 
   // Effect pour gérer l'auto-génération des titres - dépendances MINIMALES
   useEffect(() => {
@@ -239,6 +246,12 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     if (currentStep !== 'titles') {
       // Reset le guard si on revient à l'étape précédente
       autoGenerateTriggered.current = false;
+      return;
+    }
+
+    // Si génération interrompue, ne pas auto-générer (laisser l'utilisateur décider)
+    if (generationInterrupted) {
+      console.log('[TitleBasedStoryCreator] Génération interrompue détectée, attente action utilisateur');
       return;
     }
 
@@ -261,10 +274,12 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       return;
     }
 
-    // Marquer comme déclenché AVANT l'appel
+    // Marquer comme déclenché AVANT l'appel + persister
     autoGenerateTriggered.current = true;
     isGeneratingRef.current = true;
     lastGenerationTimeRef.current = Date.now();
+    setIsGeneratingTitles(true);
+    forceSave();
 
     console.log('[TitleBasedStoryCreator] Auto-génération des titres...');
     
@@ -288,11 +303,19 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         variant: "destructive"
       });
     }).finally(() => {
+      setIsGeneratingTitles(false);
       setTimeout(() => {
         isGeneratingRef.current = false;
       }, 1000);
     });
-  }, [currentStep, generatedTitles.length, isGeneratingTitles, generateTitles, updateCurrentStep, toast]);
+  }, [currentStep, generatedTitles.length, isGeneratingTitles, generationInterrupted, generateTitles, updateCurrentStep, setIsGeneratingTitles, forceSave, toast]);
+
+  // Handler pour relancer après interruption
+  const handleRetryAfterInterruption = useCallback(() => {
+    clearGenerationInterrupted();
+    autoGenerateTriggered.current = false;
+    // Le useEffect va détecter le changement et relancer
+  }, [clearGenerationInterrupted]);
 
   const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes) => {
     if (!titleToUse) {
@@ -497,6 +520,45 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
   // Étape 2: Sélection du titre
   if (currentStep === 'titles') {
+    // Si génération interrompue, afficher un message de reprise
+    if (generationInterrupted) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <RefreshCw className="w-8 h-8 text-amber-500" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">
+                ⏸️ Génération interrompue
+              </h3>
+              <p className="text-muted-foreground">
+                La génération des titres a été interrompue. Voulez-vous reprendre ?
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                clearGenerationInterrupted();
+                updateCurrentStep('objective');
+              }}
+            >
+              Revenir à la configuration
+            </Button>
+            <Button 
+              onClick={handleRetryAfterInterruption}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reprendre la génération
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     // Si les titres sont en cours de génération, afficher l'état de chargement
     if (isGeneratingTitles && generatedTitles.length === 0) {
       return (
@@ -513,6 +575,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
                 Nos petits lutins magiques travaillent à créer des titres uniques pour {selectedChildren.map(c => c.name).join(', ')}. 
                 Vous serez prévenu dès qu'ils seront prêts !
               </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                💡 Vous pouvez changer d'application, votre progression sera conservée.
+              </p>
             </div>
           </div>
           
@@ -521,6 +586,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
               variant="outline" 
               onClick={() => {
                 clearTitles();
+                setIsGeneratingTitles(false);
                 updateCurrentStep('objective');
               }}
             >

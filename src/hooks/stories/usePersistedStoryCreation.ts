@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { safeStorage } from '@/utils/safeStorage';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 import type { GeneratedTitle, TitleCostData } from '@/hooks/stories/useN8nTitleGeneration';
 import type { StoryDurationMinutes } from '@/types/story';
 
@@ -12,10 +14,26 @@ interface PersistedStoryCreationState {
   timestamp: number;
   regenerationUsed: boolean;
   titleGenerationCost: TitleCostData | null;
+  isGeneratingTitles: boolean;
+  generationInterrupted: boolean;
 }
 
 const STORAGE_KEY = 'calmiverse_story_creation';
 const EXPIRATION_TIME = 60 * 60 * 1000; // 1 hour
+
+const getDefaultState = (): PersistedStoryCreationState => ({
+  currentStep: 'children',
+  selectedChildrenIds: [],
+  selectedObjective: '',
+  generatedTitles: [],
+  selectedTitle: '',
+  selectedDuration: null,
+  timestamp: Date.now(),
+  regenerationUsed: false,
+  titleGenerationCost: null,
+  isGeneratingTitles: false,
+  generationInterrupted: false
+});
 
 /**
  * Hook to persist story creation state across page refreshes and tab changes
@@ -23,7 +41,7 @@ const EXPIRATION_TIME = 60 * 60 * 1000; // 1 hour
 export const usePersistedStoryCreation = () => {
   const [state, setState] = useState<PersistedStoryCreationState>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = safeStorage.getItem(STORAGE_KEY);
       if (stored && stored.trim()) {
         const parsed = JSON.parse(stored);
         
@@ -34,8 +52,12 @@ export const usePersistedStoryCreation = () => {
             console.log('[usePersistedStoryCreation] Session restaurée:', {
               step: parsed.currentStep,
               childrenCount: parsed.selectedChildrenIds?.length || 0,
-              age: Math.round((Date.now() - parsed.timestamp) / 1000 / 60) // minutes
+              age: Math.round((Date.now() - parsed.timestamp) / 1000 / 60),
+              wasGenerating: parsed.isGeneratingTitles
             });
+            
+            // Si génération était en cours, marquer comme interrompue
+            const wasGenerating = Boolean(parsed.isGeneratingTitles);
             
             return {
               currentStep: parsed.currentStep || 'children',
@@ -46,67 +68,66 @@ export const usePersistedStoryCreation = () => {
               selectedDuration: parsed.selectedDuration || null,
               timestamp: parsed.timestamp,
               regenerationUsed: Boolean(parsed.regenerationUsed),
-              titleGenerationCost: parsed.titleGenerationCost || null
+              titleGenerationCost: parsed.titleGenerationCost || null,
+              isGeneratingTitles: false, // Reset car on a quitté
+              generationInterrupted: wasGenerating && (parsed.generatedTitles?.length || 0) === 0
             };
           } else {
             console.log('[usePersistedStoryCreation] Session expirée, nettoyage');
-            localStorage.removeItem(STORAGE_KEY);
+            safeStorage.removeItem(STORAGE_KEY);
           }
         }
       }
     } catch (error) {
       console.warn('[usePersistedStoryCreation] Erreur lors de la restauration:', error);
-      // Nettoyer les données corrompues
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch (cleanupError) {
-        console.warn('[usePersistedStoryCreation] Impossible de nettoyer localStorage:', cleanupError);
-      }
+      safeStorage.removeItem(STORAGE_KEY);
     }
     
-    // Return default state
-    return {
-      currentStep: 'children' as const,
-      selectedChildrenIds: [],
-      selectedObjective: '',
-      generatedTitles: [],
-      selectedTitle: '',
-      selectedDuration: null,
-      timestamp: Date.now(),
-      regenerationUsed: false,
-      titleGenerationCost: null
-    };
+    return getDefaultState();
   });
 
-  // Save to localStorage whenever state changes avec protection contre les boucles
-  useEffect(() => {
+  // Ref pour éviter les sauvegardes inutiles
+  const lastSavedRef = useRef<string>('');
+
+  // Forcer la sauvegarde immédiate
+  const forceSave = useCallback(() => {
+    const stateToSave = { ...state, timestamp: Date.now() };
     try {
-      const stateToSave = {
-        ...state,
-        timestamp: Date.now()
-      };
-      
-      const serialized = JSON.stringify(stateToSave);
-      if (serialized && typeof Storage !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, serialized);
-        console.log('[usePersistedStoryCreation] Session sauvegardée:', {
-          step: state.currentStep,
-          childrenCount: state.selectedChildrenIds.length,
-          objective: state.selectedObjective,
-          titlesCount: state.generatedTitles.length
-        });
-      }
+      safeStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+      console.log('[usePersistedStoryCreation] Sauvegarde forcée');
+    } catch (error) {
+      console.warn('[usePersistedStoryCreation] Erreur sauvegarde forcée:', error);
+    }
+  }, [state]);
+
+  // Sauvegarder quand la page devient invisible
+  usePageVisibility({
+    onHide: forceSave,
+    onShow: () => {
+      console.log('[usePersistedStoryCreation] Page visible - vérification session');
+    }
+  });
+
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    const stateToSave = { ...state, timestamp: Date.now() };
+    const serialized = JSON.stringify(stateToSave);
+    
+    // Éviter les sauvegardes identiques
+    if (serialized === lastSavedRef.current) return;
+    
+    try {
+      safeStorage.setItem(STORAGE_KEY, serialized);
+      lastSavedRef.current = serialized;
+      console.log('[usePersistedStoryCreation] Session sauvegardée:', {
+        step: state.currentStep,
+        childrenCount: state.selectedChildrenIds.length,
+        objective: state.selectedObjective,
+        titlesCount: state.generatedTitles.length,
+        isGenerating: state.isGeneratingTitles
+      });
     } catch (error) {
       console.warn('[usePersistedStoryCreation] Erreur lors de la sauvegarde:', error);
-      // En cas d'erreur de stockage, continuer sans crasher
-      if (error instanceof Error && error.message.includes('QuotaExceededError')) {
-        console.warn('[usePersistedStoryCreation] Quota localStorage dépassé, nettoyage...');
-        try {
-          localStorage.clear();
-        } catch (clearError) {
-          console.warn('[usePersistedStoryCreation] Impossible de nettoyer localStorage:', clearError);
-        }
-      }
     }
   }, [state]);
 
@@ -124,7 +145,11 @@ export const usePersistedStoryCreation = () => {
   }, []);
 
   const updateGeneratedTitles = useCallback((titles: GeneratedTitle[]) => {
-    setState(prev => ({ ...prev, generatedTitles: titles }));
+    setState(prev => ({ 
+      ...prev, 
+      generatedTitles: titles,
+      generationInterrupted: false // Clear interrupted flag when titles arrive
+    }));
   }, []);
 
   const updateSelectedTitle = useCallback((title: string) => {
@@ -143,20 +168,19 @@ export const usePersistedStoryCreation = () => {
     setState(prev => ({ ...prev, titleGenerationCost: cost }));
   }, []);
 
+  const setIsGeneratingTitles = useCallback((isGenerating: boolean) => {
+    setState(prev => ({ ...prev, isGeneratingTitles: isGenerating }));
+  }, []);
+
+  const clearGenerationInterrupted = useCallback(() => {
+    setState(prev => ({ ...prev, generationInterrupted: false }));
+  }, []);
+
   // Clear persisted state
   const clearPersistedState = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setState({
-      currentStep: 'children',
-      selectedChildrenIds: [],
-      selectedObjective: '',
-      generatedTitles: [],
-      selectedTitle: '',
-      selectedDuration: null,
-      timestamp: Date.now(),
-      regenerationUsed: false,
-      titleGenerationCost: null
-    });
+    safeStorage.removeItem(STORAGE_KEY);
+    lastSavedRef.current = '';
+    setState(getDefaultState());
   }, []);
 
   // Check if we have a persisted session
@@ -173,17 +197,10 @@ export const usePersistedStoryCreation = () => {
     const sessionAge = Date.now() - state.timestamp;
     const isNotExpired = sessionAge < EXPIRATION_TIME;
     
-    console.log('[usePersistedStoryCreation] Validation session:', {
-      hasRequiredData,
-      sessionAge: Math.round(sessionAge / 1000 / 60), // minutes
-      isNotExpired,
-      currentStep: state.currentStep
-    });
-    
     return hasRequiredData && isNotExpired;
   }, [state]);
 
-  // Force refresh session data (for debugging)
+  // Force refresh session data
   const refreshSession = useCallback(() => {
     console.log('[usePersistedStoryCreation] Refresh forcé de la session');
     setState(prev => ({ ...prev, timestamp: Date.now() }));
@@ -199,6 +216,8 @@ export const usePersistedStoryCreation = () => {
     selectedDuration: state.selectedDuration,
     regenerationUsed: state.regenerationUsed,
     titleGenerationCost: state.titleGenerationCost,
+    isGeneratingTitlesPersisted: state.isGeneratingTitles,
+    generationInterrupted: state.generationInterrupted,
     
     // Actions
     updateCurrentStep,
@@ -209,9 +228,12 @@ export const usePersistedStoryCreation = () => {
     updateSelectedDuration,
     incrementRegeneration,
     updateTitleGenerationCost,
+    setIsGeneratingTitles,
+    clearGenerationInterrupted,
     clearPersistedState,
     hasPersistedSession,
     hasValidSession,
-    refreshSession
+    refreshSession,
+    forceSave
   };
 };
