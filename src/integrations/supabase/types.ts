@@ -175,6 +175,27 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_history: {
+        Row: {
+          created_at: string | null
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
       children: {
         Row: {
           authorid: string
