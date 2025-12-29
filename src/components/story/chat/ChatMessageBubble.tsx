@@ -1,13 +1,23 @@
 import React from 'react';
 import type { ChatbotMessage } from '@/types/chatbot';
 import { Bot, User } from 'lucide-react';
+import ChatChoiceButtons from './ChatChoiceButtons';
 
 interface ChatMessageBubbleProps {
   message: ChatbotMessage;
+  onSelectChoice?: (messageId: string, choiceId: string) => void;
+  onConfirmChoices?: (messageId: string) => void;
+  disabled?: boolean;
 }
 
-const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message }) => {
+const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ 
+  message,
+  onSelectChoice,
+  onConfirmChoices,
+  disabled = false,
+}) => {
   const isAssistant = message.role === 'assistant';
+  const hasChoices = message.choices && message.choices.length > 0;
 
   return (
     <div
@@ -45,6 +55,22 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message }) => {
         <p className="text-sm leading-relaxed whitespace-pre-wrap">
           {message.content}
         </p>
+
+        {/* Boutons de choix (uniquement pour les messages assistant) */}
+        {isAssistant && hasChoices && (
+          <div className="mt-3 pt-3 border-t border-border/30">
+            <ChatChoiceButtons
+              choices={message.choices!}
+              choiceType={message.choiceType || 'single'}
+              selectedChoices={message.selectedChoices || []}
+              confirmed={message.choicesConfirmed || false}
+              onSelect={(choiceId) => onSelectChoice?.(message.id, choiceId)}
+              onConfirm={() => onConfirmChoices?.(message.id)}
+              disabled={disabled}
+            />
+          </div>
+        )}
+
         <span
           className={`
             text-[10px] mt-1 block

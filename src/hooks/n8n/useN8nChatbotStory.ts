@@ -5,7 +5,8 @@ import type {
   ChatbotResponse, 
   ChatbotInitPayload, 
   ChatbotMessagePayload,
-  ChatbotChildInfo 
+  ChatbotChildInfo,
+  ChatbotChoice
 } from '@/types/chatbot';
 import { calculateAge } from '@/utils/age';
 import { usePersistedChatbotState } from './usePersistedChatbotState';
@@ -36,6 +37,7 @@ export const useN8nChatbotStory = () => {
     pendingMessageId,
     setMessages,
     addMessage: addPersistedMessage,
+    updateMessage,
     setInitialized,
     setStoryId: setPersistedStoryId,
     setChildrenIds,
@@ -96,23 +98,12 @@ export const useN8nChatbotStory = () => {
       }
 
       const data = await response.json();
-      const content = data.content || data.chatInput;
-
+      
       // Effacer le pending AVANT d'ajouter la réponse
       clearPendingMessage();
 
-      // Ajouter la réponse
-      const newMessage: ChatbotMessage = {
-        id: generateId(),
-        role: 'assistant',
-        content: content || JSON.stringify(data),
-        timestamp: new Date(),
-      };
-      addPersistedMessage(newMessage);
-
-      if (data.type === 'story_complete' && data.storyId) {
-        setPersistedStoryId(data.storyId);
-      }
+      // Traiter la réponse (inclut les choix)
+      handleResponseData(data);
 
       console.log('[useN8nChatbotStory] Retry réussi');
     } catch (err) {
@@ -122,7 +113,7 @@ export const useN8nChatbotStory = () => {
       setIsLoading(false);
       setIsRetrying(false);
     }
-  }, [hasPendingMessage, messages, conversationId, clearPendingMessage, addPersistedMessage, setPersistedStoryId]);
+  }, [hasPendingMessage, messages, conversationId, clearPendingMessage]);
 
   // Sauvegarder quand la page devient invisible + retry au retour
   usePageVisibility({
@@ -136,16 +127,61 @@ export const useN8nChatbotStory = () => {
     }
   });
 
-  const addMessage = useCallback((role: 'user' | 'assistant', content: string) => {
+  // Ajouter un message (avec support des choix)
+  const addMessage = useCallback((
+    role: 'user' | 'assistant', 
+    content: string,
+    options?: { 
+      choices?: ChatbotChoice[]; 
+      choiceType?: 'single' | 'multiple';
+    }
+  ) => {
     const newMessage: ChatbotMessage = {
       id: generateId(),
       role,
       content,
       timestamp: new Date(),
+      choices: options?.choices,
+      choiceType: options?.choiceType,
+      selectedChoices: [],
+      choicesConfirmed: false,
     };
     addPersistedMessage(newMessage);
     return newMessage;
   }, [addPersistedMessage]);
+
+  // Traiter les données de réponse n8n
+  const handleResponseData = useCallback((data: any) => {
+    console.log('[useN8nChatbotStory] Réponse brute n8n:', data);
+    
+    const content = data.content || data.chatInput;
+    
+    if (data.type === 'error') {
+      setError(content);
+      addMessage('assistant', content);
+      return;
+    }
+
+    if (data.type === 'story_complete' && data.storyId) {
+      console.log('[useN8nChatbotStory] Histoire créée:', data.storyId);
+      addMessage('assistant', content);
+      setPersistedStoryId(data.storyId);
+      return;
+    }
+
+    // Message avec choix
+    if (data.type === 'message_with_choices' && data.choices && Array.isArray(data.choices)) {
+      console.log('[useN8nChatbotStory] Message avec choix:', data.choices.length);
+      addMessage('assistant', content, {
+        choices: data.choices,
+        choiceType: data.choiceType || 'single'
+      });
+      return;
+    }
+
+    // Message normal
+    addMessage('assistant', content || JSON.stringify(data));
+  }, [addMessage, setPersistedStoryId]);
 
   const handleResponse = useCallback((response: ChatbotResponse) => {
     console.log('[useN8nChatbotStory] Réponse reçue:', response);
@@ -160,6 +196,15 @@ export const useN8nChatbotStory = () => {
       console.log('[useN8nChatbotStory] Histoire créée:', response.storyId);
       addMessage('assistant', response.content);
       setPersistedStoryId(response.storyId);
+      return;
+    }
+
+    // Message avec choix
+    if (response.type === 'message_with_choices' && response.choices) {
+      addMessage('assistant', response.content, {
+        choices: response.choices,
+        choiceType: response.choiceType || 'single'
+      });
       return;
     }
 
@@ -188,11 +233,13 @@ export const useN8nChatbotStory = () => {
     // n8n peut renvoyer "chatInput" au lieu de "content"
     const content = data.content || data.chatInput;
 
-    // Si n8n renvoie directement le bon format
+    // Si n8n renvoie directement le bon format avec choix
     if (data.type && content) {
       return {
         type: data.type,
         content,
+        choices: data.choices,
+        choiceType: data.choiceType,
         storyId: data.storyId,
       } as ChatbotResponse;
     }
@@ -291,29 +338,12 @@ export const useN8nChatbotStory = () => {
       }
 
       const data = await response.json();
-      console.log('[useN8nChatbotStory] Réponse brute n8n:', data);
-
+      
       // Effacer le pending AVANT d'ajouter la réponse
       clearPendingMessage();
 
-      // Traiter la réponse
-      const content = data.content || data.chatInput;
-      
-      if (data.type === 'error') {
-        setError(content);
-        addMessage('assistant', content);
-        return;
-      }
-
-      if (data.type === 'story_complete' && data.storyId) {
-        console.log('[useN8nChatbotStory] Histoire créée:', data.storyId);
-        addMessage('assistant', content);
-        setPersistedStoryId(data.storyId);
-        return;
-      }
-
-      // Message normal
-      addMessage('assistant', content || JSON.stringify(data));
+      // Traiter la réponse (inclut les choix)
+      handleResponseData(data);
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
@@ -324,7 +354,46 @@ export const useN8nChatbotStory = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, addMessage, setPendingMessage, clearPendingMessage, setPersistedStoryId]);
+  }, [conversationId, addMessage, setPendingMessage, clearPendingMessage, handleResponseData]);
+
+  // Sélectionner un choix dans un message
+  const selectChoice = useCallback((messageId: string, choiceId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message || message.choicesConfirmed) return;
+
+    let newSelected: string[];
+    
+    if (message.choiceType === 'multiple') {
+      // Toggle pour choix multiples
+      const currentSelected = message.selectedChoices || [];
+      newSelected = currentSelected.includes(choiceId)
+        ? currentSelected.filter(id => id !== choiceId)
+        : [...currentSelected, choiceId];
+    } else {
+      // Remplacement pour choix unique
+      newSelected = [choiceId];
+    }
+
+    updateMessage(messageId, { selectedChoices: newSelected });
+  }, [messages, updateMessage]);
+
+  // Confirmer les choix et envoyer comme message utilisateur
+  const confirmChoices = useCallback(async (messageId: string, userId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message?.choices || !message.selectedChoices?.length) return;
+
+    // Marquer comme confirmé
+    updateMessage(messageId, { choicesConfirmed: true });
+
+    // Construire le texte à envoyer (les labels des choix sélectionnés)
+    const selectedLabels = message.choices
+      .filter(c => message.selectedChoices?.includes(c.id))
+      .map(c => c.label)
+      .join(', ');
+
+    // Envoyer comme message utilisateur
+    await sendMessage(selectedLabels, userId);
+  }, [messages, updateMessage, sendMessage]);
 
   const resetConversation = useCallback(() => {
     console.log('[useN8nChatbotStory] Reset conversation');
@@ -346,6 +415,8 @@ export const useN8nChatbotStory = () => {
     sendMessage,
     resetConversation,
     retryLastMessage,
+    selectChoice,
+    confirmChoices,
   };
 };
 
