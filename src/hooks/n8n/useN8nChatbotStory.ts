@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Child } from '@/types/child';
 import type { 
   ChatbotMessage, 
@@ -8,6 +8,8 @@ import type {
   ChatbotChildInfo 
 } from '@/types/chatbot';
 import { calculateAge } from '@/utils/age';
+import { usePersistedChatbotState } from './usePersistedChatbotState';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 const N8N_WEBHOOK_URL = 'https://n8n.srv856374.hstgr.cloud/webhook/ec1e6586-86dc-4755-b73e-80a19762ddd2';
 
@@ -25,12 +27,32 @@ const mapChildToInfo = (child: Child): ChatbotChildInfo => ({
 });
 
 export const useN8nChatbotStory = () => {
-  const [messages, setMessages] = useState<ChatbotMessage[]>([]);
+  // État persisté
+  const {
+    conversationId,
+    messages,
+    isInitialized,
+    storyId,
+    setMessages,
+    addMessage: addPersistedMessage,
+    setInitialized,
+    setStoryId: setPersistedStoryId,
+    setChildrenIds,
+    resetSession,
+    forceSave,
+    hasValidSession
+  } = usePersistedChatbotState();
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [storyId, setStoryId] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const conversationIdRef = useRef(generateId());
+
+  // Sauvegarder quand la page devient invisible
+  usePageVisibility({
+    onHide: forceSave,
+    onShow: () => {
+      console.log('[useN8nChatbotStory] Page visible - session valide:', hasValidSession());
+    }
+  });
 
   const addMessage = useCallback((role: 'user' | 'assistant', content: string) => {
     const newMessage: ChatbotMessage = {
@@ -39,9 +61,9 @@ export const useN8nChatbotStory = () => {
       content,
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, newMessage]);
+    addPersistedMessage(newMessage);
     return newMessage;
-  }, []);
+  }, [addPersistedMessage]);
 
   const handleResponse = useCallback((response: ChatbotResponse) => {
     console.log('[useN8nChatbotStory] Réponse reçue:', response);
@@ -55,13 +77,13 @@ export const useN8nChatbotStory = () => {
     if (response.type === 'story_complete' && response.storyId) {
       console.log('[useN8nChatbotStory] Histoire créée:', response.storyId);
       addMessage('assistant', response.content);
-      setStoryId(response.storyId);
+      setPersistedStoryId(response.storyId);
       return;
     }
 
     // Message normal
     addMessage('assistant', response.content);
-  }, [addMessage]);
+  }, [addMessage, setPersistedStoryId]);
 
   const sendToWebhook = useCallback(async (payload: ChatbotInitPayload | ChatbotMessagePayload): Promise<ChatbotResponse> => {
     console.log('[useN8nChatbotStory] Envoi vers n8n:', payload);
@@ -101,19 +123,23 @@ export const useN8nChatbotStory = () => {
   }, []);
 
   const initConversation = useCallback(async (userId: string, children: Child[]) => {
-    if (isInitialized) {
-      console.log('[useN8nChatbotStory] Conversation déjà initialisée');
+    // Si session déjà valide, ne pas réinitialiser
+    if (isInitialized && hasValidSession()) {
+      console.log('[useN8nChatbotStory] Session valide existante, skip init');
       return;
     }
 
     console.log('[useN8nChatbotStory] Initialisation conversation pour', children.length, 'enfants');
     setIsLoading(true);
     setError(null);
+    
+    // Sauvegarder les IDs des enfants pour la session
+    setChildrenIds(children.map(c => c.id));
 
     try {
       const payload: ChatbotInitPayload = {
         chatInput: "Bonjour ! Je souhaite créer une histoire personnalisée pour mes enfants.",
-        sessionId: conversationIdRef.current,
+        sessionId: conversationId,
         userId,
         action: 'init',
         children: children.map(mapChildToInfo),
@@ -121,7 +147,7 @@ export const useN8nChatbotStory = () => {
 
       const response = await sendToWebhook(payload);
       handleResponse(response);
-      setIsInitialized(true);
+      setInitialized(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
       console.error('[useN8nChatbotStory] Erreur init:', errorMessage);
@@ -130,7 +156,7 @@ export const useN8nChatbotStory = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isInitialized, sendToWebhook, handleResponse, addMessage]);
+  }, [isInitialized, hasValidSession, conversationId, sendToWebhook, handleResponse, addMessage, setInitialized, setChildrenIds]);
 
   const sendMessage = useCallback(async (message: string, userId: string) => {
     if (!message.trim()) return;
@@ -145,7 +171,7 @@ export const useN8nChatbotStory = () => {
     try {
       const payload: ChatbotMessagePayload = {
         chatInput: message,
-        sessionId: conversationIdRef.current,
+        sessionId: conversationId,
         userId,
         action: 'message',
       };
@@ -160,16 +186,13 @@ export const useN8nChatbotStory = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [sendToWebhook, handleResponse, addMessage]);
+  }, [conversationId, sendToWebhook, handleResponse, addMessage]);
 
   const resetConversation = useCallback(() => {
     console.log('[useN8nChatbotStory] Reset conversation');
-    setMessages([]);
+    resetSession();
     setError(null);
-    setStoryId(null);
-    setIsInitialized(false);
-    conversationIdRef.current = generateId();
-  }, []);
+  }, [resetSession]);
 
   return {
     messages,
@@ -177,7 +200,8 @@ export const useN8nChatbotStory = () => {
     error,
     storyId,
     isInitialized,
-    conversationId: conversationIdRef.current,
+    conversationId,
+    hasValidSession,
     initConversation,
     sendMessage,
     resetConversation,
