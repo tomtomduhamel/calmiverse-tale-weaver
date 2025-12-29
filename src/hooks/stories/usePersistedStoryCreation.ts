@@ -3,8 +3,10 @@ import { safeStorage } from '@/utils/safeStorage';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 import type { GeneratedTitle, TitleCostData } from '@/hooks/stories/useN8nTitleGeneration';
 import type { StoryDurationMinutes } from '@/types/story';
+import type { CreationMode } from '@/types/chatbot';
 
 interface PersistedStoryCreationState {
+  creationMode: CreationMode;
   currentStep: 'children' | 'objective' | 'titles' | 'creating';
   selectedChildrenIds: string[];
   selectedObjective: string;
@@ -22,6 +24,7 @@ const STORAGE_KEY = 'calmiverse_story_creation';
 const EXPIRATION_TIME = 60 * 60 * 1000; // 1 hour
 
 const getDefaultState = (): PersistedStoryCreationState => ({
+  creationMode: 'guided',
   currentStep: 'children',
   selectedChildrenIds: [],
   selectedObjective: '',
@@ -60,6 +63,7 @@ export const usePersistedStoryCreation = () => {
             const wasGenerating = Boolean(parsed.isGeneratingTitles);
             
             return {
+              creationMode: parsed.creationMode || 'guided',
               currentStep: parsed.currentStep || 'children',
               selectedChildrenIds: Array.isArray(parsed.selectedChildrenIds) ? parsed.selectedChildrenIds : [],
               selectedObjective: parsed.selectedObjective || '',
@@ -176,6 +180,10 @@ export const usePersistedStoryCreation = () => {
     setState(prev => ({ ...prev, generationInterrupted: false }));
   }, []);
 
+  const updateCreationMode = useCallback((mode: CreationMode) => {
+    setState(prev => ({ ...prev, creationMode: mode }));
+  }, []);
+
   // Clear persisted state
   const clearPersistedState = useCallback(() => {
     safeStorage.removeItem(STORAGE_KEY);
@@ -208,6 +216,7 @@ export const usePersistedStoryCreation = () => {
 
   return {
     // State
+    creationMode: state.creationMode,
     currentStep: state.currentStep,
     selectedChildrenIds: state.selectedChildrenIds,
     selectedObjective: state.selectedObjective,
@@ -220,6 +229,7 @@ export const usePersistedStoryCreation = () => {
     generationInterrupted: state.generationInterrupted,
     
     // Actions
+    updateCreationMode,
     updateCurrentStep,
     updateSelectedChildren,
     updateSelectedObjective,
