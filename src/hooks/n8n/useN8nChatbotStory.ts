@@ -40,6 +40,7 @@ export const useN8nChatbotStory = () => {
     setInitialized,
     setStoryId: setPersistedStoryId,
     setChildrenIds,
+    setConversationId,
     resetSession,
     forceSave,
     hasValidSession
@@ -83,6 +84,12 @@ export const useN8nChatbotStory = () => {
   const handleResponseData = useCallback((data: any) => {
     console.log('[useN8nChatbotStory] Réponse brute n8n:', data);
     
+    // Synchronisation du sessionId avec n8n
+    if (data.sessionId && data.sessionId !== conversationId) {
+      console.log('[useN8nChatbotStory] Synchronisation sessionId:', conversationId, '->', data.sessionId);
+      setConversationId(data.sessionId);
+    }
+    
     const content = data.content || data.chatInput;
     
     if (data.type === 'error') {
@@ -91,10 +98,22 @@ export const useN8nChatbotStory = () => {
       return;
     }
 
-    if (data.type === 'story_complete' && data.storyId) {
-      console.log('[useN8nChatbotStory] Histoire créée:', data.storyId);
-      addMessage('assistant', content);
-      setPersistedStoryId(data.storyId);
+    // Gestion de story_complete - histoire générée par n8n
+    if (data.type === 'story_complete') {
+      console.log('[useN8nChatbotStory] Histoire complète reçue:', {
+        title: data.title,
+        objective: data.objective,
+        childrenNames: data.childrennames,
+        nbMots: data.nb_mots
+      });
+      
+      const successMessage = content || `L'histoire "${data.title}" a été créée avec succès ! Bonne lecture !`;
+      addMessage('assistant', successMessage);
+      
+      // Si n8n a sauvegardé l'histoire et renvoyé un storyId
+      if (data.storyId) {
+        setPersistedStoryId(data.storyId);
+      }
       return;
     }
 
@@ -110,10 +129,16 @@ export const useN8nChatbotStory = () => {
 
     // Message normal
     addMessage('assistant', content || JSON.stringify(data));
-  }, [addMessage, setPersistedStoryId]);
+  }, [conversationId, addMessage, setPersistedStoryId, setConversationId]);
 
   const handleResponse = useCallback((response: ChatbotResponse) => {
     console.log('[useN8nChatbotStory] Réponse reçue:', response);
+
+    // Synchronisation du sessionId avec n8n
+    if (response.sessionId && response.sessionId !== conversationId) {
+      console.log('[useN8nChatbotStory] Synchronisation sessionId (init):', conversationId, '->', response.sessionId);
+      setConversationId(response.sessionId);
+    }
 
     if (response.type === 'error') {
       setError(response.content);
@@ -121,10 +146,14 @@ export const useN8nChatbotStory = () => {
       return;
     }
 
-    if (response.type === 'story_complete' && response.storyId) {
-      console.log('[useN8nChatbotStory] Histoire créée:', response.storyId);
-      addMessage('assistant', response.content);
-      setPersistedStoryId(response.storyId);
+    // Gestion de story_complete
+    if (response.type === 'story_complete') {
+      console.log('[useN8nChatbotStory] Histoire complète reçue:', response.title);
+      const successMessage = response.content || `L'histoire "${response.title}" a été créée avec succès !`;
+      addMessage('assistant', successMessage);
+      if (response.storyId) {
+        setPersistedStoryId(response.storyId);
+      }
       return;
     }
 
@@ -139,7 +168,7 @@ export const useN8nChatbotStory = () => {
 
     // Message normal
     addMessage('assistant', response.content);
-  }, [addMessage, setPersistedStoryId]);
+  }, [conversationId, addMessage, setPersistedStoryId, setConversationId]);
 
   const sendToWebhook = useCallback(async (payload: ChatbotInitPayload | ChatbotMessagePayload): Promise<ChatbotResponse> => {
     console.log('[useN8nChatbotStory] Envoi vers n8n:', payload);
@@ -167,9 +196,14 @@ export const useN8nChatbotStory = () => {
       return {
         type: data.type,
         content,
+        sessionId: data.sessionId,
         choices: data.choices,
         choiceType: data.choiceType,
         storyId: data.storyId,
+        title: data.title,
+        objective: data.objective,
+        childrennames: data.childrennames,
+        childrenids: data.childrenids,
       } as ChatbotResponse;
     }
 
@@ -177,6 +211,7 @@ export const useN8nChatbotStory = () => {
     return {
       type: 'message',
       content: typeof data === 'string' ? data : (content || JSON.stringify(data)),
+      sessionId: data.sessionId,
     };
   }, []);
 

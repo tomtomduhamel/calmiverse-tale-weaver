@@ -195,6 +195,17 @@ export const usePersistedChatbotState = () => {
     setState(prev => ({ ...prev, childrenIds }));
   }, []);
 
+  // Mettre à jour le conversationId si n8n renvoie un ID différent
+  const setConversationId = useCallback((newId: string) => {
+    setState(prev => {
+      if (prev.conversationId !== newId) {
+        console.log('[usePersistedChatbotState] ConversationId mis à jour:', prev.conversationId, '->', newId);
+        return { ...prev, conversationId: newId };
+      }
+      return prev;
+    });
+  }, []);
+
   const setPendingMessage = useCallback((messageId: string | null) => {
     setState(prev => ({
       ...prev,
@@ -248,6 +259,7 @@ export const usePersistedChatbotState = () => {
     setInitialized,
     setStoryId,
     setChildrenIds,
+    setConversationId,
     setPendingMessage,
     clearPendingMessage,
     hasPendingMessage,
