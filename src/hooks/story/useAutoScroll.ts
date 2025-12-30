@@ -5,6 +5,7 @@ import { useReadingSpeed } from "@/contexts/ReadingSpeedContext";
 import { useAutoScrollState } from "./useAutoScrollState";
 import { useScrollDomUtils } from "./scrollDomUtils";
 import { calculateScrollSpeed, calculateScrollMetrics, calculateTargetPosition } from "./scrollCalculations";
+import { useWakeLock } from "@/hooks/useWakeLock";
 
 interface UseAutoScrollProps {
   wordCount: number;
@@ -23,6 +24,9 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
   } = useAutoScrollState();
 
   const { getViewportElement, scrollToPosition } = useScrollDomUtils(scrollAreaRef);
+  
+  // Wake Lock pour empêcher la mise en veille pendant le défilement
+  const { isSupported: wakeLockSupported, request: requestWakeLock, release: releaseWakeLock } = useWakeLock();
   
   // Récupération de la vitesse de lecture depuis le Context partagé
   const { readingSpeed } = useReadingSpeed();
@@ -61,6 +65,11 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
     
     setScrollStatus('running');
     setIsManuallyPaused(false);
+    
+    // Activer le wake lock pour empêcher la mise en veille
+    if (wakeLockSupported) {
+      requestWakeLock();
+    }
     
     // Notifier que le défilement commence
     notifyScrollStateChange(true);
@@ -118,11 +127,16 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
       animationFrameRef.current = null;
     }
     
+    // Libérer le wake lock
+    if (wakeLockSupported) {
+      releaseWakeLock();
+    }
+    
     setScrollStatus('idle');
     // Notifier que le défilement s'arrête
     notifyScrollStateChange(false);
     console.log("Auto-scroll: Stopped");
-  }, [animationFrameRef, setScrollStatus, notifyScrollStateChange]);
+  }, [animationFrameRef, setScrollStatus, notifyScrollStateChange, wakeLockSupported, releaseWakeLock]);
   
   // Mettre en pause
   const pauseAutoScroll = useCallback(() => {
