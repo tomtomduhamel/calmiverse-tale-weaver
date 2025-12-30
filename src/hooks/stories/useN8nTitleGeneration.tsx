@@ -207,17 +207,24 @@ export const useN8nTitleGeneration = (
         throw new Error('Aucun nouveau titre reçu');
       }
       
-      // Placer les nouveaux titres EN PREMIER et notifier la persistance
-      const updatedTitles = [...newTitles, ...generatedTitles];
+      // Corriger les IDs pour refléter la position réelle (4, 5, 6)
+      const startIndex = generatedTitles.length;
+      const titlesWithCorrectIds = newTitles.map((title, index) => ({
+        ...title,
+        id: `title-${startIndex + index + 1}-${Date.now()}`
+      }));
+      
+      // Ajouter les nouveaux titres À LA FIN de la liste existante
+      const updatedTitles = [...generatedTitles, ...titlesWithCorrectIds];
       onTitlesGenerated?.(updatedTitles);
       onRegenerationUsed?.(); // Utiliser la callback de persistance
       
       toast({
         title: "Nouveaux titres générés",
-        description: "3 nouveaux titres ont été ajoutés en haut de la liste",
+        description: "3 nouveaux titres ont été ajoutés à la liste",
       });
       
-      return newTitles;
+      return titlesWithCorrectIds;
     } catch (error: any) {
       console.error("Erreur lors de la regénération des titres:", error);
         toast({
