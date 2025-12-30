@@ -98,8 +98,8 @@ export const useN8nChatbotStory = () => {
       return;
     }
 
-    // Message avec choix
-    if (data.type === 'message_with_choices' && data.choices && Array.isArray(data.choices)) {
+    // Message avec choix (détection basée sur la présence de choices, pas sur le type)
+    if (data.choices && Array.isArray(data.choices) && data.choices.length > 0) {
       console.log('[useN8nChatbotStory] Message avec choix:', data.choices.length);
       addMessage('assistant', content, {
         choices: data.choices,
@@ -128,8 +128,8 @@ export const useN8nChatbotStory = () => {
       return;
     }
 
-    // Message avec choix
-    if (response.type === 'message_with_choices' && response.choices) {
+    // Message avec choix (détection basée sur la présence de choices, pas sur le type)
+    if (response.choices && Array.isArray(response.choices) && response.choices.length > 0) {
       addMessage('assistant', response.content, {
         choices: response.choices,
         choiceType: response.choiceType || 'single'
