@@ -564,6 +564,48 @@ export type Database = {
           },
         ]
       }
+      stories_memory: {
+        Row: {
+          created_at: string | null
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
+      stories_series_memory: {
+        Row: {
+          created_at: string | null
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
       story_access_logs: {
         Row: {
           access_data: Json
@@ -751,6 +793,27 @@ export type Database = {
           stories_per_month?: number
           tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      title_memory: {
+        Row: {
+          created_at: string | null
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          message?: Json
+          session_id?: string
         }
         Relationships: []
       }
