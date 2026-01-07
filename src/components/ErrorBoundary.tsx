@@ -55,8 +55,8 @@ const DefaultErrorFallback: React.FC<{ error: Error; retry: () => void }> = ({ e
         </button>
         <button
           onClick={() => {
-            const navEvent = new CustomEvent('calmi-navigate', { detail: { path: '/' } });
-            window.dispatchEvent(navEvent);
+            // Navigation directe - plus fiable en cas d'erreur
+            window.location.href = '/';
           }}
           className="w-full bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90 transition-colors"
         >
