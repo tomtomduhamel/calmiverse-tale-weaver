@@ -49,7 +49,8 @@ serve(async (req) => {
       storyId, 
       previousStoryId, 
       tomeNumber,
-      userId 
+      userId,
+      seriesIdFromPayload: seriesId
     });
 
     // 1. Vérifier que l'histoire existe et appartient à l'utilisateur
@@ -77,11 +78,19 @@ serve(async (req) => {
     }
 
     // 3. Préparer le payload enrichi pour n8n
+    // Source unique pour seriesId : DB prioritaire, fallback vers payload
+    const resolvedSeriesId = story.series_id || seriesId;
+    console.log('📦 Serie info:', {
+      seriesIdFromPayload: seriesId,
+      seriesIdFromDB: story.series_id,
+      seriesIdUsed: resolvedSeriesId
+    });
+
     const n8nPayload = {
       action: 'create_story_sequel',
       storyId: storyId,
       previousStoryId: previousStoryId,
-      seriesId: seriesId,
+      seriesId: resolvedSeriesId,
       tomeNumber: tomeNumber,
       
       // Informations de l'histoire précédente depuis la base de données
@@ -129,7 +138,6 @@ serve(async (req) => {
       // Métadonnées
       userId: userId,
       authorid: story.authorid,
-      seriesId: story.series_id,
       timestamp: timestamp,
       locale: 'fr'
     };
