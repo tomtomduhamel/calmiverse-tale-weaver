@@ -14,6 +14,7 @@ import { getStoryImageUrl } from '@/utils/supabaseImageUtils';
 import type { SeriesGroup, Story } from '@/types/story';
 import { SeriesStoryCard } from './SeriesStoryCard';
 import { SeriesTimeline } from './SeriesTimeline';
+import { MobileSeriesStoryCard } from './MobileSeriesStoryCard';
 
 interface SeriesStoriesModalProps {
   isOpen: boolean;
@@ -125,93 +126,21 @@ export const SeriesStoriesModal: React.FC<SeriesStoriesModalProps> = ({
 
           {/* Contenu des tomes - optimisé pour mobile */}
           <div className="flex-1 overflow-y-auto">
-            <div className="p-2 space-y-2">
+          <div className="p-2 space-y-2">
               {stories.map((story, index) => (
-                <Card 
+                <MobileSeriesStoryCard
                   key={story.id}
-                  className={`cursor-pointer transition-all duration-200 hover:shadow-sm hover:border-primary/20 ${
-                    index === readStories && story.status !== 'read' ? 'ring-1 ring-primary/30 bg-primary/5' : ''
-                  }`}
+                  story={story}
+                  index={index}
+                  readStoriesCount={readStories}
                   onClick={() => handleStorySelect(story)}
-                >
-                  <CardContent className="p-3">
-                    <div className="flex gap-2.5">
-                      {/* Image compacte */}
-                      {story.image_path ? (
-                        <div className="w-9 h-12 rounded-sm overflow-hidden bg-muted flex-shrink-0">
-                          <img 
-                            src={getStoryImageUrl(story.image_path) || ''} 
-                            alt={story.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-9 h-12 rounded-sm bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center flex-shrink-0">
-                          <BookOpen className="w-3 h-3 text-primary/60" />
-                        </div>
-                      )}
-                      
-                      <div className="flex-1 min-w-0 space-y-1">
-                        {/* Header avec tome et statut */}
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5">
-                            {story.tome_number && (
-                              <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
-                                Tome {story.tome_number}
-                              </Badge>
-                            )}
-                            {story.status === 'completed' && <CheckCircle className="w-3 h-3 text-green-500" />}
-                            {story.status === 'pending' && <Clock className="w-3 h-3 text-yellow-500" />}
-                            {story.status === 'error' && <AlertTriangle className="w-3 h-3 text-red-500" />}
-                          </div>
-                          
-                          {/* Indicateur de lecture recommandée */}
-                          {index === readStories && story.status !== 'read' && (
-                            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 px-1.5 py-0 h-5">
-                              À lire
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        {/* Titre compact */}
-                        <h4 className="font-medium text-sm text-foreground line-clamp-2 leading-tight">
-                          {story.title}
-                        </h4>
-                        
-                        {/* Métadonnées compactes */}
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {story.status === 'read' && (
-                            <div className="flex items-center text-green-600">
-                              <BookCheck className="h-3 w-3 mr-1" />
-                              <span className="font-medium">Lu</span>
-                            </div>
-                          )}
-                          {story.status === 'completed' && (
-                            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 px-1.5 py-0 h-4 text-xs">
-                              Prête
-                            </Badge>
-                          )}
-                          {story.status === 'pending' && (
-                            <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-200 px-1.5 py-0 h-4 text-xs">
-                              En cours
-                            </Badge>
-                          )}
-                          {story.status === 'error' && (
-                            <Badge variant="destructive" className="px-1.5 py-0 h-4 text-xs">
-                              Erreur
-                            </Badge>
-                          )}
-                          <span className="ml-auto">
-                            {formatDistanceToNow(story.createdAt, { addSuffix: true, locale: fr })}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  onDelete={onDeleteStory}
+                  onToggleFavorite={onToggleFavorite}
+                  onRetry={onRetryStory}
+                  isDeleting={isDeletingId === story.id}
+                  isUpdatingFavorite={isUpdatingFavorite}
+                  isRetrying={isRetrying && pendingStoryId === story.id}
+                />
               ))}
             </div>
           </div>
