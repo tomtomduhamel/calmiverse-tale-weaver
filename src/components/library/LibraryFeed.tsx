@@ -120,11 +120,10 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
               )}
             </div>
 
-            {/* Pill filters - extends beyond parent padding */}
+            {/* Pill filters with internal padding */}
             <PillFilters
               selectedObjective={selectedObjective}
               onObjectiveChange={setSelectedObjective}
-              className="-mx-4"
             />
           </div>
 
