@@ -19,6 +19,10 @@ export const PWAGestures: React.FC<PWAGesturesProps> = ({
   const isPulling = useRef<boolean>(false);
   const pullStartTime = useRef<number>(0);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollEndTime = useRef<number>(0);
+  const velocityRef = useRef<number>(0);
+  const lastTouchY = useRef<number>(0);
+  const lastTouchTime = useRef<number>(0);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -26,9 +30,10 @@ export const PWAGestures: React.FC<PWAGesturesProps> = ({
 
     let refreshTriggered = false;
     let listenersActive = false;
-    const PULL_THRESHOLD = 80;
-    const MIN_PULL_DURATION = 200;
-    const SCROLL_TOP_THRESHOLD = 10; // Seuil pour activer pull-to-refresh
+    const PULL_THRESHOLD = 150;      // 150px pour un pull intentionnel
+    const MIN_PULL_DURATION = 400;   // 400ms minimum
+    const SCROLL_TOP_THRESHOLD = 0;  // Strictement en haut
+    const SCROLL_COOLDOWN = 300;     // 300ms après un scroll
 
     const handleTouchStart = (e: TouchEvent) => {
       // Ne pas intercepter si on touche une carte (laisser le swipe horizontal fonctionner)
@@ -37,9 +42,17 @@ export const PWAGestures: React.FC<PWAGesturesProps> = ({
         return;
       }
       
+      // Ignorer si on vient juste de scroller (cooldown)
+      if (Date.now() - scrollEndTime.current < SCROLL_COOLDOWN) {
+        return;
+      }
+      
       if (container.scrollTop === 0) {
         startY.current = e.touches[0].clientY;
         startX.current = e.touches[0].clientX;
+        lastTouchY.current = e.touches[0].clientY;
+        lastTouchTime.current = Date.now();
+        velocityRef.current = 0;
         isPulling.current = true;
         refreshTriggered = false;
         pullStartTime.current = Date.now();
@@ -49,36 +62,51 @@ export const PWAGestures: React.FC<PWAGesturesProps> = ({
     const handleTouchMove = (e: TouchEvent) => {
       if (!isPulling.current) return;
 
-      currentY.current = e.touches[0].clientY;
+      const now = Date.now();
+      const touchY = e.touches[0].clientY;
+      
+      // Calculer la vélocité (pixels par milliseconde)
+      if (lastTouchTime.current > 0) {
+        const timeDelta = now - lastTouchTime.current;
+        if (timeDelta > 0) {
+          const yDelta = touchY - lastTouchY.current;
+          velocityRef.current = Math.abs(yDelta / timeDelta);
+        }
+      }
+      
+      lastTouchY.current = touchY;
+      lastTouchTime.current = now;
+
+      currentY.current = touchY;
       currentX.current = e.touches[0].clientX;
       
       const deltaY = currentY.current - startY.current;
       const deltaX = currentX.current - startX.current;
       const pullDuration = Date.now() - pullStartTime.current;
 
-      // Détecter la direction dominante du mouvement
-      const isVerticalMovement = Math.abs(deltaY) > Math.abs(deltaX);
+      // Détecter la direction dominante du mouvement (plus strict)
+      const isVerticalMovement = Math.abs(deltaY) > Math.abs(deltaX) * 2;
       const isPullingDown = deltaY > 0;
-      const hasMinimumMovement = Math.abs(deltaY) > 10;
+      const hasMinimumMovement = Math.abs(deltaY) > 20;
+      const isSlowPull = velocityRef.current < 0.8; // Vitesse lente = intentionnel
 
-      // Ne bloquer le scroll QUE pour un pull-to-refresh légitime (mouvement vertical vers le bas)
-      if (isPullingDown && isVerticalMovement && hasMinimumMovement && container.scrollTop === 0) {
-        e.preventDefault(); // Bloquer SEULEMENT pour pull-to-refresh
+      // Ne déclencher que pour un pull LENT et INTENTIONNEL
+      if (isPullingDown && isVerticalMovement && hasMinimumMovement && isSlowPull && container.scrollTop === 0) {
+        e.preventDefault();
         
         // Visual feedback for pull-to-refresh
-        const pullDistance = Math.min(deltaY, 120);
+        const pullDistance = Math.min(deltaY, 180);
         const opacity = Math.min(pullDistance / PULL_THRESHOLD, 1);
         
-        container.style.transform = `translateY(${pullDistance * 0.25}px)`;
-        container.style.opacity = (1 - opacity * 0.15).toString();
+        container.style.transform = `translateY(${pullDistance * 0.2}px)`;
+        container.style.opacity = (1 - opacity * 0.1).toString();
 
         // Trigger refresh at threshold with minimum duration
         if (pullDistance > PULL_THRESHOLD && pullDuration > MIN_PULL_DURATION && !refreshTriggered) {
           refreshTriggered = true;
-          navigator.vibrate?.(50); // Haptic feedback if available
+          navigator.vibrate?.(50);
         }
-      } else if (!isVerticalMovement || !isPullingDown) {
-        // Si ce n'est pas un pull vers le bas, réinitialiser l'état
+      } else if (!isVerticalMovement || !isPullingDown || !isSlowPull) {
         isPulling.current = false;
       }
     };
@@ -137,6 +165,7 @@ export const PWAGestures: React.FC<PWAGesturesProps> = ({
 
     // Écouter les changements de scroll pour activer/désactiver
     const handleScroll = () => {
+      scrollEndTime.current = Date.now();
       updateListeners();
     };
 

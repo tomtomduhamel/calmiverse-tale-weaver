@@ -50,10 +50,23 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
     hasMore,
     fetchNextPage,
     toggleFavorite,
+    refresh,
   } = useInfiniteStories({
     objectiveFilter: selectedObjective,
     searchTerm: debouncedSearchTerm || undefined,
   });
+
+  // Listen for library refresh event (from pull-to-refresh)
+  useEffect(() => {
+    const handleLibraryRefresh = () => {
+      refresh();
+    };
+
+    window.addEventListener('library-refresh', handleLibraryRefresh);
+    return () => {
+      window.removeEventListener('library-refresh', handleLibraryRefresh);
+    };
+  }, [refresh]);
 
   // Handle story selection for sidebar
   const handleSelectStory = useCallback((story: Story) => {
