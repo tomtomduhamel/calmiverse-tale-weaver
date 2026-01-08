@@ -97,7 +97,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
       {/* Image container: 1:1 ratio with double-tap */}
       <div 
         ref={imageRef}
-        className="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer bg-muted"
+        className="relative aspect-[4/5] w-full max-h-[400px] overflow-hidden rounded-lg cursor-pointer bg-muted"
         onClick={handleDoubleTap}
       >
         {storyImageUrl ? (

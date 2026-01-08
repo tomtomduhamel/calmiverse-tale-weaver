@@ -18,8 +18,8 @@ const SingleSkeleton: React.FC = () => (
       <Skeleton className="h-8 w-8 rounded-full" />
     </div>
     
-    {/* Image skeleton - 1:1 ratio */}
-    <Skeleton className="aspect-square w-full rounded-lg" />
+    {/* Image skeleton - 4:5 ratio */}
+    <Skeleton className="aspect-[4/5] w-full max-h-[400px] rounded-lg" />
     
     {/* Metadata skeleton */}
     <div className="flex items-center gap-3 px-1">
