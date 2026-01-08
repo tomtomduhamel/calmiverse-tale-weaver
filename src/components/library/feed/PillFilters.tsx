@@ -32,9 +32,12 @@ const PillFilters: React.FC<PillFiltersProps> = ({
 
   return (
     <div className={cn("relative", className)}>
-      {/* Scrollable container */}
-      <div className="overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="flex gap-2 pb-2 pr-8 min-w-max">
+      {/* Scrollable container - extended scroll area */}
+      <div 
+        className="overflow-x-auto overflow-y-visible scrollbar-hide -mx-4 px-4"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <div className="flex gap-2 pb-2 pr-4 min-w-max">
           {allOptions.map((option) => {
             const Icon = option.icon;
             const isActive = option.value === selectedObjective;

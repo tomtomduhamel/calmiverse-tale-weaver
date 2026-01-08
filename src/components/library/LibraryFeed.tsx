@@ -92,7 +92,7 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
   }, [onCreateSequel, toast]);
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-screen">
       {/* Main layout */}
       <div className="mx-auto w-full max-w-4xl px-4">
         <div className="flex gap-6">
