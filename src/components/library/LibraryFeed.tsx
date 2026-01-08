@@ -3,7 +3,7 @@
  * Responsive: mobile = single column edge-to-edge, desktop = centered with sidebar
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useInfiniteStories } from "@/hooks/stories/useInfiniteStories";
@@ -30,7 +30,17 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedObjective, setSelectedObjective] = useState<string | null>(null);
+  
+  // Debounce search term to avoid excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm.trim());
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
   
   // Infinite scroll hook
   const {
@@ -42,7 +52,7 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
     toggleFavorite,
   } = useInfiniteStories({
     objectiveFilter: selectedObjective,
-    searchTerm: searchTerm.trim() || undefined,
+    searchTerm: debouncedSearchTerm || undefined,
   });
 
   // Handle story selection for sidebar
@@ -69,14 +79,14 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
   }, [onCreateSequel, toast]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       {/* Main layout */}
-      <div className={`mx-auto ${isMobile ? 'px-0' : 'max-w-4xl px-4'}`}>
+      <div className={`mx-auto w-full ${isMobile ? '' : 'max-w-4xl'}`}>
         <div className="flex gap-6">
           {/* Main feed column */}
           <div className={`flex-1 ${isMobile ? '' : 'max-w-[650px]'}`}>
             {/* Sticky header with search and filters */}
-            <div className={`sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-3 ${isMobile ? 'px-4 pt-4' : 'pt-4'}`}>
+            <div className={`sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-3 pt-4`}>
               {/* Search bar */}
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -106,12 +116,10 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
             </div>
 
             {/* Stories in progress section */}
-            <div className={isMobile ? 'px-4' : ''}>
-              <StoriesInProgressSection />
-            </div>
+            <StoriesInProgressSection />
 
             {/* Feed */}
-            <div className={isMobile ? 'px-4 mt-4' : 'mt-4'}>
+            <div className="mt-4">
               <FeedContainer
                 stories={stories}
                 isLoading={isLoading}

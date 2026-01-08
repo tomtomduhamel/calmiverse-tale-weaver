@@ -31,7 +31,7 @@ const PillFilters: React.FC<PillFiltersProps> = ({
   ];
 
   return (
-    <div className={cn("overflow-x-auto scrollbar-hide -mx-4 px-4", className)}>
+    <div className={cn("overflow-x-auto scrollbar-hide", className)}>
       <div className="flex gap-2 pb-2">
         {allOptions.map((option) => {
           const Icon = option.icon;

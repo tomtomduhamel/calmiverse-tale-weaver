@@ -65,6 +65,7 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
   
   const currentPage = useRef(0);
   const isFetching = useRef(false);
+  const lastFetchParams = useRef<string>("");
 
   // Build query based on filters
   const buildQuery = useCallback((start: number, end: number) => {
@@ -219,10 +220,16 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
 
   // Initial fetch when filters change
   useEffect(() => {
-    if (user?.id) {
+    if (!user?.id) return;
+    
+    // Create unique key for current params to avoid redundant fetches
+    const paramsKey = `${statusFilter}-${objectiveFilter || 'null'}-${searchTerm || ''}`;
+    
+    if (paramsKey !== lastFetchParams.current) {
+      lastFetchParams.current = paramsKey;
       fetchStories(true);
     }
-  }, [user?.id, statusFilter, objectiveFilter, searchTerm]);
+  }, [user?.id, statusFilter, objectiveFilter, searchTerm, fetchStories]);
 
   // Subscribe to realtime updates
   useEffect(() => {
