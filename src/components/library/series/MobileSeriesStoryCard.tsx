@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, CheckCircle, Clock, AlertTriangle, BookCheck, Trash2, Loader2 } from 'lucide-react';
@@ -40,6 +40,13 @@ export const MobileSeriesStoryCard: React.FC<MobileSeriesStoryCardProps> = ({
   const DETECTION_THRESHOLD = 5;
 
   const isNextRecommended = index === readStoriesCount && story.status !== 'read';
+
+  // Reset le swipe quand la suppression démarre
+  useEffect(() => {
+    if (isDeleting) {
+      setTranslateX(0);
+    }
+  }, [isDeleting]);
 
   // Gestion du swipe pour la suppression
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -142,8 +149,9 @@ export const MobileSeriesStoryCard: React.FC<MobileSeriesStoryCardProps> = ({
       <Card 
         ref={cardRef}
         className={`
-          cursor-pointer transition-all duration-200 bg-background
-          ${isNextRecommended ? 'ring-1 ring-primary/30 bg-primary/5' : 'hover:shadow-sm hover:border-primary/20'}
+          cursor-pointer transition-all duration-200 
+          bg-card dark:bg-slate-900 border
+          ${isNextRecommended ? 'ring-1 ring-primary/30' : 'hover:shadow-sm hover:border-primary/20'}
           ${isDragging ? 'transition-none' : 'transition-transform duration-300 ease-out'}
         `}
         style={{
