@@ -120,13 +120,12 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
               )}
             </div>
 
-            {/* Pill filters - Zone isolée pour le scroll */}
-            <div className="-mx-4">
-              <PillFilters
-                selectedObjective={selectedObjective}
-                onObjectiveChange={setSelectedObjective}
-              />
-            </div>
+            {/* Pill filters - extends beyond parent padding */}
+            <PillFilters
+              selectedObjective={selectedObjective}
+              onObjectiveChange={setSelectedObjective}
+              className="-mx-4"
+            />
           </div>
 
           {/* Stories in progress section */}
