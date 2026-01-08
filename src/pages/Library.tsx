@@ -80,7 +80,7 @@ const Library: React.FC = () => {
 
   return (
     <PWAGestures onPullToRefresh={() => window.location.reload()} className="min-h-screen">
-      <div className="min-h-screen bg-background pwa-safe-area">
+      <div className="min-h-screen bg-background pwa-safe-area overflow-x-hidden">
         <div className="container mx-auto px-4 py-6">
           {/* Header */}
           <div className="mb-6 text-center">
