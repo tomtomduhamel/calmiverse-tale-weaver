@@ -1,9 +1,9 @@
 /**
  * Horizontal scrollable pill filters for objectives
- * Autonomous scroll component that extends beyond parent padding
+ * Uses viewport-width calculation to break out of parent padding
  */
 
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { STORY_OBJECTIVES } from "@/utils/objectiveUtils";
 import { BookOpen } from "lucide-react";
@@ -20,6 +20,8 @@ const PillFilters: React.FC<PillFiltersProps> = ({
   onObjectiveChange,
   className,
 }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const allOptions = [
     { id: 'all', label: 'Tout', value: null, icon: BookOpen },
     ...STORY_OBJECTIVES.map(obj => ({
@@ -30,13 +32,33 @@ const PillFilters: React.FC<PillFiltersProps> = ({
     }))
   ];
 
+  // Scroll active filter into view on mount
+  useEffect(() => {
+    if (scrollRef.current && selectedObjective) {
+      const activeButton = scrollRef.current.querySelector('[data-active="true"]');
+      if (activeButton) {
+        activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, []);
+
   return (
     <div className={cn("w-full", className)}>
-      {/* Container with negative margins to extend beyond parent padding, 
-          and overflow-x-auto to enable horizontal scrolling */}
+      {/* 
+        Scroll container with full viewport width calculation
+        Uses calc to break out of parent padding on both sides
+      */}
       <div 
-        className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide"
+        ref={scrollRef}
+        className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
         style={{ 
+          // Calculate full viewport width minus scrollbar
+          width: '100vw',
+          // Position to start from left edge of viewport
+          marginLeft: 'calc(-50vw + 50%)',
+          // Add internal padding for content
+          paddingLeft: 'max(1rem, calc(50vw - 50% + 0.25rem))',
+          paddingRight: 'max(1rem, calc(50vw - 50% + 0.25rem))',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none'
@@ -49,6 +71,7 @@ const PillFilters: React.FC<PillFiltersProps> = ({
           return (
             <Button
               key={option.id}
+              data-active={isActive}
               variant={isActive ? "default" : "outline"}
               size="sm"
               onClick={() => onObjectiveChange(option.value)}
@@ -64,9 +87,6 @@ const PillFilters: React.FC<PillFiltersProps> = ({
             </Button>
           );
         })}
-        
-        {/* Extra spacer to ensure last item is fully visible when scrolled */}
-        <div className="flex-shrink-0 w-4" aria-hidden="true" />
       </div>
     </div>
   );
