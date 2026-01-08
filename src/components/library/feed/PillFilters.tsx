@@ -31,18 +31,17 @@ const PillFilters: React.FC<PillFiltersProps> = ({
   ];
 
   return (
-    <div className={cn("w-full overflow-visible", className)}>
+    <div className={cn("w-full", className)}>
+      {/* Container with negative margins to extend beyond parent padding, 
+          and overflow-x-auto to enable horizontal scrolling */}
       <div 
-        className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
+        className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide"
         style={{ 
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none'
         }}
       >
-        {/* Spacer initial pour le padding gauche */}
-        <div className="flex-shrink-0 w-4" aria-hidden="true" />
-        
         {allOptions.map((option) => {
           const Icon = option.icon;
           const isActive = option.value === selectedObjective;
@@ -66,7 +65,7 @@ const PillFilters: React.FC<PillFiltersProps> = ({
           );
         })}
         
-        {/* Spacer final pour le padding droit */}
+        {/* Extra spacer to ensure last item is fully visible when scrolled */}
         <div className="flex-shrink-0 w-4" aria-hidden="true" />
       </div>
     </div>
