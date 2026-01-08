@@ -31,31 +31,36 @@ const PillFilters: React.FC<PillFiltersProps> = ({
   ];
 
   return (
-    <div className={cn("overflow-x-auto scrollbar-hide", className)}>
-      <div className="flex gap-2 pb-2">
-        {allOptions.map((option) => {
-          const Icon = option.icon;
-          const isActive = option.value === selectedObjective;
-          
-          return (
-            <Button
-              key={option.id}
-              variant={isActive ? "default" : "outline"}
-              size="sm"
-              onClick={() => onObjectiveChange(option.value)}
-              className={cn(
-                "flex-shrink-0 rounded-full px-4 h-9 text-sm font-medium transition-all",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-md" 
-                  : "bg-card hover:bg-accent border-border"
-              )}
-            >
-              <Icon className="h-4 w-4 mr-1.5" />
-              {option.label}
-            </Button>
-          );
-        })}
+    <div className={cn("relative", className)}>
+      {/* Scrollable container */}
+      <div className="overflow-x-auto scrollbar-hide">
+        <div className="flex gap-2 pb-2 pr-8">
+          {allOptions.map((option) => {
+            const Icon = option.icon;
+            const isActive = option.value === selectedObjective;
+            
+            return (
+              <Button
+                key={option.id}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => onObjectiveChange(option.value)}
+                className={cn(
+                  "flex-shrink-0 rounded-full px-3 h-8 text-xs font-medium transition-all whitespace-nowrap",
+                  isActive 
+                    ? "bg-primary text-primary-foreground shadow-md" 
+                    : "bg-card hover:bg-accent border-border"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5 mr-1" />
+                {option.label}
+              </Button>
+            );
+          })}
+        </div>
       </div>
+      {/* Scroll indicator gradient */}
+      <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
     </div>
   );
 };
