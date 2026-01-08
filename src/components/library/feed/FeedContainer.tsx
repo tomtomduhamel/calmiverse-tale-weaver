@@ -101,7 +101,7 @@ const FeedContainer: React.FC<FeedContainerProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full flex flex-col items-center">
       {/* Stories feed */}
       {stories.map((story) => (
         <FeedCard

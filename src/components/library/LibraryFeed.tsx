@@ -94,10 +94,10 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Main layout */}
-      <div className={`mx-auto w-full ${isMobile ? '' : 'max-w-4xl'}`}>
+      <div className={`mx-auto w-full ${isMobile ? 'px-4' : 'max-w-4xl px-4'}`}>
         <div className="flex gap-6">
           {/* Main feed column */}
-          <div className={`flex-1 ${isMobile ? '' : 'max-w-[650px]'}`}>
+          <div className={`flex-1 ${isMobile ? 'flex flex-col items-center' : 'max-w-[650px]'}`}>
             {/* Sticky header with search and filters */}
             <div className={`sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-3 pt-4`}>
               {/* Search bar */}

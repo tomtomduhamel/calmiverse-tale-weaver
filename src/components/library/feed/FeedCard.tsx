@@ -74,7 +74,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
     && !story.next_story_id;
 
   return (
-    <Card className="overflow-hidden border-0 shadow-none bg-transparent w-full max-w-[500px] mx-auto">
+    <Card className="overflow-hidden border-0 shadow-none bg-transparent w-full max-w-full sm:max-w-[500px] mx-auto">
       {/* Header: Title + Favorite */}
       <div className="flex items-center justify-between px-1 py-3">
         <h3 
