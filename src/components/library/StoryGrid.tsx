@@ -37,7 +37,12 @@ const StoryGrid: React.FC<StoryGridProps> = ({
   pendingStoryId
 }) => {
   const isMobile = useIsMobile();
-  const [selectedSeries, setSelectedSeries] = useState<any>(null);
+  const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
+
+  // Récupérer la série sélectionnée depuis les items mis à jour
+  const selectedSeries = selectedSeriesId 
+    ? items.find(item => item.type === 'series' && item.id === selectedSeriesId) || null
+    : null;
 
   if (items.length === 0) {
     return (
@@ -70,14 +75,14 @@ const StoryGrid: React.FC<StoryGridProps> = ({
               <SeriesCard
                 key={item.id}
                 seriesGroup={item}
-                onClick={() => setSelectedSeries(item)}
+                onClick={() => setSelectedSeriesId(item.id)}
                 className="mx-2"
               />
             ) : (
               <SeriesCard
                 key={item.id}
                 seriesGroup={item}
-                onClick={() => setSelectedSeries(item)}
+                onClick={() => setSelectedSeriesId(item.id)}
               />
             );
           } else {
@@ -115,10 +120,10 @@ const StoryGrid: React.FC<StoryGridProps> = ({
       </div>
 
       {/* Modal pour sélectionner une histoire dans une série */}
-      {selectedSeries && (
+      {selectedSeries && selectedSeries.type === 'series' && (
         <SeriesStoriesModal
           isOpen={!!selectedSeries}
-          onClose={() => setSelectedSeries(null)}
+          onClose={() => setSelectedSeriesId(null)}
           seriesGroup={selectedSeries}
           onSelectStory={handleCardClick}
           onToggleFavorite={onToggleFavorite}
