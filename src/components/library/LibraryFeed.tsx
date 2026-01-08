@@ -92,9 +92,9 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
   }, [onCreateSequel, toast]);
 
   return (
-    <div className="min-h-screen">
+    <div>
       {/* Main layout */}
-      <div className="mx-auto w-full max-w-4xl px-4">
+      <div className="mx-auto w-full max-w-4xl">
         <div className="flex gap-6">
           {/* Main feed column */}
           <div className={`flex-1 ${isMobile ? '' : 'max-w-[650px]'}`}>

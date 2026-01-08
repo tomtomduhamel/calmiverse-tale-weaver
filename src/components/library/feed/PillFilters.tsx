@@ -32,16 +32,12 @@ const PillFilters: React.FC<PillFiltersProps> = ({
 
   return (
     <div className={cn("w-full", className)}>
-      {/* Wrapper that escapes parent constraints */}
-      <div className="relative w-screen left-1/2 -translate-x-1/2">
-        {/* Scrollable container - full screen width */}
-        <div 
-          className="flex gap-2 overflow-x-auto pb-2 px-4 scrollbar-hide"
-          style={{ 
-            WebkitOverflowScrolling: 'touch',
-            scrollSnapType: 'x mandatory'
-          }}
-        >
+      {/* Scrollable container with negative margins to extend to edges */}
+      <div 
+        className="overflow-x-auto scrollbar-hide -mx-4 px-4"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <div className="flex gap-2 pb-2 min-w-max">
           {allOptions.map((option) => {
             const Icon = option.icon;
             const isActive = option.value === selectedObjective;
@@ -52,7 +48,6 @@ const PillFilters: React.FC<PillFiltersProps> = ({
                 variant={isActive ? "default" : "outline"}
                 size="sm"
                 onClick={() => onObjectiveChange(option.value)}
-                style={{ scrollSnapAlign: 'start' }}
                 className={cn(
                   "flex-none rounded-full px-4 h-9 text-sm font-medium transition-all whitespace-nowrap",
                   isActive 
@@ -65,8 +60,6 @@ const PillFilters: React.FC<PillFiltersProps> = ({
               </Button>
             );
           })}
-          {/* Spacer to allow scrolling to last element */}
-          <div className="flex-none w-4" aria-hidden="true" />
         </div>
       </div>
     </div>
