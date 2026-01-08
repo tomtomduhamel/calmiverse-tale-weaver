@@ -91,7 +91,7 @@ const Library: React.FC = () => {
   return (
     <PWAGestures onPullToRefresh={handlePullToRefresh} className="min-h-screen">
       <div className="min-h-screen bg-background pwa-safe-area">
-        <div className="container mx-auto px-4 py-6">
+        <div className="w-full max-w-4xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-bold mb-1">

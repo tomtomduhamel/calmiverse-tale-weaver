@@ -92,73 +92,73 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
   }, [onCreateSequel, toast]);
 
   return (
-    <div>
+    <div className="w-full">
       {/* Main layout */}
-      <div className="mx-auto w-full max-w-4xl">
-        <div className="flex gap-6">
-          {/* Main feed column */}
-          <div className={`flex-1 ${isMobile ? '' : 'max-w-[650px]'}`}>
-            {/* Sticky header with search and filters */}
-            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-3 pt-4 w-full">
-              {/* Search bar */}
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher une histoire..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-10 bg-card"
-                />
-                {searchTerm && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+      <div className="flex gap-6">
+        {/* Main feed column */}
+        <div className={`flex-1 ${isMobile ? '' : 'max-w-[650px]'}`}>
+          {/* Sticky header with search and filters */}
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-3 pt-4">
+            {/* Search bar */}
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher une histoire..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-10 bg-card"
+              />
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
 
-              {/* Pill filters */}
+            {/* Pill filters - Zone isolée pour le scroll */}
+            <div className="-mx-4">
               <PillFilters
                 selectedObjective={selectedObjective}
                 onObjectiveChange={setSelectedObjective}
               />
             </div>
-
-            {/* Stories in progress section */}
-            <StoriesInProgressSection />
-
-            {/* Feed */}
-            <div className="mt-4">
-              <FeedContainer
-                stories={stories}
-                isLoading={isLoading}
-                isLoadingMore={isLoadingMore}
-                hasMore={hasMore}
-                onLoadMore={fetchNextPage}
-                onToggleFavorite={toggleFavorite}
-                onShare={onShare}
-                onCreateSequel={handleCreateSequel}
-              />
-            </div>
           </div>
 
-          {/* Desktop sidebar - Focus Mode */}
-          {!isMobile && (
-            <aside className="hidden lg:block w-72 flex-shrink-0">
-              <div className="sticky top-20">
-                <FocusSidebar
-                  stories={stories}
-                  onSelectStory={handleSelectStory}
-                  className="bg-card rounded-lg border"
-                />
-              </div>
-            </aside>
-          )}
+          {/* Stories in progress section */}
+          <StoriesInProgressSection />
+
+          {/* Feed */}
+          <div className="mt-4">
+            <FeedContainer
+              stories={stories}
+              isLoading={isLoading}
+              isLoadingMore={isLoadingMore}
+              hasMore={hasMore}
+              onLoadMore={fetchNextPage}
+              onToggleFavorite={toggleFavorite}
+              onShare={onShare}
+              onCreateSequel={handleCreateSequel}
+            />
+          </div>
         </div>
+
+        {/* Desktop sidebar - Focus Mode */}
+        {!isMobile && (
+          <aside className="hidden lg:block w-72 flex-shrink-0">
+            <div className="sticky top-20">
+              <FocusSidebar
+                stories={stories}
+                onSelectStory={handleSelectStory}
+                className="bg-card rounded-lg border"
+              />
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );
