@@ -62,7 +62,8 @@ const PillFilters: React.FC<PillFiltersProps> = ({
             </Button>
           );
         })}
-        <div className="flex-shrink-0 w-4" aria-hidden="true" />
+        {/* Spacer plus large pour compenser le -mx-4 et permettre de scroller jusqu'au dernier */}
+        <div className="flex-shrink-0 w-8" aria-hidden="true" />
       </div>
     </div>
   );
