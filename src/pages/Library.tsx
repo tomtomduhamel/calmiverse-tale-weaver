@@ -60,6 +60,16 @@ const Library: React.FC = () => {
     navigate(`/reader/${storyId}?share=true`);
   }, [navigate]);
 
+  const handlePullToRefresh = useCallback(() => {
+    // Dispatch event to refresh library data instead of full page reload
+    window.dispatchEvent(new CustomEvent('library-refresh'));
+    toast({
+      title: "Actualisation",
+      description: "La bibliothèque a été rafraîchie",
+      duration: 2000
+    });
+  }, [toast]);
+
   // Loading state
   if (authLoading) {
     return (
@@ -79,7 +89,7 @@ const Library: React.FC = () => {
   }
 
   return (
-    <PWAGestures onPullToRefresh={() => window.location.reload()} className="min-h-screen">
+    <PWAGestures onPullToRefresh={handlePullToRefresh} className="min-h-screen">
       <div className="min-h-screen bg-background pwa-safe-area overflow-x-hidden">
         <div className="container mx-auto px-4 py-6">
           {/* Header */}
