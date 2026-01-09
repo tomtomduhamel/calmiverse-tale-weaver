@@ -1,6 +1,6 @@
 /**
  * Instagram-style Feed Card Component
- * Features: 1:1 image ratio, double-tap favorite, lazy loading
+ * Features: 1:1 image ratio, double-tap favorite, lazy loading, series badge
  */
 
 import React, { useState, useCallback, useRef } from "react";
@@ -10,7 +10,7 @@ import { FavoriteButton } from "@/components/story/FavoriteButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Clock, Share2, BookPlus, Loader2, Heart } from "lucide-react";
+import { Clock, Share2, BookPlus, Loader2, Heart, Library } from "lucide-react";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ interface FeedCardProps {
   onToggleFavorite: (storyId: string, currentStatus: boolean) => void;
   onShare?: (storyId: string) => void;
   onCreateSequel?: (storyId: string) => void;
+  onSeriesClick?: (story: Story) => void;
   isUpdatingFavorite?: boolean;
 }
 
@@ -30,6 +31,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
   onToggleFavorite,
   onShare,
   onCreateSequel,
+  onSeriesClick,
   isUpdatingFavorite = false,
 }) => {
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
@@ -39,6 +41,17 @@ const FeedCard: React.FC<FeedCardProps> = ({
   const storyImageUrl = getStoryImageUrl(story.image_path);
   const readingTime = calculateReadingTime(story.content);
   const timeAgo = formatDistanceToNow(story.createdAt, { addSuffix: false, locale: fr });
+
+  const isSeriesStory = Boolean(story.series_id && story.tome_number);
+
+  // Handle image click - series opens modal, standalone navigates
+  const handleImageClick = useCallback(() => {
+    if (isSeriesStory && onSeriesClick) {
+      onSeriesClick(story);
+    } else {
+      onClick();
+    }
+  }, [isSeriesStory, onSeriesClick, onClick, story]);
 
   // Handle double tap for favorite
   const handleDoubleTap = useCallback(() => {
@@ -55,15 +68,15 @@ const FeedCard: React.FC<FeedCardProps> = ({
       lastTapRef.current = 0;
     } else {
       lastTapRef.current = now;
-      // Single tap after delay - navigate
+      // Single tap after delay - handle click
       setTimeout(() => {
         if (lastTapRef.current !== 0 && Date.now() - lastTapRef.current >= DOUBLE_TAP_DELAY) {
-          onClick();
+          handleImageClick();
           lastTapRef.current = 0;
         }
       }, DOUBLE_TAP_DELAY);
     }
-  }, [story.id, story.isFavorite, onToggleFavorite, onClick]);
+  }, [story.id, story.isFavorite, onToggleFavorite, handleImageClick]);
 
   const handleToggleFavorite = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -94,12 +107,22 @@ const FeedCard: React.FC<FeedCardProps> = ({
         </div>
       </div>
 
-      {/* Image container: 1:1 ratio with double-tap */}
+      {/* Image container: 4:5 ratio with double-tap */}
       <div 
         ref={imageRef}
         className="relative aspect-[4/5] w-full max-h-[400px] overflow-hidden rounded-lg cursor-pointer bg-muted"
         onClick={handleDoubleTap}
       >
+        {/* Series badge */}
+        {isSeriesStory && (
+          <div className="absolute top-3 left-3 z-10">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white text-xs font-medium shadow-lg">
+              <Library className="h-3 w-3" />
+              <span>Tome {story.tome_number}</span>
+            </div>
+          </div>
+        )}
+
         {storyImageUrl ? (
           <img
             src={storyImageUrl}
@@ -136,7 +159,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
         )}
       </div>
 
-      {/* Metadata: Reading time + Date */}
+      {/* Metadata: Reading time + Date + Series indicator */}
       <CardContent className="px-1 pt-3 pb-0">
         <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
           <span className="flex items-center gap-1">
@@ -145,6 +168,18 @@ const FeedCard: React.FC<FeedCardProps> = ({
           </span>
           <span className="text-xs">•</span>
           <span>Il y a {timeAgo}</span>
+          {isSeriesStory && (
+            <>
+              <span className="text-xs">•</span>
+              <span 
+                className="flex items-center gap-1 text-primary/80 cursor-pointer hover:text-primary transition-colors"
+                onClick={() => onSeriesClick?.(story)}
+              >
+                <Library className="h-3.5 w-3.5" />
+                Série
+              </span>
+            </>
+          )}
         </div>
 
         {/* Action buttons */}

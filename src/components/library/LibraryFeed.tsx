@@ -1,18 +1,21 @@
 /**
  * Library Feed - Instagram-style story feed
  * Responsive: mobile = single column edge-to-edge, desktop = centered with sidebar
+ * Series stories open a modal with full series overview
  */
 
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useInfiniteStories } from "@/hooks/stories/useInfiniteStories";
+import { useSeriesDetails } from "@/hooks/stories/useSeriesDetails";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FeedContainer, PillFilters, FocusSidebar } from "./feed";
 import { StoriesInProgressSection } from "./sections/StoriesInProgressSection";
+import { SeriesStoriesModal } from "./series/SeriesStoriesModal";
 import type { Story } from "@/types/story";
 
 interface LibraryFeedProps {
@@ -32,6 +35,10 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedObjective, setSelectedObjective] = useState<string | null>(null);
+  
+  // Series modal state
+  const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
+  const { seriesGroup, isLoading: isLoadingSeries } = useSeriesDetails(selectedSeriesId);
   
   // Debounce search term to avoid excessive API calls
   useEffect(() => {
@@ -68,7 +75,7 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
     };
   }, [refresh]);
 
-  // Handle story selection for sidebar
+  // Handle story selection for sidebar / navigation
   const handleSelectStory = useCallback((story: Story) => {
     if (story.status === 'pending') {
       toast({
@@ -77,6 +84,31 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
       });
       return;
     }
+    navigate(`/reader/${story.id}`);
+  }, [navigate, toast]);
+
+  // Handle series click - open modal
+  const handleSeriesClick = useCallback((story: Story) => {
+    if (story.series_id) {
+      setSelectedSeriesId(story.series_id);
+    }
+  }, []);
+
+  // Handle closing series modal
+  const handleCloseSeriesModal = useCallback(() => {
+    setSelectedSeriesId(null);
+  }, []);
+
+  // Handle story selection from series modal
+  const handleSelectSeriesStory = useCallback((story: Story) => {
+    if (story.status === 'pending') {
+      toast({
+        title: "Histoire en cours de génération",
+        description: "Veuillez patienter, l'histoire sera bientôt prête.",
+      });
+      return;
+    }
+    setSelectedSeriesId(null); // Close modal
     navigate(`/reader/${story.id}`);
   }, [navigate, toast]);
 
@@ -141,6 +173,7 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
               onToggleFavorite={toggleFavorite}
               onShare={onShare}
               onCreateSequel={handleCreateSequel}
+              onSeriesClick={handleSeriesClick}
             />
           </div>
         </div>
@@ -158,6 +191,17 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
           </aside>
         )}
       </div>
+
+      {/* Series Stories Modal */}
+      {seriesGroup && (
+        <SeriesStoriesModal
+          isOpen={Boolean(selectedSeriesId)}
+          onClose={handleCloseSeriesModal}
+          seriesGroup={seriesGroup}
+          onSelectStory={handleSelectSeriesStory}
+          onToggleFavorite={toggleFavorite}
+        />
+      )}
     </div>
   );
 };
