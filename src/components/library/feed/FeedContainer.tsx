@@ -20,6 +20,7 @@ interface FeedContainerProps {
   onToggleFavorite: (storyId: string, currentStatus: boolean) => void;
   onShare?: (storyId: string) => void;
   onCreateSequel?: (storyId: string) => void;
+  onSeriesClick?: (story: Story) => void;
   isUpdatingFavorite?: boolean;
 }
 
@@ -32,6 +33,7 @@ const FeedContainer: React.FC<FeedContainerProps> = ({
   onToggleFavorite,
   onShare,
   onCreateSequel,
+  onSeriesClick,
   isUpdatingFavorite = false,
 }) => {
   const navigate = useNavigate();
@@ -111,6 +113,7 @@ const FeedContainer: React.FC<FeedContainerProps> = ({
           onToggleFavorite={onToggleFavorite}
           onShare={onShare}
           onCreateSequel={onCreateSequel}
+          onSeriesClick={onSeriesClick}
           isUpdatingFavorite={isUpdatingFavorite}
         />
       ))}
