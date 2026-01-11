@@ -17,6 +17,8 @@ interface ModernChildrenProfilesProps {
   onCreateStory?: (childId?: string) => void;
   storiesCountMap?: Record<string, number>;
   totalStories?: number;
+  initialCreateMode?: boolean;
+  onClearCreateMode?: () => void;
 }
 
 const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
@@ -26,12 +28,23 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   onDeleteChild,
   onCreateStory,
   storiesCountMap = {},
-  totalStories = 0
+  totalStories = 0,
+  initialCreateMode = false,
+  onClearCreateMode
 }) => {
   const isMobile = useIsMobile();
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Handle initial create mode
+  React.useEffect(() => {
+    if (initialCreateMode && !showModal) {
+      handleShowForm();
+      // Optional: Clear the param immediately or wait for modal close
+      // onClearCreateMode?.(); 
+    }
+  }, [initialCreateMode]);
 
   // Form state
   const [childName, setChildName] = useState("");
@@ -50,7 +63,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   const [sortBy, setSortBy] = useState<'name' | 'age' | 'created'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [ageFilter, setAgeFilter] = useState<'all' | 'toddler' | 'preschool' | 'school'>('all');
-  
+
   // Nouveaux filtres à deux niveaux
   const [categoryFilter, setCategoryFilter] = useState<'all' | ProfileCategory>('all');
   const [childGenderFilter, setChildGenderFilter] = useState<'all' | 'boy' | 'girl'>('all');
@@ -60,8 +73,8 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
     let filtered = children.filter(child => {
       // Search filter
       const matchesSearch = child.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           child.teddyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           child.imaginaryWorld?.toLowerCase().includes(searchTerm.toLowerCase());
+        child.teddyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        child.imaginaryWorld?.toLowerCase().includes(searchTerm.toLowerCase());
 
       // Category filter (primary)
       const category = getProfileCategory(child);
@@ -76,7 +89,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
       // Age filter
       const age = calculateAge(child.birthDate);
       let matchesAge = true;
-      
+
       if (ageFilter === 'toddler') matchesAge = age <= 2;
       else if (ageFilter === 'preschool') matchesAge = age >= 3 && age <= 5;
       else if (ageFilter === 'school') matchesAge = age >= 6;
@@ -87,7 +100,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
     // Sort
     filtered.sort((a, b) => {
       let comparison = 0;
-      
+
       if (sortBy === 'name') {
         comparison = a.name.localeCompare(b.name);
       } else if (sortBy === 'age') {
@@ -125,6 +138,10 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
   const handleCancel = () => {
     resetForm();
     setShowModal(false);
+    // Cleanup param on close
+    if (initialCreateMode) {
+      onClearCreateMode?.();
+    }
   };
 
   const handleEdit = (child: Child) => {

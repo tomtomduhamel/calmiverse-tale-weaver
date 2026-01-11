@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ProfilesView } from "@/pages/views/ProfilesView";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useStories } from "@/hooks/useStories";
@@ -13,6 +13,7 @@ import { SimpleLoader } from "@/components/ui/SimpleLoader";
  */
 const ChildrenListPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     children,
     loading,
@@ -23,6 +24,9 @@ const ChildrenListPage: React.FC = () => {
   
   const { stories } = useStories(children);
   
+  // Check for auto-open create modal request
+  const initialCreateMode = searchParams.get("action") === "create";
+
   // Calculer le nombre total d'histoires et la map par enfant
   const totalStories = stories.stories?.length || 0;
   const storiesCountMap = React.useMemo(() => {
@@ -34,6 +38,14 @@ const ChildrenListPage: React.FC = () => {
     });
     return countMap;
   }, [children, stories.stories]);
+
+  const clearActionParam = () => {
+    if (initialCreateMode) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("action");
+      setSearchParams(newParams, { replace: true });
+    }
+  };
 
   if (loading) {
     return <SimpleLoader />;
@@ -55,6 +67,8 @@ const ChildrenListPage: React.FC = () => {
         }}
         totalStories={totalStories}
         storiesCountMap={storiesCountMap}
+        initialCreateMode={initialCreateMode}
+        onClearCreateMode={clearActionParam}
       />
     </div>
   );

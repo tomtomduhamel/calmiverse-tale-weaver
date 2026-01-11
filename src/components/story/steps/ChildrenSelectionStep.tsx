@@ -50,8 +50,8 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
   }, [preSelectedChildId, children, hasPersistedSession, selectedChildrenIds, updateSelectedChildren]);
 
   const handleChildToggle = useCallback((childId: string) => {
-    const newSelection = selectedChildrenIds.includes(childId) 
-      ? selectedChildrenIds.filter(id => id !== childId) 
+    const newSelection = selectedChildrenIds.includes(childId)
+      ? selectedChildrenIds.filter(id => id !== childId)
       : [...selectedChildrenIds, childId];
     updateSelectedChildren(newSelection);
   }, [selectedChildrenIds, updateSelectedChildren]);
@@ -86,19 +86,19 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
     return [...children]
       .filter(child => {
         const category = getProfileCategory(child);
-        
+
         // Filtre par catégorie principale
         if (categoryFilter !== 'all' && category !== categoryFilter) {
           return false;
         }
-        
+
         // Filtre par genre (seulement pour les enfants)
         if (categoryFilter === 'child' && childGenderFilter !== 'all') {
           if (child.gender !== childGenderFilter) {
             return false;
           }
         }
-        
+
         return true;
       })
       .sort((a, b) => {
@@ -112,9 +112,9 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
   if (isMobile) {
     return (
       <StoryCreationErrorBoundary>
-        <MobileChildrenSelectionStep 
-          children={children} 
-          preSelectedChildId={preSelectedChildId} 
+        <MobileChildrenSelectionStep
+          children={children}
+          preSelectedChildId={preSelectedChildId}
         />
       </StoryCreationErrorBoundary>
     );
@@ -123,7 +123,7 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
   // Split children into chunks for horizontal scrolling if more than 10
   const maxVisibleCards = 10;
   const needsScrolling = children.length > maxVisibleCards;
-  
+
   return <StoryCreationErrorBoundary>
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Notification de session récupérée */}
@@ -157,7 +157,7 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
             <Users className="h-5 w-5" />
             Vos personnages ({children.length})
           </CardTitle>
-          
+
           {/* Filtres de catégorie */}
           <CharacterCategoryFilter
             categoryFilter={categoryFilter}
@@ -183,34 +183,70 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
                   Glissez horizontalement →
                 </p>
               </div>
-              
+
               {/* Conteneur de scroll horizontal optimisé */}
-              <div 
+              <div
                 className="flex gap-3 overflow-x-auto px-6 pb-4 scrollbar-hide scroll-smooth snap-x snap-mandatory"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                 {displayChildren.map(child => (
                   <div key={child.id} className="flex-none w-44 snap-start">
-                    <ChildCard 
-                      child={child} 
-                      isSelected={selectedChildrenIds.includes(child.id)} 
+                    <ChildCard
+                      child={child}
+                      isSelected={selectedChildrenIds.includes(child.id)}
                       onToggle={handleChildToggle}
                     />
                   </div>
                 ))}
+
+                {/* Carte "Ajouter un enfant" (Scroll horizontal) */}
+                <div className="flex-none w-44 snap-start">
+                  <div
+                    onClick={() => navigate('/children?action=create')}
+                    className="
+                      h-full relative p-4 rounded-xl border-2 border-dashed border-border/50
+                      cursor-pointer hover:border-primary/60 hover:bg-card/50
+                      transition-all duration-300 ease-in-out
+                      flex flex-col items-center justify-center gap-2
+                      text-muted-foreground hover:text-foreground min-h-[140px]
+                    "
+                  >
+                    <div className="h-10 w-10 rounded-full bg-secondary/50 flex items-center justify-center">
+                      <span className="text-2xl font-light">+</span>
+                    </div>
+                    <span className="font-medium text-sm text-center">Ajouter un<br />personnage</span>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
             <div className="px-6">
               <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                 {displayChildren.map(child => (
-                  <ChildCard 
-                    key={child.id} 
-                    child={child} 
-                    isSelected={selectedChildrenIds.includes(child.id)} 
+                  <ChildCard
+                    key={child.id}
+                    child={child}
+                    isSelected={selectedChildrenIds.includes(child.id)}
                     onToggle={handleChildToggle}
                   />
                 ))}
+
+                {/* Carte "Ajouter un enfant" */}
+                <div
+                  onClick={() => navigate('/children?action=create')}
+                  className="
+                    relative p-4 rounded-xl border-2 border-dashed border-border/50 
+                    cursor-pointer hover:border-primary/60 hover:bg-card/50
+                    transition-all duration-300 ease-in-out
+                    flex flex-col items-center justify-center gap-2
+                    min-h-[140px] text-muted-foreground hover:text-foreground
+                  "
+                >
+                  <div className="h-10 w-10 rounded-full bg-secondary/50 flex items-center justify-center">
+                    <span className="text-2xl font-light">+</span>
+                  </div>
+                  <span className="font-medium text-sm text-center">Ajouter un<br />personnage</span>
+                </div>
               </div>
             </div>
           )}
@@ -231,7 +267,7 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
           })}
           {selectedChildren.length === 0 && <span className="text-muted-foreground text-sm">Aucun personnage sélectionné</span>}
         </div>
-        
+
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/')}>
             Annuler
@@ -269,14 +305,14 @@ const ChildCard: React.FC<ChildCardProps> = ({
   const isPopular = storiesCount > 5;
 
   return (
-    <div 
-      onClick={() => onToggle(child.id)} 
+    <div
+      onClick={() => onToggle(child.id)}
       className={`
         relative p-4 rounded-xl border-2 cursor-pointer 
         transition-all duration-300 ease-in-out
         hover:shadow-lg hover:-translate-y-0.5
-        ${isSelected 
-          ? 'border-primary bg-primary/5 shadow-md' 
+        ${isSelected
+          ? 'border-primary bg-primary/5 shadow-md'
           : 'border-border/50 hover:border-primary/60 bg-card'
         }
       `}
@@ -284,11 +320,11 @@ const ChildCard: React.FC<ChildCardProps> = ({
       {/* Top badge - minimaliste */}
       {isTopPerformer && (
         <div className="absolute -top-2 -right-2 z-10">
-          <Badge 
+          <Badge
             className={`
               text-xs px-2.5 py-1 font-semibold shadow-sm
-              ${isPopular 
-                ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300' 
+              ${isPopular
+                ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300'
                 : 'bg-secondary text-secondary-foreground'
               }
             `}
@@ -297,7 +333,7 @@ const ChildCard: React.FC<ChildCardProps> = ({
           </Badge>
         </div>
       )}
-      
+
       {/* Main content */}
       <div className="space-y-3">
         {/* Name and selection indicator */}
@@ -312,7 +348,7 @@ const ChildCard: React.FC<ChildCardProps> = ({
             </div>
           )}
         </div>
-        
+
         {/* Age and stories count */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm text-muted-foreground">
@@ -324,7 +360,7 @@ const ChildCard: React.FC<ChildCardProps> = ({
             </span>
           )}
         </div>
-        
+
         {/* Teddy name */}
         {child.teddyName && (
           <div className="text-xs text-muted-foreground truncate pt-1 border-t border-border/30">

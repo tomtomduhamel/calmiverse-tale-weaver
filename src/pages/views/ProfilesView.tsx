@@ -13,6 +13,8 @@ interface ProfilesViewProps {
   onCreateStory?: (childId?: string) => void;
   storiesCountMap?: Record<string, number>;
   totalStories?: number;
+  initialCreateMode?: boolean;
+  onClearCreateMode?: () => void;
 }
 
 export const ProfilesView: React.FC<ProfilesViewProps> = ({
@@ -23,9 +25,11 @@ export const ProfilesView: React.FC<ProfilesViewProps> = ({
   onCreateStory,
   storiesCountMap,
   totalStories,
+  initialCreateMode,
+  onClearCreateMode
 }) => {
   const isMobile = useIsMobile();
-  
+
   return (
     <div className="animate-fade-in">
       <ScrollArea className={`${isMobile ? 'h-[calc(100vh-140px)]' : 'h-[calc(100vh-100px)]'} w-full px-1`}>
@@ -38,6 +42,8 @@ export const ProfilesView: React.FC<ProfilesViewProps> = ({
             onCreateStory={onCreateStory}
             storiesCountMap={storiesCountMap}
             totalStories={totalStories}
+            initialCreateMode={initialCreateMode}
+            onClearCreateMode={onClearCreateMode}
           />
         </div>
       </ScrollArea>
