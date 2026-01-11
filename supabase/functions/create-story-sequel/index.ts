@@ -6,6 +6,56 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+/**
+ * Récupère le template de prompt actif depuis la base de données
+ */
+async function fetchActivePromptTemplate(
+  supabase: any,
+  templateKey: string
+): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('v_active_prompt_templates')
+      .select('active_content')
+      .eq('key', templateKey)
+      .single();
+
+    if (error) {
+      console.warn(`⚠️ Erreur récupération template ${templateKey}:`, error.message);
+      return null;
+    }
+
+    return data?.active_content || null;
+  } catch (err) {
+    console.warn(`⚠️ Exception récupération template ${templateKey}:`, err);
+    return null;
+  }
+}
+
+/**
+ * Remplace les variables {{variable}} dans un template
+ */
+function replacePromptVariables(
+  template: string,
+  variables: Record<string, string | number | undefined | null>
+): string {
+  if (!template) return "";
+  
+  let result = template;
+  
+  Object.entries(variables).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, "g");
+      result = result.replace(regex, String(value));
+    }
+  });
+  
+  // Nettoyer les variables non remplacées
+  result = result.replace(/\{\{[^}]+\}\}/g, "");
+  
+  return result;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -77,7 +127,34 @@ serve(async (req) => {
       throw new Error('Histoire précédente non trouvée');
     }
 
-    // 3. Préparer le payload enrichi pour n8n
+    // 3. 🆕 Récupérer le template de prompt pour les suites depuis la DB
+    console.log('📝 Récupération du template sequel_prompt_template...');
+    const sequelPromptTemplate = await fetchActivePromptTemplate(supabase, 'sequel_prompt_template');
+    const promptSource = sequelPromptTemplate ? 'database' : 'fallback';
+    console.log(`📝 Source du template: ${promptSource}`);
+
+    // 4. Si template disponible, générer le prompt avec les variables
+    let generatedSequelPrompt: string | null = null;
+    if (sequelPromptTemplate) {
+      const promptVariables = {
+        previous_story_title: previousStory.title,
+        previous_story_summary: previousStory.summary || previousStorySummary || '',
+        previous_story_content: previousStory.content?.substring(0, 2000) || previousStoryContent?.substring(0, 2000) || '',
+        characters: JSON.stringify(characters || previousStory.story_analysis?.characters || {}),
+        tome_number: tomeNumber,
+        children_names: (previousStory.childrennames || childrenNames || []).join(', '),
+        objective: previousStory.objective || objective || 'fun',
+        writing_style: writingStyle || '',
+        recurring_phrases: Array.isArray(recurringPhrases) ? recurringPhrases.join(', ') : '',
+        duration: duration || 10,
+        estimated_word_count: duration ? Math.round(duration * 140) : 1400,
+      };
+      
+      generatedSequelPrompt = replacePromptVariables(sequelPromptTemplate, promptVariables);
+      console.log('✅ Prompt de suite généré depuis template DB');
+    }
+
+    // 5. Préparer le payload enrichi pour n8n
     // Source unique pour seriesId : DB prioritaire, fallback vers payload
     const resolvedSeriesId = story.series_id || seriesId;
     console.log('📦 Serie info:', {
@@ -92,6 +169,11 @@ serve(async (req) => {
       previousStoryId: previousStoryId,
       seriesId: resolvedSeriesId,
       tomeNumber: tomeNumber,
+      
+      // 🆕 Prompt généré depuis le template (si disponible)
+      sequelPrompt: generatedSequelPrompt,
+      sequelPromptTemplate: sequelPromptTemplate, // Template brut pour référence
+      promptSource: promptSource, // 'database' ou 'fallback'
       
       // Informations de l'histoire précédente depuis la base de données
       previousStoryInfo: {
@@ -142,7 +224,7 @@ serve(async (req) => {
       locale: 'fr'
     };
 
-    // 4. Déclencher le webhook n8n - priorité à l'URL fournie dans la requête
+    // 6. Déclencher le webhook n8n - priorité à l'URL fournie dans la requête
     const N8N_WEBHOOK_URL = webhookUrl || Deno.env.get('N8N_SEQUEL_WEBHOOK_URL');
     
     if (!N8N_WEBHOOK_URL) {
@@ -161,6 +243,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           storyId: storyId,
+          promptSource: promptSource,
           message: 'Suite créée (mode développement)'
         }),
         { 
@@ -172,7 +255,7 @@ serve(async (req) => {
       );
     }
 
-    // 5. Validation et appel du webhook n8n avec retry
+    // 7. Validation et appel du webhook n8n avec retry
     console.log('🔗 Appel webhook n8n:', N8N_WEBHOOK_URL);
     
     // Validation de l'URL du webhook
@@ -250,7 +333,7 @@ serve(async (req) => {
 
     console.log('✅ Webhook n8n appelé avec succès');
 
-    // 6. Mettre à jour le statut de l'histoire
+    // 8. Mettre à jour le statut de l'histoire
     await supabase
       .from('stories')
       .update({
@@ -263,6 +346,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         storyId: storyId,
+        promptSource: promptSource,
         message: `Tome ${tomeNumber} en cours de génération`
       }),
       { 

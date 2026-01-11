@@ -8,6 +8,9 @@ import { generateAdvancedStoryPrompt } from '@/utils/storyPromptUtils';
 import { calculateAge } from '@/utils/age';
 import { estimateWordCountForDuration, StoryDurationMinutes } from '@/types/story';
 import type { TitleCostData } from '@/hooks/stories/useN8nTitleGeneration';
+import { useActivePrompts } from '@/hooks/prompts';
+import { replacePromptVariables, OBJECTIVE_DESCRIPTIONS, getVocabularyInstructions, type PromptVariables } from '@/utils/promptVariables';
+import { analyzeCharacters, generateCharacterContext } from '@/utils/storyPromptUtils';
 
 interface StoryCreationData {
   selectedTitle: string;
@@ -20,13 +23,62 @@ interface StoryCreationData {
   titleGenerationCost?: TitleCostData | null; // Coût de génération des titres
 }
 
-// Ancienne fonction remplacée par generateAdvancedStoryPrompt dans storyPromptUtils.ts
+/**
+ * Génère le prompt à partir du template de la DB ou utilise le fallback
+ */
+const generatePromptFromTemplate = (
+  template: string | undefined,
+  data: StoryCreationData,
+  childrenForPrompt: Child[],
+  targetWordCount: number | undefined
+): string => {
+  // Si pas de template, utiliser le fallback hardcodé
+  if (!template) {
+    console.log('[N8nStoryFromTitle] Pas de template DB, utilisation du fallback');
+    return generateAdvancedStoryPrompt(
+      data.objective,
+      childrenForPrompt,
+      data.selectedTitle,
+      { durationMinutes: data.durationMinutes, targetWordCount }
+    );
+  }
+
+  // Analyser les personnages
+  const analysis = analyzeCharacters(childrenForPrompt);
+  const characterContext = generateCharacterContext(analysis);
+  
+  // Construire les noms
+  const allNames = [...analysis.children.map(c => c.child.name), ...analysis.pets.map(p => p.name)];
+  const namesText = allNames.length === 1
+    ? allNames[0]
+    : `${allNames.slice(0, -1).join(', ')} et ${allNames[allNames.length - 1]}`;
+
+  // Préparer les variables
+  const variables: PromptVariables = {
+    children_names: namesText,
+    children_context: characterContext,
+    objective: data.objective,
+    objective_description: OBJECTIVE_DESCRIPTIONS[data.objective] || data.objective,
+    vocabulary_level: getVocabularyInstructions(analysis.youngestAge),
+    target_word_count: targetWordCount?.toString() || '1500',
+    selected_title: data.selectedTitle,
+    duration_minutes: data.durationMinutes?.toString() || '',
+    youngest_age: analysis.youngestAge.toString(),
+    oldest_age: analysis.oldestAge.toString(),
+    average_age: analysis.averageAge.toString(),
+  };
+
+  console.log('[N8nStoryFromTitle] Génération depuis template DB avec variables:', Object.keys(variables));
+  
+  return replacePromptVariables(template, variables);
+};
 
 export const useN8nStoryFromTitle = () => {
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const { user } = useSupabaseAuth();
   const { toast } = useToast();
   const { notifyStoryReady, notifyStoryError } = useStoryNotifications();
+  const { prompts } = useActivePrompts();
 
   const createStoryFromTitle = async (data: StoryCreationData): Promise<string> => {
     if (!user) {
@@ -60,15 +112,20 @@ export const useN8nStoryFromTitle = () => {
         petTypeCustom: child.petTypeCustom || null
       }));
       
-      // Générer le prompt avancé avec titre, durée et contexte multi-personnages
+      // Générer le prompt - priorité au template de la DB
       const targetWordCount = data.durationMinutes ? estimateWordCountForDuration(data.durationMinutes) : undefined;
-      const storyPrompt = generateAdvancedStoryPrompt(
-        data.objective,
+      const storyPromptTemplate = prompts.advanced_story_prompt_template;
+      
+      const storyPrompt = generatePromptFromTemplate(
+        storyPromptTemplate,
+        data,
         childrenForPrompt,
-        data.selectedTitle,
-        { durationMinutes: data.durationMinutes, targetWordCount }
+        targetWordCount
       );
-      console.log('[N8nStoryFromTitle] Prompt avancé généré:', storyPrompt.substring(0, 200) + '...');
+      
+      const promptSource = storyPromptTemplate ? 'database' : 'fallback';
+      console.log(`[N8nStoryFromTitle] Source du prompt: ${promptSource}`);
+      console.log('[N8nStoryFromTitle] Prompt généré:', storyPrompt.substring(0, 200) + '...');
       console.log('[N8nStoryFromTitle] Données enrichies des enfants:', enrichedChildrenData);
       
       // CORRECTION CRITIQUE: Utiliser le bon webhook pour la création d'histoire
@@ -89,7 +146,8 @@ export const useN8nStoryFromTitle = () => {
         targetWordCount: targetWordCount ?? undefined,
         userId: user.id,
         userEmail: user.email,
-        storyPrompt, // Prompt essentiel pour la génération
+        storyPrompt, // Prompt généré (DB ou fallback)
+        promptSource, // 🆕 Source du prompt pour debug
         // 🆕 Coût de génération des titres pour calcul du coût total
         titleGenerationCost: data.titleGenerationCost || null,
         timestamp: new Date().toISOString(),
