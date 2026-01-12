@@ -67,9 +67,10 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Erreur lors de la suppression du compte:", error.message);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    console.error("Erreur lors de la suppression du compte:", errorMessage);
     return new Response(
-      JSON.stringify({ error: `Erreur lors de la suppression du compte: ${error.message}` }),
+      JSON.stringify({ error: `Erreur lors de la suppression du compte: ${errorMessage}` }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

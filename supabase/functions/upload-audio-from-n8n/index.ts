@@ -97,7 +97,8 @@ serve(async (req) => {
     } catch (parseError) {
       clearTimeout(parseTimeout);
       console.error(`💥 [upload-audio-from-n8n-${requestId}] Erreur parsing FormData:`, parseError);
-      throw new Error(`Erreur parsing FormData: ${parseError.message}`);
+      const parseErrorMessage = parseError instanceof Error ? parseError.message : 'Erreur inconnue';
+      throw new Error(`Erreur parsing FormData: ${parseErrorMessage}`);
     }
 
     // Lire les données

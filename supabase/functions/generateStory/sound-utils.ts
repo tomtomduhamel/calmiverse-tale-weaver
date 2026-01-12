@@ -30,7 +30,7 @@ export async function selectSoundForObjective(supabase: any, objective: string):
     }
     
     // Vérifier que chaque son a un fichier valide
-    const validSounds = sounds.filter(sound => sound.file_path);
+    const validSounds = sounds.filter((sound: { id: string; title: string; file_path: string | null }) => sound.file_path);
     
     if (validSounds.length === 0) {
       console.log(`⚠️ Aucun son avec fichier valide trouvé pour l'objectif: ${objective}`);

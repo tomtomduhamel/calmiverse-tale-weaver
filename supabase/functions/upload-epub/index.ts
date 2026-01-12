@@ -80,7 +80,7 @@ serve(async (req) => {
     const epubFilename = `${cleanDisplayTitle}.epub`;
     
     // Chemin de stockage interne (avec timestamp + underscores pour éviter conflits)
-    const storagePath = `epubs/${timestamp}_${cleanDisplayTitle.replace(/\s+/g, '_')}.epub`;
+    let storagePath = `epubs/${timestamp}_${cleanDisplayTitle.replace(/\s+/g, '_')}.epub`;
 
     // Upload optimisé avec retry automatique
     console.log(`📤 [upload-epub-${requestId}] Upload vers: ${storagePath}`);
@@ -118,7 +118,7 @@ serve(async (req) => {
       try {
         console.log(`🔄 [upload-epub-${requestId}] Tentative upload ${i + 1}/${uploadStrategies.length}`);
         
-        const result = await uploadStrategies[i]();
+        const result = await uploadStrategies[i]() as { data: { id: string; path: string; fullPath: string } | null; error: { message: string } | null; path?: string };
         
         if (!result.error) {
           uploadData = result.data;
@@ -135,13 +135,14 @@ serve(async (req) => {
           console.warn(`⚠️ [upload-epub-${requestId}] Tentative ${i + 1} échouée:`, result.error.message);
         }
       } catch (strategyError) {
-        uploadError = strategyError;
+        uploadError = strategyError as { message: string };
         console.warn(`⚠️ [upload-epub-${requestId}] Exception tentative ${i + 1}:`, strategyError);
       }
     }
 
     if (!uploadSuccess) {
-      throw new Error(`Échec upload après ${uploadStrategies.length} tentatives: ${uploadError?.message || 'Erreur inconnue'}`);
+      const errorMsg = uploadError instanceof Error ? uploadError.message : (uploadError as { message?: string })?.message || 'Erreur inconnue';
+      throw new Error(`Échec upload après ${uploadStrategies.length} tentatives: ${errorMsg}`);
     }
 
     const uploadTime = Date.now() - uploadStartTime;

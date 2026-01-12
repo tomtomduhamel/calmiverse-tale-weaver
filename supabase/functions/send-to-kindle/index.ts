@@ -195,11 +195,12 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('💥 [send-to-kindle] Erreur serveur:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     return new Response(
       JSON.stringify({ 
         error: 'Erreur serveur', 
-        details: error.message 
-      }), 
+        details: errorMessage 
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

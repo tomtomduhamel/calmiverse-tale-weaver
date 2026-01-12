@@ -156,11 +156,12 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('[n8n-story-completion-callback] Error processing callback:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error', 
-        details: error.message 
+        details: errorMessage 
       }),
       { 
         status: 500, 
