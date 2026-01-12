@@ -109,7 +109,8 @@ RÈGLES FONDAMENTALES POUR PERSONNAGES MULTIPLES :
     return storyText;
   } catch (error) {
     console.error('❌ Erreur lors de la génération du texte:', error);
-    throw new Error(`Erreur lors de la génération de l'histoire: ${error.message || 'Erreur inconnue'}`);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    throw new Error(`Erreur lors de la génération de l'histoire: ${errorMessage}`);
   }
 };
 

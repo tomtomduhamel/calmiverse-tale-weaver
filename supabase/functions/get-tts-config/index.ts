@@ -58,9 +58,10 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in get-tts-config function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: errorMessage,
         provider: 'elevenlabs', // Fallback par défaut
         webhookUrl: Deno.env.get('N8N_WEBHOOK_URL') || '',
         voiceId: '9BWtsMINqrJLrRacOk9x',
