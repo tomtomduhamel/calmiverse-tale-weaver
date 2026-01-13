@@ -125,6 +125,17 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     description: 'Histoire joyeuse et divertissante'
   }];
   
+  // Log de diagnostic au montage
+  useEffect(() => {
+    console.log('[TitleBasedStoryCreator] 🔍 Montage composant', {
+      childrenCount: children?.length,
+      currentStep,
+      selectedChildrenIds,
+      selectedObjective,
+      preSelectedChildId,
+    });
+  }, []);
+
   // Effect pour présélectionner un enfant si spécifié et pas déjà de session
   useEffect(() => {
     if (preSelectedChildId && children.length > 0 && !hasPersistedSession()) {

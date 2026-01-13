@@ -114,7 +114,12 @@ export const useN8nStoryFromTitle = () => {
       
       // Générer le prompt - priorité au template de la DB
       const targetWordCount = data.durationMinutes ? estimateWordCountForDuration(data.durationMinutes) : undefined;
-      const storyPromptTemplate = prompts.advanced_story_prompt_template;
+      const storyPromptTemplate = prompts?.advanced_story_prompt_template;
+      
+      // Log pour diagnostic
+      if (!storyPromptTemplate) {
+        console.warn('[N8nStoryFromTitle] ⚠️ Template DB non disponible, utilisation du fallback hardcodé');
+      }
       
       const storyPrompt = generatePromptFromTemplate(
         storyPromptTemplate,

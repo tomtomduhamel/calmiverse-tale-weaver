@@ -38,9 +38,9 @@ const ACTIVE_PROMPTS_CONFIG: Record<string, {
   category: 'generation' | 'sequel' | 'other';
   icon: React.ElementType;
 }> = {
-  'story_system_prompt': {
-    label: '🟢 Génération histoire',
-    description: 'Prompt système principal pour créer des histoires',
+  'advanced_story_prompt_template': {
+    label: '🟢 Génération histoire (n8n)',
+    description: 'Template principal envoyé à n8n pour créer les histoires',
     category: 'generation',
     icon: Sparkles,
   },

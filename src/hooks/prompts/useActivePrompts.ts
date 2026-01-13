@@ -29,7 +29,8 @@ export const useActivePrompts = () => {
 
       if (fetchError) {
         console.error("[useActivePrompts] Erreur de récupération:", fetchError);
-        throw fetchError;
+        // Ne pas throw, retourner un objet vide pour permettre le fallback
+        return {};
       }
 
       // Construire l'objet des prompts par clé
@@ -48,6 +49,8 @@ export const useActivePrompts = () => {
     },
     staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
     gcTime: 10 * 60 * 1000, // Garder en cache pendant 10 minutes
+    retry: 2, // Retry 2 fois en cas d'échec
+    retryDelay: 1000, // Attendre 1 seconde entre les retries
   });
 
   return {
