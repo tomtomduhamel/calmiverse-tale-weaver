@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import './styles/scrollbar.css'
 import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext.tsx'
@@ -10,6 +11,18 @@ import { bootMonitor } from './utils/bootMonitor'
 import { logBootMode } from './utils/mobileBootOptimizer'
 import { safeStorage } from './utils/safeStorage'
 import App from './App.tsx'
+
+// React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (anciennement cacheTime)
+      retry: 2,
+      retryDelay: 1000,
+    },
+  },
+})
 
 
 // 🔧 PHASE 3: Diagnostic des chunks chargés
@@ -74,9 +87,11 @@ if (isSafeMode) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <CriticalErrorBoundary>
-        <SupabaseAuthProvider>
-          <App />
-        </SupabaseAuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <SupabaseAuthProvider>
+            <App />
+          </SupabaseAuthProvider>
+        </QueryClientProvider>
       </CriticalErrorBoundary>
     </React.StrictMode>,
   );
@@ -85,11 +100,13 @@ if (isSafeMode) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <CriticalErrorBoundary>
-        <SafeThemeProvider>
-          <SupabaseAuthProvider>
-            <App />
-          </SupabaseAuthProvider>
-        </SafeThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <SafeThemeProvider>
+            <SupabaseAuthProvider>
+              <App />
+            </SupabaseAuthProvider>
+          </SafeThemeProvider>
+        </QueryClientProvider>
       </CriticalErrorBoundary>
     </React.StrictMode>,
   );
