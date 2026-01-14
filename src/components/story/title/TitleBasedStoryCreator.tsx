@@ -28,6 +28,20 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   onStoryCreated,
   preSelectedChildId
 }) => {
+  // 🔍 Log IMMÉDIAT au début du composant pour debug
+  console.log('[TitleBasedStoryCreator] === DÉBUT RENDU ===', {
+    childrenReceived: children?.length,
+    childrenValid: Array.isArray(children),
+    preSelectedChildId,
+    firstChild: children?.[0] ? { id: children[0].id, name: children[0].name } : null
+  });
+
+  // Validation des props
+  if (!children || !Array.isArray(children)) {
+    console.error('[TitleBasedStoryCreator] Props "children" invalide:', children);
+    throw new Error('La liste des enfants est invalide ou non chargée');
+  }
+
   const navigate = useNavigate();
   // Use persisted state instead of local state
   const {
@@ -472,12 +486,26 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {children.map(child => <div key={child.id} onClick={() => handleChildToggle(child.id)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedChildrenIds.includes(child.id) ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
-                  <div className="font-medium">{child.name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {new Date().getFullYear() - new Date(child.birthDate).getFullYear()} ans
+              {children.map(child => {
+                // Gérer les deux formats possibles: birthDate (type) ou birthdate (Supabase)
+                const birthDateValue = (child as any).birthdate || child.birthDate;
+                const age = birthDateValue 
+                  ? new Date().getFullYear() - new Date(birthDateValue).getFullYear()
+                  : null;
+                
+                return (
+                  <div 
+                    key={child.id} 
+                    onClick={() => handleChildToggle(child.id)} 
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedChildrenIds.includes(child.id) ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
+                  >
+                    <div className="font-medium">{child.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {age !== null ? `${age} ans` : 'Âge inconnu'}
+                    </div>
                   </div>
-                </div>)}
+                );
+              })}
             </div>
           </CardContent>
         </Card>

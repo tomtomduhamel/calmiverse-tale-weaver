@@ -83,8 +83,13 @@ export const usePersistedStoryCreation = () => {
         }
       }
     } catch (error) {
-      console.warn('[usePersistedStoryCreation] Erreur lors de la restauration:', error);
-      safeStorage.removeItem(STORAGE_KEY);
+      console.error('[usePersistedStoryCreation] ❌ Erreur critique lors de la restauration:', error);
+      // Nettoyage complet en cas d'erreur pour éviter les crashs
+      try {
+        safeStorage.removeItem(STORAGE_KEY);
+      } catch (cleanupError) {
+        console.error('[usePersistedStoryCreation] Erreur lors du nettoyage:', cleanupError);
+      }
     }
     
     return getDefaultState();

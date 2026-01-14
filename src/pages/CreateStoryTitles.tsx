@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import TitleBasedStoryCreator from "@/components/story/title/TitleBasedStoryCreator";
+import StoryCreationErrorBoundary from "@/components/ui/StoryCreationErrorBoundary";
 const CreateStoryTitles: React.FC = () => {
   const {
     user,
@@ -77,7 +78,9 @@ const CreateStoryTitles: React.FC = () => {
 
         {/* Composant de création d'histoires avec titres */}
         <div className="max-w-4xl mx-auto">
-          <TitleBasedStoryCreator children={children} onStoryCreated={handleStoryCreated} preSelectedChildId={preSelectedChildId} />
+          <StoryCreationErrorBoundary>
+            <TitleBasedStoryCreator children={children} onStoryCreated={handleStoryCreated} preSelectedChildId={preSelectedChildId} />
+          </StoryCreationErrorBoundary>
         </div>
       </div>
     </div>;
