@@ -74,19 +74,19 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
     return [...children]
       .filter(child => {
         const category = getProfileCategory(child);
-        
+
         // Filtre par catégorie principale
         if (categoryFilter !== 'all' && category !== categoryFilter) {
           return false;
         }
-        
+
         // Filtre par genre (seulement pour les enfants)
         if (categoryFilter === 'child' && childGenderFilter !== 'all') {
           if (child.gender !== childGenderFilter) {
             return false;
           }
         }
-        
+
         return true;
       })
       .sort((a, b) => {
@@ -124,9 +124,9 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
         <Button variant="outline" onClick={() => navigate('/')} className="flex-1">
           Annuler
         </Button>
-        <Button 
-          onClick={handleContinue} 
-          disabled={selectedChildrenIds.length === 0} 
+        <Button
+          onClick={handleContinue}
+          disabled={selectedChildrenIds.length === 0}
           className="flex-1"
         >
           Continuer
@@ -141,7 +141,7 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
             <Users className="h-5 w-5" />
             Vos personnages ({children.length})
           </CardTitle>
-          
+
           {/* Filtres de catégorie - version compacte pour mobile */}
           <CharacterCategoryFilter
             categoryFilter={categoryFilter}
@@ -167,6 +167,23 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
                   onToggle={handleChildToggle}
                 />
               ))}
+
+              {/* Carte "Ajouter un enfant" */}
+              <div
+                onClick={() => navigate('/children?action=create')}
+                className="
+                  p-4 rounded-lg border-2 border-dashed border-border/50
+                  cursor-pointer hover:border-primary/60 hover:bg-card/50
+                  transition-all duration-200 ease-in-out
+                  flex items-center gap-3
+                  text-muted-foreground hover:text-foreground
+                "
+              >
+                <div className="h-10 w-10 rounded-full bg-secondary/50 flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl font-light">+</span>
+                </div>
+                <span className="font-medium">Ajouter un personnage</span>
+              </div>
             </div>
           )}
         </CardContent>
@@ -213,11 +230,10 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
   return (
     <div
       onClick={() => onToggle(child.id)}
-      className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-        isSelected 
-          ? 'border-primary bg-primary/5 shadow-sm' 
+      className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isSelected
+          ? 'border-primary bg-primary/5 shadow-sm'
           : 'border-border hover:border-primary/50'
-      }`}
+        }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
