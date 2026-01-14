@@ -49,17 +49,17 @@ export const FloatingAutoScrollButton: React.FC<FloatingAutoScrollButtonProps> =
 
   const { icon, tooltip, bgClass, hoverClass } = getButtonState();
 
-  // Position adaptée selon l'appareil pour éviter la superposition
+  // Position adaptée selon l'appareil pour éviter la superposition avec les contrôles
   const getPositionStyles = () => {
     if (isMobile) {
       return {
-        bottom: '2rem',
-        left: '1rem',     // Côté gauche sur mobile
+        bottom: '8.5rem', // Même hauteur que le toggle button pour éviter overlap avec les contrôles
+        right: '1rem',    // Côté droit sur mobile
       };
     }
     return {
-      bottom: '2rem',     // Même niveau que le toggle button
-      left: '2rem',       // Côté gauche sur desktop pour éviter la superposition
+      bottom: '5rem',     // Même niveau que le toggle button sur desktop
+      left: '2rem',       // Côté gauche sur desktop
     };
   };
 

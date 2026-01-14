@@ -1,13 +1,16 @@
 
+// Constante de vitesse de lecture alignée avec celle utilisée pour le choix de durée (src/types/story.ts)
+// Cette valeur doit être cohérente dans toute l'application
+export const READING_SPEED_WPM = 140;
+
 export const calculateReadingTime = (text: string | undefined): string => {
   if (!text) {
     return "0 min de lecture";
   }
 
-  // Utilisation d'une vitesse de lecture plus lente, adaptée aux enfants
-  const wordsPerMinute = 125; // Réduction de 250 à 125 mots par minute
+  // Vitesse de lecture adaptée aux enfants, alignée avec estimateWordCountForDuration
   const wordCount = text.trim().split(/\s+/).length;
-  const minutes = Math.ceil(wordCount / wordsPerMinute); // Utiliser Math.ceil au lieu de Math.round pour arrondir à la minute supérieure
+  const minutes = Math.round(wordCount / READING_SPEED_WPM);
 
   if (minutes < 1) {
     return "< 1 min de lecture";

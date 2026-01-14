@@ -101,7 +101,8 @@ export type StoryDurationMinutes = 5 | 10 | 15;
 export const STORY_DURATION_OPTIONS: readonly StoryDurationMinutes[] = [5, 10, 15] as const;
 
 // Rough reading speed for kids-friendly text (words per minute)
-const AVERAGE_WPM = 140;
+// Cette valeur doit être cohérente avec READING_SPEED_WPM dans src/utils/readingTime.ts
+export const AVERAGE_WPM = 140;
 
 export const estimateWordCountForDuration = (minutes: number): number => {
   const words = Math.round(minutes * AVERAGE_WPM);
