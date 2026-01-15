@@ -119,8 +119,8 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
         </p>
       </div>
 
-      {/* Navigation mobile en haut */}
-      <div className="flex gap-3 mb-6">
+      {/* Navigation mobile sticky en haut */}
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-3 -mx-4 px-4 flex gap-3 mb-3">
         <Button variant="outline" onClick={() => navigate('/')} className="flex-1">
           Annuler
         </Button>
