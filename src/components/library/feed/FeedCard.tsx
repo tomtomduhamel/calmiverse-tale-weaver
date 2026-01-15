@@ -10,7 +10,7 @@ import { FavoriteButton } from "@/components/story/FavoriteButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Clock, Share2, BookPlus, Loader2, Heart, Library } from "lucide-react";
+import { Clock, Share2, BookPlus, Loader2, Heart, Library, BookCheck } from "lucide-react";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { cn } from "@/lib/utils";
@@ -83,14 +83,14 @@ const FeedCard: React.FC<FeedCardProps> = ({
     onToggleFavorite(story.id, story.isFavorite || false);
   }, [story.id, story.isFavorite, onToggleFavorite]);
 
-  const canCreateSequel = (story.status === 'ready' || story.status === 'read' || story.status === 'completed') 
+  const canCreateSequel = (story.status === 'ready' || story.status === 'read' || story.status === 'completed')
     && !story.next_story_id;
 
   return (
     <Card className="overflow-hidden border-0 shadow-none bg-transparent w-full mx-auto sm:max-w-[500px]">
       {/* Header: Title + Favorite */}
       <div className="flex items-center justify-between px-1 py-3">
-        <h3 
+        <h3
           className="font-semibold text-base leading-tight line-clamp-1 flex-1 cursor-pointer hover:text-primary transition-colors"
           onClick={onClick}
         >
@@ -108,7 +108,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
       </div>
 
       {/* Image container: 4:5 ratio with double-tap */}
-      <div 
+      <div
         ref={imageRef}
         className="relative aspect-[4/5] w-full max-h-[400px] overflow-hidden rounded-lg cursor-pointer bg-muted"
         onClick={handleDoubleTap}
@@ -152,8 +152,8 @@ const FeedCard: React.FC<FeedCardProps> = ({
         {/* Heart animation on double-tap */}
         {showHeartAnimation && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <Heart 
-              className="h-24 w-24 text-red-500 fill-red-500 animate-ping" 
+            <Heart
+              className="h-24 w-24 text-red-500 fill-red-500 animate-ping"
             />
           </div>
         )}
@@ -161,7 +161,13 @@ const FeedCard: React.FC<FeedCardProps> = ({
 
       {/* Metadata: Reading time + Date + Series indicator */}
       <CardContent className="px-1 pt-3 pb-0">
-        <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3 flex-wrap">
+          {story.status === "read" && (
+            <span className="flex items-center gap-1 text-green-600 dark:text-green-500 font-medium bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full text-xs">
+              <BookCheck className="h-3 w-3" />
+              Lu
+            </span>
+          )}
           <span className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
             {readingTime}
@@ -171,7 +177,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
           {isSeriesStory && (
             <>
               <span className="text-xs">•</span>
-              <span 
+              <span
                 className="flex items-center gap-1 text-primary/80 cursor-pointer hover:text-primary transition-colors"
                 onClick={() => onSeriesClick?.(story)}
               >
