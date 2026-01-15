@@ -1,12 +1,15 @@
 import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
 import { cn } from '@/lib/utils';
 import { useStoryGenerationManager } from '@/services/stories/StoryGenerationManager';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 interface MobileObjectiveSelectionStepProps {
   children: Child[];
@@ -103,97 +106,100 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
   };
 
   return (
-    <div className="bg-gradient-to-b from-primary/5 to-accent/5 min-h-screen">
-      {/* En-tête avec progression et navigation */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/20 px-4 pt-4 pb-3">
-        {/* Navigation avec flèche retour et titre d'étape */}
-        <div className="flex items-center justify-between mb-4">
-          <Button 
-            variant="ghost" 
-            onClick={handleBack}
-            size="sm"
-            className="p-1"
-          >
-            <ArrowLeft className="w-5 h-5 text-primary" />
-          </Button>
-          
-          <h2 className="text-lg font-semibold text-primary">
-            Étape 2 sur 3
-          </h2>
-          
-          <Button 
-            onClick={handleContinueToTitles} 
-            disabled={!selectedObjective}
-            size="sm"
-            className={cn(
-              "gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200",
-              selectedObjective 
-                ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
-                : "bg-muted text-muted-foreground cursor-not-allowed"
-            )}
-          >
-            Continuer
-            <ArrowRight className="w-3 h-3" />
-          </Button>
+    <div className="space-y-6 px-4 py-6">
+      {/* Indicateur de progression - même style que Step 1 */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+          <span>Enfants</span>
+          <span className="font-medium text-primary">Objectif</span>
+          <span>Titre</span>
+          <span>Création</span>
         </div>
+        <Progress value={50} className="h-2" />
+      </div>
 
-        {/* Barre de progression */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-            <div className="w-1/2 h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"></div>
-          </div>
-        </div>
+      {/* En-tête mobile - même style que Step 1 */}
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Choisissez l'objectif
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Quel type d'histoire souhaitez-vous créer ?
+        </p>
+      </div>
 
-        {/* Zone des enfants sélectionnés */}
-        {selectedChildren.length > 0 && (
-          <div className="flex gap-2 flex-wrap">
-            {selectedChildren.map(child => (
+      {/* Navigation mobile sticky en haut - même style que Step 1 */}
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-3 -mx-4 px-4 flex gap-3 mb-3">
+        <Button variant="outline" onClick={handleBack} className="flex-1">
+          Retour
+        </Button>
+        <Button
+          onClick={handleContinueToTitles}
+          disabled={!selectedObjective}
+          className="flex-1"
+        >
+          Continuer
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+      </div>
+
+      {/* Sélection actuelle des enfants - même style Card que Step 1 */}
+      {selectedChildren.length > 0 && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="pt-4">
+            <div className="text-sm font-medium mb-2">Personnages de l'histoire :</div>
+            <div className="flex flex-wrap gap-2">
+              {selectedChildren.map(child => (
+                <Badge key={child.id} variant="secondary" className="text-sm gap-1.5">
+                  <span>{getGenderIcon(child.gender)}</span>
+                  {child.name}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Objectifs dans une Card - cohérence avec Step 1 */}
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            🎯 Objectif de l'histoire
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-2 gap-4">
+            {objectives.map(objective => (
               <div 
-                key={child.id} 
-                className="flex items-center gap-1 bg-primary text-primary-foreground rounded-full px-3 py-1.5 text-sm"
+                key={objective.value}
+                onClick={() => handleObjectiveSelect(objective.value)}
+                className={cn(
+                  "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
+                  "bg-card backdrop-blur-sm aspect-square flex flex-col items-center justify-center text-center",
+                  selectedObjective === objective.value 
+                    ? 'border-primary bg-primary/20 shadow-lg ring-2 ring-primary/30' 
+                    : 'border-border hover:border-primary/50 hover:shadow-md'
+                )}
               >
-                <span className="text-sm">{getGenderIcon(child.gender)}</span>
-                <span className="font-medium">{child.name}</span>
+                {/* Indicateur de sélection */}
+                {selectedObjective === objective.value && (
+                  <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                    <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+                  </div>
+                )}
+                
+                {/* Icône */}
+                <div className="text-4xl mb-3">{objective.icon}</div>
+                
+                {/* Titre */}
+                <h3 className="font-semibold text-sm text-foreground leading-tight">
+                  {objective.label}
+                </h3>
               </div>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Contenu principal */}
-      <div className="px-4 py-6">
-        {/* Grille des objectifs 2x2 */}
-        <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-          {objectives.map(objective => (
-            <div 
-              key={objective.value}
-              onClick={() => handleObjectiveSelect(objective.value)}
-              className={cn(
-                "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
-                "bg-card backdrop-blur-sm aspect-square flex flex-col items-center justify-center text-center",
-                selectedObjective === objective.value 
-                  ? 'border-primary bg-primary/20 shadow-lg ring-2 ring-primary/30' 
-                  : 'border-border hover:border-primary/50 hover:shadow-md'
-              )}
-            >
-              {/* Indicateur de sélection */}
-              {selectedObjective === objective.value && (
-                <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
-                  <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
-                </div>
-              )}
-              
-              {/* Icône */}
-              <div className="text-4xl mb-3">{objective.icon}</div>
-              
-              {/* Titre */}
-              <h3 className="font-semibold text-sm text-foreground leading-tight">
-                {objective.label}
-              </h3>
-            </div>
-          ))}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
