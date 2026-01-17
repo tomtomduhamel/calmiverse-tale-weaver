@@ -1,12 +1,13 @@
 
 export const calculateScrollSpeed = (readingSpeed: number): number => {
   // Plage de vitesse de défilement adaptée à la lecture à voix haute (en pixels/seconde)
-  const minSpeed = 3;    // Pour 50 mots/min - défilement très lent, lecture expressive
-  const maxSpeed = 30;   // Pour 300 mots/min - défilement maximum (lecture rapide à voix haute)
+  const minSpeed = 5;    // Pour 90 mots/min - défilement lent, lecture expressive
+  const maxSpeed = 20;   // Pour 150 mots/min - défilement rapide mais lisible
   
   // Paramètres de vitesse de lecture utilisateur (en mots/minute)
-  const minReadingSpeed = 50;
-  const maxReadingSpeed = 300;
+  // Alignés avec les presets: Escargot 90, Tortue 120, Lapin 150
+  const minReadingSpeed = 90;
+  const maxReadingSpeed = 150;
   
   // Normaliser la vitesse de lecture vers [0, 1]
   const normalizedSpeed = Math.max(0, Math.min(1, 

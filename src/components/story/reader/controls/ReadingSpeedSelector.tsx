@@ -9,24 +9,24 @@ interface ReadingSpeedSelectorProps {
   compact?: boolean;
 }
 
-const SPEED_PRESETS = [
+export const SPEED_PRESETS = [
   { 
     icon: Snail, 
-    speed: 75, 
-    label: 'Très lent',
-    description: '75 mots/min - Lecture très expressive'
+    speed: 90, 
+    label: 'Lent',
+    description: '90 mots/min - Lecture expressive'
   },
   { 
     icon: Turtle, 
-    speed: 125, 
+    speed: 120, 
     label: 'Normal',
-    description: '125 mots/min - Lecture confortable'
+    description: '120 mots/min - Lecture confortable'
   },
   { 
     icon: Rabbit, 
-    speed: 200, 
+    speed: 150, 
     label: 'Rapide',
-    description: '200 mots/min - Lecture fluide'
+    description: '150 mots/min - Lecture fluide'
   },
 ];
 
