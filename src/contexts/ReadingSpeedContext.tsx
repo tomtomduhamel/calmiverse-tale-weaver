@@ -14,9 +14,9 @@ export const ReadingSpeedProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { userSettings } = useUserSettings();
   const { user } = useSupabaseAuth();
   
-  // État local partagé pour la vitesse de lecture
+  // État local partagé pour la vitesse de lecture (défaut: 120 = vitesse Tortue/Normal)
   const [readingSpeed, setLocalSpeed] = useState<number>(
-    userSettings?.readingPreferences?.readingSpeed || 125
+    userSettings?.readingPreferences?.readingSpeed || 120
   );
   
   // Synchroniser avec les paramètres utilisateur au chargement initial

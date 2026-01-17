@@ -1,7 +1,7 @@
 
-// Constante de vitesse de lecture alignée avec celle utilisée pour le choix de durée (src/types/story.ts)
+// Constante de vitesse de lecture alignée avec la vitesse "Tortue" (Normal) du ReadingSpeedSelector
 // Cette valeur doit être cohérente dans toute l'application
-export const READING_SPEED_WPM = 140;
+export const READING_SPEED_WPM = 120;
 
 export const calculateReadingTime = (text: string | undefined): string => {
   if (!text) {

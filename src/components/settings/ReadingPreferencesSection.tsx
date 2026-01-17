@@ -3,8 +3,10 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserSettings } from "@/types/user-settings";
+import { SPEED_PRESETS } from "@/components/story/reader/controls/ReadingSpeedSelector";
 
 interface ReadingPreferencesSectionProps {
   userSettings: UserSettings;
@@ -28,11 +30,11 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
   };
 
   // Gérer le changement de la vitesse de lecture
-  const handleReadingSpeedChange = async (value: number[]) => {
+  const handleReadingSpeedChange = async (speed: number) => {
     await onUpdateSettings({
       readingPreferences: {
         ...userSettings.readingPreferences,
-        readingSpeed: value[0]
+        readingSpeed: speed
       }
     });
   };
@@ -94,27 +96,51 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
 
         {/* Contrôle de la vitesse de lecture */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="reading-speed" className="text-base font-medium">
+          <div className="flex flex-col gap-2">
+            <Label className="text-base font-medium">
               Vitesse de lecture
             </Label>
-            <span className="text-sm font-medium">
-              {userSettings.readingPreferences?.readingSpeed || 125} mots/minute
-            </span>
+            <div className="text-sm text-muted-foreground">
+              Sélectionnez votre vitesse de lecture préférée pour le défilement automatique
+            </div>
           </div>
-          <Slider
-            id="reading-speed"
-            defaultValue={[userSettings.readingPreferences?.readingSpeed || 125]}
-            min={50}
-            max={300}
-            step={5}
-            onValueChange={handleReadingSpeedChange}
-            disabled={isLoading}
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Lent</span>
-            <span>Normal</span>
-            <span>Rapide</span>
+          <TooltipProvider delayDuration={300}>
+            <div className="flex gap-2 justify-center">
+              {SPEED_PRESETS.map((preset) => {
+                const Icon = preset.icon;
+                const currentSpeed = userSettings.readingPreferences?.readingSpeed || 120;
+                const isActive = currentSpeed === preset.speed;
+                
+                return (
+                  <Tooltip key={preset.speed}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={isActive ? 'default' : 'outline'}
+                        size="lg"
+                        className={`h-14 w-14 transition-all ${
+                          isActive 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'hover:bg-muted'
+                        }`}
+                        onClick={() => handleReadingSpeedChange(preset.speed)}
+                        disabled={isLoading}
+                      >
+                        <Icon className="h-6 w-6" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="text-center">
+                        <p className="font-medium">{preset.label}</p>
+                        <p className="text-xs text-muted-foreground">{preset.description}</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
+          <div className="text-center text-sm text-muted-foreground">
+            Vitesse actuelle : {userSettings.readingPreferences?.readingSpeed || 120} mots/minute
           </div>
         </div>
       </CardContent>
