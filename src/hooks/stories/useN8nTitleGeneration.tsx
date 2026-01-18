@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
 import { fetchWithRetry, getErrorMessage } from '@/utils/retryUtils';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from "@/integrations/supabase/client";
 
 export interface TitleGenerationData {
   objective: string;
@@ -51,9 +52,9 @@ export const useN8nTitleGeneration = (
 
   const parseN8nTitlesResponse = (rawResult: any): GeneratedTitle[] => {
     console.log('[N8nTitleGeneration] Structure brute de la réponse:', JSON.stringify(rawResult, null, 2));
-    
+
     let result = rawResult;
-    
+
     // CORRECTION CRITIQUE: Gérer le format array de n8n
     if (Array.isArray(rawResult)) {
       console.log('[N8nTitleGeneration] Détection format array - extraction du premier élément');
@@ -63,21 +64,21 @@ export const useN8nTitleGeneration = (
         return [];
       }
     }
-    
+
     console.log('[N8nTitleGeneration] Result après extraction array:', JSON.stringify(result, null, 2));
-    
+
     let titles: GeneratedTitle[] = [];
-    
+
     // Format 1: result.output.title_1/title_2/title_3 ou "title 1"/"title 2"/"title 3"
     if (result.output) {
       console.log('[N8nTitleGeneration] Détection du format output:', result.output);
-      
+
       const outputTitles = [];
       for (let i = 1; i <= 3; i++) {
         // Essayer les différentes variantes de clés
         const titleKeyUnderscore = `title_${i}`;
         const titleKeySpace = `title ${i}`;
-        
+
         if (result.output[titleKeyUnderscore]) {
           outputTitles.push(result.output[titleKeyUnderscore]);
           console.log(`[N8nTitleGeneration] Trouvé ${titleKeyUnderscore}:`, result.output[titleKeyUnderscore]);
@@ -88,7 +89,7 @@ export const useN8nTitleGeneration = (
           console.warn(`[N8nTitleGeneration] Titre ${i} non trouvé avec les clés ${titleKeyUnderscore} ou ${titleKeySpace}`);
         }
       }
-      
+
       if (outputTitles.length > 0) {
         console.log('[N8nTitleGeneration] Titres extraits du format output:', outputTitles);
         titles = outputTitles.map((title, index) => ({
@@ -96,18 +97,18 @@ export const useN8nTitleGeneration = (
           title: typeof title === 'string' ? title : title.title || title.name || String(title),
           description: typeof title === 'object' ? title.description : undefined
         }));
-        
+
         // Validation : vérifier qu'on a au moins 1 titre valide
         const validTitles = titles.filter(t => t.title && t.title.trim().length > 0);
         if (validTitles.length === 0) {
           console.error('[N8nTitleGeneration] Aucun titre valide trouvé dans les titres extraits');
           return [];
         }
-        
+
         return validTitles;
       }
     }
-    
+
     // Format 2: result.titles (format array)
     if (result.titles && Array.isArray(result.titles)) {
       console.log('[N8nTitleGeneration] Détection du format titles array:', result.titles);
@@ -118,7 +119,7 @@ export const useN8nTitleGeneration = (
       }));
       return titles;
     }
-    
+
     // Format 3: result.title1/title2/title3 (format direct)
     if (result.title1 && result.title2 && result.title3) {
       console.log('[N8nTitleGeneration] Détection du format title1/title2/title3');
@@ -129,12 +130,12 @@ export const useN8nTitleGeneration = (
       ];
       return titles;
     }
-    
+
     // Format 4: Tentative d'extraction de propriétés contenant "title"
-    const titleKeys = Object.keys(result).filter(key => 
+    const titleKeys = Object.keys(result).filter(key =>
       key.toLowerCase().includes('title') && result[key]
     );
-    
+
     if (titleKeys.length > 0) {
       console.log('[N8nTitleGeneration] Détection de clés contenant "title":', titleKeys);
       titles = titleKeys.slice(0, 3).map((key, index) => ({
@@ -143,7 +144,7 @@ export const useN8nTitleGeneration = (
       }));
       return titles;
     }
-    
+
     console.error('[N8nTitleGeneration] ERREUR: Aucun format de titre reconnu dans:', result);
     console.error('[N8nTitleGeneration] Clés disponibles:', Object.keys(result));
     return [];
@@ -162,12 +163,31 @@ export const useN8nTitleGeneration = (
 
     try {
       setIsGeneratingTitles(true);
-      
+
       const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb14-4e1b-8b6b-b21e872c1d60';
-      
+
+      const { data: templateData } = await supabase
+        .from('prompt_templates')
+        .select('active_version_id, prompt_template_versions!active_version_id(content)')
+        .eq('key', 'title_generation_prompt')
+        .single();
+
+      const versionData = templateData?.prompt_template_versions as unknown as { content: string } | { content: string }[];
+      let promptContent = "";
+
+      if (Array.isArray(versionData)) {
+        promptContent = versionData[0]?.content;
+      } else if (versionData) {
+        promptContent = (versionData as { content: string }).content;
+      }
+
+      if (!promptContent) promptContent = "Génère 3 titres pour : {{objective}}";
+      const finalPrompt = promptContent.replace('{{objective}}', data.objective);
+
       const payload = {
         action: 'generate_titles',
         objective: data.objective,
+        prompt: finalPrompt,
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         childrenGenders: data.childrenGenders,
@@ -202,36 +222,36 @@ export const useN8nTitleGeneration = (
       console.log('[N8nTitleGeneration] Réponse regénération reçue:', JSON.stringify(result, null, 2));
 
       const newTitles = parseN8nTitlesResponse(result);
-      
+
       if (newTitles.length === 0) {
         throw new Error('Aucun nouveau titre reçu');
       }
-      
+
       // Corriger les IDs pour refléter la position réelle (4, 5, 6)
       const startIndex = generatedTitles.length;
       const titlesWithCorrectIds = newTitles.map((title, index) => ({
         ...title,
         id: `title-${startIndex + index + 1}-${Date.now()}`
       }));
-      
+
       // Ajouter les nouveaux titres À LA FIN de la liste existante
       const updatedTitles = [...generatedTitles, ...titlesWithCorrectIds];
       onTitlesGenerated?.(updatedTitles);
       onRegenerationUsed?.(); // Utiliser la callback de persistance
-      
+
       toast({
         title: "Nouveaux titres générés",
         description: "3 nouveaux titres ont été ajoutés à la liste",
       });
-      
+
       return titlesWithCorrectIds;
     } catch (error: any) {
       console.error("Erreur lors de la regénération des titres:", error);
-        toast({
-          title: "Erreur de regénération",
-          description: getErrorMessage(error, "regénération de titres"),
-          variant: "destructive",
-        });
+      toast({
+        title: "Erreur de regénération",
+        description: getErrorMessage(error, "regénération de titres"),
+        variant: "destructive",
+      });
       return [];
     } finally {
       setIsGeneratingTitles(false);
@@ -240,21 +260,39 @@ export const useN8nTitleGeneration = (
 
   const generateTitles = async (data: TitleGenerationData): Promise<GeneratedTitle[]> => {
     console.log('[N8nTitleGeneration] ===== DÉBUT GÉNÉRATION TITRES =====');
-    console.log('[N8nTitleGeneration] État initial:', { 
-      currentTitles: generatedTitles.length, 
-      isGenerating: isGeneratingTitles 
+    console.log('[N8nTitleGeneration] État initial:', {
+      currentTitles: generatedTitles.length,
+      isGenerating: isGeneratingTitles
     });
-    
+
     setIsGeneratingTitles(true);
-    
+
     try {
       console.log('[N8nTitleGeneration] Envoi de la requête pour générer 3 titres:', data);
-      
+
       const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb14-4e1b-8b6b-b21e872c1d60';
-      
+
+      const { data: templateData } = await supabase
+        .from('prompt_templates')
+        .select('active_version_id, prompt_template_versions!active_version_id(content)')
+        .eq('key', 'title_generation_prompt')
+        .single();
+
+      let promptContent = templateData?.prompt_template_versions?.content;
+
+      // Fallback si pas de prompt en base (ou erreur fetch silencieuse)
+      if (!promptContent) {
+        console.warn('[N8nTitleGeneration] Pas de prompt trouvé en base, utilisation du fallback par défaut (vide)');
+        promptContent = "Génère 3 titres pour : {{objective}}"; // Fallback minimal
+      }
+
+      // Remplacer la variable {{objective}}
+      const finalPrompt = promptContent.replace('{{objective}}', data.objective);
+
       const payload = {
         action: 'generate_titles',
         objective: data.objective,
+        prompt: finalPrompt, // Nouveau champ prompt envoyé à n8n
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         childrenGenders: data.childrenGenders,
@@ -263,7 +301,7 @@ export const useN8nTitleGeneration = (
       };
 
       console.log('[N8nTitleGeneration] Payload envoyé:', JSON.stringify(payload, null, 2));
-      
+
       const response = await fetchWithRetry(webhookUrl, {
         method: 'POST',
         headers: {
@@ -310,10 +348,10 @@ export const useN8nTitleGeneration = (
       console.log('[N8nTitleGeneration] SUCCÈS: Titres finaux extraits:', titles);
       console.log('[N8nTitleGeneration] Données de coût extraites:', costData);
       console.log('[N8nTitleGeneration] ===== FIN GÉNÉRATION TITRES - SUCCÈS =====');
-      
+
       // Notifier la persistance des nouveaux titres avec le coût
       onTitlesGenerated?.(titles, costData);
-      
+
       // 🚨 NOTIFICATION NATIVE : Titres prêts
       try {
         await notifyTitlesGenerated();
@@ -321,19 +359,19 @@ export const useN8nTitleGeneration = (
       } catch (notifError) {
         console.warn('[N8nTitleGeneration] ⚠️ Erreur notification native:', notifError);
       }
-      
+
       // Pas de toast ici - sera géré par le composant appelant
       return titles;
     } catch (error: any) {
       console.error('[N8nTitleGeneration] ===== ERREUR GÉNÉRATION TITRES =====');
       console.error('[N8nTitleGeneration] Erreur complète:', error);
-      
+
       toast({
         title: "Erreur de génération",
         description: getErrorMessage(error, "génération de titres"),
         variant: "destructive",
       });
-      
+
       // 🚨 NOTIFICATION NATIVE : Erreur de génération
       try {
         await notifyStoryError('Génération de titres', 'generation-error');
@@ -341,7 +379,7 @@ export const useN8nTitleGeneration = (
       } catch (notifError) {
         console.warn('[N8nTitleGeneration] ⚠️ Erreur notification d\'erreur:', notifError);
       }
-      
+
       throw error;
     } finally {
       console.log('[N8nTitleGeneration] ===== FIN GÉNÉRATION TITRES - CLEANUP =====');

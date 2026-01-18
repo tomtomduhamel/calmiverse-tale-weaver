@@ -46,7 +46,7 @@ const generatePromptFromTemplate = (
   // Analyser les personnages
   const analysis = analyzeCharacters(childrenForPrompt);
   const characterContext = generateCharacterContext(analysis);
-  
+
   // Construire les noms
   const allNames = [...analysis.children.map(c => c.child.name), ...analysis.pets.map(p => p.name)];
   const namesText = allNames.length === 1
@@ -69,7 +69,7 @@ const generatePromptFromTemplate = (
   };
 
   console.log('[N8nStoryFromTitle] Génération depuis template DB avec variables:', Object.keys(variables));
-  
+
   return replacePromptVariables(template, variables);
 };
 
@@ -86,10 +86,10 @@ export const useN8nStoryFromTitle = () => {
     }
 
     setIsCreatingStory(true);
-    
+
     try {
       console.log('[N8nStoryFromTitle] Création d\'histoire à partir du titre:', data);
-      
+
       // Utiliser les données complètes des enfants si disponibles, sinon créer des objets basiques
       const childrenForPrompt = data.children || data.childrenNames.map((name, index) => ({
         id: data.childrenIds[index] || `temp-${index}`,
@@ -98,7 +98,7 @@ export const useN8nStoryFromTitle = () => {
         birthDate: new Date(Date.now() - (5 * 365.25 * 24 * 60 * 60 * 1000)), // Default à 5 ans
         authorId: user.id
       })) as Child[];
-      
+
       // Calculer les informations enrichies pour chaque enfant
       const enrichedChildrenData = childrenForPrompt.map(child => ({
         id: child.id,
@@ -111,31 +111,40 @@ export const useN8nStoryFromTitle = () => {
         petType: child.petType || null,
         petTypeCustom: child.petTypeCustom || null
       }));
-      
-      // Générer le prompt - priorité au template de la DB
+
+      // Générer le prompt - priorité au template de la DB spécifique à l'objectif
       const targetWordCount = data.durationMinutes ? estimateWordCountForDuration(data.durationMinutes) : undefined;
-      const storyPromptTemplate = prompts?.advanced_story_prompt_template;
-      
+
+      // Sélection dynamique du prompt selon l'objectif
+      const promptKey = `story_prompt_${data.objective}` as keyof typeof prompts;
+      let storyPromptTemplate = prompts?.[promptKey];
+
+      // Fallback 1: Si pas de prompt spécifique, essayer le prompt générique
+      if (!storyPromptTemplate) {
+        console.log(`[N8nStoryFromTitle] Prompt spécifique '${promptKey}' non trouvé, essai du générique`);
+        storyPromptTemplate = prompts?.advanced_story_prompt_template;
+      }
+
       // Log pour diagnostic
       if (!storyPromptTemplate) {
-        console.warn('[N8nStoryFromTitle] ⚠️ Template DB non disponible, utilisation du fallback hardcodé');
+        console.warn('[N8nStoryFromTitle] ⚠️ Template DB non disponible (ni spécifique ni générique), utilisation du fallback hardcodé');
       }
-      
+
       const storyPrompt = generatePromptFromTemplate(
         storyPromptTemplate,
         data,
         childrenForPrompt,
         targetWordCount
       );
-      
-      const promptSource = storyPromptTemplate ? 'database' : 'fallback';
+
+      const promptSource = storyPromptTemplate ? (prompts?.[promptKey] ? `database-${data.objective}` : 'database-generic') : 'fallback';
       console.log(`[N8nStoryFromTitle] Source du prompt: ${promptSource}`);
       console.log('[N8nStoryFromTitle] Prompt généré:', storyPrompt.substring(0, 200) + '...');
       console.log('[N8nStoryFromTitle] Données enrichies des enfants:', enrichedChildrenData);
-      
+
       // CORRECTION CRITIQUE: Utiliser le bon webhook pour la création d'histoire
       const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/816f3f78-bbdc-4b51-88b6-13232fcf3c78';
-      
+
       // Payload enrichi avec les informations complètes des enfants
       const payload = {
         action: 'create_story_from_title',
@@ -189,17 +198,17 @@ export const useN8nStoryFromTitle = () => {
       // Retourner un identifiant temporaire pour le processus, pas un vrai storyId
       const processId = result.processId || result.workflowId || `process-${Date.now()}`;
       console.log('[N8nStoryFromTitle] Processus n8n lancé avec ID:', processId);
-      
+
       return processId;
     } catch (error: any) {
       console.error('[N8nStoryFromTitle] Erreur:', error);
-      
+
       toast({
         title: "Erreur de création",
         description: getErrorMessage(error, "création d'histoire"),
         variant: "destructive",
       });
-      
+
       // 🚨 NOTIFICATION NATIVE : Erreur de création
       try {
         await notifyStoryError(data.selectedTitle, 'creation-error');
@@ -207,7 +216,7 @@ export const useN8nStoryFromTitle = () => {
       } catch (notifError) {
         console.warn('[N8nStoryFromTitle] ⚠️ Erreur notification:', notifError);
       }
-      
+
       throw error;
     } finally {
       setIsCreatingStory(false);

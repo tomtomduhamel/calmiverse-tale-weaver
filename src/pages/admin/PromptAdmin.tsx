@@ -50,6 +50,36 @@ const ACTIVE_PROMPTS_CONFIG: Record<string, {
     category: 'sequel',
     icon: BookOpen,
   },
+  'title_generation_prompt': {
+    label: '🟢 Génération Titres',
+    description: 'Template pour la génération des 3 propositions de titres',
+    category: 'generation',
+    icon: Sparkles,
+  },
+  'story_prompt_sleep': {
+    label: '🌙 Histoire du Soir (Sleep)',
+    description: 'Prompt spécifique pour l\'objectif Sommeil/Endormissement',
+    category: 'generation',
+    icon: Sparkles,
+  },
+  'story_prompt_focus': {
+    label: '🧠 Histoire Focus',
+    description: 'Prompt spécifique pour l\'objectif Concentration/Éveil',
+    category: 'generation',
+    icon: Sparkles,
+  },
+  'story_prompt_relax': {
+    label: '🌸 Histoire Détente (Relax)',
+    description: 'Prompt spécifique pour l\'objectif Relaxation/Calme',
+    category: 'generation',
+    icon: Sparkles,
+  },
+  'story_prompt_fun': {
+    label: '🎉 Histoire Fun',
+    description: 'Prompt spécifique pour l\'objectif Amusement/Aventure',
+    category: 'generation',
+    icon: Sparkles,
+  },
 };
 
 const getCategoryLabel = (category: string) => {
@@ -164,6 +194,144 @@ const PromptAdmin: React.FC = () => {
     }
   };
 
+  const DEFAULT_TITLE_PROMPT = `Tu es un agent qui est chargé de créer 3 titres d'histoires pour enfants selon ce prompt : 
+"Génère 3 titres d'histoires originales pour enfants, adaptés au thème suivant : {{objective}}.
+Objectif : Les titres doivent captiver l’attention tout en respectant l’intention du thème.
+- "sleep" : choisis des titres doux, rassurants et poétiques.
+- "focus" : choisis des titres engageants, stimulant la curiosité et l’attention.
+- "relax" : choisis des titres apaisants, inspirant le calme et la légèreté.
+- "fun" : choisis des titres drôles, surprenants et qui déclenche un sourire aux lecteurs (enfants).
+Chaque titre doit :
+- Être adapté à des enfants de 3 à 8 ans
+- Contenir maximum 10 mots
+- Donner envie d’écouter l’histoire."
+
+ATTENTION : Concernant les titres proposés, je veux que les règles d'écriture de la langue française soit respectée. C'est à dire que les majuscules soient pour la première lettre du titre et ensuite, seulement pour les noms propres.
+
+Les titres doivent être courts en interdisant les adjectifs qualificatifs laudatifs (exemple : merveilleux, surprenant, brillant, joyeux, farfelue, magique, etc.). Évite aussi les titres de type : "Quelche-chose qui fait une action". Inspire toi de la littérature jeunesse sans jamais répéter un titre déjà existant.
+
+Pour le titre de l'histoire (title),analyse utilise la mémoire "title_memory" et crée trois titres originaux qui sont différents des titres des 10 dernières histoires. Je souhaite que les titres ne contiennent pas les noms des enfants pour laquelle est créée l'histoire. Ne mets donc pas de nom d'enfant dans le titre des histoires.
+
+Renvoie le nombre de tokens iuput, le nombre de tokens output et le modèle llm utilisé (gpt-5) dans les variable "input_tokens", "output_tokens" et "model_llm" du json en sortie.
+
+Je veux que tu retournes un format json à l'aide de l’outil structured output parser.
+
+Conclusion : le format json final devra avoir la structure suivante :
+{
+	"title_1": "...",
+	"title_2": "...",
+    "title_3" : "...",
+  "input_tokens": string,
+  "output_tokens": string,
+  "model_llm": string
+}`;
+
+  const initializeDefaultPrompts = async () => {
+    try {
+      setLoading(true);
+      const userRes = await supabase.auth.getUser();
+      const userId = userRes.data.user?.id;
+      if (!userId) throw new Error("Utilisateur non connecté");
+
+      // 1. Récupérer le contenu du prompt générique actuel pour l'utiliser comme base
+      // Ou utiliser une base vide si aucun n'existe
+      let baseContent = "";
+      const genericPrompt = templates.find(t => t.key === 'advanced_story_prompt_template');
+
+      if (genericPrompt?.active_version_id) {
+        const { data } = await supabase
+          .from("prompt_template_versions")
+          .select("content")
+          .eq("id", genericPrompt.active_version_id)
+          .single();
+        if (data?.content) baseContent = data.content;
+      }
+
+      // Liste des clés à initialiser (ajout des titre + les 4 objectifs)
+      const keysToInit = [
+        'title_generation_prompt',
+        'story_prompt_sleep',
+        'story_prompt_focus',
+        'story_prompt_relax',
+        'story_prompt_fun'
+      ];
+
+      let initCount = 0;
+
+      for (const key of keysToInit) {
+        const config = ACTIVE_PROMPTS_CONFIG[key];
+        const existing = templates.find(t => t.key === key);
+
+        if (!existing) {
+          // Déterminer le contenu initial
+          let initialContent = "";
+          if (key === 'title_generation_prompt') {
+            initialContent = DEFAULT_TITLE_PROMPT;
+          } else {
+            // Pour les prompts d'histoire, on utilise le prompt générique s'il existe, sinon un placeholder
+            initialContent = baseContent || "Génère une histoire pour enfants...";
+          }
+
+          // Créer le template
+          const { data: templateData, error: templateError } = await supabase
+            .from("prompt_templates")
+            .insert({
+              key: key as string,
+              title: config.label.replace('🟢 ', '').replace('🌙 ', '').replace('🧠 ', '').replace('🌸 ', '').replace('🎉 ', ''),
+              description: config.description,
+              created_by: userId
+            })
+            .select("id")
+            .single();
+
+          if (templateError) {
+            console.error(`Erreur création template ${key}:`, templateError);
+            continue;
+          }
+
+          // Créer la version initiale
+          const { data: versionData, error: versionError } = await supabase
+            .from("prompt_template_versions")
+            .insert({
+              template_id: templateData.id,
+              version: 1,
+              content: initialContent,
+              changelog: 'Initialisation automatique',
+              created_by: userId,
+            })
+            .select("id")
+            .single();
+
+          if (versionError) {
+            console.error(`Erreur création version ${key}:`, versionError);
+            continue;
+          }
+
+          // Activer la version
+          await supabase
+            .from("prompt_templates")
+            .update({ active_version_id: versionData.id })
+            .eq("id", templateData.id);
+
+          initCount++;
+        }
+      }
+
+      if (initCount > 0) {
+        toast({ title: `${initCount} prompt(s) initialisé(s)` });
+        await fetchTemplates();
+      } else {
+        toast({ title: "Tous les prompts sont déjà initialisés" });
+      }
+
+    } catch (e: unknown) {
+      const err = e as Error;
+      toast({ title: "Erreur d'initialisation", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const createTemplate = async () => {
     try {
       const tKey = prompt("Clé technique (ex: story_generation):")?.trim();
@@ -262,16 +430,15 @@ const PromptAdmin: React.FC = () => {
     const config = getPromptConfig(t.key);
     const isActive = isActivePrompt(t.key);
     const Icon = config?.icon || Archive;
-    
+
     return (
       <button
         key={t.id}
         onClick={() => setSelectedId(t.id)}
-        className={`w-full text-left p-3 rounded-lg border transition-all ${
-          selectedId === t.id 
-            ? 'bg-primary/10 border-primary ring-1 ring-primary/30' 
-            : 'hover:bg-muted/50 hover:border-muted-foreground/20'
-        }`}
+        className={`w-full text-left p-3 rounded-lg border transition-all ${selectedId === t.id
+          ? 'bg-primary/10 border-primary ring-1 ring-primary/30'
+          : 'hover:bg-muted/50 hover:border-muted-foreground/20'
+          }`}
       >
         <div className="flex items-start gap-3">
           <div className={`mt-0.5 p-1.5 rounded-md ${isActive ? 'bg-green-500/10' : 'bg-muted'}`}>
@@ -341,15 +508,20 @@ const PromptAdmin: React.FC = () => {
                 <Zap className="h-4 w-4 text-primary" />
                 Templates
               </h2>
-              <Button size="sm" onClick={createTemplate}>
-                <Plus className="h-4 w-4 mr-1"/> Nouveau
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={initializeDefaultPrompts} title="Initialiser les prompts manquants">
+                  <Sparkles className="h-4 w-4" />
+                </Button>
+                <Button size="sm" onClick={createTemplate}>
+                  <Plus className="h-4 w-4 mr-1" /> Nouveau
+                </Button>
+              </div>
             </div>
             <Separator />
 
             <div className="space-y-4 max-h-[65vh] overflow-auto pr-1">
               {loading && <p className="text-sm text-muted-foreground">Chargement...</p>}
-              
+
               {!loading && templates.length === 0 && (
                 <p className="text-sm text-muted-foreground">Aucun template.</p>
               )}
@@ -413,13 +585,13 @@ const PromptAdmin: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="text-sm">Titre</label>
-                      <Input value={metaDraft.title} onChange={e => setMetaDraft(v => ({...v, title: e.target.value}))} />
+                      <Input value={metaDraft.title} onChange={e => setMetaDraft(v => ({ ...v, title: e.target.value }))} />
                     </div>
                     <div>
                       <label className="text-sm">Clé technique</label>
-                      <Input 
-                        value={metaDraft.key} 
-                        onChange={e => setMetaDraft(v => ({...v, key: e.target.value}))}
+                      <Input
+                        value={metaDraft.key}
+                        onChange={e => setMetaDraft(v => ({ ...v, key: e.target.value }))}
                         className="font-mono text-sm"
                       />
                       {isActivePrompt(metaDraft.key) && (
@@ -428,12 +600,12 @@ const PromptAdmin: React.FC = () => {
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-sm">Description</label>
-                      <Textarea value={metaDraft.description} onChange={e => setMetaDraft(v => ({...v, description: e.target.value}))} />
+                      <Textarea value={metaDraft.description} onChange={e => setMetaDraft(v => ({ ...v, description: e.target.value }))} />
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button onClick={saveMeta} disabled={savingMeta}>
-                      <Save className="h-4 w-4 mr-1"/> Enregistrer
+                      <Save className="h-4 w-4 mr-1" /> Enregistrer
                     </Button>
                   </div>
                 </Card>
@@ -449,13 +621,13 @@ const PromptAdmin: React.FC = () => {
                     <label className="text-sm">Contenu (nouvelle version)</label>
                     <Textarea
                       value={newVersionDraft.content}
-                      onChange={e => setNewVersionDraft(v => ({...v, content: e.target.value}))}
+                      onChange={e => setNewVersionDraft(v => ({ ...v, content: e.target.value }))}
                       className="min-h-[200px] font-mono text-sm"
                     />
                     <label className="text-sm">Changelog</label>
                     <Input
                       value={newVersionDraft.changelog}
-                      onChange={e => setNewVersionDraft(v => ({...v, changelog: e.target.value}))}
+                      onChange={e => setNewVersionDraft(v => ({ ...v, changelog: e.target.value }))}
                       placeholder="Décrivez les modifications apportées..."
                     />
                   </div>
@@ -464,11 +636,10 @@ const PromptAdmin: React.FC = () => {
 
                   <div className="space-y-3 max-h-[50vh] overflow-auto">
                     {versions.map(v => (
-                      <div key={v.id} className={`p-3 rounded-md border ${
-                        selected.active_version_id === v.id 
-                          ? 'border-primary bg-primary/5' 
-                          : ''
-                      }`}>
+                      <div key={v.id} className={`p-3 rounded-md border ${selected.active_version_id === v.id
+                        ? 'border-primary bg-primary/5'
+                        : ''
+                        }`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">Version v{v.version}</span>

@@ -5,6 +5,11 @@ export interface ActivePrompts {
   advanced_story_prompt_template?: string;
   sequel_prompt_template?: string;
   story_system_prompt?: string;
+  title_generation_prompt?: string;
+  story_prompt_sleep?: string;
+  story_prompt_focus?: string;
+  story_prompt_relax?: string;
+  story_prompt_fun?: string;
   [key: string]: string | undefined;
 }
 
@@ -35,7 +40,7 @@ export const useActivePrompts = () => {
 
       // Construire l'objet des prompts par clé
       const prompts: ActivePrompts = {};
-      
+
       if (templates) {
         (templates as PromptTemplateRow[]).forEach((template) => {
           if (template.key && template.active_content) {
