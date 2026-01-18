@@ -3,39 +3,73 @@ import { Button } from '@/components/ui/button';
 import { Snail, Turtle, Rabbit } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useReadingSpeed } from '@/contexts/ReadingSpeedContext';
+import { useUserSettings } from '@/hooks/settings/useUserSettings';
 
 interface ReadingSpeedSelectorProps {
   isDarkMode?: boolean;
   compact?: boolean;
 }
 
-export const SPEED_PRESETS = [
-  { 
-    icon: Snail, 
-    speed: 90, 
-    label: 'Lent',
-    description: '90 mots/min - Lecture expressive'
-  },
-  { 
-    icon: Turtle, 
-    speed: 120, 
-    label: 'Normal',
-    description: '120 mots/min - Lecture confortable'
-  },
-  { 
-    icon: Rabbit, 
-    speed: 150, 
-    label: 'Rapide',
-    description: '150 mots/min - Lecture fluide'
-  },
-];
+// Valeurs par défaut des vitesses (utilisées si non personnalisées)
+export const DEFAULT_SPEED_PRESETS = {
+  slow: 90,
+  normal: 120,
+  fast: 150,
+};
 
 export const ReadingSpeedSelector: React.FC<ReadingSpeedSelectorProps> = ({ isDarkMode = false, compact = false }) => {
   const { readingSpeed, setReadingSpeed } = useReadingSpeed();
+  const { userSettings } = useUserSettings();
+
+  // Obtenir les vitesses personnalisées de l'utilisateur ou les valeurs par défaut
+  const speedPresets = [
+    { 
+      key: 'slow',
+      icon: Snail, 
+      speed: userSettings?.readingPreferences?.customSpeedSlow ?? DEFAULT_SPEED_PRESETS.slow,
+      label: 'Lent',
+      description: 'Escargot'
+    },
+    { 
+      key: 'normal',
+      icon: Turtle, 
+      speed: userSettings?.readingPreferences?.customSpeedNormal ?? DEFAULT_SPEED_PRESETS.normal,
+      label: 'Normal',
+      description: 'Tortue'
+    },
+    { 
+      key: 'fast',
+      icon: Rabbit, 
+      speed: userSettings?.readingPreferences?.customSpeedFast ?? DEFAULT_SPEED_PRESETS.fast,
+      label: 'Rapide',
+      description: 'Lapin'
+    },
+  ];
 
   const handleSpeedChange = (newSpeed: number) => {
     setReadingSpeed(newSpeed);
   };
+
+  // Déterminer quel preset est actif (correspondance exacte ou le plus proche)
+  const getActivePreset = () => {
+    const exactMatch = speedPresets.find(p => p.speed === readingSpeed);
+    if (exactMatch) return exactMatch.key;
+    
+    // Si pas de correspondance exacte, trouver le plus proche
+    let closest = speedPresets[0];
+    let minDiff = Math.abs(speedPresets[0].speed - readingSpeed);
+    
+    for (const preset of speedPresets) {
+      const diff = Math.abs(preset.speed - readingSpeed);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = preset;
+      }
+    }
+    return closest.key;
+  };
+
+  const activeKey = getActivePreset();
 
   return (
     <div className="flex items-center gap-2">
@@ -46,12 +80,12 @@ export const ReadingSpeedSelector: React.FC<ReadingSpeedSelectorProps> = ({ isDa
       )}
       <TooltipProvider delayDuration={300}>
         <div className="flex gap-1">
-          {SPEED_PRESETS.map((preset) => {
+          {speedPresets.map((preset) => {
             const Icon = preset.icon;
-            const isActive = readingSpeed === preset.speed;
+            const isActive = activeKey === preset.key;
             
             return (
-              <Tooltip key={preset.speed}>
+              <Tooltip key={preset.key}>
                 <TooltipTrigger asChild>
                   <Button
                     variant={isActive ? 'default' : 'outline'}
@@ -69,7 +103,7 @@ export const ReadingSpeedSelector: React.FC<ReadingSpeedSelectorProps> = ({ isDa
                 <TooltipContent>
                   <div className="text-center">
                     <p className="font-medium">{preset.label}</p>
-                    <p className="text-xs text-muted-foreground">{preset.description}</p>
+                    <p className="text-xs text-muted-foreground">{preset.speed} mots/min</p>
                   </div>
                 </TooltipContent>
               </Tooltip>

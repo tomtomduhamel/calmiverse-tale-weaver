@@ -63,6 +63,12 @@ export const useUpdateUserSettings = (
         supabaseData.reading_speed = newSettings.readingPreferences.readingSpeed;
       if (newSettings.readingPreferences?.backgroundMusicEnabled !== undefined)
         supabaseData.background_music_enabled = newSettings.readingPreferences.backgroundMusicEnabled;
+      if (newSettings.readingPreferences?.customSpeedSlow !== undefined)
+        supabaseData.custom_speed_slow = newSettings.readingPreferences.customSpeedSlow;
+      if (newSettings.readingPreferences?.customSpeedNormal !== undefined)
+        supabaseData.custom_speed_normal = newSettings.readingPreferences.customSpeedNormal;
+      if (newSettings.readingPreferences?.customSpeedFast !== undefined)
+        supabaseData.custom_speed_fast = newSettings.readingPreferences.customSpeedFast;
       
       // Vérifier si l'utilisateur existe déjà dans la table
       const { data: existingUser, error: checkError } = await supabase
