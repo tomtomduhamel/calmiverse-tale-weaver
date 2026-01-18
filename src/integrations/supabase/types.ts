@@ -1003,6 +1003,9 @@ export type Database = {
           auto_scroll_enabled: boolean | null
           background_music_enabled: boolean | null
           created_at: string
+          custom_speed_fast: number | null
+          custom_speed_normal: number | null
+          custom_speed_slow: number | null
           email: string
           email_notifications: boolean | null
           firstname: string | null
@@ -1020,6 +1023,9 @@ export type Database = {
           auto_scroll_enabled?: boolean | null
           background_music_enabled?: boolean | null
           created_at?: string
+          custom_speed_fast?: number | null
+          custom_speed_normal?: number | null
+          custom_speed_slow?: number | null
           email: string
           email_notifications?: boolean | null
           firstname?: string | null
@@ -1037,6 +1043,9 @@ export type Database = {
           auto_scroll_enabled?: boolean | null
           background_music_enabled?: boolean | null
           created_at?: string
+          custom_speed_fast?: number | null
+          custom_speed_normal?: number | null
+          custom_speed_slow?: number | null
           email?: string
           email_notifications?: boolean | null
           firstname?: string | null

@@ -21,8 +21,11 @@ export const useUserSettingsState = () => {
     },
     readingPreferences: {
       autoScrollEnabled: false,
-      readingSpeed: 125,
+      readingSpeed: 120,
       backgroundMusicEnabled: true,
+      customSpeedSlow: 90,
+      customSpeedNormal: 120,
+      customSpeedFast: 150,
     }
   });
   
@@ -69,8 +72,11 @@ export const useUserSettingsState = () => {
             },
             readingPreferences: {
               autoScrollEnabled: data.auto_scroll_enabled ?? false,
-              readingSpeed: data.reading_speed ?? 125,
+              readingSpeed: data.reading_speed ?? 120,
               backgroundMusicEnabled: data.background_music_enabled ?? true,
+              customSpeedSlow: data.custom_speed_slow ?? 90,
+              customSpeedNormal: data.custom_speed_normal ?? 120,
+              customSpeedFast: data.custom_speed_fast ?? 150,
             }
           });
         } else {

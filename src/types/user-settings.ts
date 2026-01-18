@@ -13,8 +13,11 @@ export interface UserSettings {
   };
   readingPreferences: {
     autoScrollEnabled: boolean;
-    readingSpeed: number; // mots par minute
+    readingSpeed: number; // mots par minute (vitesse sélectionnée)
     backgroundMusicEnabled: boolean;
+    customSpeedSlow: number; // vitesse personnalisée Escargot (50-200)
+    customSpeedNormal: number; // vitesse personnalisée Tortue (50-200)
+    customSpeedFast: number; // vitesse personnalisée Lapin (50-200)
   };
 }
 
