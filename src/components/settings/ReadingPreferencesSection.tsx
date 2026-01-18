@@ -33,21 +33,9 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
   isLoading,
   onUpdateSettings
 }) => {
-  // États locaux pour les champs d'édition
-  const [editingSpeeds, setEditingSpeeds] = useState({
-    slow: userSettings.readingPreferences?.customSpeedSlow ?? DEFAULT_SPEEDS.slow,
-    normal: userSettings.readingPreferences?.customSpeedNormal ?? DEFAULT_SPEEDS.normal,
-    fast: userSettings.readingPreferences?.customSpeedFast ?? DEFAULT_SPEEDS.fast,
-  });
-
-  // Synchroniser avec les settings quand ils changent
-  React.useEffect(() => {
-    setEditingSpeeds({
-      slow: userSettings.readingPreferences?.customSpeedSlow ?? DEFAULT_SPEEDS.slow,
-      normal: userSettings.readingPreferences?.customSpeedNormal ?? DEFAULT_SPEEDS.normal,
-      fast: userSettings.readingPreferences?.customSpeedFast ?? DEFAULT_SPEEDS.fast,
-    });
-  }, [userSettings.readingPreferences?.customSpeedSlow, userSettings.readingPreferences?.customSpeedNormal, userSettings.readingPreferences?.customSpeedFast]);
+  // État pour savoir quel champ est en cours d'édition
+  const [editingKey, setEditingKey] = useState<'slow' | 'normal' | 'fast' | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
 
   // Gérer le changement du défilement automatique
   const handleAutoScrollChange = async (checked: boolean) => {
@@ -55,16 +43,6 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
       readingPreferences: {
         ...userSettings.readingPreferences,
         autoScrollEnabled: checked
-      }
-    });
-  };
-
-  // Gérer le changement de la vitesse de lecture sélectionnée
-  const handleReadingSpeedChange = async (speed: number) => {
-    await onUpdateSettings({
-      readingPreferences: {
-        ...userSettings.readingPreferences,
-        readingSpeed: speed
       }
     });
   };
@@ -79,84 +57,104 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
     });
   };
 
-  // Valider et sauvegarder une vitesse personnalisée
-  const handleCustomSpeedChange = async (speedKey: 'slow' | 'normal' | 'fast', value: string) => {
-    const numValue = parseInt(value, 10);
-    
-    // Mise à jour de l'état local
-    setEditingSpeeds(prev => ({
-      ...prev,
-      [speedKey]: value === '' ? '' : numValue || prev[speedKey]
-    }));
+  // Obtenir les vitesses personnalisées
+  const speeds = {
+    slow: userSettings.readingPreferences?.customSpeedSlow ?? DEFAULT_SPEEDS.slow,
+    normal: userSettings.readingPreferences?.customSpeedNormal ?? DEFAULT_SPEEDS.normal,
+    fast: userSettings.readingPreferences?.customSpeedFast ?? DEFAULT_SPEEDS.fast,
   };
 
-  // Sauvegarder lors du blur
-  const handleCustomSpeedBlur = async (speedKey: 'slow' | 'normal' | 'fast') => {
-    let value = editingSpeeds[speedKey];
-    
-    // Valider les limites
-    if (typeof value === 'number') {
-      value = Math.max(SPEED_LIMITS.min, Math.min(SPEED_LIMITS.max, value));
-    } else {
-      value = DEFAULT_SPEEDS[speedKey];
-    }
+  const currentSpeed = userSettings.readingPreferences?.readingSpeed ?? DEFAULT_SPEEDS.normal;
 
-    // Mettre à jour l'état local avec la valeur validée
-    setEditingSpeeds(prev => ({ ...prev, [speedKey]: value }));
+  // Configuration des presets
+  const speedPresets = [
+    { key: 'slow' as const, icon: Snail, label: 'Escargot' },
+    { key: 'normal' as const, icon: Turtle, label: 'Tortue' },
+    { key: 'fast' as const, icon: Rabbit, label: 'Lapin' },
+  ];
 
-    // Mapper vers les propriétés de settings
-    const settingsKey = speedKey === 'slow' ? 'customSpeedSlow' 
-      : speedKey === 'normal' ? 'customSpeedNormal' 
-      : 'customSpeedFast';
-
+  // Sélectionner une vitesse (clic sur le bouton icône)
+  const handleSelectSpeed = async (speedKey: 'slow' | 'normal' | 'fast') => {
     await onUpdateSettings({
       readingPreferences: {
         ...userSettings.readingPreferences,
-        [settingsKey]: value
+        readingSpeed: speeds[speedKey]
       }
     });
   };
 
+  // Commencer l'édition d'une vitesse
+  const handleStartEdit = (speedKey: 'slow' | 'normal' | 'fast') => {
+    setEditingKey(speedKey);
+    setEditValue(speeds[speedKey].toString());
+  };
+
+  // Annuler l'édition
+  const handleCancelEdit = () => {
+    setEditingKey(null);
+    setEditValue('');
+  };
+
+  // Valider et sauvegarder la vitesse
+  const handleSaveSpeed = async () => {
+    if (!editingKey) return;
+
+    let value = parseInt(editValue, 10);
+    
+    // Valider les limites
+    if (isNaN(value)) {
+      value = DEFAULT_SPEEDS[editingKey];
+    } else {
+      value = Math.max(SPEED_LIMITS.min, Math.min(SPEED_LIMITS.max, value));
+    }
+
+    // Mapper vers les propriétés de settings
+    const settingsKeyMap = {
+      slow: 'customSpeedSlow',
+      normal: 'customSpeedNormal',
+      fast: 'customSpeedFast',
+    } as const;
+
+    await onUpdateSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        [settingsKeyMap[editingKey]]: value,
+        // Si la vitesse actuelle correspond à l'ancienne valeur, mettre à jour aussi
+        ...(currentSpeed === speeds[editingKey] ? { readingSpeed: value } : {})
+      }
+    });
+
+    setEditingKey(null);
+    setEditValue('');
+  };
+
+  // Gérer les touches clavier
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveSpeed();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
+
   // Réinitialiser aux valeurs par défaut
   const handleResetToDefaults = async () => {
-    setEditingSpeeds(DEFAULT_SPEEDS);
     await onUpdateSettings({
       readingPreferences: {
         ...userSettings.readingPreferences,
         customSpeedSlow: DEFAULT_SPEEDS.slow,
         customSpeedNormal: DEFAULT_SPEEDS.normal,
         customSpeedFast: DEFAULT_SPEEDS.fast,
-        readingSpeed: DEFAULT_SPEEDS.normal, // Reset à la vitesse normale par défaut
+        readingSpeed: DEFAULT_SPEEDS.normal,
       }
     });
   };
 
-  // Obtenir les vitesses personnalisées pour le sélecteur
-  const customSpeedPresets = [
-    {
-      key: 'slow' as const,
-      icon: Snail,
-      speed: userSettings.readingPreferences?.customSpeedSlow ?? DEFAULT_SPEEDS.slow,
-      label: 'Lent',
-      description: 'Escargot'
-    },
-    {
-      key: 'normal' as const,
-      icon: Turtle,
-      speed: userSettings.readingPreferences?.customSpeedNormal ?? DEFAULT_SPEEDS.normal,
-      label: 'Normal',
-      description: 'Tortue'
-    },
-    {
-      key: 'fast' as const,
-      icon: Rabbit,
-      speed: userSettings.readingPreferences?.customSpeedFast ?? DEFAULT_SPEEDS.fast,
-      label: 'Rapide',
-      description: 'Lapin'
-    },
-  ];
-
-  const currentSpeed = userSettings.readingPreferences?.readingSpeed ?? DEFAULT_SPEEDS.normal;
+  // Vérifier si les vitesses sont différentes des valeurs par défaut
+  const hasCustomSpeeds = 
+    speeds.slow !== DEFAULT_SPEEDS.slow ||
+    speeds.normal !== DEFAULT_SPEEDS.normal ||
+    speeds.fast !== DEFAULT_SPEEDS.fast;
 
   return (
     <Card className="w-full">
@@ -203,156 +201,96 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
           </div>
         </div>
 
-        {/* Sélection de la vitesse de lecture */}
+        {/* Sélection de la vitesse de lecture - Design simplifié */}
         <div className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <Label className="text-base font-medium">
-              Vitesse de lecture
-            </Label>
-            <div className="text-sm text-muted-foreground">
-              Sélectionnez votre vitesse de lecture préférée pour le défilement automatique
-            </div>
-          </div>
-          <TooltipProvider delayDuration={300}>
-            <div className="flex gap-2 justify-center">
-              {customSpeedPresets.map((preset) => {
-                const Icon = preset.icon;
-                const isActive = currentSpeed === preset.speed;
-                
-                return (
-                  <Tooltip key={preset.key}>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={isActive ? 'default' : 'outline'}
-                        size="lg"
-                        className={`h-14 w-14 transition-all ${
-                          isActive 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'hover:bg-muted'
-                        }`}
-                        onClick={() => handleReadingSpeedChange(preset.speed)}
-                        disabled={isLoading}
-                      >
-                        <Icon className="h-6 w-6" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div className="text-center">
-                        <p className="font-medium">{preset.label}</p>
-                        <p className="text-xs text-muted-foreground">{preset.speed} mots/min</p>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </div>
-          </TooltipProvider>
-          <div className="text-center text-sm text-muted-foreground">
-            Vitesse actuelle : {currentSpeed} mots/minute
-          </div>
-        </div>
-
-        {/* Configuration des vitesses personnalisées */}
-        <div className="space-y-4 pt-4 border-t">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <Label className="text-base font-medium">
-                Personnaliser les vitesses
+                Vitesse de lecture
               </Label>
               <div className="text-sm text-muted-foreground">
-                Définissez vos propres valeurs pour chaque mode (50-200 mots/min)
+                Cliquez sur la vitesse pour la modifier
               </div>
             </div>
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleResetToDefaults}
-                    disabled={isLoading}
-                    className="gap-2"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    Valeurs initiales
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Réinitialiser aux valeurs par défaut (90, 120, 150)</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {hasCustomSpeeds && (
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleResetToDefaults}
+                      disabled={isLoading}
+                      className="h-8 w-8"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Réinitialiser (90, 120, 150)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            {/* Escargot */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Snail className="h-5 w-5" />
-                <span className="text-sm font-medium">Escargot</span>
-              </div>
-              <div className="relative w-full">
-                <Input
-                  type="number"
-                  min={SPEED_LIMITS.min}
-                  max={SPEED_LIMITS.max}
-                  value={editingSpeeds.slow}
-                  onChange={(e) => handleCustomSpeedChange('slow', e.target.value)}
-                  onBlur={() => handleCustomSpeedBlur('slow')}
-                  disabled={isLoading}
-                  className="text-center pr-12"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                  m/m
-                </span>
-              </div>
-            </div>
+          <div className="flex justify-center gap-4">
+            {speedPresets.map((preset) => {
+              const Icon = preset.icon;
+              const speed = speeds[preset.key];
+              const isActive = currentSpeed === speed;
+              const isEditing = editingKey === preset.key;
+              
+              return (
+                <div key={preset.key} className="flex flex-col items-center gap-2">
+                  {/* Bouton icône */}
+                  <Button
+                    variant={isActive ? 'default' : 'outline'}
+                    size="lg"
+                    className={`h-16 w-16 transition-all ${
+                      isActive 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'hover:bg-muted'
+                    }`}
+                    onClick={() => handleSelectSpeed(preset.key)}
+                    disabled={isLoading || isEditing}
+                  >
+                    <Icon className="h-7 w-7" />
+                  </Button>
 
-            {/* Tortue */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Turtle className="h-5 w-5" />
-                <span className="text-sm font-medium">Tortue</span>
-              </div>
-              <div className="relative w-full">
-                <Input
-                  type="number"
-                  min={SPEED_LIMITS.min}
-                  max={SPEED_LIMITS.max}
-                  value={editingSpeeds.normal}
-                  onChange={(e) => handleCustomSpeedChange('normal', e.target.value)}
-                  onBlur={() => handleCustomSpeedBlur('normal')}
-                  disabled={isLoading}
-                  className="text-center pr-12"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                  m/m
-                </span>
-              </div>
-            </div>
+                  {/* Vitesse sous l'icône - éditable au clic */}
+                  {isEditing ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min={SPEED_LIMITS.min}
+                        max={SPEED_LIMITS.max}
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onBlur={handleSaveSpeed}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
+                        className="w-16 h-7 text-center text-sm px-1"
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleStartEdit(preset.key)}
+                      disabled={isLoading}
+                      className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
+                        isActive ? 'text-primary' : 'text-muted-foreground'
+                      }`}
+                    >
+                      {speed}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-            {/* Lapin */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Rabbit className="h-5 w-5" />
-                <span className="text-sm font-medium">Lapin</span>
-              </div>
-              <div className="relative w-full">
-                <Input
-                  type="number"
-                  min={SPEED_LIMITS.min}
-                  max={SPEED_LIMITS.max}
-                  value={editingSpeeds.fast}
-                  onChange={(e) => handleCustomSpeedChange('fast', e.target.value)}
-                  onBlur={() => handleCustomSpeedBlur('fast')}
-                  disabled={isLoading}
-                  className="text-center pr-12"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                  m/m
-                </span>
-              </div>
-            </div>
+          <div className="text-center text-xs text-muted-foreground">
+            mots/minute
           </div>
         </div>
       </CardContent>
