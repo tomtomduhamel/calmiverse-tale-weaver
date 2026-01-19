@@ -6,6 +6,7 @@ export interface ActivePrompts {
   sequel_prompt_template?: string;
   story_system_prompt?: string;
   title_generation_prompt?: string;
+  image_generation_prompt?: string;
   story_prompt_sleep?: string;
   story_prompt_focus?: string;
   story_prompt_relax?: string;

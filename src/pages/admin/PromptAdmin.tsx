@@ -56,6 +56,12 @@ const ACTIVE_PROMPTS_CONFIG: Record<string, {
     category: 'generation',
     icon: Sparkles,
   },
+  'image_generation_prompt': {
+    label: '🎨 Génération Image',
+    description: 'Prompt pour la création de l\'image de couverture (contient des variables n8n)',
+    category: 'generation',
+    icon: Sparkles,
+  },
   'story_prompt_sleep': {
     label: '🌙 Histoire du Soir (Sleep)',
     description: 'Prompt spécifique pour l\'objectif Sommeil/Endormissement',
@@ -226,6 +232,15 @@ Conclusion : le format json final devra avoir la structure suivante :
   "model_llm": string
 }`;
 
+  const DEFAULT_IMAGE_PROMPT = `Crée une image pour cette histoire : {{ $json.summary }}.
+L'image doit illustrer parfaitement l'histoire pour enfants en restant simple et très visuelle. Elle est vouée à être l'image de couverture de l'histoire. Elle doit intéresser les enfants et les encourager à écouter l'histoire et donc ne pas être surchargée visuellement. L'image doit être adaptée aux âges des enfants de l'histoire ({{ $('Webhook').item.json.body.childrenData }})
+
+Le titre de l'histoire ({{ $('Webhook').item.json.body.selectedTitle }}) doit se retrouver dans la partie supérieure de l'image avec une police et un style adapté aux enfants.
+
+IMPORTANT : L'image ne doit contenir aucune incitation à la haine ou à la discrimination.
+
+IMPORTANT : l'image ne doit pas être tronquée. Elle doit être complète et le titre doit être bien parfaitement visible.`;
+
   const initializeDefaultPrompts = async () => {
     try {
       setLoading(true);
@@ -247,9 +262,10 @@ Conclusion : le format json final devra avoir la structure suivante :
         if (data?.content) baseContent = data.content;
       }
 
-      // Liste des clés à initialiser (ajout des titre + les 4 objectifs)
+      // Liste des clés à initialiser (ajout des titre + les 4 objectifs + image)
       const keysToInit = [
         'title_generation_prompt',
+        'image_generation_prompt',
         'story_prompt_sleep',
         'story_prompt_focus',
         'story_prompt_relax',
@@ -267,6 +283,8 @@ Conclusion : le format json final devra avoir la structure suivante :
           let initialContent = "";
           if (key === 'title_generation_prompt') {
             initialContent = DEFAULT_TITLE_PROMPT;
+          } else if (key === 'image_generation_prompt') {
+            initialContent = DEFAULT_IMAGE_PROMPT;
           } else {
             // Pour les prompts d'histoire, on utilise le prompt générique s'il existe, sinon un placeholder
             initialContent = baseContent || "Génère une histoire pour enfants...";

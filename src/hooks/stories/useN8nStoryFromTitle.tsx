@@ -125,6 +125,12 @@ export const useN8nStoryFromTitle = () => {
         storyPromptTemplate = prompts?.advanced_story_prompt_template;
       }
 
+      // Récupération du prompt d'image (nouvelle demande)
+      const imageGenerationPrompt = prompts?.image_generation_prompt;
+      if (!imageGenerationPrompt) {
+        console.warn('[N8nStoryFromTitle] ⚠️ Prompt de génération d\'image non trouvé');
+      }
+
       // Log pour diagnostic
       if (!storyPromptTemplate) {
         console.warn('[N8nStoryFromTitle] ⚠️ Template DB non disponible (ni spécifique ni générique), utilisation du fallback hardcodé');
@@ -161,6 +167,7 @@ export const useN8nStoryFromTitle = () => {
         userId: user.id,
         userEmail: user.email,
         storyPrompt, // Prompt généré (DB ou fallback)
+        imageGenerationPrompt: imageGenerationPrompt || null, // Nouveau prompt image
         promptSource, // 🆕 Source du prompt pour debug
         // 🆕 Coût de génération des titres pour calcul du coût total
         titleGenerationCost: data.titleGenerationCost || null,
