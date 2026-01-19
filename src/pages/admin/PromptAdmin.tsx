@@ -477,8 +477,8 @@ Conclusion : le format json final devra avoir la structure suivante :
 
   return (
     <AdminGuard>
-      <main className="p-4 md:p-6 space-y-4">
-        <header>
+      <div className="flex flex-col h-[calc(100vh-2rem)] p-4 md:p-6 gap-4">
+        <header className="flex-none">
           <h1 className="text-2xl font-semibold">Administration des prompts</h1>
           <p className="text-sm text-muted-foreground">
             Gérez les templates et leurs versions utilisées pour la génération des histoires.
@@ -486,7 +486,7 @@ Conclusion : le format json final devra avoir la structure suivante :
         </header>
 
         {/* Légende */}
-        <Card className="p-3 bg-muted/30">
+        <Card className="flex-none p-3 bg-muted/30">
           <div className="flex flex-wrap gap-4 text-xs">
             <div className="flex items-center gap-2">
               <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30">
@@ -501,25 +501,29 @@ Conclusion : le format json final devra avoir la structure suivante :
           </div>
         </Card>
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="font-medium flex items-center gap-2">
-                <Zap className="h-4 w-4 text-primary" />
-                Templates
-              </h2>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={initializeDefaultPrompts} title="Initialiser les prompts manquants">
-                  <Sparkles className="h-4 w-4" />
-                </Button>
-                <Button size="sm" onClick={createTemplate}>
-                  <Plus className="h-4 w-4 mr-1" /> Nouveau
-                </Button>
+        <section className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-h-0">
+          {/* Liste des templates (Sidebar) - Scroll indépendant */}
+          <Card className="flex flex-col h-full overflow-hidden">
+            <div className="p-4 flex-none space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="font-medium flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" />
+                  Templates
+                </h2>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={initializeDefaultPrompts} title="Initialiser les prompts manquants">
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" onClick={createTemplate}>
+                    <Plus className="h-4 w-4 mr-1" /> Nouveau
+                  </Button>
+                </div>
               </div>
             </div>
-            <Separator />
 
-            <div className="space-y-4 max-h-[65vh] overflow-auto pr-1">
+            <Separator className="flex-none" />
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {loading && <p className="text-sm text-muted-foreground">Chargement...</p>}
 
               {!loading && templates.length === 0 && (
@@ -529,9 +533,9 @@ Conclusion : le format json final devra avoir la structure suivante :
               {/* Prompts actifs en production */}
               {!loading && groupedTemplates.active.length > 0 && (
                 <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-green-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <h3 className="text-xs font-semibold text-green-500 uppercase tracking-wider flex items-center gap-1.5 sticky top-0 bg-background/95 backdrop-blur py-1 z-10">
                     <CheckCircle2 className="h-3 w-3" />
-                    Actifs en production ({groupedTemplates.active.length})
+                    Actifs ({groupedTemplates.active.length})
                   </h3>
                   <div className="space-y-2">
                     {groupedTemplates.active.map(renderTemplateButton)}
@@ -539,12 +543,17 @@ Conclusion : le format json final devra avoir la structure suivante :
                 </div>
               )}
 
+              {/* Separator visual between groups */}
+              {!loading && groupedTemplates.active.length > 0 && groupedTemplates.inactive.length > 0 && (
+                <Separator className="my-4" />
+              )}
+
               {/* Prompts non utilisés */}
               {!loading && groupedTemplates.inactive.length > 0 && (
                 <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 sticky top-0 bg-background/95 backdrop-blur py-1 z-10">
                     <Archive className="h-3 w-3" />
-                    Archives / Non utilisés ({groupedTemplates.inactive.length})
+                    Archives ({groupedTemplates.inactive.length})
                   </h3>
                   <div className="space-y-2">
                     {groupedTemplates.inactive.map(renderTemplateButton)}
@@ -554,7 +563,8 @@ Conclusion : le format json final devra avoir la structure suivante :
             </div>
           </Card>
 
-          <div className="md:col-span-2 space-y-4">
+          {/* Détail du template sélectionné - Scroll indépendant */}
+          <div className="md:col-span-2 h-full overflow-y-auto pr-1 space-y-4">
             {selected ? (
               <>
                 {/* Status banner */}
@@ -634,7 +644,7 @@ Conclusion : le format json final devra avoir la structure suivante :
 
                   <Separator />
 
-                  <div className="space-y-3 max-h-[50vh] overflow-auto">
+                  <div className="space-y-3 mt-4">
                     {versions.map(v => (
                       <div key={v.id} className={`p-3 rounded-md border ${selected.active_version_id === v.id
                         ? 'border-primary bg-primary/5'
@@ -662,7 +672,7 @@ Conclusion : le format json final devra avoir la structure suivante :
                           <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
                             Voir le contenu
                           </summary>
-                          <pre className="mt-2 bg-muted p-2 rounded whitespace-pre-wrap text-sm font-mono">
+                          <pre className="mt-2 bg-muted p-2 rounded whitespace-pre-wrap text-sm font-mono max-h-[300px] overflow-auto">
                             {v.content}
                           </pre>
                         </details>
@@ -672,13 +682,17 @@ Conclusion : le format json final devra avoir la structure suivante :
                 </Card>
               </>
             ) : (
-              <Card className="p-6">
-                <p className="text-muted-foreground">Sélectionnez un template à gauche.</p>
+              <Card className="p-6 h-full flex items-center justify-center text-center">
+                <div>
+                  <Sparkles className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+                  <p className="text-muted-foreground font-medium">Sélectionnez un template dans la liste pour l'éditer.</p>
+                  <p className="text-sm text-muted-foreground/60 mt-2">Vous pourrez gérer ses versions et son contenu.</p>
+                </div>
               </Card>
             )}
           </div>
         </section>
-      </main>
+      </div>
     </AdminGuard>
   );
 };
