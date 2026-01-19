@@ -57,7 +57,7 @@ const PageLoader = () => {
 
   useEffect(() => {
     bootMonitor.log('PageLoader: Started');
-    
+
     // Compteur de temps écoulé
     const interval = setInterval(() => {
       setElapsed(prev => prev + 1);
@@ -96,7 +96,7 @@ const PageLoader = () => {
         <div style={{ marginBottom: '1.5rem', opacity: 0.7 }}>
           Le chargement prend plus de temps que prévu
         </div>
-        <button 
+        <button
           onClick={() => {
             bootMonitor.log('PageLoader: Manual reload');
             window.location.reload();
@@ -142,9 +142,12 @@ const PageLoader = () => {
   );
 };
 
+import { TitleGenerationProvider } from "@/contexts/TitleGenerationContext";
+import { TitleGenerationIndicator } from "@/components/story/TitleGenerationIndicator";
+
 function App() {
   const isDemoMode = (window as any).__CALMI_DEMO_MODE === true;
-  
+
   useEffect(() => {
     bootMonitor.log('App: Component mounted');
     if (isDemoMode) {
@@ -163,72 +166,75 @@ function App() {
         console.warn('[App] Notifications not supported on this device');
       }
     };
-    
+
     initNotifications();
   }, []);
 
   return (
     <ErrorBoundary>
-      {isDemoMode && <DemoBanner />}
-      <div className={isDemoMode ? "pt-[60px]" : ""}>
-        <Router>
-          <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Routes publiques */}
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/beta-pending" element={<BetaPending />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/privacy-policy" element={<NewPrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/cookies" element={<CookiePolicy />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/documentation" element={<DocumentationPage />} />
-            <Route path="/status" element={<ServiceStatusPage />} />
-            <Route path="/quick-start" element={<QuickStartPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/shared/:token" element={<SharedStory />} />
-            <Route path="/shared-story" element={<SharedStoryRedirect />} />
-            <Route path="/story/:id" element={<PublicStory />} />
-            <Route path="/404" element={<NotFound />} />
+      <TitleGenerationProvider>
+        {isDemoMode && <DemoBanner />}
+        <div className={isDemoMode ? "pt-[60px]" : ""}>
+          <Router>
+            <Suspense fallback={<PageLoader />}>
+              <TitleGenerationIndicator />
+              <Routes>
+                {/* Routes publiques */}
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/beta-pending" element={<BetaPending />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/privacy-policy" element={<NewPrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/cookies" element={<CookiePolicy />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/documentation" element={<DocumentationPage />} />
+                <Route path="/status" element={<ServiceStatusPage />} />
+                <Route path="/quick-start" element={<QuickStartPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/shared/:token" element={<SharedStory />} />
+                <Route path="/shared-story" element={<SharedStoryRedirect />} />
+                <Route path="/story/:id" element={<PublicStory />} />
+                <Route path="/404" element={<NotFound />} />
 
-        {/* Routes avec authentification et vérification beta */}
-        <Route path="/" element={<BetaGuard><Shell /></BetaGuard>}>
-          <Route index element={<Index />} />
-          <Route path="children" element={<ChildrenListPage />} />
-          <Route path="kids-profile" element={<KidsProfile />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="library" element={<Library />} />
-          <Route path="reader/:id" element={<StoryReaderPage />} />
-          {/* Route obsolète supprimée - utiliser /create-story/step-1 */}
-          {/* Redirection de l'ancienne route vers la nouvelle */}
-          <Route path="create-story-n8n" element={<Navigate to="/create-story/step-1" replace />} />
-          <Route path="create-story-titles" element={<CreateStoryTitles />} />
-          <Route path="create-story/step-1" element={<CreateStoryStep1 />} />
-          <Route path="create-story/step-2" element={<CreateStoryStep2 />} />
-          {/* Routes step-3 supprimée - génération en arrière-plan */}
-          <Route path="pricing" element={<Pricing />} />
-          <Route path="subscription" element={<Subscription />} />
-          <Route path="test-connection" element={<TestConnection />} />
-          <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
-          <Route path="admin/prompts" element={<AdminGuard><PromptAdmin /></AdminGuard>} />
-          <Route path="admin/tts-config" element={<AdminGuard><TtsConfig /></AdminGuard>} />
-          <Route path="admin/feedback" element={<AdminGuard><AdminFeedback /></AdminGuard>} />
-          <Route path="admin/beta-testers" element={<AdminGuard><BetaTestersAdmin /></AdminGuard>} />
-        </Route>
+                {/* Routes avec authentification et vérification beta */}
+                <Route path="/" element={<BetaGuard><Shell /></BetaGuard>}>
+                  <Route index element={<Index />} />
+                  <Route path="children" element={<ChildrenListPage />} />
+                  <Route path="kids-profile" element={<KidsProfile />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="library" element={<Library />} />
+                  <Route path="reader/:id" element={<StoryReaderPage />} />
+                  {/* Route obsolète supprimée - utiliser /create-story/step-1 */}
+                  {/* Redirection de l'ancienne route vers la nouvelle */}
+                  <Route path="create-story-n8n" element={<Navigate to="/create-story/step-1" replace />} />
+                  <Route path="create-story-titles" element={<CreateStoryTitles />} />
+                  <Route path="create-story/step-1" element={<CreateStoryStep1 />} />
+                  <Route path="create-story/step-2" element={<CreateStoryStep2 />} />
+                  {/* Routes step-3 supprimée - génération en arrière-plan */}
+                  <Route path="pricing" element={<Pricing />} />
+                  <Route path="subscription" element={<Subscription />} />
+                  <Route path="test-connection" element={<TestConnection />} />
+                  <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
+                  <Route path="admin/prompts" element={<AdminGuard><PromptAdmin /></AdminGuard>} />
+                  <Route path="admin/tts-config" element={<AdminGuard><TtsConfig /></AdminGuard>} />
+                  <Route path="admin/feedback" element={<AdminGuard><AdminFeedback /></AdminGuard>} />
+                  <Route path="admin/beta-testers" element={<AdminGuard><BetaTestersAdmin /></AdminGuard>} />
+                </Route>
 
-            {/* Route de fallback */}
-            <Route path="*" element={<Navigate to="/404" replace />} />
-          </Routes>
-        </Suspense>
-      </Router>
+                {/* Route de fallback */}
+                <Route path="*" element={<Navigate to="/404" replace />} />
+              </Routes>
+            </Suspense>
+          </Router>
 
-      {/* Composants globaux */}
-      <ErrorListener />
-      <Toaster />
-      <PWAInstallPrompt />
-      <PWAUpdateNotification />
-      <OfflineIndicator />
-      </div>
+          {/* Composants globaux */}
+          <ErrorListener />
+          <Toaster />
+          <PWAInstallPrompt />
+          <PWAUpdateNotification />
+          <OfflineIndicator />
+        </div>
+      </TitleGenerationProvider>
     </ErrorBoundary>
   );
 }

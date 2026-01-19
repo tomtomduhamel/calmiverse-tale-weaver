@@ -7,22 +7,22 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useN8nTitleGeneration } from '@/hooks/stories/useN8nTitleGeneration';
+import { useTitleGeneration } from '@/contexts/TitleGenerationContext';
 import { useN8nStoryFromTitle } from '@/hooks/stories/useN8nStoryFromTitle';
 import { useRealtimeStoryMonitor } from '@/hooks/stories/useRealtimeStoryMonitor';
-import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
 import { useQuotaChecker } from '@/hooks/subscription/useQuotaChecker';
 import { useSubscription } from '@/hooks/subscription/useSubscription';
 import TitleSelector from './TitleSelector';
 import UpgradePrompt from '@/components/subscription/UpgradePrompt';
 import type { Child } from '@/types/child';
-import type { GeneratedTitle, TitleCostData } from '@/hooks/stories/useN8nTitleGeneration';
 import type { StoryDurationMinutes } from '@/types/story';
+
 interface TitleBasedStoryCreatorProps {
   children: Child[];
   onStoryCreated: (storyId: string) => void;
   preSelectedChildId?: string;
 }
+
 const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   children,
   onStoryCreated,
@@ -43,7 +43,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   }
 
   const navigate = useNavigate();
-  // Use persisted state instead of local state
+
+  // Utiliser le contexte global au lieu des hooks locaux
   const {
     currentStep,
     selectedChildrenIds,
@@ -66,36 +67,21 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     clearGenerationInterrupted,
     clearPersistedState,
     hasPersistedSession,
-    forceSave
-  } = usePersistedStoryCreation();
+    forceSave,
+    // N8n logic from context
+    generateTitles,
+    generateAdditionalTitles,
+    clearTitles,
+    isGeneratingTitles,
+    canRegenerate
+  } = useTitleGeneration();
+
   const { toast } = useToast();
   const { validateAction, incrementUsage } = useQuotaChecker();
   const { subscription } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [quotaMessage, setQuotaMessage] = useState<string>('');
 
-  // Callback pour gérer les titres générés avec leur coût
-  const handleTitlesGeneratedWithCost = useCallback((titles: GeneratedTitle[], costData?: TitleCostData) => {
-    updateGeneratedTitles(titles);
-    if (costData) {
-      console.log('[TitleBasedStoryCreator] Coût de génération des titres reçu:', costData);
-      updateTitleGenerationCost(costData);
-    }
-  }, [updateGeneratedTitles, updateTitleGenerationCost]);
-
-  const {
-    generateTitles,
-    generateAdditionalTitles,
-    clearTitles,
-    resetRegenerationState,
-    isGeneratingTitles,
-    canRegenerate
-  } = useN8nTitleGeneration(
-    generatedTitles,
-    handleTitlesGeneratedWithCost,
-    regenerationUsed,
-    incrementRegeneration
-  );
   const {
     createStoryFromTitle,
     isCreatingStory
@@ -117,6 +103,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     },
     timeoutMs: 120000 // 2 minutes
   });
+
   const objectives = [{
     value: 'sleep',
     label: 'Endormissement',
@@ -138,7 +125,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     icon: '🎉',
     description: 'Histoire joyeuse et divertissante'
   }];
-  
+
   // Log de diagnostic au montage
   useEffect(() => {
     console.log('[TitleBasedStoryCreator] 🔍 Montage composant', {
@@ -163,7 +150,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
 
   const handleChildToggle = useCallback((childId: string) => {
-    const newSelection = selectedChildrenIds.includes(childId) 
+    const newSelection = selectedChildrenIds.includes(childId)
       ? selectedChildrenIds.filter(id => id !== childId)
       : [...selectedChildrenIds, childId];
     updateSelectedChildren(newSelection);
@@ -307,10 +294,10 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     forceSave();
 
     console.log('[TitleBasedStoryCreator] Auto-génération des titres...');
-    
+
     // Appel direct avec les données de la ref (pas de dépendance à handleGenerateTitles)
     const selectedChildrenForGen = childrenList.filter(child => ids.includes(child.id));
-    
+
     generateTitles({
       objective: obj,
       childrenIds: ids,
@@ -354,7 +341,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
     // ✅ Vérifier le quota AVANT de créer l'histoire
     const validation = await validateAction('create_story');
-    
+
     if (!validation.allowed) {
       console.log('[TitleBasedStoryCreator] Quota atteint:', validation);
       // ✅ Toast immédiat pour feedback
@@ -448,78 +435,78 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
           onCancel={() => setShowUpgradePrompt(false)}
         />
         <div className="space-y-6">
-        {/* Notification de session récupérée */}
-        {hasPersistedSession() && (
-          <Alert className="mb-6">
-            <RefreshCw className="h-4 w-4" />
-            <AlertDescription>
-              Une session de création d'histoire a été récupérée. 
-              <Button variant="link" className="ml-2 p-0" onClick={handleRestart}>
-                Recommencer
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
+          {/* Notification de session récupérée */}
+          {hasPersistedSession() && (
+            <Alert className="mb-6">
+              <RefreshCw className="h-4 w-4" />
+              <AlertDescription>
+                Une session de création d'histoire a été récupérée.
+                <Button variant="link" className="ml-2 p-0" onClick={handleRestart}>
+                  Recommencer
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
-        {/* Indicateur de progression */}
-        <div className="mb-6">
-        <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-          <span>Sélection enfants</span>
-          <span>Choix objectif</span>
-          <span>Sélection du titre</span>
-          <span>Création</span>
-        </div>
-        <Progress 
-          value={currentStep === 'children' ? 25 : currentStep === 'objective' ? 50 : currentStep === 'titles' ? 75 : 100} 
-          className="h-2" 
-        />
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Sélectionnez les enfants
-            </CardTitle>
-            <CardDescription>
-              Choisissez pour qui vous souhaitez créer cette histoire
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {children.map(child => {
-                // Gérer les deux formats possibles: birthDate (type) ou birthdate (Supabase)
-                const birthDateValue = (child as any).birthdate || child.birthDate;
-                const age = birthDateValue 
-                  ? new Date().getFullYear() - new Date(birthDateValue).getFullYear()
-                  : null;
-                
-                return (
-                  <div 
-                    key={child.id} 
-                    onClick={() => handleChildToggle(child.id)} 
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedChildrenIds.includes(child.id) ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
-                  >
-                    <div className="font-medium">{child.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {age !== null ? `${age} ans` : 'Âge inconnu'}
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Indicateur de progression */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+              <span>Sélection enfants</span>
+              <span>Choix objectif</span>
+              <span>Sélection du titre</span>
+              <span>Création</span>
             </div>
-          </CardContent>
-        </Card>
+            <Progress
+              value={currentStep === 'children' ? 25 : currentStep === 'objective' ? 50 : currentStep === 'titles' ? 75 : 100}
+              className="h-2"
+            />
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Sélectionnez les enfants
+              </CardTitle>
+              <CardDescription>
+                Choisissez pour qui vous souhaitez créer cette histoire
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {children.map(child => {
+                  // Gérer les deux formats possibles: birthDate (type) ou birthdate (Supabase)
+                  const birthDateValue = (child as any).birthdate || child.birthDate;
+                  const age = birthDateValue
+                    ? new Date().getFullYear() - new Date(birthDateValue).getFullYear()
+                    : null;
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Objectif de l'histoire</CardTitle>
-            <CardDescription>
-              Quel est le but de cette histoire ?
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {objectives.map(objective => <div key={objective.value} onClick={() => updateSelectedObjective(objective.value)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedObjective === objective.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+                  return (
+                    <div
+                      key={child.id}
+                      onClick={() => handleChildToggle(child.id)}
+                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedChildrenIds.includes(child.id) ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
+                    >
+                      <div className="font-medium">{child.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {age !== null ? `${age} ans` : 'Âge inconnu'}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Objectif de l'histoire</CardTitle>
+              <CardDescription>
+                Quel est le but de cette histoire ?
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {objectives.map(objective => <div key={objective.value} onClick={() => updateSelectedObjective(objective.value)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedObjective === objective.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-2xl">{objective.icon}</span>
                     <span className="font-medium">{objective.label}</span>
@@ -528,30 +515,30 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
                     {objective.description}
                   </div>
                 </div>)}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-        <div className="flex justify-between items-center">
-          <div className="flex flex-wrap gap-2">
-            {selectedChildren.map(child => <Badge key={child.id} variant="secondary">
+          <div className="flex justify-between items-center">
+            <div className="flex flex-wrap gap-2">
+              {selectedChildren.map(child => <Badge key={child.id} variant="secondary">
                 {child.name}
               </Badge>)}
-            {selectedObjectiveData && <Badge variant="outline">
+              {selectedObjectiveData && <Badge variant="outline">
                 {selectedObjectiveData.icon} {selectedObjectiveData.label}
               </Badge>}
-          </div>
-          
-          <Button onClick={handleGenerateTitles} disabled={selectedChildrenIds.length === 0 || isGeneratingTitles} className="min-w-[200px]">
-            {isGeneratingTitles ? <>
+            </div>
+
+            <Button onClick={handleGenerateTitles} disabled={selectedChildrenIds.length === 0 || isGeneratingTitles} className="min-w-[200px]">
+              {isGeneratingTitles ? <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Génération IA... (2-3 min)
               </> : <>
                 <Sparkles className="w-4 h-4 mr-2" />
                 Générer les titres
               </>}
-          </Button>
-        </div>
+            </Button>
+          </div>
         </div>
       </>
     );
@@ -576,10 +563,10 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
               </p>
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 clearGenerationInterrupted();
                 updateCurrentStep('objective');
@@ -587,7 +574,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
             >
               Revenir à la configuration
             </Button>
-            <Button 
+            <Button
               onClick={handleRetryAfterInterruption}
             >
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -611,7 +598,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
                 ✨ Calmi crée vos 3 titres personnalisés
               </h3>
               <p className="text-muted-foreground">
-                Nos petits lutins magiques travaillent à créer des titres uniques pour {selectedChildren.map(c => c.name).join(', ')}. 
+                Nos petits lutins magiques travaillent à créer des titres uniques pour {selectedChildren.map(c => c.name).join(', ')}.
                 Vous serez prévenu dès qu'ils seront prêts !
               </p>
               <p className="text-xs text-muted-foreground mt-2">
@@ -619,10 +606,10 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
               </p>
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 clearTitles();
                 setIsGeneratingTitles(false);
@@ -631,7 +618,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
             >
               Annuler la création des titres
             </Button>
-            <Button 
+            <Button
               variant="secondary"
               onClick={() => {
                 navigate('/library');
@@ -665,7 +652,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
             isCreatingStory={isCreatingStory}
             isRegenerating={isGeneratingTitles}
           />
-          
+
           <div className="flex justify-center">
             <Button variant="outline" onClick={handleBack}>
               Retour à la configuration
