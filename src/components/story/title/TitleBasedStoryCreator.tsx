@@ -343,5 +343,3 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 };
 
 export default TitleBasedStoryCreator;
-
-export default TitleBasedStoryCreator;
