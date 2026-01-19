@@ -272,33 +272,41 @@ export const useN8nTitleGeneration = (
 
       const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb14-4e1b-8b6b-b21e872c1d60';
 
-      const { data: templateData, error: fetchError } = await supabase
+      // 1. Récupérer l'ID de la version active du template
+      console.log('[N8nTitleGeneration] Récupération du template "title_generation_prompt"...');
+      const { data: templateData, error: templateError } = await supabase
         .from('prompt_templates')
-        .select('active_version_id, prompt_template_versions!active_version_id(content)')
+        .select('id, active_version_id')
         .eq('key', 'title_generation_prompt')
         .single();
 
-      if (fetchError) {
-        console.warn('[N8nTitleGeneration] Erreur fetch template:', fetchError);
+      if (templateError) {
+        console.warn('[N8nTitleGeneration] Erreur fetch template:', templateError);
       }
 
-      // Extraction sécurisée du contenu
       let promptContent = "";
-      const versionData = templateData?.prompt_template_versions;
 
-      if (versionData) {
-        if (Array.isArray(versionData)) {
-          promptContent = versionData[0]?.content;
-        } else if (typeof versionData === 'object' && 'content' in versionData) {
-          promptContent = (versionData as { content: string }).content;
+      // 2. Si on a une version active, récupérer son contenu
+      if (templateData?.active_version_id) {
+        const { data: versionData, error: versionError } = await supabase
+          .from('prompt_template_versions')
+          .select('content')
+          .eq('id', templateData.active_version_id)
+          .single();
+
+        if (versionError) {
+          console.warn('[N8nTitleGeneration] Erreur fetch version:', versionError);
+        } else if (versionData?.content) {
+          promptContent = versionData.content;
+          console.log('[N8nTitleGeneration] Prompt chargé avec succès, longueur:', promptContent.length);
         }
+      } else {
+        console.warn('[N8nTitleGeneration] Aucune version active trouvée pour le template');
       }
-
-      console.log('[N8nTitleGeneration] Prompt récupéré de la DB:', promptContent ? 'OUI' : 'NON');
 
       // Fallback si pas de prompt en base
       if (!promptContent) {
-        console.warn('[N8nTitleGeneration] Pas de prompt trouvé en base, utilisation du fallback par défaut');
+        console.warn('[N8nTitleGeneration] Pas de prompt trouvé en base (ou vide), utilisation du fallback par défaut');
         promptContent = "Génère 3 titres pour : {{objective}}";
       }
 
