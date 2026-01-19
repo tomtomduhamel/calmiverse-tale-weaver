@@ -272,18 +272,34 @@ export const useN8nTitleGeneration = (
 
       const webhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/067eebcf-cb14-4e1b-8b6b-b21e872c1d60';
 
-      const { data: templateData } = await supabase
+      const { data: templateData, error: fetchError } = await supabase
         .from('prompt_templates')
         .select('active_version_id, prompt_template_versions!active_version_id(content)')
         .eq('key', 'title_generation_prompt')
         .single();
 
-      let promptContent = templateData?.prompt_template_versions?.content;
+      if (fetchError) {
+        console.warn('[N8nTitleGeneration] Erreur fetch template:', fetchError);
+      }
 
-      // Fallback si pas de prompt en base (ou erreur fetch silencieuse)
+      // Extraction sécurisée du contenu
+      let promptContent = "";
+      const versionData = templateData?.prompt_template_versions;
+
+      if (versionData) {
+        if (Array.isArray(versionData)) {
+          promptContent = versionData[0]?.content;
+        } else if (typeof versionData === 'object' && 'content' in versionData) {
+          promptContent = (versionData as { content: string }).content;
+        }
+      }
+
+      console.log('[N8nTitleGeneration] Prompt récupéré de la DB:', promptContent ? 'OUI' : 'NON');
+
+      // Fallback si pas de prompt en base
       if (!promptContent) {
-        console.warn('[N8nTitleGeneration] Pas de prompt trouvé en base, utilisation du fallback par défaut (vide)');
-        promptContent = "Génère 3 titres pour : {{objective}}"; // Fallback minimal
+        console.warn('[N8nTitleGeneration] Pas de prompt trouvé en base, utilisation du fallback par défaut');
+        promptContent = "Génère 3 titres pour : {{objective}}";
       }
 
       // Remplacer la variable {{objective}}
@@ -292,7 +308,8 @@ export const useN8nTitleGeneration = (
       const payload = {
         action: 'generate_titles',
         objective: data.objective,
-        prompt: finalPrompt, // Nouveau champ prompt envoyé à n8n
+        prompt: finalPrompt,
+        title_generation_prompt: finalPrompt, // Ajout du champ explicite pour éviter toute confusion
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         childrenGenders: data.childrenGenders,
