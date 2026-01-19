@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -7,45 +7,31 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import TitleBasedStoryCreator from "@/components/story/title/TitleBasedStoryCreator";
 import StoryCreationErrorBoundary from "@/components/ui/StoryCreationErrorBoundary";
+import { useTitleGeneration } from "@/contexts/TitleGenerationContext";
 const CreateStoryTitles: React.FC = () => {
   const {
     user,
-    loading: authLoading
-  } = useSupabaseAuth();
-  const {
-    children,
-    loading: childrenLoading
-  } = useSupabaseChildren();
-  const {
-    toast
-  } = useToast();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+    const {
+      selectedChildrenIds,
+      selectedObjective,
+      updateCurrentStep,
+      generatedTitles,
+      isGeneratingTitles
+    } = useTitleGeneration();
 
-  // Récupérer l'ID de l'enfant présélectionné depuis l'URL
-  const preSelectedChildId = searchParams.get('childId') || undefined;
-  const handleStoryCreated = (storyId: string) => {
-    console.log("[CreateStoryTitles] Processus de création terminé:", storyId);
-    if (storyId === "timeout") {
-      // Cas de timeout - rediriger vers la bibliothèque avec un message
-      toast({
-        title: "Création en cours",
-        description: "Votre histoire est en cours de génération. Vérifiez votre bibliothèque dans quelques minutes."
-      });
-      navigate("/library");
-    } else if (storyId === "library") {
-      // Nouveau cas : Création lancée, redirection immédiate vers bibliothèque
-      console.log("[CreateStoryTitles] Redirection immédiate vers bibliothèque après lancement création");
-      navigate("/library");
-    } else {
-      // Succès normal - rediriger directement vers l'histoire créée
-      console.log("[CreateStoryTitles] Redirection vers l'histoire créée:", storyId);
-      navigate(`/reader/${storyId}`);
+  useEffect(() => {
+    // Si pas de enfants ou objectif, on redirige
+    if (selectedChildrenIds.length === 0 || !selectedObjective) {
+      // Sauf si on est déjà en train de charger quelque chose (pour éviter flash)
+      console.log('[CreateStoryTitles] Données manquantes, redirection vers step 1');
+      navigate("/create-story/step-1");
+      return;
     }
-  };
-  const handleBack = () => {
-    navigate("/");
-  };
+
+    // Forcer l'étape "titles" si on arrive sur cette page
+    updateCurrentStep('titles');
+  }, [selectedChildrenIds, selectedObjective, updateCurrentStep, navigate]);
+
   if (authLoading || childrenLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -61,28 +47,28 @@ const CreateStoryTitles: React.FC = () => {
     return null;
   }
   return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        {/* En-tête avec bouton retour */}
-        <div className="mb-8">
-          
-          
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Créer une histoire avec sélection de titres
-            </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Générez 3 titres d'histoires personnalisés, puis choisissez celui qui vous inspire le plus
-            </p>
-          </div>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      {/* En-tête avec bouton retour */}
+      <div className="mb-8">
 
-        {/* Composant de création d'histoires avec titres */}
-        <div className="max-w-4xl mx-auto">
-          <StoryCreationErrorBoundary>
-            <TitleBasedStoryCreator children={children} onStoryCreated={handleStoryCreated} preSelectedChildId={preSelectedChildId} />
-          </StoryCreationErrorBoundary>
+
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Créer une histoire avec sélection de titres
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Générez 3 titres d'histoires personnalisés, puis choisissez celui qui vous inspire le plus
+          </p>
         </div>
       </div>
-    </div>;
+
+      {/* Composant de création d'histoires avec titres */}
+      <div className="max-w-4xl mx-auto">
+        <StoryCreationErrorBoundary>
+          <TitleBasedStoryCreator children={children} onStoryCreated={handleStoryCreated} preSelectedChildId={preSelectedChildId} />
+        </StoryCreationErrorBoundary>
+      </div>
+    </div>
+  </div>;
 };
 export default CreateStoryTitles;

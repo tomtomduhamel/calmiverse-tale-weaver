@@ -31,20 +31,12 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   // 🔍 Log IMMÉDIAT au début du composant pour debug
   console.log('[TitleBasedStoryCreator] === DÉBUT RENDU ===', {
     childrenReceived: children?.length,
-    childrenValid: Array.isArray(children),
-    preSelectedChildId,
-    firstChild: children?.[0] ? { id: children[0].id, name: children[0].name } : null
+    preSelectedChildId
   });
-
-  // Validation des props
-  if (!children || !Array.isArray(children)) {
-    console.error('[TitleBasedStoryCreator] Props "children" invalide:', children);
-    throw new Error('La liste des enfants est invalide ou non chargée');
-  }
 
   const navigate = useNavigate();
 
-  // Utiliser le contexte global au lieu des hooks locaux
+  // Utiliser le contexte global
   const {
     currentStep,
     selectedChildrenIds,
@@ -94,97 +86,20 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   } = useRealtimeStoryMonitor({
     onStoryCreated: story => {
       console.log('[TitleBasedStoryCreator] Histoire détectée par Realtime:', story.id);
-      // Redirection immédiate vers l'histoire créée
       onStoryCreated(story.id);
     },
     onTimeout: () => {
-      console.log('[TitleBasedStoryCreator] Timeout du monitoring, redirection vers bibliothèque');
+      console.log('[TitleBasedStoryCreator] Timeout du monitoring');
       onStoryCreated('timeout');
     },
-    timeoutMs: 120000 // 2 minutes
+    timeoutMs: 120000
   });
 
-  const objectives = [{
-    value: 'sleep',
-    label: 'Endormissement',
-    icon: '🌙',
-    description: 'Histoire apaisante pour le coucher'
-  }, {
-    value: 'focus',
-    label: 'Concentration',
-    icon: '🧠',
-    description: 'Histoire stimulante et éducative'
-  }, {
-    value: 'relax',
-    label: 'Relaxation',
-    icon: '🌸',
-    description: 'Histoire douce pour se détendre'
-  }, {
-    value: 'fun',
-    label: 'Amusement',
-    icon: '🎉',
-    description: 'Histoire joyeuse et divertissante'
-  }];
-
-  // Log de diagnostic au montage
-  useEffect(() => {
-    console.log('[TitleBasedStoryCreator] 🔍 Montage composant', {
-      childrenCount: children?.length,
-      currentStep,
-      selectedChildrenIds,
-      selectedObjective,
-      preSelectedChildId,
-    });
-  }, []);
-
-  // Effect pour présélectionner un enfant si spécifié et pas déjà de session
-  useEffect(() => {
-    if (preSelectedChildId && children.length > 0 && !hasPersistedSession()) {
-      const childExists = children.find(child => child.id === preSelectedChildId);
-      if (childExists && !selectedChildrenIds.includes(preSelectedChildId)) {
-        console.log('[TitleBasedStoryCreator] Présélection de l\'enfant:', childExists.name);
-        updateSelectedChildren([preSelectedChildId]);
-      }
-    }
-  }, [preSelectedChildId, children, hasPersistedSession, selectedChildrenIds, updateSelectedChildren]);
-
-
-  const handleChildToggle = useCallback((childId: string) => {
-    const newSelection = selectedChildrenIds.includes(childId)
-      ? selectedChildrenIds.filter(id => id !== childId)
-      : [...selectedChildrenIds, childId];
-    updateSelectedChildren(newSelection);
-  }, [selectedChildrenIds, updateSelectedChildren]);
-
-  // Regénérer 3 titres supplémentaires
-  const handleRegenerateTitles = useCallback(async () => {
-    if (!selectedObjective || selectedChildrenIds.length === 0) return;
-    try {
-      const selectedChildrenForTitles = children.filter(child => selectedChildrenIds.includes(child.id));
-      const newTitles = await generateAdditionalTitles({
-        objective: selectedObjective,
-        childrenIds: selectedChildrenIds,
-        childrenNames: selectedChildrenForTitles.map(c => c.name),
-        childrenGenders: selectedChildrenForTitles.map(c => c.gender)
-      });
-      // Le hook gère déjà la mise à jour des titres et l'incrémentation
-      // via onTitlesGenerated et onRegenerationUsed
-    } catch (error: any) {
-      console.error("Erreur lors de la regénération:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de regénérer les titres",
-        variant: "destructive"
-      });
-    }
-  }, [selectedObjective, selectedChildrenIds, children, generateAdditionalTitles, generatedTitles, updateGeneratedTitles, incrementRegeneration, toast]);
-  // Guards synchrones pour éviter les appels multiples
+  // Guards synchrones
   const isGeneratingRef = useRef(false);
   const autoGenerateTriggered = useRef(false);
   const lastGenerationTimeRef = useRef<number>(0);
-  const GENERATION_COOLDOWN_MS = 5000; // 5 secondes minimum entre 2 appels
-
-  // Ref stable pour les données nécessaires à la génération
+  const GENERATION_COOLDOWN_MS = 5000;
   const generationParamsRef = useRef({ selectedChildrenIds, selectedObjective, children });
 
   // Mettre à jour la ref quand les données changent
@@ -192,93 +107,20 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     generationParamsRef.current = { selectedChildrenIds, selectedObjective, children };
   }, [selectedChildrenIds, selectedObjective, children]);
 
-  const handleGenerateTitles = useCallback(async () => {
-    // Guard synchrone AVANT tout le reste
-    if (isGeneratingRef.current) {
-      console.log('[TitleBasedStoryCreator] Génération déjà en cours (guard ref), appel ignoré');
-      return;
-    }
-
-    // Throttle: éviter les appels trop rapprochés
-    const now = Date.now();
-    if (now - lastGenerationTimeRef.current < GENERATION_COOLDOWN_MS) {
-      console.log('[TitleBasedStoryCreator] Cooldown actif, appel ignoré');
-      return;
-    }
-
-    if (selectedChildrenIds.length === 0) {
-      toast({
-        title: "Sélection requise",
-        description: "Veuillez sélectionner au moins un enfant",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Marquer comme en cours SYNCHRONIQUEMENT + persister
-    isGeneratingRef.current = true;
-    lastGenerationTimeRef.current = now;
-    setIsGeneratingTitles(true);
-    forceSave(); // Sauvegarder immédiatement l'état de génération
-
-    try {
-      const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
-      const childrenNames = selectedChildren.map(child => child.name);
-      console.log('[TitleBasedStoryCreator] Génération de titres pour:', childrenNames);
-      const titles = await generateTitles({
-        objective: selectedObjective,
-        childrenIds: selectedChildrenIds,
-        childrenNames,
-        childrenGenders: selectedChildren.map(child => child.gender)
-      });
-      // Le hook useN8nTitleGeneration appelle déjà onTitlesGenerated (updateGeneratedTitles)
-      // donc pas besoin de l'appeler ici pour éviter la double mise à jour
-      if (titles && titles.length > 0) {
-        updateCurrentStep('titles');
-      }
-    } catch (error: any) {
-      console.error('[TitleBasedStoryCreator] Erreur génération titres:', error);
-      toast({
-        title: "Erreur",
-        description: error.message || "Impossible de générer les titres",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGeneratingTitles(false);
-      // Libérer le guard après un délai pour éviter les appels rebond
-      setTimeout(() => {
-        isGeneratingRef.current = false;
-      }, 1000);
-    }
-  }, [selectedChildrenIds, selectedObjective, children, generateTitles, updateCurrentStep, setIsGeneratingTitles, forceSave, toast]);
-
-  // Effect pour gérer l'auto-génération des titres - dépendances MINIMALES
+  // Effect pour gérer l'auto-génération des titres
   useEffect(() => {
     // Vérifications préliminaires
-    if (currentStep !== 'titles') {
-      // Reset le guard si on revient à l'étape précédente
-      autoGenerateTriggered.current = false;
-      return;
-    }
+    // NOTE: On considère que ce composant est monté UNIQUEMENT quand on devrait gérer les titres
 
-    // Si génération interrompue, ne pas auto-générer (laisser l'utilisateur décider)
     if (generationInterrupted) {
-      console.log('[TitleBasedStoryCreator] Génération interrompue détectée, attente action utilisateur');
+      console.log('[TitleBasedStoryCreator] Génération interrompue détectée');
       return;
     }
 
-    // Conditions pour éviter les appels multiples
     if (autoGenerateTriggered.current || isGeneratingRef.current || isGeneratingTitles || generatedTitles.length > 0) {
-      console.log('[TitleBasedStoryCreator] Auto-génération bloquée:', {
-        autoGenerateTriggered: autoGenerateTriggered.current,
-        isGeneratingRef: isGeneratingRef.current,
-        isGeneratingTitles,
-        generatedTitlesCount: generatedTitles.length
-      });
       return;
     }
 
-    // Récupérer les données depuis la ref stable
     const { selectedChildrenIds: ids, selectedObjective: obj, children: childrenList } = generationParamsRef.current;
 
     if (ids.length === 0 || !obj) {
@@ -286,7 +128,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       return;
     }
 
-    // Marquer comme déclenché AVANT l'appel + persister
+    // Lancer la génération
     autoGenerateTriggered.current = true;
     isGeneratingRef.current = true;
     lastGenerationTimeRef.current = Date.now();
@@ -294,8 +136,6 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     forceSave();
 
     console.log('[TitleBasedStoryCreator] Auto-génération des titres...');
-
-    // Appel direct avec les données de la ref (pas de dépendance à handleGenerateTitles)
     const selectedChildrenForGen = childrenList.filter(child => ids.includes(child.id));
 
     generateTitles({
@@ -320,34 +160,42 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         isGeneratingRef.current = false;
       }, 1000);
     });
-  }, [currentStep, generatedTitles.length, isGeneratingTitles, generationInterrupted, generateTitles, updateCurrentStep, setIsGeneratingTitles, forceSave, toast]);
+  }, [generatedTitles.length, isGeneratingTitles, generationInterrupted, generateTitles, updateCurrentStep, setIsGeneratingTitles, forceSave, toast]);
+
+  // Regénérer des titres
+  const handleRegenerateTitles = useCallback(async () => {
+    if (!selectedObjective || selectedChildrenIds.length === 0) return;
+    try {
+      const selectedChildrenForTitles = children.filter(child => selectedChildrenIds.includes(child.id));
+      await generateAdditionalTitles({
+        objective: selectedObjective,
+        childrenIds: selectedChildrenIds,
+        childrenNames: selectedChildrenForTitles.map(c => c.name),
+        childrenGenders: selectedChildrenForTitles.map(c => c.gender)
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de regénérer les titres",
+        variant: "destructive"
+      });
+    }
+  }, [selectedObjective, selectedChildrenIds, children, generateAdditionalTitles, toast]);
 
   // Handler pour relancer après interruption
   const handleRetryAfterInterruption = useCallback(() => {
     clearGenerationInterrupted();
     autoGenerateTriggered.current = false;
-    // Le useEffect va détecter le changement et relancer
   }, [clearGenerationInterrupted]);
 
+  // Création finale de l'histoire
   const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes) => {
-    if (!titleToUse) {
-      toast({
-        title: "Titre requis",
-        description: "Veuillez sélectionner un titre",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // ✅ Vérifier le quota AVANT de créer l'histoire
     const validation = await validateAction('create_story');
 
     if (!validation.allowed) {
-      console.log('[TitleBasedStoryCreator] Quota atteint:', validation);
-      // ✅ Toast immédiat pour feedback
       toast({
         title: "Limite atteinte",
-        description: validation.reason || "Vous avez atteint votre quota mensuel d'histoires",
+        description: validation.reason || "Quota atteint",
         variant: "destructive"
       });
       setQuotaMessage(validation.reason || 'Limite atteinte');
@@ -358,41 +206,35 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     try {
       const selectedChildrenForStory = children.filter(child => selectedChildrenIds.includes(child.id));
       const childrenNames = selectedChildrenForStory.map(child => child.name);
-      console.log('[TitleBasedStoryCreator] Création histoire avec titre:', titleToUse, 'durée:', durationMinutes, 'min');
+
       updateSelectedTitle(titleToUse);
       updateSelectedDuration(durationMinutes);
       updateCurrentStep('creating');
 
-      // Démarrer le monitoring en temps réel AVANT de créer l'histoire
       const cleanupMonitoring = startMonitoring();
 
-      // Créer l'histoire via n8n avec les données complètes des enfants, la durée et le coût des titres
-      console.log('[TitleBasedStoryCreator] Envoi du coût de génération des titres:', titleGenerationCost);
-      const processId = await createStoryFromTitle({
+      await createStoryFromTitle({
         selectedTitle: titleToUse,
         objective: selectedObjective,
         childrenIds: selectedChildrenIds,
         childrenNames,
         childrenGenders: selectedChildrenForStory.map(child => child.gender),
-        children: selectedChildrenForStory, // Passer les données complètes des enfants
+        children: selectedChildrenForStory,
         durationMinutes,
-        titleGenerationCost, // 🆕 Passer le coût de génération des titres
+        titleGenerationCost,
       });
 
-      // ✅ Incrémenter le compteur d'usage APRÈS succès
       await incrementUsage('story');
 
-      // Toast et redirection immédiate vers bibliothèque
       toast({
         title: "✨ Création lancée !",
-        description: "Vous pouvez naviguer librement. Vous recevrez une notification quand votre histoire sera prête (5-8 min)."
+        description: "Vous recevrez une notification quand votre histoire sera prête."
       });
 
-      // Effacer l'état persisté et rediriger immédiatement vers la bibliothèque
       clearPersistedState();
-      onStoryCreated('library'); // Signal spécial pour aller à la bibliothèque
+      onStoryCreated('library');
     } catch (error: any) {
-      console.error('[TitleBasedStoryCreator] Erreur création histoire:', error);
+      console.error('[TitleBasedStoryCreator] Erreur création:', error);
       updateCurrentStep('titles');
       toast({
         title: "Erreur",
@@ -400,270 +242,67 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         variant: "destructive"
       });
     }
-  }, [selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, updateSelectedTitle, updateSelectedDuration, updateCurrentStep, validateAction, incrementUsage, toast]);
-  const handleBack = useCallback(() => {
-    if (currentStep === 'titles') {
-      updateCurrentStep('objective');
-      clearTitles();
-    } else if (currentStep === 'creating') {
-      updateCurrentStep('titles');
-    }
-  }, [currentStep, clearTitles, updateCurrentStep]);
+  }, [selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, updateSelectedTitle, updateSelectedDuration, updateCurrentStep, validateAction, incrementUsage, toast, titleGenerationCost]);
 
-  // Gestion de la recommencer
-  const handleRestart = useCallback(() => {
-    clearPersistedState();
-    toast({
-      title: "Session réinitialisée",
-      description: "Vous pouvez recommencer la création d'histoire."
-    });
-  }, [clearPersistedState, toast]);
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
-  const selectedObjectiveData = objectives.find(obj => obj.value === selectedObjective);
 
-  // Étape 1: Configuration
-  if (currentStep === 'children') {
+  // --- RENDU ---
+
+  // Cas 1: Interruption
+  if (generationInterrupted) {
     return (
-      <>
-        <UpgradePrompt
-          open={showUpgradePrompt}
-          onOpenChange={setShowUpgradePrompt}
-          currentTier={subscription?.tier || 'calmini'}
-          reason="stories"
-          message={quotaMessage}
-          onUpgrade={() => navigate('/pricing')}
-          onCancel={() => setShowUpgradePrompt(false)}
-        />
-        <div className="space-y-6">
-          {/* Notification de session récupérée */}
-          {hasPersistedSession() && (
-            <Alert className="mb-6">
-              <RefreshCw className="h-4 w-4" />
-              <AlertDescription>
-                Une session de création d'histoire a été récupérée.
-                <Button variant="link" className="ml-2 p-0" onClick={handleRestart}>
-                  Recommencer
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Indicateur de progression */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-              <span>Sélection enfants</span>
-              <span>Choix objectif</span>
-              <span>Sélection du titre</span>
-              <span>Création</span>
-            </div>
-            <Progress
-              value={currentStep === 'children' ? 25 : currentStep === 'objective' ? 50 : currentStep === 'titles' ? 75 : 100}
-              className="h-2"
-            />
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Sélectionnez les enfants
-              </CardTitle>
-              <CardDescription>
-                Choisissez pour qui vous souhaitez créer cette histoire
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {children.map(child => {
-                  // Gérer les deux formats possibles: birthDate (type) ou birthdate (Supabase)
-                  const birthDateValue = (child as any).birthdate || child.birthDate;
-                  const age = birthDateValue
-                    ? new Date().getFullYear() - new Date(birthDateValue).getFullYear()
-                    : null;
-
-                  return (
-                    <div
-                      key={child.id}
-                      onClick={() => handleChildToggle(child.id)}
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedChildrenIds.includes(child.id) ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
-                    >
-                      <div className="font-medium">{child.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {age !== null ? `${age} ans` : 'Âge inconnu'}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Objectif de l'histoire</CardTitle>
-              <CardDescription>
-                Quel est le but de cette histoire ?
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {objectives.map(objective => <div key={objective.value} onClick={() => updateSelectedObjective(objective.value)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedObjective === objective.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{objective.icon}</span>
-                    <span className="font-medium">{objective.label}</span>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {objective.description}
-                  </div>
-                </div>)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-between items-center">
-            <div className="flex flex-wrap gap-2">
-              {selectedChildren.map(child => <Badge key={child.id} variant="secondary">
-                {child.name}
-              </Badge>)}
-              {selectedObjectiveData && <Badge variant="outline">
-                {selectedObjectiveData.icon} {selectedObjectiveData.label}
-              </Badge>}
-            </div>
-
-            <Button onClick={handleGenerateTitles} disabled={selectedChildrenIds.length === 0 || isGeneratingTitles} className="min-w-[200px]">
-              {isGeneratingTitles ? <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Génération IA... (2-3 min)
-              </> : <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Générer les titres
-              </>}
-            </Button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Étape 2: Sélection du titre
-  if (currentStep === 'titles') {
-    // Si génération interrompue, afficher un message de reprise
-    if (generationInterrupted) {
-      return (
-        <div className="space-y-6">
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <RefreshCw className="w-8 h-8 text-amber-500" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">
-                ⏸️ Génération interrompue
-              </h3>
-              <p className="text-muted-foreground">
-                La génération des titres a été interrompue. Voulez-vous reprendre ?
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              variant="outline"
-              onClick={() => {
-                clearGenerationInterrupted();
-                updateCurrentStep('objective');
-              }}
-            >
-              Revenir à la configuration
-            </Button>
-            <Button
-              onClick={handleRetryAfterInterruption}
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Reprendre la génération
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
-    // Si les titres sont en cours de génération, afficher l'état de chargement
-    if (isGeneratingTitles && generatedTitles.length === 0) {
-      return (
-        <div className="space-y-6">
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">
-                ✨ Calmi crée vos 3 titres personnalisés
-              </h3>
-              <p className="text-muted-foreground">
-                Nos petits lutins magiques travaillent à créer des titres uniques pour {selectedChildren.map(c => c.name).join(', ')}.
-                Vous serez prévenu dès qu'ils seront prêts !
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                💡 Vous pouvez changer d'application, votre progression sera conservée.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              variant="outline"
-              onClick={() => {
-                clearTitles();
-                setIsGeneratingTitles(false);
-                updateCurrentStep('objective');
-              }}
-            >
-              Annuler la création des titres
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                navigate('/library');
-              }}
-            >
-              Parcourir la bibliothèque d'histoires
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
-    // Si les titres sont générés, afficher le sélecteur
-    return (
-      <>
-        <UpgradePrompt
-          open={showUpgradePrompt}
-          onOpenChange={setShowUpgradePrompt}
-          currentTier={subscription?.tier || 'calmini'}
-          reason="stories"
-          message={quotaMessage}
-          onUpgrade={() => navigate('/pricing')}
-          onCancel={() => setShowUpgradePrompt(false)}
-        />
-        <div className="space-y-6">
-          <TitleSelector
-            titles={generatedTitles}
-            onSelectTitle={handleCreateStory}
-            onRegenerateTitles={canRegenerate ? handleRegenerateTitles : undefined}
-            canRegenerate={canRegenerate}
-            isCreatingStory={isCreatingStory}
-            isRegenerating={isGeneratingTitles}
-          />
-
+      <div className="space-y-6">
+        <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <Button variant="outline" onClick={handleBack}>
-              Retour à la configuration
-            </Button>
+            <RefreshCw className="w-8 h-8 text-amber-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-2">⏸️ Génération interrompue</h3>
+            <p className="text-muted-foreground">Voulez-vous reprendre ?</p>
           </div>
         </div>
-      </>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button variant="outline" onClick={() => navigate('/create-story/step-1')}>
+            Revenir au début
+          </Button>
+          <Button onClick={handleRetryAfterInterruption}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Reprendre
+          </Button>
+        </div>
+      </div>
     );
   }
 
-  // Rendu avec UpgradePrompt
+  // Cas 2: Génération en cours (et pas de titres)
+  if (isGeneratingTitles && generatedTitles.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-2">✨ Calmi crée vos titres...</h3>
+            <p className="text-muted-foreground">
+              Cela prend quelques secondes. Vous pouvez changer d'application, la génération continuera.
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={() => {
+            clearTitles();
+            setIsGeneratingTitles(false);
+            navigate('/create-story/step-2');
+          }}>
+            Annuler
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Cas 3: Affichage des titres (ou état initial vide en attente de génération)
   return (
     <>
       <UpgradePrompt
@@ -675,8 +314,34 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         onUpgrade={() => navigate('/pricing')}
         onCancel={() => setShowUpgradePrompt(false)}
       />
+
+      <div className="space-y-6">
+        {/* Si on a des titres, on affiche le sélecteur, sinon rien (le loader devrait être actif) */}
+        {generatedTitles.length > 0 ? (
+          <TitleSelector
+            titles={generatedTitles}
+            onSelectTitle={handleCreateStory}
+            onRegenerateTitles={canRegenerate ? handleRegenerateTitles : undefined}
+            canRegenerate={canRegenerate}
+            isCreatingStory={isCreatingStory}
+            isRegenerating={isGeneratingTitles}
+          />
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            Préparation de la génération...
+          </div>
+        )}
+
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={() => navigate('/create-story/step-2')}>
+            Retour au choix de l'objectif
+          </Button>
+        </div>
+      </div>
     </>
   );
 };
+
+export default TitleBasedStoryCreator;
 
 export default TitleBasedStoryCreator;

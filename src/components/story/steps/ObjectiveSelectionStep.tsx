@@ -37,7 +37,7 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
     updateCurrentStep,
     clearPersistedState
   } = usePersistedStoryCreation();
-  
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const { generateStoryInBackground } = useStoryGenerationManager();
@@ -84,13 +84,13 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
 
       // S'assurer que les données sont bien sauvegardées avant navigation
       console.log('[ObjectiveSelectionStep] Sauvegarde des données avant navigation...');
-      
+
       // Attendre un court délai pour s'assurer que la sauvegarde est terminée
       await new Promise(resolve => setTimeout(resolve, 50));
-      
+
       // Mettre à jour l'étape actuelle vers 'titles' 
       updateCurrentStep('titles');
-      
+
       // Attendre encore un peu pour la persistance
       await new Promise(resolve => setTimeout(resolve, 50));
 
@@ -177,14 +177,13 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {objectives.map(objective => (
-              <div 
+              <div
                 key={objective.value}
                 onClick={() => handleObjectiveSelect(objective.value)}
-                className={`p-6 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
-                  selectedObjective === objective.value 
-                    ? 'border-primary bg-primary/5 shadow-sm' 
+                className={`p-6 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${selectedObjective === objective.value
+                    ? 'border-primary bg-primary/5 shadow-sm'
                     : 'border-border hover:border-primary/50'
-                }`}
+                  }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -214,14 +213,14 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
           <ArrowLeft className="w-4 h-4 mr-2" />
           Retour
         </Button>
-        
+
         <div className="flex items-center gap-3">
           {selectedObjectiveData && (
             <Badge variant="outline" className="px-3 py-1">
               {selectedObjectiveData.icon} {selectedObjectiveData.label}
             </Badge>
           )}
-          <Button 
+          <Button
             onClick={handleContinueToTitles}
             disabled={!selectedObjective}
             className="min-w-[180px]"
