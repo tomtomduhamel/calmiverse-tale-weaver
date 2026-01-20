@@ -307,7 +307,38 @@ export const useN8nTitleGeneration = (
       // Fallback si pas de prompt en base
       if (!promptContent) {
         console.warn('[N8nTitleGeneration] Pas de prompt trouvé en base (ou vide), utilisation du fallback par défaut');
-        promptContent = "Génère 3 titres pour : {{objective}}";
+        const DEFAULT_FALLBACK_PROMPT = `Tu es un agent qui est chargé de créer 3 titres d'histoires pour enfants selon ce prompt : 
+"Génère 3 titres d'histoires originales pour enfants, adaptés au thème suivant : {{objective}}.
+Objectif : Les titres doivent captiver l’attention tout en respectant l’intention du thème.
+- "sleep" : choisis des titres doux, rassurants et poétiques.
+- "focus" : choisis des titres engageants, stimulant la curiosité et l’attention.
+- "relax" : choisis des titres apaisants, inspirant le calme et la légèreté.
+- "fun" : choisis des titres drôles, surprenants et qui déclenche un sourire aux lecteurs (enfants).
+Chaque titre doit :
+- Être adapté à des enfants de 3 à 8 ans
+- Contenir maximum 10 mots
+- Donner envie d’écouter l’histoire."
+
+ATTENTION : Concernant les titres proposés, je veux que les règles d'écriture de la langue française soit respectée. C'est à dire que les majuscules soient pour la première lettre du titre et ensuite, seulement pour les noms propres.
+
+Les titres doivent être courts en interdisant les adjectifs qualificatifs laudatifs (exemple : merveilleux, surprenant, brillant, joyeux, farfelue, magique, etc.). Évite aussi les titres de type : "Quelche-chose qui fait une action". Inspire toi de la littérature jeunesse sans jamais répéter un titre déjà existant.
+
+Pour le titre de l'histoire (title),analyse utilise la mémoire "title_memory" et crée trois titres originaux qui sont différents des titres des 10 dernières histoires. Je souhaite que les titres ne contiennent pas les noms des enfants pour laquelle est créée l'histoire. Ne mets donc pas de nom d'enfant dans le titre des histoires.
+
+Renvoie le nombre de tokens iuput, le nombre de tokens output et le modèle llm utilisé (gpt-5) dans les variable "input_tokens", "output_tokens" et "model_llm" du json en sortie.
+
+Je veux que tu retournes un format json à l'aide de l’outil structured output parser.
+
+Conclusion : le format json final devra avoir la structure suivante :
+{
+	"title_1": "...",
+	"title_2": "...",
+    "title_3" : "...",
+  "input_tokens": string,
+  "output_tokens": string,
+  "model_llm": string
+}`;
+        promptContent = DEFAULT_FALLBACK_PROMPT;
       }
 
       // Remplacer la variable {{objective}}
