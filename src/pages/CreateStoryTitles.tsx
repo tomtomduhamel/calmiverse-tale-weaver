@@ -51,17 +51,30 @@ const CreateStoryTitles: React.FC = () => {
     }
   };
 
+  // État pour éviter la redirection immédiate au montage (laisser le temps au contexte de s'hydrater)
+  const [isReadyToCheck, setIsReadyToCheck] = React.useState(false);
+
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsReadyToCheck(true);
+    }, 500); // 500ms de grâce pour l'hydratation
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // Ne rien faire tant qu'on n'est pas "prêt" (pour éviter race condition montage/hydratation)
+    if (!isReadyToCheck) return;
+
     // Si pas de enfants ou objectif, on redirige
     if ((selectedChildrenIds.length === 0 || !selectedObjective) && !childrenLoading && !authLoading) {
-      // On attend que le chargement initial soit fini pour rediriger
-      // Sinon on risque de rediriger alors que le contexte n'est pas encore hydraté
-      // Mais le contexte TitleGeneration est hydraté via localStorage donc c'est synchrone en théorie
-      // Sauf que selectedChildrenIds vient du contexte.
-      // Ajoutons une petite sécurité : si generatedTitles est vide et qu'on a rien sélectionné
+      // Sauf si on est déjà en train de charger quelque chose (pour éviter flash)
+      // Ou si on a déjà des titres générés (le contexte peut être partiellement hydraté ?)
 
       if (generatedTitles.length === 0 && !isGeneratingTitles) {
-        console.log('[CreateStoryTitles] Données manquantes, redirection vers step 1');
+        console.log('[CreateStoryTitles] Données manquantes après délai, redirection vers step 1', {
+          kids: selectedChildrenIds.length,
+          obj: selectedObjective
+        });
         navigate("/create-story/step-1");
       }
     }
@@ -70,7 +83,7 @@ const CreateStoryTitles: React.FC = () => {
     if (selectedChildrenIds.length > 0 && selectedObjective) {
       updateCurrentStep('titles');
     }
-  }, [selectedChildrenIds, selectedObjective, updateCurrentStep, navigate, childrenLoading, authLoading, generatedTitles.length, isGeneratingTitles]);
+  }, [isReadyToCheck, selectedChildrenIds, selectedObjective, updateCurrentStep, navigate, childrenLoading, authLoading, generatedTitles.length, isGeneratingTitles]);
 
   if (authLoading || childrenLoading) {
     return (
