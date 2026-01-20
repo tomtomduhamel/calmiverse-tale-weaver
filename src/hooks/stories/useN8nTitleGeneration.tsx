@@ -187,7 +187,7 @@ export const useN8nTitleGeneration = (
       const payload = {
         action: 'generate_titles',
         objective: data.objective,
-        prompt: finalPrompt,
+        title_generation_prompt: finalPrompt,
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         childrenGenders: data.childrenGenders,
@@ -347,8 +347,7 @@ Conclusion : le format json final devra avoir la structure suivante :
       const payload = {
         action: 'generate_titles',
         objective: data.objective,
-        prompt: finalPrompt,
-        title_generation_prompt: finalPrompt, // Ajout du champ explicite pour éviter toute confusion
+        title_generation_prompt: finalPrompt, // Champ explicite pour la génération
         childrenIds: data.childrenIds,
         childrenNames: data.childrenNames,
         childrenGenders: data.childrenGenders,
