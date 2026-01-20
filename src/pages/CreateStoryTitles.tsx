@@ -9,28 +9,68 @@ import TitleBasedStoryCreator from "@/components/story/title/TitleBasedStoryCrea
 import StoryCreationErrorBoundary from "@/components/ui/StoryCreationErrorBoundary";
 import { useTitleGeneration } from "@/contexts/TitleGenerationContext";
 const CreateStoryTitles: React.FC = () => {
+  // Force update for Lovable build sync
   const {
     user,
-    const {
-      selectedChildrenIds,
-      selectedObjective,
-      updateCurrentStep,
-      generatedTitles,
-      isGeneratingTitles
-    } = useTitleGeneration();
+    loading: authLoading
+  } = useSupabaseAuth();
+  const {
+    children,
+    loading: childrenLoading
+  } = useSupabaseChildren();
+  const {
+    selectedChildrenIds,
+    selectedObjective,
+    updateCurrentStep,
+    generatedTitles,
+    isGeneratingTitles
+  } = useTitleGeneration();
+  const {
+    toast
+  } = useToast();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Récupérer l'ID de l'enfant présélectionné depuis l'URL
+  const preSelectedChildId = searchParams.get('childId') || undefined;
+
+  const handleStoryCreated = (storyId: string) => {
+    console.log("[CreateStoryTitles] Processus de création terminé:", storyId);
+    if (storyId === "timeout") {
+      toast({
+        title: "Création en cours",
+        description: "Votre histoire est en cours de génération. Vérifiez votre bibliothèque dans quelques minutes."
+      });
+      navigate("/library");
+    } else if (storyId === "library") {
+      console.log("[CreateStoryTitles] Redirection immédiate vers bibliothèque après lancement création");
+      navigate("/library");
+    } else {
+      console.log("[CreateStoryTitles] Redirection vers l'histoire créée:", storyId);
+      navigate(`/reader/${storyId}`);
+    }
+  };
 
   useEffect(() => {
     // Si pas de enfants ou objectif, on redirige
-    if (selectedChildrenIds.length === 0 || !selectedObjective) {
-      // Sauf si on est déjà en train de charger quelque chose (pour éviter flash)
-      console.log('[CreateStoryTitles] Données manquantes, redirection vers step 1');
-      navigate("/create-story/step-1");
-      return;
+    if ((selectedChildrenIds.length === 0 || !selectedObjective) && !childrenLoading && !authLoading) {
+      // On attend que le chargement initial soit fini pour rediriger
+      // Sinon on risque de rediriger alors que le contexte n'est pas encore hydraté
+      // Mais le contexte TitleGeneration est hydraté via localStorage donc c'est synchrone en théorie
+      // Sauf que selectedChildrenIds vient du contexte.
+      // Ajoutons une petite sécurité : si generatedTitles est vide et qu'on a rien sélectionné
+
+      if (generatedTitles.length === 0 && !isGeneratingTitles) {
+        console.log('[CreateStoryTitles] Données manquantes, redirection vers step 1');
+        navigate("/create-story/step-1");
+      }
     }
 
-    // Forcer l'étape "titles" si on arrive sur cette page
-    updateCurrentStep('titles');
-  }, [selectedChildrenIds, selectedObjective, updateCurrentStep, navigate]);
+    // Forcer l'étape "titles" si on arrive sur cette page avec les bonnes données
+    if (selectedChildrenIds.length > 0 && selectedObjective) {
+      updateCurrentStep('titles');
+    }
+  }, [selectedChildrenIds, selectedObjective, updateCurrentStep, navigate, childrenLoading, authLoading, generatedTitles.length, isGeneratingTitles]);
 
   if (authLoading || childrenLoading) {
     return (
