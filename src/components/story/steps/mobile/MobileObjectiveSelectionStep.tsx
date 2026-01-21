@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
+import { useTitleGeneration } from '@/contexts/TitleGenerationContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
@@ -22,8 +22,8 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
     updateSelectedObjective,
     updateCurrentStep,
     clearPersistedState
-  } = usePersistedStoryCreation();
-  
+  } = useTitleGeneration();
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const { generateStoryInBackground } = useStoryGenerationManager();
@@ -69,13 +69,13 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
 
       // S'assurer que les données sont bien sauvegardées avant navigation
       console.log('[MobileObjectiveSelectionStep] Sauvegarde des données avant navigation...');
-      
+
       // Attendre un court délai pour s'assurer que la sauvegarde est terminée
       await new Promise(resolve => setTimeout(resolve, 50));
-      
+
       // Mettre à jour l'étape actuelle vers 'titles' 
       updateCurrentStep('titles');
-      
+
       // Attendre encore un peu pour la persistance
       await new Promise(resolve => setTimeout(resolve, 50));
 
@@ -170,14 +170,14 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
         <CardContent className="pt-0">
           <div className="grid grid-cols-2 gap-4">
             {objectives.map(objective => (
-              <div 
+              <div
                 key={objective.value}
                 onClick={() => handleObjectiveSelect(objective.value)}
                 className={cn(
                   "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
                   "bg-card backdrop-blur-sm aspect-square flex flex-col items-center justify-center text-center",
-                  selectedObjective === objective.value 
-                    ? 'border-primary bg-primary/20 shadow-lg ring-2 ring-primary/30' 
+                  selectedObjective === objective.value
+                    ? 'border-primary bg-primary/20 shadow-lg ring-2 ring-primary/30'
                     : 'border-border hover:border-primary/50 hover:shadow-md'
                 )}
               >
@@ -187,10 +187,10 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
                     <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
                   </div>
                 )}
-                
+
                 {/* Icône */}
                 <div className="text-4xl mb-3">{objective.icon}</div>
-                
+
                 {/* Titre */}
                 <h3 className="font-semibold text-sm text-foreground leading-tight">
                   {objective.label}

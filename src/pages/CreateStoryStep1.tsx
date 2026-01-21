@@ -6,7 +6,7 @@ import ChildrenSelectionStep from "@/components/story/steps/ChildrenSelectionSte
 import LoadingWithTimeout from "@/components/ui/LoadingWithTimeout";
 import CreationModeToggle from "@/components/story/chat/CreationModeToggle";
 import ChatStoryCreator from "@/components/story/chat/ChatStoryCreator";
-import { usePersistedStoryCreation } from "@/hooks/stories/usePersistedStoryCreation";
+import { useTitleGeneration } from "@/contexts/TitleGenerationContext";
 import type { CreationMode } from "@/types/chatbot";
 
 const CreateStoryStep1: React.FC = () => {
@@ -16,9 +16,9 @@ const CreateStoryStep1: React.FC = () => {
   const [searchParams] = useSearchParams();
   const preSelectedChildId = searchParams.get("childId") || undefined;
   const [currentStep, setCurrentStep] = useState(0);
-  
+
   // Mode de création persisté (survit aux changements d'onglet)
-  const { creationMode, updateCreationMode, forceSave } = usePersistedStoryCreation();
+  const { creationMode, updateCreationMode, forceSave } = useTitleGeneration();
 
   // PHASE 3: Gestion des étapes de progression
   React.useEffect(() => {
@@ -87,14 +87,14 @@ const CreateStoryStep1: React.FC = () => {
 
       {/* Rendu conditionnel selon le mode */}
       {creationMode === 'guided' ? (
-        <ChildrenSelectionStep 
-          children={children} 
-          preSelectedChildId={preSelectedChildId} 
+        <ChildrenSelectionStep
+          children={children}
+          preSelectedChildId={preSelectedChildId}
         />
       ) : (
-        <ChatStoryCreator 
-          children={children} 
-          onBack={handleBackToGuided} 
+        <ChatStoryCreator
+          children={children}
+          onBack={handleBackToGuided}
         />
       )}
     </div>

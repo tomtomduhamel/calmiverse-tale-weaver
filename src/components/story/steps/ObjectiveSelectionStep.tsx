@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, Target } from 'lucide-react';
-import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
+import { useTitleGeneration } from '@/contexts/TitleGenerationContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
@@ -36,7 +36,7 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
     updateSelectedObjective,
     updateCurrentStep,
     clearPersistedState
-  } = usePersistedStoryCreation();
+  } = useTitleGeneration();
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -181,8 +181,8 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
                 key={objective.value}
                 onClick={() => handleObjectiveSelect(objective.value)}
                 className={`p-6 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${selectedObjective === objective.value
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-border hover:border-primary/50'
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border hover:border-primary/50'
                   }`}
               >
                 <div className="flex items-start justify-between mb-3">

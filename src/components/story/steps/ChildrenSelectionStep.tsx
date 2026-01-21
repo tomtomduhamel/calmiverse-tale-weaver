@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Users, ArrowRight } from 'lucide-react';
-import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
+import { useTitleGeneration } from '@/contexts/TitleGenerationContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
@@ -30,7 +30,7 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
     updateSelectedChildren,
     clearPersistedState,
     hasPersistedSession
-  } = usePersistedStoryCreation();
+  } = useTitleGeneration();
   const navigate = useNavigate();
   const { toast } = useToast();
 

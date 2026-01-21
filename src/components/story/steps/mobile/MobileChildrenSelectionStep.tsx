@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ArrowRight, Users } from 'lucide-react';
-import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
+import { useTitleGeneration } from '@/contexts/TitleGenerationContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Child } from '@/types/child';
@@ -26,7 +26,7 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
     updateSelectedChildren,
     clearPersistedState,
     hasPersistedSession
-  } = usePersistedStoryCreation();
+  } = useTitleGeneration();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -231,8 +231,8 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
     <div
       onClick={() => onToggle(child.id)}
       className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isSelected
-          ? 'border-primary bg-primary/5 shadow-sm'
-          : 'border-border hover:border-primary/50'
+        ? 'border-primary bg-primary/5 shadow-sm'
+        : 'border-border hover:border-primary/50'
         }`}
     >
       <div className="flex items-center justify-between">
