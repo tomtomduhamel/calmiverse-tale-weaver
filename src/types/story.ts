@@ -36,6 +36,10 @@ export interface Story {
   tags?: string[];
   isFavorite?: boolean;
   updatedAt?: Date;
+  // Champs de notation
+  rating?: number;
+  rating_comment?: string;
+
   sound_id?: string | null;
   image_path?: string | null;
   settings?: StorySettings;
