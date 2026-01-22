@@ -2,11 +2,12 @@ import React, { createContext, useContext, ReactNode, useCallback } from 'react'
 import { usePersistedStoryCreation } from '@/hooks/stories/usePersistedStoryCreation';
 import { useN8nTitleGeneration, GeneratedTitle, TitleCostData } from '@/hooks/stories/useN8nTitleGeneration';
 import { TitleGenerationData } from '@/hooks/stories/useN8nTitleGeneration';
+import type { CreationMode } from '@/types/chatbot';
 
 // Define the shape of the context
 interface TitleGenerationContextType {
     // From usePersistedStoryCreation
-    creationMode: string;
+    creationMode: CreationMode;
     currentStep: 'children' | 'objective' | 'titles' | 'creating';
     selectedChildrenIds: string[];
     selectedObjective: string;
