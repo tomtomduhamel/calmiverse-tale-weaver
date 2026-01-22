@@ -4,6 +4,17 @@ import { Bot, ArrowLeft, Sparkles, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useN8nChatbotStory } from '@/hooks/n8n/useN8nChatbotStory';
 import type { Child } from '@/types/child';
@@ -20,7 +31,7 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
   const navigate = useNavigate();
   const { user } = useSupabaseAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  
+
   const {
     messages,
     isLoading,
@@ -98,7 +109,7 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
           <ArrowLeft className="h-4 w-4" />
           Mode guidé
         </Button>
-        
+
         <div className="flex items-center gap-2 text-muted-foreground">
           <Sparkles className="h-4 w-4 text-primary" />
           <span className="text-sm">Création assistée par Calmi</span>
@@ -125,17 +136,33 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
                   ✓ Histoire créée
                 </span>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleReset}
-                disabled={isLoading}
-                className="text-primary/70 hover:text-primary hover:bg-primary/10 gap-1.5"
-                title="Recommencer la conversation"
-              >
-                <RotateCcw className="h-5 w-5" />
-                <span className="hidden sm:inline text-xs">Recommencer</span>
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isLoading}
+                    className="text-primary/70 hover:text-primary hover:bg-primary/10 gap-1.5"
+                    title="Recommencer la conversation"
+                  >
+                    <RotateCcw className="h-5 w-5" />
+                    <span className="hidden sm:inline text-xs">Recommencer</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Recommencer la conversation ?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Cela effacera tous les échanges actuels et redémarrera l'assistant à zéro.
+                      Cette action est irréversible.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleReset}>Confirmer</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </CardHeader>
@@ -151,17 +178,17 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
                 </div>
               </div>
             )}
-            
+
             {messages.map((message) => (
-              <ChatMessageBubble 
-                key={message.id} 
+              <ChatMessageBubble
+                key={message.id}
                 message={message}
                 onSelectChoice={selectChoice}
                 onConfirmChoices={handleConfirmChoices}
                 disabled={isLoading}
               />
             ))}
-            
+
             {isLoading && <TypingIndicator />}
           </ScrollArea>
 
