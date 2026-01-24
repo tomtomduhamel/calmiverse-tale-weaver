@@ -17,11 +17,11 @@ export const useStoryRating = (): UseStoryRatingReturn => {
             console.log(`[useStoryRating] Soumission de la note pour l'histoire ${storyId}: ${rating} étoiles`, comment ? `Commentaire: ${comment}` : 'Sans commentaire');
 
             // Préparation de l'objet de mise à jour
-            // Note: On utilise 'any' temporairement pour éviter les erreurs de type strict si les colonnes ne sont pas encore regénérées dans les types Supabase
-            const updates: any = {
+            // Préparation de l'objet de mise à jour
+            const updates = {
                 rating: rating,
                 rating_comment: comment || null,
-                updated_at: new Date().toISOString()
+                updatedat: new Date().toISOString()
             };
 
             const { error } = await supabase
@@ -40,11 +40,11 @@ export const useStoryRating = (): UseStoryRatingReturn => {
             });
 
             return true;
-        } catch (error) {
+        } catch (error: any) {
             console.error('[useStoryRating] Erreur lors de la soumission de la note:', error);
             toast({
                 title: "Erreur",
-                description: "Impossible d'enregistrer votre note. Veuillez réessayer.",
+                description: `Impossible d'enregistrer votre note: ${error.message || "Erreur inconnue"}`,
                 variant: "destructive"
             });
             return false;
