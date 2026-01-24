@@ -21,7 +21,7 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
   const { user } = useSupabaseAuth();
   const { toast } = useToast();
   const { notifyStoryReady } = useStoryNotifications();
-  
+
   const {
     onStoryCreated,
     onTimeout,
@@ -33,7 +33,7 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
   const n8nCallback = useN8nCompletionCallback({
     onStoryCompleted: (storyId, storyData) => {
       console.log('[RealtimeStoryMonitor] Histoire complétée via callback n8n:', storyId);
-      
+
       // Créer un objet Story temporaire pour la compatibilité
       const completedStory: Story = {
         id: storyId,
@@ -85,7 +85,7 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
         },
         (payload) => {
           console.log('[RealtimeStoryMonitor] SUCCÈS: Nouvelle histoire détectée en temps réel:', payload);
-          
+
           const newStory = payload.new as any;
           const formattedStory: Story = {
             id: newStory.id,
@@ -127,13 +127,13 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
         },
         (payload) => {
           console.log('[RealtimeStoryMonitor] Histoire mise à jour détectée:', payload);
-          
+
           const updatedStory = payload.new as any;
-          
+
           // Vérifier si l'histoire est passée de 'pending' à 'completed'
           if (updatedStory.status === 'completed' && payload.old?.status === 'pending') {
             console.log('[RealtimeStoryMonitor] Histoire complétée détectée:', updatedStory.id);
-            
+
             const formattedStory: Story = {
               id: updatedStory.id,
               title: updatedStory.title || 'Histoire générée',
@@ -167,19 +167,14 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
       )
       .subscribe((status) => {
         console.log('[RealtimeStoryMonitor] Statut de connexion Realtime:', status);
-        
+
         if (status === 'SUBSCRIBED') {
           console.log('[RealtimeStoryMonitor] Connexion Realtime établie avec succès');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('[RealtimeStoryMonitor] Erreur de connexion Realtime');
+          console.warn('[RealtimeStoryMonitor] Erreur de connexion Realtime (non-critique, bascule sur polling)');
           setIsMonitoring(false);
           setMonitoringStartTime(null);
-          
-          toast({
-            title: "Erreur de monitoring",
-            description: "Impossible de surveiller la création en temps réel",
-            variant: "destructive",
-          });
+          // Pas de toast ici pour éviter d'effrayer l'utilisateur alors que le polling fonctionne
         }
       });
 
@@ -189,16 +184,16 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
         console.warn('[RealtimeStoryMonitor] TIMEOUT: Temps limite dépassé');
         setIsMonitoring(false);
         setMonitoringStartTime(null);
-        
+
         supabase.removeChannel(channel);
         if (cleanupN8n) cleanupN8n();
-        
+
         toast({
           title: "Création en cours",
           description: "La création prend plus de temps que prévu. Vérifiez votre bibliothèque dans quelques minutes.",
           variant: "default",
         });
-        
+
         if (onTimeout) {
           onTimeout();
         }
