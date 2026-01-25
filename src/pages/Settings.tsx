@@ -21,7 +21,7 @@ const Settings = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  
+
   const {
     userSettings,
     isLoading,
@@ -147,11 +147,11 @@ const Settings = () => {
 
   // Déterminer si utilisateur est connecté avec mot de passe (pour afficher l'option de changement de mot de passe)
   const showPasswordChange = user.app_metadata?.provider === 'email';
-  
+
   return (
-    <div className="container mx-auto py-6 space-y-8 pb-24">
-      <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
-        <SettingsIcon className="h-8 w-8" />
+    <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-6 space-y-6 md:space-y-8 pb-24">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 flex items-center gap-2">
+        <SettingsIcon className="h-6 w-6 md:h-8 md:w-8" />
         Paramètres utilisateur
       </h1>
 
@@ -163,7 +163,7 @@ const Settings = () => {
         </Alert>
       )}
 
-      <ProfileSection 
+      <ProfileSection
         userSettings={userSettings}
         onSubmit={handleProfileSubmit}
       />
@@ -180,12 +180,12 @@ const Settings = () => {
 
       <KindleSection />
 
-      <NotificationsSection 
+      <NotificationsSection
         notifications={userSettings.notifications}
         onNotificationChange={handleNotificationChange}
       />
 
-      <SecuritySection 
+      <SecuritySection
         onSubmit={handleSecuritySubmit}
         showPasswordChange={showPasswordChange}
       />
