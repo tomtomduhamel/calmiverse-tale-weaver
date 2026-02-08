@@ -1,5 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+
+// Expose React for diagnostic tools
+(window as any).React = React;
+(window as any).ReactDOM = ReactDOM;
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import './styles/scrollbar.css'
@@ -134,10 +138,10 @@ setTimeout(() => {
   const bootDuration = bootEndTime - (window as any).__CALMI_MAIN_START;
   bootMonitor.log(`React mount completed (${bootDuration}ms)`);
   console.log(`⏱️ [Calmi] React mounted in ${bootDuration}ms`);
-  
+
   // Afficher le rapport de boot complet
   bootMonitor.report();
-  
+
   // Skip SW reset in preview iframe or preview mode
   if (isPreviewIframe() || (window as any).__CALMI_PREVIEW_MODE) {
     safeStorage.setItem('calmi_safe_mode', '1');

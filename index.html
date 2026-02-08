@@ -256,10 +256,8 @@
         });
         
         // PHASE 4: TIMEOUT D'URGENCE ADAPTATIF
-        // - 30s pour mobile réel (connexions instables)
-        // - 20s pour mobile preview (Lovable iframe)
-        // - 10s pour desktop (connexions rapides)
-        var timeoutDuration = isPreviewMode ? 20000 : (isMobile ? 30000 : 10000);
+        // - 30s pour tout le monde (mobile, desktop, preview)
+        var timeoutDuration = 30000;
         var bootStartTime = Date.now();
         
         logBoot('Configuration timeout: ' + (timeoutDuration/1000) + 's');
