@@ -51,18 +51,28 @@ const formatStoryFromRow = (row: any): Story => ({
   is_series_starter: row.is_series_starter,
   previous_story_id: row.previous_story_id,
   next_story_id: row.next_story_id,
+  series: row.series ? {
+    id: row.series_id,
+    title: row.series.title,
+    total_tomes: row.series.total_tomes,
+    // Autres champs par défaut ou non disponibles dans cette vue simplifiée
+    author_id: row.authorid,
+    created_at: new Date(),
+    updated_at: new Date(),
+    is_active: true
+  } : undefined
 });
 
 export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): UseInfiniteStoriesReturn {
   const { user } = useSupabaseAuth();
   const { statusFilter = 'all', objectiveFilter, searchTerm } = options;
-  
+
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const currentPage = useRef(0);
   const isFetching = useRef(false);
   const lastFetchParams = useRef<string>("");
@@ -72,7 +82,7 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
     // Only select necessary columns for feed performance
     let query = supabase
       .from('stories')
-      .select('id, title, preview, objective, image_path, createdat, updatedat, status, is_favorite, content, childrenids, childrennames, authorid, error, sound_id, series_id, tome_number, is_series_starter, previous_story_id, next_story_id, summary')
+      .select('id, title, preview, objective, image_path, createdat, updatedat, status, is_favorite, content, childrenids, childrennames, authorid, error, sound_id, series_id, tome_number, is_series_starter, previous_story_id, next_story_id, summary, series:series_id(title, total_tomes)')
       .eq('authorid', user?.id || '')
       .order('createdat', { ascending: false })
       .range(start, end);
@@ -110,9 +120,9 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
   // Fetch stories
   const fetchStories = useCallback(async (isInitial: boolean = false) => {
     if (!user?.id || isFetching.current) return;
-    
+
     isFetching.current = true;
-    
+
     if (isInitial) {
       setIsLoading(true);
       currentPage.current = 0;
@@ -132,7 +142,7 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
       }
 
       const formattedStories = (data || []).map(formatStoryFromRow);
-      
+
       if (isInitial) {
         setStories(formattedStories);
       } else {
@@ -169,7 +179,7 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
     if (!user?.id) return;
 
     // Optimistic update
-    setStories(prev => prev.map(story => 
+    setStories(prev => prev.map(story =>
       story.id === storyId ? { ...story, isFavorite: !currentStatus } : story
     ));
 
@@ -183,7 +193,7 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
       if (updateError) throw updateError;
     } catch (err) {
       // Revert on error
-      setStories(prev => prev.map(story => 
+      setStories(prev => prev.map(story =>
         story.id === storyId ? { ...story, isFavorite: currentStatus } : story
       ));
       console.error('[useInfiniteStories] Toggle favorite error:', err);
@@ -209,7 +219,7 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
     } catch (err) {
       // Revert on error
       if (storyToDelete) {
-        setStories(prev => [...prev, storyToDelete].sort((a, b) => 
+        setStories(prev => [...prev, storyToDelete].sort((a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         ));
       }
@@ -221,10 +231,10 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
   // Initial fetch when filters change
   useEffect(() => {
     if (!user?.id) return;
-    
+
     // Create unique key for current params to avoid redundant fetches
     const paramsKey = `${statusFilter}-${objectiveFilter || 'null'}-${searchTerm || ''}`;
-    
+
     if (paramsKey !== lastFetchParams.current) {
       lastFetchParams.current = paramsKey;
       fetchStories(true);
@@ -247,13 +257,13 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
         },
         (payload) => {
           console.log('[useInfiniteStories] Realtime update:', payload.eventType);
-          
+
           if (payload.eventType === 'INSERT') {
             const newStory = formatStoryFromRow(payload.new);
             setStories(prev => [newStory, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
             const updatedStory = formatStoryFromRow(payload.new);
-            setStories(prev => prev.map(story => 
+            setStories(prev => prev.map(story =>
               story.id === updatedStory.id ? updatedStory : story
             ));
           } else if (payload.eventType === 'DELETE') {

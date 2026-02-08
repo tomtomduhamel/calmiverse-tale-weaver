@@ -6,6 +6,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CreateSequelButton } from "@/components/story/series/CreateSequelButton";
 import { FavoriteButton } from "@/components/story/FavoriteButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -89,12 +90,13 @@ const FeedCard: React.FC<FeedCardProps> = ({
   return (
     <Card className="overflow-hidden border-0 shadow-none bg-transparent w-full mx-auto sm:max-w-[500px]">
       {/* Header: Title + Favorite */}
+      {/* Header: Title + Favorite */}
       <div className="flex items-center justify-between px-1 py-3">
         <h3
           className="font-semibold text-base leading-tight line-clamp-1 flex-1 cursor-pointer hover:text-primary transition-colors"
-          onClick={onClick}
+          onClick={handleImageClick}
         >
-          {story.title}
+          {isSeriesStory && story.series?.title ? story.series.title : story.title}
         </h3>
         <div data-favorite-button>
           <FavoriteButton
@@ -116,9 +118,9 @@ const FeedCard: React.FC<FeedCardProps> = ({
         {/* Series badge */}
         {isSeriesStory && (
           <div className="absolute top-3 left-3 z-10">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white text-xs font-medium shadow-lg">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-600/90 backdrop-blur-sm text-white text-xs font-medium shadow-lg border border-indigo-400/20">
               <Library className="h-3 w-3" />
-              <span>Tome {story.tome_number}</span>
+              <span>Série {story.series?.total_tomes ? `• ${story.series.total_tomes} tomes` : ''}</span>
             </div>
           </div>
         )}
@@ -173,19 +175,8 @@ const FeedCard: React.FC<FeedCardProps> = ({
             {readingTime}
           </span>
           <span className="text-xs">•</span>
+          <span className="text-xs">•</span>
           <span>Il y a {timeAgo}</span>
-          {isSeriesStory && (
-            <>
-              <span className="text-xs">•</span>
-              <span
-                className="flex items-center gap-1 text-primary/80 cursor-pointer hover:text-primary transition-colors"
-                onClick={() => onSeriesClick?.(story)}
-              >
-                <Library className="h-3.5 w-3.5" />
-                Série
-              </span>
-            </>
-          )}
         </div>
 
         {/* Action buttons */}
@@ -201,16 +192,17 @@ const FeedCard: React.FC<FeedCardProps> = ({
               Partager
             </Button>
           )}
+
+          {/* Correction: Utilisation du composant dédié CreateSequelButton pour ouvrir la modale */}
           {onCreateSequel && canCreateSequel && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onCreateSequel(story.id)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <BookPlus className="h-4 w-4 mr-1.5" />
-              Créer une suite
-            </Button>
+            <div data-sequel-button onClick={(e) => e.stopPropagation()}>
+              <CreateSequelButton
+                story={story}
+                onSequelCreated={onCreateSequel}
+                variant="ghost"
+                size="sm"
+              />
+            </div>
           )}
         </div>
       </CardContent>

@@ -76,7 +76,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
         buttonVariant: 'outline' as const
       };
     }
-    
+
     if (hasPendingSequel) {
       return {
         disabled: true,
@@ -85,7 +85,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
         buttonVariant: 'secondary' as const
       };
     }
-    
+
     if (story.status === 'error') {
       return {
         disabled: true,
@@ -94,7 +94,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
         buttonVariant: 'destructive' as const
       };
     }
-    
+
     if (story.status === 'pending') {
       return {
         disabled: true,
@@ -103,7 +103,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
         buttonVariant: 'secondary' as const
       };
     }
-    
+
     return {
       disabled: false,
       label: 'Créer une suite',
@@ -127,7 +127,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
       seriesTitle: !story.series_id ? seriesTitle : undefined,
       sequelInstructions
     };
-    
+
     const newStoryId = await createSequel(sequelData);
     if (newStoryId) {
       setCreatedStoryId(newStoryId);
@@ -145,107 +145,108 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
     setCreatedStoryId(null);
   };
   return <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <TooltipProvider>
-        <Tooltip delayDuration={300}>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-              <Button 
-                variant={buttonState.buttonVariant} 
-                size={size} 
-                disabled={buttonState.disabled} 
-                className="gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                {buttonState.label}
-              </Button>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-xs text-center" sideOffset={5}>
-            <p className="text-sm">{buttonState.tooltip}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5" />
-            Créer une suite à "{story.title}"
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-4">
-          {createdStoryId ? (
-            <SequelCreationProgress 
-              storyId={createdStoryId} 
-              onComplete={handleProgressComplete}
-              onError={handleProgressError}
-            />
-          ) : (
-            <>
-              <div>
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Durée de l'histoire
-            </Label>
-            <RadioGroup value={duration.toString()} onValueChange={value => setDuration(parseInt(value) as StoryDurationMinutes)} className="flex gap-4 mt-2">
-              {STORY_DURATION_OPTIONS.map(durationOption => <div key={durationOption} className="flex items-center space-x-2">
+    <TooltipProvider>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+          <DialogTrigger asChild>
+            <Button
+              variant={buttonState.buttonVariant}
+              size={size}
+              disabled={buttonState.disabled}
+              className="gap-2"
+              type="button"
+            >
+              <Plus className="w-4 h-4" />
+              {buttonState.label}
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-xs text-center" sideOffset={5}>
+          <p className="text-sm">{buttonState.tooltip}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+
+    <DialogContent className="max-w-md">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <BookOpen className="w-5 h-5" />
+          Créer une suite à "{story.title}"
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        {createdStoryId ? (
+          <SequelCreationProgress
+            storyId={createdStoryId}
+            onComplete={handleProgressComplete}
+            onError={handleProgressError}
+          />
+        ) : (
+          <>
+            <div>
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Durée de l'histoire
+              </Label>
+              <RadioGroup value={duration.toString()} onValueChange={value => setDuration(parseInt(value) as StoryDurationMinutes)} className="flex gap-4 mt-2">
+                {STORY_DURATION_OPTIONS.map(durationOption => <div key={durationOption} className="flex items-center space-x-2">
                   <RadioGroupItem value={durationOption.toString()} id={`duration-${durationOption}`} />
                   <Label htmlFor={`duration-${durationOption}`} className="text-sm">
                     {durationOption} min
                   </Label>
                 </div>)}
-            </RadioGroup>
-          </div>
+              </RadioGroup>
+            </div>
 
-          <div>
-            <Label className="text-sm font-medium">Instructions pour la suite</Label>
-            <div className="space-y-3 mt-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="consistency" className="text-sm">Maintenir la cohérence des personnages</Label>
-                <Switch id="consistency" checked={sequelInstructions.maintainCharacterConsistency} onCheckedChange={checked => setSequelInstructions(prev => ({
-                ...prev,
-                maintainCharacterConsistency: checked
-              }))} />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="references" className="text-sm">Faire référence aux événements précédents</Label>
-                <Switch id="references" checked={sequelInstructions.referenceToEvents} onCheckedChange={checked => setSequelInstructions(prev => ({
-                ...prev,
-                referenceToEvents: checked
-              }))} />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="evolution" className="text-sm">Évolution des personnages</Label>
-                <Switch id="evolution" checked={sequelInstructions.evolutionOfCharacters} onCheckedChange={checked => setSequelInstructions(prev => ({
-                ...prev,
-                evolutionOfCharacters: checked
-              }))} />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="challenges" className="text-sm">Nouveaux défis à relever</Label>
-                <Switch id="challenges" checked={sequelInstructions.newChallengesIntroduced} onCheckedChange={checked => setSequelInstructions(prev => ({
-                ...prev,
-                newChallengesIntroduced: checked
-              }))} />
+            <div>
+              <Label className="text-sm font-medium">Instructions pour la suite</Label>
+              <div className="space-y-3 mt-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="consistency" className="text-sm">Maintenir la cohérence des personnages</Label>
+                  <Switch id="consistency" checked={sequelInstructions.maintainCharacterConsistency} onCheckedChange={checked => setSequelInstructions(prev => ({
+                    ...prev,
+                    maintainCharacterConsistency: checked
+                  }))} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="references" className="text-sm">Faire référence aux événements précédents</Label>
+                  <Switch id="references" checked={sequelInstructions.referenceToEvents} onCheckedChange={checked => setSequelInstructions(prev => ({
+                    ...prev,
+                    referenceToEvents: checked
+                  }))} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="evolution" className="text-sm">Évolution des personnages</Label>
+                  <Switch id="evolution" checked={sequelInstructions.evolutionOfCharacters} onCheckedChange={checked => setSequelInstructions(prev => ({
+                    ...prev,
+                    evolutionOfCharacters: checked
+                  }))} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="challenges" className="text-sm">Nouveaux défis à relever</Label>
+                  <Switch id="challenges" checked={sequelInstructions.newChallengesIntroduced} onCheckedChange={checked => setSequelInstructions(prev => ({
+                    ...prev,
+                    newChallengesIntroduced: checked
+                  }))} />
+                </div>
               </div>
             </div>
-          </div>
 
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
-                  Annuler
-                </Button>
-                <Button onClick={handleCreateSequel} disabled={isCreating} className="flex-1">
-                  {isCreating ? 'Création...' : 'Créer la suite'}
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>;
+            <div className="flex gap-2 pt-4">
+              <Button variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
+                Annuler
+              </Button>
+              <Button onClick={handleCreateSequel} disabled={isCreating} className="flex-1">
+                {isCreating ? 'Création...' : 'Créer la suite'}
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </DialogContent>
+  </Dialog>;
 };

@@ -13,7 +13,7 @@ import LibraryFeed from "@/components/library/LibraryFeed";
 const Library: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "stories";
-  
+
   const { user, loading: authLoading } = useSupabaseAuth();
   const { pendingCount, refetch: refetchPendingShares } = usePendingShares();
   const { toast } = useToast();
@@ -50,10 +50,14 @@ const Library: React.FC = () => {
     });
   };
 
-  const handleCreateSequel = useCallback((storyId: string) => {
-    // Navigate to story with sequel creation flow
-    navigate(`/reader/${storyId}?createSequel=true`);
-  }, [navigate]);
+  const handleCreateSequel = useCallback((newStoryId: string) => {
+    // La suite a été créée via la modale, on redirige vers la nouvelle histoire (qui sera en cours de génération)
+    navigate(`/reader/${newStoryId}`);
+    toast({
+      title: "Suite créée !",
+      description: "Votre nouvelle histoire est en cours de création."
+    });
+  }, [navigate, toast]);
 
   const handleShare = useCallback((storyId: string) => {
     // Navigate to story with share modal open
@@ -121,7 +125,7 @@ const Library: React.FC = () => {
             </TabsList>
 
             <TabsContent value="stories" className="mt-0">
-              <LibraryFeed 
+              <LibraryFeed
                 onCreateSequel={handleCreateSequel}
                 onShare={handleShare}
               />

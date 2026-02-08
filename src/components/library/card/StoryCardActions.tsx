@@ -16,9 +16,9 @@ interface StoryCardActionsProps {
   onSequelCreated?: (storyId: string) => void;
   seriesStories?: Story[];
 }
-const StoryCardActions: React.FC<StoryCardActionsProps> = ({ 
-  story, 
-  onDelete, 
+const StoryCardActions: React.FC<StoryCardActionsProps> = ({
+  story,
+  onDelete,
   onRetry,
   isRetrying = false,
   isDeleting = false,
@@ -59,8 +59,8 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
       <div className="flex flex-col gap-1">
         {/* Bouton créer une suite intelligent */}
         {canCreateSequel && onSequelCreated && (
-          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-            <CreateSequelButton 
+          <div className="flex justify-end" data-sequel-button onClick={(e) => e.stopPropagation()}>
+            <CreateSequelButton
               story={story}
               seriesStories={seriesStories}
               onSequelCreated={onSequelCreated}
@@ -70,7 +70,7 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
             />
           </div>
         )}
-        
+
         <div className="flex items-center space-x-2 justify-end">
           {/* Badge Lu à côté de la poubelle (desktop) */}
           {story.status === 'read' && (
@@ -79,16 +79,15 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
               Lu
             </Badge>
           )}
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={handleDeleteClick}
                   disabled={isDeleting || isRetrying}
-                  className={`p-1.5 rounded-full text-red-600 hover:bg-red-100 dark:hover:bg-red-500/20 ${
-                    isDeleting ? "cursor-not-allowed opacity-50" : ""
-                  }`}
+                  className={`p-1.5 rounded-full text-red-600 hover:bg-red-100 dark:hover:bg-red-500/20 ${isDeleting ? "cursor-not-allowed opacity-50" : ""
+                    }`}
                   aria-label="Supprimer l'histoire"
                   type="button"
                 >

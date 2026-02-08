@@ -30,25 +30,25 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedObjective, setSelectedObjective] = useState<string | null>(null);
-  
+
   // Series modal state
   const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
   const { seriesGroup, isLoading: isLoadingSeries } = useSeriesDetails(selectedSeriesId);
-  
+
   // Debounce search term to avoid excessive API calls
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm.trim());
     }, 300);
-    
+
     return () => clearTimeout(timer);
   }, [searchTerm]);
-  
+
   // Infinite scroll hook
   const {
     stories,
@@ -123,6 +123,17 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
     });
   }, [onCreateSequel, toast]);
 
+  // Filter stories to only show the most recent one per series
+  const displayedStories = React.useMemo(() => {
+    const seenSeries = new Set<string>();
+    return stories.filter(story => {
+      if (!story.series_id) return true;
+      if (seenSeries.has(story.series_id)) return false;
+      seenSeries.add(story.series_id);
+      return true;
+    });
+  }, [stories]);
+
   return (
     <div className="w-full">
       {/* Main layout */}
@@ -165,7 +176,7 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
           {/* Feed */}
           <div className="mt-4">
             <FeedContainer
-              stories={stories}
+              stories={displayedStories}
               isLoading={isLoading}
               isLoadingMore={isLoadingMore}
               hasMore={hasMore}

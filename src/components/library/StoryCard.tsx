@@ -67,7 +67,9 @@ const StoryCard: React.FC<StoryCardProps> = ({
   };
   const handleCardClick = (e: React.MouseEvent) => {
     // Empêcher la propagation si le clic provient du bouton favori ou marquer comme lu
-    if ((e.target as HTMLElement).closest('[data-favorite-button]') || (e.target as HTMLElement).closest('[data-mark-as-read-button]')) {
+    if ((e.target as HTMLElement).closest('[data-favorite-button]') ||
+      (e.target as HTMLElement).closest('[data-mark-as-read-button]') ||
+      (e.target as HTMLElement).closest('[data-sequel-button]')) {
       return;
     }
     console.log("[StoryCard] DEBUG: Clic sur carte:", story.id, "status:", story.status);

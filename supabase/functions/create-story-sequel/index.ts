@@ -40,19 +40,19 @@ function replacePromptVariables(
   variables: Record<string, string | number | undefined | null>
 ): string {
   if (!template) return "";
-  
+
   let result = template;
-  
+
   Object.entries(variables).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       const regex = new RegExp(`\\{\\{${key}\\}\\}`, "g");
       result = result.replace(regex, String(value));
     }
   });
-  
+
   // Nettoyer les variables non remplacées
   result = result.replace(/\{\{[^}]+\}\}/g, "");
-  
+
   return result;
 }
 
@@ -66,11 +66,11 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    
+
     if (!supabaseUrl || !supabaseKey) {
       throw new Error("Variables d'environnement Supabase manquantes");
     }
-    
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Parse request body
@@ -95,9 +95,9 @@ serve(async (req) => {
       webhookUrl
     } = await req.json();
 
-    console.log('🔄 Création suite d\'histoire:', { 
-      storyId, 
-      previousStoryId, 
+    console.log('🔄 Création suite d\'histoire:', {
+      storyId,
+      previousStoryId,
       tomeNumber,
       userId,
       seriesIdFromPayload: seriesId
@@ -149,7 +149,7 @@ serve(async (req) => {
         duration: duration || 10,
         estimated_word_count: duration ? Math.round(duration * 140) : 1400,
       };
-      
+
       generatedSequelPrompt = replacePromptVariables(sequelPromptTemplate, promptVariables);
       console.log('✅ Prompt de suite généré depuis template DB');
     }
@@ -169,12 +169,12 @@ serve(async (req) => {
       previousStoryId: previousStoryId,
       seriesId: resolvedSeriesId,
       tomeNumber: tomeNumber,
-      
+
       // 🆕 Prompt généré depuis le template (si disponible)
       sequelPrompt: generatedSequelPrompt,
       sequelPromptTemplate: sequelPromptTemplate, // Template brut pour référence
       promptSource: promptSource, // 'database' ou 'fallback'
-      
+
       // Informations de l'histoire précédente depuis la base de données
       previousStoryInfo: {
         id: previousStory.id,
@@ -185,7 +185,7 @@ serve(async (req) => {
         storyAnalysis: previousStory.story_analysis || {},
         childrenNames: previousStory.childrennames || []
       },
-      
+
       // Contexte narratif de l'histoire précédente (données fournies par l'utilisateur)
       previousContext: {
         content: previousStoryContent,
@@ -195,20 +195,20 @@ serve(async (req) => {
         recurringPhrases: recurringPhrases || [],
         narrativeStructure: narrativeStructure || {}
       },
-      
+
       // Contexte des enfants (inchangé)
       childrenContext: {
         childrenIds: childrenIds,
         childrenNames: childrenNames,
         objective: objective
       },
-      
+
       // Configuration de la suite
       sequelConfiguration: {
         duration: duration || 10, // Durée en minutes (par défaut 10 min)
         estimatedWordCount: duration ? Math.round(duration * 140) : 1400 // 140 mots par minute en moyenne
       },
-      
+
       // Instructions spéciales pour la suite
       sequelInstructions: sequelInstructions || {
         maintainCharacterConsistency: true,
@@ -216,7 +216,7 @@ serve(async (req) => {
         evolutionOfCharacters: true,
         newChallengesIntroduced: true
       },
-      
+
       // Métadonnées
       userId: userId,
       authorid: story.authorid,
@@ -226,10 +226,10 @@ serve(async (req) => {
 
     // 6. Déclencher le webhook n8n - priorité à l'URL fournie dans la requête
     const N8N_WEBHOOK_URL = webhookUrl || Deno.env.get('N8N_SEQUEL_WEBHOOK_URL');
-    
+
     if (!N8N_WEBHOOK_URL) {
       console.warn('⚠️ URL webhook n8n non configurée, simulation du déclenchement');
-      
+
       // Pour le développement, mettre à jour directement le statut
       await supabase
         .from('stories')
@@ -238,26 +238,26 @@ serve(async (req) => {
           preview: `Génération du tome ${tomeNumber} en cours...`
         })
         .eq('id', storyId);
-        
+
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           storyId: storyId,
           promptSource: promptSource,
           message: 'Suite créée (mode développement)'
         }),
-        { 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json' 
-          } 
+        {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
         }
       );
     }
 
     // 7. Validation et appel du webhook n8n avec retry
     console.log('🔗 Appel webhook n8n:', N8N_WEBHOOK_URL);
-    
+
     // Validation de l'URL du webhook
     if (!N8N_WEBHOOK_URL.startsWith('https://')) {
       throw new Error('URL webhook invalide: doit commencer par https://');
@@ -265,14 +265,14 @@ serve(async (req) => {
 
     let lastError = null;
     const maxRetries = 3;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         console.log(`🔄 Tentative ${attempt}/${maxRetries} d'appel webhook`);
-        
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-        
+
         const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
           method: 'POST',
           headers: {
@@ -281,49 +281,49 @@ serve(async (req) => {
           body: JSON.stringify(n8nPayload),
           signal: controller.signal
         });
-        
+
         clearTimeout(timeoutId);
-        
+
         console.log(`📡 Réponse webhook - Status: ${n8nResponse.status}`);
-        
+
         if (!n8nResponse.ok) {
           const responseText = await n8nResponse.text();
           console.error(`❌ Erreur webhook n8n (${n8nResponse.status}):`, responseText);
-          
+
           // Erreurs permanentes - pas de retry
           if (n8nResponse.status === 404 || n8nResponse.status === 400) {
             throw new Error(`Webhook inaccessible (${n8nResponse.status}): ${responseText || 'Vérifiez la configuration n8n'}`);
           }
-          
+
           // Erreurs temporaires - retry possible
           lastError = new Error(`Erreur temporaire webhook (${n8nResponse.status}): ${responseText}`);
-          
+
           if (attempt < maxRetries) {
             const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
             console.log(`⏳ Nouvelle tentative dans ${delay}ms`);
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
-          
+
           throw lastError;
         }
-        
+
         console.log('✅ Webhook n8n appelé avec succès');
         break;
-        
+
       } catch (error: any) {
         lastError = error;
-        
+
         if (error.name === 'AbortError') {
           lastError = new Error('Timeout: le webhook n8n ne répond pas dans les temps');
         }
-        
+
         console.error(`❌ Erreur tentative ${attempt}:`, error.message);
-        
+
         if (attempt === maxRetries || error.message.includes('inaccessible')) {
           throw lastError;
         }
-        
+
         // Retry avec délai exponentiel
         const delay = Math.pow(2, attempt) * 1000;
         console.log(`⏳ Nouvelle tentative dans ${delay}ms`);
@@ -331,45 +331,60 @@ serve(async (req) => {
       }
     }
 
-    console.log('✅ Webhook n8n appelé avec succès');
+    console.log('✅ Webhook n8n appelé avec succès. Fin de la fonction (la suite est gérée par n8n).');
 
-    // 8. Mettre à jour le statut de l'histoire
-    await supabase
-      .from('stories')
-      .update({
-        status: 'pending',
-        preview: `Génération du tome ${tomeNumber} en cours...`
-      })
-      .eq('id', storyId);
+    // Mettre à jour le statut avec une prévisualisation informative, MAIS SANS écraser si n8n a déjà répondu rapidement
+    // On ne touche plus au statut ici pour éviter la race condition si n8n a déjà mis à jour vers "generating" ou "completed"
+    // Cependant, si n8n est lent, l'histoire reste en "pending" grâce au front (useStorySeries)
+
+    // Optionnel : on peut mettre un log dans la DB si besoin, mais on évite de toucher à 'status'
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         storyId: storyId,
         promptSource: promptSource,
-        message: `Tome ${tomeNumber} en cours de génération`
+        message: `Tome ${tomeNumber} initialisé avec succès`
       }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
     );
 
   } catch (error: any) {
     console.error('❌ Erreur création suite:', error);
-    
+
+    // Tentative de mise à jour du statut en erreur pour que l'UI sache s'arrêter
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { storyId } = await req.json().catch(() => ({ storyId: null }));
+        if (storyId) {
+          await supabase.from('stories').update({
+            status: 'error',
+            error: error.message || 'Erreur inconnue lors de l\'initialisation'
+          }).eq('id', storyId);
+        }
+      }
+    } catch (e) {
+      console.error('Impossible de mettre à jour le statut erreur en DB', e);
+    }
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error.message || 'Erreur interne du serveur',
         success: false
       }),
-      { 
+      {
         status: 500,
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
         }
       }
     );
