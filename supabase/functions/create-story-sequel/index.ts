@@ -130,6 +130,11 @@ serve(async (req) => {
     // 3. 🆕 Récupérer le template de prompt pour les suites depuis la DB
     console.log('📝 Récupération du template sequel_prompt_template...');
     const sequelPromptTemplate = await fetchActivePromptTemplate(supabase, 'sequel_prompt_template');
+
+    // 🆕 Récupérer le template de prompt pour l'image
+    console.log('📝 Récupération du template image_generation_prompt...');
+    const imagePromptTemplate = await fetchActivePromptTemplate(supabase, 'image_generation_prompt');
+
     const promptSource = sequelPromptTemplate ? 'database' : 'fallback';
     console.log(`📝 Source du template: ${promptSource}`);
 
@@ -173,6 +178,7 @@ serve(async (req) => {
       // 🆕 Prompt généré depuis le template (si disponible)
       sequelPrompt: generatedSequelPrompt,
       sequelPromptTemplate: sequelPromptTemplate, // Template brut pour référence
+      imagePromptTemplate: imagePromptTemplate, // 🆕 Template image brut
       promptSource: promptSource, // 'database' ou 'fallback'
 
       // Informations de l'histoire précédente depuis la base de données
