@@ -26,30 +26,35 @@ export interface CalmiNotificationOptions {
  */
 export class NotificationService {
   private static instance: NotificationService;
-  
-  private constructor() {}
-  
+
+  private constructor() { }
+
   static getInstance(): NotificationService {
     if (!NotificationService.instance) {
       NotificationService.instance = new NotificationService();
     }
     return NotificationService.instance;
   }
-  
+
   /**
    * Vérifie si les notifications sont supportées
    */
   isSupported(): boolean {
     return 'Notification' in window && 'serviceWorker' in navigator;
   }
-  
+
   /**
    * Obtient le statut actuel des permissions
    */
   getPermission(): NotificationPermission {
-    return this.isSupported() ? Notification.permission : 'denied';
+    try {
+      return this.isSupported() ? Notification.permission : 'denied';
+    } catch (e) {
+      console.warn('[NotificationService] Error accessing permission:', e);
+      return 'denied';
+    }
   }
-  
+
   /**
    * Demande la permission pour les notifications
    */
@@ -58,7 +63,7 @@ export class NotificationService {
       console.warn('[NotificationService] Notifications not supported');
       return false;
     }
-    
+
     try {
       const permission = await Notification.requestPermission();
       console.log('[NotificationService] Permission:', permission);
@@ -68,7 +73,7 @@ export class NotificationService {
       return false;
     }
   }
-  
+
   /**
    * Envoie une notification
    */
@@ -80,11 +85,11 @@ export class NotificationService {
       });
       return null;
     }
-    
+
     try {
       // Importer le helper de détection preview
       const { isPreviewIframe } = await import('@/utils/previewDetection');
-      
+
       // En preview, toujours utiliser notification directe (pas de SW)
       if (isPreviewIframe()) {
         console.log('[NotificationService] Preview mode: using direct notification');
@@ -96,14 +101,14 @@ export class NotificationService {
           requireInteraction: options.requireInteraction || false,
           silent: options.silent || false
         });
-        
+
         this.setupNotificationHandlers(notification);
         return notification;
       }
-      
+
       // Utiliser le Service Worker si disponible, sinon notification directe
       const registration = await navigator.serviceWorker.getRegistration();
-      
+
       if (registration) {
         // Envoyer via Service Worker pour fonctionner en arrière-plan
         await registration.showNotification(options.title, {
@@ -115,7 +120,7 @@ export class NotificationService {
           requireInteraction: options.requireInteraction || false,
           silent: options.silent || false
         });
-        
+
         console.log('[NotificationService] Notification sent via Service Worker:', options.title);
         return null; // Service Worker notifications don't return Notification object
       } else {
@@ -128,7 +133,7 @@ export class NotificationService {
           requireInteraction: options.requireInteraction || false,
           silent: options.silent || false
         });
-        
+
         this.setupNotificationHandlers(notification);
         console.log('[NotificationService] Direct notification sent:', options.title);
         return notification;
@@ -138,7 +143,7 @@ export class NotificationService {
       return null;
     }
   }
-  
+
   /**
    * Configure les gestionnaires d'événements pour les notifications directes
    */
@@ -146,24 +151,24 @@ export class NotificationService {
     notification.onclick = (event) => {
       event.preventDefault();
       window.focus();
-      
+
       const data = notification.data as CalmiNotificationData;
       if (data?.action) {
         this.handleNotificationAction(data);
       }
-      
+
       notification.close();
     };
   }
-  
+
   /**
    * Gère les actions des notifications via événements custom (évite les reloads)
    */
   private handleNotificationAction(data: CalmiNotificationData) {
     console.log('[NotificationService] Handling notification action:', data);
-    
+
     let path = '/';
-    
+
     switch (data.action) {
       case 'read':
         if (data.storyId && this.isValidStoryId(data.storyId)) {
@@ -188,7 +193,7 @@ export class NotificationService {
         path = '/';
         break;
     }
-    
+
     // Émettre un événement custom pour navigation SPA (écouté par Shell.tsx)
     const navEvent = new CustomEvent('calmi-navigate', { detail: { path } });
     window.dispatchEvent(navEvent);
@@ -199,17 +204,17 @@ export class NotificationService {
    */
   private isValidStoryId(storyId: string): boolean {
     if (!storyId) return false;
-    
+
     // Vérifier si c'est un UUID valide (format basique)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const isValidUUID = uuidRegex.test(storyId);
-    
+
     // Éviter les IDs temporaires qui commencent par des patterns connus
     const isTemporaryId = storyId.startsWith('temp-') || storyId.startsWith('title-') || storyId.length < 10;
-    
+
     return isValidUUID && !isTemporaryId;
   }
-  
+
   /**
    * Notifications prédéfinies pour Calmi
    */
@@ -226,7 +231,7 @@ export class NotificationService {
       requireInteraction: true
     });
   }
-  
+
   async notifyStoryReady(storyTitle: string, storyId: string): Promise<void> {
     await this.send({
       title: '✨ Histoire prête !',
@@ -241,7 +246,7 @@ export class NotificationService {
       requireInteraction: true
     });
   }
-  
+
   async notifyStoryError(storyTitle: string, storyId: string): Promise<void> {
     await this.send({
       title: '❌ Erreur de génération',
@@ -255,7 +260,7 @@ export class NotificationService {
       }
     });
   }
-  
+
   async notifyAudioReady(storyTitle: string, storyId: string): Promise<void> {
     await this.send({
       title: '🎵 Audio disponible !',
@@ -269,7 +274,7 @@ export class NotificationService {
       }
     });
   }
-  
+
   async notifyGeneralUpdate(title: string, body: string): Promise<void> {
     await this.send({
       title,
