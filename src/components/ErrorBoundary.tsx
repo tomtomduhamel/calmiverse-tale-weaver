@@ -63,11 +63,13 @@ const DefaultErrorFallback: React.FC<{ error: Error; retry: () => void }> = ({ e
           Retour à l'accueil
         </button>
       </div>
-      <div className="mt-4 text-left p-2 bg-red-50 border border-red-100 rounded text-xs text-red-800 font-mono overflow-auto max-h-[200px]">
-        <strong>Error:</strong> {error.message}
-        <br />
-        <pre className="mt-1 opacity-70">{error.stack}</pre>
-      </div>
+      {import.meta.env.DEV && (
+        <div className="mt-4 text-left p-2 bg-red-50 border border-red-100 rounded text-xs text-red-800 font-mono overflow-auto max-h-[200px]">
+          <strong>Error:</strong> {error.message}
+          <br />
+          <pre className="mt-1 opacity-70">{error.stack}</pre>
+        </div>
+      )}
     </div>
   </div>
 );
