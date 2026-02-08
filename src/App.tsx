@@ -172,10 +172,10 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <TitleGenerationProvider>
-        {isDemoMode && <DemoBanner />}
-        <div className={isDemoMode ? "pt-[60px]" : ""}>
-          <Router>
+      <Router>
+        <TitleGenerationProvider>
+          {isDemoMode && <DemoBanner />}
+          <div className={isDemoMode ? "pt-[60px]" : ""}>
             <Suspense fallback={<PageLoader />}>
               <TitleGenerationIndicator />
               <Routes>
@@ -225,16 +225,15 @@ function App() {
                 <Route path="*" element={<Navigate to="/404" replace />} />
               </Routes>
             </Suspense>
-          </Router>
-
+          </div>
           {/* Composants globaux */}
           <ErrorListener />
           <Toaster />
           <PWAInstallPrompt />
           <PWAUpdateNotification />
           <OfflineIndicator />
-        </div>
-      </TitleGenerationProvider>
+        </TitleGenerationProvider>
+      </Router>
     </ErrorBoundary>
   );
 }
