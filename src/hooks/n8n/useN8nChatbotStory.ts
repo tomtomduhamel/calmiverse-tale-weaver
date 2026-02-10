@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
 import type { Child } from '@/types/child';
-import type { 
-  ChatbotMessage, 
-  ChatbotResponse, 
-  ChatbotInitPayload, 
+import type {
+  ChatbotMessage,
+  ChatbotResponse,
+  ChatbotInitPayload,
   ChatbotMessagePayload,
   ChatbotChildInfo,
   ChatbotChoice
@@ -12,7 +12,7 @@ import { calculateAge } from '@/utils/age';
 import { usePersistedChatbotState } from './usePersistedChatbotState';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 
-const N8N_WEBHOOK_URL = 'https://n8n.srv856374.hstgr.cloud/webhook/ec1e6586-86dc-4755-b73e-80a19762ddd2';
+const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_CHAT_WEBHOOK_URL || 'https://n8n.srv856374.hstgr.cloud/webhook/ec1e6586-86dc-4755-b73e-80a19762ddd2';
 
 const generateId = () => crypto.randomUUID();
 
@@ -48,7 +48,7 @@ export const useN8nChatbotStory = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Verrou synchrone pour empêcher les appels multiples à initConversation
   const isInitializingRef = useRef(false);
 
@@ -59,10 +59,10 @@ export const useN8nChatbotStory = () => {
 
   // Ajouter un message (avec support des choix)
   const addMessage = useCallback((
-    role: 'user' | 'assistant', 
+    role: 'user' | 'assistant',
     content: string,
-    options?: { 
-      choices?: ChatbotChoice[]; 
+    options?: {
+      choices?: ChatbotChoice[];
       choiceType?: 'single' | 'multiple';
     }
   ) => {
@@ -83,15 +83,15 @@ export const useN8nChatbotStory = () => {
   // Traiter les données de réponse n8n
   const handleResponseData = useCallback((data: any) => {
     console.log('[useN8nChatbotStory] Réponse brute n8n:', data);
-    
+
     // Synchronisation du sessionId avec n8n
     if (data.sessionId && data.sessionId !== conversationId) {
       console.log('[useN8nChatbotStory] Synchronisation sessionId:', conversationId, '->', data.sessionId);
       setConversationId(data.sessionId);
     }
-    
+
     const content = data.content || data.chatInput;
-    
+
     if (data.type === 'error') {
       setError(content);
       addMessage('assistant', content);
@@ -106,10 +106,10 @@ export const useN8nChatbotStory = () => {
         childrenNames: data.childrennames,
         nbMots: data.nb_mots
       });
-      
+
       const successMessage = content || `L'histoire "${data.title}" a été créée avec succès ! Bonne lecture !`;
       addMessage('assistant', successMessage);
-      
+
       // Si n8n a sauvegardé l'histoire et renvoyé un storyId
       if (data.storyId) {
         setPersistedStoryId(data.storyId);
@@ -173,46 +173,72 @@ export const useN8nChatbotStory = () => {
   const sendToWebhook = useCallback(async (payload: ChatbotInitPayload | ChatbotMessagePayload): Promise<ChatbotResponse> => {
     console.log('[useN8nChatbotStory] Envoi vers n8n:', payload);
 
-    const response = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    // Timeout étendu pour la génération d'histoire (3 minutes)
+    const TIMEOUT_MS = 180000;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
+    try {
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
 
-    const data = await response.json();
-    console.log('[useN8nChatbotStory] Réponse brute n8n:', data);
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'No error text');
+        throw new Error(`Erreur HTTP: ${response.status} (${errorText.slice(0, 100)})`);
+      }
 
-    // n8n peut renvoyer "chatInput" au lieu de "content"
-    const content = data.content || data.chatInput;
+      // Lecture sécurisée du texte brut avant parsing
+      const textResponse = await response.text();
 
-    // Si n8n renvoie directement le bon format avec choix
-    if (data.type && content) {
+      let data: any;
+      try {
+        data = JSON.parse(textResponse);
+      } catch (parseError) {
+        console.error('[useN8nChatbotStory] Erreur parsing JSON:', textResponse.slice(0, 200));
+        throw new Error("Format de réponse invalide. Le serveur a peut-être renvoyé une erreur.");
+      }
+
+      console.log('[useN8nChatbotStory] Réponse n8n:', data);
+
+      // n8n peut renvoyer "chatInput" au lieu de "content"
+      const content = data.content || data.chatInput;
+
+      // Si n8n renvoie directement le bon format avec choix
+      if (data.type && content) {
+        return {
+          type: data.type,
+          content,
+          sessionId: data.sessionId,
+          choices: data.choices,
+          choiceType: data.choiceType,
+          storyId: data.storyId,
+          title: data.title,
+          objective: data.objective,
+          childrennames: data.childrennames,
+          childrenids: data.childrenids,
+        } as ChatbotResponse;
+      }
+
+      // Fallback si format différent
       return {
-        type: data.type,
-        content,
+        type: 'message',
+        content: typeof data === 'string' ? data : (content || JSON.stringify(data)),
         sessionId: data.sessionId,
-        choices: data.choices,
-        choiceType: data.choiceType,
-        storyId: data.storyId,
-        title: data.title,
-        objective: data.objective,
-        childrennames: data.childrennames,
-        childrenids: data.childrenids,
-      } as ChatbotResponse;
+      };
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        throw new Error("La création prend plus de temps que prévu. L'histoire est probablement en cours de finalisation.");
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    // Fallback si format différent
-    return {
-      type: 'message',
-      content: typeof data === 'string' ? data : (content || JSON.stringify(data)),
-      sessionId: data.sessionId,
-    };
   }, []);
 
   const initConversation = useCallback(async (userId: string, children: Child[]) => {
@@ -221,7 +247,7 @@ export const useN8nChatbotStory = () => {
       console.log('[useN8nChatbotStory] Initialisation déjà en cours, skip');
       return;
     }
-    
+
     // Si session déjà valide, ne pas réinitialiser
     if (isInitialized && hasValidSession()) {
       console.log('[useN8nChatbotStory] Session valide existante, skip init');
@@ -233,7 +259,7 @@ export const useN8nChatbotStory = () => {
     console.log('[useN8nChatbotStory] Initialisation conversation pour', children.length, 'enfants');
     setIsLoading(true);
     setError(null);
-    
+
     // Sauvegarder les IDs des enfants pour la session
     setChildrenIds(children.map(c => c.id));
 
@@ -264,10 +290,10 @@ export const useN8nChatbotStory = () => {
     if (!message.trim()) return;
 
     console.log('[useN8nChatbotStory] Envoi message:', message);
-    
+
     // Ajouter le message utilisateur immédiatement
     addMessage('user', message);
-    
+
     setIsLoading(true);
     setError(null);
 
@@ -291,7 +317,7 @@ export const useN8nChatbotStory = () => {
       }
 
       const data = await response.json();
-      
+
       // Traiter la réponse
       handleResponseData(data);
 
@@ -311,7 +337,7 @@ export const useN8nChatbotStory = () => {
     if (!message || message.choicesConfirmed) return;
 
     let newSelected: string[];
-    
+
     if (message.choiceType === 'multiple') {
       // Toggle pour choix multiples
       const currentSelected = message.selectedChoices || [];

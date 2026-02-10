@@ -31,6 +31,7 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
   const navigate = useNavigate();
   const { user } = useSupabaseAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [loadingDuration, setLoadingDuration] = React.useState(0);
 
   const {
     messages,
@@ -44,6 +45,27 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
     selectChoice,
     confirmChoices,
   } = useN8nChatbotStory();
+
+  // Reset loading timer when loading stops or starts
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      setLoadingDuration(0);
+      interval = setInterval(() => {
+        setLoadingDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      setLoadingDuration(0);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  const getLoadingMessage = () => {
+    if (loadingDuration > 60) return "Illustration de votre aventure en cours...";
+    if (loadingDuration > 30) return "Création de l'histoire magique...";
+    if (loadingDuration > 10) return "Calmi réfléchit...";
+    return "En train d'écrire...";
+  };
 
   const handleReset = () => {
     resetConversation();
@@ -75,7 +97,7 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, loadingDuration]); // Added loadingDuration to scroll on message change
 
   // Redirection vers le reader quand l'histoire est créée
   useEffect(() => {
@@ -126,8 +148,8 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
             </div>
             <div>
               <h3 className="font-semibold text-foreground">Calmi</h3>
-              <p className="text-xs text-muted-foreground">
-                {isLoading ? 'En train d\'écrire...' : 'Assistant de création d\'histoires'}
+              <p className="text-xs text-muted-foreground animate-pulse">
+                {isLoading ? getLoadingMessage() : 'Assistant de création d\'histoires'}
               </p>
             </div>
             <div className="ml-auto flex items-center gap-2">
@@ -189,22 +211,38 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
               />
             ))}
 
-            {isLoading && <TypingIndicator />}
+            {isLoading && (
+              <div className="space-y-2">
+                <TypingIndicator />
+                {loadingDuration > 5 && (
+                  <p className="text-xs text-muted-foreground ml-4 animate-fade-in">
+                    {getLoadingMessage()}
+                  </p>
+                )}
+              </div>
+            )}
           </ScrollArea>
 
           {/* Input Area */}
           <ChatInput
             onSend={handleSend}
             disabled={isLoading || !!storyId}
-            placeholder={storyId ? "Histoire créée ! Redirection..." : "Écrivez votre message..."}
+            placeholder={
+              storyId
+                ? "Histoire créée ! Redirection..."
+                : isLoading
+                  ? "Calmi réfléchit..."
+                  : "Écrivez votre message..."
+            }
           />
         </CardContent>
       </Card>
 
       {/* Error message */}
       {error && (
-        <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-          {error}
+        <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2">
+          <span>⚠️</span>
+          <span className="flex-1">{error}</span>
         </div>
       )}
 
