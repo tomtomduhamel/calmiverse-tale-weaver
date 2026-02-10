@@ -16,16 +16,20 @@ const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_CHAT_WEBHOOK_URL || 'https://n8
 
 const generateId = () => crypto.randomUUID();
 
-const mapChildToInfo = (child: Child): ChatbotChildInfo => ({
-  id: child.id,
-  name: child.name,
-  gender: child.gender,
-  birthDate: child.birthDate.toISOString(),
-  age: calculateAge(child.birthDate),
-  interests: child.interests,
-  teddyName: child.teddyName,
-  imaginaryWorld: child.imaginaryWorld,
-});
+const mapChildToInfo = (child: Child): ChatbotChildInfo => {
+  // Sécurisation : birthDate peut être une string (venant de Supabase) ou une Date
+  const birthDate = new Date(child.birthDate);
+  return {
+    id: child.id,
+    name: child.name,
+    gender: child.gender,
+    birthDate: birthDate.toISOString(),
+    age: calculateAge(birthDate),
+    interests: child.interests,
+    teddyName: child.teddyName,
+    imaginaryWorld: child.imaginaryWorld,
+  };
+};
 
 export const useN8nChatbotStory = () => {
   // État persisté
