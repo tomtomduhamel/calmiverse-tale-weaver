@@ -73,6 +73,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   const { subscription } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [quotaMessage, setQuotaMessage] = useState<string>('');
+  const [isStartingCreation, setIsStartingCreation] = useState(false);
 
   const {
     createStoryFromTitle,
@@ -96,6 +97,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   });
 
   // Guards synchrones
+  const isSubmittingRef = useRef(false);
   const isGeneratingRef = useRef(false);
   const autoGenerateTriggered = useRef(false);
   const lastGenerationTimeRef = useRef<number>(0);
@@ -190,20 +192,30 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
   // Création finale de l'histoire
   const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes) => {
-    const validation = await validateAction('create_story');
-
-    if (!validation.allowed) {
-      toast({
-        title: "Limite atteinte",
-        description: validation.reason || "Quota atteint",
-        variant: "destructive"
-      });
-      setQuotaMessage(validation.reason || 'Limite atteinte');
-      setShowUpgradePrompt(true);
+    if (isSubmittingRef.current || isCreatingStory) {
+      console.log('[TitleBasedStoryCreator] Création déjà en cours, clic ignoré.');
       return;
     }
 
+    isSubmittingRef.current = true;
+    setIsStartingCreation(true);
+
     try {
+      const validation = await validateAction('create_story');
+
+      if (!validation.allowed) {
+        toast({
+          title: "Limite atteinte",
+          description: validation.reason || "Quota atteint",
+          variant: "destructive"
+        });
+        setQuotaMessage(validation.reason || 'Limite atteinte');
+        setShowUpgradePrompt(true);
+        isSubmittingRef.current = false;
+        setIsStartingCreation(false);
+        return;
+      }
+
       const selectedChildrenForStory = children.filter(child => selectedChildrenIds.includes(child.id));
       const childrenNames = selectedChildrenForStory.map(child => child.name);
 
@@ -241,6 +253,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         description: error.message || "Impossible de créer l'histoire",
         variant: "destructive"
       });
+    } finally {
+      isSubmittingRef.current = false;
+      setIsStartingCreation(false);
     }
   }, [selectedObjective, selectedChildrenIds, children, createStoryFromTitle, startMonitoring, updateSelectedTitle, updateSelectedDuration, updateCurrentStep, validateAction, incrementUsage, toast, titleGenerationCost]);
 
@@ -323,7 +338,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
             onSelectTitle={handleCreateStory}
             onRegenerateTitles={canRegenerate ? handleRegenerateTitles : undefined}
             canRegenerate={canRegenerate}
-            isCreatingStory={isCreatingStory}
+            isCreatingStory={isCreatingStory || isStartingCreation}
             isRegenerating={isGeneratingTitles}
           />
         ) : (
