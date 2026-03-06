@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2, VolumeX, Loader2, Download, RefreshCw, X } from 'lucide-react';
 import { useN8nAudioGeneration } from '@/hooks/story/audio/useN8nAudioGeneration';
 import { useToast } from '@/hooks/use-toast';
+import { getSignedAudioUrl } from '@/utils/storageUtils';
 interface N8nAudioPlayerProps {
   storyId: string;
   text: string;
@@ -76,8 +77,19 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
         currentAudio.currentTime = 0;
       }
 
+      // Get signed URL for the audio file
+      const signedUrl = await getSignedAudioUrl(readyAudioFile.audio_url);
+      if (!signedUrl) {
+        toast({
+          title: "Erreur",
+          description: "Impossible d'obtenir l'URL audio",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Créer un nouveau lecteur audio
-      const audio = new Audio(readyAudioFile.audio_url);
+      const audio = new Audio(signedUrl);
       audioRef.current = audio;
       setCurrentAudio(audio);
 
@@ -233,10 +245,16 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
 
       {/* Lien de téléchargement si disponible */}
       {readyAudioFile?.audio_url && <div className="text-center">
-          <a href={readyAudioFile.audio_url} download className={`inline-flex items-center text-xs hover:underline ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-500'}`}>
+          <button 
+            onClick={async () => {
+              const url = await getSignedAudioUrl(readyAudioFile.audio_url);
+              if (url) window.open(url, '_blank');
+            }}
+            className={`inline-flex items-center text-xs hover:underline ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-500'}`}
+          >
             <Download className="h-3 w-3 mr-1" />
             Télécharger l'audio
-          </a>
+          </button>
         </div>}
     </div>;
 };

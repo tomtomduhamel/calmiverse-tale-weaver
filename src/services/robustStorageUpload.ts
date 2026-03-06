@@ -59,22 +59,25 @@ export const robustStorageUpload = {
             throw new Error(`Aucun path retourné par Storage (${bucketName})`);
           }
 
-          // Obtenir l'URL publique
-          const { data: urlData } = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(data.path);
+          // Store the file path for signed URL generation
+          const filePath = data.path;
 
-          if (!urlData?.publicUrl) {
-            throw new Error(`Impossible d'obtenir l'URL publique (${bucketName})`);
+          // Generate a signed URL for immediate use
+          const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+            .from(bucketName)
+            .createSignedUrl(filePath, 3600); // 1 hour
+
+          if (signedUrlError || !signedUrlData?.signedUrl) {
+            throw new Error(`Impossible d'obtenir l'URL signée (${bucketName})`);
           }
 
-          console.log(`✅ [RobustUpload] Upload réussi avec bucket ${bucketName}:`, urlData.publicUrl);
+          console.log(`✅ [RobustUpload] Upload réussi avec bucket ${bucketName}`);
           
           return {
             success: true,
-            url: urlData.publicUrl,
+            url: signedUrlData.signedUrl,
             bucketUsed: bucketName,
-            cleanFilename: filename // Retourner le nom de fichier original propre
+            cleanFilename: filename
           };
 
         } catch (error) {

@@ -226,17 +226,15 @@ serve(async (req) => {
       throw new Error(`Erreur upload: ${uploadError.message}`);
     }
 
-    // Obtenir l'URL publique
-    const { data: urlData } = supabase.storage
-      .from('audio-files')
-      .getPublicUrl(uploadData.path);
+    // Store the file path (not public URL) for signed URL generation
+    const storedPath = uploadData.path;
 
-    console.log(`🔗 [upload-audio-from-n8n-${requestId}] URL publique générée:`, urlData.publicUrl);
+    console.log(`🔗 [upload-audio-from-n8n-${requestId}] File path stored:`, storedPath);
 
-    // Mettre à jour l'enregistrement audio_files
+    // Mettre à jour l'enregistrement audio_files avec le path (pas l'URL publique)
     const updateData: any = {
       status: 'ready',
-      audio_url: urlData.publicUrl,
+      audio_url: storedPath,
       file_size: audioFile.size,
       updated_at: new Date().toISOString()
     };
@@ -262,7 +260,7 @@ serve(async (req) => {
         success: true,
         message: 'Fichier audio uploadé avec succès',
         audioFileId: audioFileRecord.id,
-        audioUrl: urlData.publicUrl,
+        audioPath: storedPath,
         fileName: uploadData.path,
         requestId
       }),
