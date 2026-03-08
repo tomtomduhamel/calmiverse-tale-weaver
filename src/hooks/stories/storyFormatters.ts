@@ -33,6 +33,8 @@ export const formatStoryFromSupabase = (story: any): Story => {
     tome_number: story.tome_number || null,
     is_series_starter: story.is_series_starter || false,
     previous_story_id: story.previous_story_id || null,
-    next_story_id: story.next_story_id || null
+    next_story_id: story.next_story_id || null,
+    rating: story.rating || undefined,
+    rating_comment: story.rating_comment || undefined
   };
 };
