@@ -74,7 +74,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
           {!isMobile && !location.pathname.startsWith('/reader/') && <Navigation />}
           
           {/* Main content with optimized mobile spacing */}
-          <div className={`flex-1 w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-16' : 'pb-4'}`}>
+          <div className={`flex-1 w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-[calc(4rem+env(safe-area-inset-bottom,8px))]' : 'pb-4'}`}>
             <StoryGenerationManager>
               {children || <Outlet />}
             </StoryGenerationManager>
@@ -106,7 +106,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
           {!isMobile && !location.pathname.startsWith('/reader/') && <Navigation />}
           
           {/* Main content with optimized mobile spacing */}
-          <div className={`flex-1 w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-16' : 'pb-4'}`}>
+          <div className={`flex-1 w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-[calc(4rem+env(safe-area-inset-bottom,8px))]' : 'pb-4'}`}>
             <StoryGenerationManager>
               {children || <Outlet />}
             </StoryGenerationManager>

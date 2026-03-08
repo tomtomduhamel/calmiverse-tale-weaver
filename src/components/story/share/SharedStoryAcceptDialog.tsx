@@ -152,7 +152,7 @@ const SharedStoryAcceptDialog: React.FC<SharedStoryAcceptDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto pb-safe">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -281,7 +281,7 @@ const SharedStoryAcceptDialog: React.FC<SharedStoryAcceptDialogProps> = ({
           )}
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex-col sm:flex-row gap-2 pb-safe">
           <Button
             variant="outline"
             onClick={handleReject}
