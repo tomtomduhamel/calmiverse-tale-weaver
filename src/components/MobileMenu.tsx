@@ -45,8 +45,8 @@ const MobileMenu: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md shadow-lg border-t border-border z-[100]">
-      <div className="flex items-center justify-around h-14 px-1 pb-safe">
+    <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md shadow-lg border-t border-border z-[100] pb-safe">
+      <div className="flex items-center justify-around h-14 px-1">
         {menuItems.map((item) => (
           <button
             key={item.title}
