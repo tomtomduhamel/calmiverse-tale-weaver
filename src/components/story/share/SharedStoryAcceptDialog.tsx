@@ -96,7 +96,6 @@ const SharedStoryAcceptDialog: React.FC<SharedStoryAcceptDialogProps> = ({
           finalMapping[originalName] = child.name;
         }
       }
-      // If no mapping, don't include in final mapping (keep original)
     }
     
     return finalMapping;
@@ -152,8 +151,8 @@ const SharedStoryAcceptDialog: React.FC<SharedStoryAcceptDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto pb-safe">
-        <DialogHeader>
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             Histoire partagée
@@ -163,7 +162,7 @@ const SharedStoryAcceptDialog: React.FC<SharedStoryAcceptDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4 min-h-0">
           {/* Story info */}
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <h3 className="font-semibold text-lg">{share.story_title}</h3>
@@ -215,7 +214,6 @@ const SharedStoryAcceptDialog: React.FC<SharedStoryAcceptDialogProps> = ({
                       key={index} 
                       className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg"
                     >
-                      {/* Original character */}
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <Avatar className="h-8 w-8 bg-secondary/20">
                           <AvatarFallback className="text-xs bg-secondary/20 text-secondary-foreground">
@@ -225,10 +223,8 @@ const SharedStoryAcceptDialog: React.FC<SharedStoryAcceptDialogProps> = ({
                         <span className="text-sm font-medium truncate">{originalName}</span>
                       </div>
 
-                      {/* Arrow */}
                       <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
 
-                      {/* Mapping select */}
                       <div className="flex-1 min-w-0">
                         <Select
                           value={characterMapping[originalName] || 'keep_original'}
@@ -281,7 +277,7 @@ const SharedStoryAcceptDialog: React.FC<SharedStoryAcceptDialogProps> = ({
           )}
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2 pb-safe">
+        <DialogFooter className="shrink-0 flex-col sm:flex-row gap-2 pb-safe border-t pt-4">
           <Button
             variant="outline"
             onClick={handleReject}
