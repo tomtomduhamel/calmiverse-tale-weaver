@@ -92,7 +92,8 @@ export const FeedbackButton = () => {
       <DialogTrigger asChild>
         <Button
           size="lg"
-          className={`fixed ${isMobile ? 'bottom-20' : 'bottom-6'} right-6 z-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105`}
+          className={`fixed right-6 z-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105`}
+          style={{ bottom: isMobile ? 'calc(5rem + env(safe-area-inset-bottom, 8px))' : '1.5rem' }}
         >
           <MessageSquarePlus className="h-5 w-5 mr-2" />
           Feedback
