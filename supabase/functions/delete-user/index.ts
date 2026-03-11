@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    // Créer un client Supabase pour accéder à la base de données
+    // Créer un client Supabase avec service_role pour accéder à auth.users
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -49,18 +49,69 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Suppression du compte utilisateur: ${user.id}`);
+    const userId = user.id;
+    console.log(`Début suppression du compte utilisateur: ${userId}`);
 
-    // Supprimer le compte utilisateur de auth.users
-    const { error: deleteAuthUserError } = await supabaseClient.auth.admin.deleteUser(user.id);
+    // 1. Supprimer les données associées dans l'ordre (contraintes FK)
+
+    const { error: childrenError } = await supabaseClient
+      .from('children')
+      .delete()
+      .eq('authorid', userId);
+    if (childrenError) {
+      console.warn(`Erreur suppression enfants (non bloquant): ${childrenError.message}`);
+    } else {
+      console.log(`Enfants supprimés pour ${userId}`);
+    }
+
+    const { error: storiesError } = await supabaseClient
+      .from('stories')
+      .delete()
+      .eq('authorid', userId);
+    if (storiesError) {
+      console.warn(`Erreur suppression histoires (non bloquant): ${storiesError.message}`);
+    } else {
+      console.log(`Histoires supprimées pour ${userId}`);
+    }
+
+    const { error: subscriptionsError } = await supabaseClient
+      .from('user_subscriptions')
+      .delete()
+      .eq('user_id', userId);
+    if (subscriptionsError) {
+      console.warn(`Erreur suppression abonnements (non bloquant): ${subscriptionsError.message}`);
+    }
+
+    const { error: betaError } = await supabaseClient
+      .from('beta_users')
+      .delete()
+      .eq('user_id', userId);
+    if (betaError) {
+      console.warn(`Erreur suppression beta_users (non bloquant): ${betaError.message}`);
+    }
+
+    const { error: usersTableError } = await supabaseClient
+      .from('users')
+      .delete()
+      .eq('id', userId);
+    if (usersTableError) {
+      console.warn(`Erreur suppression table users (non bloquant): ${usersTableError.message}`);
+    } else {
+      console.log(`Enregistrement users supprimé pour ${userId}`);
+    }
+
+    // 2. Supprimer le compte utilisateur de auth.users (nécessite service_role)
+    const { error: deleteAuthUserError } = await supabaseClient.auth.admin.deleteUser(userId);
     
     if (deleteAuthUserError) {
-      console.error("Erreur lors de la suppression du compte:", deleteAuthUserError);
+      console.error("Erreur lors de la suppression auth user:", deleteAuthUserError);
       return new Response(
         JSON.stringify({ error: deleteAuthUserError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log(`Compte utilisateur ${userId} supprimé avec succès`);
 
     return new Response(
       JSON.stringify({ success: true, message: "Compte utilisateur supprimé avec succès" }),

@@ -34,21 +34,35 @@ export const AccountManagementSection = () => {
       setIsDeleting(true);
       
       if (!user) return;
+
+      // Récupérer la session active pour extraire le JWT
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("Session expirée. Veuillez vous reconnecter et réessayer.");
+      }
       
       // Supprimer le compte utilisateur via la fonction Edge sécurisée
-      // Cette fonction gère automatiquement la suppression de toutes les données associées
-      // incluant children, stories, audio_files, story_access_logs et users
-      const { error: deleteUserError } = await supabase.functions.invoke('delete-user');
+      // On passe explicitement le token d'authentification pour éviter les erreurs 401/non-2xx
+      const { error: deleteUserError } = await supabase.functions.invoke('delete-user', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
       
       if (deleteUserError) throw deleteUserError;
+
+      // Déconnecter l'utilisateur localement
+      await supabase.auth.signOut();
       
       toast({
         title: "Compte supprimé",
         description: "Votre compte et toutes vos données ont été supprimés.",
       });
       
-      // Rediriger vers la page d'accueil
-      navigate('/');
+      // Rediriger vers la page d'authentification
+      navigate('/auth');
       
     } catch (error: any) {
       console.error("Erreur lors de la suppression du compte:", error);
