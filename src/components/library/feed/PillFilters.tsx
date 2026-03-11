@@ -1,23 +1,30 @@
-/**
- * Horizontal scrollable pill filters for objectives
- * Uses viewport-width calculation to break out of parent padding
- */
-
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { STORY_OBJECTIVES } from "@/utils/objectiveUtils";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Book, BookOpenCheck, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PillFiltersProps {
   selectedObjective: string | null;
   onObjectiveChange: (objective: string | null) => void;
+  statusFilter?: 'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites' | 'recent';
+  onStatusFilterChange?: (status: 'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites' | 'recent') => void;
   className?: string;
 }
 
 const PillFilters: React.FC<PillFiltersProps> = ({
   selectedObjective,
   onObjectiveChange,
+  statusFilter = 'all',
+  onStatusFilterChange,
   className,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -87,6 +94,59 @@ const PillFilters: React.FC<PillFiltersProps> = ({
             </Button>
           );
         })}
+
+        {/* Status Filter Dropdown */}
+        {onStatusFilterChange && (
+          <div className="flex items-center pl-1 ml-1 border-l border-border/50">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={(statusFilter === 'read' || statusFilter === 'unread') ? "default" : "outline"}
+                  size="sm"
+                  className={cn(
+                    "flex-shrink-0 rounded-full px-3 h-9 text-sm font-medium",
+                    (statusFilter === 'read' || statusFilter === 'unread')
+                      ? "bg-primary text-primary-foreground shadow-md" 
+                      : "bg-card hover:bg-accent border-border"
+                  )}
+                >
+                  {statusFilter === 'read' ? (
+                    <><BookOpenCheck className="h-4 w-4 mr-1.5" /> Lues</>
+                  ) : statusFilter === 'unread' ? (
+                    <><Book className="h-4 w-4 mr-1.5" /> Non lues</>
+                  ) : (
+                    <><Filter className="h-4 w-4 mr-1.5" /> Statut</>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[180px] z-[100]">
+                <DropdownMenuLabel>Filtrer par statut</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => onStatusFilterChange('all')}
+                  className={cn("cursor-pointer", statusFilter !== 'read' && statusFilter !== 'unread' && "bg-accent")}
+                >
+                  <BookOpen className="ml-2 mr-2 h-4 w-4" />
+                  <span>Toutes les histoires</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => onStatusFilterChange('unread')}
+                  className={cn("cursor-pointer", statusFilter === 'unread' && "bg-accent")}
+                >
+                  <Book className="ml-2 mr-2 h-4 w-4" />
+                  <span>Histoires non lues</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => onStatusFilterChange('read')}
+                  className={cn("cursor-pointer", statusFilter === 'read' && "bg-accent")}
+                >
+                  <BookOpenCheck className="ml-2 mr-2 h-4 w-4" />
+                  <span>Histoires lues</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
     </div>
   );

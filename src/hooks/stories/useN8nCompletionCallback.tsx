@@ -62,14 +62,9 @@ export const useN8nCompletionCallback = (options: N8nCompletionCallbackOptions =
         if (status === 'SUBSCRIBED') {
           console.log('[N8nCompletionCallback] Connexion Realtime établie avec succès');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('[N8nCompletionCallback] Erreur de connexion Realtime');
+          console.error('[N8nCompletionCallback] Erreur de connexion Realtime (mise en veille ou réseau)');
           setIsListening(false);
-          
-          toast({
-            title: "Erreur de connexion",
-            description: "Impossible d'écouter les notifications de completion",
-            variant: "destructive",
-          });
+          // Retiré: Le toast intrusif d'erreur de connexion qui apparaissait à chaque sortie de veille
         }
       });
 

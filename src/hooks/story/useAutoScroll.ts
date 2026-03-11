@@ -195,16 +195,10 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readingSpeed]);
   
-  // Démarrer automatiquement si activé
+  // Déclencher manuellement uniquement (désactivé par défaut au lancement)
   useEffect(() => {
-    if (autoScrollEnabled && scrollStatus === 'idle' && !isManuallyPaused) {
-      console.log("Auto-scroll: Auto-enabling from preferences");
-      const timer = setTimeout(() => {
-        startAutoScroll();
-      }, 1500);
-      
-      return () => clearTimeout(timer);
-    }
+    // Le défilement n'est plus lancé automatiquement après 1.5s
+    // L'utilisateur doit appuyer consciemment sur le bouton "Play"
   }, [autoScrollEnabled, scrollStatus, isManuallyPaused, startAutoScroll]);
   
   return {

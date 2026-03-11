@@ -35,6 +35,7 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedObjective, setSelectedObjective] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'ready' | 'read' | 'unread' | 'error' | 'favorites' | 'recent'>('all');
 
   // Series modal state
   const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
@@ -59,6 +60,7 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
     toggleFavorite,
     refresh,
   } = useInfiniteStories({
+    statusFilter,
     objectiveFilter: selectedObjective,
     searchTerm: debouncedSearchTerm || undefined,
   });
@@ -141,9 +143,9 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
         {/* Main feed column */}
         <div className={`flex-1 ${isMobile ? '' : 'max-w-[650px]'}`}>
           {/* Sticky header with search and filters */}
-          <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm pb-3 pt-4">
+          <div className="sticky top-[-1px] z-40 bg-background pb-3 pt-5 -mt-1">
             {/* Search bar */}
-            <div className="relative mb-3">
+            <div className="relative mb-3 flex gap-2 w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Rechercher une histoire..."
@@ -167,6 +169,8 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
             <PillFilters
               selectedObjective={selectedObjective}
               onObjectiveChange={setSelectedObjective}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
             />
           </div>
 
