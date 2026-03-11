@@ -9,6 +9,9 @@ import { ReadingSpeedProvider } from "@/contexts/ReadingSpeedContext";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import type { Story } from "@/types/story";
+import { useUserSettingsState } from "@/hooks/settings/useUserSettingsState";
+import { StoryVideoIntro } from "@/components/story/StoryVideoIntro";
+import { getStoryVideoUrl } from "@/utils/supabaseImageUtils";
 
 const StoryReaderPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,9 +19,11 @@ const StoryReaderPage: React.FC = () => {
   const { stories, updateStoryStatus, fetchStories } = useSupabaseStories();
   const { children } = useSupabaseChildren();
   const { toggleFavorite } = useStoryFavorites();
+  const { userSettings } = useUserSettingsState();
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [introPlayed, setIntroPlayed] = useState(false);
 
   // Charger l'histoire depuis l'ID dans l'URL
   useEffect(() => {
@@ -32,6 +37,11 @@ const StoryReaderPage: React.FC = () => {
       const story = stories.find(s => s.id === id);
       if (story) {
         console.log("[StoryReaderPage] Histoire trouvée:", story.id);
+        console.log("[StoryReaderPage] Story data debug: ", {
+          id: story.id,
+          video_path: story.video_path,
+          hasVideoPath: !!story.video_path
+        });
         setCurrentStory(story);
         setError(null);
       } else {
@@ -47,15 +57,15 @@ const StoryReaderPage: React.FC = () => {
     try {
       console.log("[StoryReaderPage] DEBUG: Toggle read status pour story:", storyId);
       console.log("[StoryReaderPage] DEBUG: Current status:", currentStory?.status);
-      
+
       // Calculer le nouveau statut (toggle entre read et completed)
       const currentStatus = currentStory?.status || "completed";
       const newStatus = currentStatus === "read" ? "completed" : "read";
-      
+
       console.log("[StoryReaderPage] DEBUG: New status:", newStatus);
-      
+
       await updateStoryStatus(storyId, newStatus);
-      
+
       // Mettre à jour l'état local
       if (currentStory && currentStory.id === storyId) {
         setCurrentStory({
@@ -64,7 +74,7 @@ const StoryReaderPage: React.FC = () => {
         });
         console.log("[StoryReaderPage] DEBUG: Local state updated to:", newStatus);
       }
-      
+
       return true;
     } catch (error) {
       console.error("[StoryReaderPage] Erreur lors du toggle read status:", error);
@@ -105,7 +115,7 @@ const StoryReaderPage: React.FC = () => {
     if (!childrenIds || childrenIds.length === 0 || !children || children.length === 0) {
       return undefined;
     }
-    
+
     const childId = childrenIds[0];
     const child = children.find(c => c.id === childId);
     return child ? child.name : undefined;
@@ -143,8 +153,25 @@ const StoryReaderPage: React.FC = () => {
     );
   }
 
+  // Vérifier si la vidéo d'intro doit être affichée
+  const videoUrl = currentStory.video_path ? getStoryVideoUrl(currentStory.video_path) : null;
+  console.log("[StoryReaderPage] Video URL computed:", videoUrl);
+  console.log("[StoryReaderPage] User settings playVideoIntro:", userSettings.readingPreferences?.playVideoIntro);
+  console.log("[StoryReaderPage] Intro played status:", introPlayed);
+  
+  const showVideoIntro =
+    videoUrl &&
+    userSettings.readingPreferences?.playVideoIntro !== false &&
+    !introPlayed;
+
   return (
     <ReadingSpeedProvider>
+      {showVideoIntro && (
+        <StoryVideoIntro
+          videoUrl={videoUrl!}
+          onComplete={() => setIntroPlayed(true)}
+        />
+      )}
       <StoryReader
         story={currentStory}
         onClose={handleClose}

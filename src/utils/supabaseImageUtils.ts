@@ -26,6 +26,33 @@ export const getStoryImageUrl = (imagePath?: string | null): string | null => {
 };
 
 /**
+ * Génère l'URL publique d'une vidéo stockée dans le bucket storyvideos
+ * @param videoPath Le chemin de la vidéo (ex: "story-id.mp4")
+ * @returns L'URL publique de la vidéo ou null si pas de vidéo
+ */
+export const getStoryVideoUrl = (videoPath?: string | null): string | null => {
+  if (!videoPath) {
+    return null;
+  }
+  
+  const supabaseUrl = 'https://ioeihnoxvtpxtqhxklpw.supabase.co';
+  
+  // Vérifier si le chemin contient déjà le préfixe "storyvideos/"
+  let cleanPath = videoPath.startsWith('storyvideos/') 
+    ? videoPath.substring('storyvideos/'.length)
+    : videoPath;
+  
+  // S'assurer que le nom de fichier a la bonne extension (souvent omise en BDD par erreur)
+  if (!cleanPath.endsWith('.mp4') && !cleanPath.includes('.')) {
+      cleanPath += '.mp4';
+  }
+  
+  const videoUrl = `${supabaseUrl}/storage/v1/object/public/storyvideos/${cleanPath}`;
+  
+  return videoUrl;
+};
+
+/**
  * Récupère l'image comme blob pour l'intégration dans les EPUB
  * @param imagePath Le chemin de l'image
  * @returns Promise<Blob | null>

@@ -23,12 +23,13 @@ export const useUserSettingsState = () => {
       autoScrollEnabled: false,
       readingSpeed: 120,
       backgroundMusicEnabled: true,
+      playVideoIntro: true,
       customSpeedSlow: 90,
       customSpeedNormal: 120,
       customSpeedFast: 150,
     }
   });
-  
+
   const { toast } = useToast();
   const { user } = useSupabaseAuth();
 
@@ -39,25 +40,25 @@ export const useUserSettingsState = () => {
         setIsLoading(false);
         return;
       }
-      
+
       try {
         console.log('Chargement des paramètres pour:', user.id);
-        
+
         // Charger les paramètres utilisateur depuis Supabase
         const { data, error } = await supabase
           .from('users')
           .select('*')
           .eq('id', user.id)
           .maybeSingle();
-        
+
         if (error && error.code !== 'PGRST116') {
           console.error('Erreur lors du chargement des paramètres:', error);
           throw error;
         }
-        
+
         if (data) {
           console.log('Document utilisateur trouvé:', data);
-          
+
           setUserSettings({
             firstName: data.firstname || '',
             lastName: data.lastname || '',
@@ -74,6 +75,7 @@ export const useUserSettingsState = () => {
               autoScrollEnabled: data.auto_scroll_enabled ?? false,
               readingSpeed: data.reading_speed ?? 120,
               backgroundMusicEnabled: data.background_music_enabled ?? true,
+              playVideoIntro: data.video_intro_enabled ?? true,
               customSpeedSlow: data.custom_speed_slow ?? 90,
               customSpeedNormal: data.custom_speed_normal ?? 120,
               customSpeedFast: data.custom_speed_fast ?? 150,
@@ -81,7 +83,7 @@ export const useUserSettingsState = () => {
           });
         } else {
           console.log('Aucun document utilisateur trouvé, utilisation des valeurs par défaut');
-          
+
           // S'assurer que l'email est défini si l'utilisateur est connecté
           setUserSettings(prev => ({
             ...prev,

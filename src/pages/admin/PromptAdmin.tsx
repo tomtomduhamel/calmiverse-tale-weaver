@@ -62,6 +62,12 @@ const ACTIVE_PROMPTS_CONFIG: Record<string, {
     category: 'generation',
     icon: Sparkles,
   },
+  'video_generation_prompt': {
+    label: '🎥 Génération Vidéo',
+    description: 'Prompt pour la création de la vidéo d\'introduction (contient des variables n8n)',
+    category: 'generation',
+    icon: Sparkles,
+  },
   'story_prompt_sleep': {
     label: '🌙 Histoire du Soir (Sleep)',
     description: 'Prompt spécifique pour l\'objectif Sommeil/Endormissement',
@@ -241,6 +247,16 @@ IMPORTANT : L'image ne doit contenir aucune incitation à la haine ou à la disc
 
 IMPORTANT : l'image ne doit pas être tronquée. Elle doit être complète et le titre doit être bien parfaitement visible.`;
 
+  const DEFAULT_VIDEO_PROMPT = `Génère un prompt pour la création d'une courte vidéo d'introduction d'une histoire pour enfants. Ce prompt sera envoyé à une IA génératrice de vidéo (ex: Kling AI, Luma Dream Machine, Runway).
+Voici le résumé de l'histoire : {{ $json.summary }}.
+Les enfants qui participent à l'histoire sont : {{ $('Webhook').item.json.body.childrenData }}.
+
+La vidéo doit être immersive, cinématographique et au format portrait (9:16).
+Elle doit représenter le personnage principal ou le monde imaginaire de l'histoire.
+Rédige le prompt UNIQUEMENT EN ANGLAIS, car les IA vidéos le comprennent mieux.
+Utilise des mots-clés descriptifs séparés par des virgules pour définir l'ambiance, les mouvements de caméra (ex: slow pan, zoom in) et le style visuel adapté aux enfants (ex: 3d animation, pixar style, soft lighting, vibrant colors, magical atmosphere).
+Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte supplémentaire.`;
+
   const initializeDefaultPrompts = async () => {
     try {
       setLoading(true);
@@ -262,10 +278,11 @@ IMPORTANT : l'image ne doit pas être tronquée. Elle doit être complète et le
         if (data?.content) baseContent = data.content;
       }
 
-      // Liste des clés à initialiser (ajout des titre + les 4 objectifs + image)
+      // Liste des clés à initialiser (ajout des titre + les 4 objectifs + image + vidéo)
       const keysToInit = [
         'title_generation_prompt',
         'image_generation_prompt',
+        'video_generation_prompt',
         'story_prompt_sleep',
         'story_prompt_focus',
         'story_prompt_relax',
@@ -285,6 +302,8 @@ IMPORTANT : l'image ne doit pas être tronquée. Elle doit être complète et le
             initialContent = DEFAULT_TITLE_PROMPT;
           } else if (key === 'image_generation_prompt') {
             initialContent = DEFAULT_IMAGE_PROMPT;
+          } else if (key === 'video_generation_prompt') {
+            initialContent = DEFAULT_VIDEO_PROMPT;
           } else {
             // Pour les prompts d'histoire, on utilise le prompt générique s'il existe, sinon un placeholder
             initialContent = baseContent || "Génère une histoire pour enfants...";

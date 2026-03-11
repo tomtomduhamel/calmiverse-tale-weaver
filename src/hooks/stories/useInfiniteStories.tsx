@@ -45,6 +45,7 @@ const formatStoryFromRow = (row: any): Story => ({
   isFavorite: row.is_favorite || false,
   error: row.error,
   image_path: row.image_path,
+  video_path: row.video_path,
   sound_id: row.sound_id,
   series_id: row.series_id,
   tome_number: row.tome_number,
@@ -82,7 +83,7 @@ export function useInfiniteStories(options: UseInfiniteStoriesOptions = {}): Use
     // Only select necessary columns for feed performance
     let query = supabase
       .from('stories')
-      .select('id, title, preview, objective, image_path, createdat, updatedat, status, is_favorite, content, childrenids, childrennames, authorid, error, sound_id, series_id, tome_number, is_series_starter, previous_story_id, next_story_id, summary, series:series_id(title, total_tomes)')
+      .select('id, title, preview, objective, image_path, video_path, createdat, updatedat, status, is_favorite, content, childrenids, childrennames, authorid, error, sound_id, series_id, tome_number, is_series_starter, previous_story_id, next_story_id, summary, series:series_id(title, total_tomes)')
       .eq('authorid', user?.id || '')
       .order('createdat', { ascending: false })
       .range(start, end);

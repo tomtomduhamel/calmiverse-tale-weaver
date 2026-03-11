@@ -42,6 +42,7 @@ export interface Story {
 
   sound_id?: string | null;
   image_path?: string | null;
+  video_path?: string | null;
   settings?: StorySettings;
   story_analysis?: StoryAnalysis;
   // Nouveaux champs pour les séries/suites

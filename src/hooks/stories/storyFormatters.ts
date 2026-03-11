@@ -6,7 +6,7 @@ export const formatStoriesFromSupabase = (supabaseStories: any[]): Story[] => {
 };
 
 export const formatStoryFromSupabase = (story: any): Story => {
-  
+
   return {
     id: story.id,
     id_stories: story.id,
@@ -28,6 +28,7 @@ export const formatStoryFromSupabase = (story: any): Story => {
     sound_id: story.sound_id,
     story_analysis: story.story_analysis,
     image_path: story.image_path || null,
+    video_path: story.video_path || null,
     // Champs pour les séries - CORRECTION MAJEURE
     series_id: story.series_id || null,
     tome_number: story.tome_number || null,

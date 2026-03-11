@@ -480,6 +480,7 @@ export type Database = {
           tome_number: number | null
           total_cost_story: number | null
           updatedat: string
+          video_path: string | null
         }
         Insert: {
           authorid: string
@@ -509,6 +510,7 @@ export type Database = {
           tome_number?: number | null
           total_cost_story?: number | null
           updatedat?: string
+          video_path?: string | null
         }
         Update: {
           authorid?: string
@@ -538,6 +540,7 @@ export type Database = {
           tome_number?: number | null
           total_cost_story?: number | null
           updatedat?: string
+          video_path?: string | null
         }
         Relationships: [
           {

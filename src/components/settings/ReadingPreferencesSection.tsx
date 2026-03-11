@@ -57,6 +57,16 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
     });
   };
 
+  // Gérer le changement de la vidéo d'intro
+  const handleVideoIntroChange = async (checked: boolean) => {
+    await onUpdateSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        playVideoIntro: checked
+      }
+    });
+  };
+
   // Obtenir les vitesses personnalisées
   const speeds = {
     slow: userSettings.readingPreferences?.customSpeedSlow ?? DEFAULT_SPEEDS.slow,
@@ -100,7 +110,7 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
     if (!editingKey) return;
 
     let value = parseInt(editValue, 10);
-    
+
     // Valider les limites
     if (isNaN(value)) {
       value = DEFAULT_SPEEDS[editingKey];
@@ -151,7 +161,7 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
   };
 
   // Vérifier si les vitesses sont différentes des valeurs par défaut
-  const hasCustomSpeeds = 
+  const hasCustomSpeeds =
     speeds.slow !== DEFAULT_SPEEDS.slow ||
     speeds.normal !== DEFAULT_SPEEDS.normal ||
     speeds.fast !== DEFAULT_SPEEDS.fast;
@@ -201,6 +211,24 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
           </div>
         </div>
 
+        {/* Option Vidéo d'introduction */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="video-intro" className="text-base font-medium">
+              Vidéo d'introduction
+            </Label>
+            <Switch
+              id="video-intro"
+              checked={userSettings.readingPreferences?.playVideoIntro ?? true}
+              onCheckedChange={handleVideoIntroChange}
+              disabled={isLoading}
+            />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Lancer une courte vidéo immersive avant le début de l'histoire
+          </div>
+        </div>
+
         {/* Sélection de la vitesse de lecture - Design simplifié */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -240,18 +268,17 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
               const speed = speeds[preset.key];
               const isActive = currentSpeed === speed;
               const isEditing = editingKey === preset.key;
-              
+
               return (
                 <div key={preset.key} className="flex flex-col items-center gap-2">
                   {/* Bouton icône */}
                   <Button
                     variant={isActive ? 'default' : 'outline'}
                     size="lg"
-                    className={`h-16 w-16 transition-all ${
-                      isActive 
-                        ? 'bg-primary text-primary-foreground' 
+                    className={`h-16 w-16 transition-all ${isActive
+                        ? 'bg-primary text-primary-foreground'
                         : 'hover:bg-muted'
-                    }`}
+                      }`}
                     onClick={() => handleSelectSpeed(preset.key)}
                     disabled={isLoading || isEditing}
                   >
@@ -277,9 +304,8 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
                     <button
                       onClick={() => handleStartEdit(preset.key)}
                       disabled={isLoading}
-                      className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
-                        isActive ? 'text-primary' : 'text-muted-foreground'
-                      }`}
+                      className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${isActive ? 'text-primary' : 'text-muted-foreground'
+                        }`}
                     >
                       {speed}
                     </button>
