@@ -48,6 +48,7 @@ const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m
 const TestConnection = lazy(() => import("./pages/TestConnection"));
 const DiagnosticConnection = lazy(() => import("./pages/DiagnosticConnection"));
 const BetaPending = lazy(() => import("./pages/BetaPending"));
+const VipAccess = lazy(() => import("./pages/VipAccess"));
 
 // PageLoader avec détection de timeout et retry
 const PageLoader = () => {
@@ -179,6 +180,7 @@ function App() {
               <TitleGenerationIndicator />
               <Routes>
                 {/* Routes publiques */}
+                <Route path="/vip" element={<VipAccess />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/beta-pending" element={<BetaPending />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />

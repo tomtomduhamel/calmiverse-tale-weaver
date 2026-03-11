@@ -74,6 +74,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [quotaMessage, setQuotaMessage] = useState<string>('');
   const [isStartingCreation, setIsStartingCreation] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   const {
     createStoryFromTitle,
@@ -148,9 +149,11 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     }).then(titles => {
       if (titles && titles.length > 0) {
         updateCurrentStep('titles');
+        setGenerationError(null);
       }
     }).catch(error => {
       console.error('[TitleBasedStoryCreator] Erreur auto-génération:', error);
+      setGenerationError(error.message || "Impossible de générer les titres. Veuillez vérifier votre connexion.");
       toast({
         title: "Erreur",
         description: error.message || "Impossible de générer les titres",
@@ -162,7 +165,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         isGeneratingRef.current = false;
       }, 1000);
     });
-  }, [generatedTitles.length, isGeneratingTitles, generationInterrupted, generateTitles, updateCurrentStep, setIsGeneratingTitles, forceSave, toast]);
+  }, [generatedTitles.length, isGeneratingTitles, generationInterrupted, generateTitles, updateCurrentStep, setIsGeneratingTitles, forceSave, toast, generationError]);
 
   // Regénérer des titres
   const handleRegenerateTitles = useCallback(async () => {
@@ -187,8 +190,15 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   // Handler pour relancer après interruption
   const handleRetryAfterInterruption = useCallback(() => {
     clearGenerationInterrupted();
+    setGenerationError(null);
     autoGenerateTriggered.current = false;
   }, [clearGenerationInterrupted]);
+
+  // Handler pour relancer après erreur de réseau ("Failed to fetch" etc)
+  const handleRetryAfterError = useCallback(() => {
+    setGenerationError(null);
+    autoGenerateTriggered.current = false;
+  }, []);
 
   // Création finale de l'histoire
   const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes) => {
@@ -308,9 +318,42 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
           <Button variant="outline" onClick={() => {
             clearTitles();
             setIsGeneratingTitles(false);
+            autoGenerateTriggered.current = false;
             navigate('/create-story/step-2');
           }}>
             Annuler
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Cas 3: Erreur de génération
+  if (generationError && generatedTitles.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-4">
+          <div className="flex justify-center w-full">
+            <Alert variant="destructive" className="max-w-md text-left">
+              <AlertDescription>
+                {generationError === "Failed to fetch" 
+                  ? "Un problème de connexion est survenu (Failed to fetch). Assurez-vous d'être connecté à internet." 
+                  : generationError}
+              </AlertDescription>
+            </Alert>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Oups, la génération a échoué</h3>
+            <p className="text-muted-foreground">Nous n'avons pas pu générer les titres d'histoire.</p>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button variant="outline" onClick={() => navigate('/create-story/step-2')}>
+            Retour aux objectifs
+          </Button>
+          <Button onClick={handleRetryAfterError}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Réessayer maintenant
           </Button>
         </div>
       </div>

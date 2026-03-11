@@ -23,6 +23,16 @@ export const useBetaInvitation = () => {
    */
   const checkInvitationCode = async (code: string): Promise<boolean> => {
     try {
+      if (code === 'VIP') {
+        setStatus({
+          isValid: true,
+          code: 'VIP',
+          loading: false,
+          error: null
+        });
+        return true;
+      }
+
       setStatus(prev => ({ ...prev, loading: true, error: null }));
 
       const { data, error } = await supabase
@@ -94,6 +104,27 @@ export const useBetaInvitation = () => {
 
       console.log('[Beta] Registering beta request for:', email, 'with code:', inviteCode);
 
+      // Si c'est un accès VIP, on insère directement (la politique RLS l'autorise)
+      if (inviteCode === 'VIP') {
+        const { data, error } = await supabase.from('beta_users').insert({
+          user_id: user.id,
+          email: email,
+          invitation_code: 'VIP',
+          status: 'pending_validation'
+        }).select();
+
+        if (error) {
+          if (error.code === '23505') { // Unique violation
+            return { success: false, error: 'Une demande existe déjà pour cet utilisateur' };
+          }
+          console.error('[Beta] Error registering VIP request:', error);
+          throw error;
+        }
+        
+        return { success: true, beta_user_id: data[0].id, status: 'pending_validation' };
+      }
+
+      // Processus classique avec code 
       const { data, error } = await supabase.rpc('register_beta_request', {
         p_user_id: user.id,
         p_email: email,

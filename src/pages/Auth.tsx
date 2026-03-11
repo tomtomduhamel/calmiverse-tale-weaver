@@ -36,10 +36,21 @@ const Auth = () => {
     }
   }, [isCompleted, refreshStatus]);
 
-  // Détecter le code d'invitation dans l'URL
+  // Détecter le code d'invitation ou le flag VIP dans l'URL
   useEffect(() => {
     const inviteCode = searchParams.get('invite');
-    if (inviteCode && !inviteCodeChecked) {
+    const isVip = searchParams.get('vip') === 'true';
+
+    // Si c'est un accès VIP, on court-circuite la vérification
+    if (isVip && !inviteCodeChecked) {
+      console.log('[Auth] VIP access detected');
+      checkInvitationCode('VIP').then(isValid => {
+        if (isValid) {
+          storeInviteCode('VIP');
+        }
+        setInviteCodeChecked(true);
+      });
+    } else if (inviteCode && !inviteCodeChecked) {
       console.log('[Auth] Beta invite code detected:', inviteCode);
       checkInvitationCode(inviteCode).then(isValid => {
         if (isValid) {
@@ -47,7 +58,7 @@ const Auth = () => {
         }
         setInviteCodeChecked(true);
       });
-    } else if (!inviteCode) {
+    } else if (!inviteCode && !isVip) {
       setInviteCodeChecked(true);
     }
   }, [searchParams, inviteCodeChecked]);

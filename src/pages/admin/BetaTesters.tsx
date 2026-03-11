@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -67,12 +68,17 @@ const BetaTesters = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // État pour la création de code
-  const [newCodeDialog, setNewCodeDialog] = useState(false);
-  const [newCode, setNewCode] = useState({
-    code: '',
-    duration_months: 3,
-    max_uses: null as number | null
+  // État pour la validation VIP
+  const [validationDialog, setValidationDialog] = useState<{
+    open: boolean;
+    user: BetaUser | null;
+    tier: string;
+    durationMonths: number;
+  }>({
+    open: false,
+    user: null,
+    tier: 'calmix',
+    durationMonths: 3
   });
 
   // État pour le rejet
@@ -126,15 +132,6 @@ const BetaTesters = () => {
       }
       setActiveUsers(activeWithStats);
 
-      // Charger les codes d'invitation
-      const { data: invites, error: invitesError } = await supabase
-        .from('beta_invitations')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (invitesError) throw invitesError;
-      setInvitations(invites || []);
-
     } catch (err: any) {
       console.error('Error loading beta data:', err);
       toast({
@@ -147,25 +144,52 @@ const BetaTesters = () => {
     }
   };
 
-  const handleValidate = async (betaUserId: string) => {
+  const handleConfirmValidation = async () => {
+    if (!validationDialog.user) return;
+    
     try {
-      setActionLoading(betaUserId);
-
-      const { data, error } = await supabase.rpc('validate_beta_user', {
-        p_beta_user_id: betaUserId
+      setActionLoading(validationDialog.user.id);
+      
+      const expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + validationDialog.durationMonths);
+      
+      const authUser = await supabase.auth.getUser();
+      
+      // Update beta_users
+      const { error: betaError } = await supabase
+        .from('beta_users')
+        .update({
+          status: 'active',
+          validated_at: new Date().toISOString(),
+          validated_by: authUser.data.user?.id,
+          subscription_expires_at: expiresAt.toISOString()
+        })
+        .eq('id', validationDialog.user.id);
+        
+      if (betaError) throw betaError;
+      
+      // Update/Insert user_subscriptions
+      const { error: subError } = await supabase
+        .from('user_subscriptions')
+        .upsert({
+          user_id: validationDialog.user.user_id,
+          tier: validationDialog.tier,
+          status: 'active',
+          current_period_start: new Date().toISOString(),
+          current_period_end: expiresAt.toISOString(),
+          stories_used_this_period: 0,
+          audio_generations_used_this_period: 0
+        }, { onConflict: 'user_id' });
+        
+      if (subError) throw subError;
+      
+      toast({
+        title: "Beta testeur validé",
+        description: `Accès activé jusqu'au ${format(expiresAt, 'dd MMMM yyyy', { locale: fr })}`
       });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "Beta testeur validé",
-          description: `Accès Calmix activé jusqu'au ${format(new Date(data.expires_at), 'dd MMMM yyyy', { locale: fr })}`
-        });
-        loadData();
-      } else {
-        throw new Error(data.error || 'Erreur lors de la validation');
-      }
+      
+      setValidationDialog({ open: false, user: null, tier: 'calmix', durationMonths: 3 });
+      loadData();
     } catch (err: any) {
       console.error('Error validating beta user:', err);
       toast({
@@ -213,83 +237,7 @@ const BetaTesters = () => {
     }
   };
 
-  const handleCreateCode = async () => {
-    try {
-      if (!newCode.code.trim()) {
-        toast({
-          title: "Erreur",
-          description: "Le code d'invitation est requis",
-          variant: "destructive"
-        });
-        return;
-      }
 
-      setActionLoading('create-code');
-
-      const { error } = await supabase
-        .from('beta_invitations')
-        .insert({
-          code: newCode.code.toUpperCase().trim(),
-          tier: 'calmix',
-          duration_months: newCode.duration_months,
-          max_uses: newCode.max_uses
-        });
-
-      if (error) {
-        if (error.code === '23505') {
-          throw new Error('Ce code existe déjà');
-        }
-        throw error;
-      }
-
-      toast({
-        title: "Code créé",
-        description: `Le code ${newCode.code.toUpperCase()} a été créé avec succès`
-      });
-
-      setNewCodeDialog(false);
-      setNewCode({ code: '', duration_months: 3, max_uses: null });
-      loadData();
-    } catch (err: any) {
-      console.error('Error creating code:', err);
-      toast({
-        title: "Erreur",
-        description: err.message || "Impossible de créer le code",
-        variant: "destructive"
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleToggleCode = async (inviteId: string, currentStatus: boolean) => {
-    try {
-      setActionLoading(inviteId);
-
-      const { error } = await supabase
-        .from('beta_invitations')
-        .update({ is_active: !currentStatus })
-        .eq('id', inviteId);
-
-      if (error) throw error;
-
-      toast({
-        title: currentStatus ? "Code désactivé" : "Code activé",
-        description: `Le code a été ${currentStatus ? 'désactivé' : 'activé'} avec succès`
-      });
-
-      loadData();
-    } catch (err: any) {
-      console.error('Error toggling code:', err);
-      toast({
-        title: "Erreur",
-        description: "Impossible de modifier le code",
-        variant: "destructive"
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
 
   if (loading) {
     return (
@@ -321,7 +269,7 @@ const BetaTesters = () => {
         </div>
 
         <Tabs defaultValue="pending" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="pending" className="gap-2">
               <Clock className="h-4 w-4" />
               Demandes en attente ({pendingUsers.length})
@@ -329,10 +277,6 @@ const BetaTesters = () => {
             <TabsTrigger value="active" className="gap-2">
               <UserCheck className="h-4 w-4" />
               Beta testeurs actifs ({activeUsers.length})
-            </TabsTrigger>
-            <TabsTrigger value="codes" className="gap-2">
-              <Key className="h-4 w-4" />
-              Codes d'invitation ({invitations.length})
             </TabsTrigger>
           </TabsList>
 
@@ -358,7 +302,7 @@ const BetaTesters = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Email</TableHead>
-                        <TableHead>Code utilisé</TableHead>
+                        <TableHead>Origine (Code)</TableHead>
                         <TableHead>Date demande</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -387,7 +331,7 @@ const BetaTesters = () => {
                             <div className="flex justify-end gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => handleValidate(user.id)}
+                                onClick={() => setValidationDialog({ open: true, user, tier: 'calmix', durationMonths: 3 })}
                                 disabled={actionLoading === user.id}
                               >
                                 {actionLoading === user.id ? (
@@ -488,158 +432,7 @@ const BetaTesters = () => {
             </Card>
           </TabsContent>
 
-          {/* Onglet Codes d'invitation */}
-          <TabsContent value="codes">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Codes d'invitation</CardTitle>
-                  <CardDescription>
-                    Créez et gérez les codes d'invitation beta
-                  </CardDescription>
-                </div>
-                <Dialog open={newCodeDialog} onOpenChange={setNewCodeDialog}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nouveau code
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Créer un code d'invitation</DialogTitle>
-                      <DialogDescription>
-                        Définissez les paramètres du nouveau code d'invitation
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="code">Code d'invitation</Label>
-                        <Input
-                          id="code"
-                          placeholder="BETA2024"
-                          value={newCode.code}
-                          onChange={(e) => setNewCode({ ...newCode, code: e.target.value.toUpperCase() })}
-                          className="font-mono"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="duration">Durée (mois)</Label>
-                        <Input
-                          id="duration"
-                          type="number"
-                          min="1"
-                          max="12"
-                          value={newCode.duration_months}
-                          onChange={(e) => setNewCode({ ...newCode, duration_months: parseInt(e.target.value) })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="max_uses">Nombre max d'utilisations (optionnel)</Label>
-                        <Input
-                          id="max_uses"
-                          type="number"
-                          min="1"
-                          placeholder="Illimité"
-                          value={newCode.max_uses || ''}
-                          onChange={(e) => setNewCode({ 
-                            ...newCode, 
-                            max_uses: e.target.value ? parseInt(e.target.value) : null 
-                          })}
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        onClick={handleCreateCode}
-                        disabled={actionLoading === 'create-code'}
-                      >
-                        {actionLoading === 'create-code' ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          <Plus className="h-4 w-4 mr-2" />
-                        )}
-                        Créer le code
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </CardHeader>
-              <CardContent>
-                {invitations.length === 0 ? (
-                  <Alert>
-                    <AlertDescription>
-                      Aucun code d'invitation créé. Créez-en un pour commencer !
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Durée</TableHead>
-                        <TableHead className="text-center">Utilisations</TableHead>
-                        <TableHead>Créé le</TableHead>
-                        <TableHead className="text-center">Statut</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {invitations.map((invite) => (
-                        <TableRow key={invite.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Tag className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-mono font-semibold">{invite.code}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {invite.duration_months} mois
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline">
-                              {invite.current_uses}
-                              {invite.max_uses && ` / ${invite.max_uses}`}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {format(new Date(invite.created_at), 'dd/MM/yyyy', { locale: fr })}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant={invite.is_active ? "default" : "secondary"}>
-                              {invite.is_active ? "Actif" : "Inactif"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleToggleCode(invite.id, invite.is_active)}
-                              disabled={actionLoading === invite.id}
-                            >
-                              {actionLoading === invite.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : invite.is_active ? (
-                                <>
-                                  <ToggleRight className="h-4 w-4 mr-1" />
-                                  Désactiver
-                                </>
-                              ) : (
-                                <>
-                                  <ToggleLeft className="h-4 w-4 mr-1" />
-                                  Activer
-                                </>
-                              )}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+
         </Tabs>
 
         {/* Dialog de rejet */}
@@ -686,6 +479,75 @@ const BetaTesters = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {/* Dialog de validation VIP */}
+        <Dialog open={validationDialog.open} onOpenChange={(open) => setValidationDialog({ ...validationDialog, open })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Valider l'accès Early Adopter</DialogTitle>
+              <DialogDescription>
+                Choisissez le niveau d'abonnement que vous souhaitez offrir à cet utilisateur.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Niveau d'abonnement</Label>
+                <Select 
+                  value={validationDialog.tier} 
+                  onValueChange={(val) => setValidationDialog({ ...validationDialog, tier: val })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choisir un forfait" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="calmini">Calmini</SelectItem>
+                    <SelectItem value="calmix">Calmix</SelectItem>
+                    <SelectItem value="calmiverse">Calmiverse</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>Durée de validité (en mois)</Label>
+                <Select 
+                  value={validationDialog.durationMonths.toString()} 
+                  onValueChange={(val) => setValidationDialog({ ...validationDialog, durationMonths: parseInt(val) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choisir une durée" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 mois</SelectItem>
+                    <SelectItem value="3">3 mois</SelectItem>
+                    <SelectItem value="6">6 mois</SelectItem>
+                    <SelectItem value="12">1 an</SelectItem>
+                    <SelectItem value="120">À vie (10 ans)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setValidationDialog({ open: false, user: null, tier: 'calmix', durationMonths: 3 })}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleConfirmValidation}
+                disabled={actionLoading === validationDialog.user?.id}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {actionLoading === validationDialog.user?.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                )}
+                Confirmer l'accès
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </AdminGuard>
   );

@@ -72,9 +72,15 @@ const BetaPending = () => {
                   <p className="font-medium">
                     🎉 Merci pour votre inscription !
                   </p>
-                  <p>
-                    Votre compte a été créé avec succès et est actuellement en attente de validation par notre équipe.
-                  </p>
+                  {betaInfo.invitation_code === 'VIP' ? (
+                    <p>
+                      Thomas a bien reçu votre demande. Votre accès VIP exclusif est en cours de préparation par notre équipe.
+                    </p>
+                  ) : (
+                    <p>
+                      Votre compte a été créé avec succès et est actuellement en attente de validation par notre équipe.
+                    </p>
+                  )}
                   <p>
                     Vous recevrez une notification dès que votre accès sera activé.
                   </p>
@@ -108,10 +114,12 @@ const BetaPending = () => {
               <span>Email :</span>
               <span className="font-medium text-foreground">{betaInfo.email}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Code d'invitation :</span>
-              <span className="font-mono text-xs font-medium text-foreground">{betaInfo.invitation_code}</span>
-            </div>
+            {betaInfo.invitation_code !== 'VIP' && (
+              <div className="flex justify-between">
+                <span>Code d'invitation :</span>
+                <span className="font-mono text-xs font-medium text-foreground">{betaInfo.invitation_code}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span>Demande envoyée le :</span>
               <span className="font-medium text-foreground">
