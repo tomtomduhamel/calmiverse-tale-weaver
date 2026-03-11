@@ -9,15 +9,13 @@ import TitleBasedStoryCreator from "@/components/story/title/TitleBasedStoryCrea
 import StoryCreationErrorBoundary from "@/components/ui/StoryCreationErrorBoundary";
 import { useTitleGeneration } from "@/contexts/TitleGenerationContext";
 const CreateStoryTitles: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+
   // Force update for Lovable build sync
-  const {
-    user,
-    loading: authLoading
-  } = useSupabaseAuth();
-  const {
-    children,
-    loading: childrenLoading
-  } = useSupabaseChildren();
+  const { user, loading: authLoading } = useSupabaseAuth();
+  const { children, loading: childrenLoading } = useSupabaseChildren();
   const {
     selectedChildrenIds,
     selectedObjective,
@@ -25,11 +23,6 @@ const CreateStoryTitles: React.FC = () => {
     generatedTitles,
     isGeneratingTitles
   } = useTitleGeneration();
-  const {
-    toast
-  } = useToast();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   // Récupérer l'ID de l'enfant présélectionné depuis l'URL
   const preSelectedChildId = searchParams.get('childId') || undefined;

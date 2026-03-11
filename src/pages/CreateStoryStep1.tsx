@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import ChildrenSelectionStep from "@/components/story/steps/ChildrenSelectionStep";
+import MagicStoryCreator from "@/components/story/steps/MagicStoryCreator";
 import LoadingWithTimeout from "@/components/ui/LoadingWithTimeout";
 import CreationModeToggle from "@/components/story/chat/CreationModeToggle";
 import ChatStoryCreator from "@/components/story/chat/ChatStoryCreator";
@@ -87,8 +87,8 @@ const CreateStoryStep1: React.FC = () => {
 
       {/* Rendu conditionnel selon le mode */}
       {creationMode === 'guided' ? (
-        <ChildrenSelectionStep
-          children={children}
+        <MagicStoryCreator
+          childrenList={children}
           preSelectedChildId={preSelectedChildId}
         />
       ) : (
