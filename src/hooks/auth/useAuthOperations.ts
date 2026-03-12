@@ -57,31 +57,37 @@ export const useAuthOperations = () => {
         throw handleAuthError(error, "Erreur d'inscription");
       }
       
-      console.log("Inscription réussie");
+      console.log("Inscription réussie:", data.user?.id);
 
-      // Créer immédiatement une entrée beta_users avec statut pending_validation
-      // pour TOUS les nouveaux utilisateurs — aucun accès sans validation admin
+      // Créer l'entrée beta_users via Edge Function (service_role bypass RLS)
+      // L'utilisateur n'a pas encore de session, donc on ne peut pas insérer directement
       if (data.user) {
         try {
-          const { error: betaError } = await supabase.from('beta_users').insert({
-            user_id: data.user.id,
-            email: email,
-            invitation_code: inviteCode || null, // null pour les users normaux
-            status: 'pending_validation'
+          const { supabaseUrl, supabaseAnonKey } = await import('@/integrations/supabase/client');
+          
+          const response = await fetch(`${supabaseUrl}/functions/v1/register-pending-user`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseAnonKey,
+              'Authorization': `Bearer ${supabaseAnonKey}`,
+            },
+            body: JSON.stringify({
+              user_id: data.user.id,
+              email: email,
+              invitation_code: inviteCode || null,
+            }),
           });
 
-          if (betaError) {
-            // La contrainte unique peut être déclenchée si l'utilisateur existe déjà
-            if (betaError.code !== '23505') {
-              console.error("[Auth] Erreur création beta_users:", betaError);
-            } else {
-              console.log("[Auth] beta_users déjà existant pour cet utilisateur");
-            }
+          const result = await response.json();
+          
+          if (!response.ok) {
+            console.error("[Auth] Erreur Edge Function register-pending-user:", result);
           } else {
-            console.log("[Auth] Entrée beta_users créée avec statut pending_validation");
+            console.log("[Auth] ✅ Entrée beta_users créée via Edge Function:", result);
           }
-        } catch (betaInsertErr) {
-          console.error("[Auth] Échec création beta_users (non bloquant):", betaInsertErr);
+        } catch (edgeFnErr) {
+          console.error("[Auth] Échec appel register-pending-user (non bloquant):", edgeFnErr);
         }
       }
 
@@ -96,6 +102,7 @@ export const useAuthOperations = () => {
       throw err;
     }
   }, [toast, handleAuthError]);
+
 
   const signInWithGoogle = useCallback(async () => {
     try {
