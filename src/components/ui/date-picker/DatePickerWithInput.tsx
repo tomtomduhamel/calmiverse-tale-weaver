@@ -11,7 +11,7 @@ import { MonthView } from "./MonthView";
 import { DayView } from "./DayView";
 
 export interface DatePickerWithInputProps {
-  value: Date;
+  value: Date | undefined;
   onChange: (date: Date) => void;
   className?: string;
   disabled?: boolean;
@@ -57,10 +57,10 @@ export function DatePickerWithInput({ value, onChange, className, disabled = fal
     setSelectedMonth(null);
   };
 
-  const hasValidDate = isValid(value);
+  const hasValidDate = value != null && isValid(value);
 
   return (
-    <Popover open={disabled ? false : open} onOpenChange={(o) => {
+    <Popover modal={false} open={disabled ? false : open} onOpenChange={(o) => {
       if (!disabled) {
         setOpen(o);
         if (!o) resetViews();

@@ -44,7 +44,7 @@ interface ChildFormProps {
 
 const ChildForm: React.FC<ChildFormProps> = ({
   childName = "",
-  birthDate = new Date(),
+  birthDate,
   gender = "boy",
   petType,
   petTypeCustom = "",

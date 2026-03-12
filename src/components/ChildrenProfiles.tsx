@@ -25,7 +25,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [newChildName, setNewChildName] = useState("");
-  const [newBirthDate, setNewBirthDate] = useState<Date>(new Date());
+  const [newBirthDate, setNewBirthDate] = useState<Date | undefined>(undefined);
   const [newTeddyName, setNewTeddyName] = useState("");
   const [newTeddyDescription, setNewTeddyDescription] = useState("");
   const [newImaginaryWorld, setNewImaginaryWorld] = useState("");
@@ -41,7 +41,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
 
   const resetForm = () => {
     setNewChildName("");
-    setNewBirthDate(new Date());
+    setNewBirthDate(undefined);
     setNewTeddyName("");
     setNewTeddyDescription("");
     setNewImaginaryWorld("");

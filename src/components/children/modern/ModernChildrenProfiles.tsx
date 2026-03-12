@@ -48,7 +48,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
 
   // Form state
   const [childName, setChildName] = useState("");
-  const [birthDate, setBirthDate] = useState(new Date());
+  const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
   const [gender, setGender] = useState<ChildGender>("boy");
   const [petType, setPetType] = useState<PetType | undefined>(undefined);
   const [petTypeCustom, setPetTypeCustom] = useState("");
@@ -119,7 +119,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
 
   const resetForm = () => {
     setChildName("");
-    setBirthDate(new Date());
+    setBirthDate(undefined);
     setGender("boy");
     setPetType(undefined);
     setPetTypeCustom("");
