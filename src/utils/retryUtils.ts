@@ -22,6 +22,8 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
            message.includes('network') || 
            message.includes('connexion') ||
            message.includes('délai') ||
+           message.includes('pattern') ||
+           message.includes('erreur temporaire') ||
            error?.name === 'AbortError' ||
            error?.name === 'NetworkError';
   }
