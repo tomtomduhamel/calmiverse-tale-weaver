@@ -45,32 +45,6 @@ export const useAuthOperations = () => {
     try {
       console.log("Tentative d'inscription avec email:", email, inviteCode ? "avec code beta" : "");
       
-      // Stocker le code d'invitation AVANT le signup pour l'utiliser après confirmation email
-      if (inviteCode) {
-        console.log("[Auth] Storing beta code in localStorage for post-confirmation registration");
-        localStorage.setItem('pending_beta_code', inviteCode);
-        localStorage.setItem('pending_beta_email', email);
-        
-        // Créer une tentative d'inscription beta en base de données
-        try {
-          const { error: attemptError } = await supabase
-            .from('beta_registration_attempts')
-            .insert({
-              email,
-              invitation_code: inviteCode,
-              status: 'pending'
-            });
-          
-          if (attemptError) {
-            console.error("[Auth] Error creating beta registration attempt:", attemptError);
-          } else {
-            console.log("[Auth] Beta registration attempt created in database");
-          }
-        } catch (attemptErr) {
-          console.error("[Auth] Failed to create beta registration attempt:", attemptErr);
-        }
-      }
-      
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -80,25 +54,41 @@ export const useAuthOperations = () => {
       });
       
       if (error) {
-        // Nettoyer localStorage en cas d'erreur
-        localStorage.removeItem('pending_beta_code');
-        localStorage.removeItem('pending_beta_email');
         throw handleAuthError(error, "Erreur d'inscription");
       }
       
       console.log("Inscription réussie");
-      
-      if (inviteCode) {
-        toast({
-          title: "Inscription réussie",
-          description: "Veuillez confirmer votre email. Votre demande beta sera enregistrée après confirmation.",
-        });
-      } else {
-        toast({
-          title: "Inscription réussie",
-          description: "Bienvenue sur Calmi ! Veuillez vérifier votre boîte mail pour confirmer votre compte.",
-        });
+
+      // Créer immédiatement une entrée beta_users avec statut pending_validation
+      // pour TOUS les nouveaux utilisateurs — aucun accès sans validation admin
+      if (data.user) {
+        try {
+          const { error: betaError } = await supabase.from('beta_users').insert({
+            user_id: data.user.id,
+            email: email,
+            invitation_code: inviteCode || null, // null pour les users normaux
+            status: 'pending_validation'
+          });
+
+          if (betaError) {
+            // La contrainte unique peut être déclenchée si l'utilisateur existe déjà
+            if (betaError.code !== '23505') {
+              console.error("[Auth] Erreur création beta_users:", betaError);
+            } else {
+              console.log("[Auth] beta_users déjà existant pour cet utilisateur");
+            }
+          } else {
+            console.log("[Auth] Entrée beta_users créée avec statut pending_validation");
+          }
+        } catch (betaInsertErr) {
+          console.error("[Auth] Échec création beta_users (non bloquant):", betaInsertErr);
+        }
       }
+
+      toast({
+        title: "Inscription réussie",
+        description: "Votre demande est en attente de validation. Vous serez notifié dès que votre accès sera activé.",
+      });
       
       return data;
     } catch (err: any) {

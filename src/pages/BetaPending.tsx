@@ -29,9 +29,9 @@ const BetaPending = () => {
     return <SimpleLoader />;
   }
 
-  // Si pas de beta info, rediriger vers l'accueil
+  // Si pas de beta info, rediriger vers la connexion
   if (!betaInfo) {
-    navigate('/');
+    navigate('/auth');
     return null;
   }
 
@@ -72,17 +72,12 @@ const BetaPending = () => {
                   <p className="font-medium">
                     🎉 Merci pour votre inscription !
                   </p>
-                  {betaInfo.invitation_code === 'VIP' ? (
-                    <p>
-                      Thomas a bien reçu votre demande. Votre accès VIP exclusif est en cours de préparation par notre équipe.
-                    </p>
-                  ) : (
-                    <p>
-                      Votre compte a été créé avec succès et est actuellement en attente de validation par notre équipe.
-                    </p>
-                  )}
                   <p>
+                    Votre compte est créé et est en attente de validation par Thomas. 
                     Vous recevrez une notification dès que votre accès sera activé.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    En attendant, vous pouvez vous déconnecter et revenir plus tard.
                   </p>
                 </div>
               </AlertDescription>
@@ -114,12 +109,6 @@ const BetaPending = () => {
               <span>Email :</span>
               <span className="font-medium text-foreground">{betaInfo.email}</span>
             </div>
-            {betaInfo.invitation_code !== 'VIP' && (
-              <div className="flex justify-between">
-                <span>Code d'invitation :</span>
-                <span className="font-mono text-xs font-medium text-foreground">{betaInfo.invitation_code}</span>
-              </div>
-            )}
             <div className="flex justify-between">
               <span>Demande envoyée le :</span>
               <span className="font-medium text-foreground">

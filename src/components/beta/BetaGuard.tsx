@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useBetaStatus } from '@/hooks/beta/useBetaStatus';
-import { useBetaRegistrationAttempt } from '@/hooks/beta/useBetaRegistrationAttempt';
 import { Card } from '@/components/ui/card';
 
 interface BetaGuardProps {
@@ -10,23 +9,25 @@ interface BetaGuardProps {
 }
 
 /**
- * BetaGuard - Protège les routes en vérifiant le statut beta de l'utilisateur
+ * BetaGuard - Protège les routes en vérifiant le statut de l'utilisateur
  * 
  * Redirige vers :
  * - /auth si l'utilisateur n'est pas connecté
- * - /beta-pending si le beta user est en attente de validation, rejeté, ou a une tentative d'inscription en cours
- * - Laisse passer si l'utilisateur est un beta user actif ou n'est pas un beta user (et n'a pas de tentative en cours)
+ * - /beta-pending si l'utilisateur est en attente de validation, rejeté, ou expiré
+ * - Laisse passer si l'utilisateur est un beta user actif
+ * 
+ * Tous les nouveaux inscrits reçoivent un statut `pending_validation` 
+ * dans la table beta_users — aucun accès sans validation admin.
  */
 const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
   const { user, loading: authLoading } = useSupabaseAuth();
   const { betaInfo, loading: betaLoading, isPending, isRejected, isExpired } = useBetaStatus();
-  const { attempt, hasPendingAttempt, loading: attemptLoading } = useBetaRegistrationAttempt();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     // Ne pas vérifier tant que le chargement n'est pas terminé
-    if (authLoading || betaLoading || attemptLoading) return;
+    if (authLoading || betaLoading) return;
 
     // Rediriger vers /auth si non connecté
     if (!user) {
@@ -35,33 +36,30 @@ const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
       return;
     }
 
-    // SÉCURITÉ: Bloquer uniquement si l'utilisateur a un vrai code d'invitation en cours
-    // (VIP ou beta code). Les utilisateurs normaux sans code ne doivent JAMAIS être bloqués ici.
-    // Note: useBetaRegistrationAttempt filtre déjà sur invitation_code non-null/non-vide
-    if (hasPendingAttempt && attempt?.invitation_code && !betaInfo) {
-      console.log('[BetaGuard] User has pending beta registration attempt but not registered as beta user yet');
-      console.log('[BetaGuard] Blocking access and redirecting to /beta-pending');
-      navigate('/beta-pending', { replace: true });
-      return;
-    }
-
-    // Si l'utilisateur est un beta user avec un statut qui bloque l'accès
+    // Bloquer les utilisateurs en attente de validation, rejetés, ou expirés
     if (betaInfo && (isPending || isRejected || isExpired)) {
-      console.log('[BetaGuard] Beta user with blocked status, redirecting to /beta-pending');
+      console.log('[BetaGuard] Beta user with blocked status:', betaInfo.status);
       navigate('/beta-pending', { replace: true });
       return;
     }
 
-    // Sinon, laisser passer (beta actif ou non-beta user sans tentative en cours)
+    // Bloquer les utilisateurs sans betaInfo (compte créé mais pas encore validé)
+    // Cas possible si l'insertion en base a été retardée
+    if (!betaInfo && user) {
+      console.log('[BetaGuard] No betaInfo found for user, redirecting to /beta-pending');
+      navigate('/beta-pending', { replace: true });
+      return;
+    }
+
+    // Accès accordé : beta user actif
     console.log('[BetaGuard] Access granted', { 
       isBeta: !!betaInfo, 
       isActive: betaInfo?.status === 'active',
-      hasPendingAttempt
     });
-  }, [user, betaInfo, isPending, isRejected, isExpired, hasPendingAttempt, authLoading, betaLoading, attemptLoading, navigate, location.pathname]);
+  }, [user, betaInfo, isPending, isRejected, isExpired, authLoading, betaLoading, navigate, location.pathname]);
 
   // Afficher un loader pendant la vérification
-  if (authLoading || betaLoading || attemptLoading) {
+  if (authLoading || betaLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <Card className="p-6 max-w-md w-full">
@@ -74,8 +72,8 @@ const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
     );
   }
 
-  // Si non authentifié, statut bloqué, ou tentative VIP/beta en attente, ne rien afficher
-  if (!user || (betaInfo && (isPending || isRejected || isExpired)) || (hasPendingAttempt && attempt?.invitation_code && !betaInfo)) {
+  // Si non authentifié ou statut bloqué, ne rien afficher (redirection en cours)
+  if (!user || !betaInfo || (betaInfo && (isPending || isRejected || isExpired))) {
     return null;
   }
 

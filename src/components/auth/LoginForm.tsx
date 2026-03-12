@@ -36,13 +36,8 @@ const LoginForm = ({ isRegister: initialIsRegister = false, inviteCode = null }:
         // Passer le code d'invitation s'il existe
         await signUpWithEmail(email, password, inviteCode);
         
-        // Si code d'invitation, rediriger vers beta-pending
-        if (inviteCode) {
-          navigate('/beta-pending');
-        } else {
-          // Sinon, rediriger les nouveaux utilisateurs vers le guide de démarrage
-          navigate('/quick-start');
-        }
+        // Tous les nouveaux utilisateurs attendent la validation admin
+        navigate('/beta-pending');
       }
     } catch (error: any) {
       console.error(error);

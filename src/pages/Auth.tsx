@@ -5,7 +5,6 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useBetaInvitation } from '@/hooks/beta/useBetaInvitation';
 import { useBetaStatus } from '@/hooks/beta/useBetaStatus';
 import { useBetaRegistrationComplete } from '@/hooks/beta/useBetaRegistrationComplete';
-import { useBetaRegistrationAttempt } from '@/hooks/beta/useBetaRegistrationAttempt';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -24,10 +23,7 @@ const Auth = () => {
   
   // Finaliser l'inscription beta après confirmation email
   const { isProcessing, isCompleted } = useBetaRegistrationComplete();
-  
-  // Vérifier si l'utilisateur a une tentative d'inscription beta en cours
-  const { attempt, hasPendingAttempt, loading: attemptLoading } = useBetaRegistrationAttempt();
-  
+
   // Rafraîchir le statut beta quand l'inscription est complétée
   useEffect(() => {
     if (isCompleted) {
@@ -65,37 +61,27 @@ const Auth = () => {
 
   // Rediriger les utilisateurs selon leur statut
   React.useEffect(() => {
-    if (!loading && !betaLoading && !attemptLoading && !isProcessing && user) {
-      // IMPORTANT: Si l'utilisateur a une tentative beta pending (avec un vrai code d'invitation)
-      // mais pas encore de betaInfo, il attend la validation admin → rediriger vers /beta-pending
-      // Les utilisateurs normaux sans code ne sont pas affectés
-      if (hasPendingAttempt && attempt?.invitation_code && !betaInfo) {
-        console.log('[Auth] User has pending beta attempt (with invite code), redirecting to /beta-pending');
+    if (!loading && !betaLoading && !isProcessing && user) {
+      // Si beta testeur en attente de validation ou rejeté → page d'attente
+      if (isPending || isRejected) {
+        navigate('/beta-pending');
+        return;
+      }
+
+      // Si l'utilisateur n'a pas de betaInfo (inscription sans validation) → bloque
+      if (!betaInfo) {
         navigate('/beta-pending');
         return;
       }
       
-      // Si beta testeur en attente de validation
-      if (isPending) {
-        navigate('/beta-pending');
-        return;
-      } 
-      
-      // Si beta testeur rejeté
-      if (isRejected) {
-        navigate('/beta-pending');
-        return;
-      }
-      
-      // Sinon, utilisateur normal ou beta actif → page d'accueil
+      // Sinon, utilisateur validé → page d'accueil
       navigate('/');
     }
-  }, [user, loading, betaLoading, attemptLoading, isProcessing, isPending, isRejected, hasPendingAttempt, betaInfo, navigate]);
+  }, [user, loading, betaLoading, isProcessing, isPending, isRejected, betaInfo, navigate]);
 
-  // Afficher le loader pendant le chargement initial ou le traitement de l'inscription beta
-  // Note: Pour les utilisateurs non connectés, on n'attend pas betaLoading/attemptLoading
+  // Afficher le loader pendant le chargement initial
   const isAuthLoading = loading;
-  const needsBetaCheck = user && (betaLoading || attemptLoading);
+  const needsBetaCheck = user && betaLoading;
   
   if (isAuthLoading || isProcessing || needsBetaCheck) {
     return <SimpleLoader />;
