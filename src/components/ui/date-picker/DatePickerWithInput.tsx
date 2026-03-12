@@ -11,7 +11,7 @@ import { MonthView } from "./MonthView";
 import { DayView } from "./DayView";
 
 export interface DatePickerWithInputProps {
-  value: Date;
+  value: Date | undefined;
   onChange: (date: Date) => void;
   className?: string;
   disabled?: boolean;
