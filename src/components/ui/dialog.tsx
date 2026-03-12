@@ -33,25 +33,29 @@ const DialogContent = React.forwardRef<
       ref={ref}
       onPointerDownOutside={(e) => {
         const target = e.target as HTMLElement;
+        // Don't close dialog when clicking inside a popover or any radix portal
+        if (target.closest('[data-radix-popper-content-wrapper]') || target.closest('[data-radix-popover-content]')) {
+          e.preventDefault();
+          return;
+        }
         if (!target.closest('[role="dialog"]')) {
           props.onPointerDownOutside?.(e);
         }
       }}
+      onInteractOutside={(e) => {
+        const target = e.target as HTMLElement;
+        // Don't close dialog when interacting with a popover
+        if (target.closest('[data-radix-popper-content-wrapper]') || target.closest('[data-radix-popover-content]')) {
+          e.preventDefault();
+          return;
+        }
+        props.onInteractOutside?.(e);
+      }}
       onEscapeKeyDown={(e) => {
         props.onEscapeKeyDown?.(e);
-        // Scroll management will be handled by useBodyScrollLock hook
       }}
       onOpenAutoFocus={(e) => {
         props.onOpenAutoFocus?.(e);
-        // Scroll management will be handled by useBodyScrollLock hook
-      }}
-      onAnimationEnd={(e) => {
-        // Animation handling without direct scroll manipulation
-        props.onAnimationEnd?.(e);
-      }}
-      onInteractOutside={(e) => {
-        // Interaction handling without direct scroll manipulation
-        props.onInteractOutside?.(e);
       }}
       className={cn(
         "fixed left-[50%] top-[50%] z-[110] w-[90vw] max-w-[500px] translate-x-[-50%] translate-y-[-50%] rounded-xl border border-border bg-background p-6 shadow-lg",
