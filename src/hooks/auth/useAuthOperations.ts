@@ -59,35 +59,23 @@ export const useAuthOperations = () => {
       
       console.log("Inscription réussie:", data.user?.id);
 
-      // Créer l'entrée beta_users via Edge Function (service_role bypass RLS)
-      // L'utilisateur n'a pas encore de session, donc on ne peut pas insérer directement
+      // Créer l'entrée beta_users via RPC (SECURITY DEFINER bypass RLS)
+      // Fonctionne en local et en production sans déploiement d'Edge Function
       if (data.user) {
         try {
-          const { supabaseUrl, supabaseAnonKey } = await import('@/integrations/supabase/client');
-          
-          const response = await fetch(`${supabaseUrl}/functions/v1/register-pending-user`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': supabaseAnonKey,
-              'Authorization': `Bearer ${supabaseAnonKey}`,
-            },
-            body: JSON.stringify({
-              user_id: data.user.id,
-              email: email,
-              invitation_code: inviteCode || null,
-            }),
+          const { data: rpcData, error: rpcError } = await supabase.rpc('create_pending_beta_user', {
+            p_user_id: data.user.id,
+            p_email: email,
+            p_invitation_code: inviteCode || null,
           });
 
-          const result = await response.json();
-          
-          if (!response.ok) {
-            console.error("[Auth] Erreur Edge Function register-pending-user:", result);
+          if (rpcError) {
+            console.error("[Auth] Erreur RPC create_pending_beta_user:", rpcError);
           } else {
-            console.log("[Auth] ✅ Entrée beta_users créée via Edge Function:", result);
+            console.log("[Auth] ✅ Entrée beta_users créée via RPC:", rpcData);
           }
-        } catch (edgeFnErr) {
-          console.error("[Auth] Échec appel register-pending-user (non bloquant):", edgeFnErr);
+        } catch (rpcErr) {
+          console.error("[Auth] Échec appel RPC (non bloquant):", rpcErr);
         }
       }
 
