@@ -13,7 +13,7 @@ interface AddChildModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   childName: string;
-  birthDate: Date;
+  birthDate: Date | undefined;
   gender: ChildGender;
   petType?: PetType;
   petTypeCustom?: string;
