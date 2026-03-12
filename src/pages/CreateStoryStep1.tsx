@@ -82,7 +82,7 @@ const CreateStoryStep1: React.FC = () => {
 
           {/* CTA principal */}
           <button
-            onClick={() => navigate("/kids-profile")}
+            onClick={() => navigate("/children")}
             className="w-full bg-primary text-primary-foreground rounded-xl py-4 px-6 text-base font-semibold hover:bg-primary/90 transition-colors shadow-md"
           >
             ✨ Ajouter un profil
