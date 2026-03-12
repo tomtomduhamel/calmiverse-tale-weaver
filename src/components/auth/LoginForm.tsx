@@ -43,7 +43,7 @@ const LoginForm = ({ isRegister: initialIsRegister = false, inviteCode = null }:
       console.error(error);
       toast({
         title: isLogin ? "Échec de la connexion" : "Échec de l'inscription",
-        description: "Vérifiez vos identifiants et réessayez.",
+        description: error.message || "Une erreur est survenue. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
