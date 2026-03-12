@@ -103,6 +103,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   const autoGenerateTriggered = useRef(false);
   const lastGenerationTimeRef = useRef<number>(0);
   const GENERATION_COOLDOWN_MS = 5000;
+  const autoRetryCount = useRef(0);
+  const MAX_AUTO_RETRIES = 2;
   const generationParamsRef = useRef({ selectedChildrenIds, selectedObjective, children });
 
   // Mettre à jour la ref quand les données changent
