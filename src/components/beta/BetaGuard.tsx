@@ -20,7 +20,7 @@ interface BetaGuardProps {
 const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
   const { user, loading: authLoading } = useSupabaseAuth();
   const { betaInfo, loading: betaLoading, isPending, isRejected, isExpired } = useBetaStatus();
-  const { hasPendingAttempt, loading: attemptLoading } = useBetaRegistrationAttempt();
+  const { attempt, hasPendingAttempt, loading: attemptLoading } = useBetaRegistrationAttempt();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -35,11 +35,10 @@ const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
       return;
     }
 
-    // SÉCURITÉ CRITIQUE: Si l'utilisateur a une tentative d'inscription beta en attente 
-    // mais n'est pas encore enregistré comme beta user, bloquer l'accès
-    // Cela empêche quelqu'un qui a créé un compte avec un code d'invitation 
-    // d'accéder à l'application avant validation admin
-    if (hasPendingAttempt && !betaInfo) {
+    // SÉCURITÉ: Bloquer uniquement si l'utilisateur a un vrai code d'invitation en cours
+    // (VIP ou beta code). Les utilisateurs normaux sans code ne doivent JAMAIS être bloqués ici.
+    // Note: useBetaRegistrationAttempt filtre déjà sur invitation_code non-null/non-vide
+    if (hasPendingAttempt && attempt?.invitation_code && !betaInfo) {
       console.log('[BetaGuard] User has pending beta registration attempt but not registered as beta user yet');
       console.log('[BetaGuard] Blocking access and redirecting to /beta-pending');
       navigate('/beta-pending', { replace: true });
@@ -75,8 +74,8 @@ const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
     );
   }
 
-  // Si non authentifié, statut bloqué, ou tentative en attente, ne rien afficher (la redirection se fera)
-  if (!user || (betaInfo && (isPending || isRejected || isExpired)) || (hasPendingAttempt && !betaInfo)) {
+  // Si non authentifié, statut bloqué, ou tentative VIP/beta en attente, ne rien afficher
+  if (!user || (betaInfo && (isPending || isRejected || isExpired)) || (hasPendingAttempt && attempt?.invitation_code && !betaInfo)) {
     return null;
   }
 

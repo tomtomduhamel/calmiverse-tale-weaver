@@ -30,16 +30,21 @@ export const useBetaRegistrationAttempt = () => {
     try {
       setLoading(true);
 
+      // Only consider attempts that actually have an invitation code (VIP/beta users)
+      // Normal users without a code must never be flagged as having a pending attempt
       const { data, error } = await supabase
         .from('beta_registration_attempts')
         .select('*')
         .eq('user_id', user.id)
+        .not('invitation_code', 'is', null)
+        .neq('invitation_code', '')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (error) {
-        console.error('[BetaAttempt] Error fetching registration attempt:', error);
+        // Treat ALL errors (including RLS/missing table) as "no attempt" to avoid blocking normal users
+        console.warn('[BetaAttempt] Could not fetch registration attempt (treating as none):', error.message);
         setAttempt(null);
         return;
       }

@@ -26,7 +26,7 @@ const Auth = () => {
   const { isProcessing, isCompleted } = useBetaRegistrationComplete();
   
   // Vérifier si l'utilisateur a une tentative d'inscription beta en cours
-  const { hasPendingAttempt, loading: attemptLoading } = useBetaRegistrationAttempt();
+  const { attempt, hasPendingAttempt, loading: attemptLoading } = useBetaRegistrationAttempt();
   
   // Rafraîchir le statut beta quand l'inscription est complétée
   useEffect(() => {
@@ -66,10 +66,11 @@ const Auth = () => {
   // Rediriger les utilisateurs selon leur statut
   React.useEffect(() => {
     if (!loading && !betaLoading && !attemptLoading && !isProcessing && user) {
-      // IMPORTANT: Si l'utilisateur a une tentative beta pending mais pas encore de betaInfo,
-      // cela signifie qu'il attend la validation admin → rediriger vers /beta-pending
-      if (hasPendingAttempt && !betaInfo) {
-        console.log('[Auth] User has pending beta attempt, redirecting to /beta-pending');
+      // IMPORTANT: Si l'utilisateur a une tentative beta pending (avec un vrai code d'invitation)
+      // mais pas encore de betaInfo, il attend la validation admin → rediriger vers /beta-pending
+      // Les utilisateurs normaux sans code ne sont pas affectés
+      if (hasPendingAttempt && attempt?.invitation_code && !betaInfo) {
+        console.log('[Auth] User has pending beta attempt (with invite code), redirecting to /beta-pending');
         navigate('/beta-pending');
         return;
       }
