@@ -55,13 +55,57 @@ const CreateStoryStep1: React.FC = () => {
     handleModeChange('guided');
   }, [handleModeChange]);
 
-  // PHASE 3: Affichage optimiste - permettre l'affichage même après timeout si données disponibles
-  // CORRECTION CRITIQUE : Ne pas bloquer l'affichage si on a des enfants
+  // ÉTAT VIDE : chargement terminé sans erreur mais aucun profil n'existe
+  const loadingDone = !authLoading && !childrenLoading && !childrenTimeout && user;
+  if (loadingDone && children.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
+        <div className="max-w-md w-full text-center space-y-6">
+          {/* Icône */}
+          <div className="flex justify-center">
+            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-5xl">👧</span>
+            </div>
+          </div>
+
+          {/* Titre et description */}
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-foreground">
+              Commençons par créer un profil !
+            </h1>
+            <p className="text-muted-foreground text-base leading-relaxed">
+              Pour créer une histoire personnalisée, ajoutez d'abord un profil —
+              un enfant, un animal de compagnie ou un adulte. Calmi adaptera
+              chaque histoire à ce profil.
+            </p>
+          </div>
+
+          {/* CTA principal */}
+          <button
+            onClick={() => navigate("/kids-profile")}
+            className="w-full bg-primary text-primary-foreground rounded-xl py-4 px-6 text-base font-semibold hover:bg-primary/90 transition-colors shadow-md"
+          >
+            ✨ Ajouter un profil
+          </button>
+
+          {/* Lien secondaire */}
+          <button
+            onClick={() => navigate("/")}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+          >
+            Retour à l'accueil
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const shouldShowLoading = isLoading && children.length === 0;
   const shouldShowTimeout = hasTimedOut && children.length === 0;
-  const shouldShowError = errorMessage && children.length === 0;
+  const shouldShowError = !!(errorMessage && children.length === 0);
 
   if (shouldShowLoading || shouldShowTimeout || shouldShowError) {
+
     return (
       <LoadingWithTimeout
         isLoading={shouldShowLoading}
