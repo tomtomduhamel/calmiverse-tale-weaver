@@ -208,7 +208,8 @@ export const useN8nTitleGeneration = (
         timeoutMs: 300000, // 5 minutes
         retryCondition: (error) => {
           const msg = error?.message?.toLowerCase() || '';
-          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion');
+          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion') ||
+                 msg.includes('pattern') || msg.includes('500') || msg.includes('erreur temporaire');
         }
       });
 
@@ -220,6 +221,12 @@ export const useN8nTitleGeneration = (
 
       const result = await response.json();
       console.log('[N8nTitleGeneration] Réponse regénération reçue:', JSON.stringify(result, null, 2));
+
+      // Détecter erreur dans le body
+      const rawCheckRegen = Array.isArray(result) ? result[0] : result;
+      if (rawCheckRegen?.error || rawCheckRegen?.message?.toLowerCase()?.includes('pattern')) {
+        throw new Error('Erreur temporaire du serveur de génération');
+      }
 
       const newTitles = parseN8nTitlesResponse(result);
 
@@ -367,9 +374,9 @@ Conclusion : le format json final devra avoir la structure suivante :
         maxRetries: 3,
         timeoutMs: 300000, // 5 minutes
         retryCondition: (error) => {
-          // Retry sur timeout et erreurs réseau, pas sur erreurs de données
           const msg = error?.message?.toLowerCase() || '';
-          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion');
+          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion') ||
+                 msg.includes('pattern') || msg.includes('500') || msg.includes('erreur temporaire');
         }
       });
 
@@ -381,6 +388,13 @@ Conclusion : le format json final devra avoir la structure suivante :
 
       const result = await response.json();
       console.log('[N8nTitleGeneration] Réponse brute reçue:', JSON.stringify(result, null, 2));
+
+      // Détecter si n8n a renvoyé une erreur dans le body (HTTP 200 mais contenu = erreur)
+      const rawCheck = Array.isArray(result) ? result[0] : result;
+      if (rawCheck?.error || rawCheck?.message?.toLowerCase()?.includes('pattern') || rawCheck?.message?.toLowerCase()?.includes('did not match')) {
+        console.error('[N8nTitleGeneration] Erreur détectée dans le body n8n:', rawCheck?.error || rawCheck?.message);
+        throw new Error('Erreur temporaire du serveur de génération');
+      }
 
       // Utiliser le parser corrigé
       const titles = parseN8nTitlesResponse(result);
