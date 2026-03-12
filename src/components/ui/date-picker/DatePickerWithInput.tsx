@@ -60,7 +60,7 @@ export function DatePickerWithInput({ value, onChange, className, disabled = fal
   const hasValidDate = isValid(value);
 
   return (
-    <Popover open={disabled ? false : open} onOpenChange={(o) => {
+    <Popover modal={false} open={disabled ? false : open} onOpenChange={(o) => {
       if (!disabled) {
         setOpen(o);
         if (!o) resetViews();
