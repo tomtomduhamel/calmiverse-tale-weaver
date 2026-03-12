@@ -13,11 +13,11 @@ interface BetaGuardProps {
  * 
  * Redirige vers :
  * - /auth si l'utilisateur n'est pas connecté
- * - /beta-pending si l'utilisateur est en attente de validation, rejeté, ou expiré
- * - Laisse passer si l'utilisateur est un beta user actif
+ * - /beta-pending si l'utilisateur a un statut bloquant EXPLICITE (pending, rejected, expired)
  * 
- * Tous les nouveaux inscrits reçoivent un statut `pending_validation` 
- * dans la table beta_users — aucun accès sans validation admin.
+ * IMPORTANT : Les utilisateurs sans entrée dans beta_users (admin, utilisateurs legacy)
+ * sont laissés passer. Seuls les utilisateurs avec un statut bloquant EXPLICITE sont bloqués.
+ * Les nouveaux inscrits reçoivent systématiquement un statut `pending_validation` à l'inscription.
  */
 const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
   const { user, loading: authLoading } = useSupabaseAuth();
@@ -36,25 +36,19 @@ const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
       return;
     }
 
-    // Bloquer les utilisateurs en attente de validation, rejetés, ou expirés
+    // Bloquer UNIQUEMENT si l'utilisateur a un statut bloquant EXPLICITE dans beta_users
+    // (pending_validation, rejected, expired)
+    // Les utilisateurs sans entrée beta_users (admin, legacy) passent librement
     if (betaInfo && (isPending || isRejected || isExpired)) {
       console.log('[BetaGuard] Beta user with blocked status:', betaInfo.status);
       navigate('/beta-pending', { replace: true });
       return;
     }
 
-    // Bloquer les utilisateurs sans betaInfo (compte créé mais pas encore validé)
-    // Cas possible si l'insertion en base a été retardée
-    if (!betaInfo && user) {
-      console.log('[BetaGuard] No betaInfo found for user, redirecting to /beta-pending');
-      navigate('/beta-pending', { replace: true });
-      return;
-    }
-
-    // Accès accordé : beta user actif
+    // Accès accordé
     console.log('[BetaGuard] Access granted', { 
-      isBeta: !!betaInfo, 
-      isActive: betaInfo?.status === 'active',
+      hasBetaInfo: !!betaInfo,
+      status: betaInfo?.status ?? 'no-record (admin/legacy)',
     });
   }, [user, betaInfo, isPending, isRejected, isExpired, authLoading, betaLoading, navigate, location.pathname]);
 
@@ -72,12 +66,17 @@ const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
     );
   }
 
-  // Si non authentifié ou statut bloqué, ne rien afficher (redirection en cours)
-  if (!user || !betaInfo || (betaInfo && (isPending || isRejected || isExpired))) {
+  // Si non authentifié, bloquer
+  if (!user) {
     return null;
   }
 
-  // Accès accordé
+  // Si statut bloquant explicite, ne rien afficher (redirection en cours)
+  if (betaInfo && (isPending || isRejected || isExpired)) {
+    return null;
+  }
+
+  // Accès accordé (beta actif OU pas d'entrée beta_users = admin/legacy)
   return <>{children}</>;
 };
 

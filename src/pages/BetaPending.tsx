@@ -10,7 +10,7 @@ import { SimpleLoader } from '@/components/ui/SimpleLoader';
 
 const BetaPending = () => {
   const navigate = useNavigate();
-  const { logout } = useSupabaseAuth();
+  const { user, logout } = useSupabaseAuth();
   const { betaInfo, loading, isPending, isActive, isRejected } = useBetaStatus();
 
   const handleLogout = async () => {
@@ -29,9 +29,9 @@ const BetaPending = () => {
     return <SimpleLoader />;
   }
 
-  // Si pas de beta info, rediriger vers la connexion
+  // Si pas de beta info, rediriger vers l'accueil (admin/legacy) ou la connexion
   if (!betaInfo) {
-    navigate('/auth');
+    navigate(user ? '/' : '/auth');
     return null;
   }
 

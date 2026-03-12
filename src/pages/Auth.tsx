@@ -67,17 +67,11 @@ const Auth = () => {
         navigate('/beta-pending');
         return;
       }
-
-      // Si l'utilisateur n'a pas de betaInfo (inscription sans validation) → bloque
-      if (!betaInfo) {
-        navigate('/beta-pending');
-        return;
-      }
       
-      // Sinon, utilisateur validé → page d'accueil
+      // Sinon (beta actif, expiré, ou pas de betaInfo = admin/legacy) → page d'accueil
       navigate('/');
     }
-  }, [user, loading, betaLoading, isProcessing, isPending, isRejected, betaInfo, navigate]);
+  }, [user, loading, betaLoading, isProcessing, isPending, isRejected, navigate]);
 
   // Afficher le loader pendant le chargement initial
   const isAuthLoading = loading;
