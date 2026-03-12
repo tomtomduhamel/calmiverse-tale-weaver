@@ -119,7 +119,7 @@ const ModernChildrenProfiles: React.FC<ModernChildrenProfilesProps> = ({
 
   const resetForm = () => {
     setChildName("");
-    setBirthDate(new Date());
+    setBirthDate(undefined);
     setGender("boy");
     setPetType(undefined);
     setPetTypeCustom("");
