@@ -155,10 +155,22 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       }
     }).catch(error => {
       console.error('[TitleBasedStoryCreator] Erreur auto-génération:', error);
-      setGenerationError(error.message || "Impossible de générer les titres. Veuillez vérifier votre connexion.");
+      
+      // Retry automatique (max 2 fois) avant d'afficher l'erreur
+      if (autoRetryCount.current < MAX_AUTO_RETRIES) {
+        autoRetryCount.current++;
+        console.log(`[TitleBasedStoryCreator] Auto-retry ${autoRetryCount.current}/${MAX_AUTO_RETRIES}...`);
+        autoGenerateTriggered.current = false;
+        // Le useEffect relancera automatiquement
+        return;
+      }
+      
+      autoRetryCount.current = 0;
+      const friendlyMessage = "Une erreur temporaire est survenue lors de la génération des titres. Veuillez réessayer.";
+      setGenerationError(friendlyMessage);
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible de générer les titres",
+        title: "Erreur de génération",
+        description: friendlyMessage,
         variant: "destructive"
       });
     }).finally(() => {
