@@ -66,7 +66,7 @@ export const useAuthOperations = () => {
           const { data: rpcData, error: rpcError } = await supabase.rpc('create_pending_beta_user', {
             p_user_id: data.user.id,
             p_email: email,
-            p_invitation_code: inviteCode || null,
+            p_invitation_code: inviteCode || 'DIRECT', // 'DIRECT' = inscription sans code (NOT NULL constraint)
           });
 
           if (rpcError) {
