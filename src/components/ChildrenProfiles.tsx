@@ -41,7 +41,7 @@ const ChildrenProfiles: React.FC<ChildrenProfilesProps> = ({
 
   const resetForm = () => {
     setNewChildName("");
-    setNewBirthDate(new Date());
+    setNewBirthDate(undefined);
     setNewTeddyName("");
     setNewTeddyDescription("");
     setNewImaginaryWorld("");
