@@ -1027,6 +1027,7 @@ export type Database = {
           story_notifications: boolean | null
           system_notifications: boolean | null
           timezone: string | null
+          video_intro_enabled: boolean | null
         }
         Insert: {
           auto_scroll_enabled?: boolean | null
@@ -1047,6 +1048,7 @@ export type Database = {
           story_notifications?: boolean | null
           system_notifications?: boolean | null
           timezone?: string | null
+          video_intro_enabled?: boolean | null
         }
         Update: {
           auto_scroll_enabled?: boolean | null
@@ -1067,6 +1069,7 @@ export type Database = {
           story_notifications?: boolean | null
           system_notifications?: boolean | null
           timezone?: string | null
+          video_intro_enabled?: boolean | null
         }
         Relationships: []
       }
@@ -1129,6 +1132,10 @@ export type Database = {
       }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
       cleanup_old_storage_files: { Args: never; Returns: undefined }
+      create_pending_beta_user: {
+        Args: { p_email: string; p_invitation_code?: string; p_user_id: string }
+        Returns: Json
+      }
       delete_user: { Args: never; Returns: undefined }
       generate_deduplication_key: {
         Args: {
@@ -1240,6 +1247,17 @@ export type Database = {
         Returns: Json
       }
       validate_beta_user: { Args: { p_beta_user_id: string }; Returns: Json }
+      validate_pending_beta_user: {
+        Args: {
+          p_beta_user_id: string
+          p_duration_months: number
+          p_email: string
+          p_tier: string
+          p_user_id: string
+          p_validated_by?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
