@@ -351,8 +351,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
             <Alert variant="destructive" className="max-w-md text-left">
               <AlertDescription>
                 {generationError === "Failed to fetch" 
-                  ? "Un problème de connexion est survenu (Failed to fetch). Assurez-vous d'être connecté à internet." 
-                  : generationError}
+                  ? "Un problème de connexion est survenu. Assurez-vous d'être connecté à internet." 
+                  : "Une erreur temporaire est survenue lors de la génération. Réessayez dans quelques instants."}
               </AlertDescription>
             </Alert>
           </div>

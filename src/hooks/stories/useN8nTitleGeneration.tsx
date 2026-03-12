@@ -208,7 +208,8 @@ export const useN8nTitleGeneration = (
         timeoutMs: 300000, // 5 minutes
         retryCondition: (error) => {
           const msg = error?.message?.toLowerCase() || '';
-          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion');
+          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion') ||
+                 msg.includes('pattern') || msg.includes('500') || msg.includes('erreur temporaire');
         }
       });
 
@@ -220,6 +221,12 @@ export const useN8nTitleGeneration = (
 
       const result = await response.json();
       console.log('[N8nTitleGeneration] Réponse regénération reçue:', JSON.stringify(result, null, 2));
+
+      // Détecter erreur dans le body
+      const rawCheckRegen = Array.isArray(result) ? result[0] : result;
+      if (rawCheckRegen?.error || rawCheckRegen?.message?.toLowerCase()?.includes('pattern')) {
+        throw new Error('Erreur temporaire du serveur de génération');
+      }
 
       const newTitles = parseN8nTitlesResponse(result);
 
