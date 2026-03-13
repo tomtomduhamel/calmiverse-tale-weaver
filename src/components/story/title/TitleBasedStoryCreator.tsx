@@ -336,10 +336,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold mb-2">✨ Calmi crée vos titres...</h3>
-            <p className="text-muted-foreground">
-              Cela prend quelques secondes. Vous pouvez changer d'application, la génération continuera.
-            </p>
+            <h3 className="text-lg font-semibold mb-2">✨ Calmi imagine vos histoires...</h3>
           </div>
         </div>
         <div className="flex justify-center">

@@ -114,7 +114,7 @@ const CreateStoryStep1: React.FC = () => {
         onRetry={handleRetry}
         onFallbackAction={handleFallback}
         fallbackActionLabel="Voir mes histoires"
-        loadingMessage={authLoading ? "Connexion en cours..." : "Chargement des profils..."}
+        loadingMessage={authLoading ? "Connexion en cours..." : "📍 Calmi vous retrouve..."}
         onQuickCreate={handleQuickCreate}
         canContinueWithoutData={false}
         progressSteps={["Authentification", "Profils enfants", "Création"]}
