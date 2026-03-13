@@ -336,7 +336,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold mb-2">✨ Calmi imagine vos histoires...</h3>
+            <h3 className="text-lg font-semibold mb-2">✨ Calmi travaille à vous créer un beau moment...</h3>
           </div>
         </div>
         <div className="flex justify-center">
@@ -421,8 +421,8 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         )}
 
         <div className="flex justify-center">
-          <Button variant="outline" onClick={() => navigate('/create-story/step-2')}>
-            Retour au choix de l'objectif
+          <Button variant="outline" onClick={() => navigate('/create-story/step-1')}>
+            Retour à la configuration de l'histoire
           </Button>
         </div>
       </div>

@@ -100,11 +100,8 @@ const CreateStoryTitles: React.FC = () => {
 
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Créer une histoire avec sélection de titres
+            Création de 3 titres pour votre histoire
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Générez 3 titres d'histoires personnalisés, puis choisissez celui qui vous inspire le plus
-          </p>
         </div>
       </div>
 
