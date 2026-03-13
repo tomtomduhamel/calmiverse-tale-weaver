@@ -61,7 +61,6 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
           {titles.length} titre{titles.length > 1 ? 's' : ''}
         </Badge>
         
-        )}
       </div>
 
       {/* Centralized Video Toggle for Mobile */}
