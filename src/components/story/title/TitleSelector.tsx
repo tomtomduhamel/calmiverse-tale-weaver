@@ -5,6 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { STORY_DURATION_OPTIONS, StoryDurationMinutes } from '@/types/story';
 import MobileTitleSelector from './mobile/MobileTitleSelector';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Video, Sparkles, Lock } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SubscriptionLimits } from '@/types/subscription';
 
 interface GeneratedTitle {
   id: string;
@@ -14,11 +19,16 @@ interface GeneratedTitle {
 
 interface TitleSelectorProps {
   titles: GeneratedTitle[];
-  onSelectTitle: (title: string, durationMinutes: StoryDurationMinutes) => void;
+  onSelectTitle: (title: string, durationMinutes: StoryDurationMinutes, generateVideo: boolean) => void;
   onRegenerateTitles?: () => void;
   canRegenerate?: boolean;
   isCreatingStory: boolean;
   isRegenerating?: boolean;
+  videoQuota?: {
+    used: number;
+    limit: number;
+  };
+  limits: SubscriptionLimits | null;
 }
 
 const TitleSelector: React.FC<TitleSelectorProps> = ({
@@ -28,8 +38,20 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
   canRegenerate = false,
   isCreatingStory,
   isRegenerating = false,
+  videoQuota,
+  limits,
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const [generateVideo, setGenerateVideo] = React.useState(true);
+
+  // Désactiver la vidéo par défaut si pas de quota
+  React.useEffect(() => {
+    if (limits && limits.max_video_intros_per_period === 0) {
+      setGenerateVideo(false);
+    }
+  }, [limits]);
+
+  const canGenerateVideo = (limits?.max_video_intros_per_period || 0) > 0;
 
   // Rendu conditionnel pour mobile
   if (isMobile) {
@@ -41,6 +63,10 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
         canRegenerate={canRegenerate}
         isCreatingStory={isCreatingStory}
         isRegenerating={isRegenerating}
+        videoQuota={videoQuota}
+        limits={limits}
+        generateVideo={generateVideo}
+        setGenerateVideo={setGenerateVideo}
       />
     );
   }
@@ -106,18 +132,59 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="grid grid-cols-3 gap-2">
-                  {STORY_DURATION_OPTIONS.map((duration) => (
-                    <Button
-                      key={duration}
-                      onClick={() => onSelectTitle(title.title, duration)}
-                      disabled={isCreatingStory || isRegenerating}
-                      variant="secondary"
-                      size="sm"
-                    >
-                      {isCreatingStory ? "Création..." : `${duration} min`}
-                    </Button>
-                  ))}
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/10">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-full">
+                        <Video className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <Label htmlFor={`video-toggle-${title.id}`} className="text-sm font-medium flex items-center gap-2">
+                          Vidéo magique ✨
+                          {!canGenerateVideo && <Lock className="w-3 h-3 text-muted-foreground" />}
+                        </Label>
+                        <p className="text-[10px] text-muted-foreground">
+                          {canGenerateVideo 
+                            ? `Quota : ${videoQuota?.used || 0}/${videoQuota?.limit || 0} ce mois`
+                            : "Indisponible avec votre plan actuel"}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <Switch
+                              id={`video-toggle-${title.id}`}
+                              checked={generateVideo}
+                              onCheckedChange={setGenerateVideo}
+                              disabled={!canGenerateVideo || isCreatingStory}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        {!canGenerateVideo && (
+                          <TooltipContent>
+                            <p>Passez au plan Calmix ou supérieur pour les vidéos !</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    {STORY_DURATION_OPTIONS.map((duration) => (
+                      <Button
+                        key={duration}
+                        onClick={() => onSelectTitle(title.title, duration, generateVideo)}
+                        disabled={isCreatingStory || isRegenerating}
+                        variant="secondary"
+                        size="sm"
+                      >
+                        {isCreatingStory ? "Création..." : `${duration} min`}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>

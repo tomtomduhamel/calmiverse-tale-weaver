@@ -70,7 +70,8 @@ export class SubscriptionService {
         current_period_start: new Date().toISOString(),
         current_period_end: periodEnd.toISOString(),
         stories_used_this_period: 0,
-        audio_generations_used_this_period: 0
+        audio_generations_used_this_period: 0,
+        video_intros_used_this_period: 0
       })
       .eq('user_id', userId);
 

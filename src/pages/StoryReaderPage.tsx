@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSupabaseStories } from "@/hooks/stories/useSupabaseStories";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
@@ -12,6 +12,8 @@ import type { Story } from "@/types/story";
 import { useUserSettingsState } from "@/hooks/settings/useUserSettingsState";
 import { StoryVideoIntro } from "@/components/story/StoryVideoIntro";
 import { getStoryVideoUrl } from "@/utils/supabaseImageUtils";
+import { useSubscription } from "@/hooks/subscription/useSubscription";
+import { useQuotaChecker } from "@/hooks/subscription/useQuotaChecker";
 
 const StoryReaderPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,10 +22,13 @@ const StoryReaderPage: React.FC = () => {
   const { children } = useSupabaseChildren();
   const { toggleFavorite } = useStoryFavorites();
   const { userSettings } = useUserSettingsState();
+  const { limits, subscription } = useSubscription();
+  const { incrementUsage } = useQuotaChecker();
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [introPlayed, setIntroPlayed] = useState(false);
+  const introPlayedRef = useRef(false);
 
   // Charger l'histoire depuis l'ID dans l'URL
   useEffect(() => {
@@ -153,24 +158,33 @@ const StoryReaderPage: React.FC = () => {
     );
   }
 
-  // Vérifier si la vidéo d'intro doit être affichée
+  // Vérifier si la vidéo d'intro doit être affichée (avec vérification de quota)
   const videoUrl = currentStory.video_path ? getStoryVideoUrl(currentStory.video_path) : null;
-  console.log("[StoryReaderPage] Video URL computed:", videoUrl);
-  console.log("[StoryReaderPage] User settings playVideoIntro:", userSettings.readingPreferences?.playVideoIntro);
-  console.log("[StoryReaderPage] Intro played status:", introPlayed);
-  
+  const hasVideoQuota = limits && subscription && (
+    limits.max_video_intros_per_period > 0 && 
+    subscription.video_intros_used_this_period < limits.max_video_intros_per_period
+  );
+
   const showVideoIntro =
     videoUrl &&
     userSettings.readingPreferences?.playVideoIntro !== false &&
-    !introPlayed;
+    !introPlayedRef.current &&
+    hasVideoQuota;
 
   return (
     <ReadingSpeedProvider>
-      {showVideoIntro && (
+      {showVideoIntro && videoUrl ? (
         <StoryVideoIntro
-          videoUrl={videoUrl!}
-          onComplete={() => setIntroPlayed(true)}
+          videoUrl={videoUrl}
+          onComplete={() => {
+            console.log("[StoryReaderPage] Video intro complete (quota tracking handled by DB trigger)");
+            introPlayedRef.current = true;
+            setIntroPlayed(true);
+          }}
         />
+      ) : (
+        // Render nothing or a placeholder if no video intro, then StoryReader
+        null
       )}
       <StoryReader
         story={currentStory}

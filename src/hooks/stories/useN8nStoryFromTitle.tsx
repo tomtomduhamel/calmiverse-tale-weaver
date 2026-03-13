@@ -21,6 +21,7 @@ interface StoryCreationData {
   children?: Child[]; // Nouvellement ajouté pour avoir accès aux données complètes
   durationMinutes?: StoryDurationMinutes;
   titleGenerationCost?: TitleCostData | null; // Coût de génération des titres
+  generateVideo?: boolean; // 🆕 Drapeau pour n8n
 }
 
 /**
@@ -171,6 +172,7 @@ export const useN8nStoryFromTitle = () => {
         promptSource, // 🆕 Source du prompt pour debug
         // 🆕 Coût de génération des titres pour calcul du coût total
         titleGenerationCost: data.titleGenerationCost || null,
+        generateVideo: data.generateVideo ?? false, // 🆕 Envoyer le flag à n8n
         timestamp: new Date().toISOString(),
         requestId: `story-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       };

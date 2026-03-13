@@ -183,6 +183,12 @@ const Subscription: React.FC = () => {
                     Musique de fond
                   </div>
                 )}
+                {limits.max_video_intros_per_period > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
+                    {limits.max_video_intros_per_period} vidéos d'introduction/mois
+                  </div>
+                )}
                 {limits.audio_generations_per_month > 0 && (
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />

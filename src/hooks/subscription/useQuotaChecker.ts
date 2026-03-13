@@ -9,7 +9,7 @@ export const useQuotaChecker = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const checkQuota = async (quotaType: 'stories' | 'audio' | 'children'): Promise<QuotaStatus | null> => {
+  const checkQuota = async (quotaType: 'stories' | 'audio' | 'children' | 'video_intro'): Promise<QuotaStatus | null> => {
     try {
       if (!user) {
         throw new Error('User not authenticated');
@@ -38,7 +38,7 @@ export const useQuotaChecker = () => {
     }
   };
 
-  const incrementUsage = async (usageType: 'story' | 'audio'): Promise<boolean> => {
+  const incrementUsage = async (usageType: 'story' | 'audio' | 'video_intro'): Promise<boolean> => {
     try {
       if (!user) {
         throw new Error('User not authenticated');
@@ -58,11 +58,12 @@ export const useQuotaChecker = () => {
     }
   };
 
-  const validateAction = async (action: 'create_story' | 'generate_audio' | 'add_child'): Promise<{ allowed: boolean; reason?: string; quotaStatus?: QuotaStatus }> => {
+  const validateAction = async (action: 'create_story' | 'generate_audio' | 'add_child' | 'show_video_intro'): Promise<{ allowed: boolean; reason?: string; quotaStatus?: QuotaStatus }> => {
     const quotaMap = {
       'create_story': 'stories' as const,
       'generate_audio': 'audio' as const,
-      'add_child': 'children' as const
+      'add_child': 'children' as const,
+      'show_video_intro': 'video_intro' as const
     };
 
     const quotaStatus = await checkQuota(quotaMap[action]);
@@ -75,7 +76,8 @@ export const useQuotaChecker = () => {
       const messages = {
         'create_story': `Vous avez atteint votre limite mensuelle d'histoires (${quotaStatus.used}/${quotaStatus.limit}). Passez à un abonnement supérieur pour créer plus d'histoires.`,
         'generate_audio': `Vous avez atteint votre limite mensuelle de génération audio (${quotaStatus.used}/${quotaStatus.limit}). Passez à un abonnement supérieur pour plus de générations audio.`,
-        'add_child': `Vous avez atteint votre limite d'enfants (${quotaStatus.used}/${quotaStatus.limit}). Passez à un abonnement supérieur pour ajouter plus d'enfants.`
+        'add_child': `Vous avez atteint votre limite d'enfants (${quotaStatus.used}/${quotaStatus.limit}). Passez à un abonnement supérieur pour ajouter plus d'enfants.`,
+        'show_video_intro': `Vous avez atteint votre limite mensuelle de vidéos d'introduction (${quotaStatus.used}/${quotaStatus.limit}). Passez à un abonnement supérieur pour en voir plus.`
       };
 
       return { 

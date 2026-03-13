@@ -49,7 +49,7 @@ export const useSubscription = () => {
         userSubscription = newSub;
       }
 
-      setSubscription(userSubscription);
+      setSubscription(userSubscription as any as UserSubscription);
 
       // Récupérer les limites pour ce tier
       const { data: limitsData, error: limitsError } = await supabase
@@ -59,7 +59,7 @@ export const useSubscription = () => {
         .single();
 
       if (limitsError) throw limitsError;
-      setLimits(limitsData);
+      setLimits(limitsData as any as SubscriptionLimits);
 
     } catch (err: any) {
       console.error('Error fetching subscription:', err);

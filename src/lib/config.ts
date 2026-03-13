@@ -48,12 +48,12 @@ export const APP_CONFIG = {
     CALMIX: {
       name: 'Calmix',
       monthlyPrice: 10.00,
-      features: ['50 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', '1 audio/mois', 'Accès priorité', 'Communauté Calmos']
+      features: ['50 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', 'Vidéos d\'introduction (3/mois)', '1 audio/mois', 'Accès priorité', 'Communauté Calmos']
     },
     CALMIXXL: {
       name: 'Calmixxl',
       monthlyPrice: 20.00,
-      features: ['100 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', '4 audio/mois', 'Accès priorité', 'Communauté Calmos']
+      features: ['100 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', 'Vidéos d\'introduction (10/mois)', '4 audio/mois', 'Accès priorité', 'Communauté Calmos']
     }
   },
 

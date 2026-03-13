@@ -11,6 +11,7 @@ export interface UserSubscription {
   current_period_end: string;
   stories_used_this_period: number;
   audio_generations_used_this_period: number;
+  video_intros_used_this_period: number;
   is_annual: boolean;
   stripe_subscription_id?: string;
   created_at: string;
@@ -24,6 +25,7 @@ export interface SubscriptionLimits {
   max_children: number | null;
   has_story_series: boolean;
   has_background_music: boolean;
+  max_video_intros_per_period: number;
   audio_generations_per_month: number;
   has_priority_access: boolean;
   has_community_access: boolean;

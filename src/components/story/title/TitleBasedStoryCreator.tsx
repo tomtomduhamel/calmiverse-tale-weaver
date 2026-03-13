@@ -215,7 +215,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
   }, []);
 
   // Création finale de l'histoire
-  const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes) => {
+  const handleCreateStory = useCallback(async (titleToUse: string, durationMinutes: StoryDurationMinutes, generateVideo: boolean = false) => {
     if (isSubmittingRef.current || isCreatingStory) {
       console.log('[TitleBasedStoryCreator] Création déjà en cours, clic ignoré.');
       return;
@@ -240,6 +240,19 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         return;
       }
 
+      // Vérification supplémentaire pour la vidéo si demandée
+      if (generateVideo) {
+        const videoValidation = await validateAction('show_video_intro');
+        if (!videoValidation || !videoValidation.allowed) {
+          toast({
+            title: "Quota vidéo atteint",
+            description: "Votre quota de vidéos est épuisé. L'histoire sera générée sans vidéo.",
+            variant: "destructive"
+          });
+          generateVideo = false; // Forcer à false si quota atteint
+        }
+      }
+
       const selectedChildrenForStory = children.filter(child => selectedChildrenIds.includes(child.id));
       const childrenNames = selectedChildrenForStory.map(child => child.name);
 
@@ -258,6 +271,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
         children: selectedChildrenForStory,
         durationMinutes,
         titleGenerationCost,
+        generateVideo, // Nouveau flag
       });
 
       await incrementUsage('story');
@@ -374,7 +388,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
     );
   }
 
-  // Cas 3: Affichage des titres (ou état initial vide en attente de génération)
+  // Cas 4: Affichage des titres (ou état initial vide en attente de génération)
   return (
     <>
       <UpgradePrompt
@@ -397,6 +411,11 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
             canRegenerate={canRegenerate}
             isCreatingStory={isCreatingStory || isStartingCreation}
             isRegenerating={isGeneratingTitles}
+            limits={subscription ? subscription.limits as any : null}
+            videoQuota={subscription ? {
+              used: subscription.video_intros_used_this_period,
+              limit: (subscription.limits as any)?.max_video_intros_per_period || 0
+            } : undefined}
           />
         ) : (
           <div className="text-center py-8 text-muted-foreground">

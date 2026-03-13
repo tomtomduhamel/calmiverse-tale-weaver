@@ -2,9 +2,12 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Loader2 } from 'lucide-react';
+import { RefreshCw, Loader2, Video, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { StoryDurationMinutes } from '@/types/story';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { SubscriptionLimits } from '@/types/subscription';
 
 interface GeneratedTitle {
   id: string;
@@ -14,11 +17,18 @@ interface GeneratedTitle {
 
 interface MobileTitleSelectorProps {
   titles: GeneratedTitle[];
-  onSelectTitle: (title: string, duration: StoryDurationMinutes) => void;
+  onSelectTitle: (title: string, duration: StoryDurationMinutes, generateVideo: boolean) => void;
   onRegenerateTitles?: () => void;
   canRegenerate?: boolean;
   isCreatingStory?: boolean;
   isRegenerating?: boolean;
+  videoQuota?: {
+    used: number;
+    limit: number;
+  };
+  limits: SubscriptionLimits | null;
+  generateVideo: boolean;
+  setGenerateVideo: (val: boolean) => void;
 }
 
 const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
@@ -27,11 +37,16 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
   onRegenerateTitles,
   canRegenerate = false,
   isCreatingStory = false,
-  isRegenerating = false
+  isRegenerating = false,
+  videoQuota,
+  limits,
+  generateVideo,
+  setGenerateVideo
 }) => {
+  const canGenerateVideo = (limits?.max_video_intros_per_period || 0) > 0;
 
   const handleTitleClick = (title: string, duration: StoryDurationMinutes) => {
-    onSelectTitle(title, duration);
+    onSelectTitle(title, duration, generateVideo);
   };
 
   if (titles.length === 0) {
@@ -78,6 +93,30 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
                   <Badge variant="outline" className="text-xs shrink-0 px-2 py-0.5">
                     #{index + 1}
                   </Badge>
+                </div>
+
+                {/* Switch Vidéo */}
+                <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/10">
+                  <div className="flex items-center gap-2">
+                    <Video className="w-4 h-4 text-primary" />
+                    <div className="flex flex-col">
+                      <Label className="text-xs font-medium flex items-center gap-1">
+                        Vidéo magique ✨
+                        {!canGenerateVideo && <Lock className="w-2.5 h-2.5 text-muted-foreground" />}
+                      </Label>
+                      <p className="text-[9px] text-muted-foreground">
+                        {canGenerateVideo 
+                          ? `${videoQuota?.used || 0}/${videoQuota?.limit || 0}`
+                          : "Plan supérieur requis"}
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={generateVideo}
+                    onCheckedChange={setGenerateVideo}
+                    disabled={!canGenerateVideo || isCreatingStory}
+                    className="scale-90"
+                  />
                 </div>
 
                 {/* Boutons de durée */}

@@ -1,11 +1,12 @@
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useControlsVisibility } from './useControlsVisibility';
 import { useAutoScroll } from '../useAutoScroll';
 import { useMarkAsRead } from '../useMarkAsRead';
 import { useStoryReaderState } from './useStoryReaderState';
 import { useStoryReaderActions } from './useStoryReaderActions';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 import type { Story } from '@/types/story';
 
 interface UseStoryReaderProps {
@@ -25,6 +26,7 @@ export const useStoryReader = ({
 }: UseStoryReaderProps) => {
   const isMobile = useIsMobile();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const savedScrollPositionRef = useRef<number>(0);
 
   // State management
   const storyState = useStoryReaderState({ initialStory });
@@ -62,6 +64,35 @@ export const useStoryReader = ({
     onClose,
     onToggleFavorite,
     stopAutoScroll: autoScrollState.stopAutoScroll
+  });
+
+  // Préservation de la position de scroll lors du lock/unlock de l'écran
+  const getViewportElement = useCallback(() => {
+    if (!scrollAreaRef.current) return null;
+    return scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+  }, []);
+
+  usePageVisibility({
+    onHide: () => {
+      const viewportEl = getViewportElement();
+      if (viewportEl) {
+        savedScrollPositionRef.current = viewportEl.scrollTop;
+        console.log('[StoryReader] Position de scroll sauvegardée:', savedScrollPositionRef.current);
+      }
+    },
+    onShow: () => {
+      const savedPosition = savedScrollPositionRef.current;
+      if (savedPosition > 0) {
+        // Restaurer après un court délai pour laisser le DOM se re-render
+        requestAnimationFrame(() => {
+          const viewportEl = getViewportElement();
+          if (viewportEl) {
+            viewportEl.scrollTop = savedPosition;
+            console.log('[StoryReader] Position de scroll restaurée:', savedPosition);
+          }
+        });
+      }
+    }
   });
 
   // Effets de cycle de vie

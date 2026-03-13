@@ -22,6 +22,10 @@ const SPEED_LIMITS = {
   max: 200,
 };
 
+import { UserSettings } from "@/types/user-settings";
+import { Snail, Turtle, Rabbit, RotateCcw, Lock } from "lucide-react";
+import { useSubscription } from "@/hooks/subscription/useSubscription";
+
 interface ReadingPreferencesSectionProps {
   userSettings: UserSettings;
   isLoading: boolean;
@@ -33,6 +37,9 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
   isLoading,
   onUpdateSettings
 }) => {
+  const { limits } = useSubscription();
+  const canPlayVideoIntro = (limits?.max_video_intros_per_period ?? 0) > 0;
+  
   // État pour savoir quel champ est en cours d'édition
   const [editingKey, setEditingKey] = useState<'slow' | 'normal' | 'fast' | null>(null);
   const [editValue, setEditValue] = useState<string>('');
@@ -214,18 +221,46 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
         {/* Option Vidéo d'introduction */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="video-intro" className="text-base font-medium">
-              Vidéo d'introduction
-            </Label>
-            <Switch
-              id="video-intro"
-              checked={userSettings.readingPreferences?.playVideoIntro ?? true}
-              onCheckedChange={handleVideoIntroChange}
-              disabled={isLoading}
-            />
+            <div className="flex items-center gap-2">
+              <Label htmlFor="video-intro" className="text-base font-medium">
+                Vidéo d'introduction
+              </Label>
+              {!canPlayVideoIntro && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+            </div>
+            
+            {!canPlayVideoIntro ? (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Switch
+                        id="video-intro"
+                        checked={false}
+                        disabled={true}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p>Bientôt disponible avec le plan Calmix</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Switch
+                id="video-intro"
+                checked={userSettings.readingPreferences?.playVideoIntro ?? true}
+                onCheckedChange={handleVideoIntroChange}
+                disabled={isLoading}
+              />
+            )}
           </div>
           <div className="text-sm text-muted-foreground">
             Lancer une courte vidéo immersive avant le début de l'histoire
+            {!canPlayVideoIntro && (
+              <span className="block text-primary mt-1 font-medium">
+                Disponible avec le plan Calmix
+              </span>
+            )}
           </div>
         </div>
 

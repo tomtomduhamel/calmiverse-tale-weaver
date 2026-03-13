@@ -57,6 +57,10 @@ const Pricing: React.FC = () => {
     }
     if (tierLimits.has_priority_access) features.push('Accès prioritaire');
     if (tierLimits.has_community_access) features.push('Communauté Calmos');
+    
+    if (tierLimits.max_video_intros_per_period > 0) {
+      features.push(`${tierLimits.max_video_intros_per_period} vidéos d'introduction par mois`);
+    }
 
     return features;
   };

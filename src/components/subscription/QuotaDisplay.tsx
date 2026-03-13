@@ -30,6 +30,9 @@ const QuotaDisplay: React.FC<QuotaDisplayProps> = ({ onUpgrade }) => {
   const audioPercentage = limits.audio_generations_per_month > 0 
     ? (subscription.audio_generations_used_this_period / limits.audio_generations_per_month) * 100 
     : 0;
+  const videoPercentage = limits.max_video_intros_per_period > 0
+    ? (subscription.video_intros_used_this_period / limits.max_video_intros_per_period) * 100
+    : 0;
 
   const daysUntilRenewal = SubscriptionService.getDaysUntilRenewal(subscription.current_period_end);
   const isTrialExpired = SubscriptionService.isTrialExpired(subscription);
@@ -40,7 +43,9 @@ const QuotaDisplay: React.FC<QuotaDisplayProps> = ({ onUpgrade }) => {
     return 'bg-primary';
   };
 
-  const shouldShowWarning = storiesPercentage >= 80 || (limits.audio_generations_per_month > 0 && audioPercentage >= 80);
+  const shouldShowWarning = storiesPercentage >= 80 || 
+    (limits.audio_generations_per_month > 0 && audioPercentage >= 80) ||
+    (limits.max_video_intros_per_period > 0 && videoPercentage >= 80);
 
   return (
     <Card className={`${shouldShowWarning ? 'border-warning' : ''}`}>
@@ -79,6 +84,22 @@ const QuotaDisplay: React.FC<QuotaDisplayProps> = ({ onUpgrade }) => {
             </div>
           )}
         </div>
+
+        {/* Quota vidéo (si applicable) */}
+        {limits.max_video_intros_per_period > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span>Vidéos d'introduction ce mois</span>
+              <span className="font-medium">
+                {subscription.video_intros_used_this_period} / {limits.max_video_intros_per_period}
+              </span>
+            </div>
+            <Progress 
+              value={videoPercentage} 
+              className={`h-2 ${getProgressColor(videoPercentage)}`}
+            />
+          </div>
+        )}
 
         {/* Quota audio (si applicable) */}
         {limits.audio_generations_per_month > 0 && (
