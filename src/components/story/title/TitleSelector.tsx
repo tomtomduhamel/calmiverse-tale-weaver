@@ -81,10 +81,51 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
   return (
     <div className="space-y-4">
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <Badge variant="secondary" className="text-sm">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+          <Badge variant="secondary" className="text-sm px-3 py-1">
             {titles.length} titre{titles.length > 1 ? 's' : ''} généré{titles.length > 1 ? 's' : ''}
           </Badge>
+
+          {/* New Centralized Video Toggle */}
+          <div className="flex items-center gap-6 px-6 py-3 bg-primary/5 rounded-2xl border border-primary/10 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-full">
+                <Video className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="global-video-toggle" className="text-sm font-semibold flex items-center gap-2 cursor-pointer">
+                  Vidéo magique ✨
+                  {!canGenerateVideo && <Lock className="w-3 h-3 text-muted-foreground" />}
+                </Label>
+                <p className="text-[10px] text-muted-foreground font-medium">
+                  {canGenerateVideo 
+                    ? `Quota : ${videoQuota?.used || 0}/${videoQuota?.limit || 0} ce mois`
+                    : "Indisponible avec votre plan"}
+                </p>
+              </div>
+            </div>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center">
+                    <Switch
+                      id="global-video-toggle"
+                      checked={generateVideo}
+                      onCheckedChange={setGenerateVideo}
+                      disabled={!canGenerateVideo || isCreatingStory}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                  </div>
+                </TooltipTrigger>
+                {!canGenerateVideo && (
+                  <TooltipContent side="bottom">
+                    <p>Passez au plan Calmix ou supérieur !</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           
           {canRegenerate && onRegenerateTitles && (
             <Button
@@ -92,7 +133,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
               disabled={isRegenerating || isCreatingStory}
               variant="outline"
               size="sm"
-              className="text-sm"
+              className="text-sm rounded-full px-4"
             >
               {isRegenerating ? (
                 <>
@@ -100,7 +141,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
                   Génération...
                 </>
               ) : (
-                "Générer 3 autres titres"
+                "Générer +3 titres"
               )}
             </Button>
           )}
@@ -132,59 +173,19 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="flex flex-col space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/10">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-full">
-                        <Video className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <Label htmlFor={`video-toggle-${title.id}`} className="text-sm font-medium flex items-center gap-2">
-                          Vidéo magique ✨
-                          {!canGenerateVideo && <Lock className="w-3 h-3 text-muted-foreground" />}
-                        </Label>
-                        <p className="text-[10px] text-muted-foreground">
-                          {canGenerateVideo 
-                            ? `Quota : ${videoQuota?.used || 0}/${videoQuota?.limit || 0} ce mois`
-                            : "Indisponible avec votre plan actuel"}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>
-                            <Switch
-                              id={`video-toggle-${title.id}`}
-                              checked={generateVideo}
-                              onCheckedChange={setGenerateVideo}
-                              disabled={!canGenerateVideo || isCreatingStory}
-                            />
-                          </div>
-                        </TooltipTrigger>
-                        {!canGenerateVideo && (
-                          <TooltipContent>
-                            <p>Passez au plan Calmix ou supérieur pour les vidéos !</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    {STORY_DURATION_OPTIONS.map((duration) => (
-                      <Button
-                        key={duration}
-                        onClick={() => onSelectTitle(title.title, duration, generateVideo)}
-                        disabled={isCreatingStory || isRegenerating}
-                        variant="secondary"
-                        size="sm"
-                      >
-                        {isCreatingStory ? "Création..." : `${duration} min`}
-                      </Button>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {STORY_DURATION_OPTIONS.map((duration) => (
+                    <Button
+                      key={duration}
+                      onClick={() => onSelectTitle(title.title, duration, generateVideo)}
+                      disabled={isCreatingStory || isRegenerating}
+                      variant="secondary"
+                      size="sm"
+                      className="h-10 hover:bg-primary/10 hover:text-primary transition-colors border-none"
+                    >
+                      {isCreatingStory ? "Création..." : `${duration} min`}
+                    </Button>
+                  ))}
                 </div>
               </CardContent>
             </Card>

@@ -61,22 +61,36 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
           {titles.length} titre{titles.length > 1 ? 's' : ''}
         </Badge>
         
-        {canRegenerate && onRegenerateTitles && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onRegenerateTitles}
-            disabled={isRegenerating || isCreatingStory}
-            className="text-xs h-7 px-3"
-          >
-            {isRegenerating ? (
-              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3 h-3 mr-1" />
-            )}
-            +3 titres
-          </Button>
         )}
+      </div>
+
+      {/* Centralized Video Toggle for Mobile */}
+      <div className="mx-2 p-3 bg-primary/5 rounded-2xl border border-primary/10 shadow-sm transition-all">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-full">
+              <Video className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <Label htmlFor="mobile-global-video-toggle" className="text-xs font-bold flex items-center gap-1.5">
+                Vidéo magique ✨
+                {!canGenerateVideo && <Lock className="w-3 h-3 text-muted-foreground" />}
+              </Label>
+              <p className="text-[9px] text-muted-foreground font-medium">
+                {canGenerateVideo 
+                  ? `${videoQuota?.used || 0}/${videoQuota?.limit || 0} utilisées`
+                  : "Réservé aux plans Calmix+"}
+              </p>
+            </div>
+          </div>
+          <Switch
+            id="mobile-global-video-toggle"
+            checked={generateVideo}
+            onCheckedChange={setGenerateVideo}
+            disabled={!canGenerateVideo || isCreatingStory}
+            className="scale-90 data-[state=checked]:bg-primary"
+          />
+        </div>
       </div>
 
       {/* Liste des titres avec largeur maximale optimisée */}
@@ -95,30 +109,6 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
                   </Badge>
                 </div>
 
-                {/* Switch Vidéo */}
-                <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/10">
-                  <div className="flex items-center gap-2">
-                    <Video className="w-4 h-4 text-primary" />
-                    <div className="flex flex-col">
-                      <Label className="text-xs font-medium flex items-center gap-1">
-                        Vidéo magique ✨
-                        {!canGenerateVideo && <Lock className="w-2.5 h-2.5 text-muted-foreground" />}
-                      </Label>
-                      <p className="text-[9px] text-muted-foreground">
-                        {canGenerateVideo 
-                          ? `${videoQuota?.used || 0}/${videoQuota?.limit || 0}`
-                          : "Plan supérieur requis"}
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={generateVideo}
-                    onCheckedChange={setGenerateVideo}
-                    disabled={!canGenerateVideo || isCreatingStory}
-                    className="scale-90"
-                  />
-                </div>
-
                 {/* Boutons de durée */}
                 <div className="grid grid-cols-3 gap-2">
                   {([5, 10, 15] as StoryDurationMinutes[]).map(duration => (
@@ -128,7 +118,7 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
                       size="sm"
                       onClick={() => handleTitleClick(title.title, duration)}
                       disabled={isCreatingStory || isRegenerating}
-                      className="h-9 text-xs font-medium"
+                      className="h-9 text-xs font-medium border-none shadow-none hover:bg-primary/5 active:bg-primary/10"
                     >
                       {duration} min
                     </Button>
