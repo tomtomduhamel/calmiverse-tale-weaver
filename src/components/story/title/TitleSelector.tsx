@@ -92,16 +92,28 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
               <div className="p-2 bg-primary/10 rounded-full">
                 <Video className="w-5 h-5 text-primary" />
               </div>
-              <div className="flex flex-col">
+               <div className="flex flex-col">
                 <Label htmlFor="global-video-toggle" className="text-sm font-semibold flex items-center gap-2 cursor-pointer">
                   Vidéo magique ✨
                   {!canGenerateVideo && <Lock className="w-3 h-3 text-muted-foreground" />}
                 </Label>
-                <p className="text-[10px] text-muted-foreground font-medium">
-                  {canGenerateVideo 
-                    ? `Quota : ${videoQuota?.used || 0}/${videoQuota?.limit || 0} ce mois`
-                    : "Indisponible avec votre plan"}
-                </p>
+                {canGenerateVideo ? (
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <div className="w-20 h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div 
+                        className="h-full rounded-full bg-primary/70 transition-all"
+                        style={{ width: `${Math.min(100, ((videoQuota?.used || 0) / Math.max(1, videoQuota?.limit || 1)) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-medium">
+                      {Math.max(0, (videoQuota?.limit || 0) - (videoQuota?.used || 0))} restante{Math.max(0, (videoQuota?.limit || 0) - (videoQuota?.used || 0)) !== 1 ? 's' : ''} sur {videoQuota?.limit || 0}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground font-medium">
+                    Indisponible avec votre plan
+                  </p>
+                )}
               </div>
             </div>
             
