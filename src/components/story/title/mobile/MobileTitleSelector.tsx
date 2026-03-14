@@ -75,11 +75,23 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
                 Vidéo magique ✨
                 {!canGenerateVideo && <Lock className="w-3 h-3 text-muted-foreground" />}
               </Label>
-              <p className="text-[9px] text-muted-foreground font-medium">
-                {canGenerateVideo 
-                  ? `${videoQuota?.used || 0}/${videoQuota?.limit || 0} utilisées`
-                  : "Réservé aux plans Calmix+"}
-              </p>
+              {canGenerateVideo ? (
+                <div className="flex items-center gap-2 mt-0.5">
+                  <div className="w-16 h-1.5 rounded-full bg-secondary overflow-hidden">
+                    <div 
+                      className="h-full rounded-full bg-primary/70 transition-all"
+                      style={{ width: `${Math.min(100, ((videoQuota?.used || 0) / Math.max(1, videoQuota?.limit || 1)) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[9px] text-muted-foreground font-medium">
+                    {Math.max(0, (videoQuota?.limit || 0) - (videoQuota?.used || 0))} restante{Math.max(0, (videoQuota?.limit || 0) - (videoQuota?.used || 0)) !== 1 ? 's' : ''} sur {videoQuota?.limit || 0}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-[9px] text-muted-foreground font-medium">
+                  Réservé aux plans Calmix+
+                </p>
+              )}
             </div>
           </div>
           <Switch
