@@ -70,7 +70,7 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
 
   const { toast } = useToast();
   const { validateAction, incrementUsage } = useQuotaChecker();
-  const { subscription } = useSubscription();
+  const { subscription, limits } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [quotaMessage, setQuotaMessage] = useState<string>('');
   const [isStartingCreation, setIsStartingCreation] = useState(false);
