@@ -63,14 +63,14 @@ export const AdminLinksSection = () => {
               <Button
                 key={link.path}
                 variant="outline"
-                className="h-auto justify-start text-left"
+                className="h-auto justify-start text-left w-full overflow-hidden py-3 px-3"
                 onClick={() => navigate(link.path)}
               >
-                <div className="flex items-start gap-3 w-full">
-                  <Icon className={`h-5 w-5 mt-0.5 ${link.color}`} />
-                  <div className="flex-1">
-                    <div className="font-semibold">{link.title}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
+                <div className="flex items-start gap-3 w-full min-w-0">
+                  <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${link.color}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold truncate">{link.title}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5 whitespace-normal break-words">
                       {link.description}
                     </div>
                   </div>
