@@ -768,6 +768,7 @@ export type Database = {
           has_story_series: boolean
           id: string
           max_children: number | null
+          max_video_intros_per_period: number | null
           monthly_price_usd: number
           stories_per_month: number
           tier: Database["public"]["Enums"]["subscription_tier"]
@@ -783,6 +784,7 @@ export type Database = {
           has_story_series?: boolean
           id?: string
           max_children?: number | null
+          max_video_intros_per_period?: number | null
           monthly_price_usd: number
           stories_per_month: number
           tier: Database["public"]["Enums"]["subscription_tier"]
@@ -798,6 +800,7 @@ export type Database = {
           has_story_series?: boolean
           id?: string
           max_children?: number | null
+          max_video_intros_per_period?: number | null
           monthly_price_usd?: number
           stories_per_month?: number
           tier?: Database["public"]["Enums"]["subscription_tier"]
@@ -968,6 +971,7 @@ export type Database = {
           tier: Database["public"]["Enums"]["subscription_tier"]
           updated_at: string
           user_id: string
+          video_intros_used_this_period: number | null
         }
         Insert: {
           audio_generations_used_this_period?: number
@@ -982,6 +986,7 @@ export type Database = {
           tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
           user_id: string
+          video_intros_used_this_period?: number | null
         }
         Update: {
           audio_generations_used_this_period?: number
@@ -996,6 +1001,7 @@ export type Database = {
           tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
           user_id?: string
+          video_intros_used_this_period?: number | null
         }
         Relationships: [
           {
