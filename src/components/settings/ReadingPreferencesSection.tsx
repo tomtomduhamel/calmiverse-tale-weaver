@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserSettings } from "@/types/user-settings";
-import { Snail, Turtle, Rabbit, RotateCcw } from "lucide-react";
+import { Snail, Turtle, Rabbit, RotateCcw, Lock } from "lucide-react";
+import { useSubscription } from "@/hooks/subscription/useSubscription";
 
 // Valeurs par défaut des vitesses
 const DEFAULT_SPEEDS = {
@@ -21,10 +22,6 @@ const SPEED_LIMITS = {
   min: 50,
   max: 200,
 };
-
-import { UserSettings } from "@/types/user-settings";
-import { Snail, Turtle, Rabbit, RotateCcw, Lock } from "lucide-react";
-import { useSubscription } from "@/hooks/subscription/useSubscription";
 
 interface ReadingPreferencesSectionProps {
   userSettings: UserSettings;

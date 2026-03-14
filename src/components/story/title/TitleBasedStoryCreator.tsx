@@ -408,10 +408,10 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
             canRegenerate={canRegenerate}
             isCreatingStory={isCreatingStory || isStartingCreation}
             isRegenerating={isGeneratingTitles}
-            limits={subscription ? subscription.limits as any : null}
+            limits={limits}
             videoQuota={subscription ? {
               used: subscription.video_intros_used_this_period,
-              limit: (subscription.limits as any)?.max_video_intros_per_period || 0
+              limit: limits?.max_video_intros_per_period || 0
             } : undefined}
           />
         ) : (
