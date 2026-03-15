@@ -7,7 +7,7 @@ import MobileTitleSelector from './mobile/MobileTitleSelector';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Video, Sparkles, Lock } from 'lucide-react';
+import { Video, Sparkles, Lock, BookOpen } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SubscriptionLimits } from '@/types/subscription';
 
