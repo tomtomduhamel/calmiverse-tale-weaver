@@ -3,7 +3,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share } from "lucide-react";
+import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share, Copy, Check } from "lucide-react";
 import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 import { MarkAsReadButton } from "./reader/MarkAsReadButton";
@@ -12,6 +12,7 @@ import { useShareDialog } from "@/hooks/story/reader/useShareDialog";
 import BackgroundSoundButton from "./reader/BackgroundSoundButton";
 import { extractObjectiveValue } from "@/utils/objectiveUtils";
 import { ReadingSpeedSelector } from "./reader/controls/ReadingSpeedSelector";
+import { toast } from "@/hooks/use-toast";
 interface ReaderControlsProps {
   fontSize: number;
   setFontSize: (size: number) => void;
