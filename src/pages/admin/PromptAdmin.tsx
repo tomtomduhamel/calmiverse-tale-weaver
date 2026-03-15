@@ -118,6 +118,15 @@ const PromptAdmin: React.FC = () => {
   const [versions, setVersions] = useState<PromptVersion[]>([]);
   const [savingMeta, setSavingMeta] = useState(false);
   const [creatingVersion, setCreatingVersion] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyPrompt = useCallback((content: string, id: string) => {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopiedId(id);
+      toast({ title: "Prompt copié dans le presse-papiers" });
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }, [toast]);
 
   const selected = useMemo(
     () => templates.find(t => t.id === selectedId) || null,
