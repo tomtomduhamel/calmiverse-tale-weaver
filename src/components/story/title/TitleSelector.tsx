@@ -43,6 +43,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
   isCreatingStory,
   isRegenerating = false,
   videoQuota,
+  storyQuota,
   limits,
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
