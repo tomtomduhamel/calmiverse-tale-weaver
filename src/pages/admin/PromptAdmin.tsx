@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminGuard from "@/components/admin/AdminGuard";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Save, CheckCircle2, Zap, BookOpen, Sparkles, Archive, HelpCircle } from "lucide-react";
+import { Plus, Save, CheckCircle2, Zap, BookOpen, Sparkles, Archive, HelpCircle, Copy, Check } from "lucide-react";
 
 interface PromptTemplate {
   id: string;
