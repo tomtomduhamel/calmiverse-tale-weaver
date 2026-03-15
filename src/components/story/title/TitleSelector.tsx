@@ -69,6 +69,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
         isCreatingStory={isCreatingStory}
         isRegenerating={isRegenerating}
         videoQuota={videoQuota}
+        storyQuota={storyQuota}
         limits={limits}
         generateVideo={generateVideo}
         setGenerateVideo={setGenerateVideo}
