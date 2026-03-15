@@ -43,6 +43,7 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
   isCreatingStory = false,
   isRegenerating = false,
   videoQuota,
+  storyQuota,
   limits,
   generateVideo,
   setGenerateVideo
