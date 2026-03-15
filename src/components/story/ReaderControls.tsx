@@ -124,7 +124,26 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             {/* Séparateur visuel */}
             <div className="h-8 w-px bg-border/50" />
 
-            {/* 5. Diagnostic technique */}
+            {/* 5. Copier le texte */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                Copier
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={handleCopyContent}
+                title="Copier le texte de l'histoire"
+              >
+                {isCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+              </Button>
+            </div>
+
+            {/* Séparateur visuel */}
+            <div className="h-8 w-px bg-border/50" />
+
+            {/* 6. Diagnostic technique */}
             <div className="shrink-0">
               <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
             </div>
