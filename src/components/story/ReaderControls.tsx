@@ -199,7 +199,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
               >
                 {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
               </Button>
-          </div>
+            </div>
 
         </div>
       </div>
