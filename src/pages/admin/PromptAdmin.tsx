@@ -727,8 +727,17 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">{v.changelog}</p>
                         <details className="mt-2">
-                          <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                          <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground inline-flex items-center gap-1.5">
                             Voir le contenu
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                              onClick={(e) => { e.stopPropagation(); handleCopyPrompt(v.content, v.id); }}
+                              title="Copier le contenu"
+                            >
+                              {copiedId === v.id ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                            </Button>
                           </summary>
                           <pre className="mt-2 bg-muted p-2 rounded whitespace-pre-wrap text-sm font-mono max-h-[300px] overflow-auto">
                             {v.content}
