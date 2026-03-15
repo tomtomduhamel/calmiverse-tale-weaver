@@ -188,7 +188,17 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 isDarkMode={isDarkMode}
                 compact={true}
               />
-            </div>
+
+              {/* Copier le texte - icône seule */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleCopyContent}
+                title="Copier le texte"
+              >
+                {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+              </Button>
           </div>
 
         </div>
