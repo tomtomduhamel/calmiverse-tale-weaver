@@ -674,7 +674,19 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
                     </Button>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm">Contenu (nouvelle version)</label>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm">Contenu (nouvelle version)</label>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => handleCopyPrompt(newVersionDraft.content, 'draft')}
+                        disabled={!newVersionDraft.content}
+                        title="Copier le contenu"
+                      >
+                        {copiedId === 'draft' ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
                     <Textarea
                       value={newVersionDraft.content}
                       onChange={e => setNewVersionDraft(v => ({ ...v, content: e.target.value }))}
