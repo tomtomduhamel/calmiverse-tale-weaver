@@ -3,7 +3,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share } from "lucide-react";
+import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share, Copy, Check } from "lucide-react";
 import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 import { MarkAsReadButton } from "./reader/MarkAsReadButton";
@@ -12,6 +12,7 @@ import { useShareDialog } from "@/hooks/story/reader/useShareDialog";
 import BackgroundSoundButton from "./reader/BackgroundSoundButton";
 import { extractObjectiveValue } from "@/utils/objectiveUtils";
 import { ReadingSpeedSelector } from "./reader/controls/ReadingSpeedSelector";
+import { toast } from "@/hooks/use-toast";
 interface ReaderControlsProps {
   fontSize: number;
   setFontSize: (size: number) => void;
@@ -37,6 +38,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   isUpdatingReadStatus
 }) => {
   const [isMounted, setIsMounted] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const {
     showShareDialog,
     openShareDialog,
@@ -45,6 +47,15 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const handleCopyContent = () => {
+    if (!story?.content) return;
+    navigator.clipboard.writeText(story.content).then(() => {
+      setIsCopied(true);
+      toast({ title: "Texte copié dans le presse-papiers" });
+      setTimeout(() => setIsCopied(false), 2000);
+    });
+  };
   const handleFontSizeChange = (value: number[]) => {
     setFontSize(value[0]);
   };
@@ -113,7 +124,26 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             {/* Séparateur visuel */}
             <div className="h-8 w-px bg-border/50" />
 
-            {/* 5. Diagnostic technique */}
+            {/* 5. Copier le texte */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                Copier
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={handleCopyContent}
+                title="Copier le texte de l'histoire"
+              >
+                {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+              </Button>
+            </div>
+
+            {/* Séparateur visuel */}
+            <div className="h-8 w-px bg-border/50" />
+
+            {/* 6. Diagnostic technique */}
             <div className="shrink-0">
               <TechnicalDiagnosticButton isDarkMode={isDarkMode} />
             </div>
@@ -158,6 +188,17 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 isDarkMode={isDarkMode}
                 compact={true}
               />
+
+              {/* Copier le texte - icône seule */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleCopyContent}
+                title="Copier le texte"
+              >
+                {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+              </Button>
             </div>
           </div>
 
