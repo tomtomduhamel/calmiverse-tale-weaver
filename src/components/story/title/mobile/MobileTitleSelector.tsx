@@ -119,7 +119,6 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
           />
         </div>
       </div>
-      </div>
 
       {/* Liste des titres avec largeur maximale optimisée */}
       <div className="space-y-3 max-w-md mx-auto">
