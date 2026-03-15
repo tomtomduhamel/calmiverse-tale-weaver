@@ -28,6 +28,10 @@ interface TitleSelectorProps {
     used: number;
     limit: number;
   };
+  storyQuota?: {
+    used: number;
+    limit: number;
+  };
   limits: SubscriptionLimits | null;
 }
 

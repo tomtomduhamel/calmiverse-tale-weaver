@@ -26,6 +26,10 @@ interface MobileTitleSelectorProps {
     used: number;
     limit: number;
   };
+  storyQuota?: {
+    used: number;
+    limit: number;
+  };
   limits: SubscriptionLimits | null;
   generateVideo: boolean;
   setGenerateVideo: (val: boolean) => void;
