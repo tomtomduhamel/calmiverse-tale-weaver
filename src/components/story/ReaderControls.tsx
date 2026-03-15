@@ -38,6 +38,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   isUpdatingReadStatus
 }) => {
   const [isMounted, setIsMounted] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const {
     showShareDialog,
     openShareDialog,
@@ -46,6 +47,15 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const handleCopyContent = () => {
+    if (!story?.content) return;
+    navigator.clipboard.writeText(story.content).then(() => {
+      setIsCopied(true);
+      toast({ title: "Texte copié dans le presse-papiers" });
+      setTimeout(() => setIsCopied(false), 2000);
+    });
+  };
   const handleFontSizeChange = (value: number[]) => {
     setFontSize(value[0]);
   };
