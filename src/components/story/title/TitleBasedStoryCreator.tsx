@@ -413,6 +413,10 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
               used: subscription.video_intros_used_this_period,
               limit: limits?.max_video_intros_per_period || 0
             } : undefined}
+            storyQuota={subscription ? {
+              used: subscription.stories_used_this_period,
+              limit: limits?.stories_per_month || 0
+            } : undefined}
           />
         ) : (
           <div className="text-center py-8 text-muted-foreground">
