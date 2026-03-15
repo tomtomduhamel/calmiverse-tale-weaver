@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Loader2, Video, Lock } from 'lucide-react';
+import { RefreshCw, Loader2, Video, Lock, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { StoryDurationMinutes } from '@/types/story';
 import { Switch } from '@/components/ui/switch';
