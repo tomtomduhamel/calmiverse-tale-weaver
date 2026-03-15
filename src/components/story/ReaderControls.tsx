@@ -136,7 +136,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                 onClick={handleCopyContent}
                 title="Copier le texte de l'histoire"
               >
-                {isCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+                {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
               </Button>
             </div>
 
