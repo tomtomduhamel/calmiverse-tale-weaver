@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { StoryHeader } from "../StoryHeader";
 import { StoryContent } from "../StoryContent";
 import { StoryRating } from "./StoryRating";
+import { MarkAsReadButton } from "./MarkAsReadButton";
 import type { Story } from "@/types/story";
 
 interface StoryReaderContentProps {
@@ -15,6 +16,9 @@ interface StoryReaderContentProps {
   isDarkMode: boolean;
   setShowSummary: (show: boolean) => void;
   scrollAreaRef: React.RefObject<HTMLDivElement>;
+  onMarkAsRead: (storyId: string) => Promise<boolean>;
+  isRead: boolean;
+  isUpdatingReadStatus: boolean;
 }
 
 export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
@@ -24,7 +28,10 @@ export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
   fontSize,
   isDarkMode,
   setShowSummary,
-  scrollAreaRef
+  scrollAreaRef,
+  onMarkAsRead,
+  isRead,
+  isUpdatingReadStatus
 }) => {
   return (
     <ScrollArea
@@ -52,6 +59,17 @@ export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
             storyId={story.id}
             initialRating={story.rating}
             initialComment={story.rating_comment}
+          />
+        </div>
+
+        {/* Marquer comme lue */}
+        <div className="mt-6 pt-6 border-t border-border flex justify-center">
+          <MarkAsReadButton
+            storyId={story.id}
+            onMarkAsRead={onMarkAsRead}
+            isRead={isRead}
+            isUpdatingReadStatus={isUpdatingReadStatus}
+            isDarkMode={isDarkMode}
           />
         </div>
       </Card>

@@ -95,6 +95,9 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         isDarkMode={isDarkMode}
         setShowSummary={setShowSummary}
         scrollAreaRef={scrollAreaRef}
+        onMarkAsRead={handleMarkAsRead}
+        isRead={story.status === 'read'}
+        isUpdatingReadStatus={isUpdatingReadStatus}
       />
 
       {/* Contrôles rétractables */}
