@@ -67,45 +67,57 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
         
       </div>
 
-      {/* Centralized Video Toggle for Mobile */}
-      <div className="mx-2 p-3 bg-primary/5 rounded-2xl border border-primary/10 shadow-sm transition-all">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-full">
-              <Video className="w-4 h-4 text-primary" />
-            </div>
-            <div className="flex flex-col">
-              <Label htmlFor="mobile-global-video-toggle" className="text-xs font-bold flex items-center gap-1.5">
-                Vidéo magique ✨
-                {!canGenerateVideo && <Lock className="w-3 h-3 text-muted-foreground" />}
-              </Label>
-              {canGenerateVideo ? (
-                <div className="flex items-center gap-2 mt-0.5">
-                  <div className="w-16 h-1.5 rounded-full bg-secondary overflow-hidden">
-                    <div 
-                      className="h-full rounded-full bg-primary/70 transition-all"
-                      style={{ width: `${Math.min(100, ((videoQuota?.used || 0) / Math.max(1, videoQuota?.limit || 1)) * 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-[9px] text-muted-foreground font-medium">
-                    {Math.max(0, (videoQuota?.limit || 0) - (videoQuota?.used || 0))} restante{Math.max(0, (videoQuota?.limit || 0) - (videoQuota?.used || 0)) !== 1 ? 's' : ''} sur {videoQuota?.limit || 0}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-[9px] text-muted-foreground font-medium">
-                  Réservé aux plans Calmix+
-                </p>
-              )}
-            </div>
+      <div className="mx-2 p-3 bg-primary/5 rounded-2xl border border-primary/10 shadow-sm space-y-2.5">
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Vos crédits ce mois</p>
+        
+        {/* Ligne Histoires */}
+        <div className="flex items-center gap-2.5">
+          <BookOpen className="w-3.5 h-3.5 text-primary shrink-0" />
+          <span className="text-[10px] font-medium w-14 shrink-0">Histoires</span>
+          <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+            <div 
+              className="h-full rounded-full bg-primary/70 transition-all"
+              style={{ width: `${Math.min(100, ((storyQuota?.used || 0) / Math.max(1, storyQuota?.limit || 1)) * 100)}%` }}
+            />
           </div>
+          <span className="text-[9px] text-muted-foreground font-medium shrink-0">
+            {Math.max(0, (storyQuota?.limit || 0) - (storyQuota?.used || 0))}/{storyQuota?.limit || 0}
+          </span>
+        </div>
+
+        {/* Ligne Vidéos */}
+        <div className="flex items-center gap-2.5">
+          <Video className="w-3.5 h-3.5 text-primary shrink-0" />
+          <span className="text-[10px] font-medium w-14 shrink-0 flex items-center gap-1">
+            Vidéos
+            {!canGenerateVideo && <Lock className="w-2.5 h-2.5 text-muted-foreground" />}
+          </span>
+          {canGenerateVideo ? (
+            <>
+              <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                <div 
+                  className="h-full rounded-full bg-primary/70 transition-all"
+                  style={{ width: `${Math.min(100, ((videoQuota?.used || 0) / Math.max(1, videoQuota?.limit || 1)) * 100)}%` }}
+                />
+              </div>
+              <span className="text-[9px] text-muted-foreground font-medium shrink-0">
+                {Math.max(0, (videoQuota?.limit || 0) - (videoQuota?.used || 0))}/{videoQuota?.limit || 0}
+              </span>
+            </>
+          ) : (
+            <span className="text-[9px] text-muted-foreground font-medium flex-1">
+              Réservé aux plans Calmix+
+            </span>
+          )}
           <Switch
             id="mobile-global-video-toggle"
             checked={generateVideo}
             onCheckedChange={setGenerateVideo}
             disabled={!canGenerateVideo || isCreatingStory}
-            className="scale-90 data-[state=checked]:bg-primary"
+            className="scale-75 data-[state=checked]:bg-primary"
           />
         </div>
+      </div>
       </div>
 
       {/* Liste des titres avec largeur maximale optimisée */}
