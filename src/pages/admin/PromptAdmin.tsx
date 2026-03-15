@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminGuard from "@/components/admin/AdminGuard";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Save, CheckCircle2, Zap, BookOpen, Sparkles, Archive, HelpCircle } from "lucide-react";
+import { Plus, Save, CheckCircle2, Zap, BookOpen, Sparkles, Archive, HelpCircle, Copy, Check } from "lucide-react";
 
 interface PromptTemplate {
   id: string;
@@ -118,6 +118,15 @@ const PromptAdmin: React.FC = () => {
   const [versions, setVersions] = useState<PromptVersion[]>([]);
   const [savingMeta, setSavingMeta] = useState(false);
   const [creatingVersion, setCreatingVersion] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyPrompt = useCallback((content: string, id: string) => {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopiedId(id);
+      toast({ title: "Prompt copié dans le presse-papiers" });
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }, [toast]);
 
   const selected = useMemo(
     () => templates.find(t => t.id === selectedId) || null,
@@ -665,7 +674,19 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
                     </Button>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm">Contenu (nouvelle version)</label>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm">Contenu (nouvelle version)</label>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => handleCopyPrompt(newVersionDraft.content, 'draft')}
+                        disabled={!newVersionDraft.content}
+                        title="Copier le contenu"
+                      >
+                        {copiedId === 'draft' ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
                     <Textarea
                       value={newVersionDraft.content}
                       onChange={e => setNewVersionDraft(v => ({ ...v, content: e.target.value }))}
@@ -706,8 +727,17 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">{v.changelog}</p>
                         <details className="mt-2">
-                          <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                          <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground inline-flex items-center gap-1.5">
                             Voir le contenu
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                              onClick={(e) => { e.stopPropagation(); handleCopyPrompt(v.content, v.id); }}
+                              title="Copier le contenu"
+                            >
+                              {copiedId === v.id ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                            </Button>
                           </summary>
                           <pre className="mt-2 bg-muted p-2 rounded whitespace-pre-wrap text-sm font-mono max-h-[300px] overflow-auto">
                             {v.content}
