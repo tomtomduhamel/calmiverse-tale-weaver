@@ -609,7 +609,7 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
           )}
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-base truncate">
-              {config?.label || selected.title}
+              {selected.title}
             </h2>
             {isProduction ? (
               <p className="text-xs text-green-500 flex items-center gap-1 mt-0.5">
