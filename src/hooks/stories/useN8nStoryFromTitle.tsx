@@ -146,10 +146,9 @@ export const useN8nStoryFromTitle = () => {
       const promptKey = `story_prompt_${data.objective}` as keyof typeof prompts;
       let storyPromptTemplate = prompts?.[promptKey];
 
-      // Fallback 1: Si pas de prompt spécifique, essayer le prompt générique
+      // Log si pas de prompt spécifique trouvé (le fallback hardcodé sera utilisé)
       if (!storyPromptTemplate) {
-        console.log(`[N8nStoryFromTitle] Prompt spécifique '${promptKey}' non trouvé, essai du générique`);
-        storyPromptTemplate = prompts?.advanced_story_prompt_template;
+        console.warn(`[N8nStoryFromTitle] ⚠️ Prompt spécifique '${promptKey}' non trouvé dans la DB`);
       }
 
       // Récupération du prompt d'image (nouvelle demande)

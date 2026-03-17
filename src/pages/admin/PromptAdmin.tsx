@@ -59,10 +59,10 @@ const ACTIVE_PROMPTS_CONFIG: Record<string, {
   icon: React.ElementType;
 }> = {
   'advanced_story_prompt_template': {
-    label: '🟢 Génération histoire (n8n)',
-    description: 'Template principal envoyé à n8n pour créer les histoires',
-    category: 'generation',
-    icon: Sparkles,
+    label: '📦 [Archivé] Ancien prompt générique',
+    description: 'Remplacé par les prompts spécifiques par objectif (sleep, focus, relax, fun)',
+    category: 'other',
+    icon: Archive,
   },
   'sequel_prompt_template': {
     label: '🟢 Suite d\'histoire',

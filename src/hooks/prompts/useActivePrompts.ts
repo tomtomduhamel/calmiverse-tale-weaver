@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ActivePrompts {
-  advanced_story_prompt_template?: string;
   sequel_prompt_template?: string;
   story_system_prompt?: string;
   title_generation_prompt?: string;
