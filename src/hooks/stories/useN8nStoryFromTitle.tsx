@@ -32,7 +32,8 @@ const generatePromptFromTemplate = (
   template: string | undefined,
   data: StoryCreationData,
   childrenForPrompt: Child[],
-  targetWordCount: number | undefined
+  targetWordCount: number | undefined,
+  variation?: StoryVariation
 ): string => {
   // Si pas de template, utiliser le fallback hardcodé
   if (!template) {
@@ -55,7 +56,7 @@ const generatePromptFromTemplate = (
     ? allNames[0]
     : `${allNames.slice(0, -1).join(', ')} et ${allNames[allNames.length - 1]}`;
 
-  // Préparer les variables
+  // Préparer les variables (existantes + nouvelles narratives)
   const variables: PromptVariables = {
     children_names: namesText,
     children_context: characterContext,
@@ -68,6 +69,18 @@ const generatePromptFromTemplate = (
     youngest_age: analysis.youngestAge.toString(),
     oldest_age: analysis.oldestAge.toString(),
     average_age: analysis.averageAge.toString(),
+    // Variables narratives depuis la sélection aléatoire
+    narrative_schema: variation?.narrativeSchema?.type || '',
+    narrative_mechanism: variation?.narrativeSchema?.mechanism || '',
+    vakog_focus: variation?.vakogFocus?.sensory_type || '',
+    vakog_keywords: variation?.vakogFocus?.sensory_keywords?.join(', ') || '',
+    symbolic_universe: variation?.symbolicUniverse?.name || '',
+    symbolic_description: variation?.symbolicUniverse?.description || '',
+    symbolic_visual_style: variation?.symbolicUniverse?.visual_style || '',
+    ericksonian_technique: variation?.ericksonianTechnique?.name || '',
+    ericksonian_pattern: variation?.ericksonianTechnique?.linguistic_pattern || '',
+    age_characteristics: variation?.ageCognition?.characteristics || '',
+    age_preferred_supports: variation?.ageCognition?.preferred_supports?.join(', ') || '',
   };
 
   console.log('[N8nStoryFromTitle] Génération depuis template DB avec variables:', Object.keys(variables));
