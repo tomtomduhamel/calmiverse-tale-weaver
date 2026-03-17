@@ -23,6 +23,19 @@ export interface PromptVariables {
   tome_number?: string | number;
   sequel_instructions?: string;
   
+  // Variables narratives (sélection aléatoire depuis la DB)
+  narrative_schema?: string;
+  narrative_mechanism?: string;
+  vakog_focus?: string;
+  vakog_keywords?: string;
+  symbolic_universe?: string;
+  symbolic_description?: string;
+  symbolic_visual_style?: string;
+  ericksonian_technique?: string;
+  ericksonian_pattern?: string;
+  age_characteristics?: string;
+  age_preferred_supports?: string;
+  
   // Variables dynamiques supplémentaires
   [key: string]: string | number | undefined;
 }

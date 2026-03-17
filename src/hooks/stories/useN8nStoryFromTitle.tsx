@@ -11,6 +11,7 @@ import type { TitleCostData } from '@/hooks/stories/useN8nTitleGeneration';
 import { useActivePrompts } from '@/hooks/prompts';
 import { replacePromptVariables, OBJECTIVE_DESCRIPTIONS, getVocabularyInstructions, type PromptVariables } from '@/utils/promptVariables';
 import { analyzeCharacters, generateCharacterContext } from '@/utils/storyPromptUtils';
+import { useStoryVariation, type StoryVariation } from '@/hooks/stories/useStoryVariation';
 
 interface StoryCreationData {
   selectedTitle: string;
@@ -31,7 +32,8 @@ const generatePromptFromTemplate = (
   template: string | undefined,
   data: StoryCreationData,
   childrenForPrompt: Child[],
-  targetWordCount: number | undefined
+  targetWordCount: number | undefined,
+  variation?: StoryVariation
 ): string => {
   // Si pas de template, utiliser le fallback hardcodé
   if (!template) {
@@ -54,7 +56,7 @@ const generatePromptFromTemplate = (
     ? allNames[0]
     : `${allNames.slice(0, -1).join(', ')} et ${allNames[allNames.length - 1]}`;
 
-  // Préparer les variables
+  // Préparer les variables (existantes + nouvelles narratives)
   const variables: PromptVariables = {
     children_names: namesText,
     children_context: characterContext,
@@ -67,6 +69,18 @@ const generatePromptFromTemplate = (
     youngest_age: analysis.youngestAge.toString(),
     oldest_age: analysis.oldestAge.toString(),
     average_age: analysis.averageAge.toString(),
+    // Variables narratives depuis la sélection aléatoire
+    narrative_schema: variation?.narrativeSchema?.type || '',
+    narrative_mechanism: variation?.narrativeSchema?.mechanism || '',
+    vakog_focus: variation?.vakogFocus?.sensory_type || '',
+    vakog_keywords: variation?.vakogFocus?.sensory_keywords?.join(', ') || '',
+    symbolic_universe: variation?.symbolicUniverse?.name || '',
+    symbolic_description: variation?.symbolicUniverse?.description || '',
+    symbolic_visual_style: variation?.symbolicUniverse?.visual_style || '',
+    ericksonian_technique: variation?.ericksonianTechnique?.name || '',
+    ericksonian_pattern: variation?.ericksonianTechnique?.linguistic_pattern || '',
+    age_characteristics: variation?.ageCognition?.characteristics || '',
+    age_preferred_supports: variation?.ageCognition?.preferred_supports?.join(', ') || '',
   };
 
   console.log('[N8nStoryFromTitle] Génération depuis template DB avec variables:', Object.keys(variables));
@@ -80,6 +94,7 @@ export const useN8nStoryFromTitle = () => {
   const { toast } = useToast();
   const { notifyStoryReady, notifyStoryError } = useStoryNotifications();
   const { prompts } = useActivePrompts();
+  const { selectVariation } = useStoryVariation();
 
   const createStoryFromTitle = async (data: StoryCreationData): Promise<string> => {
     if (!user) {
@@ -116,6 +131,17 @@ export const useN8nStoryFromTitle = () => {
       // Générer le prompt - priorité au template de la DB spécifique à l'objectif
       const targetWordCount = data.durationMinutes ? estimateWordCountForDuration(data.durationMinutes) : undefined;
 
+      // Sélection aléatoire des ingrédients narratifs
+      const analysis = analyzeCharacters(childrenForPrompt);
+      const variation = selectVariation(analysis.youngestAge, data.objective);
+      console.log('[N8nStoryFromTitle] Variation narrative sélectionnée:', {
+        schema: variation.narrativeSchema?.type,
+        vakog: variation.vakogFocus?.sensory_type,
+        universe: variation.symbolicUniverse?.name,
+        technique: variation.ericksonianTechnique?.name,
+        ageCognition: variation.ageCognition?.range,
+      });
+
       // Sélection dynamique du prompt selon l'objectif
       const promptKey = `story_prompt_${data.objective}` as keyof typeof prompts;
       let storyPromptTemplate = prompts?.[promptKey];
@@ -141,7 +167,8 @@ export const useN8nStoryFromTitle = () => {
         storyPromptTemplate,
         data,
         childrenForPrompt,
-        targetWordCount
+        targetWordCount,
+        variation
       );
 
       const promptSource = storyPromptTemplate ? (prompts?.[promptKey] ? `database-${data.objective}` : 'database-generic') : 'fallback';
@@ -170,6 +197,14 @@ export const useN8nStoryFromTitle = () => {
         storyPrompt, // Prompt généré (DB ou fallback)
         imageGenerationPrompt: imageGenerationPrompt || null, // Nouveau prompt image
         promptSource, // 🆕 Source du prompt pour debug
+        // 🆕 Ingrédients narratifs sélectionnés aléatoirement
+        narrativeVariation: {
+          schema: variation.narrativeSchema?.type || null,
+          vakog: variation.vakogFocus?.sensory_type || null,
+          universe: variation.symbolicUniverse?.name || null,
+          technique: variation.ericksonianTechnique?.name || null,
+          ageCognition: variation.ageCognition?.range || null,
+        },
         // 🆕 Coût de génération des titres pour calcul du coût total
         titleGenerationCost: data.titleGenerationCost || null,
         generateVideo: data.generateVideo ?? false, // 🆕 Envoyer le flag à n8n
