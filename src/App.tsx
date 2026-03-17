@@ -46,6 +46,7 @@ const ServiceStatusPage = lazy(() => import("@/pages/support/ServiceStatusPage")
 const QuickStartPage = lazy(() => import("@/pages/support/QuickStartPage").then(m => ({ default: m.QuickStartPage })));
 const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })));
 const TestConnection = lazy(() => import("./pages/TestConnection"));
+const StoryIngredients = lazy(() => import("./pages/admin/StoryIngredients"));
 const DiagnosticConnection = lazy(() => import("./pages/DiagnosticConnection"));
 const BetaPending = lazy(() => import("./pages/BetaPending"));
 const VipAccess = lazy(() => import("./pages/VipAccess"));
