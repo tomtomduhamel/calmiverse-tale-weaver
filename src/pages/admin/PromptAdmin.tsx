@@ -7,8 +7,30 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Save, CheckCircle2, Zap, BookOpen, Sparkles, Archive, HelpCircle, Copy, Check } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Plus, Save, CheckCircle2, Zap, BookOpen, Sparkles, Archive,
+  HelpCircle, Copy, Check, ChevronLeft, MoreVertical, AlertTriangle,
+  FileText, History, Settings,
+} from "lucide-react";
 
 interface PromptTemplate {
   id: string;
@@ -30,8 +52,6 @@ interface PromptVersion {
   created_at: string;
 }
 
-// Configuration des prompts actifs en production
-// Ces clés correspondent aux prompts réellement utilisés dans le code
 const ACTIVE_PROMPTS_CONFIG: Record<string, {
   label: string;
   description: string;
@@ -58,60 +78,45 @@ const ACTIVE_PROMPTS_CONFIG: Record<string, {
   },
   'image_generation_prompt': {
     label: '🎨 Génération Image',
-    description: 'Prompt pour la création de l\'image de couverture (contient des variables n8n)',
+    description: 'Prompt pour la création de l\'image de couverture',
     category: 'generation',
     icon: Sparkles,
   },
   'video_generation_prompt': {
     label: '🎥 Génération Vidéo',
-    description: 'Prompt pour la création de la vidéo d\'introduction (contient des variables n8n)',
+    description: 'Prompt pour la création de la vidéo d\'introduction',
     category: 'generation',
     icon: Sparkles,
   },
   'story_prompt_sleep': {
-    label: '🌙 Histoire du Soir (Sleep)',
-    description: 'Prompt spécifique pour l\'objectif Sommeil/Endormissement',
+    label: '🌙 Histoire du Soir',
+    description: 'Prompt spécifique pour l\'objectif Sommeil',
     category: 'generation',
     icon: Sparkles,
   },
   'story_prompt_focus': {
     label: '🧠 Histoire Focus',
-    description: 'Prompt spécifique pour l\'objectif Concentration/Éveil',
+    description: 'Prompt spécifique pour l\'objectif Concentration',
     category: 'generation',
     icon: Sparkles,
   },
   'story_prompt_relax': {
-    label: '🌸 Histoire Détente (Relax)',
-    description: 'Prompt spécifique pour l\'objectif Relaxation/Calme',
+    label: '🌸 Histoire Détente',
+    description: 'Prompt spécifique pour l\'objectif Relaxation',
     category: 'generation',
     icon: Sparkles,
   },
   'story_prompt_fun': {
     label: '🎉 Histoire Fun',
-    description: 'Prompt spécifique pour l\'objectif Amusement/Aventure',
+    description: 'Prompt spécifique pour l\'objectif Amusement',
     category: 'generation',
     icon: Sparkles,
   },
 };
 
-const getCategoryLabel = (category: string) => {
-  switch (category) {
-    case 'generation': return 'Génération d\'histoires';
-    case 'sequel': return 'Suites & Séries';
-    default: return 'Autres';
-  }
-};
-
-const getCategoryIcon = (category: string) => {
-  switch (category) {
-    case 'generation': return Sparkles;
-    case 'sequel': return BookOpen;
-    default: return Archive;
-  }
-};
-
 const PromptAdmin: React.FC = () => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -119,6 +124,8 @@ const PromptAdmin: React.FC = () => {
   const [savingMeta, setSavingMeta] = useState(false);
   const [creatingVersion, setCreatingVersion] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
+  const [activateConfirm, setActivateConfirm] = useState<{ versionId: string; versionNum: number } | null>(null);
 
   const handleCopyPrompt = useCallback((content: string, id: string) => {
     navigator.clipboard.writeText(content).then(() => {
@@ -134,20 +141,16 @@ const PromptAdmin: React.FC = () => {
   );
 
   const [metaDraft, setMetaDraft] = useState<{ title: string; description: string; key: string }>({
-    title: "",
-    description: "",
-    key: "",
+    title: "", description: "", key: "",
   });
 
   const [newVersionDraft, setNewVersionDraft] = useState<{ content: string; changelog: string }>(
     { content: "", changelog: "" }
   );
 
-  // Grouper les templates par catégorie
   const groupedTemplates = useMemo(() => {
     const active: PromptTemplate[] = [];
     const inactive: PromptTemplate[] = [];
-
     templates.forEach(t => {
       if (ACTIVE_PROMPTS_CONFIG[t.key]) {
         active.push(t);
@@ -155,7 +158,6 @@ const PromptAdmin: React.FC = () => {
         inactive.push(t);
       }
     });
-
     return { active, inactive };
   }, [templates]);
 
@@ -176,6 +178,15 @@ const PromptAdmin: React.FC = () => {
       setVersions([]);
     }
   }, [selectedId]);
+
+  const handleSelectTemplate = (id: string) => {
+    setSelectedId(id);
+    if (isMobile) setMobileView('detail');
+  };
+
+  const handleBack = () => {
+    setMobileView('list');
+  };
 
   const fetchTemplates = async () => {
     try {
@@ -217,15 +228,15 @@ const PromptAdmin: React.FC = () => {
 
   const DEFAULT_TITLE_PROMPT = `Tu es un agent qui est chargé de créer 3 titres d'histoires pour enfants selon ce prompt : 
 "Génère 3 titres d'histoires originales pour enfants, adaptés au thème suivant : {{objective}}.
-Objectif : Les titres doivent captiver l’attention tout en respectant l’intention du thème.
+Objectif : Les titres doivent captiver l'attention tout en respectant l'intention du thème.
 - "sleep" : choisis des titres doux, rassurants et poétiques.
-- "focus" : choisis des titres engageants, stimulant la curiosité et l’attention.
+- "focus" : choisis des titres engageants, stimulant la curiosité et l'attention.
 - "relax" : choisis des titres apaisants, inspirant le calme et la légèreté.
 - "fun" : choisis des titres drôles, surprenants et qui déclenche un sourire aux lecteurs (enfants).
 Chaque titre doit :
 - Être adapté à des enfants de 3 à 8 ans
 - Contenir maximum 10 mots
-- Donner envie d’écouter l’histoire."
+- Donner envie d'écouter l'histoire."
 
 ATTENTION : Concernant les titres proposés, je veux que les règles d'écriture de la langue française soit respectée. C'est à dire que les majuscules soient pour la première lettre du titre et ensuite, seulement pour les noms propres.
 
@@ -235,7 +246,7 @@ Pour le titre de l'histoire (title),analyse utilise la mémoire "title_memory" e
 
 Renvoie le nombre de tokens iuput, le nombre de tokens output et le modèle llm utilisé (gpt-5) dans les variable "input_tokens", "output_tokens" et "model_llm" du json en sortie.
 
-Je veux que tu retournes un format json à l'aide de l’outil structured output parser.
+Je veux que tu retournes un format json à l'aide de l'outil structured output parser.
 
 Conclusion : le format json final devra avoir la structure suivante :
 {
@@ -273,8 +284,6 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
       const userId = userRes.data.user?.id;
       if (!userId) throw new Error("Utilisateur non connecté");
 
-      // 1. Récupérer le contenu du prompt générique actuel pour l'utiliser comme base
-      // Ou utiliser une base vide si aucun n'existe
       let baseContent = "";
       const genericPrompt = templates.find(t => t.key === 'advanced_story_prompt_template');
 
@@ -287,15 +296,9 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
         if (data?.content) baseContent = data.content;
       }
 
-      // Liste des clés à initialiser (ajout des titre + les 4 objectifs + image + vidéo)
       const keysToInit = [
-        'title_generation_prompt',
-        'image_generation_prompt',
-        'video_generation_prompt',
-        'story_prompt_sleep',
-        'story_prompt_focus',
-        'story_prompt_relax',
-        'story_prompt_fun'
+        'title_generation_prompt', 'image_generation_prompt', 'video_generation_prompt',
+        'story_prompt_sleep', 'story_prompt_focus', 'story_prompt_relax', 'story_prompt_fun'
       ];
 
       let initCount = 0;
@@ -305,37 +308,25 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
         const existing = templates.find(t => t.key === key);
 
         if (!existing) {
-          // Déterminer le contenu initial
           let initialContent = "";
-          if (key === 'title_generation_prompt') {
-            initialContent = DEFAULT_TITLE_PROMPT;
-          } else if (key === 'image_generation_prompt') {
-            initialContent = DEFAULT_IMAGE_PROMPT;
-          } else if (key === 'video_generation_prompt') {
-            initialContent = DEFAULT_VIDEO_PROMPT;
-          } else {
-            // Pour les prompts d'histoire, on utilise le prompt générique s'il existe, sinon un placeholder
-            initialContent = baseContent || "Génère une histoire pour enfants...";
-          }
+          if (key === 'title_generation_prompt') initialContent = DEFAULT_TITLE_PROMPT;
+          else if (key === 'image_generation_prompt') initialContent = DEFAULT_IMAGE_PROMPT;
+          else if (key === 'video_generation_prompt') initialContent = DEFAULT_VIDEO_PROMPT;
+          else initialContent = baseContent || "Génère une histoire pour enfants...";
 
-          // Créer le template
           const { data: templateData, error: templateError } = await supabase
             .from("prompt_templates")
             .insert({
               key: key as string,
-              title: config.label.replace('🟢 ', '').replace('🌙 ', '').replace('🧠 ', '').replace('🌸 ', '').replace('🎉 ', ''),
+              title: config.label.replace(/[🟢🌙🧠🌸🎉🎨🎥]\s?/g, ''),
               description: config.description,
               created_by: userId
             })
             .select("id")
             .single();
 
-          if (templateError) {
-            console.error(`Erreur création template ${key}:`, templateError);
-            continue;
-          }
+          if (templateError) { console.error(`Erreur création template ${key}:`, templateError); continue; }
 
-          // Créer la version initiale
           const { data: versionData, error: versionError } = await supabase
             .from("prompt_template_versions")
             .insert({
@@ -348,12 +339,8 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
             .select("id")
             .single();
 
-          if (versionError) {
-            console.error(`Erreur création version ${key}:`, versionError);
-            continue;
-          }
+          if (versionError) { console.error(`Erreur création version ${key}:`, versionError); continue; }
 
-          // Activer la version
           await supabase
             .from("prompt_templates")
             .update({ active_version_id: versionData.id })
@@ -369,7 +356,6 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
       } else {
         toast({ title: "Tous les prompts sont déjà initialisés" });
       }
-
     } catch (e: unknown) {
       const err = e as Error;
       toast({ title: "Erreur d'initialisation", description: err.message, variant: "destructive" });
@@ -396,7 +382,10 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
 
       toast({ title: "Template créé", description: tKey });
       await fetchTemplates();
-      if (data?.id) setSelectedId(data.id);
+      if (data?.id) {
+        setSelectedId(data.id);
+        if (isMobile) setMobileView('detail');
+      }
     } catch (e: unknown) {
       const err = e as Error;
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
@@ -461,7 +450,7 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
         .update({ active_version_id: versionId })
         .eq("id", selected.id);
       if (error) throw error;
-      toast({ title: "Version activée" });
+      toast({ title: "Version activée en production" });
       await fetchTemplates();
     } catch (e: unknown) {
       const err = e as Error;
@@ -472,7 +461,8 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
   const isActivePrompt = (key: string) => !!ACTIVE_PROMPTS_CONFIG[key];
   const getPromptConfig = (key: string) => ACTIVE_PROMPTS_CONFIG[key];
 
-  const renderTemplateButton = (t: PromptTemplate) => {
+  // ─── Template list item ───
+  const renderTemplateItem = (t: PromptTemplate) => {
     const config = getPromptConfig(t.key);
     const isActive = isActivePrompt(t.key);
     const Icon = config?.icon || Archive;
@@ -480,286 +470,392 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
     return (
       <button
         key={t.id}
-        onClick={() => setSelectedId(t.id)}
-        className={`w-full text-left p-3 rounded-lg border transition-all ${selectedId === t.id
-          ? 'bg-primary/10 border-primary ring-1 ring-primary/30'
-          : 'hover:bg-muted/50 hover:border-muted-foreground/20'
-          }`}
+        onClick={() => handleSelectTemplate(t.id)}
+        className={`w-full text-left p-3 rounded-lg border transition-all ${
+          selectedId === t.id && !isMobile
+            ? 'bg-primary/10 border-primary ring-1 ring-primary/30'
+            : 'hover:bg-muted/50 hover:border-muted-foreground/20 border-border'
+        }`}
       >
-        <div className="flex items-start gap-3">
-          <div className={`mt-0.5 p-1.5 rounded-md ${isActive ? 'bg-green-500/10' : 'bg-muted'}`}>
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-md shrink-0 ${isActive ? 'bg-green-500/10' : 'bg-muted'}`}>
             <Icon className={`h-4 w-4 ${isActive ? 'text-green-500' : 'text-muted-foreground'}`} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
               <span className="font-medium text-sm truncate">
                 {config?.label || t.title}
               </span>
-              {isActive && (
-                <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px] px-1.5 py-0">
-                  En production
-                </Badge>
-              )}
-              {!isActive && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 opacity-60">
-                  Non utilisé
-                </Badge>
-              )}
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
               {config?.description || t.description || t.key}
             </p>
-            {!t.active_version_id && (
-              <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
-                <HelpCircle className="h-3 w-3" />
-                Aucune version active
-              </p>
+          </div>
+          <div className="shrink-0">
+            {isActive ? (
+              <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px] px-1.5 py-0">
+                Actif
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 opacity-60">
+                Archive
+              </Badge>
             )}
           </div>
         </div>
+        {!t.active_version_id && (
+          <p className="text-xs text-amber-500 mt-1.5 flex items-center gap-1 ml-11">
+            <HelpCircle className="h-3 w-3" />
+            Aucune version active
+          </p>
+        )}
       </button>
     );
   };
 
-  return (
-    <AdminGuard>
-      <div className="flex flex-col h-[calc(100vh-2rem)] p-4 md:p-6 gap-4">
-        <header className="flex-none">
-          <h1 className="text-2xl font-semibold">Administration des prompts</h1>
-          <p className="text-sm text-muted-foreground">
-            Gérez les templates et leurs versions utilisées pour la génération des histoires.
+  // ─── List view ───
+  const renderList = () => (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between p-4">
+        <div>
+          <h1 className="text-lg font-semibold">Prompts</h1>
+          <p className="text-xs text-muted-foreground">
+            {templates.length} template{templates.length > 1 ? 's' : ''}
           </p>
-        </header>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="outline">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={createTemplate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau template
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={initializeDefaultPrompts}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Initialiser les prompts manquants
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-        {/* Légende */}
-        <Card className="flex-none p-3 bg-muted/30">
-          <div className="flex flex-wrap gap-4 text-xs">
-            <div className="flex items-center gap-2">
-              <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30">
-                En production
-              </Badge>
-              <span className="text-muted-foreground">= Prompt utilisé dans l'application</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="opacity-60">Non utilisé</Badge>
-              <span className="text-muted-foreground">= Prompt archivé ou en développement</span>
+      <Separator />
+
+      <div className="flex-1 overflow-y-auto p-3 space-y-4">
+        {loading && <p className="text-sm text-muted-foreground p-2">Chargement...</p>}
+        {!loading && templates.length === 0 && (
+          <p className="text-sm text-muted-foreground p-2">Aucun template.</p>
+        )}
+
+        {!loading && groupedTemplates.active.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-green-500 uppercase tracking-wider flex items-center gap-1.5 px-1">
+              <CheckCircle2 className="h-3 w-3" />
+              En production ({groupedTemplates.active.length})
+            </h3>
+            <div className="space-y-1.5">
+              {groupedTemplates.active.map(renderTemplateItem)}
             </div>
           </div>
-        </Card>
+        )}
 
-        <section className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-h-0">
-          {/* Liste des templates (Sidebar) - Scroll indépendant */}
-          <Card className="flex flex-col h-full overflow-hidden">
-            <div className="p-4 flex-none space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="font-medium flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-primary" />
-                  Templates
-                </h2>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={initializeDefaultPrompts} title="Initialiser les prompts manquants">
-                    <Sparkles className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" onClick={createTemplate}>
-                    <Plus className="h-4 w-4 mr-1" /> Nouveau
-                  </Button>
-                </div>
-              </div>
+        {!loading && groupedTemplates.active.length > 0 && groupedTemplates.inactive.length > 0 && (
+          <Separator />
+        )}
+
+        {!loading && groupedTemplates.inactive.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 px-1">
+              <Archive className="h-3 w-3" />
+              Archives ({groupedTemplates.inactive.length})
+            </h3>
+            <div className="space-y-1.5">
+              {groupedTemplates.inactive.map(renderTemplateItem)}
             </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
-            <Separator className="flex-none" />
+  // ─── Detail view ───
+  const renderDetail = () => {
+    if (!selected) {
+      return (
+        <div className="h-full flex items-center justify-center text-center p-6">
+          <div>
+            <Sparkles className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+            <p className="text-muted-foreground font-medium">Sélectionnez un template</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">pour l'éditer</p>
+          </div>
+        </div>
+      );
+    }
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {loading && <p className="text-sm text-muted-foreground">Chargement...</p>}
+    const config = getPromptConfig(selected.key);
+    const isProduction = isActivePrompt(selected.key);
 
-              {!loading && templates.length === 0 && (
-                <p className="text-sm text-muted-foreground">Aucun template.</p>
-              )}
-
-              {/* Prompts actifs en production */}
-              {!loading && groupedTemplates.active.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-green-500 uppercase tracking-wider flex items-center gap-1.5 sticky top-0 bg-background/95 backdrop-blur py-1 z-10">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Actifs ({groupedTemplates.active.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {groupedTemplates.active.map(renderTemplateButton)}
-                  </div>
-                </div>
-              )}
-
-              {/* Separator visual between groups */}
-              {!loading && groupedTemplates.active.length > 0 && groupedTemplates.inactive.length > 0 && (
-                <Separator className="my-4" />
-              )}
-
-              {/* Prompts non utilisés */}
-              {!loading && groupedTemplates.inactive.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 sticky top-0 bg-background/95 backdrop-blur py-1 z-10">
-                    <Archive className="h-3 w-3" />
-                    Archives ({groupedTemplates.inactive.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {groupedTemplates.inactive.map(renderTemplateButton)}
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Détail du template sélectionné - Scroll indépendant */}
-          <div className="md:col-span-2 h-full overflow-y-auto pr-1 space-y-4">
-            {selected ? (
-              <>
-                {/* Status banner */}
-                {isActivePrompt(selected.key) ? (
-                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <div>
-                      <p className="text-sm font-medium text-green-400">Ce prompt est utilisé en production</p>
-                      <p className="text-xs text-green-400/70">
-                        Les modifications seront appliquées immédiatement à la génération d'histoires.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-muted/50 border border-muted rounded-lg p-3 flex items-center gap-3">
-                    <Archive className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Ce prompt n'est pas utilisé actuellement</p>
-                      <p className="text-xs text-muted-foreground/70">
-                        Il s'agit d'un prompt archivé ou en développement.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <Card className="p-4 space-y-3">
-                  <h2 className="font-medium">Métadonnées</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-sm">Titre</label>
-                      <Input value={metaDraft.title} onChange={e => setMetaDraft(v => ({ ...v, title: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className="text-sm">Clé technique</label>
-                      <Input
-                        value={metaDraft.key}
-                        onChange={e => setMetaDraft(v => ({ ...v, key: e.target.value }))}
-                        className="font-mono text-sm"
-                      />
-                      {isActivePrompt(metaDraft.key) && (
-                        <p className="text-xs text-green-500 mt-1">✓ Clé reconnue comme active</p>
-                      )}
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="text-sm">Description</label>
-                      <Textarea value={metaDraft.description} onChange={e => setMetaDraft(v => ({ ...v, description: e.target.value }))} />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={saveMeta} disabled={savingMeta}>
-                      <Save className="h-4 w-4 mr-1" /> Enregistrer
-                    </Button>
-                  </div>
-                </Card>
-
-                <Card className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-medium">Versions</h2>
-                    <Button variant="secondary" onClick={createNewVersion} disabled={creatingVersion}>
-                      Créer une nouvelle version
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm">Contenu (nouvelle version)</label>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleCopyPrompt(newVersionDraft.content, 'draft')}
-                        disabled={!newVersionDraft.content}
-                        title="Copier le contenu"
-                      >
-                        {copiedId === 'draft' ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
-                      </Button>
-                    </div>
-                    <Textarea
-                      value={newVersionDraft.content}
-                      onChange={e => setNewVersionDraft(v => ({ ...v, content: e.target.value }))}
-                      className="min-h-[200px] font-mono text-sm"
-                    />
-                    <label className="text-sm">Changelog</label>
-                    <Input
-                      value={newVersionDraft.changelog}
-                      onChange={e => setNewVersionDraft(v => ({ ...v, changelog: e.target.value }))}
-                      placeholder="Décrivez les modifications apportées..."
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-3 mt-4">
-                    {versions.map(v => (
-                      <div key={v.id} className={`p-3 rounded-md border ${selected.active_version_id === v.id
-                        ? 'border-primary bg-primary/5'
-                        : ''
-                        }`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">Version v{v.version}</span>
-                            {selected.active_version_id === v.id && (
-                              <Badge className="bg-primary/20 text-primary border-primary/30">
-                                Version active
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {selected.active_version_id !== v.id && (
-                              <Button size="sm" variant="outline" onClick={() => setActive(v.id)}>
-                                Activer cette version
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{v.changelog}</p>
-                        <details className="mt-2">
-                          <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground inline-flex items-center gap-1.5">
-                            Voir le contenu
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                              onClick={(e) => { e.stopPropagation(); handleCopyPrompt(v.content, v.id); }}
-                              title="Copier le contenu"
-                            >
-                              {copiedId === v.id ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
-                            </Button>
-                          </summary>
-                          <pre className="mt-2 bg-muted p-2 rounded whitespace-pre-wrap text-sm font-mono max-h-[300px] overflow-auto">
-                            {v.content}
-                          </pre>
-                        </details>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </>
+    return (
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-center gap-3 p-4 border-b border-border">
+          {isMobile && (
+            <Button variant="ghost" size="icon" onClick={handleBack} className="shrink-0 -ml-2">
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+          )}
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold text-base truncate">
+              {config?.label || selected.title}
+            </h2>
+            {isProduction ? (
+              <p className="text-xs text-green-500 flex items-center gap-1 mt-0.5">
+                <CheckCircle2 className="h-3 w-3" />
+                En production
+              </p>
             ) : (
-              <Card className="p-6 h-full flex items-center justify-center text-center">
-                <div>
-                  <Sparkles className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
-                  <p className="text-muted-foreground font-medium">Sélectionnez un template dans la liste pour l'éditer.</p>
-                  <p className="text-sm text-muted-foreground/60 mt-2">Vous pourrez gérer ses versions et son contenu.</p>
-                </div>
-              </Card>
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                <Archive className="h-3 w-3" />
+                Archivé
+              </p>
             )}
           </div>
-        </section>
+        </div>
+
+        {/* Production warning banner */}
+        {isProduction && (
+          <div className="mx-4 mt-3 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Les modifications seront appliquées immédiatement à la génération.
+            </p>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <Tabs defaultValue="content" className="flex-1 flex flex-col min-h-0 mt-2">
+          <TabsList className="mx-4 w-auto grid grid-cols-3">
+            <TabsTrigger value="content" className="text-xs gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Contenu</span>
+            </TabsTrigger>
+            <TabsTrigger value="versions" className="text-xs gap-1.5">
+              <History className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Versions</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="text-xs gap-1.5">
+              <Settings className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Paramètres</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ─ Tab: Contenu ─ */}
+          <TabsContent value="content" className="flex-1 overflow-y-auto px-4 pb-4 mt-0">
+            <div className="space-y-3 pt-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Contenu du prompt</label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-muted-foreground"
+                  onClick={() => handleCopyPrompt(newVersionDraft.content, 'draft')}
+                  disabled={!newVersionDraft.content}
+                >
+                  {copiedId === 'draft' ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+                  Copier
+                </Button>
+              </div>
+              <Textarea
+                value={newVersionDraft.content}
+                onChange={e => setNewVersionDraft(v => ({ ...v, content: e.target.value }))}
+                className="min-h-[40vh] font-mono text-xs leading-relaxed"
+              />
+
+              <div>
+                <label className="text-sm font-medium">Changelog</label>
+                <Input
+                  value={newVersionDraft.changelog}
+                  onChange={e => setNewVersionDraft(v => ({ ...v, changelog: e.target.value }))}
+                  placeholder="Décrivez les modifications..."
+                  className="mt-1"
+                />
+              </div>
+
+              <Button
+                onClick={createNewVersion}
+                disabled={creatingVersion}
+                className="w-full"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Créer une nouvelle version
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* ─ Tab: Versions ─ */}
+          <TabsContent value="versions" className="flex-1 overflow-y-auto px-4 pb-4 mt-0">
+            <div className="space-y-3 pt-3">
+              {versions.length === 0 && (
+                <p className="text-sm text-muted-foreground py-8 text-center">Aucune version</p>
+              )}
+              {versions.map(v => {
+                const isVersionActive = selected.active_version_id === v.id;
+                return (
+                  <Card
+                    key={v.id}
+                    className={`p-3 ${isVersionActive ? 'border-primary bg-primary/5' : ''}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-sm">v{v.version}</span>
+                        {isVersionActive && (
+                          <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => handleCopyPrompt(v.content, v.id)}
+                          title="Copier"
+                        >
+                          {copiedId === v.id ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                        </Button>
+                        {!isVersionActive && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            onClick={() => setActivateConfirm({ versionId: v.id, versionNum: v.version })}
+                          >
+                            Activer
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1.5">{v.changelog || '—'}</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-1">
+                      {new Date(v.created_at).toLocaleDateString('fr-FR', {
+                        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                      })}
+                    </p>
+                    <details className="mt-2">
+                      <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                        Voir le contenu
+                      </summary>
+                      <pre className="mt-2 bg-muted p-2 rounded whitespace-pre-wrap text-xs font-mono max-h-[200px] overflow-auto">
+                        {v.content}
+                      </pre>
+                    </details>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          {/* ─ Tab: Paramètres ─ */}
+          <TabsContent value="settings" className="flex-1 overflow-y-auto px-4 pb-4 mt-0">
+            <div className="space-y-4 pt-3">
+              <div>
+                <label className="text-sm font-medium">Titre</label>
+                <Input
+                  value={metaDraft.title}
+                  onChange={e => setMetaDraft(v => ({ ...v, title: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Clé technique</label>
+                <Input
+                  value={metaDraft.key}
+                  onChange={e => setMetaDraft(v => ({ ...v, key: e.target.value }))}
+                  className="mt-1 font-mono text-sm"
+                />
+                {isActivePrompt(metaDraft.key) && (
+                  <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Clé reconnue comme active
+                  </p>
+                )}
+                {!isActivePrompt(metaDraft.key) && metaDraft.key && (
+                  <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Cette clé n'est pas liée à une fonctionnalité active
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  value={metaDraft.description}
+                  onChange={e => setMetaDraft(v => ({ ...v, description: e.target.value }))}
+                  className="mt-1 min-h-[80px]"
+                />
+              </div>
+              <Button onClick={saveMeta} disabled={savingMeta} className="w-full">
+                <Save className="h-4 w-4 mr-2" />
+                Enregistrer les paramètres
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
+    );
+  };
+
+  // ─── Main layout ───
+  return (
+    <AdminGuard>
+      <div className="flex flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-2rem)]">
+        {isMobile ? (
+          // Mobile: drill-down navigation
+          <Card className="flex-1 overflow-hidden">
+            {mobileView === 'list' ? renderList() : renderDetail()}
+          </Card>
+        ) : (
+          // Desktop: side-by-side
+          <div className="flex-1 grid grid-cols-[320px_1fr] gap-4 p-6 min-h-0">
+            <Card className="overflow-hidden">
+              {renderList()}
+            </Card>
+            <Card className="overflow-hidden">
+              {renderDetail()}
+            </Card>
+          </div>
+        )}
+      </div>
+
+      {/* Activation confirmation dialog */}
+      <AlertDialog open={!!activateConfirm} onOpenChange={(open) => !open && setActivateConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Activer cette version ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La version <strong>v{activateConfirm?.versionNum}</strong> sera immédiatement utilisée en production
+              pour la génération d'histoires. L'ancienne version restera disponible dans l'historique.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (activateConfirm) {
+                  setActive(activateConfirm.versionId);
+                  setActivateConfirm(null);
+                }
+              }}
+            >
+              Activer v{activateConfirm?.versionNum}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminGuard>
   );
 };
