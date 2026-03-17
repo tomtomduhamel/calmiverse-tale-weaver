@@ -11,7 +11,7 @@ import type { TitleCostData } from '@/hooks/stories/useN8nTitleGeneration';
 import { useActivePrompts } from '@/hooks/prompts';
 import { replacePromptVariables, OBJECTIVE_DESCRIPTIONS, getVocabularyInstructions, type PromptVariables } from '@/utils/promptVariables';
 import { analyzeCharacters, generateCharacterContext } from '@/utils/storyPromptUtils';
-import { useStoryVariation } from '@/hooks/stories/useStoryVariation';
+import { useStoryVariation, type StoryVariation } from '@/hooks/stories/useStoryVariation';
 
 interface StoryCreationData {
   selectedTitle: string;
