@@ -484,7 +484,7 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-medium text-sm truncate">
-                {config?.label || t.title}
+                {t.title}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
