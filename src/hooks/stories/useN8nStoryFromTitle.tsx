@@ -81,6 +81,7 @@ export const useN8nStoryFromTitle = () => {
   const { toast } = useToast();
   const { notifyStoryReady, notifyStoryError } = useStoryNotifications();
   const { prompts } = useActivePrompts();
+  const { selectVariation } = useStoryVariation();
 
   const createStoryFromTitle = async (data: StoryCreationData): Promise<string> => {
     if (!user) {
