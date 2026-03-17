@@ -221,6 +221,7 @@ function App() {
                   <Route path="admin/tts-config" element={<AdminGuard><TtsConfig /></AdminGuard>} />
                   <Route path="admin/feedback" element={<AdminGuard><AdminFeedback /></AdminGuard>} />
                   <Route path="admin/beta-testers" element={<AdminGuard><BetaTestersAdmin /></AdminGuard>} />
+                  <Route path="admin/story-ingredients" element={<AdminGuard><StoryIngredients /></AdminGuard>} />
                 </Route>
 
                 {/* Route de fallback */}
