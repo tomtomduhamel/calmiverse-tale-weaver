@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      age_cognition: {
+        Row: {
+          characteristics: string
+          created_at: string
+          id: string
+          is_active: boolean
+          preferred_supports: string[]
+          range: string
+        }
+        Insert: {
+          characteristics: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          preferred_supports?: string[]
+          range: string
+        }
+        Update: {
+          characteristics?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          preferred_supports?: string[]
+          range?: string
+        }
+        Relationships: []
+      }
       audio_files: {
         Row: {
           audio_url: string | null
@@ -241,6 +268,60 @@ export type Database = {
           teddydescription?: string | null
           teddyname?: string | null
           teddyphotos?: Json | null
+        }
+        Relationships: []
+      }
+      ericksonian_techniques: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          linguistic_pattern: string
+          name: string
+          objective_affinity: string[]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          linguistic_pattern: string
+          name: string
+          objective_affinity?: string[]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          linguistic_pattern?: string
+          name?: string
+          objective_affinity?: string[]
+        }
+        Relationships: []
+      }
+      narrative_schemas: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          mechanism: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          is_active?: boolean
+          mechanism: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          mechanism?: string
+          type?: string
         }
         Relationships: []
       }
@@ -808,6 +889,36 @@ export type Database = {
         }
         Relationships: []
       }
+      symbolic_universes: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          name: string
+          objective_affinity: string[]
+          visual_style: string | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          is_active?: boolean
+          name: string
+          objective_affinity?: string[]
+          visual_style?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          objective_affinity?: string[]
+          visual_style?: string | null
+        }
+        Relationships: []
+      }
       title_memory: {
         Row: {
           created_at: string | null
@@ -1076,6 +1187,30 @@ export type Database = {
           system_notifications?: boolean | null
           timezone?: string | null
           video_intro_enabled?: boolean | null
+        }
+        Relationships: []
+      }
+      vakog_focus: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          sensory_keywords: string[]
+          sensory_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sensory_keywords?: string[]
+          sensory_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sensory_keywords?: string[]
+          sensory_type?: string
         }
         Relationships: []
       }
