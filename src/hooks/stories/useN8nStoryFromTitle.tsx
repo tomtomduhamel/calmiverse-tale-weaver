@@ -118,6 +118,17 @@ export const useN8nStoryFromTitle = () => {
       // Générer le prompt - priorité au template de la DB spécifique à l'objectif
       const targetWordCount = data.durationMinutes ? estimateWordCountForDuration(data.durationMinutes) : undefined;
 
+      // Sélection aléatoire des ingrédients narratifs
+      const analysis = analyzeCharacters(childrenForPrompt);
+      const variation = selectVariation(analysis.youngestAge, data.objective);
+      console.log('[N8nStoryFromTitle] Variation narrative sélectionnée:', {
+        schema: variation.narrativeSchema?.type,
+        vakog: variation.vakogFocus?.sensory_type,
+        universe: variation.symbolicUniverse?.name,
+        technique: variation.ericksonianTechnique?.name,
+        ageCognition: variation.ageCognition?.range,
+      });
+
       // Sélection dynamique du prompt selon l'objectif
       const promptKey = `story_prompt_${data.objective}` as keyof typeof prompts;
       let storyPromptTemplate = prompts?.[promptKey];
@@ -143,7 +154,8 @@ export const useN8nStoryFromTitle = () => {
         storyPromptTemplate,
         data,
         childrenForPrompt,
-        targetWordCount
+        targetWordCount,
+        variation
       );
 
       const promptSource = storyPromptTemplate ? (prompts?.[promptKey] ? `database-${data.objective}` : 'database-generic') : 'fallback';
