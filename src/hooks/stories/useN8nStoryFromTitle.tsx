@@ -197,6 +197,14 @@ export const useN8nStoryFromTitle = () => {
         storyPrompt, // Prompt généré (DB ou fallback)
         imageGenerationPrompt: imageGenerationPrompt || null, // Nouveau prompt image
         promptSource, // 🆕 Source du prompt pour debug
+        // 🆕 Ingrédients narratifs sélectionnés aléatoirement
+        narrativeVariation: {
+          schema: variation.narrativeSchema?.type || null,
+          vakog: variation.vakogFocus?.sensory_type || null,
+          universe: variation.symbolicUniverse?.name || null,
+          technique: variation.ericksonianTechnique?.name || null,
+          ageCognition: variation.ageCognition?.range || null,
+        },
         // 🆕 Coût de génération des titres pour calcul du coût total
         titleGenerationCost: data.titleGenerationCost || null,
         generateVideo: data.generateVideo ?? false, // 🆕 Envoyer le flag à n8n
