@@ -152,7 +152,8 @@ const PromptAdmin: React.FC = () => {
     const active: PromptTemplate[] = [];
     const inactive: PromptTemplate[] = [];
     templates.forEach(t => {
-      if (ACTIVE_PROMPTS_CONFIG[t.key]) {
+      const config = ACTIVE_PROMPTS_CONFIG[t.key];
+      if (config && config.category !== 'other') {
         active.push(t);
       } else {
         inactive.push(t);
