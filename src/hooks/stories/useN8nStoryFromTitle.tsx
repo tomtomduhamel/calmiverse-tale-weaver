@@ -157,6 +157,12 @@ export const useN8nStoryFromTitle = () => {
         console.warn('[N8nStoryFromTitle] ⚠️ Prompt de génération d\'image non trouvé');
       }
 
+      // Récupération du prompt de génération vidéo
+      const videoGenerationPrompt = prompts?.video_generation_prompt;
+      if (!videoGenerationPrompt) {
+        console.warn('[N8nStoryFromTitle] ⚠️ Prompt de génération vidéo non trouvé');
+      }
+
       // Log pour diagnostic
       if (!storyPromptTemplate) {
         console.warn('[N8nStoryFromTitle] ⚠️ Template DB non disponible (ni spécifique ni générique), utilisation du fallback hardcodé');
