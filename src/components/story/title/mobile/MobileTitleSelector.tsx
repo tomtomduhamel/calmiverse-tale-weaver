@@ -156,13 +156,34 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
         ))}
       </div>
 
-      {/* Message d'état */}
-      {titles.length < 6 && (
+      {/* Bouton regénération après les titres */}
+      {canRegenerate && onRegenerateTitles && (
+        <div className="flex justify-center px-2">
+          <Button
+            onClick={onRegenerateTitles}
+            disabled={isRegenerating || isCreatingStory}
+            variant="outline"
+            size="sm"
+            className="text-xs rounded-full px-4 h-8 border-primary/20 text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+          >
+            {isRegenerating ? (
+              <>
+                <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />
+                Génération...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-3 h-3 mr-1.5" />
+                Générer +3 titres
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {!canRegenerate && titles.length === 6 && (
         <p className="text-xs text-muted-foreground text-center px-4">
-          {titles.length === 3 ? 
-            "Vous pouvez générer 3 titres supplémentaires si nécessaire" :
-            `${titles.length} titre${titles.length > 1 ? 's' : ''} disponible${titles.length > 1 ? 's' : ''}`
-          }
+          ✨ 6 titres disponibles
         </p>
       )}
     </div>
