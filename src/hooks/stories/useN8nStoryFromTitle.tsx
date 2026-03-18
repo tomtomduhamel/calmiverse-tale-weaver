@@ -200,7 +200,8 @@ export const useN8nStoryFromTitle = () => {
         userId: user.id,
         userEmail: user.email,
         storyPrompt, // Prompt généré (DB ou fallback)
-        imageGenerationPrompt: imageGenerationPrompt || null, // Nouveau prompt image
+        imageGenerationPrompt: imageGenerationPrompt || null,
+        videoGenerationPrompt: videoGenerationPrompt || null,
         promptSource, // 🆕 Source du prompt pour debug
         // 🆕 Ingrédients narratifs sélectionnés aléatoirement
         narrativeVariation: {
