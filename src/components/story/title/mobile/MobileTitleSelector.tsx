@@ -66,6 +66,27 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
           {titles.length} titre{titles.length > 1 ? 's' : ''}
         </Badge>
         
+        {canRegenerate && onRegenerateTitles && (
+          <Button
+            onClick={onRegenerateTitles}
+            disabled={isRegenerating || isCreatingStory}
+            variant="outline"
+            size="sm"
+            className="text-xs rounded-full px-3 h-7 border-primary/20 text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+          >
+            {isRegenerating ? (
+              <>
+                <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />
+                Génération...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-3 h-3 mr-1.5" />
+                +3 titres
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
       <div className="mx-2 p-3 bg-primary/5 rounded-2xl border border-primary/10 shadow-sm space-y-2.5">
