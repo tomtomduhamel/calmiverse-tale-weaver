@@ -60,33 +60,11 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Header avec compteur et bouton de regénération */}
-      <div className="flex items-center justify-center gap-3 px-2">
+      {/* Header avec compteur */}
+      <div className="flex items-center justify-center px-2">
         <Badge variant="secondary" className="text-xs px-2 py-1">
           {titles.length} titre{titles.length > 1 ? 's' : ''}
         </Badge>
-        
-        {canRegenerate && onRegenerateTitles && (
-          <Button
-            onClick={onRegenerateTitles}
-            disabled={isRegenerating || isCreatingStory}
-            variant="outline"
-            size="sm"
-            className="text-xs rounded-full px-3 h-7 border-primary/20 text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
-          >
-            {isRegenerating ? (
-              <>
-                <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />
-                Génération...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="w-3 h-3 mr-1.5" />
-                +3 titres
-              </>
-            )}
-          </Button>
-        )}
       </div>
 
       <div className="mx-2 p-3 bg-primary/5 rounded-2xl border border-primary/10 shadow-sm space-y-2.5">
@@ -178,13 +156,34 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
         ))}
       </div>
 
-      {/* Message d'état */}
-      {titles.length < 6 && (
+      {/* Bouton regénération après les titres */}
+      {canRegenerate && onRegenerateTitles && (
+        <div className="flex justify-center px-2">
+          <Button
+            onClick={onRegenerateTitles}
+            disabled={isRegenerating || isCreatingStory}
+            variant="outline"
+            size="sm"
+            className="text-xs rounded-full px-4 h-8 border-primary/20 text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+          >
+            {isRegenerating ? (
+              <>
+                <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />
+                Génération...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-3 h-3 mr-1.5" />
+                Générer +3 titres
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {!canRegenerate && titles.length === 6 && (
         <p className="text-xs text-muted-foreground text-center px-4">
-          {titles.length === 3 ? 
-            "Vous pouvez générer 3 titres supplémentaires si nécessaire" :
-            `${titles.length} titre${titles.length > 1 ? 's' : ''} disponible${titles.length > 1 ? 's' : ''}`
-          }
+          ✨ 6 titres disponibles
         </p>
       )}
     </div>
