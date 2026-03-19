@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' && componentTagger(),
     // PWA temporairement désactivé pour stabiliser l'application
     // Sera réactivé une fois la stabilité confirmée
-    ...(false ? [VitePWA({
+    VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
       strategies: 'generateSW',
@@ -63,7 +63,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+                maxAgeSeconds: 60 * 60 * 24 * 365
               }
             }
           },
@@ -74,13 +74,13 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'supabase-storage-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // <== 30 days
+                maxAgeSeconds: 60 * 60 * 24 * 30
               }
             }
           }
         ]
       }
-    })] : []),
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -93,14 +93,31 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        // 🚀 PHASE 5: BUILD MONOLITHIQUE COMPLET (zéro code splitting)
-        // Désactive complètement le chunking pour garantir un ordre de chargement fiable sur mobile
-        manualChunks: undefined, // ❌ PAS de chunking du tout - un seul bundle
+        // 🚀 PHASE 5: OPTIMISATION PERFORMANCE (Code Splitting)
+        // Séparation intelligente des chunks pour optimiser le cache et le temps de chargement
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor-react';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            if (id.includes('@radix-ui') || id.includes('framer-motion')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('supabase')) {
+              return 'vendor-supabase';
+            }
+            return 'vendor'; // Tous les autres modules tiers
+          }
+        },
         
         // Optimisation des noms de fichiers pour le cache
         chunkFileNames: 'assets/[name].[hash].js',
+        entryFileNames: 'assets/[name].[hash].js',
         
-        // Séparation des assets uniquement
+        // Séparation des assets
         assetFileNames: (assetInfo) => {
           const name = assetInfo.name || '';
           if (name.endsWith('.css')) {
@@ -118,18 +135,18 @@ export default defineConfig(({ mode }) => ({
       // Optimisation des imports externes
       external: [],
     },
-    chunkSizeWarningLimit: 5000, // Limite plus élevée pour le bundle monolithique
+    chunkSizeWarningLimit: 2000, // Limite ajustée pour le code splitting
     target: 'es2020',
     minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: false,
         drop_debugger: true,
-        passes: 1, // Une seule passe pour build plus stable
-        pure_funcs: ['console.log', 'console.debug', 'console.info'], // Supprime les logs verbeux, garde console.error/warn
+        passes: 2, // Deux passes pour une meilleure compression
+        pure_funcs: ['console.log', 'console.debug', 'console.info'], 
       },
       format: {
-        comments: false // Enlever tous les commentaires
+        comments: false
       }
     },
     // Optimisations supplémentaires

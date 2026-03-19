@@ -26,339 +26,49 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
     
     <link href="./src/index.css" rel="stylesheet">
-    
-    <style>
-      /* Emergency Loader - Visible par défaut, supprimé par React */
-      #emergency-loader {
+        <style>
+      /* Simple & Elegant Production Loader */
+      #root-loader {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100vh;
+        inset: 0;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 50%, #F1FAEE 100%);
+        background: linear-gradient(180deg, #D6EAF8 0%, #C9E4DE 100%);
         z-index: 9999;
-        font-family: system-ui, -apple-system, sans-serif;
+        transition: opacity 0.5s ease;
       }
-      
-      #emergency-content {
-        text-align: center;
-        color: #457B9D;
+      .loader-dots {
+        display: flex;
+        gap: 8px;
+        margin-top: 20px;
       }
-      
-      .emergency-spinner {
-        width: 48px;
-        height: 48px;
-        border: 4px solid #A8DADC;
-        border-top-color: #457B9D;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 1rem;
-      }
-      
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-      
-      .emergency-error {
-        display: none;
-        color: #FF6B6B;
-        margin-top: 1rem;
-      }
-      
-      .emergency-btn {
-        margin-top: 1rem;
-        padding: 0.75rem 1.5rem;
+      .dot {
+        width: 10px;
+        height: 10px;
         background: #457B9D;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 1rem;
-        cursor: pointer;
-        font-family: inherit;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite ease-in-out;
       }
-      
-      .emergency-btn:hover {
-        background: #3a6a8a;
-      }
-      
-      .emergency-btn-secondary {
-        margin-top: 0.5rem;
-        padding: 0.75rem 1.5rem;
-        background: #B7E4C7;
-        color: #2d3748;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        cursor: pointer;
-        font-family: inherit;
-      }
-      
-      .emergency-btn-secondary:hover {
-        background: #95d5b2;
-      }
-      
-      .emergency-info {
-        font-size: 0.8rem;
-        margin-top: 1rem;
-        opacity: 0.7;
-        padding: 0.5rem;
-        background: rgba(255,255,255,0.3);
-        border-radius: 4px;
+      .dot:nth-child(2) { animation-delay: 0.2s; }
+      .dot:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes pulse {
+        0%, 100% { transform: scale(0.8); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 1; }
       }
     </style>
     
     <script>
-      (function(){
-        // 🚀 PHASE 3: DETECTION PREVIEW MODE ULTRA-PRECOCE
-        var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-        var inIframe = false;
-        try { 
-          inIframe = window.self !== window.top; 
-        } catch(e) { 
-          inIframe = true; 
-        }
-        
-        var isPreviewMode = isMobile && inIframe;
-        window.__CALMI_PREVIEW_MODE = isPreviewMode;
-        window.__CALMI_FAST_BOOT = isPreviewMode;
-        
-        if (isPreviewMode) {
-          console.log('🚀 [Boot] PREVIEW MODE - Ultra-tolérant activé');
-        } else {
-          console.log('🖥️ [Boot] STANDARD MODE');
-        }
-        
-        // SAFE STORAGE WRAPPER - Phase 1
-        function safeLocalStorageGet(key) {
-          if (isPreviewMode) return null; // Pas de localStorage en preview
-          try {
-            return localStorage.getItem(key);
-          } catch(e) {
-            return null;
-          }
-        }
-        
-        function safeLocalStorageSet(key, value) {
-          if (isPreviewMode) return false; // Pas de localStorage en preview
-          try {
-            localStorage.setItem(key, value);
-            return true;
-          } catch(e) {
-            return false;
-          }
-        }
-        
-        // BUILD ID pour tracking de version
-        var bootLogs = []; // PHASE 6: Capturer tous les logs de boot
-        
-        function logBoot(msg) {
-          var now = Date.now();
-          var entry = { t: now, msg: msg };
-          bootLogs.push(entry);
-          console.log('[Boot] ' + msg);
-        }
-        
-        logBoot('Début initialisation HTML');
-        
-        // 🔍 PHASE 1: DIAGNOSTIC MASSIF - User Agent complet
-        logBoot('User Agent: ' + navigator.userAgent);
-        logBoot('Screen: ' + window.innerWidth + 'x' + window.innerHeight);
-        logBoot('Touch: ' + ('ontouchstart' in window));
-        logBoot('MaxTouchPoints: ' + (navigator.maxTouchPoints || 0));
-        logBoot('isMobile détecté: ' + isMobile);
-        logBoot('inIframe détecté: ' + inIframe);
-        logBoot('isPreviewMode: ' + isPreviewMode);
-        
-        try {
-          var BUILD_ID = 'BUILD_' + Date.now();
-          if (!isPreviewMode) {
-            safeLocalStorageSet('calmi_build_id', BUILD_ID);
-          }
-          logBoot('BUILD_ID: ' + BUILD_ID);
-        } catch(e) {
-          logBoot('BUILD_ID failed: ' + e.message);
-        }
-        
-        // Exposer les logs globalement pour l'UI d'urgence
-        window.__CALMI_BOOT_LOGS = bootLogs;
-        
-        logBoot('Configuration storage terminée');
-        
-        // PHASE 3: Tracker les scripts qui se chargent
-        var scriptsLoading = [];
-        try {
-          var observer = new PerformanceObserver(function(list) {
-            list.getEntries().forEach(function(entry) {
-              if (entry.initiatorType === 'script') {
-                scriptsLoading.push({
-                  name: entry.name.split('/').pop(),
-                  duration: Math.round(entry.duration)
-                });
-              }
-            });
-          });
-          observer.observe({ entryTypes: ['resource'] });
-          logBoot('PerformanceObserver activé');
-        } catch(e) {
-          logBoot('PerformanceObserver non disponible: ' + e.message);
-        }
-        
-        // Early error logging
-        logBoot('Configuration error handlers');
-        
-        // 🔍 PHASE 1: Intercepter les erreurs de chargement de scripts
-        window.addEventListener('error', function(e){
-          if (e.target && e.target.tagName === 'SCRIPT') {
-            var scriptError = '[SCRIPT FAILED] ' + (e.target.src || '(inline)');
-            console.error(scriptError);
-            logBoot(scriptError);
-          }
-          
-          var msg = '[Error] ' + e.message + ' at ' + e.filename + ':' + e.lineno;
-          console.error(msg);
-          logBoot(msg);
-          
-          if (!isPreviewMode) {
-            try {
-              var logs = JSON.parse(safeLocalStorageGet('calmi_early_errors') || '[]');
-              logs.push({t:Date.now(),m:e.message,f:e.filename,l:e.lineno});
-              if (logs.length > 10) logs = logs.slice(-10);
-              safeLocalStorageSet('calmi_early_errors',JSON.stringify(logs));
-            } catch(err){}
-          }
-        });
-        
-        window.addEventListener('unhandledrejection', function(e){
-          var msg = '[Promise Rejection] ' + (e.reason?.message || e.reason);
-          console.error(msg);
-          logBoot(msg);
-          
-          if (!isPreviewMode) {
-            try {
-              var logs = JSON.parse(safeLocalStorageGet('calmi_early_errors') || '[]');
-              logs.push({t:Date.now(),m:'Unhandled Promise: '+(e.reason?.message||e.reason)});
-              if (logs.length > 10) logs = logs.slice(-10);
-              safeLocalStorageSet('calmi_early_errors',JSON.stringify(logs));
-            } catch(err){}
-          }
-        });
-        
-        // Marquer boot OK quand le DOM est complètement chargé
-        window.addEventListener('load', function(){
-          logBoot('DOM complètement chargé');
-          console.log('✅ [Boot] DOM loaded - boot OK');
-          if (!isPreviewMode) {
-            safeLocalStorageSet('calmi_boot_ok', 'true');
-          }
-        });
-        
-        // PHASE 4: TIMEOUT D'URGENCE ADAPTATIF
-        // - 30s pour tout le monde (mobile, desktop, preview)
-        var timeoutDuration = 30000;
-        var bootStartTime = Date.now();
-        
-        logBoot('Configuration timeout: ' + (timeoutDuration/1000) + 's');
-        console.log('[Boot] Emergency timeout configuré:', timeoutDuration/1000 + 's', isPreviewMode ? '(Mobile Preview)' : '(Desktop)');
-        
-        // 🔍 PHASE 1: Vérifier état de React/ReactDOM toutes les 500ms
-        var reactCheckInterval = setInterval(function() {
-          var reactStatus = typeof window.React !== 'undefined';
-          var reactDOMStatus = typeof window.ReactDOM !== 'undefined';
-          
-          if (reactStatus || reactDOMStatus) {
-            logBoot('✅ React détecté: React=' + reactStatus + ', ReactDOM=' + reactDOMStatus);
-            if (reactStatus && window.React.version) {
-              logBoot('React version: ' + window.React.version);
-            }
-            clearInterval(reactCheckInterval);
-          }
-        }, 500);
-        
-        setTimeout(function(){
-          var loader = document.getElementById('emergency-loader');
-          if (loader && loader.style.display !== 'none') {
-            var elapsed = Math.round((Date.now() - bootStartTime) / 1000);
-            logBoot('TIMEOUT atteint après ' + elapsed + 's');
-            console.error('❌ [Emergency] React n\'a pas monté dans les ' + elapsed + ' secondes');
-            
-            // Afficher message d'erreur avec diagnostic
-            var spinner = document.querySelector('.emergency-spinner');
-            var errorDiv = document.querySelector('.emergency-error');
-            
-            if (spinner) spinner.style.display = 'none';
-            if (errorDiv) {
-              errorDiv.style.display = 'block';
-              
-              // 🔍 PHASE 1: Corriger le mode affiché
-              var modeInfo = isMobile ? (inIframe ? 'Mobile Preview' : 'Mobile Production') : 'Desktop';
-              var hasDemo = window.location.search.indexOf('demo=1') === -1;
-              
-              // 🔍 PHASE 1: Arrêter l'interval de check React
-              clearInterval(reactCheckInterval);
-              
-              // PHASE 6: Afficher les derniers logs
-              var lastLogs = bootLogs.slice(-10);
-              var logsHtml = '<div style="margin-top:1rem;padding:0.75rem;background:rgba(0,0,0,0.1);border-radius:4px;font-size:0.75rem;text-align:left;max-height:150px;overflow-y:auto;">';
-              logsHtml += '<strong>Derniers logs:</strong><br>';
-              lastLogs.forEach(function(log){
-                logsHtml += '• ' + log.msg + '<br>';
-              });
-              logsHtml += '</div>';
-              
-              // PHASE 3: Afficher les scripts chargés
-              if (scriptsLoading.length > 0) {
-                logsHtml += '<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(255,165,0,0.1);border-radius:4px;font-size:0.7rem;">';
-                logsHtml += '<strong>Scripts chargés (' + scriptsLoading.length + '):</strong><br>';
-                var lastScripts = scriptsLoading.slice(-5);
-                lastScripts.forEach(function(s){
-                  logsHtml += '• ' + s.name + ' (' + s.duration + 'ms)<br>';
-                });
-                logsHtml += '</div>';
-              }
-              
-              // 🔍 PHASE 1: Lister TOUS les scripts du DOM
-              var allScripts = document.querySelectorAll('script');
-              logsHtml += '<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(100,100,255,0.1);border-radius:4px;font-size:0.7rem;">';
-              logsHtml += '<strong>Scripts dans le DOM (' + allScripts.length + '):</strong><br>';
-              for (var i = 0; i < allScripts.length; i++) {
-                var scriptSrc = allScripts[i].src || '(inline)';
-                var scriptName = scriptSrc.split('/').pop() || '(inline-' + i + ')';
-                logsHtml += '• ' + scriptName + '<br>';
-              }
-              logsHtml += '</div>';
-              
-              // 🔍 PHASE 1: État de React au timeout
-              var reactStatusAtTimeout = typeof window.React !== 'undefined';
-              var reactDOMStatusAtTimeout = typeof window.ReactDOM !== 'undefined';
-              logsHtml += '<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(255,0,0,0.1);border-radius:4px;font-size:0.7rem;">';
-              logsHtml += '<strong>État au timeout:</strong><br>';
-              logsHtml += '• window.React: ' + reactStatusAtTimeout + '<br>';
-              logsHtml += '• window.ReactDOM: ' + reactDOMStatusAtTimeout + '<br>';
-              if (reactStatusAtTimeout && window.React.version) {
-                logsHtml += '• React.version: ' + window.React.version + '<br>';
-              }
-              logsHtml += '</div>';
-              
-              errorDiv.innerHTML = '<p><strong>🔍 Diagnostic de chargement</strong></p>' +
-                '<p style="font-size:0.9rem;margin-top:0.5rem;">L\'application ne répond pas.</p>' +
-                '<div class="emergency-info">Mode: ' + modeInfo + ' | Temps écoulé: ' + elapsed + 's</div>' +
-                logsHtml +
-                '<button class="emergency-btn" onclick="window.location.href=\'/?force-clean=1\'">Forcer le rechargement</button>' +
-                '<button class="emergency-btn-secondary" onclick="window.location.href=\'/?safe-mode=1\'">🛡️ Mode sans thème</button>' +
-                (hasDemo ? '<button class="emergency-btn-secondary" onclick="window.location.href=\'/?demo=1\'">🎭 Mode démo</button>' : '');
-            }
-          }
-        }, timeoutDuration);
+      (function() {
+        // Essential Environment Detection
+        window.__CALMI_PREVIEW_MODE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) && (window.self !== window.top);
+        window.__CALMI_BOOT_LOGS = [];
+        console.log('🚀 [Calmi] Booting in ' + (window.__CALMI_PREVIEW_MODE ? 'Preview' : 'Standard') + ' mode');
       })();
     </script>
     
-  
-  
-  
-  <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:card" content="summary_large_image">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Calmi">
   <meta name="twitter:title" content="Calmi">
@@ -366,31 +76,18 @@
   <meta name="twitter:description" content="Calmi - Histoires personnalisées pour enfants">
 </head>
   <body>
-    <!-- PHASE 2: Emergency Loader - Visible par défaut -->
-    <div id="emergency-loader">
-      <div id="emergency-content">
-        <div class="emergency-spinner"></div>
-        <div style="font-size:1.2rem;font-weight:500;">Chargement de Calmi...</div>
-        <div style="font-size:0.9rem;margin-top:0.5rem;opacity:0.8;">✨ Préparation de vos histoires</div>
-        <div class="emergency-error"></div>
+    <!-- Clean Production Loader -->
+    <div id="root-loader">
+      <div style="font-size: 1.5rem; font-weight: 600; color: #457B9D; margin-bottom: 8px;">Calmi</div>
+      <div style="font-size: 0.9rem; color: #457B9D; opacity: 0.8;">Chargement de vos histoires...</div>
+      <div class="loader-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
       </div>
     </div>
     
     <div id="root"></div>
-    <div id="calmi-boot-stamp" style="display:none;"></div>
-    <script>
-      // Injecter BUILD_ID dans le DOM pour recovery.js
-      (function(){
-        var stamp = document.getElementById('calmi-boot-stamp');
-        try {
-          var buildId = localStorage.getItem('calmi_build_id') || 'UNKNOWN';
-          if (stamp) stamp.textContent = buildId;
-          console.log('[Boot] Stage: DOM Ready, BUILD_ID:', buildId);
-        } catch(e) {
-          if (stamp) stamp.textContent = 'UNKNOWN';
-        }
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

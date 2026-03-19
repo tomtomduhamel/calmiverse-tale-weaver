@@ -199,18 +199,21 @@ class AdvancedErrorMonitor {
 
   private async sendToErrorService(error: any, context: ErrorContext) {
     if (import.meta.env.PROD) {
-      // In production, you would integrate with services like:
-      // - Sentry
-      // - LogRocket
-      // - Bugsnag
-      // - Custom error endpoint
-      
       try {
-        // Placeholder for error service integration
-        await this.sendToCustomEndpoint(error, context);
+        const Sentry = await import('@sentry/react');
+        Sentry.captureException(error, {
+          extra: {
+            ...context,
+            metrics: this.getMetricsSummary()
+          },
+          tags: {
+            component: context.component || 'advanced-monitor',
+            build: context.buildVersion
+          }
+        });
       } catch (e) {
         // Don't throw errors from error reporting
-        console.warn('Failed to send error to monitoring service:', e);
+        console.warn('Failed to send error to Sentry:', e);
       }
     }
   }

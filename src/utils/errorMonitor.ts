@@ -47,8 +47,20 @@ class ProductionErrorMonitor {
     // Store in localStorage for persistence
     this.persistErrors();
 
-    // In a real implementation, you would send to error tracking service:
-    // await this.sendToErrorService(errorReport);
+    // Envoi à Sentry en production pour les erreurs critiques
+    if (import.meta.env.PROD && level === 'error') {
+      import('@sentry/react').then(Sentry => {
+        Sentry.captureException(error, {
+          extra: context,
+          level: 'error',
+          tags: {
+            component: context?.component || 'unknown'
+          }
+        });
+      }).catch(err => {
+        console.warn('[ErrorMonitor] Échec du chargement dynamique de Sentry:', err);
+      });
+    }
   }
 
   private persistErrors() {
