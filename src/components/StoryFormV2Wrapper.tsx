@@ -27,10 +27,10 @@ const StoryFormV2Wrapper: React.FC<StoryFormV2WrapperProps> = ({
   
   // Objectifs par défaut si le chargement échoue
   const defaultObjectives = [
-    { id: "sleep", label: "Aider à s'endormir", value: "sleep" },
-    { id: "focus", label: "Se concentrer", value: "focus" },
-    { id: "relax", label: "Se relaxer", value: "relax" },
-    { id: "fun", label: "S'amuser", value: "fun" },
+    { id: "sleep", label: "s'endormir", value: "sleep" },
+    { id: "focus", label: "se concentrer", value: "focus" },
+    { id: "relax", label: "se détendre", value: "relax" },
+    { id: "fun", label: "s'amuser", value: "fun" },
   ];
 
   // Afficher un indicateur de chargement pendant le chargement des objectifs

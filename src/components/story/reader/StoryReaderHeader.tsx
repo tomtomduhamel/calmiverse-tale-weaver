@@ -1,10 +1,21 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Pause, ArrowDown, Info, Moon, Sun } from "lucide-react";
+import { ArrowLeft, Play, Pause, ArrowDown, Info, Moon, Sun, Trash2 } from "lucide-react";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { FavoriteReaderButton } from "./FavoriteReaderButton";
 import { ShareStoryButton } from "./ShareStoryButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { Story } from "@/types/story";
 interface StoryReaderHeaderProps {
   story: Story;
@@ -19,6 +30,8 @@ interface StoryReaderHeaderProps {
   isManuallyPaused?: boolean;
   onToggleAutoScroll?: () => void;
   setShowSummary?: (show: boolean) => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 }
 export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
   story,
@@ -31,7 +44,9 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
   isPaused = false,
   isManuallyPaused = false,
   onToggleAutoScroll,
-  setShowSummary
+  setShowSummary,
+  onDelete,
+  isDeleting = false
 }) => {
   const readingTime = calculateReadingTime(story.content);
   const handleToggleFavorite = () => {
@@ -88,6 +103,40 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
           
           {/* Bouton partage */}
           <ShareStoryButton storyId={story.id} title={story.title} isDarkMode={isDarkMode} />
+
+          {/* Bouton suppression */}
+          {onDelete && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  disabled={isDeleting}
+                  aria-label="Supprimer l'histoire"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer cette histoire ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action est irréversible. L'histoire "{story.title}" sera définitivement supprimée de votre bibliothèque.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={onDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isDeleting ? "Suppression..." : "Supprimer"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
     </header>;

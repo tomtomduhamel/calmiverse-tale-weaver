@@ -1,3 +1,9 @@
+# Environment variables (contient des clés sensibles)
+.env
+.env.local
+.env.production
+.env.staging
+
 # Logs
 logs
 *.log

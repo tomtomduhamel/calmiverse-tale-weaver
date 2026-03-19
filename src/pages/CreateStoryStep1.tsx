@@ -3,6 +3,7 @@ import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseChildren } from "@/hooks/useSupabaseChildren";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import MagicStoryCreator from "@/components/story/steps/MagicStoryCreator";
+import FastStoryCreator from "@/components/story/fast/FastStoryCreator";
 import LoadingWithTimeout from "@/components/ui/LoadingWithTimeout";
 import CreationModeToggle from "@/components/story/chat/CreationModeToggle";
 import ChatStoryCreator from "@/components/story/chat/ChatStoryCreator";
@@ -56,8 +57,9 @@ const CreateStoryStep1: React.FC = () => {
   }, [handleModeChange]);
 
   // ÉTAT VIDE : chargement terminé sans erreur mais aucun profil n'existe
+  // (sauf si on est en mode 'fast' — pas besoin de profils)
   const loadingDone = !authLoading && !childrenLoading && !childrenTimeout && user;
-  if (loadingDone && children.length === 0) {
+  if (loadingDone && children.length === 0 && creationMode !== 'fast') {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
         <div className="max-w-md w-full text-center space-y-6">
@@ -100,9 +102,9 @@ const CreateStoryStep1: React.FC = () => {
     );
   }
 
-  const shouldShowLoading = isLoading && children.length === 0;
-  const shouldShowTimeout = hasTimedOut && children.length === 0;
-  const shouldShowError = !!(errorMessage && children.length === 0);
+  const shouldShowLoading = isLoading && children.length === 0 && creationMode !== 'fast';
+  const shouldShowTimeout = hasTimedOut && children.length === 0 && creationMode !== 'fast';
+  const shouldShowError = !!(errorMessage && children.length === 0 && creationMode !== 'fast');
 
   if (shouldShowLoading || shouldShowTimeout || shouldShowError) {
 
@@ -135,6 +137,8 @@ const CreateStoryStep1: React.FC = () => {
           childrenList={children}
           preSelectedChildId={preSelectedChildId}
         />
+      ) : creationMode === 'fast' ? (
+        <FastStoryCreator />
       ) : (
         <ChatStoryCreator
           children={children}
@@ -145,4 +149,4 @@ const CreateStoryStep1: React.FC = () => {
   );
 };
 
-export default CreateStoryStep1;
+export default CreateStoryStep1;

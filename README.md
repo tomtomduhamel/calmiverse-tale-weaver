@@ -1,11 +1,11 @@
 
-# Calmiverse
+# Calmi
 
 Progressive Web App (PWA) de génération d'histoires personnalisées pour enfants avec intelligence artificielle.
 
 ## À propos du projet
 
-Calmiverse est une plateforme complète qui permet aux parents de créer des histoires personnalisées pour leurs enfants en utilisant l'IA, avec système d'abonnements, génération audio, et bibliothèque avancée.
+Calmi est une plateforme complète qui permet aux parents de créer des histoires personnalisées pour leurs enfants en utilisant l'IA, avec système d'abonnements, génération audio, et bibliothèque avancée.
 
 ## URL du projet
 

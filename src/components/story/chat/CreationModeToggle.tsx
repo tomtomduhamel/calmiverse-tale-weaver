@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListChecks, MessageCircle } from 'lucide-react';
+import { ListChecks, MessageCircle, Zap } from 'lucide-react';
 import type { CreationMode } from '@/types/chatbot';
 
 interface CreationModeToggleProps {
@@ -26,7 +26,23 @@ const CreationModeToggle: React.FC<CreationModeToggleProps> = ({ mode, onModeCha
           <ListChecks className="h-4 w-4" />
           <span>Mode guidé</span>
         </button>
-        
+
+        <button
+          type="button"
+          onClick={() => onModeChange('fast')}
+          className={`
+            flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+            transition-all duration-200
+            ${mode === 'fast'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+            }
+          `}
+        >
+          <Zap className="h-4 w-4" />
+          <span>Histoires rapides</span>
+        </button>
+
         <button
           type="button"
           onClick={() => onModeChange('chat')}
@@ -48,3 +64,4 @@ const CreationModeToggle: React.FC<CreationModeToggleProps> = ({ mode, onModeCha
 };
 
 export default CreationModeToggle;
+

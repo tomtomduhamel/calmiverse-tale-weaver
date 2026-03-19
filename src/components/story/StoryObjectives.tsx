@@ -20,10 +20,10 @@ interface StoryObjectivesProps {
 }
 
 const defaultObjectives: ObjectiveOption[] = [
-  { id: "sleep", label: "Aider à s'endormir", value: "sleep", icon: <Moon className="h-5 w-5" /> },
-  { id: "focus", label: "Se concentrer", value: "focus", icon: <Brain className="h-5 w-5" /> },
-  { id: "relax", label: "Se détendre", value: "relax", icon: <Heart className="h-5 w-5" /> }, 
-  { id: "fun", label: "S'amuser", value: "fun", icon: <Sparkles className="h-5 w-5" /> }
+  { id: "sleep", label: "s'endormir", value: "sleep", icon: <Moon className="h-5 w-5" /> },
+  { id: "focus", label: "se concentrer", value: "focus", icon: <Brain className="h-5 w-5" /> },
+  { id: "relax", label: "se détendre", value: "relax", icon: <Heart className="h-5 w-5" /> }, 
+  { id: "fun", label: "s'amuser", value: "fun", icon: <Sparkles className="h-5 w-5" /> }
 ];
 
 const StoryObjectives: React.FC<StoryObjectivesProps> = ({

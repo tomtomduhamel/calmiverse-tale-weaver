@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { STORY_OBJECTIVES } from "@/utils/objectiveUtils";
+import { STORY_OBJECTIVES, FAST_STORY_OBJECTIVE } from "@/utils/objectiveUtils";
 import { BookOpen, Book, BookOpenCheck, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -28,15 +29,17 @@ const PillFilters: React.FC<PillFiltersProps> = ({
   className,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const allOptions = [
     { id: 'all', label: 'Tout', value: null, icon: BookOpen },
     ...STORY_OBJECTIVES.map(obj => ({
       id: obj.id,
-      label: obj.label.split(' ').slice(-1)[0],
+      label: obj.label,
       value: obj.value,
       icon: obj.icon,
-    }))
+    })),
+    { id: FAST_STORY_OBJECTIVE.id, label: 'rapides', value: FAST_STORY_OBJECTIVE.value, icon: FAST_STORY_OBJECTIVE.icon },
   ];
 
   // Scroll active filter into view on mount
@@ -58,14 +61,20 @@ const PillFilters: React.FC<PillFiltersProps> = ({
       <div 
         ref={scrollRef}
         className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
-        style={{ 
-          // Calculate full viewport width minus scrollbar
+        style={isMobile ? { 
+          // Calculate full viewport width minus scrollbar (Mobile only)
           width: '100vw',
           // Position to start from left edge of viewport
           marginLeft: 'calc(-50vw + 50%)',
           // Add internal padding for content
           paddingLeft: 'max(1rem, calc(50vw - 50% + 0.25rem))',
           paddingRight: 'max(1rem, calc(50vw - 50% + 0.25rem))',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        } : {
+          // Standard layout for Desktop to prevent side-bar overlap
+          width: '100%',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none'

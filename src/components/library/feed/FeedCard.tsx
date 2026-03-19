@@ -14,6 +14,7 @@ import type { Story } from "@/types/story";
 import { Clock, Share2, BookPlus, Loader2, Heart, Library, BookCheck } from "lucide-react";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 import { calculateReadingTime } from "@/utils/readingTime";
+import { getStoryIdentity } from "@/utils/objectiveUtils";
 import { cn } from "@/lib/utils";
 
 interface FeedCardProps {
@@ -42,6 +43,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
   const storyImageUrl = getStoryImageUrl(story.image_path);
   const readingTime = calculateReadingTime(story.content);
   const timeAgo = formatDistanceToNow(story.createdAt, { addSuffix: false, locale: fr });
+  const storyIdentity = getStoryIdentity(story);
 
   const isSeriesStory = Boolean(story.series_id && story.tome_number);
 
@@ -121,6 +123,20 @@ const FeedCard: React.FC<FeedCardProps> = ({
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-600/90 backdrop-blur-sm text-white text-xs font-medium shadow-lg border border-indigo-400/20">
               <Library className="h-3 w-3" />
               <span>Série {story.series?.total_tomes ? `• ${story.series.total_tomes} tomes` : ''}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Identity badge */}
+        {storyIdentity && (
+          <div className="absolute top-3 right-3 z-10">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md text-white text-[10px] sm:text-xs font-medium shadow-sm border border-white/10">
+              {storyIdentity.iconType === 'lucide' ? (
+                <storyIdentity.icon className="h-3 w-3" />
+              ) : (
+                <span className="text-xs">{storyIdentity.icon}</span>
+              )}
+              <span className="">{storyIdentity.label}</span>
             </div>
           </div>
         )}

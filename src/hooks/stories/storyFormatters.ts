@@ -29,6 +29,7 @@ export const formatStoryFromSupabase = (story: any): Story => {
     story_analysis: story.story_analysis,
     image_path: story.image_path || null,
     video_path: story.video_path || null,
+    settings: story.settings || undefined,
     // Champs pour les séries - CORRECTION MAJEURE
     series_id: story.series_id || null,
     tome_number: story.tome_number || null,

@@ -18,7 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { STORY_OBJECTIVES } from "@/utils/objectiveUtils";
+import { STORY_OBJECTIVES, FAST_STORY_OBJECTIVE } from "@/utils/objectiveUtils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MobileFiltersProps {
@@ -144,7 +144,7 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
                 </Tooltip>
               </TooltipProvider>
               
-              {STORY_OBJECTIVES.map((objective) => {
+              {[...STORY_OBJECTIVES, FAST_STORY_OBJECTIVE].map((objective) => {
                 const IconComponent = objective.icon;
                 const isActive = selectedObjective === objective.value;
                 

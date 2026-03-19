@@ -1,5 +1,5 @@
-
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { useStoryDeletion } from '@/hooks/stories/useStoryDeletion';
 import type { Story } from '@/types/story';
 
 interface UseStoryReaderActionsProps {
@@ -21,6 +21,8 @@ export const useStoryReaderActions = ({
   onToggleFavorite,
   stopAutoScroll
 }: UseStoryReaderActionsProps) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { deleteStory } = useStoryDeletion();
   
   // Gestion de la fermeture
   const handleBack = useCallback(() => {
@@ -56,8 +58,30 @@ export const useStoryReaderActions = ({
     }
   }, [onToggleFavorite, story, setStory, setIsUpdatingFavorite]);
 
+  // Gestion de la suppression
+  const handleDelete = useCallback(async () => {
+    if (!story || isDeleting) return;
+    
+    console.log("[StoryReaderActions] DEBUG: Suppression demandée pour:", story.id);
+    
+    setIsDeleting(true);
+    try {
+      const success = await deleteStory(story.id);
+      if (success) {
+        console.log("[StoryReaderActions] SUCCESS: Histoire supprimée, retour arrière");
+        handleBack(); // Retour à la bibliothèque
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'histoire:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [story, deleteStory, isDeleting, handleBack]);
+
   return {
     handleBack,
-    handleToggleFavorite
+    handleToggleFavorite,
+    handleDelete,
+    isDeleting
   };
 };

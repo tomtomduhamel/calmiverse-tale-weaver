@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { STORY_OBJECTIVES } from "@/utils/objectiveUtils";
+import { STORY_OBJECTIVES, FAST_STORY_OBJECTIVE } from "@/utils/objectiveUtils";
 import { cn } from "@/lib/utils";
 
 interface ObjectiveFilterProps {
@@ -23,11 +23,13 @@ const ObjectiveFilter: React.FC<ObjectiveFilterProps> = ({
     }
   };
 
+  const allObjectives = [...STORY_OBJECTIVES, FAST_STORY_OBJECTIVE];
+
   return (
     <div className="flex items-center gap-2">
       <span className="text-sm font-medium text-muted-foreground">Objectifs:</span>
       <div className="flex gap-1">
-        {STORY_OBJECTIVES.map((objective) => {
+        {allObjectives.map((objective) => {
           const IconComponent = objective.icon;
           const isSelected = selectedObjective === objective.value;
           

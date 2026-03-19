@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, FileText, Volume2, MessageSquare, Users } from 'lucide-react';
+import { Shield, FileText, Volume2, MessageSquare, Users, Music } from 'lucide-react';
 import { useIsAdmin } from '@/hooks/auth/useIsAdmin';
 
 export const AdminLinksSection = () => {
@@ -34,6 +34,13 @@ export const AdminLinksSection = () => {
       icon: Volume2,
       path: '/admin/tts-config',
       color: 'text-purple-500'
+    },
+    {
+      title: 'Musiques de fond',
+      description: 'Uploader et gérer les musiques d\'ambiance',
+      icon: Music,
+      path: '/admin/sounds',
+      color: 'text-pink-500'
     },
     {
       title: 'Feedback Utilisateurs',

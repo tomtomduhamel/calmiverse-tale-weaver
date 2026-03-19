@@ -47,6 +47,7 @@ const QuickStartPage = lazy(() => import("@/pages/support/QuickStartPage").then(
 const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })));
 const TestConnection = lazy(() => import("./pages/TestConnection"));
 const StoryIngredients = lazy(() => import("./pages/admin/StoryIngredients"));
+const SoundAdmin = lazy(() => import("./pages/admin/SoundAdmin"));
 const DiagnosticConnection = lazy(() => import("./pages/DiagnosticConnection"));
 const BetaPending = lazy(() => import("./pages/BetaPending"));
 const VipAccess = lazy(() => import("./pages/VipAccess"));
@@ -222,6 +223,7 @@ function App() {
                   <Route path="admin/feedback" element={<AdminGuard><AdminFeedback /></AdminGuard>} />
                   <Route path="admin/beta-testers" element={<AdminGuard><BetaTestersAdmin /></AdminGuard>} />
                   <Route path="admin/story-ingredients" element={<AdminGuard><StoryIngredients /></AdminGuard>} />
+                  <Route path="admin/sounds" element={<AdminGuard><SoundAdmin /></AdminGuard>} />
                 </Route>
 
                 {/* Route de fallback */}

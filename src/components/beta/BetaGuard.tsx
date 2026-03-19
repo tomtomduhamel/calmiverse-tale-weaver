@@ -31,23 +31,17 @@ const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
 
     // Non connecté → page de connexion
     if (!user) {
-      console.log('[BetaGuard] User not authenticated, redirecting to /auth');
       navigate('/auth', { replace: true });
       return;
     }
 
     // Statut bloquant EXPLICITE uniquement
     if (betaInfo && (isPending || isRejected || isExpired)) {
-      console.log('[BetaGuard] Blocking status:', betaInfo.status, '→ /beta-pending');
       navigate('/beta-pending', { replace: true });
       return;
     }
 
     // Accès accordé (status=active, ou pas d'entrée = admin/legacy/erreur query)
-    console.log('[BetaGuard] Access granted', {
-      hasBetaInfo: !!betaInfo,
-      status: betaInfo?.status ?? 'no-record',
-    });
   }, [user, betaInfo, isPending, isRejected, isExpired, authLoading, betaLoading, navigate]);
 
   // Loader pendant vérification

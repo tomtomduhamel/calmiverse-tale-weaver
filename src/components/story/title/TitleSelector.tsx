@@ -107,7 +107,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
                 />
               </div>
               <span className="text-[10px] text-muted-foreground font-medium shrink-0">
-                {Math.max(0, (storyQuota?.limit || 0) - (storyQuota?.used || 0))}/{storyQuota?.limit || 0}
+                {storyQuota?.used || 0}/{storyQuota?.limit || 0}
               </span>
             </div>
 
@@ -127,7 +127,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
                     />
                   </div>
                   <span className="text-[10px] text-muted-foreground font-medium shrink-0">
-                    {Math.max(0, (videoQuota?.limit || 0) - (videoQuota?.used || 0))}/{videoQuota?.limit || 0}
+                    {videoQuota?.used || 0}/{videoQuota?.limit || 0}
                   </span>
                 </>
               ) : (

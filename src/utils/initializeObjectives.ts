@@ -3,10 +3,10 @@ import { useToast } from "@/hooks/use-toast";
 
 // Objectifs prédéfinis pour les histoires
 const DEFAULT_OBJECTIVES = [
-  { id: "sleep", label: "Aider à s'endormir", value: "sleep" },
-  { id: "focus", label: "Se concentrer", value: "focus" },
-  { id: "relax", label: "Se détendre", value: "relax" },
-  { id: "fun", label: "S'amuser", value: "fun" }
+  { id: "sleep", label: "s'endormir", value: "sleep" },
+  { id: "focus", label: "se concentrer", value: "focus" },
+  { id: "relax", label: "se détendre", value: "relax" },
+  { id: "fun", label: "s'amuser", value: "fun" }
 ];
 
 export const initializeObjectives = () => {

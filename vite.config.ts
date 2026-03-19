@@ -123,9 +123,10 @@ export default defineConfig(({ mode }) => ({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: false, // Garder console pour debug mobile
+        drop_console: false,
         drop_debugger: true,
-        passes: 1 // Une seule passe pour build plus stable
+        passes: 1, // Une seule passe pour build plus stable
+        pure_funcs: ['console.log', 'console.debug', 'console.info'], // Supprime les logs verbeux, garde console.error/warn
       },
       format: {
         comments: false // Enlever tous les commentaires

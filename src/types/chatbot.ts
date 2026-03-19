@@ -69,4 +69,4 @@ export interface ChatbotResponse {
   model_llm?: string;
 }
 
-export type CreationMode = 'guided' | 'chat';
+export type CreationMode = 'guided' | 'chat' | 'fast';

@@ -31,6 +31,7 @@ import {
   HelpCircle, Copy, Check, ChevronLeft, MoreVertical, AlertTriangle,
   FileText, History, Settings,
 } from "lucide-react";
+import { FAST_STORY_PROMPT_CONFIG, FAST_STORY_PROMPT_KEYS } from "@/config/fastStoryConfig";
 
 interface PromptTemplate {
   id: string;
@@ -112,6 +113,68 @@ const ACTIVE_PROMPTS_CONFIG: Record<string, {
     category: 'generation',
     icon: Sparkles,
   },
+  // ─── Histoires rapides ────────────────────────────────────────────────────
+  ...Object.fromEntries(
+    Object.entries(FAST_STORY_PROMPT_CONFIG).map(([key, config]) => [
+      key,
+      {
+        label: config.label,
+        description: config.description,
+        category: 'generation' as const,
+        icon: Zap,
+      }
+    ])
+  ),
+};
+
+const getFastStoryDefaultContent = (key: string, label: string, description: string, section: string) => {
+  const baseInstructions = `
+Rôle : Tu es Assistant Calmi, un conteur d'élite spécialisé dans l'accompagnement émotionnel des enfants.
+
+Objectif : Créer une histoire pour aborder le thème : "${label.replace('⚡ Rapide — ', '')}".
+Description du besoin : ${description}
+
+Technique Narrative et Hypnotique :
+- Schéma narratif : {{narrative_schema}}
+- Mécanisme : {{narrative_mechanism}}
+- Technique Ericksonienne : {{ericksonian_technique}}
+- Pattern linguistique : {{ericksonian_pattern}}
+
+Univers et Immersion :
+- Univers symbolique : {{symbolic_universe}}
+- Description de l'univers : {{symbolic_description}}
+- Style visuel : {{symbolic_visual_style}}
+- Focus sensoriel (VAKOG) : {{vakog_focus}}
+- Mots-clés sensoriels : {{vakog_keywords}}
+
+Contraintes de format :
+- Longueur : Environ {{target_word_count}} mots.
+- Durée de lecture : ~{{duration_minutes}} minutes.
+- Langage adapté à un enfant d'environ 6 ans.
+- Structure fluide avec début, milieu et fin, avec des sauts de ligne pour la lisibilité.
+`;
+
+  if (section === 'regulation') {
+    return `${baseInstructions}
+Instructions spécifiques (Régulation Émotionnelle) :
+1. L'histoire doit aider l'enfant à identifier, accepter et transformer l'émotion difficile.
+2. Utilise des métaphores de libération (ex: nuages qui s'envolent, rivière qui emporte les soucis).
+3. Rythme lent et apaisant. Termine par un sentiment de sécurité profonde.`.trim();
+  }
+
+  if (section === 'renforcement') {
+    return `${baseInstructions}
+Instructions spécifiques (Renforcement de Ressources) :
+1. L'histoire doit mettre en avant la découverte d'une force intérieure ou d'une nouvelle capacité.
+2. Crée un "ancrage" positif que l'enfant pourra mémoriser (un geste, un mot magique, une sensation).
+3. Ton enthousiaste et valorisant. Termine par un sentiment de fierté et de confiance.`.trim();
+  }
+
+  return `${baseInstructions}
+Instructions spécifiques (Situation de Vie) :
+1. L'histoire doit mettre en scène une situation similaire à celle vécue par l'enfant, mais transposée de manière métaphorique.
+2. Propose une résolution créative et positive au défi rencontré.
+3. Aide l'enfant à changer sa perception de la situation. Termine sur une ouverture et une solution concrète imaginaire.`.trim();
 };
 
 const PromptAdmin: React.FC = () => {
@@ -299,7 +362,8 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
 
       const keysToInit = [
         'title_generation_prompt', 'image_generation_prompt', 'video_generation_prompt',
-        'story_prompt_sleep', 'story_prompt_focus', 'story_prompt_relax', 'story_prompt_fun'
+        'story_prompt_sleep', 'story_prompt_focus', 'story_prompt_relax', 'story_prompt_fun',
+        ...FAST_STORY_PROMPT_KEYS
       ];
 
       let initCount = 0;
@@ -313,6 +377,10 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
           if (key === 'title_generation_prompt') initialContent = DEFAULT_TITLE_PROMPT;
           else if (key === 'image_generation_prompt') initialContent = DEFAULT_IMAGE_PROMPT;
           else if (key === 'video_generation_prompt') initialContent = DEFAULT_VIDEO_PROMPT;
+          else if (key.startsWith('fast_story_')) {
+            const fConfig = FAST_STORY_PROMPT_CONFIG[key];
+            initialContent = getFastStoryDefaultContent(key, fConfig?.label || '', fConfig?.description || '', fConfig?.section || '');
+          }
           else initialContent = baseContent || "Génère une histoire pour enfants...";
 
           const { data: templateData, error: templateError } = await supabase

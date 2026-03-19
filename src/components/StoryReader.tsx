@@ -56,7 +56,9 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     // Actions
     handleBack,
     handleToggleFavorite,
-    handleMarkAsRead
+    handleMarkAsRead,
+    handleDelete,
+    isDeleting
   } = useStoryReader({
     story: initialStory,
     onClose,
@@ -85,6 +87,8 @@ const StoryReader: React.FC<StoryReaderProps> = ({
           isManuallyPaused={isManuallyPaused}
           onToggleAutoScroll={toggleAutoScroll}
           setShowSummary={setShowSummary}
+          onDelete={handleDelete}
+          isDeleting={isDeleting}
         />
 
       <StoryReaderContent
