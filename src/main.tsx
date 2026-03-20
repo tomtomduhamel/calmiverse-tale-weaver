@@ -76,12 +76,22 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 );
 
-// Cleanup loader when React mounts
-const rootLoader = document.getElementById('root-loader');
-if (rootLoader) {
-  rootLoader.style.opacity = '0';
-  setTimeout(() => rootLoader.remove(), 500);
-}
+// Cleanup loader when React begins mounting process
+const cleanupLoader = () => {
+  const rootLoader = document.getElementById('root-loader');
+  if (rootLoader) {
+    console.log('✨ [Calmi] Removing root loader');
+    rootLoader.style.opacity = '0';
+    setTimeout(() => {
+      if (rootLoader.parentNode) {
+        rootLoader.remove();
+      }
+    }, 500);
+  }
+};
+
+// CRITICAL: Force removal of loader if it's still there after a small delay
+setTimeout(cleanupLoader, 100);
 
 // CRITICAL: Clear stuck marker AFTER React is mounted (safe storage access)
 clearStuckMarker();
@@ -91,7 +101,9 @@ clearStuckMarker();
 // ============================================================================
 setTimeout(() => {
   const bootEndTime = Date.now();
-  const bootDuration = bootEndTime - (window as any).__CALMI_MAIN_START;
+  const mainStart = (window as any).__CALMI_MAIN_START || (window as any).__CALMI_BOOT_MONITOR?.startTime || Date.now();
+  const bootDuration = bootEndTime - mainStart;
+  
   bootMonitor.log(`React mount completed (${bootDuration}ms)`);
   console.log(`⏱️ [Calmi] React mounted in ${bootDuration}ms`);
 

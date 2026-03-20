@@ -62,9 +62,44 @@
     <script>
       (function() {
         // Essential Environment Detection
+        window.__CALMI_MAIN_START = Date.now();
         window.__CALMI_PREVIEW_MODE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) && (window.self !== window.top);
         window.__CALMI_BOOT_LOGS = [];
         console.log('🚀 [Calmi] Booting in ' + (window.__CALMI_PREVIEW_MODE ? 'Preview' : 'Standard') + ' mode');
+        
+        // Emergency Recovery Mode detection/trigger
+        setTimeout(function() {
+          var loader = document.getElementById('root-loader');
+          if (loader && loader.parentNode) {
+            console.warn('⚠️ [Calmi] Boot timeout detected. Showing emergency recovery link.');
+            var recovery = document.createElement('div');
+            recovery.id = 'emergency-recovery';
+            recovery.innerHTML = '<a href="#" onclick="window.__calmiReset(); return false;" style="color: #457B9D; text-decoration: underline; font-size: 0.8rem; margin-top: 20px; display: block; opacity: 0.8;">L\'application semble bloquée ? Cliquez ici pour réparer</a>';
+            loader.appendChild(recovery);
+          }
+        }, 12000); // 12 seconds before showing recovery link
+
+        window.__calmiReset = function() {
+          if (confirm("Voulez-vous réinitialiser l'application ? Cela peut résoudre les problèmes de chargement.")) {
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(regs) {
+                regs.forEach(function(r) { r.unregister(); });
+                if ('caches' in window) {
+                   caches.keys().then(function(names) {
+                     names.forEach(function(n) { caches.delete(n); });
+                     localStorage.clear();
+                     sessionStorage.clear();
+                     location.reload(true);
+                   });
+                } else {
+                   location.reload(true);
+                }
+              });
+            } else {
+              location.reload(true);
+            }
+          }
+        };
       })();
     </script>
     

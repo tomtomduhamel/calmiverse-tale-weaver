@@ -1,5 +1,6 @@
 
 import { createClient } from "@supabase/supabase-js";
+import { safeStorage } from "@/utils/safeStorage";
 
 // Configuration avec les vraies valeurs du projet
 const supabaseUrl = "https://ioeihnoxvtpxtqhxklpw.supabase.co";
@@ -16,7 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storage: localStorage,
+    storage: safeStorage as any, // Cast to any to match Supabase Expected Storage interface if needed
     storageKey: 'calmi-auth-token'
   },
   global: {
