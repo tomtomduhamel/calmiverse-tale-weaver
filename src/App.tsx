@@ -51,6 +51,7 @@ const SoundAdmin = lazy(() => import("./pages/admin/SoundAdmin"));
 const DiagnosticConnection = lazy(() => import("./pages/DiagnosticConnection"));
 const BetaPending = lazy(() => import("./pages/BetaPending"));
 const VipAccess = lazy(() => import("./pages/VipAccess"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
 // PageLoader avec détection de timeout et retry
 const PageLoader = () => {
@@ -202,6 +203,7 @@ function App() {
                 {/* Routes avec authentification et vérification beta */}
                 <Route path="/" element={<BetaGuard><Shell /></BetaGuard>}>
                   <Route index element={<Index />} />
+                  <Route path="dashboard" element={<Dashboard />} />
                   <Route path="children" element={<ChildrenListPage />} />
                   <Route path="kids-profile" element={<KidsProfile />} />
                   <Route path="settings" element={<Settings />} />

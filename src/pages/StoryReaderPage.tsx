@@ -14,6 +14,8 @@ import { StoryVideoIntro } from "@/components/story/StoryVideoIntro";
 import { getStoryVideoUrl } from "@/utils/supabaseImageUtils";
 import { useSubscription } from "@/hooks/subscription/useSubscription";
 import { useQuotaChecker } from "@/hooks/subscription/useQuotaChecker";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const StoryReaderPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +31,8 @@ const StoryReaderPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [introPlayed, setIntroPlayed] = useState(false);
   const introPlayedRef = useRef(false);
+  const { user } = useSupabaseAuth();
+  const hasLoggedRead = useRef(false);
 
   // Charger l'histoire depuis l'ID dans l'URL
   useEffect(() => {
@@ -56,6 +60,23 @@ const StoryReaderPage: React.FC = () => {
       setIsLoading(false);
     }
   }, [id, stories]);
+
+  // Enregistrer la lecture dans l'historique de l'utilisateur (gamification)
+  useEffect(() => {
+    if (currentStory && user && !hasLoggedRead.current) {
+      hasLoggedRead.current = true;
+      supabase.from('reading_history').insert({
+        user_id: user.id,
+        story_id: currentStory.id,
+      }).then(({ error }) => {
+        if (error) {
+          console.error("[StoryReaderPage] Erreur lors de l'enregistrement de la lecture", error);
+        } else {
+          console.log("[StoryReaderPage] Lecture enregistrée dans reading_history pour le tableau de bord.");
+        }
+      });
+    }
+  }, [currentStory, user]);
 
   // Gestionnaire pour marquer comme lu/non lu (toggle)
   const handleMarkAsRead = async (storyId: string): Promise<boolean> => {

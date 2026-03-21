@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
-import { Home, BookOpen, Users, Settings, LogOut, Menu } from 'lucide-react';
+import { Home, BookOpen, Users, Settings, LogOut, Menu, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStoryGeneration';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -41,6 +41,10 @@ const Navigation = () => {
     icon: BookOpen,
     label: 'Histoires',
     path: '/library'
+  }, {
+    icon: Sparkles,
+    label: 'Mon ciel',
+    path: '/dashboard'
   }, {
     icon: Users,
     label: 'Enfants',

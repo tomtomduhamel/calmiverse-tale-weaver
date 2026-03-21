@@ -47,6 +47,12 @@ export const useAppNavigation = () => {
     navigate('/');
   }, [navigate]);
 
+  // Navigation vers le tableau de bord "Mon ciel"
+  const navigateToDashboard = useCallback(() => {
+    console.log('[AppNavigation] Navigation vers le tableau de bord');
+    navigate('/dashboard');
+  }, [navigate]);
+
   // Navigation vers les paramètres
   const navigateToSettings = useCallback(() => {
     console.log('[AppNavigation] Navigation vers les paramètres');
@@ -70,11 +76,14 @@ export const useAppNavigation = () => {
       case 'library':
         navigateToLibrary();
         break;
+      case 'dashboard':
+        navigateToDashboard();
+        break;
       case 'settings':
         navigateToSettings();
         break;
     }
-  }, [navigateToHome, navigateToCreate, navigateToProfiles, navigateToLibrary, navigateToSettings]);
+  }, [navigateToHome, navigateToCreate, navigateToProfiles, navigateToLibrary, navigateToDashboard, navigateToSettings]);
 
   // Actions post-création d'histoire
   const handleStoryCreated = useCallback((story: Story) => {
@@ -108,6 +117,7 @@ export const useAppNavigation = () => {
     navigateToStory,
     navigateToLibrary,
     navigateToCreate,
+    navigateToDashboard,
     navigateToProfiles,
     navigateToHome,
     navigateToSettings,

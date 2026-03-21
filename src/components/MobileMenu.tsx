@@ -5,7 +5,8 @@ import {
   Library, 
   Users, 
   Settings,
-  PenSquare
+  PenSquare,
+  Sparkles
 } from "lucide-react";
 import { Badge } from '@/components/ui/badge';
 import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStoryGeneration';
@@ -20,7 +21,7 @@ import { useAppNavigation } from "@/hooks/navigation/useAppNavigation";
  */
 const MobileMenu: React.FC = () => {
   const location = useLocation();
-  const { navigateToHome, navigateToLibrary, navigateToCreate, navigateToProfiles, navigateToSettings } = useAppNavigation();
+  const { navigateToHome, navigateToLibrary, navigateToCreate, navigateToDashboard, navigateToProfiles, navigateToSettings } = useAppNavigation();
   const { totalActiveCount } = useBackgroundStoryGeneration();
   
   // Items for the bottom navigation
@@ -28,6 +29,7 @@ const MobileMenu: React.FC = () => {
     { icon: Home, title: "Accueil", path: "/", action: navigateToHome },
     { icon: Library, title: "Bibliothèque", path: "/library", action: navigateToLibrary },
     { icon: PenSquare, title: "Créer", path: "/create-story/step-1", action: navigateToCreate },
+    { icon: Sparkles, title: "Mon ciel", path: "/dashboard", action: navigateToDashboard },
     { icon: Users, title: "Enfants", path: "/children", action: navigateToProfiles },
     { icon: Settings, title: "Paramètres", path: "/settings", action: navigateToSettings }
   ];
