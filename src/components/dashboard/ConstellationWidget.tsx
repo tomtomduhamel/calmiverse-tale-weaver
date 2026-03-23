@@ -17,7 +17,7 @@ export const ConstellationWidget: React.FC<ConstellationWidgetProps> = ({ totalR
     <div className="p-6 rounded-2xl bg-white/40 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-sm relative overflow-hidden h-full min-h-[300px] flex flex-col transition-colors">
       <h3 className="text-xl font-semibold mb-1 flex items-center gap-2 text-foreground dark:text-white">
         <BookOpen className="w-5 h-5 text-primary" />
-        L'Amas des Histoires
+        L'amas des histoires
       </h3>
       <div className="mb-6">
         <p className="text-sm text-slate-600 dark:text-white/80 leading-relaxed">

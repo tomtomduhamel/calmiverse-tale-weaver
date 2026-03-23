@@ -28,7 +28,7 @@ export const StarLogbook: React.FC<StarLogbookProps> = ({ recentReads }) => {
       <div className="flex flex-col mb-4">
         <div className="flex items-center gap-2">
           <Compass className="w-5 h-5 text-secondary" />
-          <h3 className="text-lg font-medium text-foreground dark:text-white">Carnet Stellaire</h3>
+          <h3 className="text-lg font-medium text-foreground dark:text-white">Carnet stellaire</h3>
         </div>
         <p className="text-sm text-slate-500 dark:text-white/60 mt-1">
           Retrouvez vos dernières histoires lues pour prolonger le voyage.

@@ -20,6 +20,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({ currentStreak 
         <div className="absolute -top-4 -right-4 w-16 h-16 bg-primary/20 blur-2xl rounded-full"></div>
       )}
       
+
       <div className="flex items-center gap-3 mb-2">
         {hasStreak ? (
           <Flame className="w-8 h-8 text-orange-500 dark:text-yellow-400 animate-pulse" />

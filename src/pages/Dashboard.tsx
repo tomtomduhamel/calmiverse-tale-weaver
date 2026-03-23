@@ -29,7 +29,7 @@ const Dashboard = () => {
         <div className="flex justify-center items-center mb-3">
           <Sparkles className="w-8 h-8 text-blue-500 dark:text-yellow-300 mr-2 animate-pulse" />
           <h1 className="text-3xl md:text-5xl font-bold text-slate-800 dark:text-white drop-shadow-sm dark:drop-shadow-lg tracking-tight pb-1">
-            Mon Ciel
+            Mon ciel
           </h1>
           <Sparkles className="w-8 h-8 text-blue-500 dark:text-yellow-300 ml-2 animate-pulse delay-150" />
         </div>
