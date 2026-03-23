@@ -3,6 +3,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Compass, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { getPoeticObjectiveName } from '@/utils/objectiveTranslations';
+import { useNavigate } from 'react-router-dom';
 
 interface ReadItem {
   id: string;
@@ -19,11 +21,18 @@ interface StarLogbookProps {
 }
 
 export const StarLogbook: React.FC<StarLogbookProps> = ({ recentReads }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="p-6 rounded-2xl bg-white/50 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/5 shadow-sm h-full flex flex-col transition-colors">
-      <div className="flex items-center gap-2 mb-4">
-        <Compass className="w-5 h-5 text-secondary" />
-        <h3 className="text-lg font-medium text-foreground dark:text-white">Carnet Stellaire</h3>
+      <div className="flex flex-col mb-4">
+        <div className="flex items-center gap-2">
+          <Compass className="w-5 h-5 text-secondary" />
+          <h3 className="text-lg font-medium text-foreground dark:text-white">Carnet Stellaire</h3>
+        </div>
+        <p className="text-sm text-slate-500 dark:text-white/60 mt-1">
+          Retrouvez vos dernières histoires lues pour prolonger le voyage.
+        </p>
       </div>
       
       <ScrollArea className="flex-1 -mx-4 px-4 text-foreground dark:text-white">
@@ -36,7 +45,8 @@ export const StarLogbook: React.FC<StarLogbookProps> = ({ recentReads }) => {
             {recentReads.map((item, index) => (
               <div 
                 key={item.id} 
-                className="flex flex-col p-3 rounded-lg border border-primary/5 bg-primary/5 dark:border-white/5 dark:bg-white/5 hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
+                onClick={() => navigate(`/story/${item.story_id}`)}
+                className="flex flex-col p-3 rounded-lg border border-primary/5 bg-primary/5 dark:border-white/5 dark:bg-white/5 hover:bg-primary/10 dark:hover:bg-white/10 transition-all cursor-pointer hover:scale-[1.02] hover:shadow-md"
               >
                 <div className="flex justify-between items-start mb-1">
                   <h4 className="font-medium text-sm text-foreground dark:text-white line-clamp-1">
@@ -49,7 +59,7 @@ export const StarLogbook: React.FC<StarLogbookProps> = ({ recentReads }) => {
                 </div>
                 {item.story?.objective && (
                   <span className="text-[10px] bg-accent/10 dark:bg-accent/20 text-accent-foreground dark:text-accent-foreground px-2 py-0.5 rounded-full w-fit mt-1">
-                    {item.story.objective}
+                    {getPoeticObjectiveName(item.story.objective)}
                   </span>
                 )}
               </div>

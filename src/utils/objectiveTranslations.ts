@@ -122,3 +122,44 @@ export function formatFrenchTitle(title: string): string {
     return word.charAt(0).toUpperCase() + word.slice(1);
   }).join(' ');
 }
+
+/**
+ * Utility to translate technical objective keys into poetic, user-friendly labels for the Gamification Dashboard.
+ */
+export const getPoeticObjectiveName = (key: string | null | undefined): string => {
+  if (!key) return "Voyage inconnu";
+
+  const lowerKey = key.toLowerCase();
+
+  const poeticTranslations: Record<string, string> = {
+    "custom": "Aventures sur mesure",
+    "fast_story_anger": "Colères apaisées",
+    "fast_story_sadness": "Chagrins consolés",
+    "fast_story_fear": "Craintes envolées",
+    "fast_story_joy": "Éclats de joie",
+    "fast_story_disgust": "Découvertes sereines",
+    "fast_story_surprise": "Surprises émerveillées",
+    "fast_story_situation_anger": "Colères apaisées",
+    "fast_story_situation_sadness": "Chagrins consolés",
+    "fast_story_situation_fear": "Craintes envolées",
+    "s'endormir": "Nuits douces",
+    "se détendre": "Bulles de sérénité",
+    "se concentrer": "Bulles de concentration",
+    "s'amuser": "Éclats de rire",
+    "fun": "Éclats de rire",
+    "apprendre": "Petites découvertes",
+    "gérer ses émotions": "Cœurs apaisés"
+  };
+
+  if (poeticTranslations[lowerKey]) {
+    return poeticTranslations[lowerKey];
+  }
+
+  // Fallback pattern matching
+  if (lowerKey.includes("anger")) return "Colères apaisées";
+  if (lowerKey.includes("sadness") || lowerKey.includes("sad")) return "Chagrins consolés";
+  if (lowerKey.includes("fear")) return "Craintes envolées";
+  if (lowerKey.includes("joy") || lowerKey.includes("fun")) return "Éclats de joie";
+
+  return key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+};

@@ -22,17 +22,18 @@ const Dashboard = () => {
   }
 
   return (
-    <MilkyWayBackground>
-      {/* Header */}
+    <div className="p-4 md:p-8 flex-1 flex flex-col items-center animate-fade-in w-full max-w-7xl mx-auto">
+      <MilkyWayBackground>
+        {/* Header */}
       <div className="text-center animate-fade-in mb-8 relative z-20">
         <div className="flex justify-center items-center mb-3">
           <Sparkles className="w-8 h-8 text-blue-500 dark:text-yellow-300 mr-2 animate-pulse" />
-          <h1 className="text-3xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-800 to-indigo-600 dark:from-white dark:to-primary/50 pb-1">
+          <h1 className="text-3xl md:text-5xl font-bold text-slate-800 dark:text-white drop-shadow-sm dark:drop-shadow-lg tracking-tight pb-1">
             Mon Ciel
           </h1>
           <Sparkles className="w-8 h-8 text-blue-500 dark:text-yellow-300 ml-2 animate-pulse delay-150" />
         </div>
-        <p className="text-lg md:text-xl font-medium text-foreground/80 dark:text-white/90 max-w-2xl mx-auto">
+        <p className="text-lg md:text-xl font-medium text-slate-600 dark:text-white/90 max-w-2xl mx-auto">
           Ton univers s'épanouit à chaque histoire. Découvre tes constellations !
         </p>
       </div>
@@ -66,9 +67,9 @@ const Dashboard = () => {
             
             {/* Optional extra stats block, e.g total reads */}
             {stats.totalReads > 0 && (
-              <div className="p-6 rounded-2xl bg-black/20 backdrop-blur-md border border-white/10 shadow-soft text-center flex flex-col items-center justify-center gap-2">
-                <span className="text-3xl font-bold text-secondary">{stats.totalReads}</span>
-                <span className="text-sm opacity-80">Histoires explorées au total</span>
+              <div className="p-6 rounded-2xl bg-white/50 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-sm text-center flex flex-col items-center justify-center gap-2">
+                <span className="text-3xl md:text-4xl font-black text-slate-800 dark:text-white drop-shadow-sm">{stats.totalReads}</span>
+                <span className="text-sm font-medium text-slate-600 dark:text-white/80">Histoires explorées au total</span>
               </div>
             )}
           </div>
@@ -88,7 +89,8 @@ const Dashboard = () => {
 
         </div>
       )}
-    </MilkyWayBackground>
+      </MilkyWayBackground>
+    </div>
   );
 };
 

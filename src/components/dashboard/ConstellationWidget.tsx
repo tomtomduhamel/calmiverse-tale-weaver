@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookOpen } from 'lucide-react';
+import { getPoeticObjectiveName } from '@/utils/objectiveTranslations';
 
 interface ConstellationWidgetProps {
   totalReads: number;
@@ -18,7 +19,11 @@ export const ConstellationWidget: React.FC<ConstellationWidgetProps> = ({ totalR
         <BookOpen className="w-5 h-5 text-primary" />
         L'Amas des Histoires
       </h3>
-      <p className="text-sm text-muted-foreground dark:text-white/70 mb-6">Tu as visité {totalReads} mondes différents.</p>
+      <div className="mb-6">
+        <p className="text-sm text-slate-600 dark:text-white/80 leading-relaxed">
+          Parmi tes <span className="font-bold text-primary dark:text-yellow-300">{totalReads} expéditions</span> au total, voici les 3 mondes où tu aimes le plus voyager :
+        </p>
+      </div>
       
       {totalReads === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
@@ -28,58 +33,41 @@ export const ConstellationWidget: React.FC<ConstellationWidgetProps> = ({ totalR
           <p className="text-foreground dark:text-white">Le ciel est encore vide.<br/>Lis ta première histoire pour allumer l'univers.</p>
         </div>
       ) : (
-        <div className="flex-1 relative flex items-center justify-center">
-          {/* Dessin rudimentaire d'une constellation en fonction des données */}
-          <div className="relative w-full max-w-[250px] aspect-square">
-            {/* Lignes reliant les étoiles (svg de fond) */}
-            <svg className="absolute inset-0 w-full h-full" overflow="visible">
-              <path 
-                d="M 125,40 L 40,160 L 210,160 Z" 
-                fill="none" 
-                stroke="currentColor" 
-                className="text-primary/10 dark:text-white/15"
-                strokeWidth="1.5" 
-                strokeDasharray="4 4" 
-              />
-              <path 
-                d="M 125,40 L 125,110 L 40,160" 
-                fill="none" 
-                stroke="currentColor"
-                className="text-primary/10 dark:text-white/15"
-                strokeWidth="1.5" 
-              />
-            </svg>
-            
-            {/* Étoile Principale (La plus grande) */}
-            <div className="absolute top-[40px] left-[125px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-primary/80 dark:bg-primary/80 shadow-[0_0_15px_rgba(var(--primary),0.5)] dark:shadow-[0_0_15px_rgba(var(--primary),0.8)] animate-pulse-slow"></div>
-              {topObjectives[0] && (
-                <span className="text-[10px] mt-2 bg-white/80 dark:bg-black/60 text-foreground dark:text-white px-2 py-1 rounded-full whitespace-nowrap border border-primary/10 dark:border-white/10 shadow-sm backdrop-blur-sm">
-                  {topObjectives[0][0]} ({topObjectives[0][1]})
-                </span>
-              )}
+        <div className="flex-1 flex justify-center items-end gap-2 sm:gap-6 w-full pb-4">
+          
+          {/* Troisième place (À gauche) */}
+          {topObjectives[2] && (
+            <div className="flex flex-col items-center gap-2 pb-2">
+              <span className="text-[10px] text-muted-foreground dark:text-white/60 font-medium">{topObjectives[2][1]} voyage{topObjectives[2][1] > 1 ? 's' : ''}</span>
+              <div className="w-5 h-5 rounded-full bg-accent/80 shadow-[0_0_8px_rgba(var(--accent),0.5)] animate-pulse-slow delay-300"></div>
+              <span className="text-[10px] sm:text-xs text-center text-foreground dark:text-white font-medium max-w-[80px] leading-tight">
+                {getPoeticObjectiveName(topObjectives[2][0])}
+              </span>
             </div>
-            
-            {/* Étoile Gauche */}
-            <div className="absolute top-[160px] left-[40px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-              <div className="w-5 h-5 rounded-full bg-secondary/80 dark:bg-secondary/80 shadow-[0_0_10px_rgba(var(--secondary),0.4)] dark:shadow-[0_0_10px_rgba(var(--secondary),0.6)] animate-pulse-slow delay-150"></div>
-              {topObjectives[1] && (
-                <span className="text-[10px] mt-2 bg-white/80 dark:bg-black/60 text-foreground dark:text-white px-2 py-1 rounded-full whitespace-nowrap border border-primary/10 dark:border-white/10 shadow-sm backdrop-blur-sm">
-                  {topObjectives[1][0]} ({topObjectives[1][1]})
-                </span>
-              )}
+          )}
+          
+          {/* Première place (Au centre, plus haut et plus gros) */}
+          {topObjectives[0] && (
+            <div className="flex flex-col items-center gap-2 mb-8">
+              <span className="text-xs text-primary dark:text-yellow-300 font-bold">{topObjectives[0][1]} voyage{topObjectives[0][1] > 1 ? 's' : ''}</span>
+              <div className="w-10 h-10 rounded-full bg-primary/80 shadow-[0_0_15px_rgba(var(--primary),0.6)] animate-pulse-slow"></div>
+              <span className="text-xs sm:text-sm text-center text-foreground dark:text-white font-bold border-b border-primary/30 pb-1 px-2 max-w-[120px] leading-tight">
+                {getPoeticObjectiveName(topObjectives[0][0])}
+              </span>
             </div>
-            
-            {/* Étoile Droite */}
-            <div className="absolute top-[160px] left-[210px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-               <div className="w-6 h-6 rounded-full bg-accent/80 dark:bg-accent/80 shadow-[0_0_12px_rgba(var(--accent),0.5)] dark:shadow-[0_0_12px_rgba(var(--accent),0.7)] animate-pulse-slow delay-300"></div>
-               {topObjectives[2] && (
-                <span className="text-[10px] mt-2 bg-white/80 dark:bg-black/60 text-foreground dark:text-white px-2 py-1 rounded-full whitespace-nowrap border border-primary/10 dark:border-white/10 shadow-sm backdrop-blur-sm">
-                  {topObjectives[2][0]} ({topObjectives[2][1]})
-                </span>
-              )}
+          )}
+
+          {/* Deuxième place (À droite) */}
+          {topObjectives[1] && (
+            <div className="flex flex-col items-center gap-2 pb-4">
+              <span className="text-[10px] sm:text-xs text-secondary dark:text-secondary-foreground font-semibold">{topObjectives[1][1]} voyage{topObjectives[1][1] > 1 ? 's' : ''}</span>
+              <div className="w-7 h-7 rounded-full bg-secondary/80 shadow-[0_0_12px_rgba(var(--secondary),0.5)] animate-pulse-slow delay-150"></div>
+              <span className="text-[10px] sm:text-xs text-center text-foreground dark:text-white font-medium max-w-[80px] leading-tight">
+                {getPoeticObjectiveName(topObjectives[1][0])}
+              </span>
             </div>
-          </div>
+          )}
+          
         </div>
       )}
     </div>
