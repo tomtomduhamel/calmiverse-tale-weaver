@@ -283,6 +283,7 @@ serve(async (req) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Calmi-Webhook-Secret': Deno.env.get('N8N_WEBHOOK_SECRET') || ''
           },
           body: JSON.stringify(n8nPayload),
           signal: controller.signal
