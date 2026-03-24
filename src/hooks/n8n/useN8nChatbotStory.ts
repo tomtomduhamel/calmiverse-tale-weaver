@@ -11,6 +11,7 @@ import type {
 import { calculateAge } from '@/utils/age';
 import { usePersistedChatbotState } from './usePersistedChatbotState';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import { supabase } from '@/integrations/supabase/client';
 
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_CHAT_WEBHOOK_URL || 'https://n8n.srv856374.hstgr.cloud/webhook/ec1e6586-86dc-4755-b73e-80a19762ddd2';
 
@@ -183,32 +184,22 @@ export const useN8nChatbotStory = () => {
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     try {
-      const response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal
+      const { data: result, error: functionError } = await supabase.functions.invoke('trigger-n8n', {
+        body: { targetUrl: N8N_WEBHOOK_URL, payload },
+        // On ne peut pas passer de signal d'annulation natif à invoke, donc on surveille le timeout manuellement si besoin
       });
 
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'No error text');
-        throw new Error(`Erreur HTTP: ${response.status} (${errorText.slice(0, 100)})`);
+      if (functionError) {
+        throw new Error(`Erreur proxy n8n: ${functionError.message}`);
+      }
+      if (result?.error) {
+        throw new Error(result.error);
       }
 
-      // Lecture sécurisée du texte brut avant parsing
-      const textResponse = await response.text();
+      console.log('[useN8nChatbotStory] Réponse n8n:', result);
 
-      let data: any;
-      try {
-        data = JSON.parse(textResponse);
-      } catch (parseError) {
-        console.error('[useN8nChatbotStory] Erreur parsing JSON:', textResponse.slice(0, 200));
-        throw new Error("Format de réponse invalide. Le serveur a peut-être renvoyé une erreur.");
-      }
-
-      console.log('[useN8nChatbotStory] Réponse n8n:', data);
+      // Le proxy renvoie déjà un objet JSON parsé
+      const data = result;
 
       // n8n peut renvoyer "chatInput" au lieu de "content"
       const content = data.content || data.chatInput;
@@ -309,18 +300,16 @@ export const useN8nChatbotStory = () => {
         action: 'message',
       };
 
-      // Fetch simple sans AbortController - continue en arrière-plan si l'onglet change
-      const response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const { data, error } = await supabase.functions.invoke('trigger-n8n', {
+        body: { targetUrl: N8N_WEBHOOK_URL, payload }
       });
 
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
+      if (error) {
+        throw new Error(`Erreur proxy: ${error.message}`);
       }
-
-      const data = await response.json();
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       // Traiter la réponse
       handleResponseData(data);

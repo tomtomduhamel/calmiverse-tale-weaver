@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
-import { fetchWithRetry, getErrorMessage } from '@/utils/retryUtils';
-import type { Child } from '@/types/child';
+import { getErrorMessage } from '@/utils/retryUtils';
+import { supabase } from '@/integrations/supabase/client';
 import { generateAdvancedStoryPrompt } from '@/utils/storyPromptUtils';
 import { calculateAge } from '@/utils/age';
 import { estimateWordCountForDuration, StoryDurationMinutes } from '@/types/story';
@@ -220,26 +220,34 @@ export const useN8nStoryFromTitle = () => {
 
       console.log('[N8nStoryFromTitle] Envoi vers n8n avec payload:', payload);
 
-      const response = await fetchWithRetry(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      }, {
-        maxRetries: 3, // Plus de retries pour robustesse
-        timeoutMs: 900000, // 15 minutes - timeout augmenté pour permettre la création complète
-        retryCondition: (error) => {
-          const msg = error?.message?.toLowerCase() || '';
-          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion');
+      let result;
+      let retries = 0;
+      let success = false;
+      let lastError;
+
+      while (!success && retries < 3) {
+        try {
+          const { data, error } = await supabase.functions.invoke('trigger-n8n', {
+            body: { targetUrl: webhookUrl, payload }
+          });
+
+          if (error) throw new Error(error.message || "Erreur Supabase function proxy");
+          if (data?.error) throw new Error(data.error);
+          
+          result = data;
+          success = true;
+        } catch (err: any) {
+          lastError = err;
+          const msg = err?.message?.toLowerCase() || '';
+          if (msg.includes('timeout') || msg.includes('network') || msg.includes('connexion') || msg.includes('proxy')) {
+            retries++;
+            if (retries >= 3) throw err;
+            await new Promise(r => setTimeout(r, 2000 * Math.pow(2, retries))); // Exponential backoff
+          } else {
+            throw err;
+          }
         }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
       }
-
-      const result = await response.json();
       console.log('[N8nStoryFromTitle] Réponse n8n reçue:', result);
 
       // CORRECTION: Ne pas créer d'ID fictif, attendre que n8n nous confirme la création

@@ -4,7 +4,8 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useActivePrompts } from '@/hooks/prompts';
 import { useStoryVariation } from '@/hooks/stories/useStoryVariation';
 import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
-import { fetchWithRetry, getErrorMessage } from '@/utils/retryUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { getErrorMessage } from '@/utils/retryUtils';
 import { estimateWordCountForDuration } from '@/types/story';
 import type { StoryDurationMinutes } from '@/types/story';
 import { replacePromptVariables } from '@/utils/promptVariables';
@@ -92,24 +93,35 @@ export const useN8nFastStory = () => {
 
       console.log('[N8nFastStory] Envoi vers n8n:', payload);
 
-      const response = await fetchWithRetry(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }, {
-        maxRetries: 3,
-        timeoutMs: 900000, // 15 minutes
-        retryCondition: (error) => {
-          const msg = error?.message?.toLowerCase() || '';
-          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion');
-        },
-      });
+      let result;
+      let retries = 0;
+      let success = false;
+      let lastError;
 
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
+      while (!success && retries < 3) {
+        try {
+          const { data, error } = await supabase.functions.invoke('trigger-n8n', {
+            body: { targetUrl: webhookUrl, payload }
+          });
+
+          if (error) throw new Error(error.message || "Erreur Supabase function proxy");
+          if (data?.error) throw new Error(data.error);
+          
+          result = data;
+          success = true;
+        } catch (err: any) {
+          lastError = err;
+          const msg = err?.message?.toLowerCase() || '';
+          if (msg.includes('timeout') || msg.includes('network') || msg.includes('connexion') || msg.includes('proxy')) {
+            retries++;
+            if (retries >= 3) throw err;
+            await new Promise(r => setTimeout(r, 2000 * Math.pow(2, retries))); // Exponential backoff
+          } else {
+            throw err;
+          }
+        }
       }
 
-      const result = await response.json();
       console.log('[N8nFastStory] Réponse n8n:', result);
 
       const processId = result.processId || result.workflowId || `fast-process-${Date.now()}`;

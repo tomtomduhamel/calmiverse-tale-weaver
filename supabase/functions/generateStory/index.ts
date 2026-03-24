@@ -32,7 +32,6 @@ serve(async (req) => {
   }
 
   console.log(`🎯 [generateStory-${requestId}] REQUÊTE POST REÇUE - SUCCÈS!`);
-  console.log(`📋 [generateStory-${requestId}] Headers complets:`, Object.fromEntries(req.headers.entries()));
 
   try {
     console.log(`📥 [generateStory-${requestId}] Lecture du corps de la requête...`);

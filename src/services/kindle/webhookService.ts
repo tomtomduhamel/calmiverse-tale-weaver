@@ -1,6 +1,7 @@
 
 import type { KindleShareData } from './types';
 import { kindleValidationService } from './validationService';
+import { supabase } from '@/integrations/supabase/client';
 
 export const kindleWebhookService = {
   /**
@@ -30,31 +31,24 @@ export const kindleWebhookService = {
     });
     
     try {
-      const response = await fetch(kindleWebhookUrl, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'User-Agent': 'Calmi-App'
-        },
-        body: JSON.stringify(webhookData)
+      const { data: result, error: functionError } = await supabase.functions.invoke('trigger-n8n', {
+        body: { targetUrl: kindleWebhookUrl, payload: webhookData }
       });
 
-      console.log('📡 [KindleWebhook] Réponse webhook N8N:', {
-        status: response.status,
-        statusText: response.statusText
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [KindleWebhook] Erreur webhook Kindle:', response.status, errorText);
-        throw new Error(`Erreur webhook Kindle: ${response.status} - ${errorText}`);
+      if (functionError) {
+        console.error('❌ [KindleWebhook] Erreur proxy webhook Kindle:', functionError);
+        throw new Error(`Erreur proxy webhook Kindle: ${functionError.message}`);
       }
 
-      const result = await response.json();
-      console.log('✅ [KindleWebhook] Réponse du webhook N8N Kindle:', result);
+      if (result?.error) {
+         console.error('❌ [KindleWebhook] Erreur n8n Kindle:', result.error);
+         throw new Error(`Erreur webhook Kindle: ${result.error}`);
+      }
+
+      console.log('✅ [KindleWebhook] Réponse du webhook N8N Kindle via proxy:', result);
       return result;
     } catch (error) {
-      console.error('💥 [KindleWebhook] Erreur lors de l\'envoi au webhook N8N:', error);
+      console.error('💥 [KindleWebhook] Erreur lors de l\'envoi au webhook N8N via proxy:', error);
       throw error;
     }
   }

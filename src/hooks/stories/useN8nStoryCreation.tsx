@@ -72,20 +72,21 @@ export const useN8nStoryCreation = () => {
         storyPrompt: `${storyPrompt.substring(0, 100)}...` // Log tronqué pour la lisibilité
       });
 
-      // Appeler le webhook n8n de production
-      const response = await fetch(N8N_WEBHOOK, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(n8nData)
+      // Appeler le proxy Supabase (qui appellera n8n de manière sécurisée)
+      const { data: result, error: functionError } = await supabase.functions.invoke('trigger-n8n', {
+        body: {
+          targetUrl: N8N_WEBHOOK,
+          payload: n8nData
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`Erreur webhook n8n: ${response.status}`);
+      if (functionError) {
+        console.error("Supabase function error:", functionError);
+        throw new Error(functionError.message || `Erreur lors de l'appel au proxy n8n`);
       }
-
-      const result = await response.json();
+      if (result?.error) {
+        throw new Error(result.error);
+      }
       console.log('[N8nStoryCreation] Réponse n8n production:', result);
 
       toast({

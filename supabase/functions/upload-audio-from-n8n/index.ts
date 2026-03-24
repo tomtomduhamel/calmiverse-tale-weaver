@@ -21,7 +21,6 @@ serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
   console.log(`🎵 [upload-audio-from-n8n-${requestId}] NOUVELLE REQUÊTE ${req.method}`);
   console.log(`🎵 [upload-audio-from-n8n-${requestId}] URL:`, req.url);
-  console.log(`🎵 [upload-audio-from-n8n-${requestId}] Headers:`, Object.fromEntries(req.headers.entries()));
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {

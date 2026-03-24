@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
-import { fetchWithRetry, getErrorMessage } from '@/utils/retryUtils';
+import { getErrorMessage } from '@/utils/retryUtils';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -197,29 +197,34 @@ export const useN8nTitleGeneration = (
 
       console.log('[N8nTitleGeneration] Regénération - Payload envoyé:', JSON.stringify(payload, null, 2));
 
-      const response = await fetchWithRetry(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      }, {
-        maxRetries: 3,
-        timeoutMs: 300000, // 5 minutes
-        retryCondition: (error) => {
-          const msg = error?.message?.toLowerCase() || '';
-          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion') ||
-                 msg.includes('pattern') || msg.includes('500') || msg.includes('erreur temporaire');
+      let result;
+      let retries = 0;
+      let successRegen = false;
+      let lastRegenError;
+
+      while (!successRegen && retries < 3) {
+        try {
+          const { data, error } = await supabase.functions.invoke('trigger-n8n', {
+            body: { targetUrl: webhookUrl, payload }
+          });
+
+          if (error) throw new Error(error.message || "Erreur proxy");
+          if (data?.error) throw new Error(data.error);
+          
+          result = data;
+          successRegen = true;
+        } catch (err: any) {
+          lastRegenError = err;
+          const msg = err?.message?.toLowerCase() || '';
+          if (msg.includes('timeout') || msg.includes('network') || msg.includes('connexion') || msg.includes('proxy') || msg.includes('pattern') || msg.includes('erreur temporaire')) {
+            retries++;
+            if (retries >= 3) throw err;
+            await new Promise(r => setTimeout(r, 2000 * Math.pow(2, retries)));
+          } else {
+            throw err;
+          }
         }
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[N8nTitleGeneration] Erreur HTTP regénération:', response.status, errorText);
-        throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
       }
-
-      const result = await response.json();
       console.log('[N8nTitleGeneration] Réponse regénération reçue:', JSON.stringify(result, null, 2));
 
       // Détecter erreur dans le body
@@ -364,29 +369,34 @@ Conclusion : le format json final devra avoir la structure suivante :
 
       console.log('[N8nTitleGeneration] Payload envoyé:', JSON.stringify(payload, null, 2));
 
-      const response = await fetchWithRetry(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      }, {
-        maxRetries: 3,
-        timeoutMs: 300000, // 5 minutes
-        retryCondition: (error) => {
-          const msg = error?.message?.toLowerCase() || '';
-          return msg.includes('timeout') || msg.includes('network') || msg.includes('connexion') ||
-                 msg.includes('pattern') || msg.includes('500') || msg.includes('erreur temporaire');
+      let result;
+      let retriesGen = 0;
+      let successGen = false;
+      let lastGenError;
+
+      while (!successGen && retriesGen < 3) {
+        try {
+          const { data, error } = await supabase.functions.invoke('trigger-n8n', {
+            body: { targetUrl: webhookUrl, payload }
+          });
+
+          if (error) throw new Error(error.message || "Erreur proxy");
+          if (data?.error) throw new Error(data.error);
+          
+          result = data;
+          successGen = true;
+        } catch (err: any) {
+          lastGenError = err;
+          const msg = err?.message?.toLowerCase() || '';
+          if (msg.includes('timeout') || msg.includes('network') || msg.includes('connexion') || msg.includes('proxy') || msg.includes('pattern') || msg.includes('erreur temporaire')) {
+            retriesGen++;
+            if (retriesGen >= 3) throw err;
+            await new Promise(r => setTimeout(r, 2000 * Math.pow(2, retriesGen)));
+          } else {
+            throw err;
+          }
         }
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[N8nTitleGeneration] Erreur HTTP:', response.status, errorText);
-        throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
       }
-
-      const result = await response.json();
       console.log('[N8nTitleGeneration] Réponse brute reçue:', JSON.stringify(result, null, 2));
 
       // Détecter si n8n a renvoyé une erreur dans le body (HTTP 200 mais contenu = erreur)

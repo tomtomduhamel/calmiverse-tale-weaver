@@ -81,17 +81,18 @@ export const emailSharingService = {
   async sendToEmailWebhook(webhookData: EmailShareData) {
     const n8nWebhookUrl = 'https://n8n.srv856374.hstgr.cloud/webhook/9655e007-2b71-4b57-ab03-748eaa158ebe';
     
-    const response = await fetch(n8nWebhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(webhookData)
+    const { data: result, error: functionError } = await supabase.functions.invoke('trigger-n8n', {
+      body: { targetUrl: n8nWebhookUrl, payload: webhookData }
     });
 
-    if (!response.ok) {
-      throw new Error(`Erreur webhook: ${response.status}`);
+    if (functionError) {
+      throw new Error(`Erreur proxy webhook: ${functionError.message}`);
+    }
+    if (result?.error) {
+      throw new Error(`Erreur webhook: ${result.error}`);
     }
 
-    console.log('Données envoyées au webhook N8N:', webhookData);
+    console.log('Données envoyées au webhook N8N via proxy:', webhookData);
   },
 
   /**
