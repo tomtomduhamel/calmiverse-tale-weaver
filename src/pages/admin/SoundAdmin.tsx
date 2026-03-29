@@ -290,7 +290,7 @@ const AddSoundDialog: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent position="popper" className="z-[200]" container={dialogRef.current}>
+              <SelectContent position="popper" className="z-[200]">
                 {OBJECTIVE_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
