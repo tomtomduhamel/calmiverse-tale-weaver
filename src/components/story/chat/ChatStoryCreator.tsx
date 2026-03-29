@@ -18,6 +18,7 @@ import {
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useN8nChatbotStory } from '@/hooks/n8n/useN8nChatbotStory';
 import type { Child } from '@/types/child';
+import { useRealtimeStoryMonitor } from '@/hooks/stories/useRealtimeStoryMonitor';
 import ChatMessageBubble from './ChatMessageBubble';
 import TypingIndicator from './TypingIndicator';
 import ChatInput from './ChatInput';
@@ -99,17 +100,20 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
     }
   }, [messages, isLoading, loadingDuration]); // Added loadingDuration to scroll on message change
 
-  // Redirection vers le reader quand l'histoire est créée
+  const { isMonitoring, startMonitoring } = useRealtimeStoryMonitor({
+    onStoryCreated: (story) => {
+      console.log('[ChatStoryCreator] Histoire générée avec succès:', story.id);
+      navigate(`/reader/${story.id}`);
+    }
+  });
+
+  // Démarrer la surveillance quand le brouillon est créé (au lieu de rediriger directement)
   useEffect(() => {
     if (storyId) {
-      console.log('[ChatStoryCreator] Redirection vers reader:', storyId);
-      // Petit délai pour laisser l'utilisateur voir le message final
-      const timer = setTimeout(() => {
-        navigate(`/reader/${storyId}`);
-      }, 2000);
-      return () => clearTimeout(timer);
+      console.log('[ChatStoryCreator] Brouillon détecté, démarrage de la surveillance...');
+      startMonitoring();
     }
-  }, [storyId, navigate]);
+  }, [storyId, startMonitoring]);
 
   const handleSend = (message: string) => {
     if (user) {
@@ -226,10 +230,10 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
           {/* Input Area */}
           <ChatInput
             onSend={handleSend}
-            disabled={isLoading || !!storyId}
+            disabled={isLoading || !!storyId || isMonitoring}
             placeholder={
-              storyId
-                ? "Histoire créée ! Redirection..."
+              (storyId || isMonitoring)
+                ? "Création magique en cours... Veuillez patienter."
                 : isLoading
                   ? "Calmi réfléchit..."
                   : "Écrivez votre message..."
