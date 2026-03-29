@@ -445,6 +445,38 @@ export type Database = {
         }
         Relationships: []
       }
+      reading_history: {
+        Row: {
+          completed: boolean | null
+          id: string
+          read_at: string | null
+          story_id: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          id?: string
+          read_at?: string | null
+          story_id: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          id?: string
+          read_at?: string | null
+          story_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_history_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_modification_cooldown: {
         Row: {
           created_at: string

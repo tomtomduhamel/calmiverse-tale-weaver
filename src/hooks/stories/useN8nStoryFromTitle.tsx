@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Child } from '@/types/child';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useStoryNotifications } from '@/hooks/stories/useStoryNotifications';
