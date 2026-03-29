@@ -10,9 +10,12 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "overrides": {
+    "serialize-javascript": "7.0.5"
+  },
   "dependencies": {
     "@11labs/react": "^0.0.4",
-    "@google-cloud/storage": "^7.15.0",
+    "@google-cloud/storage": "^5.18.3",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -76,7 +79,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
-    "vite-plugin-pwa": "^1.2.0",
+    "vite-plugin-pwa": "^0.21.2",
     "vitest": "^3.0.6",
     "workbox-window": "^7.3.0",
     "zod": "^3.23.8"
