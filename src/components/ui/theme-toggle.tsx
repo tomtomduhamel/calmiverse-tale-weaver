@@ -27,7 +27,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
             <span className="sr-only">Basculer le thème</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="z-50">
+        <DropdownMenuContent align="end" className="z-[150]">
           <DropdownMenuItem onClick={() => setLightMode()}>
             <Sun className="mr-2 h-4 w-4" />
             Clair

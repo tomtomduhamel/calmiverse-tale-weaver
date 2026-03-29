@@ -21,8 +21,8 @@ max_client_conn = 100
 [realtime]
 enabled = true
 ip_version = "IPv6"
-tenant_id = "realtime-dev"
-max_slot_name_length = 63
+# tenant_id = "realtime-dev"
+# max_slot_name_length = 63
 
 [studio]
 enabled = true
@@ -37,16 +37,16 @@ pop3_port = 54326
 
 [storage]
 enabled = true
-port = 54327
+# port = 54327
 file_size_limit = "50MiB"
 
 [auth]
 enabled = true
-port = 54328
+# port = 54328
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://127.0.0.1:3000"]
 jwt_expiry = 3600
-refresh_token_rotation_enabled = true
+# refresh_token_rotation_enabled = true
 refresh_token_reuse_interval = 10
 enable_signup = true
 
