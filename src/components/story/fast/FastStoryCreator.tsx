@@ -241,11 +241,21 @@ const FastStoryCreator: React.FC = () => {
 
               {/* Quota info */}
               {subscription && limits && (
-                <div className="flex items-center justify-center gap-1 mt-4 text-xs text-muted-foreground">
-                  <BookOpen className="w-3 h-3" />
-                  <span>
-                    {subscription.stories_used_this_period}/{limits.stories_per_month} histoires utilisées ce mois
-                  </span>
+                <div className="flex flex-col items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" />
+                    <span>
+                      {subscription.stories_used_this_period}/{limits.stories_per_month} histoires utilisées ce mois
+                    </span>
+                  </div>
+                  {canGenerateVideo && (
+                    <div className="flex items-center gap-1">
+                      <Video className="w-3 h-3" />
+                      <span>
+                        {subscription.video_intros_used_this_period}/{limits.max_video_intros_per_period} vidéos magiques ce mois
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
