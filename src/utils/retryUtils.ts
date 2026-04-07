@@ -87,27 +87,19 @@ export async function fetchWithRetry(
   );
 }
 
-/**
- * Messages d'erreur améliorés selon le type d'erreur
- */
 export function getErrorMessage(error: any, context: string = ''): string {
   const message = error?.message?.toLowerCase() || '';
+  const actionContext = context || 'l\'action en cours';
   
   if (message.includes('timeout') || message.includes('délai')) {
-    return `${context} a pris trop de temps (timeout). Le serveur n8n est peut-être surchargé. Nouvelle tentative automatique...`;
+    return `La ${actionContext} prend un peu plus de temps que prévu. Le système est peut-être surchargé, mais ne vous inquiétez pas, cela devrait s'améliorer rapidement !`;
   }
   
-  if (message.includes('network') || message.includes('connexion')) {
-    return `Problème de connexion réseau${context ? ` pour ${context}` : ''}. Vérifiez votre connexion internet.`;
+  if (message.includes('network') || message.includes('connexion') || message.includes('failed to fetch')) {
+    return `Problème de connexion avec nos serveurs pour la ${actionContext}. Vérifiez votre connexion internet et réessayez.`;
   }
   
-  if (message.includes('400') || message.includes('bad request')) {
-    return `Erreur de données envoyées${context ? ` pour ${context}` : ''}. Veuillez réessayer.`;
-  }
-  
-  if (message.includes('500') || message.includes('internal server')) {
-    return `Erreur serveur n8n${context ? ` pour ${context}` : ''}. Nouvelle tentative automatique...`;
-  }
-  
-  return error?.message || `Erreur inconnue${context ? ` pour ${context}` : ''}`;
+  // Remplacement global pour toutes les autres erreurs (403, 500, JWT, Edge Function, etc.)
+  // On cache complètement l'erreur technique à l'utilisateur final.
+  return `Une petite anomalie est survenue lors de la ${actionContext}. Nos équipes techniques sont déjà dessus pour résoudre ce problème ! Veuillez réessayer d'ici quelques minutes.`;
 }

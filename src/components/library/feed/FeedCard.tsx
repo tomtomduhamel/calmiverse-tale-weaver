@@ -17,6 +17,41 @@ import { calculateReadingTime } from "@/utils/readingTime";
 import { getStoryIdentity } from "@/utils/objectiveUtils";
 import { cn } from "@/lib/utils";
 
+const LOADING_MESSAGES = [
+  "Rassemblement des poussières d'étoiles...",
+  "L'auteur murmure les premiers mots...",
+  "Esquisse des paysages lointains...",
+  "Mise en couleurs de votre aventure..."
+];
+
+const StoryLoadingOverlay = () => {
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center p-6 text-center z-20 backdrop-blur-[2px]">
+      <div className="relative mb-6">
+        <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
+        <Loader2 className="h-10 w-10 animate-spin text-primary relative z-10" />
+      </div>
+      <div className="h-12 flex items-center justify-center">
+        <span 
+          key={messageIndex}
+          className="text-sm font-medium text-foreground/90 animate-pulse"
+        >
+          {LOADING_MESSAGES[messageIndex]}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 interface FeedCardProps {
   story: Story;
   onClick: () => void;
@@ -98,17 +133,21 @@ const FeedCard: React.FC<FeedCardProps> = ({
           className="font-semibold text-base leading-tight line-clamp-1 flex-1 cursor-pointer hover:text-primary transition-colors"
           onClick={handleImageClick}
         >
-          {isSeriesStory && story.series?.title ? story.series.title : story.title}
+          {story.status === 'pending' 
+             ? "Écriture de votre aventure..." 
+             : (isSeriesStory && story.series?.title ? story.series.title : story.title)}
         </h3>
-        <div data-favorite-button>
-          <FavoriteButton
-            isFavorite={story.isFavorite || false}
-            onToggle={handleToggleFavorite}
-            isLoading={isUpdatingFavorite}
-            size="sm"
-            variant="ghost"
-          />
-        </div>
+        {story.status !== 'pending' && (
+          <div data-favorite-button>
+            <FavoriteButton
+              isFavorite={story.isFavorite || false}
+              onToggle={handleToggleFavorite}
+              isLoading={isUpdatingFavorite}
+              size="sm"
+              variant="ghost"
+            />
+          </div>
+        )}
       </div>
 
       {/* Image container: 4:5 ratio with double-tap */}
@@ -159,12 +198,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
 
         {/* Pending overlay */}
         {story.status === 'pending' && (
-          <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-2">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="text-sm font-medium">En cours de création...</span>
-            </div>
-          </div>
+          <StoryLoadingOverlay />
         )}
 
         {/* Heart animation on double-tap */}
@@ -178,50 +212,52 @@ const FeedCard: React.FC<FeedCardProps> = ({
       </div>
 
       {/* Metadata: Reading time + Date + Series indicator */}
-      <CardContent className="px-1 pt-3 pb-0">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3 flex-wrap">
-          {story.status === "read" && (
-            <span className="flex items-center gap-1 text-green-600 dark:text-green-500 font-medium bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full text-xs">
-              <BookCheck className="h-3 w-3" />
-              Lu
+      {story.status !== 'pending' && (
+        <CardContent className="px-1 pt-3 pb-0">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3 flex-wrap">
+            {story.status === "read" && (
+              <span className="flex items-center gap-1 text-green-600 dark:text-green-500 font-medium bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full text-xs">
+                <BookCheck className="h-3 w-3" />
+                Lu
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              {readingTime}
             </span>
-          )}
-          <span className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            {readingTime}
-          </span>
-          <span className="text-xs">•</span>
-          <span className="text-xs">•</span>
-          <span>Il y a {timeAgo}</span>
-        </div>
+            <span className="text-xs">•</span>
+            <span className="text-xs">•</span>
+            <span>Il y a {timeAgo}</span>
+          </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 pb-4 border-b border-border">
-          {onShare && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onShare(story.id)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Share2 className="h-4 w-4 mr-1.5" />
-              Partager
-            </Button>
-          )}
-
-          {/* Correction: Utilisation du composant dédié CreateSequelButton pour ouvrir la modale */}
-          {onCreateSequel && canCreateSequel && (
-            <div data-sequel-button onClick={(e) => e.stopPropagation()}>
-              <CreateSequelButton
-                story={story}
-                onSequelCreated={onCreateSequel}
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 pb-4 border-b border-border">
+            {onShare && (
+              <Button
                 variant="ghost"
                 size="sm"
-              />
-            </div>
-          )}
-        </div>
-      </CardContent>
+                onClick={() => onShare(story.id)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Share2 className="h-4 w-4 mr-1.5" />
+                Partager
+              </Button>
+            )}
+
+            {/* Correction: Utilisation du composant dédié CreateSequelButton pour ouvrir la modale */}
+            {onCreateSequel && canCreateSequel && (
+              <div data-sequel-button onClick={(e) => e.stopPropagation()}>
+                <CreateSequelButton
+                  story={story}
+                  onSequelCreated={onCreateSequel}
+                  variant="ghost"
+                  size="sm"
+                />
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
     </Card>
   );
 };

@@ -41,13 +41,6 @@ const ChatChoiceButtons: React.FC<ChatChoiceButtonsProps> = ({
   const hasSelection = selectedChoices.length > 0;
   const isDisabled = disabled || confirmed;
 
-  // Calcul du nombre de colonnes selon le nombre de choix
-  const getGridCols = () => {
-    if (choices.length <= 2) return 'grid-cols-2';
-    if (choices.length <= 4) return 'grid-cols-2 sm:grid-cols-4';
-    return 'grid-cols-2 sm:grid-cols-3';
-  };
-
   return (
     <div className="space-y-3">
       {/* Label du type de sélection */}
@@ -58,8 +51,8 @@ const ChatChoiceButtons: React.FC<ChatChoiceButtonsProps> = ({
         }
       </p>
 
-      {/* Grille de boutons */}
-      <div className={cn('grid gap-2', getGridCols())}>
+      {/* Conteneur de boutons fluide (Chips) */}
+      <div className="flex flex-wrap gap-2">
         {choices.map((choice) => {
           const isSelected = selectedChoices.includes(choice.id);
           const IconComponent = choice.icon ? iconMap[choice.icon] : null;
@@ -92,7 +85,7 @@ const ChatChoiceButtons: React.FC<ChatChoiceButtonsProps> = ({
               )}
               
               {/* Label */}
-              <span className="flex-1 truncate">{choice.label}</span>
+              <span className="break-words whitespace-normal leading-tight">{choice.label}</span>
               
               {/* Check si sélectionné */}
               {isSelected && (
