@@ -24,7 +24,6 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [totalWords, setTotalWords] = useState(0);
-  const [isTokenized, setIsTokenized] = useState(false);
 
   const { userSettings } = useUserSettings();
   const immersiveMode = userSettings.readingPreferences?.immersiveReadingMode || 'pulse';
@@ -40,7 +39,8 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 
   // Tokenisation du DOM (Wrapped words in spans pour la performance)
   useEffect(() => {
-    if (!contentRef.current || isTokenized || story.status === 'regenerating') return;
+    if (!contentRef.current || story.status === 'regenerating') return;
+    if (contentRef.current.hasAttribute('data-tokenized')) return;
 
     // Reset before tokenizing in case of re-mount
     const blocks = contentRef.current.querySelectorAll('p, h1, h2, h3, li');
@@ -85,13 +85,11 @@ export const StoryContent: React.FC<StoryContentProps> = ({
     });
 
     setTotalWords(wordIdx);
-    setIsTokenized(true);
     contentRef.current.setAttribute('data-tokenized', 'true');
-  }, [story.content, story.status, isTokenized]);
+  }, [story.content, story.status]);
 
   // Réinitialisation de la tokenisation si l'histoire change
   useEffect(() => {
-    setIsTokenized(false);
     if (contentRef.current) {
       contentRef.current.removeAttribute('data-tokenized');
     }
@@ -99,9 +97,9 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 
   // Effets visuels (Mise à jour DOM sans re-render React pour max perf)
   useEffect(() => {
-    if (!contentRef.current || !isTokenized || immersiveMode === 'none') {
+    if (!contentRef.current || immersiveMode === 'none') {
       // Nettoyage si on désactive le mode
-      if (contentRef.current && isTokenized) {
+      if (contentRef.current && contentRef.current.hasAttribute('data-tokenized')) {
         const allWords = contentRef.current.querySelectorAll('.story-word');
         const allBlocks = contentRef.current.querySelectorAll('[data-paragraph-index]');
         allWords.forEach(w => {
@@ -184,7 +182,7 @@ export const StoryContent: React.FC<StoryContentProps> = ({
       });
     }
 
-  }, [currentWordIndex, immersiveMode, isTokenized]);
+  }, [currentWordIndex, immersiveMode]);
 
   // Memoize markdown to prevent re-renders losing DOM manipulations
   const memoizedMarkdown = useMemo(() => (

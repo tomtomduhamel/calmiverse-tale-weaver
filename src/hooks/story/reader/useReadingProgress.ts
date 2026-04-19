@@ -21,9 +21,9 @@ export const useReadingProgress = ({
   const lastUpdateRef = useRef<number>(0);
   const frameRef = useRef<number | null>(null);
 
-  // Remise à zéro quand on arrête le défilement (pas juste pause, mais STOP)
+  // Remise à zéro quand on arrête le défilement (statut IDLE: ni scrolling ni paused)
   useEffect(() => {
-    if (!isAutoScrolling) {
+    if (!isAutoScrolling && !isPaused && !isManuallyPaused) {
       setCurrentWordIndex(-1);
       startTimeRef.current = null;
       pausedTimeRef.current = 0;
@@ -31,7 +31,7 @@ export const useReadingProgress = ({
         cancelAnimationFrame(frameRef.current);
       }
     }
-  }, [isAutoScrolling]);
+  }, [isAutoScrolling, isPaused, isManuallyPaused]);
 
   useEffect(() => {
     // Ne rien faire si on n'est pas en auto-scroll
