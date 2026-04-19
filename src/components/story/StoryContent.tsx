@@ -146,10 +146,11 @@ export const StoryContent: React.FC<StoryContentProps> = ({
       allBlocks.forEach(b => { (b as HTMLElement).style.opacity = '1'; });
     } 
     else if (immersiveMode === 'karaoke') {
+      const isCurrentlyPaused = isPaused || isManuallyPaused || !isAutoScrolling;
       allBlocks.forEach((blockElement) => {
         const b = blockElement as HTMLElement;
         const pIdx = b.getAttribute('data-paragraph-index');
-        b.style.opacity = (pIdx === currentParaIndex || currentWordIndex === -1) ? '1' : '0.4';
+        b.style.opacity = (pIdx === currentParaIndex || currentWordIndex === -1 || isCurrentlyPaused) ? '1' : '0.4';
         b.style.transition = 'opacity 300ms ease-in-out';
       });
 
@@ -182,7 +183,7 @@ export const StoryContent: React.FC<StoryContentProps> = ({
       });
     }
 
-  }, [currentWordIndex, immersiveMode]);
+  }, [currentWordIndex, immersiveMode, isPaused, isManuallyPaused, isAutoScrolling]);
 
   // Memoize markdown to prevent re-renders losing DOM manipulations
   const memoizedMarkdown = useMemo(() => (
