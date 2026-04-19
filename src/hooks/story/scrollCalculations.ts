@@ -1,23 +1,25 @@
 
-export const calculateScrollSpeed = (readingSpeed: number): number => {
-  // Plage de vitesse de défilement adaptée à la lecture à voix haute (en pixels/seconde)
-  const minSpeed = 5;    // Pour 90 mots/min - défilement lent, lecture expressive
-  const maxSpeed = 20;   // Pour 150 mots/min - défilement rapide mais lisible
+export const calculateScrollSpeed = (
+  readingSpeed: number, 
+  wordCount: number, 
+  viewportEl: HTMLElement
+): number => {
+  if (wordCount <= 0) return 10;
   
-  // Paramètres de vitesse de lecture utilisateur (en mots/minute)
-  // Alignés avec les presets: Escargot 90, Tortue 120, Lapin 150
-  const minReadingSpeed = 90;
-  const maxReadingSpeed = 150;
+  const contentHeight = viewportEl.scrollHeight;
+  const viewportHeight = viewportEl.clientHeight;
+  const scrollDistance = Math.max(0, contentHeight - viewportHeight);
   
-  // Normaliser la vitesse de lecture vers [0, 1]
-  const normalizedSpeed = Math.max(0, Math.min(1, 
-    (readingSpeed - minReadingSpeed) / (maxReadingSpeed - minReadingSpeed)
-  ));
+  // Temps total nécessaire pour lire toute l'histoire en secondes
+  const totalSeconds = (wordCount / readingSpeed) * 60;
   
-  // Interpolation linéaire entre minSpeed et maxSpeed
-  const pixelsPerSecond = minSpeed + (normalizedSpeed * (maxSpeed - minSpeed));
+  if (totalSeconds <= 0) return 10;
   
-  console.log(`[AutoScroll] Vitesse lecture: ${readingSpeed} mots/min → ${pixelsPerSecond.toFixed(1)} px/sec`);
+  // Vitesse de défilement mathématique stricte pour parfaitement synchroniser 
+  // le défilement et le mot surligné du début à la fin de l'histoire
+  const pixelsPerSecond = scrollDistance / totalSeconds;
+  
+  console.log(`[AutoScroll] Synchronisation parfaite: Distance=${scrollDistance}px, Temps=${totalSeconds.toFixed(1)}s → ${pixelsPerSecond.toFixed(1)} px/sec`);
   
   return pixelsPerSecond;
 };

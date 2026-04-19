@@ -74,7 +74,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
     // Notifier que le défilement commence
     notifyScrollStateChange(true);
     
-    const pixelsPerSecond = calculateScrollSpeed(readingSpeed);
+    const pixelsPerSecond = calculateScrollSpeed(readingSpeed, wordCount, viewportEl);
     const startTime = Date.now();
     const startPosition = viewportEl.scrollTop;
     
