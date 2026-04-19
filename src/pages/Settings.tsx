@@ -10,6 +10,7 @@ import { AccountManagementSection } from '@/components/settings/AccountManagemen
 import { ReadingPreferencesSection } from '@/components/settings/ReadingPreferencesSection';
 import { ThemeSection } from '@/components/settings/ThemeSection';
 import { AdminLinksSection } from '@/components/settings/AdminLinksSection';
+import { FamilySection } from '@/components/settings/FamilySection';
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -169,6 +170,8 @@ const Settings = () => {
       />
 
       <AccountInfoSection user={user} />
+
+      <FamilySection />
 
       <ThemeSection />
 

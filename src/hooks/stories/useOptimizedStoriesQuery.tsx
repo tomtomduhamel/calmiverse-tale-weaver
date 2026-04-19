@@ -77,7 +77,6 @@ export const useOptimizedStoriesQuery = () => {
       const { data, error: queryError } = await supabase
         .from('stories')
         .select('*')
-        .eq('authorid', user.id)
         .order('createdat', { ascending: false });
       
       if (queryError) {
@@ -127,8 +126,7 @@ export const useOptimizedStoriesQuery = () => {
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'stories',
-        filter: `authorid=eq.${user.id}`
+        table: 'stories'
       }, (payload) => {
         console.log("New story inserted:", payload.new);
         // Add new story to existing list instead of full refresh
@@ -146,8 +144,7 @@ export const useOptimizedStoriesQuery = () => {
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
-        table: 'stories',
-        filter: `authorid=eq.${user.id}`
+        table: 'stories'
       }, (payload) => {
         console.log("Story updated:", payload.new);
         // Update specific story instead of full refresh
@@ -171,8 +168,7 @@ export const useOptimizedStoriesQuery = () => {
       .on('postgres_changes', {
         event: 'DELETE',
         schema: 'public',
-        table: 'stories',
-        filter: `authorid=eq.${user.id}`
+        table: 'stories'
       }, (payload) => {
         console.log("Story deleted:", payload.old);
         // Remove story from list instead of full refresh

@@ -19,6 +19,9 @@ interface StoryReaderContentProps {
   onMarkAsRead: (storyId: string) => Promise<boolean>;
   isRead: boolean;
   isUpdatingReadStatus: boolean;
+  isAutoScrolling: boolean;
+  isPaused: boolean;
+  isManuallyPaused: boolean;
 }
 
 export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
@@ -31,7 +34,10 @@ export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
   scrollAreaRef,
   onMarkAsRead,
   isRead,
-  isUpdatingReadStatus
+  isUpdatingReadStatus,
+  isAutoScrolling,
+  isPaused,
+  isManuallyPaused
 }) => {
   return (
     <ScrollArea
@@ -51,6 +57,9 @@ export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
           story={story}
           fontSize={fontSize}
           isDarkMode={isDarkMode}
+          isAutoScrolling={isAutoScrolling}
+          isPaused={isPaused}
+          isManuallyPaused={isManuallyPaused}
         />
 
         {/* Système de notation */}

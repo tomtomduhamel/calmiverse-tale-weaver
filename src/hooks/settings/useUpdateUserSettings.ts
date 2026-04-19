@@ -71,6 +71,8 @@ export const useUpdateUserSettings = (
         supabaseData.custom_speed_normal = newSettings.readingPreferences.customSpeedNormal;
       if (newSettings.readingPreferences?.customSpeedFast !== undefined)
         supabaseData.custom_speed_fast = newSettings.readingPreferences.customSpeedFast;
+      if (newSettings.readingPreferences?.immersiveReadingMode !== undefined)
+        supabaseData.immersive_reading_mode = newSettings.readingPreferences.immersiveReadingMode;
 
       // Vérifier si l'utilisateur existe déjà dans la table
       const { data: existingUser, error: checkError } = await supabase

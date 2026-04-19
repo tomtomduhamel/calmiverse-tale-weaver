@@ -87,7 +87,6 @@ export const useSupabaseChildren = () => {
       const { data: childrenData, error: childrenError } = await supabase
         .from('children')
         .select('*')
-        .eq('authorid', session.user.id)
         .order('createdat', { ascending: false });
 
       if (childrenError) {
@@ -188,8 +187,7 @@ export const useSupabaseChildren = () => {
             { 
               event: '*', 
               schema: 'public', 
-              table: 'children',
-              filter: `authorid=eq.${session.user.id}`
+              table: 'children'
             }, 
             (payload) => {
               console.log("[useSupabaseChildren] Changement détecté:", payload);
@@ -280,8 +278,7 @@ export const useSupabaseChildren = () => {
     const { error } = await supabase
       .from('children')
       .update(supabaseData)
-      .eq('id', childId)
-      .eq('authorid', session.user.id);
+      .eq('id', childId);
       
     if (error) throw error;
     
@@ -305,8 +302,7 @@ export const useSupabaseChildren = () => {
     const { error } = await supabase
       .from('children')
       .delete()
-      .eq('id', childId)
-      .eq('authorid', session.user.id);
+      .eq('id', childId);
       
     if (error) throw error;
     

@@ -27,6 +27,7 @@ export const useUserSettingsState = () => {
       customSpeedSlow: 90,
       customSpeedNormal: 120,
       customSpeedFast: 150,
+      immersiveReadingMode: 'pulse',
     }
   });
 
@@ -79,6 +80,7 @@ export const useUserSettingsState = () => {
               customSpeedSlow: data.custom_speed_slow ?? 90,
               customSpeedNormal: data.custom_speed_normal ?? 120,
               customSpeedFast: data.custom_speed_fast ?? 150,
+              immersiveReadingMode: data.immersive_reading_mode ?? 'pulse',
             }
           });
         } else {

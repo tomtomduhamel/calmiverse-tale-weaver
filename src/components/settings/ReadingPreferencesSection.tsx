@@ -6,8 +6,9 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserSettings } from "@/types/user-settings";
-import { Snail, Turtle, Rabbit, RotateCcw, Lock } from "lucide-react";
+import { Snail, Turtle, Rabbit, RotateCcw, Lock, Wand2 } from "lucide-react";
 import { useSubscription } from "@/hooks/subscription/useSubscription";
 
 // Valeurs par défaut des vitesses
@@ -57,6 +58,16 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
       readingPreferences: {
         ...userSettings.readingPreferences,
         backgroundMusicEnabled: checked
+      }
+    });
+  };
+
+  // Gérer le changement du mode de lecture immersive
+  const handleImmersiveModeChange = async (value: 'none' | 'pulse' | 'karaoke' | 'brush') => {
+    await onUpdateSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        immersiveReadingMode: value
       }
     });
   };
@@ -258,6 +269,40 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
                 Disponible avec le plan Calmix
               </span>
             )}
+          </div>
+        </div>
+
+        {/* Option Lecture Immersive */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Wand2 className="h-5 w-5 text-primary" />
+                <Label htmlFor="immersive-mode" className="text-base font-medium">
+                  Mode Lecture Immersive
+                </Label>
+              </div>
+              <div className="text-sm text-muted-foreground mr-4">
+                Surligne le texte pendant la lecture au rythme sélectionné ci-dessous.
+              </div>
+            </div>
+            <div className="w-48 xl:w-56">
+              <Select
+                value={userSettings.readingPreferences?.immersiveReadingMode || 'pulse'}
+                onValueChange={(value) => handleImmersiveModeChange(value as 'none' | 'pulse' | 'karaoke' | 'brush')}
+                disabled={isLoading}
+              >
+                <SelectTrigger id="immersive-mode">
+                  <SelectValue placeholder="Sélectionner un mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Désactivé</SelectItem>
+                  <SelectItem value="pulse">Focus Mot (Classique)</SelectItem>
+                  <SelectItem value="karaoke">Karaoké (Paragraphe)</SelectItem>
+                  <SelectItem value="brush">Pinceau Fluide</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 

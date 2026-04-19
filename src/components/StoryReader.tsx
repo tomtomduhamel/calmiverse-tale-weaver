@@ -102,6 +102,9 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         onMarkAsRead={handleMarkAsRead}
         isRead={story.status === 'read'}
         isUpdatingReadStatus={isUpdatingReadStatus}
+        isAutoScrolling={isAutoScrolling}
+        isPaused={isPaused}
+        isManuallyPaused={isManuallyPaused}
       />
 
       {/* Contrôles rétractables */}
