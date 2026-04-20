@@ -12,21 +12,37 @@ export const FamilySection: React.FC = () => {
   const { toast } = useToast();
   const [joinCode, setJoinCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleGenerateCode = async () => {
+    setIsGenerating(true);
     try {
-      await generateInvite();
-      toast({
-        title: "Code généré",
-        description: "Vous pouvez maintenant le partager avec un autre membre de la famille.",
-      });
+      const token = await generateInvite();
+      if (token) {
+        // Copier automatiquement dans le presse-papier
+        await navigator.clipboard.writeText(token);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+        toast({
+          title: "Code généré et copié !",
+          description: `Le code "${token}" a été copié dans votre presse-papier. Partagez-le avec la personne à inviter.`,
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de générer le code. Veuillez réessayer.",
+          variant: "destructive"
+        });
+      }
     } catch (e: any) {
       toast({
         title: "Erreur",
         description: "Impossible de générer le code.",
         variant: "destructive"
       });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -85,17 +101,26 @@ export const FamilySection: React.FC = () => {
             Membres de la tribu ({members.length})
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {members.map(member => (
-              <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border bg-background/50">
-                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                  <UserPlus className="w-4 h-4 text-primary" />
+            {members.map(member => {
+              const initials = member.displayName
+                ? member.displayName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+                : '?';
+              return (
+                <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border bg-background/50">
+                  <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-primary">{initials}</span>
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-sm font-medium truncate">
+                      {member.displayName || 'Utilisateur inconnu'}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {member.email || ''} · {member.role === 'owner' ? '👑 Créateur' : 'Membre'}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-medium truncate">{member.user_id.substring(0, 8)}...</p>
-                  <p className="text-xs text-muted-foreground capitalize">{member.role === 'owner' ? 'Créateur' : 'Membre'}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -108,18 +133,21 @@ export const FamilySection: React.FC = () => {
             </h4>
             
             {!inviteToken ? (
-              <Button onClick={handleGenerateCode} variant="outline" className="w-full">
-                Générer un code d'invitation
+              <Button onClick={handleGenerateCode} variant="outline" className="w-full" disabled={isGenerating}>
+                {isGenerating ? 'Génération en cours...' : 'Générer un code d\'invitation'}
               </Button>
             ) : (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">Partagez ce code :</p>
                 <div className="flex gap-2">
                   <Input value={inviteToken} readOnly className="font-mono text-center text-lg tracking-widest bg-primary/5" />
-                  <Button variant="secondary" size="icon" onClick={copyToClipboard}>
+                  <Button variant="secondary" size="icon" onClick={copyToClipboard} title="Copier le code">
                     {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
+                <Button onClick={handleGenerateCode} variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" disabled={isGenerating}>
+                  {isGenerating ? 'Génération...' : '↺ Générer un nouveau code'}
+                </Button>
               </div>
             )}
           </div>

@@ -9,7 +9,7 @@ import { ReadingSpeedProvider } from "@/contexts/ReadingSpeedContext";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import type { Story } from "@/types/story";
-import { useUserSettingsState } from "@/hooks/settings/useUserSettingsState";
+import { useUserSettings } from "@/hooks/settings/useUserSettings";
 import { StoryVideoIntro } from "@/components/story/StoryVideoIntro";
 import { getStoryVideoUrl } from "@/utils/supabaseImageUtils";
 import { useSubscription } from "@/hooks/subscription/useSubscription";
@@ -23,7 +23,7 @@ const StoryReaderPage: React.FC = () => {
   const { stories, updateStoryStatus, fetchStories } = useSupabaseStories();
   const { children } = useSupabaseChildren();
   const { toggleFavorite } = useStoryFavorites();
-  const { userSettings } = useUserSettingsState();
+  const { userSettings } = useUserSettings();
   const { limits, subscription } = useSubscription();
   const { incrementUsage } = useQuotaChecker();
   const [currentStory, setCurrentStory] = useState<Story | null>(null);

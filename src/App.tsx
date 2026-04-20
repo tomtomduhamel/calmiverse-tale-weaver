@@ -147,6 +147,7 @@ const PageLoader = () => {
 
 import { TitleGenerationProvider } from "@/contexts/TitleGenerationContext";
 import { TitleGenerationIndicator } from "@/components/story/TitleGenerationIndicator";
+import { UserSettingsProvider } from "@/contexts/UserSettingsContext";
 
 function App() {
   const isDemoMode = (window as any).__CALMI_DEMO_MODE === true;
@@ -176,6 +177,7 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <UserSettingsProvider>
         <TitleGenerationProvider>
           {isDemoMode && <DemoBanner />}
           <div className={isDemoMode ? "pt-[60px]" : ""}>
@@ -240,6 +242,7 @@ function App() {
           <PWAUpdateNotification />
           <OfflineIndicator />
         </TitleGenerationProvider>
+        </UserSettingsProvider>
       </Router>
     </ErrorBoundary>
   );
