@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Story } from '@/types/story';
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
 import { useReadingProgress } from '@/hooks/story/reader/useReadingProgress';
+import { useReadingSpeed } from '@/contexts/ReadingSpeedContext';
 
 interface StoryContentProps {
   story: Story;
@@ -27,7 +28,9 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 
   const { userSettings } = useUserSettings();
   const immersiveMode = userSettings.readingPreferences?.immersiveReadingMode || 'pulse';
-  const readingSpeed = userSettings.readingPreferences?.readingSpeed || 120;
+  // Lire la vitesse depuis ReadingSpeedContext (même source que useAutoScroll)
+  // pour garantir la synchronisation parfaite entre défilement et surlignage
+  const { readingSpeed } = useReadingSpeed();
 
   const { currentWordIndex } = useReadingProgress({
     isAutoScrolling,
