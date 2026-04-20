@@ -73,9 +73,9 @@ const AddChildModal: React.FC<AddChildModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-background/95 to-background/98 backdrop-blur-sm">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-background/95 to-background/98 backdrop-blur-sm">
         <DialogHeader className="space-y-3">
-          <DialogTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <DialogTitle className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             {editingChild ? "Modifier le profil" : "Ajouter un enfant"}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">

@@ -37,8 +37,8 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
       </div>
 
       {/* Stats Cards - 4 columns now */}
-      <div className="flex justify-center">
-        <div className={`grid grid-cols-4 max-w-3xl ${isMobile ? 'gap-2' : 'gap-4'}`}>
+      <div className="w-full">
+        <div className={`grid grid-cols-4 w-full ${isMobile ? 'gap-2' : 'gap-4'}`}>
           {/* Children */}
           <Card className={`bg-gradient-to-br from-blue-500/5 to-blue-500/10 border-blue-500/20 ${isMobile ? 'p-2' : 'p-4'}`}>
             <div className={`flex items-center ${isMobile ? 'flex-col text-center space-y-1' : 'space-x-3'}`}>
@@ -46,8 +46,8 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
                 <Users className={`text-blue-500 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
               </div>
               <div>
-                <p className={`font-bold text-blue-500 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{childrenCount}</p>
-                <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>Enfant{childrenCount > 1 ? 's' : ''}</p>
+                <p className={`font-bold text-blue-500 ${isMobile ? 'text-base leading-none' : 'text-2xl'}`}>{childrenCount}</p>
+                <p className={`text-muted-foreground truncate ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'}`}>Enfant{childrenCount > 1 ? 's' : ''}</p>
               </div>
             </div>
           </Card>
@@ -59,8 +59,8 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
                 <UserCircle className={`text-purple-500 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
               </div>
               <div>
-                <p className={`font-bold text-purple-500 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{adultsCount}</p>
-                <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>Adulte{adultsCount > 1 ? 's' : ''}</p>
+                <p className={`font-bold text-purple-500 ${isMobile ? 'text-base leading-none' : 'text-2xl'}`}>{adultsCount}</p>
+                <p className={`text-muted-foreground truncate ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'}`}>Adulte{adultsCount > 1 ? 's' : ''}</p>
               </div>
             </div>
           </Card>
@@ -72,8 +72,8 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
                 <Cat className={`text-orange-500 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
               </div>
               <div>
-                <p className={`font-bold text-orange-500 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{petsCount}</p>
-                <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>Anim{petsCount > 1 ? 'aux' : 'al'}</p>
+                <p className={`font-bold text-orange-500 ${isMobile ? 'text-base leading-none' : 'text-2xl'}`}>{petsCount}</p>
+                <p className={`text-muted-foreground truncate ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'}`}>Anim{petsCount > 1 ? 'aux' : 'al'}</p>
               </div>
             </div>
           </Card>
@@ -85,8 +85,8 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
                 <BookOpen className={`text-accent ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
               </div>
               <div>
-                <p className={`font-bold text-accent ${isMobile ? 'text-lg' : 'text-2xl'}`}>{totalStories}</p>
-                <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>Histoire{totalStories > 1 ? 's' : ''}</p>
+                <p className={`font-bold text-accent ${isMobile ? 'text-base leading-none' : 'text-2xl'}`}>{totalStories}</p>
+                <p className={`text-muted-foreground truncate ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'}`}>Histoire{totalStories > 1 ? 's' : ''}</p>
               </div>
             </div>
           </Card>

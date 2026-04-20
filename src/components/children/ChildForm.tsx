@@ -153,7 +153,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
           value={onGenderChange ? gender : localGender}
           onValueChange={(value: ChildGender) => onGenderChange ? onGenderChange(value) : setLocalGender(value)}
           disabled={isSubmitting}
-          className="flex flex-row gap-6"
+          className="flex flex-row flex-wrap gap-4"
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="boy" id="boy" />
@@ -187,7 +187,7 @@ const ChildForm: React.FC<ChildFormProps> = ({
               value={onPetTypeChange ? petType : localPetType}
               onValueChange={(value: PetType) => onPetTypeChange ? onPetTypeChange(value) : setLocalPetType(value)}
               disabled={isSubmitting}
-              className="flex flex-row gap-6"
+              className="flex flex-row flex-wrap gap-4"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="dog" id="dog" />

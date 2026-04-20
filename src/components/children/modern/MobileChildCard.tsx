@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, Trash2, BookOpen, Calendar } from "lucide-react";
+import { Trash2, BookOpen, Calendar } from "lucide-react";
 import type { Child } from "@/types/child";
 import { calculateAge, formatAge } from "@/utils/age";
 import { getCategoryDisplay } from "@/utils/profileCategory";
@@ -31,7 +31,10 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
   const categoryDisplay = getCategoryDisplay(child);
 
   return (
-    <Card className="bg-background/80 border-border/50 hover:border-primary/30 transition-all duration-200 active:scale-[0.98]">
+    <Card
+      className="bg-background/80 border-border/50 hover:border-primary/30 transition-all duration-200 active:scale-[0.98] cursor-pointer"
+      onClick={() => onEdit(child)}
+    >
       <div className="p-3">
         <div className="flex items-center gap-3">
           {/* Avatar */}
@@ -49,20 +52,12 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-semibold text-base leading-tight truncate pr-2">{child.name}</h3>
               
-              {/* Actions */}
+              {/* Action : suppression uniquement */}
               <div className="flex items-center gap-1 flex-shrink-0">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onEdit(child)}
-                  className="h-8 w-8 p-0 hover:bg-primary/10"
-                >
-                  <Edit className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(child.id)}
+                  onClick={(e) => { e.stopPropagation(); onDelete(child.id); }}
                   className="h-8 w-8 p-0 hover:bg-destructive/10 text-destructive"
                 >
                   <Trash2 className="h-3 w-3" />
@@ -91,7 +86,7 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
             {/* Bouton créer histoire */}
             {onCreateStory && (
               <Button
-                onClick={() => onCreateStory(child.id)}
+                onClick={(e) => { e.stopPropagation(); onCreateStory(child.id); }}
                 variant="outline"
                 size="sm"
                 className="w-full h-8 text-xs text-primary border-primary/30 hover:bg-primary/10"

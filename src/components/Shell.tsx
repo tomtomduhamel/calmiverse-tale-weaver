@@ -67,7 +67,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
     // Mode preview : affichage direct sans AuthGuard
     return (
       <SidebarProvider>
-        <div className="flex flex-col min-h-screen w-full relative">
+        <div className="flex flex-col min-h-screen w-full relative overflow-x-hidden">
           <PreviewBanner />
           
           {/* Only show top navigation on desktop and not on reader pages */}
@@ -101,7 +101,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   return (
     <AuthGuard>
       <SidebarProvider>
-        <div className="flex flex-col min-h-screen w-full relative">
+        <div className="flex flex-col min-h-screen w-full relative overflow-x-hidden">
           {/* Only show top navigation on desktop and not on reader pages */}
           {!isMobile && !location.pathname.startsWith('/reader/') && <Navigation />}
           

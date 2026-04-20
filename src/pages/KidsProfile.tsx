@@ -93,7 +93,7 @@ const KidsProfile = () => {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-3 sm:px-4 max-w-full overflow-x-hidden">
       <div className="flex items-center mb-6">
         <Button variant="ghost" onClick={handleBack} className="mr-2">
           <ArrowLeft className="h-4 w-4 mr-2" />
