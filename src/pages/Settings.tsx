@@ -12,8 +12,6 @@ import { ThemeSection } from '@/components/settings/ThemeSection';
 import { AdminLinksSection } from '@/components/settings/AdminLinksSection';
 import { FamilySection } from '@/components/settings/FamilySection';
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
-import pkg from '../../package.json';
-const appVersion = pkg.version;
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { UserSettings, SecuritySettings } from '@/types/user-settings';
@@ -198,17 +196,6 @@ const Settings = () => {
       <AdminLinksSection />
 
       <AccountManagementSection />
-
-      <div className="pt-8 flex flex-col items-center gap-2 border-t border-muted-foreground/10 pb-4">
-        <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest opacity-50">
-          Calmiverse
-        </p>
-        <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full border border-border/50">
-          <span className="text-[10px] font-bold text-muted-foreground">VERSION</span>
-          <span className="h-3 w-[1px] bg-muted-foreground/20" />
-          <span className="text-xs font-mono text-primary/80">{appVersion}</span>
-        </div>
-      </div>
     </div>
   );
 };

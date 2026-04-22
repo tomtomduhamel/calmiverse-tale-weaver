@@ -1,3 +1,5 @@
+import { APP_CONFIG } from '@/lib/config';
+
 interface FeatureFlags {
   // Phase 6 feature flags
   backgroundStoryGeneration: boolean;
@@ -37,7 +39,7 @@ export class FeatureFlagService {
     rolloutPercentage: 10, // 10% des utilisateurs par défaut
     enabledUsers: [],
     disabledUsers: [],
-    version: '1.0.0'
+    version: APP_CONFIG.APP_VERSION
   };
 
   private constructor() {

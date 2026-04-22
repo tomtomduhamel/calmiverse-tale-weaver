@@ -3,10 +3,12 @@
  * Centralizes all production-ready configuration
  */
 
+import pkg from '../../package.json';
+
 export const APP_CONFIG = {
   // Application info
   APP_NAME: 'Calmiverse',
-  APP_VERSION: '1.0.0',
+  APP_VERSION: pkg.version,
   APP_DESCRIPTION: 'Génération d\'histoires personnalisées pour enfants par IA',
   
   // Company info (required for legal pages)

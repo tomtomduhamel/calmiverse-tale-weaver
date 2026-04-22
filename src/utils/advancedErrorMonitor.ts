@@ -3,6 +3,8 @@
  * Production-ready error tracking with detailed context
  */
 
+import { APP_CONFIG } from '@/lib/config';
+
 interface ErrorContext {
   userId?: string;
   component?: string;
@@ -30,7 +32,7 @@ class AdvancedErrorMonitor {
 
   constructor() {
     this.sessionId = this.generateSessionId();
-    this.buildVersion = import.meta.env.VITE_APP_VERSION || '1.0.0';
+    this.buildVersion = APP_CONFIG.APP_VERSION;
     this.metrics = {
       errorCount: 0,
       errorRate: 0,
