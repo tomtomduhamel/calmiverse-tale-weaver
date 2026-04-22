@@ -100,88 +100,99 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 
   // Effets visuels (Mise à jour DOM sans re-render React pour max perf)
   useEffect(() => {
-    if (!contentRef.current || immersiveMode === 'none') {
-      // Nettoyage si on désactive le mode
-      if (contentRef.current && contentRef.current.hasAttribute('data-tokenized')) {
-        const allWords = contentRef.current.querySelectorAll('.story-word');
-        const allBlocks = contentRef.current.querySelectorAll('[data-paragraph-index]');
-        allWords.forEach(w => {
-           (w as HTMLElement).style.cssText = 'transition: all 150ms ease-in-out;';
-           w.className = 'story-word transition-all duration-150 inline-block';
-        });
-        allBlocks.forEach(b => {
-           (b as HTMLElement).style.opacity = '1';
-        });
-      }
-      return;
-    }
+    if (!contentRef.current) return;
 
     const allWords = contentRef.current.querySelectorAll('.story-word');
     const allBlocks = contentRef.current.querySelectorAll('[data-paragraph-index]');
 
-    // Si on n'a pas encore commencé
-    if (currentWordIndex === -1) {
-      allWords.forEach(w => {
-        w.className = 'story-word transition-all duration-150 inline-block';
-        (w as HTMLElement).style.color = '';
-      });
-      allBlocks.forEach(b => {
-        (b as HTMLElement).style.opacity = '1';
-      });
+    // === NETTOYAGE SYSTÉMATIQUE au changement de mode ===
+    // On remet TOUT à zéro à chaque tick pour éviter les résidus visuels
+    allWords.forEach(w => {
+      const el = w as HTMLElement;
+      el.className = 'story-word inline-block';
+      el.style.cssText = '';
+    });
+    allBlocks.forEach(b => {
+      (b as HTMLElement).style.opacity = '1';
+      (b as HTMLElement).style.transition = '';
+    });
+
+    // Si mode désactivé ou pas encore démarré, on s'arrête après le nettoyage
+    if (immersiveMode === 'none' || currentWordIndex === -1) {
       return;
     }
 
     const activeWordSpan = contentRef.current.querySelector(`[data-word-index="${currentWordIndex}"]`) as HTMLElement;
     const currentParaIndex = activeWordSpan?.getAttribute('data-paragraph-index') || '-1';
+    const isCurrentlyPaused = isPaused || isManuallyPaused || !isAutoScrolling;
 
-    // Appliquer les styles selon le mode
+    console.log(`[Immersive] Mode=${immersiveMode}, WordIdx=${currentWordIndex}, Paused=${isCurrentlyPaused}`);
+
+    // === MODE PULSATION ===
+    // Un seul mot surligné avec fond bien visible + légère mise en valeur
     if (immersiveMode === 'pulse') {
       allWords.forEach((wordElement) => {
         const w = wordElement as HTMLElement;
         const wIdx = parseInt(w.getAttribute('data-word-index') || '0', 10);
         
         if (wIdx === currentWordIndex) {
-          w.className = 'story-word transition-all duration-150 inline-block bg-primary/20 text-primary font-medium rounded px-1 -mx-1';
+          w.style.cssText = 'display: inline-block; background: hsl(var(--primary) / 0.3); color: hsl(var(--primary)); font-weight: 600; border-radius: 4px; padding: 1px 4px; margin: 0 -4px; transition: all 120ms ease-out; transform: scale(1.05);';
         } else {
-          w.className = 'story-word transition-all duration-150 inline-block';
+          w.style.cssText = 'display: inline-block; transition: all 120ms ease-out;';
         }
       });
-      allBlocks.forEach(b => { (b as HTMLElement).style.opacity = '1'; });
     } 
+
+    // === MODE KARAOKÉ ===
+    // Paragraphe actif pleine opacité, autres très atténués (sauf en pause)
+    // Mot actif en gras coloré, mots précédents du paragraphe en couleur douce (traînée)
     else if (immersiveMode === 'karaoke') {
-      const isCurrentlyPaused = isPaused || isManuallyPaused || !isAutoScrolling;
+      // Dimmer les paragraphes non-actifs (sauf en pause)
       allBlocks.forEach((blockElement) => {
         const b = blockElement as HTMLElement;
         const pIdx = b.getAttribute('data-paragraph-index');
-        b.style.opacity = (pIdx === currentParaIndex || currentWordIndex === -1 || isCurrentlyPaused) ? '1' : '0.4';
-        b.style.transition = 'opacity 300ms ease-in-out';
+        if (isCurrentlyPaused) {
+          b.style.opacity = '1';
+        } else {
+          b.style.opacity = (pIdx === currentParaIndex) ? '1' : '0.25';
+        }
+        b.style.transition = 'opacity 400ms ease-in-out';
       });
 
       allWords.forEach((wordElement) => {
         const w = wordElement as HTMLElement;
         const wIdx = parseInt(w.getAttribute('data-word-index') || '0', 10);
+        const wPara = w.getAttribute('data-paragraph-index');
         
         if (wIdx === currentWordIndex) {
-          w.className = 'story-word transition-all duration-150 inline-block text-primary font-bold scale-105';
-        } else if (wIdx < currentWordIndex && w.getAttribute('data-paragraph-index') === currentParaIndex) {
-          // Traînée magique dans le même paragraphe
-          w.className = 'story-word transition-all duration-150 inline-block text-primary/70';
+          // Mot actif : gros, coloré, mis en avant
+          w.style.cssText = 'display: inline-block; color: hsl(var(--primary)); font-weight: 700; transform: scale(1.08); transition: all 150ms ease-out;';
+        } else if (wIdx < currentWordIndex && wPara === currentParaIndex) {
+          // Traînée : mots déjà lus dans le même paragraphe
+          w.style.cssText = 'display: inline-block; color: hsl(var(--primary) / 0.55); transition: all 200ms ease-out;';
         } else {
-          w.className = 'story-word transition-all duration-150 inline-block';
+          w.style.cssText = 'display: inline-block; transition: all 200ms ease-out;';
         }
       });
     }
+
+    // === MODE PINCEAU ===
+    // Effet de "peinture" progressive : tous les mots lus changent de couleur
+    // avec un dégradé d'opacité entre les mots récents et anciens
     else if (immersiveMode === 'brush') {
-      allBlocks.forEach(b => { (b as HTMLElement).style.opacity = '1'; });
-      
       allWords.forEach((wordElement) => {
         const w = wordElement as HTMLElement;
         const wIdx = parseInt(w.getAttribute('data-word-index') || '0', 10);
         
-        if (wIdx <= currentWordIndex) {
-          w.className = 'story-word transition-all duration-300 inline-block text-primary';
+        if (wIdx === currentWordIndex) {
+          // Mot actif : couleur primaire bien visible + underline
+          w.style.cssText = 'display: inline-block; color: hsl(var(--primary)); font-weight: 600; text-decoration: underline; text-decoration-color: hsl(var(--primary) / 0.5); text-underline-offset: 3px; transition: all 200ms ease-out;';
+        } else if (wIdx < currentWordIndex) {
+          // Mots déjà lus : couleur primaire (plus subtile)
+          w.style.cssText = 'display: inline-block; color: hsl(var(--primary) / 0.7); transition: color 300ms ease-out;';
         } else {
-          w.className = 'story-word transition-all duration-300 inline-block';
+          // Mots à venir : style par défaut
+          w.style.cssText = 'display: inline-block; transition: color 300ms ease-out;';
         }
       });
     }

@@ -35,11 +35,6 @@ export const useFamily = () => {
       setFamilies(familyData || []);
 
       if (familyData && familyData.length > 0) {
-        // On cherche la famille dont l'utilisateur est le propriétaire
-        const ownedFamily = familyData.find((f: any) => {
-          // On le déterminera via family_members ci-dessous
-          return true; // placeholder, on filtre après
-        });
         const familyId = familyData[0].id; // fallback initial
 
         // Récupérer les memberships pour trouver la famille "owned"
@@ -137,7 +132,7 @@ export const useFamily = () => {
       setInviteToken(token);
       return token;
     }
-    console.error('Failed to insert invite token');
+    console.error('[useFamily] Erreur insertion invite token:', error?.message, error?.code, error?.details);
     return null;
   };
 
