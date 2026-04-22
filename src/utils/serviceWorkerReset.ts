@@ -4,10 +4,11 @@
  */
 
 import { safeStorage, safeSessionStorage } from './safeStorage';
+import { APP_CONFIG } from '@/lib/config';
 
 const SW_RESET_KEY = 'calmi-sw-reset-done';
 const SW_VERSION_KEY = 'calmi-sw-version';
-const CURRENT_VERSION = '2.0.3'; // Incrémentez pour forcer un reset
+const CURRENT_VERSION = APP_CONFIG.APP_VERSION; // Source de vérité unifiée
 
 export interface ResetResult {
   didCleanup: boolean;

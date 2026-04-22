@@ -2,8 +2,22 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import fs from "fs";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
+
+// Auto-generate version.json at build time from package.json
+function versionJsonPlugin() {
+  return {
+    name: 'version-json-generator',
+    buildStart() {
+      const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+      const versionData = JSON.stringify({ version: pkg.version }, null, 2);
+      fs.writeFileSync('public/version.json', versionData + '\n');
+      console.log(`[version-json] Generated version.json with version ${pkg.version}`);
+    }
+  };
+}
 
 export default defineConfig(({ mode }) => ({
   test: {
@@ -21,6 +35,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    versionJsonPlugin(),
     mode === 'development' && componentTagger(),
     // PWA temporairement désactivé pour stabiliser l'application
     // Sera réactivé une fois la stabilité confirmée

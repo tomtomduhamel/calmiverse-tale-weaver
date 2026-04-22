@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePWAAnalytics } from '@/hooks/usePWAAnalytics';
 import { isPreviewIframe } from '@/utils/previewDetection';
+import { APP_CONFIG } from '@/lib/config';
 
 interface PWAState {
   isInstalled: boolean;
@@ -8,6 +9,9 @@ interface PWAState {
   canInstall: boolean;
   updateAvailable: boolean;
 }
+
+// Poll interval: check for updates every 5 minutes
+const VERSION_POLL_INTERVAL_MS = 5 * 60 * 1000;
 
 export const usePWA = () => {
   const { track } = usePWAAnalytics();
@@ -17,60 +21,106 @@ export const usePWA = () => {
     canInstall: false,
     updateAvailable: false
   });
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    // Check if app is installed
-    const checkInstallStatus = () => {
-      const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
-                         (window.navigator as any).standalone === true;
-      setState(prev => ({ ...prev, isInstalled }));
-    };
+  /**
+   * Check if a newer version is deployed by fetching /version.json
+   * This is the primary, reliable mechanism for update detection.
+   */
+  const checkVersionFromServer = useCallback(async () => {
+    try {
+      const response = await fetch('/version.json', {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
 
-    // Check for update availability
-    const checkForUpdates = () => {
-      // Skip SW operations in preview iframe
-      if (isPreviewIframe()) {
-        console.log('[usePWA] Preview mode: skipping SW update checks');
+      if (!response.ok) {
+        console.log('[usePWA] version.json not available (HTTP', response.status + ')');
         return;
       }
-      
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          setState(prev => ({ ...prev, updateAvailable: true }));
-          track('pwa_update_available');
-        });
-      }
-    };
 
-    // Online/offline status
+      const data = await response.json();
+      const serverVersion = data.version;
+      const localVersion = APP_CONFIG.APP_VERSION;
+
+      if (serverVersion && serverVersion !== localVersion) {
+        console.log(`[usePWA] 🆕 New version detected! Local: ${localVersion}, Server: ${serverVersion}`);
+        setState(prev => ({ ...prev, updateAvailable: true }));
+        track('pwa_update_available');
+
+        // Stop polling once we know an update is available
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+      }
+    } catch (error) {
+      // Silently fail - network might be offline or version.json missing in dev
+      console.debug('[usePWA] Version check failed (expected in dev):', error);
+    }
+  }, [track]);
+
+  useEffect(() => {
+    // Skip in preview iframe
+    if (isPreviewIframe()) {
+      console.log('[usePWA] Preview mode: skipping all update checks');
+      return;
+    }
+
+    // --- Install status ---
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
+                       (window.navigator as any).standalone === true;
+    setState(prev => ({ ...prev, isInstalled }));
+
+    // --- SW controllerchange (legacy, kept as backup) ---
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        setState(prev => ({ ...prev, updateAvailable: true }));
+        track('pwa_update_available');
+      });
+    }
+
+    // --- Version polling (primary mechanism) ---
+    // Initial check after a short delay to let the app stabilize
+    const initialCheckTimeout = setTimeout(() => {
+      checkVersionFromServer();
+    }, 10_000); // 10 seconds after mount
+
+    // Then poll periodically
+    pollIntervalRef.current = setInterval(checkVersionFromServer, VERSION_POLL_INTERVAL_MS);
+
+    // --- Online/offline status ---
     const handleOnline = () => {
       setState(prev => ({ ...prev, isOnline: true }));
       track('pwa_online');
+      // Re-check version when coming back online
+      checkVersionFromServer();
     };
     const handleOffline = () => {
       setState(prev => ({ ...prev, isOnline: false }));
       track('pwa_offline');
     };
 
-    // BeforeInstallPrompt event
+    // --- Install prompt ---
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setState(prev => ({ ...prev, canInstall: true }));
     };
-
-    checkInstallStatus();
-    checkForUpdates();
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     return () => {
+      clearTimeout(initialCheckTimeout);
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [checkVersionFromServer, track]);
 
   const reloadApp = () => {
     console.warn('[usePWA] Manual reload requested by user');
