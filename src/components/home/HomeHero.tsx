@@ -40,7 +40,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({
   });
 
   return (
-    <div className="flex flex-col min-h-screen max-h-screen overflow-hidden animate-fade-in px-3 py-1">
+    <div className="flex flex-col w-full flex-1 min-h-[calc(100dvh-5rem)] md:min-h-screen animate-fade-in px-3 py-1">
       {/* Arrière-plan avec gradient */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-hero"></div>

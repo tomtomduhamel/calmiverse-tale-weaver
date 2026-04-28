@@ -87,7 +87,7 @@ export const PWAInstallPrompt: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-80">
+    <div className="fixed bottom-20 left-4 right-4 z-[110] md:bottom-4 md:left-auto md:right-4 md:w-80">
       <Card className="border-primary/20 bg-background/95 backdrop-blur-sm shadow-soft-lg">
         <CardHeader className="relative pb-2">
           <Button
