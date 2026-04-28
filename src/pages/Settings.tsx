@@ -16,9 +16,13 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { UserSettings, SecuritySettings } from '@/types/user-settings';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { usePWA } from '@/hooks/usePWA';
+import { Button } from '@/components/ui/button';
+import { RefreshCw, Download } from 'lucide-react';
 
 const Settings = () => {
   const { user } = useSupabaseAuth();
+  const { checkForUpdate, isCheckingUpdate, updateAvailable, reloadApp } = usePWA();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -196,6 +200,36 @@ const Settings = () => {
       <AdminLinksSection />
 
       <AccountManagementSection />
+
+      <div className="pt-8 flex flex-col items-center gap-4 border-t border-muted-foreground/10 pb-4">
+        {updateAvailable ? (
+          <Button 
+            onClick={reloadApp} 
+            className="w-full sm:w-auto flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            <Download className="h-4 w-4" />
+            Installer la mise à jour
+          </Button>
+        ) : (
+          <Button 
+            onClick={async () => {
+              const hasUpdate = await checkForUpdate();
+              if (!hasUpdate) {
+                toast({
+                  title: "À jour",
+                  description: "Vous utilisez déjà la dernière version.",
+                });
+              }
+            }} 
+            variant="outline"
+            disabled={isCheckingUpdate}
+            className="w-full sm:w-auto flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <RefreshCw className={`h-4 w-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+            {isCheckingUpdate ? 'Vérification...' : 'Vérifier les mises à jour'}
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

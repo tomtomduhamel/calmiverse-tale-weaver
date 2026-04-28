@@ -23,20 +23,28 @@ export const usePWA = () => {
   });
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+
   /**
    * Check if a newer version is deployed by fetching /version.json
    * This is the primary, reliable mechanism for update detection.
    */
-  const checkVersionFromServer = useCallback(async () => {
+  const checkVersionFromServer = useCallback(async (manual = false) => {
     try {
-      const response = await fetch('/version.json', {
+      if (manual) setIsCheckingUpdate(true);
+      // Cache busting with timestamp parameter
+      const response = await fetch(`/version.json?t=${Date.now()}`, {
         cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' }
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
       });
 
       if (!response.ok) {
         console.log('[usePWA] version.json not available (HTTP', response.status + ')');
-        return;
+        return false;
       }
 
       const data = await response.json();
@@ -53,10 +61,15 @@ export const usePWA = () => {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
         }
+        return true;
       }
+      return false;
     } catch (error) {
       // Silently fail - network might be offline or version.json missing in dev
       console.debug('[usePWA] Version check failed (expected in dev):', error);
+      return false;
+    } finally {
+      if (manual) setIsCheckingUpdate(false);
     }
   }, [track]);
 
@@ -129,6 +142,8 @@ export const usePWA = () => {
 
   return {
     ...state,
-    reloadApp
+    reloadApp,
+    checkForUpdate: () => checkVersionFromServer(true),
+    isCheckingUpdate
   };
 };
