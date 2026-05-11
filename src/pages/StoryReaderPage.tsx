@@ -12,6 +12,8 @@ import type { Story } from "@/types/story";
 import { useUserSettings } from "@/hooks/settings/useUserSettings";
 import { StoryVideoIntro } from "@/components/story/StoryVideoIntro";
 import { getStoryVideoUrl } from "@/utils/supabaseImageUtils";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { useSubscription } from "@/hooks/subscription/useSubscription";
 import { useQuotaChecker } from "@/hooks/subscription/useQuotaChecker";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
@@ -30,9 +32,12 @@ const StoryReaderPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [introPlayed, setIntroPlayed] = useState(false);
+  const [forcePlayVideo, setForcePlayVideo] = useState(false);
   const introPlayedRef = useRef(false);
   const { user } = useSupabaseAuth();
   const hasLoggedRead = useRef(false);
+  const prevVideoPathRef = useRef<string | null | undefined>(undefined);
+  const { toast } = useToast();
 
   // Charger l'histoire depuis l'ID dans l'URL
   useEffect(() => {
@@ -46,11 +51,23 @@ const StoryReaderPage: React.FC = () => {
       const story = stories.find(s => s.id === id);
       if (story) {
         console.log("[StoryReaderPage] Histoire trouvée:", story.id);
-        console.log("[StoryReaderPage] Story data debug: ", {
-          id: story.id,
-          video_path: story.video_path,
-          hasVideoPath: !!story.video_path
-        });
+        
+        // Détecter l'arrivée de la vidéo
+        if (prevVideoPathRef.current === null && story.video_path) {
+          console.log("[StoryReaderPage] La vidéo vient de terminer sa génération !");
+          toast({
+            title: "🎬 Votre vidéo est prête !",
+            description: "La magie a opéré, la vidéo d'introduction est disponible.",
+            duration: 8000,
+            action: (
+              <ToastAction altText="Voir la vidéo" onClick={() => setForcePlayVideo(true)}>
+                Regarder
+              </ToastAction>
+            ),
+          });
+        }
+        prevVideoPathRef.current = story.video_path;
+
         setCurrentStory(story);
         setError(null);
       } else {
@@ -188,9 +205,8 @@ const StoryReaderPage: React.FC = () => {
 
   const showVideoIntro =
     videoUrl &&
-    userSettings.readingPreferences?.playVideoIntro !== false &&
-    !introPlayedRef.current &&
-    hasVideoQuota;
+    hasVideoQuota &&
+    ((userSettings.readingPreferences?.playVideoIntro !== false && !introPlayedRef.current) || forcePlayVideo);
 
   return (
     <ReadingSpeedProvider>
@@ -201,6 +217,7 @@ const StoryReaderPage: React.FC = () => {
             console.log("[StoryReaderPage] Video intro complete (quota tracking handled by DB trigger)");
             introPlayedRef.current = true;
             setIntroPlayed(true);
+            setForcePlayVideo(false);
           }}
         />
       ) : (

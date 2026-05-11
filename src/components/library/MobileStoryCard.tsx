@@ -249,6 +249,13 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
                 </div>
               )}
               
+              {(story.status === "ready" || story.status === "read") && !story.video_path && story.settings?.generateVideo && (
+                <div className="flex items-center text-purple-600 text-xs">
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  <span className="font-medium">Vidéo en préparation...</span>
+                </div>
+              )}
+              
               {isRecent && story.status !== "read" && (
                 <div className="flex items-center text-blue-600 text-xs">
                   <Sparkles className="h-3 w-3 mr-1" />

@@ -76,6 +76,7 @@ export interface StorySettings {
   atmosphere: string;
   theme: string;
   additionalNotes?: string;
+  generateVideo?: boolean;
 }
 
 export interface StoryAnalysis {

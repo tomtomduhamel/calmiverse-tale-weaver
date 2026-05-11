@@ -156,6 +156,9 @@ const StoryCard: React.FC<StoryCardProps> = ({
         </span> : <span>{getTimeAgo(story.createdAt)}</span> : story.status === "pending" || isPending ? <span className="flex items-center">
           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
           En génération...
+        </span> : (story.status === "ready" || story.status === "read") && !story.video_path && story.settings?.generateVideo ? <span className="flex items-center text-purple-600 dark:text-purple-400">
+          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+          Vidéo en préparation...
         </span> : <span className={isRecent ? "text-blue-600 font-medium dark:text-blue-400" : ""}>
           {getTimeAgo(story.createdAt)}
         </span>}

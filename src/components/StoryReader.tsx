@@ -91,6 +91,17 @@ const StoryReader: React.FC<StoryReaderProps> = ({
           isDeleting={isDeleting}
         />
 
+      {(!story.video_path && story.settings?.generateVideo) && (
+        <div className="mx-4 mt-2 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/30 rounded-xl flex items-start sm:items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+          <div className="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-800/50 flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0">
+            <span className="text-purple-600 dark:text-purple-300 text-lg">🪄</span>
+          </div>
+          <p className="text-sm text-purple-800 dark:text-purple-200 leading-snug">
+            <strong className="font-medium">Votre histoire est prête !</strong> La vidéo d'introduction est en cours de création magique en arrière-plan.
+          </p>
+        </div>
+      )}
+
       <StoryReaderContent
         story={story}
         childName={childName}
