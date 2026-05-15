@@ -92,16 +92,16 @@ const CreateStoryTitles: React.FC = () => {
     navigate("/auth");
     return null;
   }
-  return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-    <div className="container mx-auto px-4 py-8">
-      {/* En-tête avec bouton retour */}
-      <div className="mb-8">
-
-
+  return <div className="min-h-screen bg-gradient-hero relative overflow-hidden">
+    <div aria-hidden className="pointer-events-none absolute -top-32 -left-32 h-80 w-80 rounded-full bg-primary-soft/15 blur-3xl animate-drift" />
+    <div aria-hidden className="pointer-events-none absolute bottom-0 -right-32 h-96 w-96 rounded-full bg-accent/15 blur-3xl animate-drift" style={{ animationDelay: '2s' }} />
+    <div className="container mx-auto px-4 py-8 relative">
+      <div className="mb-8 animate-fade-up-slow">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Création de 3 titres pour votre histoire
+          <h1 className="font-display italic text-3xl sm:text-4xl text-foreground mb-2">
+            Choisissez le titre de votre histoire
           </h1>
+          <p className="text-sm text-muted-foreground">Trois propositions, doucement imaginées pour vous.</p>
         </div>
       </div>
 

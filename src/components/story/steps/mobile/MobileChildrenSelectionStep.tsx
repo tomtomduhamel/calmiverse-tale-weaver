@@ -110,12 +110,12 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
       </div>
 
       {/* En-tête mobile */}
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="text-center mb-6 animate-fade-up-slow">
+        <h1 className="font-display italic text-2xl sm:text-3xl text-foreground mb-2">
           Choisissez vos personnages
         </h1>
         <p className="text-muted-foreground text-sm">
-          Sélectionnez les personnages pour qui créer l'histoire
+          Pour qui imaginons-nous cette histoire ?
         </p>
       </div>
 
@@ -230,9 +230,9 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
   return (
     <div
       onClick={() => onToggle(child.id)}
-      className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isSelected
-        ? 'border-primary bg-primary/5 shadow-sm'
-        : 'border-border hover:border-primary/50'
+      className={`p-4 rounded-2xl border cursor-pointer transition-all duration-400 ease-calm active:scale-[0.98] ${isSelected
+        ? 'border-primary-soft/60 bg-primary-soft/15 shadow-soft animate-glow-pulse'
+        : 'border-border/50 hover:border-primary-soft/40 bg-card/50'
         }`}
     >
       <div className="flex items-center justify-between">
@@ -253,8 +253,8 @@ const MobileChildCard: React.FC<MobileChildCardProps> = ({
           </div>
         </div>
         {isSelected && (
-          <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
-            <div className="h-2 w-2 rounded-full bg-white"></div>
+          <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center shadow-glow-primary">
+            <div className="h-2 w-2 rounded-full bg-primary-foreground"></div>
           </div>
         )}
       </div>

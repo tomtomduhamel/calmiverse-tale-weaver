@@ -21,28 +21,28 @@ export const FloatingAutoScrollButton: React.FC<FloatingAutoScrollButtonProps> =
 }) => {
   const isMobile = useIsMobile();
 
-  // Déterminer l'icône et l'état visuel
+  // Déterminer l'icône et l'état visuel — tokens design system
   const getButtonState = () => {
     if (isAutoScrolling) {
       return {
         icon: <Pause className="h-5 w-5" />,
         tooltip: "Arrêter le défilement",
-        bgClass: "bg-primary/20 border-primary/50 text-primary",
+        bgClass: "bg-primary/20 border-primary-soft/50 text-primary",
         hoverClass: "hover:bg-primary/30"
       };
     } else if (isPaused || isManuallyPaused) {
       return {
         icon: <Play className="h-5 w-5" />,
         tooltip: "Reprendre le défilement",
-        bgClass: "bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300",
-        hoverClass: "hover:bg-amber-200 dark:hover:bg-amber-900/50"
+        bgClass: "bg-accent/30 border-accent/50 text-accent-foreground",
+        hoverClass: "hover:bg-accent/40"
       };
     } else {
       return {
         icon: <ArrowDown className="h-5 w-5" />,
         tooltip: "Démarrer le défilement",
-        bgClass: isDarkMode ? "bg-gray-800 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-700",
-        hoverClass: isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-50"
+        bgClass: "bg-background/70 backdrop-blur-xl border-primary-soft/30 text-foreground",
+        hoverClass: "hover:bg-background/85"
       };
     }
   };
@@ -79,9 +79,9 @@ export const FloatingAutoScrollButton: React.FC<FloatingAutoScrollButtonProps> =
               onClick={onToggleAutoScroll}
               className={`
                 rounded-full w-14 h-14 p-0
-                shadow-lg border-2
-                transition-all duration-300 ease-in-out
-                hover:scale-110 active:scale-95
+                shadow-floating border
+                transition-all duration-400 ease-calm
+                hover:scale-105 active:scale-95
                 ${bgClass} ${hoverClass}
                 animate-fade-in
               `}
