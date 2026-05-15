@@ -31,10 +31,10 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));
 
   const objectives = [
-    { value: 'sleep', label: "s'endormir", icon: '🌙', description: "Histoire pour s'endormir" },
-    { value: 'focus', label: 'se concentrer', icon: '🧠', description: 'Histoire stimulante et éducative' },
-    { value: 'relax', label: 'se détendre', icon: '🌸', description: 'Histoire douce pour se détendre' },
-    { value: 'fun', label: "s'amuser", icon: '🎉', description: 'Histoire joyeuse et divertissante' }
+    { value: 'sleep', label: "s'endormir", Icon: Moon, description: "Histoire pour s'endormir" },
+    { value: 'focus', label: 'se concentrer', Icon: Brain, description: 'Histoire stimulante et éducative' },
+    { value: 'relax', label: 'se détendre', Icon: Heart, description: 'Histoire douce pour se détendre' },
+    { value: 'fun', label: "s'amuser", Icon: Sparkles, description: 'Histoire joyeuse et divertissante' }
   ];
 
   const handleObjectiveSelect = useCallback((objective: string) => {
