@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Moon, Brain, Heart, Sparkles, Target } from 'lucide-react';
 import { useTitleGeneration } from '@/contexts/TitleGenerationContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
