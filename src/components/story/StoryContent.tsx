@@ -201,11 +201,11 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 
   // Memoize markdown to prevent re-renders losing DOM manipulations
   const memoizedMarkdown = useMemo(() => (
-    <ReactMarkdown
+      <ReactMarkdown
       components={{
-        h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-8 mb-4 text-foreground text-center" {...props} />,
-        h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-6 mb-3 text-foreground text-center" {...props} />,
-        p: ({ node, ...props }) => <p className="my-4 text-foreground relative z-10" style={{ textAlign: 'justify' }} {...props} />,
+        h1: ({ node, ...props }) => <h1 className="font-display text-3xl font-medium italic mt-8 mb-5 text-foreground text-center tracking-tight" {...props} />,
+        h2: ({ node, ...props }) => <h2 className="font-display text-2xl font-medium italic mt-7 mb-4 text-foreground text-center tracking-tight" {...props} />,
+        p: ({ node, ...props }) => <p className="my-5 text-foreground relative z-10 leading-[1.85]" style={{ textAlign: 'justify' }} {...props} />,
         strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
         em: ({ node, ...props }) => <em className="italic" {...props} />,
         ul: ({ node, ...props }) => <ul className="list-disc ml-6 my-4 relative z-10" {...props} />,
