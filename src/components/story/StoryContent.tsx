@@ -136,9 +136,9 @@ export const StoryContent: React.FC<StoryContentProps> = ({
         const wIdx = parseInt(w.getAttribute('data-word-index') || '0', 10);
         
         if (wIdx === currentWordIndex) {
-          w.style.cssText = 'display: inline-block; background: hsl(var(--primary) / 0.3); color: hsl(var(--primary)); font-weight: 600; border-radius: 4px; padding: 1px 4px; margin: 0 -4px; transition: all 120ms ease-out; transform: scale(1.05);';
+          w.style.cssText = 'display: inline-block; background: hsl(var(--primary-soft) / 0.35); color: hsl(var(--primary)); font-weight: 600; border-radius: 6px; padding: 1px 4px; margin: 0 -4px; transition: all 220ms cubic-bezier(0.22, 0.61, 0.36, 1); transform: scale(1.04);';
         } else {
-          w.style.cssText = 'display: inline-block; transition: all 120ms ease-out;';
+          w.style.cssText = 'display: inline-block; transition: all 220ms cubic-bezier(0.22, 0.61, 0.36, 1);';
         }
       });
     } 
