@@ -110,14 +110,13 @@ const StoryCard: React.FC<StoryCardProps> = ({
   return <Card className={cardStyles} onClick={handleCardClick}>
     <CardContent className="pt-6 pb-2">
       {/* Image de couverture si disponible */}
-      {storyImageUrl && <div className="mb-4 flex justify-center">
-        <img src={storyImageUrl} alt={`Illustration de ${story.title}`} className="w-full max-w-32 h-24 object-cover rounded-lg shadow-sm" onLoad={() => {
-          console.log('[StoryCard] Image chargée avec succès:', storyImageUrl);
-        }} onError={e => {
-          console.error('[StoryCard] Erreur de chargement image:', storyImageUrl, 'pour l\'histoire:', story.title);
-          // Masquer l'image si elle ne charge pas
-          (e.target as HTMLImageElement).style.display = 'none';
-        }} />
+      {storyImageUrl && <div className="mb-4 -mx-6 -mt-6">
+        <div className="relative aspect-[16/9] overflow-hidden">
+          <img src={storyImageUrl} alt={`Illustration de ${story.title}`} className="w-full h-full object-cover transition-transform duration-700 ease-calm hover:scale-105" onError={e => {
+            (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+          }} />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent pointer-events-none" />
+        </div>
       </div>}
 
       {/* Indicateur de série si l'histoire fait partie d'une série */}
