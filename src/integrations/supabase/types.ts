@@ -228,6 +228,7 @@ export type Database = {
           authorid: string
           birthdate: string
           createdat: string
+          family_id: string | null
           gender: string
           id: string
           imaginaryworld: string | null
@@ -243,6 +244,7 @@ export type Database = {
           authorid: string
           birthdate: string
           createdat?: string
+          family_id?: string | null
           gender?: string
           id?: string
           imaginaryworld?: string | null
@@ -258,6 +260,7 @@ export type Database = {
           authorid?: string
           birthdate?: string
           createdat?: string
+          family_id?: string | null
           gender?: string
           id?: string
           imaginaryworld?: string | null
@@ -269,7 +272,15 @@ export type Database = {
           teddyname?: string | null
           teddyphotos?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "children_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ericksonian_techniques: {
         Row: {
@@ -297,6 +308,94 @@ export type Database = {
           objective_affinity?: string[]
         }
         Relationships: []
+      }
+      families: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      family_invites: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          expires_at: string | null
+          family_id: string
+          id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          expires_at?: string | null
+          family_id: string
+          id?: string
+          token: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          expires_at?: string | null
+          family_id?: string
+          id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_invites_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_members: {
+        Row: {
+          family_id: string
+          id: string
+          joined_at: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          family_id: string
+          id?: string
+          joined_at?: string | null
+          role?: string
+          user_id: string
+        }
+        Update: {
+          family_id?: string
+          id?: string
+          joined_at?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_members_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       narrative_schemas: {
         Row: {
@@ -573,6 +672,7 @@ export type Database = {
           createdat: string
           deduplication_key: string | null
           error: string | null
+          family_id: string | null
           id: string
           image_path: string | null
           is_favorite: boolean
@@ -603,6 +703,7 @@ export type Database = {
           createdat?: string
           deduplication_key?: string | null
           error?: string | null
+          family_id?: string | null
           id?: string
           image_path?: string | null
           is_favorite?: boolean
@@ -633,6 +734,7 @@ export type Database = {
           createdat?: string
           deduplication_key?: string | null
           error?: string | null
+          family_id?: string | null
           id?: string
           image_path?: string | null
           is_favorite?: boolean
@@ -675,6 +777,13 @@ export type Database = {
             columns: ["series_id"]
             isOneToOne: false
             referencedRelation: "story_series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stories_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
             referencedColumns: ["id"]
           },
           {
@@ -1168,6 +1277,7 @@ export type Database = {
           email_notifications: boolean | null
           firstname: string | null
           id: string
+          immersive_reading_mode: string | null
           inapp_notifications: boolean | null
           kindle_email: string | null
           language: string | null
@@ -1189,6 +1299,7 @@ export type Database = {
           email_notifications?: boolean | null
           firstname?: string | null
           id: string
+          immersive_reading_mode?: string | null
           inapp_notifications?: boolean | null
           kindle_email?: string | null
           language?: string | null
@@ -1210,6 +1321,7 @@ export type Database = {
           email_notifications?: boolean | null
           firstname?: string | null
           id?: string
+          immersive_reading_mode?: string | null
           inapp_notifications?: boolean | null
           kindle_email?: string | null
           language?: string | null
@@ -1319,6 +1431,7 @@ export type Database = {
         }
         Returns: string
       }
+      get_my_families: { Args: never; Returns: string[] }
       get_next_tome_number: { Args: { p_series_id: string }; Returns: number }
       get_pending_beta_users: {
         Args: never
@@ -1385,6 +1498,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      join_family: { Args: { p_token: string }; Returns: boolean }
       log_security_event: {
         Args: {
           p_action?: string
