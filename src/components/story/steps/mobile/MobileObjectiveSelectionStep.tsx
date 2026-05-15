@@ -118,9 +118,9 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
         <Progress value={50} className="h-2" />
       </div>
 
-      {/* En-tête mobile - même style que Step 1 */}
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">
+      {/* En-tête mobile */}
+      <div className="text-center mb-6 animate-fade-up-slow">
+        <h1 className="font-display italic text-2xl text-foreground mb-2 tracking-tight">
           Choisissez l'objectif
         </h1>
         <p className="text-muted-foreground text-sm">
@@ -128,12 +128,13 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
         </p>
       </div>
 
-      {/* Navigation mobile sticky en haut - même style que Step 1 */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-3 -mx-4 px-4 flex gap-3 mb-3">
-        <Button variant="outline" onClick={handleBack} className="flex-1">
+      {/* Navigation mobile sticky en haut */}
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl py-3 -mx-4 px-4 flex gap-3 mb-3 border-b border-primary-soft/15">
+        <Button variant="calm" onClick={handleBack} className="flex-1">
           Retour
         </Button>
         <Button
+          variant={selectedObjective ? 'glow' : 'default'}
           onClick={handleContinueToTitles}
           disabled={!selectedObjective}
           className="flex-1"
