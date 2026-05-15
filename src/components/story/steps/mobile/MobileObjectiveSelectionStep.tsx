@@ -161,42 +161,52 @@ const MobileObjectiveSelectionStep: React.FC<MobileObjectiveSelectionStepProps> 
       )}
 
       {/* Objectifs dans une Card - cohérence avec Step 1 */}
-      <Card>
+      <Card variant="elevated">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            🎯 Objectif de l'histoire
+          <CardTitle className="flex items-center gap-2 text-lg font-display italic">
+            <Target className="h-5 w-5 text-primary" />
+            Objectif de l'histoire
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="grid grid-cols-2 gap-4">
-            {objectives.map(objective => (
-              <div
-                key={objective.value}
-                onClick={() => handleObjectiveSelect(objective.value)}
-                className={cn(
-                  "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 active:scale-95",
-                  "bg-card backdrop-blur-sm aspect-square flex flex-col items-center justify-center text-center",
-                  selectedObjective === objective.value
-                    ? 'border-primary bg-primary/20 shadow-lg ring-2 ring-primary/30'
-                    : 'border-border hover:border-primary/50 hover:shadow-md'
-                )}
-              >
-                {/* Indicateur de sélection */}
-                {selectedObjective === objective.value && (
-                  <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
-                    <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+            {objectives.map((objective, idx) => {
+              const isSelected = selectedObjective === objective.value;
+              return (
+                <div
+                  key={objective.value}
+                  onClick={() => handleObjectiveSelect(objective.value)}
+                  style={{ animationDelay: `${idx * 60}ms` }}
+                  className={cn(
+                    "group relative p-4 rounded-2xl border cursor-pointer transition-all duration-400 ease-calm active:scale-[0.97] animate-fade-up-slow",
+                    "bg-card aspect-square flex flex-col items-center justify-center text-center",
+                    isSelected
+                      ? 'border-primary-soft bg-primary-soft/15 shadow-floating ring-2 ring-primary-soft/40 animate-glow-pulse'
+                      : 'border-border/60 hover:border-primary-soft/60 hover:shadow-soft hover:-translate-y-0.5'
+                  )}
+                >
+                  {isSelected && (
+                    <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-soft">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground"></div>
+                    </div>
+                  )}
+
+                  <div className={cn(
+                    "mb-3 h-12 w-12 rounded-full flex items-center justify-center transition-all duration-400 ease-calm",
+                    isSelected ? "bg-primary-soft/30" : "bg-primary-soft/10 group-hover:bg-primary-soft/20"
+                  )}>
+                    <objective.Icon className={cn(
+                      "h-6 w-6 transition-colors duration-400 ease-calm",
+                      isSelected ? "text-primary" : "text-primary/70"
+                    )} />
                   </div>
-                )}
 
-                {/* Icône */}
-                <div className="text-4xl mb-3">{objective.icon}</div>
-
-                {/* Titre */}
-                <h3 className="font-semibold text-sm text-foreground leading-tight">
-                  {objective.label}
-                </h3>
-              </div>
-            ))}
+                  <h3 className="font-semibold text-sm text-foreground leading-tight">
+                    {objective.label}
+                  </h3>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
