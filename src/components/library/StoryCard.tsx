@@ -55,10 +55,21 @@ const StoryCard: React.FC<StoryCardProps> = ({
   const isRecent = isRecentStory();
 
   // Styles différents pour les cartes en série vs cartes standalone
-  const cardStyles = ["transition-all duration-300 hover:shadow-md relative", isInSeries ? "bg-background border-border hover:border-primary/40" // Design épuré pour série
-    : isClickable ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01] bg-card border-border" : "",
-    // Style subtil pour pending (évite transparence bizarre)
-    story.status === "pending" || isPending ? "bg-gradient-to-br from-amber-50/30 to-background dark:from-amber-500/5 dark:to-background border-amber-300/50 dark:border-amber-500/30" : "", story.status === "read" ? "border-green-200 bg-green-50/30 dark:bg-green-500/5" : "", story.isFavorite && story.status !== "read" ? "border-amber-200 dark:border-amber-500/30" : "", story.isFavorite && story.status === "read" ? "border-green-200 dark:border-green-500/30" : "", isRecent && !isInSeries ? "border-blue-300 bg-blue-50/30 dark:bg-blue-500/5" : ""].join(" ");
+  const cardStyles = [
+    "relative overflow-hidden transition-all duration-400 ease-calm animate-fade-up-slow",
+    isInSeries
+      ? "bg-card border-border/60 hover:border-primary-soft/50"
+      : isClickable
+        ? "cursor-pointer bg-card hover:-translate-y-0.5 hover:shadow-floating border-border/60"
+        : "",
+    // Style subtil pour pending
+    story.status === "pending" || isPending
+      ? "bg-gradient-to-br from-primary-soft/10 to-card border-primary-soft/40"
+      : "",
+    story.status === "read" ? "border-primary-soft/40 bg-primary-soft/5" : "",
+    story.isFavorite ? "ring-1 ring-primary-soft/30" : "",
+    isRecent && !isInSeries ? "border-primary-soft/50 bg-primary-soft/5" : "",
+  ].join(" ");
   const getTimeAgo = (date: Date) => {
     return formatDistanceToNow(date, {
       addSuffix: true,
@@ -99,14 +110,13 @@ const StoryCard: React.FC<StoryCardProps> = ({
   return <Card className={cardStyles} onClick={handleCardClick}>
     <CardContent className="pt-6 pb-2">
       {/* Image de couverture si disponible */}
-      {storyImageUrl && <div className="mb-4 flex justify-center">
-        <img src={storyImageUrl} alt={`Illustration de ${story.title}`} className="w-full max-w-32 h-24 object-cover rounded-lg shadow-sm" onLoad={() => {
-          console.log('[StoryCard] Image chargée avec succès:', storyImageUrl);
-        }} onError={e => {
-          console.error('[StoryCard] Erreur de chargement image:', storyImageUrl, 'pour l\'histoire:', story.title);
-          // Masquer l'image si elle ne charge pas
-          (e.target as HTMLImageElement).style.display = 'none';
-        }} />
+      {storyImageUrl && <div className="mb-4 -mx-6 -mt-6">
+        <div className="relative aspect-[16/9] overflow-hidden">
+          <img src={storyImageUrl} alt={`Illustration de ${story.title}`} className="w-full h-full object-cover transition-transform duration-700 ease-calm hover:scale-105" onError={e => {
+            (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+          }} />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent pointer-events-none" />
+        </div>
       </div>}
 
       {/* Indicateur de série si l'histoire fait partie d'une série */}
@@ -122,11 +132,11 @@ const StoryCard: React.FC<StoryCardProps> = ({
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2 flex-1">
           <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
-          {isRecent && story.status !== "read" && <div className="flex items-center text-blue-600 text-xs">
+          {isRecent && story.status !== "read" && <div className="flex items-center text-primary text-xs">
             <Sparkles className="h-3 w-3 mr-1" />
             <span className="font-medium">Nouveau</span>
           </div>}
-          {story.status === "read" && <div className="flex items-center text-green-600 dark:text-green-400 text-xs">
+          {story.status === "read" && <div className="flex items-center text-primary text-xs">
             <BookCheck className="h-3 w-3 mr-1" />
             <span className="font-medium">Lu</span>
           </div>}
@@ -150,16 +160,16 @@ const StoryCard: React.FC<StoryCardProps> = ({
     <CardFooter className="flex justify-between pt-2 pb-4">
       <span className="text-xs text-muted-foreground">
         {/* Affichage différent pour les cartes en série */}
-        {isInSeries ? story.status === "pending" || isPending ? <span className="flex items-center text-amber-600 dark:text-amber-400">
+        {isInSeries ? story.status === "pending" || isPending ? <span className="flex items-center text-primary">
           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
           Génération en cours
-        </span> : <span>{getTimeAgo(story.createdAt)}</span> : story.status === "pending" || isPending ? <span className="flex items-center">
+        </span> : <span>{getTimeAgo(story.createdAt)}</span> : story.status === "pending" || isPending ? <span className="flex items-center text-primary">
           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
           En génération...
-        </span> : (story.status === "ready" || story.status === "read") && !story.video_path && story.settings?.generateVideo ? <span className="flex items-center text-purple-600 dark:text-purple-400">
+        </span> : (story.status === "ready" || story.status === "read") && !story.video_path && story.settings?.generateVideo ? <span className="flex items-center text-primary">
           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
           Vidéo en préparation...
-        </span> : <span className={isRecent ? "text-blue-600 font-medium dark:text-blue-400" : ""}>
+        </span> : <span className={isRecent ? "text-primary font-medium" : ""}>
           {getTimeAgo(story.createdAt)}
         </span>}
       </span>
