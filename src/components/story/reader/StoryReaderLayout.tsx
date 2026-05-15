@@ -14,10 +14,13 @@ export const StoryReaderLayout: React.FC<StoryReaderLayoutProps> = ({
   scrollAreaRef
 }) => {
   return (
-    <div 
-      className="fixed inset-0 z-50 flex flex-col min-h-screen transition-colors duration-300 bg-background text-foreground"
+    <div
+      className="fixed inset-0 z-50 flex flex-col min-h-screen transition-colors duration-500 text-foreground bg-gradient-reader overflow-hidden"
     >
-      <div className="flex-1 max-w-3xl mx-auto px-4 flex flex-col h-full">
+      {/* Halos d'ambiance — animation lente, n'interfère pas avec la lecture */}
+      <div aria-hidden className="pointer-events-none absolute -top-32 -left-32 h-80 w-80 rounded-full bg-primary-soft/15 blur-3xl animate-drift" />
+      <div aria-hidden className="pointer-events-none absolute bottom-0 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl animate-drift" style={{ animationDelay: '2s' }} />
+      <div className="relative flex-1 max-w-[640px] w-full mx-auto px-5 flex flex-col h-full">
         {children}
       </div>
     </div>

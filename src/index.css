@@ -1,270 +1,248 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Nunito+Sans:wght@300;400;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
-    /* Mode clair - Palette Calmiverse douce et moderne */
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
- 
-    --muted: 210 40% 98%;
-    --muted-foreground: 215.4 16.3% 46.9%;
- 
+    /* === Calmiverse — Nuit douce (light) === */
+    --background: 204 50% 97%;          /* #F5F9FC */
+    --foreground: 222 38% 17%;          /* #1A2238 */
+
+    --muted: 207 40% 94%;               /* #EAF1F6 */
+    --muted-foreground: 215 18% 45%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
- 
+    --popover-foreground: 222 38% 17%;
+
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
- 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
- 
-    /* Couleur primaire Calmiverse - Bleu pastel doux */
-    --primary: 187 85% 53%;
-    --primary-foreground: 210 40% 98%;
- 
-    --secondary: 210 40% 98%;
-    --secondary-foreground: 222.2 84% 4.9%;
- 
-    --accent: 210 40% 98%;
-    --accent-foreground: 222.2 84% 4.9%;
- 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --ring: 187 85% 53%;
- 
-    --radius: 0.5rem;
-    
+    --card-foreground: 222 38% 17%;
+
+    --border: 207 35% 88%;
+    --input: 207 35% 88%;
+
+    /* Bleu profond apaisant */
+    --primary: 205 39% 44%;             /* #457B9D */
+    --primary-foreground: 204 50% 98%;
+    --primary-soft: 184 41% 76%;        /* #A8DADC */
+    --primary-glow: 205 60% 65%;
+
+    --secondary: 207 40% 94%;
+    --secondary-foreground: 222 38% 17%;
+
+    --accent: 211 51% 82%;              /* #B7CFEA */
+    --accent-foreground: 222 38% 17%;
+
+    --destructive: 0 75% 62%;
+    --destructive-foreground: 0 0% 100%;
+
+    --ring: 184 41% 70%;
+
+    --radius: 1rem;
+
+    /* Surfaces / profondeur */
+    --surface-elevated: 0 0% 100%;
+    --surface-sunken: 207 45% 96%;
+
+    /* Gradients d'ambiance */
+    --gradient-night: radial-gradient(ellipse at top, hsl(207 45% 96%), hsl(204 50% 97%) 60%, hsl(211 51% 92%));
+    --gradient-dawn: linear-gradient(180deg, hsl(204 50% 97%) 0%, hsl(207 40% 94%) 50%, hsl(211 51% 90%) 100%);
+    --gradient-reader: radial-gradient(ellipse at 50% 0%, hsl(184 41% 94%) 0%, hsl(204 50% 97%) 45%, hsl(207 40% 95%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+
+    /* Ombres douces */
+    --shadow-soft: 0 2px 12px -2px hsl(205 40% 30% / 0.08);
+    --shadow-floating: 0 12px 32px -12px hsl(205 40% 25% / 0.18);
+    --shadow-glow-primary: 0 0 32px -4px hsl(184 41% 70% / 0.45);
+
+    /* Effets */
+    --blur-glass: 16px;
+
+    /* Motion */
+    --ease-calm: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --duration-slow: 600ms;
+    --duration-breath: 4s;
+
     --scale: 1;
   }
- 
+
   .dark {
-    /* Mode sombre moderne - Palette équilibrée avec bon contraste */
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* === Nuit douce (dark) === */
+    --background: 222 38% 11%;          /* #0E1626 */
+    --foreground: 210 30% 92%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 222 30% 18%;
+    --muted-foreground: 213 20% 70%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 38% 11%;
+    --popover-foreground: 210 30% 92%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 32% 14%;
+    --card-foreground: 210 30% 92%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 222 25% 22%;
+    --input: 222 25% 22%;
 
-    /* Couleur primaire adaptée au dark - Bleu plus lumineux */
-    --primary: 187 85% 53%;
-    --primary-foreground: 222.2 84% 4.9%;
+    --primary: 184 50% 65%;             /* plus lumineux en nuit */
+    --primary-foreground: 222 38% 11%;
+    --primary-soft: 184 41% 50%;
+    --primary-glow: 184 60% 70%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 222 28% 20%;
+    --secondary-foreground: 210 30% 92%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 211 40% 30%;
+    --accent-foreground: 210 30% 92%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 0 0% 100%;
 
-    --ring: 187 85% 53%;
+    --ring: 184 50% 55%;
 
-    --radius: 0.5rem;
+    --surface-elevated: 222 32% 16%;
+    --surface-sunken: 222 38% 9%;
+
+    --gradient-night: radial-gradient(ellipse at top, hsl(222 38% 14%), hsl(222 38% 9%) 70%);
+    --gradient-dawn: linear-gradient(180deg, hsl(222 38% 11%) 0%, hsl(222 32% 14%) 100%);
+    --gradient-reader: radial-gradient(ellipse at 50% 0%, hsl(222 38% 16%) 0%, hsl(222 38% 11%) 60%);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+
+    --shadow-soft: 0 2px 12px -2px hsl(0 0% 0% / 0.4);
+    --shadow-floating: 0 12px 32px -12px hsl(0 0% 0% / 0.6);
+    --shadow-glow-primary: 0 0 32px -4px hsl(184 50% 50% / 0.4);
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Nunito Sans', system-ui, -apple-system, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Lora', Georgia, serif;
+    letter-spacing: -0.01em;
+  }
 }
 
-/* Animation de scintillement pour les boutons */
+/* === Animations douces === */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+@keyframes drift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary-soft) / 0.45); }
+  50% { box-shadow: 0 0 28px 6px hsl(var(--primary-soft) / 0.25); }
+}
+@keyframes fade-up-slow {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer-soft {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 @keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
-}
-
-.shadow-soft-lg {
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.01);
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-in-out forwards;
-}
-
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-/* Classes d'utilité pour le système de grille responsive */
-.grid-auto-fit {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-/* Animations pour les contrôles rétractables */
 @keyframes slideUp {
-  from {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(100%);
-    opacity: 0;
-  }
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
 }
-
 @keyframes slideDown {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
-
-.animate-slide-up {
-  animation: slideUp 0.3s ease-in-out forwards;
-}
-
-.animate-slide-down {
-  animation: slideDown 0.3s ease-in-out forwards;
-}
-
-/* Amélioration du backdrop blur pour les contrôles */
-.backdrop-blur-sm {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-/* Transition fluide pour le bouton flottant */
-.floating-button-enter {
-  transform: translateY(100%) scale(0.8);
-  opacity: 0;
-}
-
-.floating-button-enter-active {
-  transform: translateY(0) scale(1);
-  opacity: 1;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* Animation de pulsation subtile pour indiquer l'interactivité */
 @keyframes subtlePulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+  50% { box-shadow: 0 0 0 8px hsl(var(--primary) / 0); }
+}
+
+.animate-breathe { animation: breathe var(--duration-breath) ease-in-out infinite; }
+.animate-drift { animation: drift 8s ease-in-out infinite; }
+.animate-glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
+.animate-fade-up-slow { animation: fade-up-slow var(--duration-slow) var(--ease-calm) both; }
+.animate-shimmer-soft {
+  background: linear-gradient(90deg, transparent, hsl(var(--muted) / 0.6), transparent);
+  background-size: 200% 100%;
+  animation: shimmer-soft 2.5s ease-in-out infinite;
+}
+.animate-shimmer { animation: shimmer 2s infinite; }
+.animate-fade-in { animation: fadeIn 0.5s ease-in-out forwards; }
+.animate-slide-up { animation: slideUp 0.3s ease-in-out forwards; }
+.animate-slide-down { animation: slideDown 0.3s ease-in-out forwards; }
+.animate-subtle-pulse { animation: subtlePulse 2s infinite; }
+
+/* Verres */
+.glass-soft {
+  background: hsl(var(--background) / 0.72);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid hsl(var(--primary-soft) / 0.18);
+}
+.shadow-soft { box-shadow: var(--shadow-soft); }
+.shadow-floating { box-shadow: var(--shadow-floating); }
+.shadow-glow-primary { box-shadow: var(--shadow-glow-primary); }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-breathe,
+  .animate-drift,
+  .animate-glow-pulse,
+  .animate-shimmer-soft,
+  .animate-shimmer,
+  .animate-subtle-pulse {
+    animation: none !important;
   }
-  50% {
-    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
   }
 }
 
-.animate-subtle-pulse {
-  animation: subtlePulse 2s infinite;
+/* Backdrop helpers */
+.backdrop-blur-sm { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.shadow-soft-lg {
+  box-shadow: 0 10px 25px -3px hsl(205 40% 25% / 0.08), 0 4px 6px -2px hsl(205 40% 25% / 0.04);
 }
 
-/* Mobile optimizations */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Touch-friendly interactions */
-@media (hover: none) and (pointer: coarse) {
-  .hover\:scale-105:hover {
-    transform: none;
-  }
-  
-  .active\:scale-\[0\.98\]:active {
-    transform: scale(0.98);
-  }
-}
-
-/* Safe area for mobile devices */
-.pb-safe {
-  padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
-}
-
-/* PWA optimizations */
+/* Mobile + PWA helpers */
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pb-safe { padding-bottom: max(8px, env(safe-area-inset-bottom, 8px)); }
 .pwa-safe-area {
   padding-top: env(safe-area-inset-top);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
 }
-
-/* Enhanced touch interactions for PWA */
 .touch-manipulation {
   touch-action: manipulation;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
+.overscroll-behavior-contain { overscroll-behavior: contain; }
+.scroll-smooth-ios { -webkit-overflow-scrolling: touch; }
 
-/* Pull to refresh indicator */
-.overscroll-behavior-contain {
-  overscroll-behavior: contain;
+@media (hover: none) and (pointer: coarse) {
+  .hover\:scale-105:hover { transform: none; }
+  .active\:scale-\[0\.98\]:active { transform: scale(0.98); }
 }
 
-/* Native-like scroll momentum */
-.scroll-smooth-ios {
-  -webkit-overflow-scrolling: touch;
-}
-
-/* PWA splash screen background */
 body.pwa-mode {
-  background: linear-gradient(180deg, #F1FAEE 0%, #A8DADC 100%);
-}
-
-/* Smooth transitions for PWA navigation */
-.page-transition {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.page-transition-enter {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
-.page-transition-enter-active {
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.page-transition-exit {
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.page-transition-exit-active {
-  transform: translateX(-100%);
-  opacity: 0;
+  background: var(--gradient-dawn);
 }
