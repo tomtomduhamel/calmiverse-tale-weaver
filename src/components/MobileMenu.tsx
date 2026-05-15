@@ -47,31 +47,39 @@ const MobileMenu: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md shadow-lg border-t border-border z-[100] pb-safe">
+    <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-primary-soft/20 shadow-floating z-[100] pb-safe">
       <div className="flex items-center justify-around h-14 px-1">
-        {menuItems.map((item) => (
-          <button
-            key={item.title}
-            onClick={() => handleNavigation(item.action, item.path)}
-            className={cn(
-              "flex flex-col items-center justify-center w-full p-1 rounded-lg transition-all duration-200 min-h-[44px]",
-              isActive(item.path)
-                ? "text-primary bg-primary/10"
-                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-            )}
-            aria-label={item.title}
-          >
-            <div className="relative">
-              <item.icon className="h-4 w-4" />
-              {item.path === '/library' && totalActiveCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-3 w-3 p-0 text-[8px] bg-primary text-primary-foreground">
-                  {totalActiveCount}
-                </Badge>
+        {menuItems.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <button
+              key={item.title}
+              onClick={() => handleNavigation(item.action, item.path)}
+              className={cn(
+                "relative flex flex-col items-center justify-center w-full p-1 rounded-xl transition-all duration-400 ease-calm min-h-[44px] active:scale-95",
+                active
+                  ? "text-primary"
+                  : "text-muted-foreground/70 hover:text-foreground"
               )}
-            </div>
-            <span className="text-[10px] mt-0.5 leading-tight">{item.title}</span>
-          </button>
-        ))}
+              aria-label={item.title}
+            >
+              {active && (
+                <span aria-hidden className="absolute top-0.5 h-1 w-1 rounded-full bg-primary-soft animate-glow-pulse" />
+              )}
+              <div className="relative">
+                <item.icon className={cn("h-4 w-4 transition-transform duration-400 ease-calm", active && "scale-110")} strokeWidth={active ? 2.4 : 1.8} />
+                {item.path === '/library' && totalActiveCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-3 w-3 p-0 text-[8px] bg-primary text-primary-foreground">
+                    {totalActiveCount}
+                  </Badge>
+                )}
+              </div>
+              <span className={cn("text-[10px] mt-0.5 leading-tight transition-opacity", active ? "opacity-100 font-semibold" : "opacity-70")}>
+                {item.title}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
