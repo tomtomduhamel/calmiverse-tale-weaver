@@ -55,10 +55,21 @@ const StoryCard: React.FC<StoryCardProps> = ({
   const isRecent = isRecentStory();
 
   // Styles différents pour les cartes en série vs cartes standalone
-  const cardStyles = ["transition-all duration-300 hover:shadow-md relative", isInSeries ? "bg-background border-border hover:border-primary/40" // Design épuré pour série
-    : isClickable ? "cursor-pointer hover:translate-y-[-2px] hover:scale-[1.01] bg-card border-border" : "",
-    // Style subtil pour pending (évite transparence bizarre)
-    story.status === "pending" || isPending ? "bg-gradient-to-br from-amber-50/30 to-background dark:from-amber-500/5 dark:to-background border-amber-300/50 dark:border-amber-500/30" : "", story.status === "read" ? "border-green-200 bg-green-50/30 dark:bg-green-500/5" : "", story.isFavorite && story.status !== "read" ? "border-amber-200 dark:border-amber-500/30" : "", story.isFavorite && story.status === "read" ? "border-green-200 dark:border-green-500/30" : "", isRecent && !isInSeries ? "border-blue-300 bg-blue-50/30 dark:bg-blue-500/5" : ""].join(" ");
+  const cardStyles = [
+    "relative overflow-hidden transition-all duration-400 ease-calm animate-fade-up-slow",
+    isInSeries
+      ? "bg-card border-border/60 hover:border-primary-soft/50"
+      : isClickable
+        ? "cursor-pointer bg-card hover:-translate-y-0.5 hover:shadow-floating border-border/60"
+        : "",
+    // Style subtil pour pending
+    story.status === "pending" || isPending
+      ? "bg-gradient-to-br from-primary-soft/10 to-card border-primary-soft/40"
+      : "",
+    story.status === "read" ? "border-primary-soft/40 bg-primary-soft/5" : "",
+    story.isFavorite ? "ring-1 ring-primary-soft/30" : "",
+    isRecent && !isInSeries ? "border-primary-soft/50 bg-primary-soft/5" : "",
+  ].join(" ");
   const getTimeAgo = (date: Date) => {
     return formatDistanceToNow(date, {
       addSuffix: true,
