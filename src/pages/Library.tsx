@@ -97,8 +97,8 @@ const Library: React.FC = () => {
       <div className="min-h-screen bg-background pwa-safe-area overflow-x-clip">
         <div className="w-full max-w-4xl mx-auto px-4 py-6">
           {/* Header */}
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl font-bold mb-1">
+          <div className="mb-6 text-center animate-fade-up-slow">
+            <h1 className="font-display italic text-3xl sm:text-4xl tracking-tight mb-1">
               Ma Bibliothèque
             </h1>
             <p className="text-sm text-muted-foreground">
