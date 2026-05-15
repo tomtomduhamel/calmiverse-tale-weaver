@@ -12,7 +12,7 @@ const StoryCardTitle: React.FC<StoryCardTitleProps> = ({ title }) => {
   const cleanTitle = title.replace(/^\*\*|\*\*$/g, "");
   
   return (
-    <h3 className="text-lg font-semibold text-foreground">
+    <h3 className="font-display italic text-lg sm:text-xl text-foreground leading-snug">
       {cleanTitle || "Nouvelle histoire"}
     </h3>
   );
