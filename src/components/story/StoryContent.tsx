@@ -71,7 +71,7 @@ export const StoryContent: React.FC<StoryContentProps> = ({
           if (word.trim()) {
             const span = document.createElement('span');
             span.textContent = word;
-            span.className = 'story-word transition-all duration-150 inline-block';
+            span.className = 'story-word inline-block';
             span.setAttribute('data-word-index', wordIdx.toString());
             span.setAttribute('data-paragraph-index', paraIdx.toString());
             fragment.appendChild(span);
