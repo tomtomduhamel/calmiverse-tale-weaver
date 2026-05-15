@@ -132,11 +132,11 @@ const StoryCard: React.FC<StoryCardProps> = ({
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2 flex-1">
           <StoryCardTitle title={story.title} status={story.status} isFavorite={story.isFavorite} />
-          {isRecent && story.status !== "read" && <div className="flex items-center text-blue-600 text-xs">
+          {isRecent && story.status !== "read" && <div className="flex items-center text-primary text-xs">
             <Sparkles className="h-3 w-3 mr-1" />
             <span className="font-medium">Nouveau</span>
           </div>}
-          {story.status === "read" && <div className="flex items-center text-green-600 dark:text-green-400 text-xs">
+          {story.status === "read" && <div className="flex items-center text-primary text-xs">
             <BookCheck className="h-3 w-3 mr-1" />
             <span className="font-medium">Lu</span>
           </div>}
