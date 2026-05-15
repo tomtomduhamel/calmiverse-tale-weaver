@@ -182,14 +182,14 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
           {titles.map((title, index) => (
             <Card 
               key={title.id} 
-              className={`cursor-pointer transition-all hover:shadow-md ${
+              className={`cursor-pointer transition-all duration-500 ease-calm hover:shadow-floating hover:-translate-y-0.5 border-primary-soft/20 ${
                 isCreatingStory || isRegenerating ? 'opacity-50' : ''
               }`}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-lg leading-tight mb-2">
+                    <CardTitle className="font-display italic text-xl leading-tight mb-2 text-foreground">
                       {title.title}
                     </CardTitle>
                     {title.description && (
@@ -198,7 +198,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
                       </CardDescription>
                     )}
                   </div>
-                  <Badge variant="outline" className="ml-2 text-xs">
+                  <Badge variant="outline" className="ml-2 text-xs border-primary-soft/40">
                     #{index + 1}
                   </Badge>
                 </div>
@@ -210,9 +210,9 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
                       key={duration}
                       onClick={() => onSelectTitle(title.title, duration, generateVideo)}
                       disabled={isCreatingStory || isRegenerating}
-                      variant="secondary"
+                      variant="calm"
                       size="sm"
-                      className="h-10 hover:bg-primary/10 hover:text-primary transition-colors border-none"
+                      className="h-10"
                     >
                       {isCreatingStory ? "Création..." : `${duration} min`}
                     </Button>
