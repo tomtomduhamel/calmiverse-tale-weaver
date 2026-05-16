@@ -95,8 +95,8 @@ export const StoryRating: React.FC<StoryRatingProps> = ({
                             className={cn(
                                 "w-10 h-10 transition-colors duration-200",
                                 star <= (hoveredRating || rating)
-                                    ? "fill-yellow-400 text-yellow-400 drop-shadow-sm"
-                                    : "text-muted-foreground/30 hover:text-yellow-400/50"
+                                    ? "fill-primary-soft text-primary-soft drop-shadow-sm"
+                                    : "text-muted-foreground/30 hover:text-primary-soft/60"
                             )}
                         />
                     </button>
