@@ -30,7 +30,7 @@ export const ActiveGenerationsCard: React.FC = () => {
   };
 
   return (
-    <Card className="border-l-4 border-l-primary bg-gradient-to-r from-primary/5 to-transparent">
+    <Card className="border-l-4 border-l-primary bg-gradient-to-r from-primary-soft/10 to-transparent shadow-soft rounded-2xl">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
