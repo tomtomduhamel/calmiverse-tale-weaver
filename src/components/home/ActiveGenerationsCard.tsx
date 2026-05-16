@@ -59,7 +59,7 @@ export const ActiveGenerationsCard: React.FC = () => {
           )}
           
           {completedCount > 0 && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800 h-5 text-xs">
+            <Badge variant="secondary" className="bg-accent/30 text-accent-foreground h-5 text-xs">
               <CheckCircle className="h-2 w-2 mr-1" />
               {completedCount} prête{completedCount > 1 ? 's' : ''}
             </Badge>
