@@ -191,8 +191,8 @@ export const MobileSeriesStoryCard: React.FC<MobileSeriesStoryCardProps> = ({
                       Tome {story.tome_number}
                     </Badge>
                   )}
-                  {story.status === 'completed' && <CheckCircle className="w-3 h-3 text-green-500" />}
-                  {story.status === 'pending' && <Clock className="w-3 h-3 text-yellow-500" />}
+                  {story.status === 'completed' && <CheckCircle className="w-3 h-3 text-accent-foreground" />}
+                  {story.status === 'pending' && <Clock className="w-3 h-3 text-primary-soft" />}
                   {story.status === 'error' && <AlertTriangle className="w-3 h-3 text-destructive" />}
                 </div>
                 
