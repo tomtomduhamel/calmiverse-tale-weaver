@@ -40,7 +40,7 @@ export const BackgroundGenerationIndicator: React.FC = () => {
             )}
             
             {completedGenerations.length > 0 && (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge variant="secondary" className="bg-accent/40 text-accent-foreground">
                 <CheckCircle className="h-3 w-3 mr-1" />
                 {completedGenerations.length} terminée{completedGenerations.length > 1 ? 's' : ''}
               </Badge>
