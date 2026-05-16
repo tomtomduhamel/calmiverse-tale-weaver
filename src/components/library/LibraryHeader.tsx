@@ -17,12 +17,11 @@ const LibraryHeader = ({
     navigate("/create-story/step-1");
   };
   return <div className={`flex justify-between items-center ${isMobile ? 'mb-3' : 'mb-6'}`}>
-      <h2 className={`font-semibold ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+      <h2 className={`font-display italic text-foreground ${isMobile ? 'text-2xl' : 'text-3xl sm:text-4xl'} animate-fade-up-slow`}>
         {isMobile ? 'Bibliothèque' : 'Bibliothèque des histoires'}
       </h2>
       <div className="flex items-center gap-2">
-        {!isMobile}
-        <Button onClick={handleCreateStory} size={isMobile ? "sm" : "default"} className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2">
+        <Button onClick={handleCreateStory} size={isMobile ? "sm" : "default"} variant="glow" className="flex items-center gap-2">
           <PlusCircle className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
           {isMobile ? 'Créer' : 'Créer une histoire'}
         </Button>
