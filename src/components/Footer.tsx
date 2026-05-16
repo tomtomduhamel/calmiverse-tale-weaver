@@ -6,7 +6,7 @@ export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border bg-background/50 backdrop-blur-sm mt-auto">
+    <footer className="border-t border-primary-soft/20 bg-background/60 backdrop-blur-xl mt-auto">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company info */}
