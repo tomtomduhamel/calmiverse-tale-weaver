@@ -82,13 +82,13 @@ export const ActiveGenerationsCard: React.FC = () => {
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {generation.status === 'pending' && (
-                  <Clock className="h-2 w-2 text-orange-500 flex-shrink-0" />
+                  <Clock className="h-2 w-2 text-primary flex-shrink-0" />
                 )}
                 {generation.status === 'completed' && (
-                  <CheckCircle className="h-2 w-2 text-green-500 flex-shrink-0" />
+                  <CheckCircle className="h-2 w-2 text-accent-foreground flex-shrink-0" />
                 )}
                 {generation.status === 'error' && (
-                  <XCircle className="h-2 w-2 text-red-500 flex-shrink-0" />
+                  <XCircle className="h-2 w-2 text-destructive flex-shrink-0" />
                 )}
                 <span className="truncate flex-1">{generation.title}</span>
               </div>
