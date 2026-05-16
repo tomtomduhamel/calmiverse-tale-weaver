@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import DeleteStoryDialog from "../DeleteStoryDialog";
 import { CreateSequelButton } from "../../story/series/CreateSequelButton";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface StoryCardActionsProps {
   story: Story;
@@ -74,7 +75,7 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
         <div className="flex items-center space-x-2 justify-end">
           {/* Badge Lu à côté de la poubelle (desktop) */}
           {story.status === 'read' && (
-            <Badge variant="outline" className="hidden md:flex text-green-600 border-green-200 bg-green-50 dark:bg-green-500/10 dark:border-green-500/30">
+            <Badge variant="outline" className="hidden md:flex text-accent-foreground border-accent/40 bg-accent/20">
               <BookCheck className="h-3 w-3 mr-1" />
               Lu
             </Badge>
@@ -86,8 +87,10 @@ const StoryCardActions: React.FC<StoryCardActionsProps> = ({
                 <button
                   onClick={handleDeleteClick}
                   disabled={isDeleting || isRetrying}
-                  className={`p-1.5 rounded-full text-red-600 hover:bg-red-100 dark:hover:bg-red-500/20 ${isDeleting ? "cursor-not-allowed opacity-50" : ""
-                    }`}
+                  className={cn(
+                    "p-1.5 rounded-full text-destructive hover:bg-destructive/10 transition-colors duration-300 ease-calm",
+                    isDeleting && "cursor-not-allowed opacity-50"
+                  )}
                   aria-label="Supprimer l'histoire"
                   type="button"
                 >

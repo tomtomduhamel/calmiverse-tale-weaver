@@ -42,10 +42,10 @@ const ObjectiveFilter: React.FC<ObjectiveFilterProps> = ({
                     size="sm"
                     onClick={() => handleObjectiveToggle(objective.value)}
                     className={cn(
-                      "h-9 w-9 p-0",
-                      isSelected 
-                        ? "bg-primary text-primary-foreground" 
-                        : "hover:bg-muted"
+                      "h-9 w-9 p-0 rounded-full transition-all duration-300 ease-calm",
+                      isSelected
+                        ? "bg-primary text-primary-foreground shadow-glow-primary hover:bg-primary/90"
+                        : "bg-card/60 border-primary-soft/30 hover:bg-primary-soft/20 hover:border-primary-soft/60"
                     )}
                   >
                     <IconComponent className="h-4 w-4" />
