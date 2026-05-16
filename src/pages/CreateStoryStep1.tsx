@@ -61,18 +61,18 @@ const CreateStoryStep1: React.FC = () => {
   const loadingDone = !authLoading && !childrenLoading && !childrenTimeout && user;
   if (loadingDone && children.length === 0 && creationMode !== 'fast') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
-        <div className="max-w-md w-full text-center space-y-6">
-          {/* Icône */}
+      <div className="relative min-h-screen flex items-center justify-center p-6 bg-gradient-hero overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute -top-32 -left-32 h-80 w-80 rounded-full bg-primary-soft/20 blur-3xl animate-drift" />
+        <div aria-hidden className="pointer-events-none absolute bottom-0 -right-32 h-96 w-96 rounded-full bg-accent/25 blur-3xl animate-drift" style={{ animationDelay: '2s' }} />
+        <div className="relative max-w-md w-full text-center space-y-6 animate-fade-up-slow">
           <div className="flex justify-center">
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-5xl">👧</span>
+            <div className="w-24 h-24 rounded-full bg-primary-soft/30 border border-primary-soft/50 shadow-glow-primary flex items-center justify-center animate-breathe">
+              <Sparkles className="w-10 h-10 text-primary" strokeWidth={1.5} />
             </div>
           </div>
 
-          {/* Titre et description */}
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">
+          <div className="space-y-3">
+            <h1 className="font-display italic text-3xl text-foreground">
               Commençons par créer un profil !
             </h1>
             <p className="text-muted-foreground text-base leading-relaxed">
@@ -82,15 +82,14 @@ const CreateStoryStep1: React.FC = () => {
             </p>
           </div>
 
-          {/* CTA principal */}
           <button
             onClick={() => navigate("/children")}
-            className="w-full bg-primary text-primary-foreground rounded-xl py-4 px-6 text-base font-semibold hover:bg-primary/90 transition-colors shadow-md"
+            className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-4 px-6 text-base font-semibold hover:bg-primary/90 transition-all duration-400 ease-calm shadow-floating hover:shadow-glow-primary"
           >
-            ✨ Ajouter un profil
+            <Sparkles className="w-5 h-5" strokeWidth={1.75} />
+            Ajouter un profil
           </button>
 
-          {/* Lien secondaire */}
           <button
             onClick={() => navigate("/")}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
