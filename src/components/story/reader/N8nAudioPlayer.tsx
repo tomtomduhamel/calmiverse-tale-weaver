@@ -250,7 +250,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
               const url = await getSignedAudioUrl(readyAudioFile.audio_url);
               if (url) window.open(url, '_blank');
             }}
-            className={`inline-flex items-center text-xs hover:underline ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-500'}`}
+            className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground hover:underline"
           >
             <Download className="h-3 w-3 mr-1" />
             Télécharger l'audio
