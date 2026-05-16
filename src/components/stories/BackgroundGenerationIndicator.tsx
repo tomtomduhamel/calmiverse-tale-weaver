@@ -40,7 +40,7 @@ export const BackgroundGenerationIndicator: React.FC = () => {
             )}
             
             {completedGenerations.length > 0 && (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge variant="secondary" className="bg-accent/40 text-accent-foreground">
                 <CheckCircle className="h-3 w-3 mr-1" />
                 {completedGenerations.length} terminée{completedGenerations.length > 1 ? 's' : ''}
               </Badge>
@@ -74,13 +74,13 @@ export const BackgroundGenerationIndicator: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   {generation.status === 'pending' && (
-                    <Clock className="h-3 w-3 text-orange-500" />
+                    <Clock className="h-3 w-3 text-primary-soft" />
                   )}
                   {generation.status === 'completed' && (
-                    <CheckCircle className="h-3 w-3 text-green-500" />
+                    <CheckCircle className="h-3 w-3 text-accent-foreground" />
                   )}
                   {generation.status === 'error' && (
-                    <XCircle className="h-3 w-3 text-red-500" />
+                    <XCircle className="h-3 w-3 text-destructive" />
                   )}
                   <span className="truncate max-w-48">{generation.title}</span>
                 </div>
