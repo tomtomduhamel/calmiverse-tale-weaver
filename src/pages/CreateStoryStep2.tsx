@@ -26,8 +26,10 @@ const CreateStoryStep2: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
+    <div className="relative min-h-screen bg-gradient-hero overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute -top-32 -left-32 h-80 w-80 rounded-full bg-primary-soft/20 blur-3xl animate-drift" />
+      <div aria-hidden className="pointer-events-none absolute bottom-0 -right-32 h-96 w-96 rounded-full bg-accent/25 blur-3xl animate-drift" style={{ animationDelay: '2s' }} />
+      <div className="relative container mx-auto px-4 py-8">
         <ObjectiveSelectionStep children={children} />
       </div>
     </div>
