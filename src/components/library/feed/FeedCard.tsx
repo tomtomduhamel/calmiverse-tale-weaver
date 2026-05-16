@@ -159,7 +159,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
         {/* Series badge */}
         {isSeriesStory && (
           <div className="absolute top-3 left-3 z-10">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-600/90 backdrop-blur-sm text-white text-xs font-medium shadow-lg border border-indigo-400/20">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground text-xs font-medium shadow-floating border border-primary-soft/30">
               <Library className="h-3 w-3" />
               <span>Série {story.series?.total_tomes ? `• ${story.series.total_tomes} tomes` : ''}</span>
             </div>
