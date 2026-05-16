@@ -107,12 +107,12 @@ const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, pre
               font-bold text-2xl md:text-4xl lg:text-5xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95
               border-b-4 border-transparent
               ${selectedObjective 
-                ? 'text-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/15' 
+                ? 'text-primary bg-primary-soft/15 hover:bg-primary-soft/25' 
                 : 'text-muted-foreground bg-muted hover:bg-muted/80 border-dashed border-b-muted-foreground/30'}
             `}
           >
             {getSelectedObjectiveText()}
-            <ChevronDown className={`w-5 h-5 md:w-8 md:h-8 ${selectedObjective ? 'text-indigo-500' : 'text-muted-foreground'}`} />
+            <ChevronDown className={`w-5 h-5 md:w-8 md:h-8 ${selectedObjective ? 'text-primary' : 'text-muted-foreground'}`} />
           </button>
           .
         </h1>
