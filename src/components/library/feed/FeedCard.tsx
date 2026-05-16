@@ -191,8 +191,8 @@ const FeedCard: React.FC<FeedCardProps> = ({
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-            <span className="text-6xl opacity-50">📖</span>
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-soft/20 to-accent/10">
+            <BookCheck className="h-16 w-16 text-primary/40" />
           </div>
         )}
 
