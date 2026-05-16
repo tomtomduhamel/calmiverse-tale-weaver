@@ -155,9 +155,9 @@ const Settings = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-6 space-y-6 md:space-y-8 pb-24">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 flex items-center gap-2">
-        <SettingsIcon className="h-6 w-6 md:h-8 md:w-8" />
-        Paramètres utilisateur
+      <h1 className="font-display italic text-3xl md:text-4xl text-foreground tracking-tight mb-6 md:mb-8 flex items-center gap-2 animate-fade-up-slow">
+        <SettingsIcon className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+        Paramètres
       </h1>
 
       {formError && (

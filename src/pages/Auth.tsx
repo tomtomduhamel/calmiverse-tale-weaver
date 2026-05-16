@@ -82,8 +82,10 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4">
-      <Card className="w-full max-w-md">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-hero p-4 relative overflow-hidden">
+      <div aria-hidden className="absolute -top-32 -left-32 w-96 h-96 bg-primary-soft/20 rounded-full blur-3xl animate-drift" />
+      <div aria-hidden className="absolute -bottom-32 -right-32 w-96 h-96 bg-accent/25 rounded-full blur-3xl animate-drift" style={{ animationDelay: '2s' }} />
+      <Card className="w-full max-w-md relative z-10 shadow-floating rounded-3xl border-primary-soft/20 bg-card/80 backdrop-blur-xl">
         <CardHeader className="text-center space-y-2">
           {status.isValid && status.code && (
             <Badge variant="secondary" className="mx-auto mb-2 gap-1 px-3 py-1">
@@ -91,7 +93,7 @@ const Auth = () => {
               Invitation Beta Testeur
             </Badge>
           )}
-          <CardTitle className="text-2xl font-bold">Bienvenue sur Calmi</CardTitle>
+          <CardTitle className="font-display italic text-3xl text-foreground tracking-tight">Bienvenue sur Calmi</CardTitle>
           <CardDescription>
             {status.isValid && status.code 
               ? "Créez votre compte pour accéder au programme beta"

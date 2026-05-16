@@ -53,7 +53,7 @@ const Subscription: React.FC = () => {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Mon abonnement</h1>
+          <h1 className="font-display italic text-3xl sm:text-4xl text-foreground tracking-tight animate-fade-up-slow">Mon abonnement</h1>
           <p className="text-muted-foreground">
             Gérez votre abonnement et consultez votre utilisation
           </p>
