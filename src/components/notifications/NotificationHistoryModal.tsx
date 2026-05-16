@@ -78,11 +78,11 @@ export const NotificationHistoryModal: React.FC<NotificationHistoryModalProps> =
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'story_ready':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-accent-foreground" />;
       case 'story_error':
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       case 'audio_ready':
-        return <CheckCircle className="h-4 w-4 text-blue-500" />;
+        return <CheckCircle className="h-4 w-4 text-primary" />;
       default:
         return <Bell className="h-4 w-4 text-muted-foreground" />;
     }
@@ -92,11 +92,11 @@ export const NotificationHistoryModal: React.FC<NotificationHistoryModalProps> =
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'story_ready':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Histoire</Badge>;
+        return <Badge variant="secondary" className="bg-accent/40 text-accent-foreground">Histoire</Badge>;
       case 'story_error':
         return <Badge variant="destructive">Erreur</Badge>;
       case 'audio_ready':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Audio</Badge>;
+        return <Badge variant="secondary" className="bg-primary-soft/30 text-primary">Audio</Badge>;
       default:
         return <Badge variant="outline">Général</Badge>;
     }
