@@ -216,7 +216,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
         <CardContent className="px-1 pt-3 pb-0">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3 flex-wrap">
             {story.status === "read" && (
-              <span className="flex items-center gap-1 text-green-600 dark:text-green-500 font-medium bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full text-xs">
+              <span className="flex items-center gap-1 text-accent-foreground font-medium bg-accent/20 px-2 py-0.5 rounded-full text-xs">
                 <BookCheck className="h-3 w-3" />
                 Lu
               </span>
