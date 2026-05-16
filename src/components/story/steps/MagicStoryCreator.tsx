@@ -107,12 +107,12 @@ const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, pre
               font-bold text-2xl md:text-4xl lg:text-5xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95
               border-b-4 border-transparent
               ${selectedObjective 
-                ? 'text-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/15' 
+                ? 'text-primary bg-primary-soft/15 hover:bg-primary-soft/25' 
                 : 'text-muted-foreground bg-muted hover:bg-muted/80 border-dashed border-b-muted-foreground/30'}
             `}
           >
             {getSelectedObjectiveText()}
-            <ChevronDown className={`w-5 h-5 md:w-8 md:h-8 ${selectedObjective ? 'text-indigo-500' : 'text-muted-foreground'}`} />
+            <ChevronDown className={`w-5 h-5 md:w-8 md:h-8 ${selectedObjective ? 'text-primary' : 'text-muted-foreground'}`} />
           </button>
           .
         </h1>
@@ -121,10 +121,11 @@ const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, pre
         <div className={`mt-12 flex justify-center transition-all duration-700 ease-out transform ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
           <Button 
             size="lg" 
+            variant="glow"
             onClick={handleContinue}
-            className="rounded-full px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all group"
+            className="rounded-full px-8 py-6 text-lg font-semibold hover:-translate-y-1 transition-all group"
           >
-            <Sparkles className="w-5 h-5 mr-2 text-yellow-300 group-hover:rotate-12 transition-transform" />
+            <Sparkles className="w-5 h-5 mr-2 text-primary-foreground/90 group-hover:rotate-12 transition-transform" />
             Création des 3 titres
           </Button>
         </div>

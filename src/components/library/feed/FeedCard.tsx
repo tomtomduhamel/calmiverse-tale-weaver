@@ -159,7 +159,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
         {/* Series badge */}
         {isSeriesStory && (
           <div className="absolute top-3 left-3 z-10">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-600/90 backdrop-blur-sm text-white text-xs font-medium shadow-lg border border-indigo-400/20">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground text-xs font-medium shadow-floating border border-primary-soft/30">
               <Library className="h-3 w-3" />
               <span>Série {story.series?.total_tomes ? `• ${story.series.total_tomes} tomes` : ''}</span>
             </div>
@@ -169,7 +169,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
         {/* Identity badge */}
         {storyIdentity && (
           <div className="absolute top-3 right-3 z-10">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md text-white text-[10px] sm:text-xs font-medium shadow-sm border border-white/10">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-foreground/40 backdrop-blur-md text-background text-[10px] sm:text-xs font-medium shadow-soft border border-background/10">
               {storyIdentity.iconType === 'lucide' ? (
                 <storyIdentity.icon className="h-3 w-3" />
               ) : (
@@ -191,8 +191,8 @@ const FeedCard: React.FC<FeedCardProps> = ({
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-            <span className="text-6xl opacity-50">📖</span>
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-soft/20 to-accent/10">
+            <BookCheck className="h-16 w-16 text-primary/40" />
           </div>
         )}
 
@@ -205,7 +205,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
         {showHeartAnimation && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <Heart
-              className="h-24 w-24 text-red-500 fill-red-500 animate-ping"
+              className="h-24 w-24 text-destructive fill-destructive animate-ping"
             />
           </div>
         )}
@@ -216,7 +216,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
         <CardContent className="px-1 pt-3 pb-0">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3 flex-wrap">
             {story.status === "read" && (
-              <span className="flex items-center gap-1 text-green-600 dark:text-green-500 font-medium bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full text-xs">
+              <span className="flex items-center gap-1 text-accent-foreground font-medium bg-accent/20 px-2 py-0.5 rounded-full text-xs">
                 <BookCheck className="h-3 w-3" />
                 Lu
               </span>

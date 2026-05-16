@@ -23,7 +23,7 @@ export const SeriesStoryCardStatus: React.FC<SeriesStoryCardStatusProps> = ({
         return {
           icon: Loader2,
           label: progress ? `Génération ${progress}%` : 'Génération en cours',
-          className: 'bg-amber-500/10 text-amber-700 border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400',
+          className: 'bg-primary-soft/15 text-primary border-primary-soft/40',
           iconClassName: 'animate-spin'
         };
       case 'completed':
@@ -31,21 +31,21 @@ export const SeriesStoryCardStatus: React.FC<SeriesStoryCardStatusProps> = ({
         return {
           icon: CheckCircle,
           label: 'Prête à lire',
-          className: 'bg-green-500/10 text-green-700 border-green-500/30 dark:bg-green-500/20 dark:text-green-400',
+          className: 'bg-accent/20 text-accent-foreground border-accent/40',
           iconClassName: ''
         };
       case 'read':
         return {
           icon: BookCheck,
           label: 'Déjà lu',
-          className: 'bg-blue-500/10 text-blue-700 border-blue-500/30 dark:bg-blue-500/20 dark:text-blue-400',
+          className: 'bg-primary/10 text-primary border-primary/30',
           iconClassName: ''
         };
       case 'error':
         return {
           icon: AlertTriangle,
           label: 'Erreur',
-          className: 'bg-red-500/10 text-red-700 border-red-500/30 dark:bg-red-500/20 dark:text-red-400',
+          className: 'bg-destructive/10 text-destructive border-destructive/30',
           iconClassName: ''
         };
       default:

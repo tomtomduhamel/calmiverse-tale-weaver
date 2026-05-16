@@ -234,19 +234,19 @@ const LibraryContainer: React.FC<LibraryContainerProps> = ({
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     {generation.status === 'pending' && (
-                      <Clock className="h-3 w-3 text-orange-500 flex-shrink-0" />
+                      <Clock className="h-3 w-3 text-primary flex-shrink-0" />
                     )}
                     {generation.status === 'completed' && (
-                      <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                      <CheckCircle className="h-3 w-3 text-accent-foreground flex-shrink-0" />
                     )}
                     {generation.status === 'error' && (
-                      <XCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
+                      <XCircle className="h-3 w-3 text-destructive flex-shrink-0" />
                     )}
                     <span className="truncate">{generation.title}</span>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                     {generation.status === 'completed' && (
-                      <Badge variant="secondary" className="bg-green-100 text-green-800 h-4 text-xs">
+                      <Badge variant="secondary" className="bg-accent/30 text-accent-foreground h-4 text-xs">
                         Prête
                       </Badge>
                     )}
