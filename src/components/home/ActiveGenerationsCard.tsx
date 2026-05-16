@@ -30,7 +30,7 @@ export const ActiveGenerationsCard: React.FC = () => {
   };
 
   return (
-    <Card className="border-l-4 border-l-primary bg-gradient-to-r from-primary/5 to-transparent">
+    <Card className="border-l-4 border-l-primary bg-gradient-to-r from-primary-soft/10 to-transparent shadow-soft rounded-2xl">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export const ActiveGenerationsCard: React.FC = () => {
           )}
           
           {completedCount > 0 && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800 h-5 text-xs">
+            <Badge variant="secondary" className="bg-accent/30 text-accent-foreground h-5 text-xs">
               <CheckCircle className="h-2 w-2 mr-1" />
               {completedCount} prête{completedCount > 1 ? 's' : ''}
             </Badge>
@@ -82,13 +82,13 @@ export const ActiveGenerationsCard: React.FC = () => {
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {generation.status === 'pending' && (
-                  <Clock className="h-2 w-2 text-orange-500 flex-shrink-0" />
+                  <Clock className="h-2 w-2 text-primary flex-shrink-0" />
                 )}
                 {generation.status === 'completed' && (
-                  <CheckCircle className="h-2 w-2 text-green-500 flex-shrink-0" />
+                  <CheckCircle className="h-2 w-2 text-accent-foreground flex-shrink-0" />
                 )}
                 {generation.status === 'error' && (
-                  <XCircle className="h-2 w-2 text-red-500 flex-shrink-0" />
+                  <XCircle className="h-2 w-2 text-destructive flex-shrink-0" />
                 )}
                 <span className="truncate flex-1">{generation.title}</span>
               </div>

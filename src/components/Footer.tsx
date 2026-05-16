@@ -6,7 +6,7 @@ export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border bg-background/50 backdrop-blur-sm mt-auto">
+    <footer className="border-t border-primary-soft/20 bg-background/60 backdrop-blur-xl mt-auto">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company info */}
@@ -79,15 +79,15 @@ export const Footer: React.FC = () => {
             <h4 className="font-medium text-foreground">Conformité</h4>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse"></div>
                 <span className="text-xs text-muted-foreground">RGPD Conforme</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse"></div>
                 <span className="text-xs text-muted-foreground">Protection enfants</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse"></div>
                 <span className="text-xs text-muted-foreground">Données sécurisées</span>
               </div>
             </div>
