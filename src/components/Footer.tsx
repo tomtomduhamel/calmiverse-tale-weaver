@@ -79,15 +79,15 @@ export const Footer: React.FC = () => {
             <h4 className="font-medium text-foreground">Conformité</h4>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse"></div>
                 <span className="text-xs text-muted-foreground">RGPD Conforme</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse"></div>
                 <span className="text-xs text-muted-foreground">Protection enfants</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse"></div>
                 <span className="text-xs text-muted-foreground">Données sécurisées</span>
               </div>
             </div>
