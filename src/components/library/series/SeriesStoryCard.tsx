@@ -134,7 +134,7 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
                     {isDeleting ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      <Trash2 className="w-3 h-3 text-red-500" />
+                      <Trash2 className="w-3 h-3 text-destructive" />
                     )}
                   </Button>
                 )}
