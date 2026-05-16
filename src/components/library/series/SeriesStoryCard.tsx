@@ -115,7 +115,7 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
                     {isRetrying ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      <RotateCcw className="w-3 h-3 text-blue-500" />
+                      <RotateCcw className="w-3 h-3 text-primary" />
                     )}
                   </Button>
                 )}
