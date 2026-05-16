@@ -43,24 +43,24 @@ export const PWANotificationBanner: React.FC = () => {
   };
 
   return (
-    <Card className="mb-4 border-l-4 border-l-blue-500 bg-blue-50 dark:bg-blue-950/20">
+    <Card className="mb-4 border-l-4 border-l-primary bg-primary-soft/15 shadow-soft">
       <CardContent className="pt-4">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-3 flex-1">
-            <Bell className="h-5 w-5 text-blue-600 mt-0.5" />
+            <Bell className="h-5 w-5 text-primary mt-0.5" />
             <div className="flex-1">
-              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+              <h4 className="font-display italic text-lg text-foreground mb-1">
                 Activez les notifications
               </h4>
-              <p className="text-sm text-blue-700 dark:text-blue-200 mb-3">
+              <p className="text-sm text-muted-foreground mb-3">
                 Recevez une notification quand vos histoires sont prêtes, même quand l'application est fermée.
               </p>
               <div className="flex items-center space-x-2">
                 <Button 
                   size="sm" 
+                  variant="glow"
                   onClick={handleRequestPermission}
                   disabled={isAsking}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   {isAsking ? (
                     <>

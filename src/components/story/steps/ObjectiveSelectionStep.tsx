@@ -158,7 +158,7 @@ const DesktopObjectiveSelectionStep: React.FC<ObjectiveSelectionStepProps> = ({ 
 
       {/* En-tête */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="font-display italic text-3xl sm:text-4xl text-foreground mb-2 animate-fade-up-slow">
           Choisissez l'objectif de l'histoire
         </h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
