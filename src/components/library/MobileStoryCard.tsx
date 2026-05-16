@@ -165,11 +165,11 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
   return (
     <div className="relative overflow-hidden rounded-lg" style={{ touchAction: 'manipulation' }}>
       {/* Bouton de suppression en arrière-plan */}
-      <div className="absolute right-0 top-0 h-full w-20 bg-red-500 rounded-r-lg flex items-center justify-center">
+      <div className="absolute right-0 top-0 h-full w-20 bg-destructive rounded-r-lg flex items-center justify-center">
         <button
           onClick={handleDelete}
           disabled={isDeleting}
-          className="p-3 text-white disabled:opacity-50"
+          className="p-3 text-destructive-foreground disabled:opacity-50"
           aria-label="Supprimer l'histoire"
         >
           {isDeleting ? (
