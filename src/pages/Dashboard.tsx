@@ -68,9 +68,9 @@ const Dashboard = () => {
             
             {/* Optional extra stats block, e.g total reads */}
             {stats.totalReads > 0 && (
-              <div className="p-6 rounded-2xl bg-white/50 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-sm text-center flex flex-col items-center justify-center gap-2">
-                <span className="text-3xl md:text-4xl font-black text-slate-800 dark:text-white drop-shadow-sm">{stats.totalReads}</span>
-                <span className="text-sm font-medium text-slate-600 dark:text-white/80">Histoires explorées au total</span>
+              <div className="p-6 rounded-2xl bg-card/60 backdrop-blur-xl border border-primary-soft/20 shadow-soft text-center flex flex-col items-center justify-center gap-2">
+                <span className="font-display italic text-3xl md:text-4xl text-foreground">{stats.totalReads}</span>
+                <span className="text-sm text-muted-foreground">Histoires explorées au total</span>
               </div>
             )}
           </div>
