@@ -31,7 +31,7 @@ export const SeriesStoryCardStatus: React.FC<SeriesStoryCardStatusProps> = ({
         return {
           icon: CheckCircle,
           label: 'Prête à lire',
-          className: 'bg-green-500/10 text-green-700 border-green-500/30 dark:bg-green-500/20 dark:text-green-400',
+          className: 'bg-accent/20 text-accent-foreground border-accent/40',
           iconClassName: ''
         };
       case 'read':
