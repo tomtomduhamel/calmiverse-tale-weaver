@@ -99,7 +99,7 @@ const Navigation = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[260px] bg-background/95 backdrop-blur-xl border-l border-primary-soft/20">
               <div className="flex flex-col space-y-4 mt-8">
-                {navItems.map(item => <Link key={item.path} to={item.path} className={`flex items-center py-2 px-4 rounded-md ${isActive(item.path) ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}>
+                {navItems.map(item => <Link key={item.path} to={item.path} className={`flex items-center py-2 px-4 rounded-xl transition-all duration-400 ease-calm ${isActive(item.path) ? 'bg-primary-soft/20 text-primary font-medium' : 'text-foreground hover:bg-primary-soft/10'}`}>
                     <item.icon className="w-5 h-5 mr-3" />
                     {item.label}
                     {item.path === '/library' && (totalActiveCount > 0 || pendingCount > 0) && (
