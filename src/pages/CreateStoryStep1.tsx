@@ -9,6 +9,7 @@ import CreationModeToggle from "@/components/story/chat/CreationModeToggle";
 import ChatStoryCreator from "@/components/story/chat/ChatStoryCreator";
 import { useTitleGeneration } from "@/contexts/TitleGenerationContext";
 import type { CreationMode } from "@/types/chatbot";
+import { Sparkles } from "lucide-react";
 
 const CreateStoryStep1: React.FC = () => {
   const { user, loading: authLoading, error: authError, timeoutReached: authTimeout, retryAuth } = useSupabaseAuth();
