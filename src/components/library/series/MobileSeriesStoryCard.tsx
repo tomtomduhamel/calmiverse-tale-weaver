@@ -150,7 +150,7 @@ export const MobileSeriesStoryCard: React.FC<MobileSeriesStoryCardProps> = ({
         ref={cardRef}
         className={`
           cursor-pointer transition-all duration-200 
-          bg-card dark:bg-slate-900 border
+          bg-card border
           ${isNextRecommended ? 'ring-1 ring-primary/30' : 'hover:shadow-sm hover:border-primary/20'}
           ${isDragging ? 'transition-none' : 'transition-transform duration-300 ease-out'}
         `}
