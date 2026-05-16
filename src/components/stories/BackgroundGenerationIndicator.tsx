@@ -74,13 +74,13 @@ export const BackgroundGenerationIndicator: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   {generation.status === 'pending' && (
-                    <Clock className="h-3 w-3 text-orange-500" />
+                    <Clock className="h-3 w-3 text-primary-soft" />
                   )}
                   {generation.status === 'completed' && (
-                    <CheckCircle className="h-3 w-3 text-green-500" />
+                    <CheckCircle className="h-3 w-3 text-accent-foreground" />
                   )}
                   {generation.status === 'error' && (
-                    <XCircle className="h-3 w-3 text-red-500" />
+                    <XCircle className="h-3 w-3 text-destructive" />
                   )}
                   <span className="truncate max-w-48">{generation.title}</span>
                 </div>
