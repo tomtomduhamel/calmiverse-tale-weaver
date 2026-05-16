@@ -92,10 +92,10 @@ const PillFilters: React.FC<PillFiltersProps> = ({
               size="sm"
               onClick={() => onObjectiveChange(option.value)}
               className={cn(
-                "flex-shrink-0 rounded-full px-4 h-9 text-sm font-medium whitespace-nowrap",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-md" 
-                  : "bg-card hover:bg-accent border-border"
+                "flex-shrink-0 rounded-full px-4 h-9 text-sm font-medium whitespace-nowrap transition-all duration-300 ease-calm",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-glow-primary hover:bg-primary/90"
+                  : "bg-card/60 hover:bg-primary-soft/15 border-primary-soft/30"
               )}
             >
               <Icon className="h-4 w-4 mr-1.5" />
@@ -113,10 +113,10 @@ const PillFilters: React.FC<PillFiltersProps> = ({
                   variant={(statusFilter === 'read' || statusFilter === 'unread') ? "default" : "outline"}
                   size="sm"
                   className={cn(
-                    "flex-shrink-0 rounded-full px-3 h-9 text-sm font-medium",
+                    "flex-shrink-0 rounded-full px-3 h-9 text-sm font-medium transition-all duration-300 ease-calm",
                     (statusFilter === 'read' || statusFilter === 'unread')
-                      ? "bg-primary text-primary-foreground shadow-md" 
-                      : "bg-card hover:bg-accent border-border"
+                      ? "bg-primary text-primary-foreground shadow-glow-primary hover:bg-primary/90"
+                      : "bg-card/60 hover:bg-primary-soft/15 border-primary-soft/30"
                   )}
                 >
                   {statusFilter === 'read' ? (
@@ -128,7 +128,7 @@ const PillFilters: React.FC<PillFiltersProps> = ({
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[180px] z-[100]">
+              <DropdownMenuContent align="end" className="w-[180px] z-[100] bg-popover/95 backdrop-blur-xl border-primary-soft/30 shadow-floating rounded-2xl">
                 <DropdownMenuLabel>Filtrer par statut</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
