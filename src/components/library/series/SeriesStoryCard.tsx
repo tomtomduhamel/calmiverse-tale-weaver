@@ -96,7 +96,7 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
                     {isUpdatingFavorite ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      <Star className={`w-3 h-3 ${story.isFavorite ? 'fill-current text-yellow-500' : 'text-muted-foreground'}`} />
+                      <Star className={`w-3 h-3 ${story.isFavorite ? 'fill-current text-primary-soft' : 'text-muted-foreground'}`} />
                     )}
                   </Button>
                 )}
