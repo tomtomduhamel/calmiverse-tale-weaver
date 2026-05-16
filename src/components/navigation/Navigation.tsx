@@ -97,7 +97,7 @@ const Navigation = () => {
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[250px] bg-background">
+            <SheetContent side="right" className="w-[260px] bg-background/95 backdrop-blur-xl border-l border-primary-soft/20">
               <div className="flex flex-col space-y-4 mt-8">
                 {navItems.map(item => <Link key={item.path} to={item.path} className={`flex items-center py-2 px-4 rounded-md ${isActive(item.path) ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}>
                     <item.icon className="w-5 h-5 mr-3" />
