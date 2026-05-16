@@ -52,13 +52,14 @@ const Dashboard = () => {
             
             {/* Call to action si aucune histoire lue */}
             {stats.totalReads === 0 && (
-              <div className="p-6 rounded-2xl bg-primary/20 backdrop-blur-md border border-primary/30 text-center">
-                <p className="text-primary-foreground mb-4">
+              <div className="p-6 rounded-2xl bg-primary-soft/20 backdrop-blur-md border border-primary-soft/30 shadow-soft text-center">
+                <p className="text-foreground mb-4">
                   Prêt à allumer ta première étoile ?
                 </p>
                 <Button 
                   onClick={() => navigate('/library')}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  variant="glow"
+                  className="w-full"
                 >
                   Aller à la bibliothèque
                 </Button>
