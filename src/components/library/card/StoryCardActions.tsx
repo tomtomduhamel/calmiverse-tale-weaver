@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import DeleteStoryDialog from "../DeleteStoryDialog";
 import { CreateSequelButton } from "../../story/series/CreateSequelButton";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface StoryCardActionsProps {
   story: Story;
