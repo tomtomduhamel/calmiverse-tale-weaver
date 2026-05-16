@@ -58,19 +58,19 @@ export const SeriesTimeline: React.FC<SeriesTimelineProps> = ({
                 w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold
                 transition-all duration-300 shadow-sm
                 ${story.status === 'completed' || story.status === 'ready' 
-                  ? 'bg-green-500 text-white ring-2 ring-green-200 dark:ring-green-900' 
+                  ? 'bg-accent text-accent-foreground ring-2 ring-accent/40' 
                   : ''
                 }
                 ${story.status === 'pending' 
-                  ? 'bg-amber-500 text-white animate-pulse ring-2 ring-amber-200 dark:ring-amber-900' 
+                  ? 'bg-primary-soft text-primary-foreground animate-glow-pulse ring-2 ring-primary-soft/40' 
                   : ''
                 }
                 ${story.status === 'read' 
-                  ? 'bg-blue-500 text-white ring-2 ring-blue-200 dark:ring-blue-900' 
+                  ? 'bg-primary text-primary-foreground ring-2 ring-primary/30' 
                   : ''
                 }
                 ${story.status === 'error' 
-                  ? 'bg-red-500 text-white ring-2 ring-red-200 dark:ring-red-900' 
+                  ? 'bg-destructive text-destructive-foreground ring-2 ring-destructive/30' 
                   : ''
                 }
                 ${isNextToRead && story.status !== 'read'
@@ -86,8 +86,8 @@ export const SeriesTimeline: React.FC<SeriesTimelineProps> = ({
                 <div className={`
                   w-0.5 h-16 my-1 transition-colors duration-300
                   ${story.status === 'read' 
-                    ? 'bg-blue-500 dark:bg-blue-400' 
-                    : 'bg-border dark:bg-muted'
+                    ? 'bg-primary' 
+                    : 'bg-border'
                   }
                 `} />
               )}
