@@ -25,15 +25,15 @@ const Dashboard = () => {
     <div className="p-4 md:p-8 flex-1 flex flex-col items-center animate-fade-in w-full max-w-7xl mx-auto">
       <MilkyWayBackground>
         {/* Header */}
-      <div className="text-center animate-fade-in mb-8 relative z-20">
+      <div className="text-center animate-fade-up-slow mb-8 relative z-20">
         <div className="flex justify-center items-center mb-3">
-          <Sparkles className="w-8 h-8 text-blue-500 dark:text-yellow-300 mr-2 animate-pulse" />
-          <h1 className="text-3xl md:text-5xl font-bold text-slate-800 dark:text-white drop-shadow-sm dark:drop-shadow-lg tracking-tight pb-1">
+          <Sparkles className="w-7 h-7 text-primary mr-2 animate-glow-pulse" />
+          <h1 className="font-display italic text-3xl md:text-5xl text-foreground tracking-tight pb-1">
             Mon ciel
           </h1>
-          <Sparkles className="w-8 h-8 text-blue-500 dark:text-yellow-300 ml-2 animate-pulse delay-150" />
+          <Sparkles className="w-7 h-7 text-primary ml-2 animate-glow-pulse" style={{ animationDelay: '1s' }} />
         </div>
-        <p className="text-lg md:text-xl font-medium text-slate-600 dark:text-white/90 max-w-2xl mx-auto">
+        <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
           Ton univers s'épanouit à chaque histoire. Découvre tes constellations !
         </p>
       </div>
