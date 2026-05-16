@@ -41,7 +41,7 @@ const Dashboard = () => {
       {isLoading || !stats ? (
         <div className="flex-1 flex flex-col items-center justify-center relative z-20">
           <Loader2 className="w-12 h-12 animate-spin text-primary/70 mb-4" />
-          <p className="text-foreground/70 dark:text-primary-foreground/70 animate-pulse">Observation des étoiles en cours...</p>
+          <p className="text-muted-foreground animate-pulse">Observation des étoiles en cours...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 w-full max-w-5xl mx-auto relative z-20 animate-fade-in [animation-delay:200ms] opacity-0" style={{ animationFillMode: 'forwards' }}>
