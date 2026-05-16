@@ -70,7 +70,7 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({
                     Série d'histoires
                   </Badge>
                   {readStories === totalStories && totalStories > 0 && (
-                    <div className="flex items-center text-green-600 text-xs">
+                    <div className="flex items-center text-accent-foreground text-xs">
                       <BookCheck className="h-3 w-3 mr-1" />
                       <span className="font-medium">Série terminée</span>
                     </div>
@@ -79,7 +79,7 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({
               </div>
               {hasFavorites && (
                 <div className="flex-shrink-0 mt-1">
-                  <Star className="w-5 h-5 text-amber-500 fill-current" />
+                  <Star className="w-5 h-5 text-primary-soft fill-current" />
                 </div>
               )}
             </div>

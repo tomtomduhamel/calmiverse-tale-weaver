@@ -22,7 +22,7 @@ export const ShareStoryButton: React.FC<ShareStoryButtonProps> = ({
         variant="ghost"
         size="sm"
         onClick={() => setShowShareDialog(true)}
-        className={`${isDarkMode ? 'text-white hover:bg-gray-800' : ''}`}
+        className={`${isDarkMode ? 'text-foreground hover:bg-muted/50' : ''}`}
       >
         <Share2 className="h-4 w-4" />
       </Button>

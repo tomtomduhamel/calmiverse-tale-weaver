@@ -163,17 +163,17 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
   const getStatusMessage = () => {
     if (pendingAudioFile) {
       if (pendingAudioFile.status === 'pending') {
-        return <div className={`text-xs text-center ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-            🕒 En attente de traitement par n8n (timeout: 60s)
+        return <div className="text-xs text-center text-muted-foreground">
+            En attente de traitement (timeout: 60s)
           </div>;
       }
       if (pendingAudioFile.status === 'processing') {
-        return <div className={`text-xs text-center ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>⚙️ Génération audio en cours</div>;
+        return <div className="text-xs text-center text-primary">Génération audio en cours…</div>;
       }
     }
     if (recoverableAudioFile) {
-      return <div className={`text-xs text-center ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-          🔧 Fichier récupérable (cliquez sur récupérer)
+      return <div className="text-xs text-center text-primary-soft">
+          Fichier récupérable (cliquez sur récupérer)
         </div>;
     }
     if (errorAudioFile) {
@@ -203,7 +203,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
   return <div className="space-y-3">
       {/* Bouton principal */}
       <div className="flex gap-2">
-        <Button onClick={readyAudioFile ? handlePlayPause : handleGenerateAudio} disabled={isGenerating || !!pendingAudioFile} className={`${isDarkMode ? 'border-gray-600 text-white hover:bg-gray-700' : ''}`} variant="outline" size="sm">
+        <Button onClick={readyAudioFile ? handlePlayPause : handleGenerateAudio} disabled={isGenerating || !!pendingAudioFile} variant="outline" size="sm">
           {isGenerating ? <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Génération...
@@ -223,19 +223,19 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
         
 
         {/* Bouton récupérer fichier en erreur avec URL */}
-        {recoverableAudioFile && <Button onClick={handleRecoverFile} variant="outline" size="icon" className={`text-green-500 hover:text-green-600 ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : ''}`} title="Récupérer le fichier audio">
+        {recoverableAudioFile && <Button onClick={handleRecoverFile} variant="outline" size="icon" className="text-accent-foreground hover:bg-accent/20" title="Récupérer le fichier audio">
             <RefreshCw className="h-4 w-4" />
           </Button>}
 
         {/* Bouton supprimer fichier en erreur SANS URL */}
-        {errorAudioFile && <Button onClick={handleDeleteErrorFile} variant="outline" size="icon" className={`text-red-500 hover:text-red-600 ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : ''}`}>
+        {errorAudioFile && <Button onClick={handleDeleteErrorFile} variant="outline" size="icon" className="text-destructive hover:bg-destructive/10">
             <X className="h-4 w-4" />
           </Button>}
       </div>
 
       {/* Barre de progression */}
-      {isPlaying && readyAudioFile && <div className="w-full bg-gray-200 rounded-full h-2">
-          <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{
+      {isPlaying && readyAudioFile && <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+          <div className="bg-primary h-2 rounded-full transition-all duration-300 shadow-glow-primary" style={{
         width: `${progress}%`
       }}></div>
         </div>}
@@ -250,7 +250,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
               const url = await getSignedAudioUrl(readyAudioFile.audio_url);
               if (url) window.open(url, '_blank');
             }}
-            className={`inline-flex items-center text-xs hover:underline ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-500'}`}
+            className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground hover:underline"
           >
             <Download className="h-3 w-3 mr-1" />
             Télécharger l'audio

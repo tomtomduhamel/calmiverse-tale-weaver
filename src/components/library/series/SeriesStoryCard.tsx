@@ -96,7 +96,7 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
                     {isUpdatingFavorite ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      <Star className={`w-3 h-3 ${story.isFavorite ? 'fill-current text-yellow-500' : 'text-muted-foreground'}`} />
+                      <Star className={`w-3 h-3 ${story.isFavorite ? 'fill-current text-primary-soft' : 'text-muted-foreground'}`} />
                     )}
                   </Button>
                 )}
@@ -115,7 +115,7 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
                     {isRetrying ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      <RotateCcw className="w-3 h-3 text-blue-500" />
+                      <RotateCcw className="w-3 h-3 text-primary" />
                     )}
                   </Button>
                 )}
@@ -134,7 +134,7 @@ export const SeriesStoryCard: React.FC<SeriesStoryCardProps> = ({
                     {isDeleting ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      <Trash2 className="w-3 h-3 text-red-500" />
+                      <Trash2 className="w-3 h-3 text-destructive" />
                     )}
                   </Button>
                 )}
