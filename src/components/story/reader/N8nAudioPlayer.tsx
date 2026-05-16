@@ -163,17 +163,17 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
   const getStatusMessage = () => {
     if (pendingAudioFile) {
       if (pendingAudioFile.status === 'pending') {
-        return <div className={`text-xs text-center ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-            🕒 En attente de traitement par n8n (timeout: 60s)
+        return <div className="text-xs text-center text-muted-foreground">
+            En attente de traitement (timeout: 60s)
           </div>;
       }
       if (pendingAudioFile.status === 'processing') {
-        return <div className={`text-xs text-center ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>⚙️ Génération audio en cours</div>;
+        return <div className="text-xs text-center text-primary">Génération audio en cours…</div>;
       }
     }
     if (recoverableAudioFile) {
-      return <div className={`text-xs text-center ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-          🔧 Fichier récupérable (cliquez sur récupérer)
+      return <div className="text-xs text-center text-primary-soft">
+          Fichier récupérable (cliquez sur récupérer)
         </div>;
     }
     if (errorAudioFile) {
