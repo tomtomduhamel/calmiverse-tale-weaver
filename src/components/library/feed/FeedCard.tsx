@@ -205,7 +205,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
         {showHeartAnimation && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <Heart
-              className="h-24 w-24 text-red-500 fill-red-500 animate-ping"
+              className="h-24 w-24 text-destructive fill-destructive animate-ping"
             />
           </div>
         )}
