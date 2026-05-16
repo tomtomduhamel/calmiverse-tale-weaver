@@ -53,7 +53,7 @@ const DeleteStoryDialog: React.FC<DeleteStoryDialogProps> = ({
               onConfirm();
             }}
             disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground focus:ring-destructive"
           >
             {isDeleting ? (
               <>
