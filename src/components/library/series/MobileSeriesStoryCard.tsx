@@ -212,18 +212,18 @@ export const MobileSeriesStoryCard: React.FC<MobileSeriesStoryCardProps> = ({
               {/* Métadonnées compactes */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 {story.status === 'read' && (
-                  <div className="flex items-center text-green-600">
+                  <div className="flex items-center text-accent-foreground">
                     <BookCheck className="h-3 w-3 mr-1" />
                     <span className="font-medium">Lu</span>
                   </div>
                 )}
                 {story.status === 'completed' && (
-                  <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 px-1.5 py-0 h-4 text-xs">
+                  <Badge variant="secondary" className="bg-accent/20 text-accent-foreground border-accent/30 px-1.5 py-0 h-4 text-xs">
                     Prête
                   </Badge>
                 )}
                 {story.status === 'pending' && (
-                  <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-200 px-1.5 py-0 h-4 text-xs">
+                  <Badge variant="secondary" className="bg-primary-soft/15 text-primary border-primary-soft/30 px-1.5 py-0 h-4 text-xs">
                     En cours
                   </Badge>
                 )}
