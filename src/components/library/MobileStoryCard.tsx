@@ -48,10 +48,10 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
   
   const getStatusColor = () => {
     switch (story.status) {
-      case "error": return "border-l-red-500 bg-red-50/50";
-      case "pending": return "border-l-amber-500 bg-amber-50/50";
-      case "read": return "border-l-green-500 bg-green-50/50";
-      default: return isRecent ? "border-l-blue-500 bg-blue-50/50" : "border-l-gray-300";
+      case "error": return "border-l-destructive bg-destructive/5";
+      case "pending": return "border-l-primary-soft bg-primary-soft/10";
+      case "read": return "border-l-accent bg-accent/10";
+      default: return isRecent ? "border-l-primary bg-primary/5" : "border-l-border";
     }
   };
 
