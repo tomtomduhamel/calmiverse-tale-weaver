@@ -223,12 +223,12 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
         
 
         {/* Bouton récupérer fichier en erreur avec URL */}
-        {recoverableAudioFile && <Button onClick={handleRecoverFile} variant="outline" size="icon" className={`text-green-500 hover:text-green-600 ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : ''}`} title="Récupérer le fichier audio">
+        {recoverableAudioFile && <Button onClick={handleRecoverFile} variant="outline" size="icon" className="text-accent-foreground hover:bg-accent/20" title="Récupérer le fichier audio">
             <RefreshCw className="h-4 w-4" />
           </Button>}
 
         {/* Bouton supprimer fichier en erreur SANS URL */}
-        {errorAudioFile && <Button onClick={handleDeleteErrorFile} variant="outline" size="icon" className={`text-red-500 hover:text-red-600 ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : ''}`}>
+        {errorAudioFile && <Button onClick={handleDeleteErrorFile} variant="outline" size="icon" className="text-destructive hover:bg-destructive/10">
             <X className="h-4 w-4" />
           </Button>}
       </div>
