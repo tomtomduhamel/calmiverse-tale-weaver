@@ -10,10 +10,10 @@ interface StatusFilterProps {
 const StatusFilter: React.FC<StatusFilterProps> = ({ statusFilter, onStatusChange }) => {
   return (
     <Select value={statusFilter} onValueChange={onStatusChange}>
-      <SelectTrigger className="w-full sm:w-48">
+      <SelectTrigger className="w-full sm:w-48 rounded-2xl bg-card/60 border-primary-soft/30 shadow-soft">
         <SelectValue placeholder="Filtrer par statut" />
       </SelectTrigger>
-      <SelectContent className="bg-background border border-border shadow-md">
+      <SelectContent className="bg-popover/95 backdrop-blur-xl border border-primary-soft/30 shadow-floating rounded-2xl">
         <SelectItem value="all">Toutes les histoires</SelectItem>
         <SelectItem value="recent">✨ Nouvelles histoires</SelectItem>
         <SelectItem value="favorites">⭐ Favoris</SelectItem>
