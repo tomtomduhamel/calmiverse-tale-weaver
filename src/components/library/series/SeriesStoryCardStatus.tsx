@@ -38,7 +38,7 @@ export const SeriesStoryCardStatus: React.FC<SeriesStoryCardStatusProps> = ({
         return {
           icon: BookCheck,
           label: 'Déjà lu',
-          className: 'bg-blue-500/10 text-blue-700 border-blue-500/30 dark:bg-blue-500/20 dark:text-blue-400',
+          className: 'bg-primary/10 text-primary border-primary/30',
           iconClassName: ''
         };
       case 'error':
