@@ -169,7 +169,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
         {/* Identity badge */}
         {storyIdentity && (
           <div className="absolute top-3 right-3 z-10">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md text-white text-[10px] sm:text-xs font-medium shadow-sm border border-white/10">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-foreground/40 backdrop-blur-md text-background text-[10px] sm:text-xs font-medium shadow-soft border border-background/10">
               {storyIdentity.iconType === 'lucide' ? (
                 <storyIdentity.icon className="h-3 w-3" />
               ) : (
