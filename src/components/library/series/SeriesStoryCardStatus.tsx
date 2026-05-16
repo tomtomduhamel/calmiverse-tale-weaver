@@ -23,7 +23,7 @@ export const SeriesStoryCardStatus: React.FC<SeriesStoryCardStatusProps> = ({
         return {
           icon: Loader2,
           label: progress ? `Génération ${progress}%` : 'Génération en cours',
-          className: 'bg-amber-500/10 text-amber-700 border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400',
+          className: 'bg-primary-soft/15 text-primary border-primary-soft/40',
           iconClassName: 'animate-spin'
         };
       case 'completed':
