@@ -81,8 +81,8 @@ Deno.serve(async (req) => {
       mode: 'subscription',
       customer: customerId,
       line_items: [{ price: priceRow.stripe_price_id, quantity: 1 }],
-      success_url: `${origin}/subscription?status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/pricing?status=cancelled`,
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout/cancelled`,
       allow_promotion_codes: true,
       metadata: { supabase_user_id: userId, tier, is_annual: String(isAnnual) },
       subscription_data: {
