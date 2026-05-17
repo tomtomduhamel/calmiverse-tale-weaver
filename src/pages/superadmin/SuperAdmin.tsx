@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, XCircle, Gift, RotateCcw, Trash2, Plus, ExternalLink } from "lucide-react";
+import { Loader2, RefreshCw, XCircle, Gift, RotateCcw, Trash2, Plus, ExternalLink, HelpCircle } from "lucide-react";
 
 type Subscription = {
   user_id: string;
