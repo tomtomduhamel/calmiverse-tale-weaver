@@ -127,6 +127,23 @@ Deno.serve(async (req) => {
           .eq('stripe_subscription_id', sub.id);
         break;
       }
+      case 'invoice.payment_succeeded': {
+        const inv = event.data.object as Stripe.Invoice;
+        if (inv.subscription && inv.billing_reason === 'subscription_cycle') {
+          const sub = await stripe.subscriptions.retrieve(inv.subscription as string);
+          let userId = sub.metadata?.supabase_user_id;
+          if (!userId) {
+            const { data } = await admin
+              .from('user_subscriptions')
+              .select('user_id')
+              .eq('stripe_customer_id', sub.customer as string)
+              .maybeSingle();
+            userId = data?.user_id;
+          }
+          if (userId) await upsertSubscription(userId, sub, true);
+        }
+        break;
+      }
       case 'invoice.payment_failed': {
         const inv = event.data.object as Stripe.Invoice;
         if (inv.subscription) {
