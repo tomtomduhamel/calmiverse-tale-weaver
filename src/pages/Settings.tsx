@@ -238,6 +238,12 @@ const Settings = () => {
             {isCheckingUpdate ? 'Vérification...' : 'Vérifier les mises à jour'}
           </Button>
         )}
+        <div className="text-center text-xs text-muted-foreground">
+          <p>Version {APP_CONFIG.APP_VERSION}</p>
+          {APP_CONFIG.APP_BUILD_DATE && (
+            <p>Build du {APP_CONFIG.APP_BUILD_DATE}</p>
+          )}
+        </div>
       </div>
     </div>
   );
