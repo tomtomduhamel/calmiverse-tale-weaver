@@ -1,70 +1,40 @@
-## 1. Beta testeurs : Calmix 3 mois ?
+# Correction de l'affichage "Calmiverse" dans le footer
 
-**Oui, pour le système actuel.** Une seule invitation beta est active aujourd'hui :
+## Diagnostic
 
-- Code `LESAMISDECALMI` → **tier `calmix`**, **durée 3 mois**, 5 utilisations à ce jour.
+Le code source est déjà correct :
+- `src/lib/config.ts` → `APP_NAME: 'Calmi'` et `COMPANY.NAME: 'Calmi'`
+- `src/components/Footer.tsx` lit `APP_CONFIG.APP_NAME` (pas de hardcode)
+- Tous les autres fichiers ont été nettoyés au tour précédent (sed sur 37 fichiers)
 
-La fonction `validate_beta_user` applique automatiquement le tier et la durée définis dans `beta_invitations` au moment de la validation admin.
+Le problème est uniquement que la **version publiée** sur `calmi-stories.lovable.app` est antérieure aux changements (build `260517.1818` du 17 mai 14:18). Le mécanisme "Vérifier les mises à jour" compare le service worker local à la version publiée → il dit "à jour" car les deux sont identiques (et obsolètes).
 
-**Exceptions historiques** (avant ce code unique) :
-- `emeline_duhamel@yahoo.fr` → `calmini` (ancien code/process).
-- `tomtom.duhamel@gmail.com` → aucune souscription créée (validation incomplète).
-- Quelques beta users ont `subscription_expires_at` (beta_users) désynchronisé de `current_period_end` (user_subscriptions) parce que leur abonnement a été reconduit/réinitialisé après validation.
+## Actions à exécuter
 
-Tant que le seul code actif reste `LESAMISDECALMI`, **tous les nouveaux beta testeurs auront Calmix 3 mois**.
+### 1. Vérification finale du code (1 min)
+- Re-grep `Calmiverse` (sensible et insensible à la casse) dans `src/`, `public/`, `index.html`
+- S'assurer qu'aucune occurrence visible utilisateur n'a été ratée
+- Garder volontairement intacts les emails `*@calmiverse.com` (adresses de support réelles)
 
----
+### 2. Republier l'application (action utilisateur)
+- Cliquer sur **Publish** dans Lovable pour générer un nouveau build
+- Le nouveau build aura un nouveau numéro (ex. `260517.2030+`) et la nouvelle date de déploiement
+- Le footer affichera alors "Calmi"
 
-## 2. Anthony — bug "Quota vidéo atteint"
+### 3. Forcer la mise à jour côté client (après republication)
+Une fois republié, sur l'appareil de l'utilisateur :
+- Ouvrir l'app → aller dans Paramètres
+- Cliquer "Vérifier les mises à jour"
+- Cette fois le bouton "Installer la mise à jour" apparaîtra (téléchargement du nouveau service worker)
+- Cliquer dessus → l'app recharge avec le nouveau build et "Calmi" dans le footer
 
-### Diagnostic confirmé (root cause)
+Note : si la PWA est installée en standalone (iOS/Android), il faut parfois la fermer complètement (swipe out) puis la rouvrir pour que le nouveau service worker s'active.
 
-État réel d'Anthony en base :
-- Tier **calmix**, statut `active`, période 17 mai → 17 août 2026
-- `video_intros_used_this_period` = **0 / 3**
+### 4. Vérification post-déploiement
+- Confirmer en bas de la page Paramètres que le numéro de build a changé
+- Confirmer que le footer affiche "Calmi"
+- Re-tester sur 1-2 autres pages contenant le nom de l'app (Pricing, légal)
 
-Il devrait donc pouvoir générer une vidéo. Le message d'erreur est **un faux positif**.
+## Pourquoi pas de modification de code cette fois
 
-**Cause exacte** : la fonction SQL `check_user_quota(p_user_id, p_quota_type)` ne gère **PAS** le type `video_intro`. Son `CASE` n'a que `stories`, `audio`, `children`, puis tombe dans le `ELSE` :
-
-```sql
-ELSE
-  RETURN json_build_object('allowed', false, 'reason', 'Type de quota inconnu');
-```
-
-Côté client (`useQuotaChecker.ts`), `validateAction('show_video_intro')` mappe vers `quotaType = 'video_intro'` et appelle ce RPC. Résultat : `allowed = false` systématiquement → toast "Quota vidéo atteint" pour **tous les utilisateurs**, peu importe leur plan ou leur consommation.
-
-C'est invoqué dans :
-- `src/components/story/title/TitleBasedStoryCreator.tsx` (ligne 245)
-- `src/components/story/fast/FastStoryCreator.tsx` (ligne ~75)
-
-### Plan de correctif
-
-**Migration SQL** — ajouter le case `video_intro` dans `check_user_quota`, avec :
-- Bypass admin (déjà géré en début de fonction)
-- Lecture de `user_subscriptions.video_intros_used_this_period`
-- Comparaison à `subscription_limits.max_video_intros_per_period`
-- Retour JSON cohérent avec les autres cas (`allowed`, `used`, `limit`, `tier`)
-
-Logique ajoutée :
-```sql
-WHEN 'video_intro' THEN
-  RETURN json_build_object(
-    'allowed', COALESCE(user_sub.video_intros_used_this_period, 0) < COALESCE(limits.max_video_intros_per_period, 0),
-    'used',    COALESCE(user_sub.video_intros_used_this_period, 0),
-    'limit',   COALESCE(limits.max_video_intros_per_period, 0),
-    'tier',    user_sub.tier
-  );
-```
-
-**Aucune modification de code frontend** nécessaire : `useQuotaChecker` et les composants appelants sont déjà corrects, seule la fonction SQL est défectueuse.
-
-### Vérification post-fix
-
-1. Re-tester en simulant Anthony : `select check_user_quota('<anthony_id>', 'video_intro')` doit renvoyer `allowed: true, used: 0, limit: 3, tier: calmix`.
-2. Vérifier qu'un user `calmini`/`calmidium` (limit 0) reçoit `allowed: false` (comportement attendu : ces tiers n'ont pas accès vidéo).
-3. Confirmer côté UI : Anthony ne voit plus le toast et la vidéo se génère.
-
-### Effets de bord
-
-Aucun. La fonction n'est pas appelée ailleurs avec `video_intro` sans déjà attendre ce comportement. Les autres branches du `CASE` restent intactes.
+Le bug visible n'est pas un bug de code mais un **cache de version publiée**. Toute nouvelle édition de code ne changerait rien tant que la republication n'a pas eu lieu. La seule action nécessaire est : **Publish**.
