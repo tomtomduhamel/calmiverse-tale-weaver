@@ -205,10 +205,15 @@ const Settings = () => {
         {updateAvailable ? (
           <Button 
             onClick={reloadApp} 
+            disabled={isReloading}
             className="w-full sm:w-auto flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
           >
-            <Download className="h-4 w-4" />
-            Installer la mise à jour
+            {isReloading ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {isReloading ? 'Mise à jour…' : 'Installer la mise à jour'}
           </Button>
         ) : (
           <Button 
