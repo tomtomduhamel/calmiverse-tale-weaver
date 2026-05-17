@@ -115,7 +115,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
   const buttonState = getButtonState();
 
   // Ne pas afficher le bouton si l'histoire n'est pas terminée ou en erreur
-  const canCreateSequel = story.status === 'ready' || story.status === 'read';
+  const canCreateSequel = story.status === 'ready' || story.status === 'read' || story.status === 'completed';
   if (!canCreateSequel) return null;
   const handleCreateSequel = async () => {
     const sequelData: SequelData = {
