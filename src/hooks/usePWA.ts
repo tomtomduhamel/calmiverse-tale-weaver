@@ -168,6 +168,8 @@ export const usePWA = () => {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
       }
+      if (swUpdateInterval) clearInterval(swUpdateInterval);
+      if ((window as any).__calmiSWCleanup) (window as any).__calmiSWCleanup();
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
