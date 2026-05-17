@@ -13,10 +13,10 @@ export const SubscriptionPlanCard: React.FC = () => {
 
   if (loading || !subscription || !limits) {
     return (
-      <div className="flex flex-col items-center justify-center p-6 rounded-2xl backdrop-blur-md border border-white/10 bg-white/5 shadow-sm animate-pulse">
-        <div className="w-8 h-8 rounded-full bg-white/10 mb-3" />
-        <div className="w-24 h-4 rounded bg-white/10 mb-2" />
-        <div className="w-16 h-3 rounded bg-white/10" />
+      <div className="flex flex-col items-center justify-center p-6 rounded-2xl backdrop-blur-md border border-primary/20 bg-primary/5 shadow-sm animate-pulse">
+        <div className="w-8 h-8 rounded-full bg-primary/20 mb-3" />
+        <div className="w-24 h-4 rounded bg-primary/20 mb-2" />
+        <div className="w-16 h-3 rounded bg-primary/20" />
       </div>
     );
   }
