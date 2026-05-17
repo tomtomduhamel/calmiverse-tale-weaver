@@ -153,13 +153,27 @@ const Pricing: React.FC = () => {
 
             <CardContent className="pb-4">
               <div className="text-center mb-6">
-                <div className="text-3xl font-bold">
-                  {tierLimits.monthly_price_usd}$
-                  <span className="text-sm font-normal text-muted-foreground">/mois</span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  ou {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$/an
-                </div>
+                {isAnnual ? (
+                  <>
+                    <div className="text-3xl font-bold">
+                      {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$
+                      <span className="text-sm font-normal text-muted-foreground">/an</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      soit {(SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd) / 12).toFixed(2)}$/mois
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-3xl font-bold">
+                      {tierLimits.monthly_price_usd}$
+                      <span className="text-sm font-normal text-muted-foreground">/mois</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      ou {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$/an (-20%)
+                    </div>
+                  </>
+                )}
               </div>
 
               <ul className="space-y-2 text-sm">
