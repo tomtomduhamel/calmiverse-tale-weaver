@@ -74,9 +74,6 @@ const Dashboard = () => {
                 <span className="text-sm text-muted-foreground">Histoires explorées au total</span>
               </div>
             )}
-
-            {/* Carte d'abonnement */}
-            <SubscriptionPlanCard />
           </div>
 
           {/* Colonne Centrale (Constellation) */}
