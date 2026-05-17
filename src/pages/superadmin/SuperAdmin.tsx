@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, XCircle, Gift, RotateCcw, Trash2, Plus, ExternalLink } from "lucide-react";
+import { Loader2, RefreshCw, XCircle, Gift, RotateCcw, Trash2, Plus, ExternalLink, HelpCircle } from "lucide-react";
 
 type Subscription = {
   user_id: string;
@@ -211,7 +212,18 @@ const SubscribersTab: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-left text-muted-foreground border-b">
-            <tr><th className="p-2">Email</th><th>Tier</th><th>Statut</th><th>Période</th><th>Quotas</th><th>Stripe</th><th></th></tr>
+            <tr><th className="p-2">Email</th><th>Tier</th><th>Statut</th><th>Période</th>
+              <th>
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger className="flex items-center gap-1 cursor-help">
+                      Quotas <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top"><p>Histoires / Audios / Vidéos</p></TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </th>
+              <th>Stripe</th><th></th></tr>
           </thead>
           <tbody>
             {filtered.map((r) => (
