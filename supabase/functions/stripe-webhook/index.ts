@@ -87,16 +87,14 @@ Deno.serve(async (req) => {
         const userId = session.metadata?.supabase_user_id;
         if (userId && session.subscription) {
           const sub = await stripe.subscriptions.retrieve(session.subscription as string);
-          await upsertSubscription(userId, sub);
+          await upsertSubscription(userId, sub, true);
         }
         break;
       }
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated': {
+      case 'customer.subscription.created': {
         const sub = event.data.object as Stripe.Subscription;
         let userId = sub.metadata?.supabase_user_id;
         if (!userId) {
-          // Fallback: look up by customer
           const { data } = await admin
             .from('user_subscriptions')
             .select('user_id')
@@ -104,7 +102,21 @@ Deno.serve(async (req) => {
             .maybeSingle();
           userId = data?.user_id;
         }
-        if (userId) await upsertSubscription(userId, sub);
+        if (userId) await upsertSubscription(userId, sub, true);
+        break;
+      }
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as Stripe.Subscription;
+        let userId = sub.metadata?.supabase_user_id;
+        if (!userId) {
+          const { data } = await admin
+            .from('user_subscriptions')
+            .select('user_id')
+            .eq('stripe_customer_id', sub.customer as string)
+            .maybeSingle();
+          userId = data?.user_id;
+        }
+        if (userId) await upsertSubscription(userId, sub, false);
         break;
       }
       case 'customer.subscription.deleted': {
