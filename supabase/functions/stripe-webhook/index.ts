@@ -22,7 +22,7 @@ async function resolveTierFromPriceId(priceId: string): Promise<{ tier: string; 
   return { tier: data.tier, isAnnual: data.is_annual };
 }
 
-async function upsertSubscription(userId: string, sub: Stripe.Subscription) {
+async function upsertSubscription(userId: string, sub: Stripe.Subscription, resetUsage = false) {
   const item = sub.items.data[0];
   const priceId = item?.price.id;
   const resolved = priceId ? await resolveTierFromPriceId(priceId) : null;
@@ -49,10 +49,12 @@ async function upsertSubscription(userId: string, sub: Stripe.Subscription) {
     update.is_annual = resolved.isAnnual;
   }
 
-  // Reset usage on new period / new sub
-  update.stories_used_this_period = 0;
-  update.audio_generations_used_this_period = 0;
-  update.video_intros_used_this_period = 0;
+  // Only reset usage on new subscription or new billing period
+  if (resetUsage) {
+    update.stories_used_this_period = 0;
+    update.audio_generations_used_this_period = 0;
+    update.video_intros_used_this_period = 0;
+  }
 
   const { error } = await admin
     .from('user_subscriptions')
