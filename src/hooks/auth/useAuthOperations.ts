@@ -61,6 +61,7 @@ export const useAuthOperations = () => {
 
       // Créer l'entrée beta_users via RPC (SECURITY DEFINER bypass RLS)
       // Fonctionne en local et en production sans déploiement d'Edge Function
+      let betaRpcOk = false;
       if (data.user) {
         try {
           const { data: rpcData, error: rpcError } = await supabase.rpc('create_pending_beta_user', {
@@ -70,19 +71,32 @@ export const useAuthOperations = () => {
           });
 
           if (rpcError) {
-            console.error("[Auth] Erreur RPC create_pending_beta_user:", rpcError);
+            console.error("[Auth] ❌ Erreur RPC create_pending_beta_user:", rpcError);
+            toast({
+              title: "Inscription partiellement réussie",
+              description: "Votre compte est créé mais l'enregistrement beta a échoué. Contactez le support si vous ne pouvez pas accéder à l'app.",
+              variant: "destructive"
+            });
           } else {
             console.log("[Auth] ✅ Entrée beta_users créée via RPC:", rpcData);
+            betaRpcOk = true;
           }
         } catch (rpcErr) {
-          console.error("[Auth] Échec appel RPC (non bloquant):", rpcErr);
+          console.error("[Auth] ❌ Échec appel RPC create_pending_beta_user:", rpcErr);
+          toast({
+            title: "Inscription partiellement réussie",
+            description: "Votre compte est créé mais l'enregistrement beta a échoué. Contactez le support si vous ne pouvez pas accéder à l'app.",
+            variant: "destructive"
+          });
         }
       }
 
-      toast({
-        title: "Inscription réussie",
-        description: "Votre demande est en attente de validation. Vous serez notifié dès que votre accès sera activé.",
-      });
+      if (betaRpcOk) {
+        toast({
+          title: "Bienvenue !",
+          description: "Votre compte est créé. Aucun mail de confirmation à attendre — vous serez prévenu directement dans l'app dès que votre accès sera activé par un administrateur.",
+        });
+      }
       
       return data;
     } catch (err: any) {

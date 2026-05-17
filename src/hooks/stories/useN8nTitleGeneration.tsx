@@ -374,7 +374,7 @@ Conclusion : le format json final devra avoir la structure suivante :
       let successGen = false;
       let lastGenError;
 
-      while (!successGen && retriesGen < 3) {
+      while (!successGen && retriesGen < 4) {
         try {
           const { data, error } = await supabase.functions.invoke('trigger-n8n', {
             body: { targetUrl: webhookUrl, payload }
@@ -388,9 +388,23 @@ Conclusion : le format json final devra avoir la structure suivante :
         } catch (err: any) {
           lastGenError = err;
           const msg = err?.message?.toLowerCase() || '';
-          if (msg.includes('timeout') || msg.includes('network') || msg.includes('connexion') || msg.includes('proxy') || msg.includes('pattern') || msg.includes('erreur temporaire')) {
+          const name = (err?.name || '').toLowerCase();
+          const isNetworkError =
+            msg.includes('failed to fetch') ||
+            msg.includes('timeout') ||
+            msg.includes('network') ||
+            msg.includes('networkerror') ||
+            msg.includes('connexion') ||
+            msg.includes('proxy') ||
+            msg.includes('pattern') ||
+            msg.includes('erreur temporaire') ||
+            name === 'typeerror';
+          if (isNetworkError) {
             retriesGen++;
-            if (retriesGen >= 3) throw err;
+            console.warn(`[N8nTitleGeneration] Retry ${retriesGen}/4 après erreur réseau:`, err?.message);
+            if (retriesGen >= 4) {
+              throw new Error("Le service de génération est temporairement indisponible. Réessaie dans quelques secondes — si l'erreur persiste, recharge l'app depuis Paramètres → Vérifier les mises à jour.");
+            }
             await new Promise(r => setTimeout(r, 2000 * Math.pow(2, retriesGen)));
           } else {
             throw err;
