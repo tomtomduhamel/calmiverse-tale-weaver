@@ -53,6 +53,9 @@ const BetaPending = lazy(() => import("./pages/BetaPending"));
 const VipAccess = lazy(() => import("./pages/VipAccess"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const SuperAdmin = lazy(() => import("./pages/superadmin/SuperAdmin"));
+const Landing = lazy(() => import("./pages/Landing"));
+const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
+const CheckoutCancelled = lazy(() => import("./pages/CheckoutCancelled"));
 
 // PageLoader avec détection de timeout et retry
 const PageLoader = () => {
