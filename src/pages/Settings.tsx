@@ -176,6 +176,8 @@ const Settings = () => {
 
       <AccountInfoSection user={user} />
 
+      <SubscriptionPlanCard />
+
       <FamilySection />
 
       <ThemeSection />
