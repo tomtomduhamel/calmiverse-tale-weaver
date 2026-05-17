@@ -16,6 +16,8 @@ const Pricing: React.FC = () => {
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const [limits, setLimits] = useState<SubscriptionLimits[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAnnual, setIsAnnual] = useState(false);
+  const [checkoutLoadingTier, setCheckoutLoadingTier] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,13 +37,25 @@ const Pricing: React.FC = () => {
 
   const handleUpgrade = async (tier: string) => {
     if (!user) {
-      // Rediriger vers la page d'authentification
       navigate('/auth');
       return;
     }
-
-    // Pour l'instant, juste un message - la logique Stripe sera ajoutée plus tard
-    alert(`Mise à niveau vers ${SubscriptionService.getTierDisplayName(tier as any)} bientôt disponible !`);
+    try {
+      setCheckoutLoadingTier(tier);
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { tier, isAnnual },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('URL de paiement introuvable');
+      }
+    } catch (e: any) {
+      alert(e?.message || 'Impossible de lancer le paiement. Vérifiez que le plan est bien configuré dans Stripe.');
+    } finally {
+      setCheckoutLoadingTier(null);
+    }
   };
 
   const getFeatureList = (tierLimits: SubscriptionLimits) => {
