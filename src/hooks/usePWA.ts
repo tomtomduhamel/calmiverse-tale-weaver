@@ -86,10 +86,49 @@ export const usePWA = () => {
     setState(prev => ({ ...prev, isInstalled }));
 
     // --- SW controllerchange (legacy, kept as backup) ---
+    let swUpdateInterval: ReturnType<typeof setInterval> | null = null;
+    const triggerSkipWaiting = (reg: ServiceWorkerRegistration) => {
+      if (reg.waiting) {
+        console.log('[usePWA] 📨 Posting SKIP_WAITING to waiting SW');
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+    };
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         setState(prev => ({ ...prev, updateAvailable: true }));
         track('pwa_update_available');
+      });
+
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (!reg) return;
+        // If a waiting SW already exists, activate it now.
+        triggerSkipWaiting(reg);
+
+        // Watch for new SW installations and auto-skip waiting.
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('[usePWA] 🆕 New SW installed — skipping waiting');
+              triggerSkipWaiting(reg);
+              setState(prev => ({ ...prev, updateAvailable: true }));
+            }
+          });
+        });
+
+        // Force update checks periodically + on focus/online
+        const checkSW = () => reg.update().catch(() => {});
+        swUpdateInterval = setInterval(checkSW, VERSION_POLL_INTERVAL_MS);
+        const onFocus = () => checkSW();
+        window.addEventListener('focus', onFocus);
+        window.addEventListener('online', onFocus);
+        // Cleanup attached below via returned function (closure capture)
+        (window as any).__calmiSWCleanup = () => {
+          window.removeEventListener('focus', onFocus);
+          window.removeEventListener('online', onFocus);
+        };
       });
     }
 
