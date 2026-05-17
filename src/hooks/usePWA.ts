@@ -176,14 +176,83 @@ export const usePWA = () => {
     };
   }, [checkVersionFromServer, track]);
 
-  const reloadApp = () => {
+  const [isReloading, setIsReloading] = useState(false);
+
+  const reloadApp = useCallback(async () => {
+    if (isReloading) return;
+    setIsReloading(true);
     console.warn('[usePWA] Manual reload requested by user');
-    window.location.reload();
-  };
+
+    const purgeCachesAndReload = async () => {
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+          console.log('[usePWA] 🧹 Caches purged');
+        }
+      } catch (e) {
+        console.warn('[usePWA] Cache purge failed:', e);
+      }
+      // Cache-busting query to defeat any remaining HTTP cache / bfcache
+      const url = new URL(window.location.href);
+      url.searchParams.set('_swr', Date.now().toString(36));
+      window.location.replace(url.toString());
+    };
+
+    try {
+      if (!('serviceWorker' in navigator)) {
+        await purgeCachesAndReload();
+        return;
+      }
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) {
+        await purgeCachesAndReload();
+        return;
+      }
+
+      // If there's a waiting SW, ask it to activate, then reload on controllerchange
+      const waiting = reg.waiting || reg.installing;
+      if (waiting) {
+        let done = false;
+        const onControllerChange = async () => {
+          if (done) return;
+          done = true;
+          navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+          await purgeCachesAndReload();
+        };
+        navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+        try {
+          waiting.postMessage({ type: 'SKIP_WAITING' });
+        } catch (e) {
+          console.warn('[usePWA] postMessage SKIP_WAITING failed:', e);
+        }
+        // Safety net if controllerchange never fires
+        setTimeout(() => {
+          if (!done) {
+            done = true;
+            console.warn('[usePWA] controllerchange timeout — forcing reload');
+            navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+            purgeCachesAndReload();
+          }
+        }, 3000);
+        return;
+      }
+
+      // No waiting SW — try to refresh registration first, then reload
+      try {
+        await reg.update();
+      } catch {}
+      await purgeCachesAndReload();
+    } catch (e) {
+      console.error('[usePWA] reloadApp failed:', e);
+      await purgeCachesAndReload();
+    }
+  }, [isReloading]);
 
   return {
     ...state,
     reloadApp,
+    isReloading,
     checkForUpdate: () => checkVersionFromServer(true),
     isCheckingUpdate
   };

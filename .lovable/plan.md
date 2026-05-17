@@ -1,68 +1,99 @@
+## Diagnostic
 
-## Objectif
+### Problème 1 — Le bouton "Mettre à jour" ne fait rien (visuellement)
 
-Créer un espace `/superadmin` réservé à un nouveau rôle `super_admin` (toi uniquement), pour piloter toute la partie facturation Stripe : KPIs, liste des abonnés, actions sur un abonné, logs webhooks et gestion des price_id.
+Le bouton appelle `reloadApp()` dans `src/hooks/usePWA.ts` :
 
----
+```ts
+const reloadApp = () => {
+  window.location.reload();
+};
+```
 
-## 1. Base de données — rôle super_admin
+Or l'app tourne en PWA installée avec un Service Worker actif (Workbox `generateSW`, `skipWaiting: true`, `clientsClaim: true`). Trois choses se passent en pratique :
 
-Migration :
-- Ajouter la valeur `super_admin` à l'enum `app_role`.
-- Insérer une ligne dans `user_roles` pour ton `user_id` avec `role = 'super_admin'` (tu confirmeras l'email à utiliser pour le lookup).
-- Créer une fonction `is_super_admin()` (SECURITY DEFINER, basée sur `has_role(auth.uid(), 'super_admin')`).
-- Créer une table `stripe_webhook_events` pour journaliser les events reçus :
-  - `stripe_event_id` (unique), `type`, `status` (`success`/`error`/`ignored`), `payload` (jsonb), `error_message`, `user_id` (nullable), `created_at`.
-  - RLS : SELECT réservé à `is_super_admin()`, INSERT autorisé (utilisé par l'edge function `stripe-webhook`).
-- Politiques RLS supplémentaires sur `user_subscriptions`, `users`, `stripe_price_mapping` : `is_super_admin()` peut SELECT/UPDATE (en plus des règles existantes).
+1. Quand un nouveau SW est détecté, le hook poste bien `SKIP_WAITING`, mais **immédiatement après** l'utilisateur clique sur "Mettre à jour" → on déclenche `location.reload()` **avant** que `controllerchange` ait basculé sur le nouveau SW. Résultat : l'ancien SW sert encore les anciens assets depuis le cache `html-nav` / `workbox-precache` → l'utilisateur recharge la même version, donc rien ne semble changer à l'écran (le bandeau "Mise à jour disponible" reste, et l'expérience visible est "rien ne se passe").
+2. `reloadApp()` ne purge pas les caches Workbox ni n'attend `controllerchange`. Si le SW est bloqué en état `waiting` (par ex. autre onglet ouvert), `skipWaiting` n'est jamais réémis avant le reload.
+3. Sur iOS standalone notamment, `location.reload()` peut être servi depuis le bfcache et ré-injecter l'ancien HTML précaché.
 
-## 2. Edge functions
+### Problème 2 — La version n'évolue jamais
 
-- **`stripe-webhook`** : à la fin de chaque traitement, insérer un enregistrement dans `stripe_webhook_events` (succès ou erreur, avec payload tronqué).
-- **`superadmin-stripe-action`** (nouvelle, `verify_jwt=true`) : actions sensibles côté Stripe, après vérification serveur que `auth.uid()` est super_admin.
-  - `resync_user` : récupère la subscription Stripe par email et met à jour `user_subscriptions` (tier, period, status).
-  - `change_plan` : appelle `stripe.subscriptions.update` avec un nouveau price_id.
-  - `cancel_subscription` : `stripe.subscriptions.cancel` (immédiat ou en fin de période).
-  - `grant_free_month` : crée un coupon 100% / 1 mois et l'applique à la subscription, ou prolonge `current_period_end` en DB pour les comptes sans Stripe (beta).
-  - `reset_quota` : remet à 0 les compteurs `*_used_this_period`.
+`vite.config.ts` génère bien `public/version.json` à partir de `package.json` au `buildStart` :
 
-## 3. Frontend — route `/superadmin`
+```ts
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+fs.writeFileSync('public/version.json', JSON.stringify({ version: pkg.version }, null, 2));
+```
 
-- `SuperAdminGuard` (copie d'`AdminGuard`) basé sur un hook `useIsSuperAdmin` (`user_roles` where `role='super_admin'`).
-- Layout dédié avec sidebar (sous-sections) :
-  - **Overview** : cartes KPI
-    - MRR estimé (somme des prix actifs depuis `user_subscriptions` + `subscription_limits`).
-    - Abonnés actifs par tier (calmini/calmidium/calmix/calmixxl), répartition mensuel/annuel.
-    - Nouveaux abonnés (7j / 30j), abonnés expirés.
-    - Quotas consommés moyens par tier.
-  - **Abonnés** : table filtrable/searchable (email, tier, statut, période, stripe_customer_id). Détail au clic :
-    - Infos user + abonnement courant + historique invoices (récupéré via une edge function `superadmin-stripe-fetch` côté Stripe).
-    - Boutons d'action : changer de tier (select des price_id), annuler, offrir un mois, reset quotas, resynchroniser depuis Stripe.
-  - **Webhooks** : table paginée de `stripe_webhook_events` (filtre type/status), bouton pour rejouer un event échoué (re-traite localement le payload via une edge function dédiée).
-  - **Price mapping** : CRUD sur `stripe_price_mapping` (tier, is_annual, stripe_price_id, active) avec validation que tous les couples tier × is_annual ont bien un price actif.
-- Navigation : ajout d'un lien "Superadmin" dans `AdminLinksSection` visible uniquement si `isSuperAdmin`.
+Mais **rien ne bumpe `package.json`** entre deux déploiements Lovable. La version reste figée à `1.2.1` (vérifié : `package.json` = 1.2.1, `public/version.json` = 1.2.1, `APP_CONFIG.APP_VERSION` = 1.2.1).
 
-## 4. Sécurité
+Conséquences :
+- `checkVersionFromServer()` compare toujours `1.2.1 === 1.2.1` → **ne déclenche jamais** `updateAvailable=true` par cette voie.
+- Le bandeau "Mise à jour disponible" visible sur la capture vient en réalité de l'autre chemin : `navigator.serviceWorker.addEventListener('controllerchange', ...)` (déclenché par Workbox quand le nouveau SW prend la main).
+- L'affichage "Version 1.2.1" dans `Footer` / `AboutPage` reste figé même après plusieurs publications.
 
-- Toutes les actions destructives passent par l'edge function avec re-check `is_super_admin()` côté serveur (jamais de confiance dans l'UI seule).
-- AlertDialog de confirmation systématique côté UI (cancel, change_plan, grant_free_month).
-- Logs : chaque action super_admin écrit dans `security_audit_logs` (action, target_user_id, metadata).
-
-## 5. Hors scope
-
-- Pas de modification du flux Stripe pour les utilisateurs finaux.
-- Pas de refonte de l'admin existant (`/admin/*` reste tel quel).
-- Pas de mobile-first poussé : interface optimisée desktop (usage interne).
+Autre point : écrire dans `public/version.json` à `buildStart` modifie un fichier source versionné à chaque build, ce qui pollue le diff. Il vaut mieux écrire dans `dist/` via `generateBundle`.
 
 ---
 
-## Détails techniques
+## Plan de correction
 
-- Fichiers créés :
-  - `src/components/superadmin/SuperAdminGuard.tsx`
-  - `src/hooks/auth/useIsSuperAdmin.ts`
-  - `src/pages/superadmin/Layout.tsx`, `Overview.tsx`, `Subscribers.tsx`, `SubscriberDetail.tsx`, `Webhooks.tsx`, `PriceMapping.tsx`
-  - `supabase/functions/superadmin-stripe-action/index.ts`
-  - `supabase/functions/superadmin-stripe-fetch/index.ts`
-- Migration : nouvelle valeur enum + table `stripe_webhook_events` + policies + insert du rôle.
-- Confirmation requise avant migration : **quel email/user_id doit recevoir le rôle `super_admin`** ?
+### A. Bump automatique de la version à chaque build
+
+1. **Modifier `versionJsonPlugin` dans `vite.config.ts`** :
+   - Composer une version "build" = `pkg.version + "+" + buildId`, où `buildId` est :
+     - `process.env.LOVABLE_BUILD_ID` ou `VERCEL_GIT_COMMIT_SHA` si présent,
+     - sinon `Date.now().toString(36)` (timestamp court).
+   - Écrire le résultat dans `dist/version.json` au hook `generateBundle` (et non plus dans `public/`), pour ne plus polluer les sources.
+   - Injecter cette même valeur via `define: { __APP_VERSION__: JSON.stringify(fullVersion) }` pour qu'elle soit disponible côté client.
+
+2. **Mettre à jour `src/lib/config.ts`** :
+   - Remplacer `APP_VERSION: pkg.version` par `APP_VERSION: __APP_VERSION__` (avec déclaration TS `declare const __APP_VERSION__: string;` dans `vite-env.d.ts`).
+   - Ainsi `Footer`, `AboutPage`, `checkVersionFromServer()` et `usePWA` voient une nouvelle valeur à chaque build, sans toucher manuellement `package.json`.
+
+3. **Nettoyer `public/version.json`** : le supprimer du repo (devient un artefact de build). Mettre à jour le script de plugin pour ne plus toucher à `public/`.
+
+### B. Réparer le flow de mise à jour
+
+1. **Réécrire `reloadApp()` dans `src/hooks/usePWA.ts`** pour suivre la séquence correcte :
+   ```text
+   1. Récupérer la registration SW.
+   2. Si reg.waiting → écouter 'controllerchange' UNE seule fois,
+      puis postMessage({type:'SKIP_WAITING'}) au waiting worker.
+   3. Dans le handler controllerchange → vider les caches Workbox
+      (caches.keys() + caches.delete) puis window.location.reload().
+   4. Fallback si pas de SW / pas de waiting : purger caches + reload direct.
+   5. Timeout de sécurité 3 s : si controllerchange n'arrive pas,
+      forcer caches.delete + reload quand même.
+   ```
+
+2. **Ajouter un état `isReloading`** exposé par le hook, pour que le bouton affiche un spinner ("Mise à jour en cours…") et empêche le double-clic.
+
+3. **`PWAUpdateNotification` + `Settings`** :
+   - Lier les boutons à la nouvelle version de `reloadApp` (signature inchangée).
+   - Désactiver le bouton + afficher le spinner pendant `isReloading`.
+   - Sur le countdown auto-reload de `PWAUpdateNotification`, appeler `reloadApp()` au lieu de `window.location.reload()` direct (le composant fait actuellement un reload brut, ce qui souffre du même bug).
+
+4. **Sanity check côté SW** : `src/sw.ts` gère déjà `SKIP_WAITING`, mais la stratégie Vite est `generateSW` → ce fichier n'est pas utilisé. Workbox généré inclut déjà `skipWaiting: true` + `clientsClaim: true`, donc rien à modifier côté SW. Documenter ce point pour éviter la confusion future.
+
+### C. Validation
+
+1. Build local → vérifier `dist/version.json` contient bien une version unique (`1.2.1+abc123`).
+2. Publier → recharger la PWA installée → le bandeau apparaît, clic "Mettre à jour" → vérifier dans les logs :
+   - `[usePWA] 📨 Posting SKIP_WAITING`
+   - `controllerchange` reçu
+   - `[usePWA] Caches purged, reloading`
+   - L'app revient sur la nouvelle version (Footer affiche la nouvelle valeur).
+3. Re-tester sur mobile (Android Chrome + iOS Safari standalone).
+
+---
+
+## Fichiers impactés
+
+- `vite.config.ts` — plugin version + `define`
+- `src/vite-env.d.ts` — `declare const __APP_VERSION__`
+- `src/lib/config.ts` — source de `APP_VERSION`
+- `src/hooks/usePWA.ts` — nouveau `reloadApp` + `isReloading`
+- `src/components/PWAUpdateNotification.tsx` — utiliser `reloadApp` pour l'auto-reload + état loading
+- `src/pages/Settings.tsx` — état loading sur le bouton
+- `public/version.json` — supprimé (devient artefact de build)
