@@ -6,20 +6,36 @@ import fs from "fs";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
 
-// Auto-generate version.json at build time from package.json
+// Compute a unique build version (package.json + build id)
+const pkgJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+const BUILD_ID =
+  process.env.LOVABLE_BUILD_ID ||
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
+  process.env.COMMIT_REF?.slice(0, 7) ||
+  Date.now().toString(36);
+const FULL_APP_VERSION = `${pkgJson.version}+${BUILD_ID}`;
+
+// Emit version.json into the build output (not into public/) at bundle time
 function versionJsonPlugin() {
   return {
     name: 'version-json-generator',
-    buildStart() {
-      const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
-      const versionData = JSON.stringify({ version: pkg.version }, null, 2);
-      fs.writeFileSync('public/version.json', versionData + '\n');
-      console.log(`[version-json] Generated version.json with version ${pkg.version}`);
-    }
+    apply: 'build' as const,
+    generateBundle(this: any) {
+      const versionData = JSON.stringify({ version: FULL_APP_VERSION }, null, 2);
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: versionData + '\n',
+      });
+      console.log(`[version-json] Emitted version.json with version ${FULL_APP_VERSION}`);
+    },
   };
 }
 
 export default defineConfig(({ mode }) => ({
+  define: {
+    __APP_VERSION__: JSON.stringify(FULL_APP_VERSION),
+  },
   test: {
     globals: true,
     environment: 'jsdom',
