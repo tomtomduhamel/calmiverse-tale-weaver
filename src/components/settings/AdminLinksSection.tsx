@@ -9,12 +9,20 @@ import { useIsSuperAdmin } from '@/hooks/auth/useIsSuperAdmin';
 export const AdminLinksSection = () => {
   const navigate = useNavigate();
   const { isAdmin, loading } = useIsAdmin();
+  const { isSuperAdmin } = useIsSuperAdmin();
 
   if (loading || !isAdmin) {
     return null;
   }
 
   const adminLinks = [
+    ...(isSuperAdmin ? [{
+      title: 'Superadmin · Billing',
+      description: 'Pilotage Stripe, abonnés et webhooks',
+      icon: CreditCard,
+      path: '/superadmin',
+      color: 'text-primary'
+    }] : []),
     {
       title: 'Gestion Beta Testeurs',
       description: 'Valider les demandes et gérer les codes d\'invitation',
