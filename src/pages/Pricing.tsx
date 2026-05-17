@@ -2,15 +2,15 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Star } from 'lucide-react';
+import { Check, Star, ArrowLeft } from 'lucide-react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useSubscription } from '@/hooks/subscription/useSubscription';
 import { SubscriptionService } from '@/services/SubscriptionService';
-import { APP_CONFIG } from '@/lib/config';
 import { useState, useEffect } from 'react';
 import { SubscriptionLimits } from '@/types/subscription';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 const Pricing: React.FC = () => {
   const { user } = useSupabaseAuth();
   const { subscription, loading: subscriptionLoading } = useSubscription();
@@ -37,7 +37,7 @@ const Pricing: React.FC = () => {
 
   const handleUpgrade = async (tier: string) => {
     if (!user) {
-      navigate('/auth');
+      navigate('/auth?mode=signup');
       return;
     }
     try {
@@ -52,7 +52,9 @@ const Pricing: React.FC = () => {
         throw new Error('URL de paiement introuvable');
       }
     } catch (e: any) {
-      alert(e?.message || 'Impossible de lancer le paiement. Vérifiez que le plan est bien configuré dans Stripe.');
+      toast.error('Impossible de lancer le paiement', {
+        description: e?.message || 'Vérifiez votre connexion et réessayez. Si le problème persiste, contactez le support.',
+      });
     } finally {
       setCheckoutLoadingTier(null);
     }
@@ -97,10 +99,22 @@ const Pricing: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {!user && (
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour à l'accueil
+        </Link>
+      )}
       <div className="text-center mb-12">
         <h1 className="font-display italic text-4xl sm:text-5xl text-foreground tracking-tight mb-4 animate-fade-up-slow">Choisissez votre plan Calmi</h1>
-        <p className="text-xl text-muted-foreground mb-8">
+        <p className="text-xl text-muted-foreground mb-3">
           Créez des histoires magiques pour vos enfants avec nos plans adaptés à vos besoins
+        </p>
+        <p className="text-sm text-muted-foreground mb-8">
+          Prix en dollars canadiens (CAD). Facturation en euros bientôt disponible.
         </p>
         <div className="flex justify-center items-center gap-3 mb-8">
           <button
@@ -157,20 +171,20 @@ const Pricing: React.FC = () => {
                   <>
                     <div className="text-3xl font-bold">
                       {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$
-                      <span className="text-sm font-normal text-muted-foreground">/an</span>
+                      <span className="text-sm font-normal text-muted-foreground"> CAD/an</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      soit {(SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd) / 12).toFixed(2)}$/mois
+                      soit {(SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd) / 12).toFixed(2)}$ CAD/mois
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="text-3xl font-bold">
                       {tierLimits.monthly_price_usd}$
-                      <span className="text-sm font-normal text-muted-foreground">/mois</span>
+                      <span className="text-sm font-normal text-muted-foreground"> CAD/mois</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      ou {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$/an (-20%)
+                      ou {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$ CAD/an (-20%)
                     </div>
                   </>
                 )}

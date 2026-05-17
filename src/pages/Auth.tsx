@@ -68,8 +68,8 @@ const Auth = () => {
         return;
       }
       
-      // Sinon (beta actif, expiré, ou pas de betaInfo = admin/legacy) → page d'accueil
-      navigate('/');
+      // Sinon (beta actif, expiré, ou pas de betaInfo = client direct/admin/legacy)
+      navigate('/app');
     }
   }, [user, loading, betaLoading, isProcessing, isPending, isRejected, navigate]);
 
@@ -122,7 +122,7 @@ const Auth = () => {
             </Alert>
           )}
           
-          <Tabs defaultValue={status.isValid ? "register" : "login"}>
+          <Tabs defaultValue={status.isValid || searchParams.get('mode') === 'signup' ? "register" : "login"}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Connexion</TabsTrigger>
               <TabsTrigger value="register">Inscription</TabsTrigger>
@@ -134,6 +134,15 @@ const Auth = () => {
               <LoginForm isRegister={true} inviteCode={status.code} />
             </TabsContent>
           </Tabs>
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Retour à l'accueil
+            </button>
+          </div>
         </CardContent>
         <CardFooter className="text-center text-sm text-muted-foreground">
           En vous connectant, vous acceptez nos conditions d'utilisation et notre politique de confidentialité.

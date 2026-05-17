@@ -33,11 +33,14 @@ const LoginForm = ({ isRegister: initialIsRegister = false, inviteCode = null }:
         await signInWithEmail(email, password);
         // La redirection vers "/" est gérée par Auth.tsx
       } else {
-        // Passer le code d'invitation s'il existe
         await signUpWithEmail(email, password, inviteCode);
-        
-        // Tous les nouveaux utilisateurs attendent la validation admin
-        navigate('/beta-pending');
+        // Les bêta-testeurs invités attendent la validation admin.
+        // Les inscriptions publiques vont directement dans l'app (onboarding).
+        if (inviteCode) {
+          navigate('/beta-pending');
+        } else {
+          navigate('/');
+        }
       }
     } catch (error: any) {
       console.error(error);

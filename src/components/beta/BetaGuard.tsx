@@ -29,9 +29,9 @@ const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
   useEffect(() => {
     if (authLoading || betaLoading) return;
 
-    // Non connecté → page de connexion
+    // Non connecté → landing publique (et non /auth directement, pour les visiteurs)
     if (!user) {
-      navigate('/auth', { replace: true });
+      navigate('/', { replace: true });
       return;
     }
 
