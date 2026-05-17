@@ -38,7 +38,7 @@ function formatBuildDate(ts?: string | null, id?: string): string | null {
 
 export const APP_CONFIG = {
   // Application info
-  APP_NAME: 'Calmiverse',
+  APP_NAME: 'Calmi',
   // Injected at build time by vite (see versionJsonPlugin + define in vite.config.ts).
   // Fallback to package.json version for dev/test environments where __APP_VERSION__ isn't defined.
   APP_VERSION: rawVersion,
@@ -51,7 +51,7 @@ export const APP_CONFIG = {
   
   // Company info (required for legal pages)
   COMPANY: {
-    NAME: 'Calmiverse',
+    NAME: 'Calmi',
     EMAIL: 'support@calmiverse.com',
     PRIVACY_EMAIL: 'privacy@calmiverse.com',
     DPO_EMAIL: 'dpo@calmiverse.com',
