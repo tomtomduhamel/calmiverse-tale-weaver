@@ -18,9 +18,19 @@ const Subscription: React.FC = () => {
     navigate('/pricing');
   };
 
-  const handleManageBilling = () => {
-    // Sera implémenté plus tard avec Stripe
-    alert('Gestion de la facturation bientôt disponible !');
+  const [portalLoading, setPortalLoading] = React.useState(false);
+  const handleManageBilling = async () => {
+    try {
+      setPortalLoading(true);
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+    } catch (e: any) {
+      alert(e?.message || 'Impossible d\'ouvrir le portail de facturation');
+    } finally {
+      setPortalLoading(false);
+    }
   };
 
   if (loading) {
