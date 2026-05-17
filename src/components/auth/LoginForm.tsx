@@ -1,11 +1,12 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { Mail, AlertCircle, LogIn } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -20,26 +21,46 @@ const LoginForm = ({ isRegister: initialIsRegister = false, inviteCode = null }:
   const [isLogin, setIsLogin] = useState(!initialIsRegister);
   const [isLoading, setIsLoading] = useState(false);
   const [googleAuthError, setGoogleAuthError] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useSupabaseAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const passwordTooWeak = !isLogin && password.length > 0 && password.length < 8;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isLogin) {
+      if (password.length < 8) {
+        toast({
+          title: "Mot de passe trop court",
+          description: "Le mot de passe doit contenir au moins 8 caractères.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!acceptTerms) {
+        toast({
+          title: "Conditions requises",
+          description: "Vous devez accepter les conditions d'utilisation et la politique de confidentialité.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
       if (isLogin) {
         await signInWithEmail(email, password);
-        // La redirection vers "/" est gérée par Auth.tsx
       } else {
         await signUpWithEmail(email, password, inviteCode);
-        // Les bêta-testeurs invités attendent la validation admin.
-        // Les inscriptions publiques vont directement dans l'app (onboarding).
         if (inviteCode) {
           navigate('/beta-pending');
         } else {
-          navigate('/');
+          navigate('/app');
         }
       }
     } catch (error: any) {
@@ -107,16 +128,46 @@ const LoginForm = ({ isRegister: initialIsRegister = false, inviteCode = null }:
         <div>
           <Input
             type="password"
-            placeholder="Mot de passe"
+            placeholder={isLogin ? "Mot de passe" : "Mot de passe (8 caractères minimum)"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={isLogin ? undefined : 8}
             disabled={isLoading}
             className="w-full"
           />
+          {passwordTooWeak && (
+            <p className="text-xs text-destructive mt-1">8 caractères minimum.</p>
+          )}
         </div>
-        <Button 
-          type="submit" 
+
+        {!isLogin && (
+          <label className="flex items-start gap-2 text-xs text-gray-600 cursor-pointer">
+            <Checkbox
+              checked={acceptTerms}
+              onCheckedChange={(v) => setAcceptTerms(Boolean(v))}
+              disabled={isLoading}
+              className="mt-0.5"
+            />
+            <span>
+              J'accepte les{" "}
+              <Link to="/terms" target="_blank" className="text-primary underline">conditions d'utilisation</Link>
+              {" "}et la{" "}
+              <Link to="/privacy-policy" target="_blank" className="text-primary underline">politique de confidentialité</Link>.
+            </span>
+          </label>
+        )}
+
+        {isLogin && (
+          <div className="text-right">
+            <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+              Mot de passe oublié ?
+            </Link>
+          </div>
+        )}
+
+        <Button
+          type="submit"
           className="w-full"
           disabled={isLoading}
         >

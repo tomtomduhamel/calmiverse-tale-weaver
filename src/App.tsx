@@ -56,6 +56,9 @@ const SuperAdmin = lazy(() => import("./pages/superadmin/SuperAdmin"));
 const Landing = lazy(() => import("./pages/Landing"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
 const CheckoutCancelled = lazy(() => import("./pages/CheckoutCancelled"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+import CookieConsent from "@/components/CookieConsent";
 
 // PageLoader avec détection de timeout et retry
 const PageLoader = () => {
@@ -192,6 +195,8 @@ function App() {
                 <Route path="/" element={<Landing />} />
                 <Route path="/vip" element={<VipAccess />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/beta-pending" element={<BetaPending />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/checkout/success" element={<CheckoutSuccess />} />
@@ -256,6 +261,7 @@ function App() {
           <PWAInstallPrompt />
           <PWAUpdateNotification />
           <OfflineIndicator />
+          <CookieConsent />
         </TitleGenerationProvider>
         </UserSettingsProvider>
       </Router>
