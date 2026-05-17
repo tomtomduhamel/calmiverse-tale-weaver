@@ -1,162 +1,63 @@
-## Refonte du design system Calmiverse — apaisement mobile-first
+# Plan d'intégration Stripe (BYOK)
 
-Objectif : un design system cohérent, doux et lent, optimisé pour la lecture du soir sur téléphone. Palette **Nuit douce**, typographie **Lora + Nunito Sans**, intensité d'animation **3/5** (présence sensible mais jamais agressive).
+Le projet utilise un Supabase externe — l'intégration Stripe "seamless" de Lovable n'est pas compatible. On part donc sur le Stripe Bring-Your-Own-Key, qui s'appuie sur ton propre compte Stripe et 3 Edge Functions.
 
----
+## Ce qui existe déjà
+- Tables `user_subscriptions` (avec `stripe_subscription_id`) et `subscription_limits` (4 tiers).
+- Page `/pricing` avec bouton "Choisir ce plan" (actuellement un `alert()`).
+- `SubscriptionService.updateSubscriptionTier()` prêt à être déclenché par le webhook.
+- Quotas, guards et UI d'upgrade fonctionnels.
 
-### 1. Fondations (tokens) — `src/index.css` + `tailwind.config.ts`
+## Ce qu'il reste à faire
 
-**Palette HSL enrichie (light + dark)**
-- `--background` (light) `#F5F9FC` / (dark) `#0E1626` (bleu nuit profond, plus chaud que l'actuel #0a0e1a)
-- `--foreground` light `#1A2238` / dark `#E8EEF5`
-- `--primary` `#457B9D` (bleu profond apaisant) + `--primary-foreground` clair
-- `--primary-soft` `#A8DADC` (bleu pastel — pour halos, hovers, badges doux)
-- `--accent` `#B7CFEA` (bleu brume — surfaces secondaires)
-- `--muted` light `#EAF1F6` / dark `#1A2438`
-- `--card` léger gradient pour profondeur tactile
-- `--ring` aligné sur `--primary-soft` à 60% (focus visible mais doux)
-- Nouveaux tokens sémantiques :
-  - `--surface-elevated`, `--surface-sunken` (3 niveaux de profondeur)
-  - `--gradient-night`, `--gradient-dawn`, `--gradient-reader` (radial doux)
-  - `--shadow-soft`, `--shadow-floating`, `--shadow-glow-primary`
-  - `--blur-glass` pour glassmorphism léger
-  - `--radius` passe à `1rem` (12-16px) pour des formes plus rassurantes
-  - `--ease-calm: cubic-bezier(0.22, 0.61, 0.36, 1)` (ease-out long)
-  - `--duration-slow: 600ms`, `--duration-breath: 4s`
+### 1. Configuration Stripe (côté toi, dans le dashboard Stripe)
+- Créer 4 **Products** Stripe (Calmini, Calmidium, Calmix, Calmixxl).
+- Pour chaque produit, créer 2 **Prices** : mensuel + annuel (-20%).
+- Noter les 8 `price_id` (format `price_xxx`) — je te demanderai où les coller.
+- Récupérer la **Secret Key** (`sk_live_...` ou `sk_test_...`).
 
-**Typographie**
-- Import Google Fonts : `Lora` (400/500/600 italic) + `Nunito Sans` (300/400/600/700)
-- Tailwind `fontFamily`: `display: ['Lora']`, `sans: ['Nunito Sans']`
-- Headings → `font-display` italic léger, tracking détendu, leading `1.25`
-- Body → `font-sans`, leading `1.7`, taille de base 16px (17 pour Reader)
-- `font-feature-settings`: `"rlig" 1, "calt" 1, "ss01" 1`
+### 2. Secrets Supabase à ajouter
+- `STRIPE_SECRET_KEY` — clé secrète Stripe.
+- `STRIPE_WEBHOOK_SECRET` — généré après création du webhook (étape 4).
 
-**Reset des `text-white` / `bg-black` épars** : audit et passage en tokens sémantiques.
+### 3. Migration DB
+- Ajouter colonne `stripe_customer_id` (text) sur `user_subscriptions` pour relier l'utilisateur à son Customer Stripe.
+- Ajouter colonne `stripe_price_id` pour tracer le prix en cours.
+- Table `stripe_price_mapping` (tier + is_annual → price_id) pour éviter de hardcoder les IDs dans le code.
 
----
+### 4. Trois Edge Functions
 
-### 2. Animations douces (intensité 3/5)
+**`create-checkout`** (JWT requis)
+- Reçoit `{ tier, isAnnual }`.
+- Crée/réutilise un Customer Stripe lié au `user.id`.
+- Crée une `checkout.session` mode `subscription` avec le bon `price_id`.
+- Renvoie l'URL de redirection Stripe.
 
-Ajout dans `tailwind.config.ts` :
-- `breathe` : scale 1 → 1.02 → 1, 4s, ease-in-out infinite (pour CTA principaux, indicateurs audio)
-- `drift` : translateY ±6px sur 8s (éléments décoratifs, étoiles)
-- `glow-pulse` : opacité halo primary, 3s
-- `fade-up-slow` : 600ms `--ease-calm` (apparition des cards)
-- `shimmer-soft` : skeleton loading très lent (2.5s)
-- Transitions globales : `transition-colors` & `transition-opacity` à `400ms` au lieu de 150ms par défaut
-- **Respect `prefers-reduced-motion`** : media query qui coupe `breathe`, `drift`, `glow-pulse`
+**`stripe-webhook`** (verify_jwt = false, signature Stripe vérifiée)
+- Écoute `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
+- Met à jour `user_subscriptions` (tier, status, dates, reset des compteurs) via service role key.
 
-Règle : aucune animation > 1s d'intensité forte. Pas de bounce, pas de spring agressif. Stagger doux sur listes (60-80ms).
+**`customer-portal`** (JWT requis)
+- Crée une session du Stripe Billing Portal → l'utilisateur gère/annule son abo lui-même.
 
----
+### 5. Frontend
+- `Pricing.tsx` : remplacer le `alert()` par un appel à `create-checkout` + redirection.
+- Ajouter un toggle Mensuel/Annuel fonctionnel (actuellement décoratif).
+- `Subscription.tsx` : bouton "Gérer mon abonnement" qui appelle `customer-portal`.
+- Pages de retour `/subscription/success` et `/subscription/cancel`.
 
-### 3. Reader (priorité #1) — cœur de l'expérience
+### 6. Webhook Stripe
+- Dans le dashboard Stripe → Developers → Webhooks → ajouter l'URL `https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/stripe-webhook`.
+- Récupérer le `whsec_...` et le stocker dans `STRIPE_WEBHOOK_SECRET`.
 
-`StoryReaderLayout` + `StoryContent` + contrôles :
-- Fond : gradient radial nuit (`--gradient-reader`) plutôt qu'aplat — sensation de cocon
-- Largeur lecture : `max-w-[640px]`, padding latéral `px-5` mobile
-- Texte : `font-display` pour titres H1/H2 (italique chaleureux), `font-sans` corps à 17px / leading 1.85
-- Indentation `text-indent` sur premier `<p>` de chaque paragraphe (style livre)
-- Surlignage immersif : couleurs déjà ok, mais transitions passent à `--ease-calm` 200ms (au lieu de 120ms) pour un glissement plus fluide
-- Contrôles flottants : glassmorphism (`backdrop-blur-md bg-background/70`), bord `border-primary-soft/20`, ombre `--shadow-floating`
-- Bouton play/pause central : taille 56px, animation `breathe` quand en lecture
-- Barre de progression : trait fin 2px, couleur `--primary-soft`, glow subtil
-- Mode immersif : fade des contrôles à 5s d'inactivité (déjà existant — vérifier durée)
-- Halos d'ambiance : 2 blobs `blur-3xl` `--primary-soft/10` animés `drift` en arrière-plan
+## Ordre d'exécution recommandé
+1. Tu crées les Products/Prices dans Stripe (test mode d'abord).
+2. Je migre la DB et crée les 3 edge functions.
+3. Tu ajoutes `STRIPE_SECRET_KEY` quand je te le demande.
+4. Je branche l'UI sur `/pricing` et `/subscription`.
+5. On configure le webhook → tu ajoutes `STRIPE_WEBHOOK_SECRET`.
+6. Test bout-en-bout en mode test Stripe (carte `4242 4242 4242 4242`).
+7. Passage en mode live.
 
----
-
-### 4. Accueil + Création histoire (priorité #2)
-
-`Index.tsx` / `HomeView` / `CreateStory*` :
-- Header : titre `font-display` italique, sous-titre `font-sans` muted
-- Cards de sélection (enfant, objectif, univers) : 
-  - Radius 1rem, `--shadow-soft`, hover `--shadow-floating` + scale 1.01
-  - Icône Lucide dans cercle `bg-primary-soft/15` 48px
-  - État sélectionné : ring 2px `--primary` + halo `glow-pulse` (lent)
-- Progress bar étapes : trait fin avec dots, ease-calm
-- CTA principal : `bg-primary` + animation `breathe` au repos, `--shadow-glow-primary`
-- Sticky bottom nav buttons : déjà en place, polish glass + safe-area
-- Suggestions/objectifs : grille 2 col mobile, animation `fade-up-slow` avec stagger
-
----
-
-### 5. Bibliothèque + Cards (priorité #3)
-
-`Library.tsx` + StoryCard :
-- Layout : grille 1 col mobile (cards larges, plus tactiles) avec image-héro 16:9
-- Card story : 
-  - Image avec overlay gradient bas → contenu lisible
-  - Titre `font-display` 18px, méta `font-sans` 13px muted
-  - Badge série "📚 Tome X" → remplacer emoji par icône Lucide `BookOpen` (mémoire core: pas d'emojis dans icônes — vérifier exception)
-  - Long-press → menu contextuel (déjà ?) 
-  - Animation entrée : `fade-up-slow` stagger
-- Filtres : chips arrondies `rounded-full`, état actif `bg-primary-soft text-primary-foreground`
-- Empty state : illustration douce + texte rassurant, animation `breathe` sur l'icône
-- Skeletons : `shimmer-soft`
-
----
-
-### 6. Navigation mobile + Shell (priorité #4)
-
-- Bottom nav : glassmorphism (`backdrop-blur-xl bg-background/80`), border-top `border-primary-soft/15`, hauteur 64px + safe-area
-- Item actif : icône Lucide remplie + label visible + petit dot `--primary-soft` au-dessus, transition 400ms
-- Item inactif : icône outline, opacity 0.6
-- Header pages : sticky, blur, titre `font-display`
-- Page transitions : fade + translate Y 8px sur 400ms (via `key` route + AnimatePresence si framer-motion dispo, sinon CSS)
-- Toaster Sonner : reposition top-center mobile, style aligné tokens, durée 4s
-
----
-
-### 7. Composants shadcn à harmoniser
-
-Variants à enrichir (sans casser l'API) :
-- `Button` : nouvelles variantes `calm` (primary-soft), `glow` (primary + breathe)
-- `Card` : variante `elevated` (gradient subtil + shadow-floating)
-- `Dialog` : overlay `bg-background/60 backdrop-blur-sm`, content radius 1.25rem, animation slow-up
-- `Input` / `Textarea` : focus ring `--primary-soft`, transition 300ms
-- `Switch` / `Slider` : couleurs primary-soft
-
----
-
-### 8. Détails techniques
-
-```text
-Fichiers modifiés (estimation)
-├── src/index.css                 (tokens, fonts import, keyframes)
-├── tailwind.config.ts            (palette, fontFamily, animations, shadows)
-├── src/App.css                   (cleanup, conserver gradients utiles)
-├── src/components/ui/button.tsx  (variants calm/glow)
-├── src/components/ui/card.tsx    (variant elevated)
-├── src/components/story/StoryContent.tsx       (typo + transitions)
-├── src/components/story/reader/StoryReaderLayout.tsx (gradient nuit)
-├── src/components/story/reader/* (contrôles glass)
-├── src/components/Shell + BottomNav            (glass + actif)
-├── src/pages/Index.tsx + HomeView              (cards, CTA breathe)
-├── src/pages/Library.tsx + StoryCard           (refonte card)
-└── src/pages/CreateStory*                      (sélecteurs cards, progress)
-```
-
-Pas de changement de logique métier, pas de modif backend, pas de modif de routes. Uniquement présentation.
-
----
-
-### 9. Garde-fous
-
-- Respect `prefers-reduced-motion` partout
-- Contraste AA minimum (WCAG) — vérifier `--primary` sur `--background` dans les deux modes
-- Pas d'emoji dans l'UI (mémoire core) — sauf data utilisateur
-- Conserver `pb-safe`, `px-3` Shell, sticky nav (mémoires existantes)
-- Aucune animation > 600ms sur interaction directe (sinon perception lag)
-- Tester sur viewport 360px (cible principale)
-
----
-
-### 10. Livraison en 4 vagues
-
-1. **Fondations** : tokens, fonts, keyframes, variants Button/Card → visible partout immédiatement
-2. **Reader** : gradient cocon, typo, contrôles glass, surlignage adouci
-3. **Accueil + Création** : cards sélection, CTA breathe, progress
-4. **Bibliothèque + Shell** : refonte card story, bottom nav glass, transitions
-
-Chaque vague est indépendante et déployable.
+## Question avant de lancer
+As-tu déjà créé les Products/Prices dans Stripe, ou tu veux que je te guide étape par étape avant que je commence à coder ?
