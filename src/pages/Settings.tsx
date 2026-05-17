@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { UserSettings, SecuritySettings } from '@/types/user-settings';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { usePWA } from '@/hooks/usePWA';
+import { APP_CONFIG } from '@/lib/config';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Download } from 'lucide-react';
 
@@ -237,6 +238,12 @@ const Settings = () => {
             {isCheckingUpdate ? 'Vérification...' : 'Vérifier les mises à jour'}
           </Button>
         )}
+        <div className="text-center text-xs text-muted-foreground">
+          <p>Version {APP_CONFIG.APP_VERSION}</p>
+          {APP_CONFIG.APP_BUILD_DATE && (
+            <p>Build du {APP_CONFIG.APP_BUILD_DATE}</p>
+          )}
+        </div>
       </div>
     </div>
   );

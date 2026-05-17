@@ -28,7 +28,7 @@ export const AboutPage = () => {
             {APP_CONFIG.APP_DESCRIPTION}
           </p>
           <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
-            <span>Version {APP_CONFIG.APP_VERSION}</span>
+            <span>Version {APP_CONFIG.APP_VERSION_CLEAN}</span>
           </div>
         </CardHeader>
       </Card>

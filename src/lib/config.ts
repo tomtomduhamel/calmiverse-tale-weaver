@@ -5,12 +5,34 @@
 
 import pkg from '../../package.json';
 
+// Parse full version (e.g. 1.2.1+mpa0uzje or 1.2.1+abc1234)
+const rawVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : pkg.version;
+const [semverPart, buildId] = rawVersion.split('+');
+
+// Try to convert a base36 build id back to a timestamp and format it
+function formatBuildDate(id?: string): string | null {
+  if (!id) return null;
+  try {
+    const ts = parseInt(id, 36);
+    if (!Number.isFinite(ts) || ts < 1e12 || ts > Date.now() + 864e5) return null;
+    return new Date(ts).toLocaleDateString('fr-FR', {
+      day: 'numeric', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch {
+    return null;
+  }
+}
+
 export const APP_CONFIG = {
   // Application info
   APP_NAME: 'Calmiverse',
   // Injected at build time by vite (see versionJsonPlugin + define in vite.config.ts).
   // Fallback to package.json version for dev/test environments where __APP_VERSION__ isn't defined.
-  APP_VERSION: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : pkg.version,
+  APP_VERSION: rawVersion,
+  APP_VERSION_CLEAN: semverPart || rawVersion,
+  APP_BUILD_ID: buildId || null,
+  APP_BUILD_DATE: formatBuildDate(buildId),
   APP_DESCRIPTION: 'Génération d\'histoires personnalisées pour enfants par IA',
   
   // Company info (required for legal pages)
