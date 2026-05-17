@@ -20,7 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { usePWA } from '@/hooks/usePWA';
 import { APP_CONFIG } from '@/lib/config';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Download } from 'lucide-react';
+import { RefreshCw, Download, Copy } from 'lucide-react';
 
 const Settings = () => {
   const { user } = useSupabaseAuth();
