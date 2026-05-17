@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +28,7 @@ const Subscription: React.FC = () => {
       if (error) throw error;
       if (data?.url) window.location.href = data.url;
     } catch (e: any) {
-      alert(e?.message || 'Impossible d\'ouvrir le portail de facturation');
+      toast.error('Impossible d\'ouvrir le portail de facturation', { description: e?.message });
     } finally {
       setPortalLoading(false);
     }
