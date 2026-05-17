@@ -979,6 +979,36 @@ export type Database = {
           },
         ]
       }
+      stripe_price_mapping: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          is_annual: boolean
+          stripe_price_id: string
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          is_annual?: boolean
+          stripe_price_id: string
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          is_annual?: boolean
+          stripe_price_id?: string
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscription_limits: {
         Row: {
           annual_price_usd: number
@@ -1219,6 +1249,8 @@ export type Database = {
           is_annual: boolean
           status: string
           stories_used_this_period: number
+          stripe_customer_id: string | null
+          stripe_price_id: string | null
           stripe_subscription_id: string | null
           tier: Database["public"]["Enums"]["subscription_tier"]
           updated_at: string
@@ -1234,6 +1266,8 @@ export type Database = {
           is_annual?: boolean
           status?: string
           stories_used_this_period?: number
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
           tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
@@ -1249,6 +1283,8 @@ export type Database = {
           is_annual?: boolean
           status?: string
           stories_used_this_period?: number
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
           tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
