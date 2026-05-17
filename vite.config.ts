@@ -29,13 +29,17 @@ function versionJsonPlugin() {
     name: 'version-json-generator',
     apply: 'build' as const,
     generateBundle(this: any) {
-      const versionData = JSON.stringify({ version: FULL_APP_VERSION }, null, 2);
+      const versionData = JSON.stringify({
+        version: FULL_APP_VERSION,
+        buildNumber: BUILD_NUMBER,
+        buildTimestamp: BUILD_TIMESTAMP,
+      }, null, 2);
       this.emitFile({
         type: 'asset',
         fileName: 'version.json',
         source: versionData + '\n',
       });
-      console.log(`[version-json] Emitted version.json with version ${FULL_APP_VERSION}`);
+      console.log(`[version-json] Emitted version.json with version ${FULL_APP_VERSION} (build ${BUILD_NUMBER})`);
     },
   };
 }
@@ -43,6 +47,8 @@ function versionJsonPlugin() {
 export default defineConfig(({ mode }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(FULL_APP_VERSION),
+    __APP_BUILD_NUMBER__: JSON.stringify(BUILD_NUMBER),
+    __APP_BUILD_TIMESTAMP__: JSON.stringify(BUILD_TIMESTAMP),
   },
   test: {
     globals: true,
