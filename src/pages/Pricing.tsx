@@ -2,15 +2,15 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Star } from 'lucide-react';
+import { Check, Star, ArrowLeft } from 'lucide-react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useSubscription } from '@/hooks/subscription/useSubscription';
 import { SubscriptionService } from '@/services/SubscriptionService';
-import { APP_CONFIG } from '@/lib/config';
 import { useState, useEffect } from 'react';
 import { SubscriptionLimits } from '@/types/subscription';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 const Pricing: React.FC = () => {
   const { user } = useSupabaseAuth();
   const { subscription, loading: subscriptionLoading } = useSubscription();
