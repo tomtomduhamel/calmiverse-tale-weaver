@@ -186,9 +186,13 @@ function App() {
               <TitleGenerationIndicator />
               <Routes>
                 {/* Routes publiques */}
+                <Route path="/" element={<Landing />} />
                 <Route path="/vip" element={<VipAccess />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/beta-pending" element={<BetaPending />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/checkout/success" element={<CheckoutSuccess />} />
+                <Route path="/checkout/cancelled" element={<CheckoutCancelled />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/privacy-policy" element={<NewPrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
@@ -204,7 +208,7 @@ function App() {
                 <Route path="/404" element={<NotFound />} />
 
                 {/* Routes avec authentification et vérification beta */}
-                <Route path="/" element={<BetaGuard><Shell /></BetaGuard>}>
+                <Route path="/app" element={<BetaGuard><Shell /></BetaGuard>}>
                   <Route index element={<Index />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="children" element={<ChildrenListPage />} />
@@ -212,14 +216,9 @@ function App() {
                   <Route path="settings" element={<Settings />} />
                   <Route path="library" element={<Library />} />
                   <Route path="reader/:id" element={<StoryReaderPage />} />
-                  {/* Route obsolète supprimée - utiliser /create-story/step-1 */}
-                  {/* Redirection de l'ancienne route vers la nouvelle */}
-                  <Route path="create-story-n8n" element={<Navigate to="/create-story/step-1" replace />} />
+                  <Route path="create-story-n8n" element={<Navigate to="/app/create-story/step-1" replace />} />
                   <Route path="create-story-titles" element={<CreateStoryTitles />} />
                   <Route path="create-story/step-1" element={<CreateStoryStep1 />} />
-                  {/* Route step-2 supprimée - objectif combiné dans step-1 */}
-                  {/* Routes step-3 supprimée - génération en arrière-plan */}
-                  <Route path="pricing" element={<Pricing />} />
                   <Route path="subscription" element={<Subscription />} />
                   <Route path="test-connection" element={<TestConnection />} />
                   <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
@@ -231,6 +230,17 @@ function App() {
                   <Route path="admin/sounds" element={<AdminGuard><SoundAdmin /></AdminGuard>} />
                   <Route path="superadmin" element={<SuperAdmin />} />
                 </Route>
+
+                {/* Redirections legacy : anciens liens internes restent fonctionnels */}
+                <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
+                <Route path="/children" element={<Navigate to="/app/children" replace />} />
+                <Route path="/kids-profile" element={<Navigate to="/app/kids-profile" replace />} />
+                <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
+                <Route path="/library" element={<Navigate to="/app/library" replace />} />
+                <Route path="/reader/:id" element={<Navigate to="/app/reader/:id" replace />} />
+                <Route path="/create-story/step-1" element={<Navigate to="/app/create-story/step-1" replace />} />
+                <Route path="/create-story-titles" element={<Navigate to="/app/create-story-titles" replace />} />
+                <Route path="/subscription" element={<Navigate to="/app/subscription" replace />} />
 
                 {/* Route de fallback */}
                 <Route path="*" element={<Navigate to="/404" replace />} />
