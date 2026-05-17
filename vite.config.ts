@@ -15,6 +15,14 @@ const BUILD_ID =
   Date.now().toString(36);
 const FULL_APP_VERSION = `${pkgJson.version}+${BUILD_ID}`;
 
+// Human-readable, monotonic build number based on UTC build time: YYMMDD.HHMM
+const _now = new Date();
+const _pad = (n: number) => n.toString().padStart(2, '0');
+const BUILD_NUMBER =
+  `${_pad(_now.getUTCFullYear() % 100)}${_pad(_now.getUTCMonth() + 1)}${_pad(_now.getUTCDate())}` +
+  `.${_pad(_now.getUTCHours())}${_pad(_now.getUTCMinutes())}`;
+const BUILD_TIMESTAMP = _now.toISOString();
+
 // Emit version.json into the build output (not into public/) at bundle time
 function versionJsonPlugin() {
   return {
