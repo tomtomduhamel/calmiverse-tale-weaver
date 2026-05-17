@@ -16,7 +16,8 @@ export const Footer: React.FC = () => {
               {APP_CONFIG.APP_DESCRIPTION}
             </p>
             <p className="text-xs text-muted-foreground">
-              Version {APP_CONFIG.APP_VERSION_CLEAN}
+              v{APP_CONFIG.APP_VERSION_CLEAN}
+              {APP_CONFIG.APP_BUILD_NUMBER && ` · build ${APP_CONFIG.APP_BUILD_NUMBER}`}
             </p>
           </div>
 
