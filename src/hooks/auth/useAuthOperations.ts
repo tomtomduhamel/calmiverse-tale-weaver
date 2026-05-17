@@ -59,42 +59,36 @@ export const useAuthOperations = () => {
       
       console.log("Inscription réussie:", data.user?.id);
 
-      // Créer l'entrée beta_users via RPC (SECURITY DEFINER bypass RLS)
-      // Fonctionne en local et en production sans déploiement d'Edge Function
-      let betaRpcOk = false;
-      if (data.user) {
+      // ⚠️ N'enregistrer dans beta_users QUE si l'utilisateur s'inscrit via un code
+      // d'invitation beta. Les inscriptions publiques (clients payants) ne passent
+      // PAS par le flux beta et accèdent directement à l'app après vérification email.
+      if (data.user && inviteCode) {
         try {
-          const { data: rpcData, error: rpcError } = await supabase.rpc('create_pending_beta_user', {
+          const { error: rpcError } = await supabase.rpc('create_pending_beta_user', {
             p_user_id: data.user.id,
             p_email: email,
-            p_invitation_code: inviteCode || 'DIRECT', // 'DIRECT' = inscription sans code (NOT NULL constraint)
+            p_invitation_code: inviteCode,
           });
-
           if (rpcError) {
             console.error("[Auth] ❌ Erreur RPC create_pending_beta_user:", rpcError);
             toast({
               title: "Inscription partiellement réussie",
-              description: "Votre compte est créé mais l'enregistrement beta a échoué. Contactez le support si vous ne pouvez pas accéder à l'app.",
+              description: "Votre compte est créé mais l'enregistrement beta a échoué. Contactez le support.",
               variant: "destructive"
             });
-          } else {
-            console.log("[Auth] ✅ Entrée beta_users créée via RPC:", rpcData);
-            betaRpcOk = true;
           }
         } catch (rpcErr) {
-          console.error("[Auth] ❌ Échec appel RPC create_pending_beta_user:", rpcErr);
-          toast({
-            title: "Inscription partiellement réussie",
-            description: "Votre compte est créé mais l'enregistrement beta a échoué. Contactez le support si vous ne pouvez pas accéder à l'app.",
-            variant: "destructive"
-          });
+          console.error("[Auth] ❌ Échec appel RPC:", rpcErr);
         }
-      }
 
-      if (betaRpcOk) {
         toast({
-          title: "Bienvenue !",
-          description: "Votre compte est créé. Aucun mail de confirmation à attendre — vous serez prévenu directement dans l'app dès que votre accès sera activé par un administrateur.",
+          title: "Bienvenue dans le programme beta !",
+          description: "Votre compte est créé. Vous serez prévenu dès que votre accès sera activé par un administrateur.",
+        });
+      } else {
+        toast({
+          title: "Bienvenue sur Calmi !",
+          description: "Votre compte est créé. Vérifiez votre email pour confirmer votre adresse.",
         });
       }
       
