@@ -7,7 +7,7 @@ import { usePWA } from '@/hooks/usePWA';
 const AUTO_RELOAD_SECONDS = 10;
 
 export const PWAUpdateNotification: React.FC = () => {
-  const { updateAvailable, reloadApp } = usePWA();
+  const { updateAvailable, reloadApp, isReloading } = usePWA();
   const [countdown, setCountdown] = useState(AUTO_RELOAD_SECONDS);
 
   useEffect(() => {
@@ -18,14 +18,14 @@ export const PWAUpdateNotification: React.FC = () => {
         if (c <= 1) {
           clearInterval(interval);
           console.log('[PWAUpdate] Auto-reload triggered');
-          window.location.reload();
+          reloadApp();
           return 0;
         }
         return c - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [updateAvailable]);
+  }, [updateAvailable, reloadApp]);
 
   if (!updateAvailable) return null;
 
@@ -40,15 +40,15 @@ export const PWAUpdateNotification: React.FC = () => {
             <div className="flex-1">
               <CardTitle className="text-sm">Nouvelle version disponible</CardTitle>
               <CardDescription className="text-xs">
-                Rechargement automatique dans {countdown}s
+                {isReloading ? 'Mise à jour en cours…' : `Rechargement automatique dans ${countdown}s`}
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <Button onClick={reloadApp} size="sm" className="w-full h-9 text-xs font-medium">
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-            Mettre à jour maintenant
+          <Button onClick={reloadApp} disabled={isReloading} size="sm" className="w-full h-9 text-xs font-medium">
+            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isReloading ? 'animate-spin' : ''}`} />
+            {isReloading ? 'Mise à jour…' : 'Mettre à jour maintenant'}
           </Button>
         </CardContent>
       </Card>
