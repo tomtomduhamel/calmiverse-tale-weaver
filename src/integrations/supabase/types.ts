@@ -1009,6 +1009,39 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_webhook_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          payload: Json | null
+          status: string
+          stripe_event_id: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json | null
+          status?: string
+          stripe_event_id?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json | null
+          status?: string
+          stripe_event_id?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       subscription_limits: {
         Row: {
           annual_price_usd: number
@@ -1534,6 +1567,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       join_family: { Args: { p_token: string }; Returns: boolean }
       log_security_event: {
         Args: {
