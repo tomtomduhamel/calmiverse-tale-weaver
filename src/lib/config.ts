@@ -8,7 +8,9 @@ import pkg from '../../package.json';
 export const APP_CONFIG = {
   // Application info
   APP_NAME: 'Calmiverse',
-  APP_VERSION: pkg.version,
+  // Injected at build time by vite (see versionJsonPlugin + define in vite.config.ts).
+  // Fallback to package.json version for dev/test environments where __APP_VERSION__ isn't defined.
+  APP_VERSION: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : pkg.version,
   APP_DESCRIPTION: 'Génération d\'histoires personnalisées pour enfants par IA',
   
   // Company info (required for legal pages)
