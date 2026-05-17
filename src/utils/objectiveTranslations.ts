@@ -133,12 +133,29 @@ export const getPoeticObjectiveName = (key: string | null | undefined): string =
 
   const poeticTranslations: Record<string, string> = {
     "custom": "Aventures sur mesure",
+    // Émotions
     "fast_story_anger": "Colères apaisées",
     "fast_story_sadness": "Chagrins consolés",
     "fast_story_fear": "Craintes envolées",
+    "fast_story_anxiety": "Inquiétudes dénouées",
+    "fast_story_stress": "Tensions relâchées",
+    "fast_story_agitation": "Agitation paisible",
+    "fast_story_guilt": "Cœurs allégés",
+    "fast_story_pain": "Douleurs apprivoisées",
     "fast_story_joy": "Éclats de joie",
     "fast_story_disgust": "Découvertes sereines",
     "fast_story_surprise": "Surprises émerveillées",
+    // Forces & qualités
+    "fast_story_confidence": "Confiance rayonnante",
+    "fast_story_serenity": "Sérénité retrouvée",
+    "fast_story_courage": "Courage éveillé",
+    "fast_story_curiosity": "Curiosité étincelante",
+    "fast_story_empathy": "Empathie tissée",
+    "fast_story_pride": "Fierté lumineuse",
+    "fast_story_focus_skill": "Concentration claire",
+    "fast_story_creativity": "Créativité infinie",
+    "fast_story_autonomy": "Autonomie radieuse",
+    // Situations
     "fast_story_situation_dark": "Nuits douces",
     "fast_story_situation_school": "Défis scolaires",
     "fast_story_situation_conflict": "Paix retrouvée",
@@ -147,6 +164,7 @@ export const getPoeticObjectiveName = (key: string | null | undefined): string =
     "fast_story_situation_bedwetting": "Nuits sereines",
     "fast_story_situation_medical": "Soins apaisés",
     "fast_story_situation_screens": "Esprit libre",
+    // Objectifs classiques
     "s'endormir": "Nuits douces",
     "se détendre": "Bulles de sérénité",
     "se concentrer": "Bulles de concentration",
