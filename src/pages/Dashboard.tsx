@@ -85,7 +85,7 @@ const Dashboard = () => {
           </div>
 
           {/* Ligne du bas (Carnet Stellaire) sur 3 colonnes de large md */}
-          <div className="md:col-span-3 h-[250px] mb-6 md:mb-0">
+          <div className="md:col-span-3 mb-6 md:mb-0">
             <StarLogbook recentReads={stats.recentReads} />
           </div>
 
