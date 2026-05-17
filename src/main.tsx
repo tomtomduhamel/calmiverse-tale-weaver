@@ -53,6 +53,31 @@ if (isDemoMode) {
   console.log('🎭 [Calmi] DEMO MODE - Using mock data');
 }
 
+// 🛡️ PWA guard: unregister SW in iframe/preview to avoid stale cache during design iterations.
+// In production (installed PWA / standalone tab), reload automatically when a new SW takes control.
+(() => {
+  if (!('serviceWorker' in navigator)) return;
+  const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
+  const host = window.location.hostname;
+  const isPreviewHost =
+    host.includes('id-preview--') ||
+    host.includes('lovableproject.com') ||
+    (host.includes('lovable.app') && host.includes('--'));
+  if (inIframe || isPreviewHost) {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((r) => r.unregister());
+    }).catch(() => {});
+  } else {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      console.log('[SW] New service worker activated — reloading for fresh assets');
+      window.location.reload();
+    });
+  }
+})();
+
 bootMonitor.log('main.tsx: React about to mount');
 
 // Mount React app
