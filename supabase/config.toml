@@ -112,3 +112,9 @@ verify_jwt = true
 [functions.stripe-webhook]
 verify_jwt = false
 
+[functions.superadmin-stripe-action]
+verify_jwt = true
+
+[functions.superadmin-stripe-fetch]
+verify_jwt = true
+
