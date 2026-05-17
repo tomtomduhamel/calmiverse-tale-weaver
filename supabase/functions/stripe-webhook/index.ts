@@ -159,14 +159,31 @@ Deno.serve(async (req) => {
         break;
       }
       default:
+        logStatus = 'ignored';
         console.log('[webhook] unhandled', event.type);
     }
+    await admin.from('stripe_webhook_events').insert({
+      stripe_event_id: event.id,
+      type: event.type,
+      status: logStatus,
+      payload: event.data.object as any,
+      user_id: logUserId,
+    });
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
     console.error('[webhook handler]', e);
+    logError = (e as Error).message;
+    await admin.from('stripe_webhook_events').insert({
+      stripe_event_id: event.id,
+      type: event.type,
+      status: 'error',
+      payload: event.data.object as any,
+      error_message: logError,
+      user_id: logUserId,
+    });
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
