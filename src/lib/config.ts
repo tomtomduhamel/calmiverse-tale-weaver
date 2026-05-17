@@ -44,7 +44,9 @@ export const APP_CONFIG = {
   APP_VERSION: rawVersion,
   APP_VERSION_CLEAN: semverPart || rawVersion,
   APP_BUILD_ID: buildId || null,
-  APP_BUILD_DATE: formatBuildDate(buildId),
+  APP_BUILD_NUMBER: buildNumber,
+  APP_BUILD_TIMESTAMP: buildTimestamp,
+  APP_BUILD_DATE: formatBuildDate(buildTimestamp, buildId),
   APP_DESCRIPTION: 'Génération d\'histoires personnalisées pour enfants par IA',
   
   // Company info (required for legal pages)
