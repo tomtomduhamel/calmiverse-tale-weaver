@@ -2,8 +2,9 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, FileText, Volume2, MessageSquare, Users, Music } from 'lucide-react';
+import { Shield, FileText, Volume2, MessageSquare, Users, Music, CreditCard } from 'lucide-react';
 import { useIsAdmin } from '@/hooks/auth/useIsAdmin';
+import { useIsSuperAdmin } from '@/hooks/auth/useIsSuperAdmin';
 
 export const AdminLinksSection = () => {
   const navigate = useNavigate();
