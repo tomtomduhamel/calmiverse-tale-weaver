@@ -27,8 +27,14 @@ export const AboutPage = () => {
           <p className="text-xl text-muted-foreground mb-4">
             {APP_CONFIG.APP_DESCRIPTION}
           </p>
-          <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
-            <span>Version {APP_CONFIG.APP_VERSION_CLEAN}</span>
+          <div className="flex flex-col items-center justify-center gap-1 text-sm text-muted-foreground">
+            <span>
+              v{APP_CONFIG.APP_VERSION_CLEAN}
+              {APP_CONFIG.APP_BUILD_NUMBER && ` · build ${APP_CONFIG.APP_BUILD_NUMBER}`}
+            </span>
+            {APP_CONFIG.APP_BUILD_DATE && (
+              <span className="text-xs">Déployé le {APP_CONFIG.APP_BUILD_DATE}</span>
+            )}
           </div>
         </CardHeader>
       </Card>

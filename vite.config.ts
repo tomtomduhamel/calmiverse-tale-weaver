@@ -15,19 +15,31 @@ const BUILD_ID =
   Date.now().toString(36);
 const FULL_APP_VERSION = `${pkgJson.version}+${BUILD_ID}`;
 
+// Human-readable, monotonic build number based on UTC build time: YYMMDD.HHMM
+const _now = new Date();
+const _pad = (n: number) => n.toString().padStart(2, '0');
+const BUILD_NUMBER =
+  `${_pad(_now.getUTCFullYear() % 100)}${_pad(_now.getUTCMonth() + 1)}${_pad(_now.getUTCDate())}` +
+  `.${_pad(_now.getUTCHours())}${_pad(_now.getUTCMinutes())}`;
+const BUILD_TIMESTAMP = _now.toISOString();
+
 // Emit version.json into the build output (not into public/) at bundle time
 function versionJsonPlugin() {
   return {
     name: 'version-json-generator',
     apply: 'build' as const,
     generateBundle(this: any) {
-      const versionData = JSON.stringify({ version: FULL_APP_VERSION }, null, 2);
+      const versionData = JSON.stringify({
+        version: FULL_APP_VERSION,
+        buildNumber: BUILD_NUMBER,
+        buildTimestamp: BUILD_TIMESTAMP,
+      }, null, 2);
       this.emitFile({
         type: 'asset',
         fileName: 'version.json',
         source: versionData + '\n',
       });
-      console.log(`[version-json] Emitted version.json with version ${FULL_APP_VERSION}`);
+      console.log(`[version-json] Emitted version.json with version ${FULL_APP_VERSION} (build ${BUILD_NUMBER})`);
     },
   };
 }
@@ -35,6 +47,8 @@ function versionJsonPlugin() {
 export default defineConfig(({ mode }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(FULL_APP_VERSION),
+    __APP_BUILD_NUMBER__: JSON.stringify(BUILD_NUMBER),
+    __APP_BUILD_TIMESTAMP__: JSON.stringify(BUILD_TIMESTAMP),
   },
   test: {
     globals: true,

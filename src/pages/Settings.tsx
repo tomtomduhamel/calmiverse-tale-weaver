@@ -20,7 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { usePWA } from '@/hooks/usePWA';
 import { APP_CONFIG } from '@/lib/config';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Download } from 'lucide-react';
+import { RefreshCw, Download, Copy } from 'lucide-react';
 
 const Settings = () => {
   const { user } = useSupabaseAuth();
@@ -238,11 +238,36 @@ const Settings = () => {
             {isCheckingUpdate ? 'Vérification...' : 'Vérifier les mises à jour'}
           </Button>
         )}
-        <div className="text-center text-xs text-muted-foreground">
-          <p>Version {APP_CONFIG.APP_VERSION}</p>
+        <div className="text-center text-xs text-muted-foreground space-y-1">
+          <p className="font-medium">
+            v{APP_CONFIG.APP_VERSION_CLEAN}
+            {APP_CONFIG.APP_BUILD_NUMBER && ` · build ${APP_CONFIG.APP_BUILD_NUMBER}`}
+          </p>
           {APP_CONFIG.APP_BUILD_DATE && (
-            <p>Build du {APP_CONFIG.APP_BUILD_DATE}</p>
+            <p>Déployé le {APP_CONFIG.APP_BUILD_DATE}</p>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+            onClick={async () => {
+              const line = [
+                `Calmiverse v${APP_CONFIG.APP_VERSION_CLEAN}`,
+                APP_CONFIG.APP_BUILD_NUMBER ? `build ${APP_CONFIG.APP_BUILD_NUMBER}` : null,
+                APP_CONFIG.APP_BUILD_ID ? `(${APP_CONFIG.APP_BUILD_ID})` : null,
+                APP_CONFIG.APP_BUILD_DATE ? `— ${APP_CONFIG.APP_BUILD_DATE}` : null,
+              ].filter(Boolean).join(' · ');
+              try {
+                await navigator.clipboard.writeText(line);
+                toast({ title: 'Copié', description: 'Informations de version copiées.' });
+              } catch {
+                toast({ title: 'Erreur', description: 'Impossible de copier.', variant: 'destructive' });
+              }
+            }}
+          >
+            <Copy className="h-3 w-3" />
+            Copier l'info de version
+          </Button>
         </div>
       </div>
     </div>

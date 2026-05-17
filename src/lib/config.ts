@@ -5,17 +5,29 @@
 
 import pkg from '../../package.json';
 
-// Parse full version (e.g. 1.2.1+mpa0uzje or 1.2.1+abc1234)
+// Parse full version (e.g. 1.3.0+mpa0uzje or 1.3.0+abc1234)
 const rawVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : pkg.version;
 const [semverPart, buildId] = rawVersion.split('+');
 
-// Try to convert a base36 build id back to a timestamp and format it
-function formatBuildDate(id?: string): string | null {
-  if (!id) return null;
+const buildNumber =
+  typeof __APP_BUILD_NUMBER__ !== 'undefined' ? __APP_BUILD_NUMBER__ : null;
+const buildTimestamp =
+  typeof __APP_BUILD_TIMESTAMP__ !== 'undefined' ? __APP_BUILD_TIMESTAMP__ : null;
+
+// Format a human date from the build timestamp (preferred) or from a base36 build id (fallback)
+function formatBuildDate(ts?: string | null, id?: string): string | null {
   try {
-    const ts = parseInt(id, 36);
-    if (!Number.isFinite(ts) || ts < 1e12 || ts > Date.now() + 864e5) return null;
-    return new Date(ts).toLocaleDateString('fr-FR', {
+    let date: Date | null = null;
+    if (ts) {
+      date = new Date(ts);
+    } else if (id) {
+      const n = parseInt(id, 36);
+      if (Number.isFinite(n) && n > 1e12 && n < Date.now() + 864e5) {
+        date = new Date(n);
+      }
+    }
+    if (!date || isNaN(date.getTime())) return null;
+    return date.toLocaleDateString('fr-FR', {
       day: 'numeric', month: 'long', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
@@ -32,7 +44,9 @@ export const APP_CONFIG = {
   APP_VERSION: rawVersion,
   APP_VERSION_CLEAN: semverPart || rawVersion,
   APP_BUILD_ID: buildId || null,
-  APP_BUILD_DATE: formatBuildDate(buildId),
+  APP_BUILD_NUMBER: buildNumber,
+  APP_BUILD_TIMESTAMP: buildTimestamp,
+  APP_BUILD_DATE: formatBuildDate(buildTimestamp, buildId),
   APP_DESCRIPTION: 'Génération d\'histoires personnalisées pour enfants par IA',
   
   // Company info (required for legal pages)
