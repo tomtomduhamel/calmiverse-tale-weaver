@@ -171,7 +171,7 @@ const SubscribersTab: React.FC = () => {
       ? await supabase.from("users").select("id,email,firstname").in("id", userIds)
       : { data: [] as any };
     const byId = new Map((users ?? []).map((u: any) => [u.id, u]));
-    setRows((subs ?? []).map((s: any) => ({ ...s, email: byId.get(s.user_id)?.email, firstname: byId.get(s.user_id)?.firstname })));
+    setRows((subs ?? []).map((s: any) => ({ ...s, email: (byId.get(s.user_id) as any)?.email, firstname: (byId.get(s.user_id) as any)?.firstname })));
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
