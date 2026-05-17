@@ -22,7 +22,7 @@ async function resolveTierFromPriceId(priceId: string): Promise<{ tier: string; 
   return { tier: data.tier, isAnnual: data.is_annual };
 }
 
-async function upsertSubscription(userId: string, sub: Stripe.Subscription) {
+async function upsertSubscription(userId: string, sub: Stripe.Subscription, resetUsage = false) {
   const item = sub.items.data[0];
   const priceId = item?.price.id;
   const resolved = priceId ? await resolveTierFromPriceId(priceId) : null;
@@ -49,10 +49,12 @@ async function upsertSubscription(userId: string, sub: Stripe.Subscription) {
     update.is_annual = resolved.isAnnual;
   }
 
-  // Reset usage on new period / new sub
-  update.stories_used_this_period = 0;
-  update.audio_generations_used_this_period = 0;
-  update.video_intros_used_this_period = 0;
+  // Only reset usage on new subscription or new billing period
+  if (resetUsage) {
+    update.stories_used_this_period = 0;
+    update.audio_generations_used_this_period = 0;
+    update.video_intros_used_this_period = 0;
+  }
 
   const { error } = await admin
     .from('user_subscriptions')
@@ -85,16 +87,14 @@ Deno.serve(async (req) => {
         const userId = session.metadata?.supabase_user_id;
         if (userId && session.subscription) {
           const sub = await stripe.subscriptions.retrieve(session.subscription as string);
-          await upsertSubscription(userId, sub);
+          await upsertSubscription(userId, sub, true);
         }
         break;
       }
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated': {
+      case 'customer.subscription.created': {
         const sub = event.data.object as Stripe.Subscription;
         let userId = sub.metadata?.supabase_user_id;
         if (!userId) {
-          // Fallback: look up by customer
           const { data } = await admin
             .from('user_subscriptions')
             .select('user_id')
@@ -102,7 +102,21 @@ Deno.serve(async (req) => {
             .maybeSingle();
           userId = data?.user_id;
         }
-        if (userId) await upsertSubscription(userId, sub);
+        if (userId) await upsertSubscription(userId, sub, true);
+        break;
+      }
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as Stripe.Subscription;
+        let userId = sub.metadata?.supabase_user_id;
+        if (!userId) {
+          const { data } = await admin
+            .from('user_subscriptions')
+            .select('user_id')
+            .eq('stripe_customer_id', sub.customer as string)
+            .maybeSingle();
+          userId = data?.user_id;
+        }
+        if (userId) await upsertSubscription(userId, sub, false);
         break;
       }
       case 'customer.subscription.deleted': {
@@ -111,6 +125,23 @@ Deno.serve(async (req) => {
           .from('user_subscriptions')
           .update({ status: 'cancelled', updated_at: new Date().toISOString() })
           .eq('stripe_subscription_id', sub.id);
+        break;
+      }
+      case 'invoice.payment_succeeded': {
+        const inv = event.data.object as Stripe.Invoice;
+        if (inv.subscription && inv.billing_reason === 'subscription_cycle') {
+          const sub = await stripe.subscriptions.retrieve(inv.subscription as string);
+          let userId = sub.metadata?.supabase_user_id;
+          if (!userId) {
+            const { data } = await admin
+              .from('user_subscriptions')
+              .select('user_id')
+              .eq('stripe_customer_id', sub.customer as string)
+              .maybeSingle();
+            userId = data?.user_id;
+          }
+          if (userId) await upsertSubscription(userId, sub, true);
+        }
         break;
       }
       case 'invoice.payment_failed': {
