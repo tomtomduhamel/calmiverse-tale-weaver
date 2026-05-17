@@ -22,7 +22,7 @@ import { RefreshCw, Download } from 'lucide-react';
 
 const Settings = () => {
   const { user } = useSupabaseAuth();
-  const { checkForUpdate, isCheckingUpdate, updateAvailable, reloadApp } = usePWA();
+  const { checkForUpdate, isCheckingUpdate, updateAvailable, reloadApp, isReloading } = usePWA();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
