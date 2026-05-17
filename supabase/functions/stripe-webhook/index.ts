@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.supabase_user_id;
         if (userId && session.subscription) {
+          logUserId = userId;
           const sub = await stripe.subscriptions.retrieve(session.subscription as string);
           await upsertSubscription(userId, sub, true);
         }
@@ -106,7 +107,7 @@ Deno.serve(async (req) => {
             .maybeSingle();
           userId = data?.user_id;
         }
-        if (userId) await upsertSubscription(userId, sub, true);
+        if (userId) { logUserId = userId; await upsertSubscription(userId, sub, true); }
         break;
       }
       case 'customer.subscription.updated': {
@@ -120,15 +121,18 @@ Deno.serve(async (req) => {
             .maybeSingle();
           userId = data?.user_id;
         }
-        if (userId) await upsertSubscription(userId, sub, false);
+        if (userId) { logUserId = userId; await upsertSubscription(userId, sub, false); }
         break;
       }
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription;
-        await admin
+        const { data: row } = await admin
           .from('user_subscriptions')
           .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-          .eq('stripe_subscription_id', sub.id);
+          .eq('stripe_subscription_id', sub.id)
+          .select('user_id')
+          .maybeSingle();
+        logUserId = row?.user_id ?? null;
         break;
       }
       case 'invoice.payment_succeeded': {
@@ -144,17 +148,20 @@ Deno.serve(async (req) => {
               .maybeSingle();
             userId = data?.user_id;
           }
-          if (userId) await upsertSubscription(userId, sub, true);
+          if (userId) { logUserId = userId; await upsertSubscription(userId, sub, true); }
         }
         break;
       }
       case 'invoice.payment_failed': {
         const inv = event.data.object as Stripe.Invoice;
         if (inv.subscription) {
-          await admin
+          const { data: row } = await admin
             .from('user_subscriptions')
             .update({ status: 'expired', updated_at: new Date().toISOString() })
-            .eq('stripe_subscription_id', inv.subscription as string);
+            .eq('stripe_subscription_id', inv.subscription as string)
+            .select('user_id')
+            .maybeSingle();
+          logUserId = row?.user_id ?? null;
         }
         break;
       }
