@@ -154,9 +154,9 @@ const Subscription: React.FC = () => {
                   Changer de plan
                 </Button>
                 {subscription.status === 'active' && (
-                  <Button onClick={handleManageBilling} variant="outline" className="flex-1">
+                  <Button onClick={handleManageBilling} variant="outline" className="flex-1" disabled={portalLoading}>
                     <CreditCard className="w-4 h-4 mr-2" />
-                    Gérer la facturation
+                    {portalLoading ? 'Ouverture…' : 'Gérer la facturation'}
                   </Button>
                 )}
               </div>
