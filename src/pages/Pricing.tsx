@@ -37,7 +37,7 @@ const Pricing: React.FC = () => {
 
   const handleUpgrade = async (tier: string) => {
     if (!user) {
-      navigate('/auth');
+      navigate('/auth?mode=signup');
       return;
     }
     try {
@@ -52,7 +52,9 @@ const Pricing: React.FC = () => {
         throw new Error('URL de paiement introuvable');
       }
     } catch (e: any) {
-      alert(e?.message || 'Impossible de lancer le paiement. Vérifiez que le plan est bien configuré dans Stripe.');
+      toast.error('Impossible de lancer le paiement', {
+        description: e?.message || 'Vérifiez votre connexion et réessayez. Si le problème persiste, contactez le support.',
+      });
     } finally {
       setCheckoutLoadingTier(null);
     }
