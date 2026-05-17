@@ -52,6 +52,7 @@ const DiagnosticConnection = lazy(() => import("./pages/DiagnosticConnection"));
 const BetaPending = lazy(() => import("./pages/BetaPending"));
 const VipAccess = lazy(() => import("./pages/VipAccess"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const SuperAdmin = lazy(() => import("./pages/superadmin/SuperAdmin"));
 
 // PageLoader avec détection de timeout et retry
 const PageLoader = () => {
@@ -228,6 +229,7 @@ function App() {
                   <Route path="admin/beta-testers" element={<AdminGuard><BetaTestersAdmin /></AdminGuard>} />
                   <Route path="admin/story-ingredients" element={<AdminGuard><StoryIngredients /></AdminGuard>} />
                   <Route path="admin/sounds" element={<AdminGuard><SoundAdmin /></AdminGuard>} />
+                  <Route path="superadmin" element={<SuperAdmin />} />
                 </Route>
 
                 {/* Route de fallback */}
