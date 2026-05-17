@@ -102,14 +102,22 @@ const Pricing: React.FC = () => {
         <p className="text-xl text-muted-foreground mb-8">
           Créez des histoires magiques pour vos enfants avec nos plans adaptés à vos besoins
         </p>
-        <div className="flex justify-center items-center gap-4 mb-8">
-          <span className="text-sm">Mensuel</span>
-          <div className="bg-muted rounded-full p-1 text-sm">
-            <div className="bg-background rounded-full px-3 py-1 shadow-sm">
-              Économisez 20% avec l'abonnement annuel
-            </div>
-          </div>
-          <span className="text-sm">Annuel</span>
+        <div className="flex justify-center items-center gap-3 mb-8">
+          <button
+            type="button"
+            onClick={() => setIsAnnual(false)}
+            className={`px-4 py-2 rounded-full text-sm transition ${!isAnnual ? 'bg-primary text-primary-foreground shadow' : 'bg-muted text-muted-foreground hover:bg-muted/70'}`}
+          >
+            Mensuel
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAnnual(true)}
+            className={`px-4 py-2 rounded-full text-sm transition flex items-center gap-2 ${isAnnual ? 'bg-primary text-primary-foreground shadow' : 'bg-muted text-muted-foreground hover:bg-muted/70'}`}
+          >
+            Annuel
+            <Badge variant="secondary" className="ml-1">-20%</Badge>
+          </button>
         </div>
       </div>
 
