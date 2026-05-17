@@ -190,10 +190,14 @@ const Pricing: React.FC = () => {
               <Button 
                 className="w-full" 
                 variant={isCurrentPlan(tierLimits.tier) ? "outline" : "default"}
-                disabled={isCurrentPlan(tierLimits.tier)}
+                disabled={isCurrentPlan(tierLimits.tier) || checkoutLoadingTier === tierLimits.tier}
                 onClick={() => handleUpgrade(tierLimits.tier)}
               >
-                {isCurrentPlan(tierLimits.tier) ? 'Plan actuel' : 'Choisir ce plan'}
+                {isCurrentPlan(tierLimits.tier)
+                  ? 'Plan actuel'
+                  : checkoutLoadingTier === tierLimits.tier
+                    ? 'Redirection…'
+                    : 'Choisir ce plan'}
               </Button>
             </CardFooter>
           </Card>
