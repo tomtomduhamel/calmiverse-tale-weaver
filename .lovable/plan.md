@@ -1,63 +1,68 @@
-# Plan d'intégration Stripe (BYOK)
 
-Le projet utilise un Supabase externe — l'intégration Stripe "seamless" de Lovable n'est pas compatible. On part donc sur le Stripe Bring-Your-Own-Key, qui s'appuie sur ton propre compte Stripe et 3 Edge Functions.
+## Objectif
 
-## Ce qui existe déjà
-- Tables `user_subscriptions` (avec `stripe_subscription_id`) et `subscription_limits` (4 tiers).
-- Page `/pricing` avec bouton "Choisir ce plan" (actuellement un `alert()`).
-- `SubscriptionService.updateSubscriptionTier()` prêt à être déclenché par le webhook.
-- Quotas, guards et UI d'upgrade fonctionnels.
+Créer un espace `/superadmin` réservé à un nouveau rôle `super_admin` (toi uniquement), pour piloter toute la partie facturation Stripe : KPIs, liste des abonnés, actions sur un abonné, logs webhooks et gestion des price_id.
 
-## Ce qu'il reste à faire
+---
 
-### 1. Configuration Stripe (côté toi, dans le dashboard Stripe)
-- Créer 4 **Products** Stripe (Calmini, Calmidium, Calmix, Calmixxl).
-- Pour chaque produit, créer 2 **Prices** : mensuel + annuel (-20%).
-- Noter les 8 `price_id` (format `price_xxx`) — je te demanderai où les coller.
-- Récupérer la **Secret Key** (`sk_live_...` ou `sk_test_...`).
+## 1. Base de données — rôle super_admin
 
-### 2. Secrets Supabase à ajouter
-- `STRIPE_SECRET_KEY` — clé secrète Stripe.
-- `STRIPE_WEBHOOK_SECRET` — généré après création du webhook (étape 4).
+Migration :
+- Ajouter la valeur `super_admin` à l'enum `app_role`.
+- Insérer une ligne dans `user_roles` pour ton `user_id` avec `role = 'super_admin'` (tu confirmeras l'email à utiliser pour le lookup).
+- Créer une fonction `is_super_admin()` (SECURITY DEFINER, basée sur `has_role(auth.uid(), 'super_admin')`).
+- Créer une table `stripe_webhook_events` pour journaliser les events reçus :
+  - `stripe_event_id` (unique), `type`, `status` (`success`/`error`/`ignored`), `payload` (jsonb), `error_message`, `user_id` (nullable), `created_at`.
+  - RLS : SELECT réservé à `is_super_admin()`, INSERT autorisé (utilisé par l'edge function `stripe-webhook`).
+- Politiques RLS supplémentaires sur `user_subscriptions`, `users`, `stripe_price_mapping` : `is_super_admin()` peut SELECT/UPDATE (en plus des règles existantes).
 
-### 3. Migration DB
-- Ajouter colonne `stripe_customer_id` (text) sur `user_subscriptions` pour relier l'utilisateur à son Customer Stripe.
-- Ajouter colonne `stripe_price_id` pour tracer le prix en cours.
-- Table `stripe_price_mapping` (tier + is_annual → price_id) pour éviter de hardcoder les IDs dans le code.
+## 2. Edge functions
 
-### 4. Trois Edge Functions
+- **`stripe-webhook`** : à la fin de chaque traitement, insérer un enregistrement dans `stripe_webhook_events` (succès ou erreur, avec payload tronqué).
+- **`superadmin-stripe-action`** (nouvelle, `verify_jwt=true`) : actions sensibles côté Stripe, après vérification serveur que `auth.uid()` est super_admin.
+  - `resync_user` : récupère la subscription Stripe par email et met à jour `user_subscriptions` (tier, period, status).
+  - `change_plan` : appelle `stripe.subscriptions.update` avec un nouveau price_id.
+  - `cancel_subscription` : `stripe.subscriptions.cancel` (immédiat ou en fin de période).
+  - `grant_free_month` : crée un coupon 100% / 1 mois et l'applique à la subscription, ou prolonge `current_period_end` en DB pour les comptes sans Stripe (beta).
+  - `reset_quota` : remet à 0 les compteurs `*_used_this_period`.
 
-**`create-checkout`** (JWT requis)
-- Reçoit `{ tier, isAnnual }`.
-- Crée/réutilise un Customer Stripe lié au `user.id`.
-- Crée une `checkout.session` mode `subscription` avec le bon `price_id`.
-- Renvoie l'URL de redirection Stripe.
+## 3. Frontend — route `/superadmin`
 
-**`stripe-webhook`** (verify_jwt = false, signature Stripe vérifiée)
-- Écoute `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
-- Met à jour `user_subscriptions` (tier, status, dates, reset des compteurs) via service role key.
+- `SuperAdminGuard` (copie d'`AdminGuard`) basé sur un hook `useIsSuperAdmin` (`user_roles` where `role='super_admin'`).
+- Layout dédié avec sidebar (sous-sections) :
+  - **Overview** : cartes KPI
+    - MRR estimé (somme des prix actifs depuis `user_subscriptions` + `subscription_limits`).
+    - Abonnés actifs par tier (calmini/calmidium/calmix/calmixxl), répartition mensuel/annuel.
+    - Nouveaux abonnés (7j / 30j), abonnés expirés.
+    - Quotas consommés moyens par tier.
+  - **Abonnés** : table filtrable/searchable (email, tier, statut, période, stripe_customer_id). Détail au clic :
+    - Infos user + abonnement courant + historique invoices (récupéré via une edge function `superadmin-stripe-fetch` côté Stripe).
+    - Boutons d'action : changer de tier (select des price_id), annuler, offrir un mois, reset quotas, resynchroniser depuis Stripe.
+  - **Webhooks** : table paginée de `stripe_webhook_events` (filtre type/status), bouton pour rejouer un event échoué (re-traite localement le payload via une edge function dédiée).
+  - **Price mapping** : CRUD sur `stripe_price_mapping` (tier, is_annual, stripe_price_id, active) avec validation que tous les couples tier × is_annual ont bien un price actif.
+- Navigation : ajout d'un lien "Superadmin" dans `AdminLinksSection` visible uniquement si `isSuperAdmin`.
 
-**`customer-portal`** (JWT requis)
-- Crée une session du Stripe Billing Portal → l'utilisateur gère/annule son abo lui-même.
+## 4. Sécurité
 
-### 5. Frontend
-- `Pricing.tsx` : remplacer le `alert()` par un appel à `create-checkout` + redirection.
-- Ajouter un toggle Mensuel/Annuel fonctionnel (actuellement décoratif).
-- `Subscription.tsx` : bouton "Gérer mon abonnement" qui appelle `customer-portal`.
-- Pages de retour `/subscription/success` et `/subscription/cancel`.
+- Toutes les actions destructives passent par l'edge function avec re-check `is_super_admin()` côté serveur (jamais de confiance dans l'UI seule).
+- AlertDialog de confirmation systématique côté UI (cancel, change_plan, grant_free_month).
+- Logs : chaque action super_admin écrit dans `security_audit_logs` (action, target_user_id, metadata).
 
-### 6. Webhook Stripe
-- Dans le dashboard Stripe → Developers → Webhooks → ajouter l'URL `https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/stripe-webhook`.
-- Récupérer le `whsec_...` et le stocker dans `STRIPE_WEBHOOK_SECRET`.
+## 5. Hors scope
 
-## Ordre d'exécution recommandé
-1. Tu crées les Products/Prices dans Stripe (test mode d'abord).
-2. Je migre la DB et crée les 3 edge functions.
-3. Tu ajoutes `STRIPE_SECRET_KEY` quand je te le demande.
-4. Je branche l'UI sur `/pricing` et `/subscription`.
-5. On configure le webhook → tu ajoutes `STRIPE_WEBHOOK_SECRET`.
-6. Test bout-en-bout en mode test Stripe (carte `4242 4242 4242 4242`).
-7. Passage en mode live.
+- Pas de modification du flux Stripe pour les utilisateurs finaux.
+- Pas de refonte de l'admin existant (`/admin/*` reste tel quel).
+- Pas de mobile-first poussé : interface optimisée desktop (usage interne).
 
-## Question avant de lancer
-As-tu déjà créé les Products/Prices dans Stripe, ou tu veux que je te guide étape par étape avant que je commence à coder ?
+---
+
+## Détails techniques
+
+- Fichiers créés :
+  - `src/components/superadmin/SuperAdminGuard.tsx`
+  - `src/hooks/auth/useIsSuperAdmin.ts`
+  - `src/pages/superadmin/Layout.tsx`, `Overview.tsx`, `Subscribers.tsx`, `SubscriberDetail.tsx`, `Webhooks.tsx`, `PriceMapping.tsx`
+  - `supabase/functions/superadmin-stripe-action/index.ts`
+  - `supabase/functions/superadmin-stripe-fetch/index.ts`
+- Migration : nouvelle valeur enum + table `stripe_webhook_events` + policies + insert du rôle.
+- Confirmation requise avant migration : **quel email/user_id doit recevoir le rôle `super_admin`** ?
