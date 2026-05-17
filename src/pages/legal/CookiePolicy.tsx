@@ -23,7 +23,7 @@ export const CookiePolicy = () => {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">2. Cookies utilisés par Calmiverse</h2>
+            <h2 className="text-xl font-semibold mb-4">2. Cookies utilisés par Calmi</h2>
             
             <h3 className="text-lg font-medium mb-2">Cookies strictement nécessaires :</h3>
             <div className="bg-muted/50 p-4 rounded-lg mb-4">
@@ -47,7 +47,7 @@ export const CookiePolicy = () => {
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4">3. Cookies que nous n'utilisons PAS</h2>
-            <p>Calmiverse ne contient aucun des éléments suivants :</p>
+            <p>Calmi ne contient aucun des éléments suivants :</p>
             <ul className="list-disc pl-6 mt-2">
               <li>Cookies de tracking publicitaire</li>
               <li>Cookies de réseaux sociaux tiers</li>
@@ -77,7 +77,7 @@ export const CookiePolicy = () => {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4">5. Cookies et données personnelles</h2>
             <p>
-              Les cookies techniques utilisés par Calmiverse contiennent uniquement des 
+              Les cookies techniques utilisés par Calmi contiennent uniquement des 
               identifiants de session anonymes. Aucune donnée personnelle identifiable 
               n'est stockée dans les cookies.
             </p>

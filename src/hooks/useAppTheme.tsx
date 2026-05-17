@@ -2,7 +2,7 @@ import { useTheme as useNextTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
 /**
- * Hook centralisé pour gérer le thème de l'application Calmiverse
+ * Hook centralisé pour gérer le thème de l'application Calmi
  * Enveloppe la logique next-themes avec des fonctionnalités supplémentaires
  */
 export const useAppTheme = () => {

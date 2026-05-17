@@ -21,10 +21,10 @@ export const DocumentationPage = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center">
-            Documentation Calmiverse
+            Documentation Calmi
           </CardTitle>
           <p className="text-center text-muted-foreground">
-            Tout ce que vous devez savoir pour utiliser Calmiverse efficacement
+            Tout ce que vous devez savoir pour utiliser Calmi efficacement
           </p>
         </CardHeader>
         <CardContent className="space-y-8">

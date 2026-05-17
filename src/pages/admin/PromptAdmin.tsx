@@ -226,7 +226,7 @@ const PromptAdmin: React.FC = () => {
   }, [templates]);
 
   useEffect(() => {
-    document.title = "Administration des prompts | Calmiverse";
+    document.title = "Administration des prompts | Calmi";
     void fetchTemplates();
   }, []);
 

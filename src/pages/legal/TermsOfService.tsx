@@ -17,7 +17,7 @@ export const TermsOfService = () => {
             <h2 className="text-xl font-semibold mb-4">1. Objet</h2>
             <p>
               Les présentes conditions générales d'utilisation (CGU) régissent l'utilisation 
-              de l'application Calmiverse, plateforme de génération d'histoires personnalisées 
+              de l'application Calmi, plateforme de génération d'histoires personnalisées 
               pour enfants utilisant l'intelligence artificielle.
             </p>
           </section>
@@ -25,7 +25,7 @@ export const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4">2. Acceptation des conditions</h2>
             <p>
-              L'utilisation de Calmiverse implique l'acceptation pleine et entière des présentes CGU. 
+              L'utilisation de Calmi implique l'acceptation pleine et entière des présentes CGU. 
               Si vous n'acceptez pas ces conditions, vous ne devez pas utiliser l'application.
             </p>
           </section>
@@ -33,7 +33,7 @@ export const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4">3. Description du service</h2>
             <p>
-              Calmiverse permet aux utilisateurs de créer des profils d'enfants et de générer 
+              Calmi permet aux utilisateurs de créer des profils d'enfants et de générer 
               des histoires personnalisées adaptées à chaque enfant. Le service inclut :
             </p>
             <ul className="list-disc pl-6 mt-2">
@@ -47,7 +47,7 @@ export const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4">4. Compte utilisateur</h2>
             <p>
-              Pour utiliser Calmiverse, vous devez créer un compte. Vous êtes responsable 
+              Pour utiliser Calmi, vous devez créer un compte. Vous êtes responsable 
               de maintenir la confidentialité de vos identifiants et de toutes les activités 
               qui se produisent sous votre compte.
             </p>
@@ -74,7 +74,7 @@ export const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4">7. Propriété intellectuelle</h2>
             <p>
-              Les histoires générées vous appartiennent. Calmiverse conserve une licence 
+              Les histoires générées vous appartiennent. Calmi conserve une licence 
               pour améliorer ses services. La plateforme et ses technologies restent 
               notre propriété exclusive.
             </p>
@@ -83,7 +83,7 @@ export const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4">8. Limitation de responsabilité</h2>
             <p>
-              Calmiverse est fourni "en l'état". Nous ne pouvons garantir la disponibilité 
+              Calmi est fourni "en l'état". Nous ne pouvons garantir la disponibilité 
               continue du service ni l'exactitude complète du contenu généré par IA.
             </p>
           </section>

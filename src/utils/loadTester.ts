@@ -40,7 +40,7 @@ class LoadTester {
   private results: LoadTestResult | null = null;
   private isRunning = false;
 
-  // Test scenarios based on typical Calmiverse usage
+  // Test scenarios based on typical Calmi usage
   private defaultScenarios: LoadTestScenario[] = [
     {
       name: 'Story Creation Flow',

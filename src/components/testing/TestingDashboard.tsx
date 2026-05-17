@@ -19,7 +19,7 @@ export const TestingDashboard: React.FC = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Calmiverse - Testing Dashboard</h1>
+          <h1 className="text-3xl font-bold">Calmi - Testing Dashboard</h1>
           <p className="text-lg text-muted-foreground mt-2">
             Phase 6 - Tests et validation du nouveau système de notifications
           </p>

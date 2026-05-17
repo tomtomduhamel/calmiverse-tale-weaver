@@ -2,7 +2,7 @@ import React from 'react';
 import { SimpleThemeToggle } from "@/components/ui/SimpleThemeToggle";
 
 /**
- * Composant de toggle de thème global pour l'application Calmiverse
+ * Composant de toggle de thème global pour l'application Calmi
  * À utiliser dans les layouts et headers principaux
  */
 export const GlobalThemeToggle: React.FC = () => {

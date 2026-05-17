@@ -313,7 +313,7 @@ class TaskQueue {
 // Instance globale de la file de tâches
 export const taskQueue = new TaskQueue(3);
 
-// Gestionnaires spécialisés pour Calmiverse
+// Gestionnaires spécialisés pour Calmi
 export class StoryTaskQueue {
   private static instance: StoryTaskQueue;
   private queue = new TaskQueue(2); // Max 2 générations simultanées

@@ -252,7 +252,7 @@ const Settings = () => {
             className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
             onClick={async () => {
               const line = [
-                `Calmiverse v${APP_CONFIG.APP_VERSION_CLEAN}`,
+                `Calmi v${APP_CONFIG.APP_VERSION_CLEAN}`,
                 APP_CONFIG.APP_BUILD_NUMBER ? `build ${APP_CONFIG.APP_BUILD_NUMBER}` : null,
                 APP_CONFIG.APP_BUILD_ID ? `(${APP_CONFIG.APP_BUILD_ID})` : null,
                 APP_CONFIG.APP_BUILD_DATE ? `— ${APP_CONFIG.APP_BUILD_DATE}` : null,

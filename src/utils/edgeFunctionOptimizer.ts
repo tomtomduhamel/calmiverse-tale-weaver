@@ -410,7 +410,7 @@ class EdgeFunctionOptimizer {
 // Instance globale de l'optimiseur Edge Functions
 export const edgeFunctionOptimizer = new EdgeFunctionOptimizer();
 
-// Wrappers pour les fonctions spécifiques de Calmiverse
+// Wrappers pour les fonctions spécifiques de Calmi
 export class CalmiEdgeFunctions {
   private static instance: CalmiEdgeFunctions;
   private optimizer = edgeFunctionOptimizer;
