@@ -16,6 +16,8 @@ const Pricing: React.FC = () => {
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const [limits, setLimits] = useState<SubscriptionLimits[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAnnual, setIsAnnual] = useState(false);
+  const [checkoutLoadingTier, setCheckoutLoadingTier] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,13 +37,25 @@ const Pricing: React.FC = () => {
 
   const handleUpgrade = async (tier: string) => {
     if (!user) {
-      // Rediriger vers la page d'authentification
       navigate('/auth');
       return;
     }
-
-    // Pour l'instant, juste un message - la logique Stripe sera ajoutée plus tard
-    alert(`Mise à niveau vers ${SubscriptionService.getTierDisplayName(tier as any)} bientôt disponible !`);
+    try {
+      setCheckoutLoadingTier(tier);
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { tier, isAnnual },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('URL de paiement introuvable');
+      }
+    } catch (e: any) {
+      alert(e?.message || 'Impossible de lancer le paiement. Vérifiez que le plan est bien configuré dans Stripe.');
+    } finally {
+      setCheckoutLoadingTier(null);
+    }
   };
 
   const getFeatureList = (tierLimits: SubscriptionLimits) => {
@@ -88,14 +102,22 @@ const Pricing: React.FC = () => {
         <p className="text-xl text-muted-foreground mb-8">
           Créez des histoires magiques pour vos enfants avec nos plans adaptés à vos besoins
         </p>
-        <div className="flex justify-center items-center gap-4 mb-8">
-          <span className="text-sm">Mensuel</span>
-          <div className="bg-muted rounded-full p-1 text-sm">
-            <div className="bg-background rounded-full px-3 py-1 shadow-sm">
-              Économisez 20% avec l'abonnement annuel
-            </div>
-          </div>
-          <span className="text-sm">Annuel</span>
+        <div className="flex justify-center items-center gap-3 mb-8">
+          <button
+            type="button"
+            onClick={() => setIsAnnual(false)}
+            className={`px-4 py-2 rounded-full text-sm transition ${!isAnnual ? 'bg-primary text-primary-foreground shadow' : 'bg-muted text-muted-foreground hover:bg-muted/70'}`}
+          >
+            Mensuel
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAnnual(true)}
+            className={`px-4 py-2 rounded-full text-sm transition flex items-center gap-2 ${isAnnual ? 'bg-primary text-primary-foreground shadow' : 'bg-muted text-muted-foreground hover:bg-muted/70'}`}
+          >
+            Annuel
+            <Badge variant="secondary" className="ml-1">-20%</Badge>
+          </button>
         </div>
       </div>
 
@@ -131,13 +153,27 @@ const Pricing: React.FC = () => {
 
             <CardContent className="pb-4">
               <div className="text-center mb-6">
-                <div className="text-3xl font-bold">
-                  {tierLimits.monthly_price_usd}$
-                  <span className="text-sm font-normal text-muted-foreground">/mois</span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  ou {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$/an
-                </div>
+                {isAnnual ? (
+                  <>
+                    <div className="text-3xl font-bold">
+                      {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$
+                      <span className="text-sm font-normal text-muted-foreground">/an</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      soit {(SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd) / 12).toFixed(2)}$/mois
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-3xl font-bold">
+                      {tierLimits.monthly_price_usd}$
+                      <span className="text-sm font-normal text-muted-foreground">/mois</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      ou {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$/an (-20%)
+                    </div>
+                  </>
+                )}
               </div>
 
               <ul className="space-y-2 text-sm">
@@ -154,10 +190,14 @@ const Pricing: React.FC = () => {
               <Button 
                 className="w-full" 
                 variant={isCurrentPlan(tierLimits.tier) ? "outline" : "default"}
-                disabled={isCurrentPlan(tierLimits.tier)}
+                disabled={isCurrentPlan(tierLimits.tier) || checkoutLoadingTier === tierLimits.tier}
                 onClick={() => handleUpgrade(tierLimits.tier)}
               >
-                {isCurrentPlan(tierLimits.tier) ? 'Plan actuel' : 'Choisir ce plan'}
+                {isCurrentPlan(tierLimits.tier)
+                  ? 'Plan actuel'
+                  : checkoutLoadingTier === tierLimits.tier
+                    ? 'Redirection…'
+                    : 'Choisir ce plan'}
               </Button>
             </CardFooter>
           </Card>

@@ -18,9 +18,19 @@ const Subscription: React.FC = () => {
     navigate('/pricing');
   };
 
-  const handleManageBilling = () => {
-    // Sera implémenté plus tard avec Stripe
-    alert('Gestion de la facturation bientôt disponible !');
+  const [portalLoading, setPortalLoading] = React.useState(false);
+  const handleManageBilling = async () => {
+    try {
+      setPortalLoading(true);
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+    } catch (e: any) {
+      alert(e?.message || 'Impossible d\'ouvrir le portail de facturation');
+    } finally {
+      setPortalLoading(false);
+    }
   };
 
   if (loading) {
@@ -144,9 +154,9 @@ const Subscription: React.FC = () => {
                   Changer de plan
                 </Button>
                 {subscription.status === 'active' && (
-                  <Button onClick={handleManageBilling} variant="outline" className="flex-1">
+                  <Button onClick={handleManageBilling} variant="outline" className="flex-1" disabled={portalLoading}>
                     <CreditCard className="w-4 h-4 mr-2" />
-                    Gérer la facturation
+                    {portalLoading ? 'Ouverture…' : 'Gérer la facturation'}
                   </Button>
                 )}
               </div>
