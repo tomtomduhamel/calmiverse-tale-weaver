@@ -52,6 +52,7 @@ const DiagnosticConnection = lazy(() => import("./pages/DiagnosticConnection"));
 const BetaPending = lazy(() => import("./pages/BetaPending"));
 const VipAccess = lazy(() => import("./pages/VipAccess"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const SuperAdmin = lazy(() => import("./pages/superadmin/SuperAdmin"));
 
 // PageLoader avec détection de timeout et retry
 const PageLoader = () => {
