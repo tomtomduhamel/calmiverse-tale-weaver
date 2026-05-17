@@ -99,7 +99,7 @@ export class SubscriptionService {
 
   static getTierDescription(tier: SubscriptionTier): string {
     const descriptions = {
-      calmini: 'Plan d\'essai parfait pour découvrir Calmiverse',
+      calmini: 'Plan d\'essai parfait pour découvrir Calmi',
       calmidium: 'Plan intermédiaire avec accès aux suites d\'histoires',
       calmix: 'Plan complet avec audio et fonctionnalités premium',
       calmixxl: 'Plan ultime pour les familles nombreuses'

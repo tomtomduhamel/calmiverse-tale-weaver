@@ -25,14 +25,14 @@ export const ContactPage = () => {
             Contactez-nous
           </CardTitle>
           <p className="text-center text-muted-foreground">
-            Notre équipe est là pour vous aider avec Calmiverse
+            Notre équipe est là pour vous aider avec Calmi
           </p>
         </CardHeader>
         <CardContent className="space-y-8">
           <section>
             <h2 className="text-xl font-semibold mb-4">Support technique</h2>
             <p className="text-muted-foreground mb-4">
-              Vous rencontrez un problème technique ou avez une question sur l'utilisation de Calmiverse ?
+              Vous rencontrez un problème technique ou avez une question sur l'utilisation de Calmi ?
             </p>
             <div className="bg-muted/50 p-4 rounded-lg">
               <div className="flex items-center mb-2">
@@ -73,7 +73,7 @@ export const ContactPage = () => {
           <section>
             <h2 className="text-xl font-semibold mb-4">Suggestions et commentaires</h2>
             <p className="text-muted-foreground mb-4">
-              Vous avez une idée pour améliorer Calmiverse ? Partagez-la avec nous !
+              Vous avez une idée pour améliorer Calmi ? Partagez-la avec nous !
             </p>
             <div className="bg-muted/50 p-4 rounded-lg">
               <div className="flex items-center mb-2">
@@ -81,7 +81,7 @@ export const ContactPage = () => {
                 <span className="font-medium">Feedback et suggestions</span>
               </div>
               <a 
-                href={`mailto:feedback@calmiverse.com?subject=Suggestion pour Calmiverse`}
+                href={`mailto:feedback@calmiverse.com?subject=Suggestion pour Calmi`}
                 className="text-primary hover:underline font-medium"
               >
                 feedback@calmiverse.com
@@ -111,7 +111,7 @@ export const ContactPage = () => {
           <section className="border-t pt-6">
             <h2 className="text-xl font-semibold mb-4">Engagement qualité</h2>
             <p className="text-sm text-muted-foreground">
-              Chez Calmiverse, nous nous engageons à créer des histoires de qualité, 
+              Chez Calmi, nous nous engageons à créer des histoires de qualité, 
               éthiques et adaptées aux enfants. Notre équipe pédagogique valide chaque 
               histoire générée pour s'assurer qu'elle respecte nos standards de qualité 
               et de bienveillance.

@@ -97,7 +97,7 @@ export class NotificationTester {
 
       if (permission === 'granted') {
         // Test d'une notification simple
-        const testNotification = new Notification('Test Calmiverse', {
+        const testNotification = new Notification('Test Calmi', {
           body: 'Test des notifications natives',
           icon: '/favicon.ico',
           badge: '/favicon.ico',

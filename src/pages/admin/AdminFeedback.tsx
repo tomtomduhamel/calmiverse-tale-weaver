@@ -33,7 +33,7 @@ const AdminFeedback: React.FC = () => {
   const [dateFilter, setDateFilter] = useState<string>("all");
 
   useEffect(() => {
-    document.title = "Feedback Utilisateurs | Admin Calmiverse";
+    document.title = "Feedback Utilisateurs | Admin Calmi";
     void fetchFeedbacks();
   }, []);
 

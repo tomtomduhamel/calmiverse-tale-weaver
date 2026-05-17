@@ -5,7 +5,7 @@ import { TtsMetrics } from '@/components/admin/TtsMetrics';
 
 const TtsConfig: React.FC = () => {
   useEffect(() => {
-    document.title = 'Configuration TTS | Calmiverse Admin';
+    document.title = 'Configuration TTS | Calmi Admin';
   }, []);
 
   return (

@@ -501,7 +501,7 @@ const BetaTesters = () => {
                   <SelectContent>
                     <SelectItem value="calmini">Calmini</SelectItem>
                     <SelectItem value="calmix">Calmix</SelectItem>
-                    <SelectItem value="calmiverse">Calmiverse</SelectItem>
+                    <SelectItem value="calmiverse">Calmi</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -140,7 +140,7 @@ const Subscription: React.FC = () => {
               {isTrialExpired && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
                   <p className="text-destructive font-medium">
-                    Votre période d'essai a expiré. Choisissez un plan pour continuer à utiliser Calmiverse.
+                    Votre période d'essai a expiré. Choisissez un plan pour continuer à utiliser Calmi.
                   </p>
                   <Button onClick={handleUpgrade} className="mt-2">
                     Choisir un plan

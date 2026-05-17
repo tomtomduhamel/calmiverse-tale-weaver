@@ -122,7 +122,7 @@ export const StoryRating: React.FC<StoryRatingProps> = ({
                     />
                     {rating === 1 && !comment.trim() && (
                         <p className="text-xs text-muted-foreground ml-1 italic">
-                            Votre retour est précieux pour améliorer Calmiverse, mais pas obligatoire.
+                            Votre retour est précieux pour améliorer Calmi, mais pas obligatoire.
                         </p>
                     )}
 

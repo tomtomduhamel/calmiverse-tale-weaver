@@ -105,7 +105,7 @@ export const ServiceStatusPage = () => {
             Statut du Service
           </CardTitle>
           <p className="text-center text-muted-foreground">
-            Surveillance en temps réel de nos services Calmiverse
+            Surveillance en temps réel de nos services Calmi
           </p>
         </CardHeader>
         <CardContent>

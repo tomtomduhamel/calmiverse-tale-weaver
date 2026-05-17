@@ -16,7 +16,7 @@ export const PrivacyPolicy = () => {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4">1. Introduction</h2>
             <p>
-              Cette politique de confidentialité explique comment Calmiverse collecte, 
+              Cette politique de confidentialité explique comment Calmi collecte, 
               utilise et protège vos données personnelles et celles de vos enfants, 
               conformément au RGPD et aux lois sur la protection des données.
             </p>
