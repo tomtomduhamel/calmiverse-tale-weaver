@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { SettingsIcon, AlertCircle } from 'lucide-react';
 import { ProfileSection } from '@/components/settings/ProfileSection';
 import { AccountInfoSection } from '@/components/settings/AccountInfoSection';
+import { SubscriptionPlanCard } from '@/components/dashboard/SubscriptionPlanCard';
 import { KindleSection } from '@/components/settings/KindleSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
 import { SecuritySection } from '@/components/settings/SecuritySection';
@@ -174,6 +175,8 @@ const Settings = () => {
       />
 
       <AccountInfoSection user={user} />
+
+      <SubscriptionPlanCard />
 
       <FamilySection />
 

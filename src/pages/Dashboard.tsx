@@ -3,7 +3,7 @@ import { MilkyWayBackground } from '@/components/dashboard/MilkyWayBackground';
 import { StreakIndicator } from '@/components/dashboard/StreakIndicator';
 import { ConstellationWidget } from '@/components/dashboard/ConstellationWidget';
 import { StarLogbook } from '@/components/dashboard/StarLogbook';
-import { SubscriptionPlanCard } from '@/components/dashboard/SubscriptionPlanCard';
+
 import { useReadingStats } from '@/hooks/dashboard/useReadingStats';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,9 +74,6 @@ const Dashboard = () => {
                 <span className="text-sm text-muted-foreground">Histoires explorées au total</span>
               </div>
             )}
-
-            {/* Carte d'abonnement */}
-            <SubscriptionPlanCard />
           </div>
 
           {/* Colonne Centrale (Constellation) */}
