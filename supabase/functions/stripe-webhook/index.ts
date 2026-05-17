@@ -80,6 +80,10 @@ Deno.serve(async (req) => {
     return new Response(`Webhook Error: ${(err as Error).message}`, { status: 400, headers: corsHeaders });
   }
 
+  let logStatus: 'success' | 'error' | 'ignored' = 'success';
+  let logError: string | null = null;
+  let logUserId: string | null = null;
+
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
