@@ -15,7 +15,7 @@ export const useAppNavigation = () => {
   // Navigation vers une histoire
   const navigateToStory = useCallback((storyId: string) => {
     console.log('[AppNavigation] Navigation vers l\'histoire:', storyId);
-    navigate(`/reader/${storyId}`);
+    navigate(`/app/reader/${storyId}`);
   }, [navigate]);
 
   // Navigation vers la bibliothèque

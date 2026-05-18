@@ -108,7 +108,7 @@ export const useNotificationHandlers = (): NotificationActionHandlers => {
   const handleNotificationClick = useCallback((storyId?: string) => {
     if (storyId) {
       // Naviguer vers l'histoire spécifique
-      navigate(`/reader/${storyId}`);
+      navigate(`/app/reader/${storyId}`);
     } else {
       // Naviguer vers la bibliothèque par défaut
       navigate('/library');

@@ -52,7 +52,7 @@ const Library: React.FC = () => {
 
   const handleCreateSequel = useCallback((newStoryId: string) => {
     // La suite a été créée via la modale, on redirige vers la nouvelle histoire (qui sera en cours de génération)
-    navigate(`/reader/${newStoryId}`);
+    navigate(`/app/reader/${newStoryId}`);
     toast({
       title: "Suite créée !",
       description: "Votre nouvelle histoire est en cours de création."
@@ -61,7 +61,7 @@ const Library: React.FC = () => {
 
   const handleShare = useCallback((storyId: string) => {
     // Navigate to story with share modal open
-    navigate(`/reader/${storyId}?share=true`);
+    navigate(`/app/reader/${storyId}?share=true`);
   }, [navigate]);
 
   const handlePullToRefresh = useCallback(() => {
