@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /forgot-password
+Disallow: /checkout/
+Disallow: /vip
+Disallow: /beta-pending
+
+Sitemap: https://calmistory.com/sitemap.xml
