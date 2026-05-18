@@ -84,6 +84,27 @@ class Analytics {
     }, userId);
   }
 
+  // ─── Funnel / commercial events ───────────────────────────────────
+  trackSignup(userId: string, method: 'email' | 'oauth' = 'email') {
+    this.track('signup', { method }, userId);
+  }
+
+  trackCheckoutStarted(userId: string, tier: string, isAnnual: boolean, currency: string) {
+    this.track('checkout_started', { tier, is_annual: isAnnual, currency }, userId);
+  }
+
+  trackCheckoutCompleted(userId: string, tier: string) {
+    this.track('checkout_completed', { tier }, userId);
+  }
+
+  trackFirstStoryCreated(userId: string, objective: string) {
+    this.track('first_story_created', { objective }, userId);
+  }
+
+  trackFirstStoryRead(userId: string, storyId: string) {
+    this.track('first_story_read', { story_id: storyId }, userId);
+  }
+
   trackError(error: string, component?: string, userId?: string) {
     this.track('error_occurred', {
       error_message: error,
