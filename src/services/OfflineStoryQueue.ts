@@ -155,7 +155,7 @@ export class OfflineStoryQueue {
         body: `"${result.title}" est maintenant disponible`,
         icon: '/icon-192x192.png',
         tag: `story-${result.id}`,
-        data: { storyId: result.id, url: `/reader/${result.id}` }
+        data: { storyId: result.id, url: `/app/reader/${result.id}` }
       });
     }
 

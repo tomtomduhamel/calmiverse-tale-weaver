@@ -86,9 +86,9 @@ export class SWNotificationHandler {
       if (data?.url) {
         targetUrl = data.url;
       } else if (data?.storyId) {
-        targetUrl = `/reader/${data.storyId}`;
+        targetUrl = `/app/reader/${data.storyId}`;
       } else if (data?.type === 'story_ready') {
-        targetUrl = '/library';
+        targetUrl = '/app/library';
       }
 
       // Ouvrir ou focus sur la fenêtre
@@ -156,7 +156,7 @@ export class SWNotificationHandler {
           data: {
             type: 'story_ready',
             storyId: result.id,
-            url: `/reader/${result.id}`
+            url: `/app/reader/${result.id}`
           },
           actions: [
             { action: 'read', title: 'Lire maintenant' },

@@ -173,24 +173,24 @@ export class NotificationService {
       case 'read':
         if (data.storyId && this.isValidStoryId(data.storyId)) {
           console.log('[NotificationService] Navigating to story:', data.storyId);
-          path = `/reader/${data.storyId}`;
+          path = `/app/reader/${data.storyId}`;
         } else {
           console.warn('[NotificationService] Invalid storyId, redirecting to library:', data.storyId);
-          path = '/library';
+          path = '/app/library';
         }
         break;
       case 'library':
         console.log('[NotificationService] Navigating to library');
-        path = '/library';
+        path = '/app/library';
         break;
       case 'create':
         console.log('[NotificationService] Navigating to story creation');
-        path = '/create-story/step-1';
+        path = '/app/create-story/step-1';
         break;
       case 'home':
       default:
         console.log('[NotificationService] Navigating to home');
-        path = '/';
+        path = '/app';
         break;
     }
 
