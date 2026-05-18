@@ -1,6 +1,7 @@
 
 import React, { useEffect, lazy, Suspense, useState } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import RedirectWithParams from "@/components/routing/RedirectWithParams";
 
 // CRITICAL: Imports synchrones pour le boot initial uniquement
 import Auth from './pages/Auth';
