@@ -53,12 +53,12 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
     if (notification.type === 'story_share_request' && notification.data?.share_id) {
       // Navigate to library with pending shares
       window.dispatchEvent(new CustomEvent('calmi-navigate', { 
-        detail: { path: '/library?tab=shared' } 
+        detail: { path: '/app/library?tab=shared' } 
       }));
       setIsOpen(false);
     } else if (notification.data?.story_id) {
       window.dispatchEvent(new CustomEvent('calmi-navigate', { 
-        detail: { path: `/reader/${notification.data.story_id}` } 
+        detail: { path: `/app/reader/${notification.data.story_id}` } 
       }));
       setIsOpen(false);
     }

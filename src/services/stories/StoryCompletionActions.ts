@@ -109,7 +109,7 @@ export class StoryCompletionActions {
    */
   navigateToStory(storyId: string): void {
     if (this.options.onNavigate) {
-      this.options.onNavigate(`/reader/${storyId}`);
+      this.options.onNavigate(`/app/reader/${storyId}`);
     }
   }
 
@@ -118,7 +118,7 @@ export class StoryCompletionActions {
    */
   navigateToLibrary(): void {
     if (this.options.onNavigate) {
-      this.options.onNavigate('/library');
+      this.options.onNavigate('/app/library');
     }
   }
 

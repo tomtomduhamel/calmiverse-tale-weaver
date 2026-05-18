@@ -11,6 +11,7 @@ import { logger } from '@/utils/logger';
 import { OfflineSyncIndicator } from './OfflineSyncIndicator';
 import { OfflineIndicator } from './OfflineIndicator';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { isReaderPathname } from '@/lib/readerPath';
 import { AuthGuard } from './auth/AuthGuard';
 import { StoryGenerationManager } from '@/services/stories/StoryGenerationManager';
 import { useNavigate } from 'react-router-dom';
@@ -38,8 +39,8 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   
   // Déterminer si le menu mobile doit être affiché
   // Ne pas l'afficher si nous sommes sur la route du lecteur d'histoire
-  const showMobileMenu = isMobile && !location.pathname.startsWith('/reader/');
-  const isReaderPage = location.pathname.startsWith('/reader/');
+  const isReaderPage = isReaderPathname(location.pathname);
+  const showMobileMenu = isMobile && !isReaderPage;
   
   logger.debug("[Shell] Configuration", {
     isMobile,
@@ -81,7 +82,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
           <PreviewBanner />
           
           {/* Only show top navigation on desktop and not on reader pages */}
-          {!isMobile && !location.pathname.startsWith('/reader/') && <Navigation />}
+          {!isMobile && !isReaderPage && <Navigation />}
           
           {/* Main content with optimized mobile spacing */}
           <div className={`flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-[calc(4rem+env(safe-area-inset-bottom,8px))]' : 'pb-4'}`}>
@@ -113,7 +114,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
       <SidebarProvider>
         <div className="flex flex-col min-h-screen w-full relative overflow-x-hidden">
           {/* Only show top navigation on desktop and not on reader pages */}
-          {!isMobile && !location.pathname.startsWith('/reader/') && <Navigation />}
+          {!isMobile && !isReaderPage && <Navigation />}
           
           {/* Main content with optimized mobile spacing */}
           <div className={`flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 ${showMobileMenu ? 'pb-[calc(4rem+env(safe-area-inset-bottom,8px))]' : 'pb-4'}`}>

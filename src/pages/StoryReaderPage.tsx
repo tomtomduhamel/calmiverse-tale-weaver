@@ -7,7 +7,7 @@ import { useStoryFavorites } from "@/hooks/stories/useStoryFavorites";
 import StoryReader from "@/components/StoryReader";
 import { ReadingSpeedProvider } from "@/contexts/ReadingSpeedContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import type { Story } from "@/types/story";
 import { useUserSettings } from "@/hooks/settings/useUserSettings";
 import { StoryVideoIntro } from "@/components/story/StoryVideoIntro";
@@ -18,6 +18,15 @@ import { useSubscription } from "@/hooks/subscription/useSubscription";
 import { useQuotaChecker } from "@/hooks/subscription/useQuotaChecker";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { formatStoryFromSupabase } from "@/hooks/stories/storyFormatters";
+import { usePWA } from "@/hooks/usePWA";
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type ReaderError =
+  | { kind: "invalid_id" }
+  | { kind: "not_found" }
+  | { kind: "network"; message?: string };
 
 const StoryReaderPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,7 +39,7 @@ const StoryReaderPage: React.FC = () => {
   const { incrementUsage } = useQuotaChecker();
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ReaderError | null>(null);
   const [introPlayed, setIntroPlayed] = useState(false);
   const [forcePlayVideo, setForcePlayVideo] = useState(false);
   const introPlayedRef = useRef(false);
@@ -38,23 +47,32 @@ const StoryReaderPage: React.FC = () => {
   const hasLoggedRead = useRef(false);
   const prevVideoPathRef = useRef<string | null | undefined>(undefined);
   const { toast } = useToast();
+  const { reloadApp, isReloading } = usePWA();
+  const directFetchAttemptedRef = useRef<string | null>(null);
 
   // Charger l'histoire depuis l'ID dans l'URL
   useEffect(() => {
     if (!id) {
-      setError("ID d'histoire manquant");
+      setError({ kind: "invalid_id" });
       setIsLoading(false);
       return;
     }
 
+    // Valider le format UUID immédiatement
+    if (!UUID_REGEX.test(id)) {
+      console.error("[StoryReaderPage] ID invalide (pas un UUID):", id);
+      setError({ kind: "invalid_id" });
+      setIsLoading(false);
+      return;
+    }
+
+    // 1) Chercher d'abord dans la liste déjà chargée
     if (stories && stories.length > 0) {
-      const story = stories.find(s => s.id === id);
+      const story = stories.find((s) => s.id === id);
       if (story) {
-        console.log("[StoryReaderPage] Histoire trouvée:", story.id);
-        
-        // Détecter l'arrivée de la vidéo
+        console.log("[StoryReaderPage] Histoire trouvée en cache:", story.id);
+
         if (prevVideoPathRef.current === null && story.video_path) {
-          console.log("[StoryReaderPage] La vidéo vient de terminer sa génération !");
           toast({
             title: "🎬 Votre vidéo est prête !",
             description: "La magie a opéré, la vidéo d'introduction est disponible.",
@@ -70,13 +88,62 @@ const StoryReaderPage: React.FC = () => {
 
         setCurrentStory(story);
         setError(null);
-      } else {
-        console.error("[StoryReaderPage] Histoire non trouvée:", id);
-        setError("Histoire non trouvée");
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
     }
-  }, [id, stories]);
+
+    // 2) Fallback : fetch direct par ID (cas où le cache global n'est pas hydraté)
+    if (!user) {
+      // Attendre que la session soit chargée
+      return;
+    }
+
+    if (directFetchAttemptedRef.current === id) {
+      // On a déjà tenté un fetch direct pour cet id et il a échoué
+      return;
+    }
+
+    directFetchAttemptedRef.current = id;
+    setIsLoading(true);
+
+    (async () => {
+      try {
+        console.log("[StoryReaderPage] Fallback fetch direct pour:", id);
+        const { data, error: fetchError } = await supabase
+          .from("stories")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (fetchError) {
+          console.error("[StoryReaderPage] Erreur fetch direct:", fetchError);
+          setError({ kind: "network", message: fetchError.message });
+          setIsLoading(false);
+          return;
+        }
+
+        if (!data) {
+          console.warn("[StoryReaderPage] Histoire introuvable en base:", id);
+          setError({ kind: "not_found" });
+          setIsLoading(false);
+          return;
+        }
+
+        const formatted = formatStoryFromSupabase(data);
+        setCurrentStory(formatted);
+        setError(null);
+        setIsLoading(false);
+
+        // Rafraichir le cache global en arrière-plan
+        fetchStories();
+      } catch (err: any) {
+        console.error("[StoryReaderPage] Exception fetch direct:", err);
+        setError({ kind: "network", message: err?.message });
+        setIsLoading(false);
+      }
+    })();
+  }, [id, stories, user, toast, fetchStories]);
 
   // Enregistrer la lecture dans l'historique de l'utilisateur (gamification)
   useEffect(() => {
@@ -98,24 +165,16 @@ const StoryReaderPage: React.FC = () => {
   // Gestionnaire pour marquer comme lu/non lu (toggle)
   const handleMarkAsRead = async (storyId: string): Promise<boolean> => {
     try {
-      console.log("[StoryReaderPage] DEBUG: Toggle read status pour story:", storyId);
-      console.log("[StoryReaderPage] DEBUG: Current status:", currentStory?.status);
-
-      // Calculer le nouveau statut (toggle entre read et completed)
       const currentStatus = currentStory?.status || "completed";
       const newStatus = currentStatus === "read" ? "completed" : "read";
 
-      console.log("[StoryReaderPage] DEBUG: New status:", newStatus);
-
       await updateStoryStatus(storyId, newStatus);
 
-      // Mettre à jour l'état local
       if (currentStory && currentStory.id === storyId) {
         setCurrentStory({
           ...currentStory,
           status: newStatus
         });
-        console.log("[StoryReaderPage] DEBUG: Local state updated to:", newStatus);
       }
 
       return true;
@@ -127,19 +186,15 @@ const StoryReaderPage: React.FC = () => {
 
   // Gestionnaire pour toggle favori
   const handleToggleFavorite = async (storyId: string) => {
-    console.log("[StoryReaderPage] DEBUG: Toggle favori pour l'histoire:", storyId);
     try {
       if (currentStory) {
         const success = await toggleFavorite(storyId, currentStory.isFavorite || false);
         if (success) {
-          // Mettre à jour l'état local
           setCurrentStory({
             ...currentStory,
             isFavorite: !currentStory.isFavorite
           });
-          // Rafraîchir la liste des histoires
           await fetchStories();
-          console.log("[StoryReaderPage] DEBUG: Favori mis à jour");
         }
       }
     } catch (error: any) {
@@ -149,8 +204,7 @@ const StoryReaderPage: React.FC = () => {
 
   // Gestionnaire pour fermer et retourner à la bibliothèque
   const handleClose = () => {
-    console.log("[StoryReaderPage] Retour à la bibliothèque");
-    navigate("/library");
+    navigate("/app/library");
   };
 
   // Trouver le nom de l'enfant pour l'affichage
@@ -158,7 +212,6 @@ const StoryReaderPage: React.FC = () => {
     if (!childrenIds || childrenIds.length === 0 || !children || children.length === 0) {
       return undefined;
     }
-
     const childId = childrenIds[0];
     const child = children.find(c => c.id === childId);
     return child ? child.name : undefined;
@@ -178,23 +231,46 @@ const StoryReaderPage: React.FC = () => {
 
   // État d'erreur
   if (error || !currentStory) {
+    const title =
+      error?.kind === "invalid_id"
+        ? "Lien invalide"
+        : error?.kind === "network"
+          ? "Connexion impossible"
+          : "Histoire non trouvée";
+    const description =
+      error?.kind === "invalid_id"
+        ? "Le lien utilisé pour ouvrir cette histoire est incorrect."
+        : error?.kind === "network"
+          ? "Nous n'avons pas pu récupérer cette histoire. Vérifiez votre connexion et réessayez."
+          : "Cette histoire n'existe plus ou vous n'y avez pas accès. Si vous venez de la créer, actualisez l'application.";
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center p-8">
+        <div className="text-center p-8 max-w-md">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            {error || "Histoire non disponible"}
+            {title}
           </h1>
-          <p className="text-muted-foreground mb-6">
-            L'histoire que vous cherchez n'existe pas ou n'est plus disponible.
-          </p>
-          <Button onClick={handleClose} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Retour à la bibliothèque
-          </Button>
+          <p className="text-muted-foreground mb-6">{description}</p>
+          <div className="flex flex-col gap-3">
+            <Button onClick={handleClose} className="flex items-center gap-2 justify-center">
+              <ArrowLeft className="h-4 w-4" />
+              Retour à la bibliothèque
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => reloadApp()}
+              disabled={isReloading}
+              className="flex items-center gap-2 justify-center"
+            >
+              <RefreshCw className={`h-4 w-4 ${isReloading ? "animate-spin" : ""}`} />
+              {isReloading ? "Actualisation..." : "Actualiser l'application"}
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
+
 
   // Vérifier si la vidéo d'intro doit être affichée (avec vérification de quota)
   const videoUrl = currentStory.video_path ? getStoryVideoUrl(currentStory.video_path) : null;
