@@ -45,7 +45,19 @@ const CheckoutSuccess: React.FC = () => {
     return () => clearTimeout(t);
   }, [user, subscription, attempts, ready, refreshSubscription]);
 
+  // Confetti + analytics once the subscription is confirmed active
+  useEffect(() => {
+    if (!ready || celebrated) return;
+    if (subscription?.status !== 'active') return;
+    setCelebrated(true);
+    analytics.trackCheckoutCompleted(user?.id || 'anonymous', subscription.tier);
+    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+    setTimeout(() => confetti({ particleCount: 60, spread: 100, origin: { y: 0.6 } }), 250);
+  }, [ready, celebrated, subscription, user]);
+
   const isPending = !ready && !subLoading;
+  const nextPath = onboardingCompleted === false ? '/app/welcome' : '/app/create-story/step-1';
+  const nextLabel = onboardingCompleted === false ? 'Découvrir Calmi en 1 min' : 'Créer ma première histoire';
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
@@ -76,9 +88,9 @@ const CheckoutSuccess: React.FC = () => {
                 <Button
                   size="lg"
                   className="w-full gap-2"
-                  onClick={() => navigate('/app/create-story/step-1')}
+                  onClick={() => navigate(nextPath)}
                 >
-                  Créer ma première histoire
+                  {nextLabel}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" onClick={() => navigate('/app/subscription')}>
