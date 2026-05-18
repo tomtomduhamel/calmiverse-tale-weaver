@@ -58,6 +58,12 @@ export const useAuthOperations = () => {
       }
       
       console.log("Inscription réussie:", data.user?.id);
+      if (data.user) {
+        try {
+          const { analytics } = await import('@/utils/analytics');
+          analytics.trackSignup(data.user.id, 'email');
+        } catch { /* ignore */ }
+      }
 
       // ⚠️ N'enregistrer dans beta_users QUE si l'utilisateur s'inscrit via un code
       // d'invitation beta. Les inscriptions publiques (clients payants) ne passent

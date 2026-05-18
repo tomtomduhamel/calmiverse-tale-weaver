@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { isPreviewMode } from '@/utils/mobileBootOptimizer';
 import { PreviewBanner } from './PreviewBanner';
 import { FeedbackButton } from './feedback/FeedbackButton';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 
 interface ShellProps {
   children?: ReactNode;
@@ -58,6 +59,15 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
     window.addEventListener('calmi-navigate' as any, handleNavigationEvent);
     return () => window.removeEventListener('calmi-navigate' as any, handleNavigationEvent);
   }, [navigate]);
+
+  // First-time users: redirect to the onboarding wizard exactly once.
+  const { loading: onbLoading, completed: onbCompleted } = useOnboardingStatus();
+  React.useEffect(() => {
+    if (!user || onbLoading) return;
+    if (onbCompleted === false && location.pathname !== '/app/welcome') {
+      navigate('/app/welcome', { replace: true });
+    }
+  }, [user, onbLoading, onbCompleted, location.pathname, navigate]);
 
   // 🎭 MODE PREVIEW : Bypass complet de l'AuthGuard pour éviter l'écran blanc
   // 🔐 MODE STANDARD : AuthGuard normal avec redirection

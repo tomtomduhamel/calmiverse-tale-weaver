@@ -11,6 +11,10 @@ import { SubscriptionLimits } from '@/types/subscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import CurrencySelector from '@/components/pricing/CurrencySelector';
+import { Currency, CURRENCIES, detectDefaultCurrency, formatPrice, saveCurrency } from '@/lib/currency';
+import { analytics } from '@/utils/analytics';
+
 const Pricing: React.FC = () => {
   const { user } = useSupabaseAuth();
   const { subscription, loading: subscriptionLoading } = useSubscription();
@@ -18,7 +22,13 @@ const Pricing: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isAnnual, setIsAnnual] = useState(false);
   const [checkoutLoadingTier, setCheckoutLoadingTier] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<Currency>(() => detectDefaultCurrency());
   const navigate = useNavigate();
+
+  const handleCurrencyChange = (c: Currency) => {
+    setCurrency(c);
+    saveCurrency(c);
+  };
 
   useEffect(() => {
     const fetchLimits = async () => {
@@ -42,8 +52,9 @@ const Pricing: React.FC = () => {
     }
     try {
       setCheckoutLoadingTier(tier);
+      analytics.trackCheckoutStarted(user.id, tier, isAnnual, currency);
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { tier, isAnnual },
+        body: { tier, isAnnual, currency },
       });
       if (error) throw error;
       if (data?.url) {
@@ -113,9 +124,12 @@ const Pricing: React.FC = () => {
         <p className="text-xl text-muted-foreground mb-3">
           Créez des histoires magiques pour vos enfants avec nos plans adaptés à vos besoins
         </p>
-        <p className="text-sm text-muted-foreground mb-8">
-          Prix en dollars canadiens (CAD). Facturation en euros bientôt disponible.
+        <p className="text-sm text-muted-foreground mb-6">
+          Les prix s'affichent en {CURRENCIES[currency].label} ({CURRENCIES[currency].suffix}). Vous serez débité dans cette devise.
         </p>
+        <div className="flex justify-center mb-6">
+          <CurrencySelector value={currency} onChange={handleCurrencyChange} />
+        </div>
         <div className="flex justify-center items-center gap-3 mb-8">
           <button
             type="button"
@@ -170,21 +184,21 @@ const Pricing: React.FC = () => {
                 {isAnnual ? (
                   <>
                     <div className="text-3xl font-bold">
-                      {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$
-                      <span className="text-sm font-normal text-muted-foreground"> CAD/an</span>
+                      {formatPrice(SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd), currency)}
+                      <span className="text-sm font-normal text-muted-foreground">/an</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      soit {(SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd) / 12).toFixed(2)}$ CAD/mois
+                      soit {formatPrice(SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd) / 12, currency)}/mois
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="text-3xl font-bold">
-                      {tierLimits.monthly_price_usd}$
-                      <span className="text-sm font-normal text-muted-foreground"> CAD/mois</span>
+                      {formatPrice(tierLimits.monthly_price_usd, currency)}
+                      <span className="text-sm font-normal text-muted-foreground">/mois</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      ou {SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd).toFixed(2)}$ CAD/an (-20%)
+                      ou {formatPrice(SubscriptionService.getAnnualPrice(tierLimits.monthly_price_usd), currency)}/an (-20%)
                     </div>
                   </>
                 )}

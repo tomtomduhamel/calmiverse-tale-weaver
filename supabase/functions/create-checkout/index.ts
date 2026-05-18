@@ -33,6 +33,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const tier = String(body.tier || '');
     const isAnnual = Boolean(body.isAnnual);
+    const currencyRaw = String(body.currency || 'cad').toLowerCase();
+    const currency = (['cad', 'usd', 'eur'].includes(currencyRaw) ? currencyRaw : 'cad') as 'cad' | 'usd' | 'eur';
     if (!['calmini', 'calmidium', 'calmix', 'calmixxl'].includes(tier)) {
       return new Response(JSON.stringify({ error: 'Invalid tier' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -80,13 +82,14 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
+      currency,
       line_items: [{ price: priceRow.stripe_price_id, quantity: 1 }],
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancelled`,
       allow_promotion_codes: true,
-      metadata: { supabase_user_id: userId, tier, is_annual: String(isAnnual) },
+      metadata: { supabase_user_id: userId, tier, is_annual: String(isAnnual), currency },
       subscription_data: {
-        metadata: { supabase_user_id: userId, tier, is_annual: String(isAnnual) },
+        metadata: { supabase_user_id: userId, tier, is_annual: String(isAnnual), currency },
       },
     });
 

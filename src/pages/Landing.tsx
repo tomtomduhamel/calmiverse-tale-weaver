@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles, Moon, Heart, Brain, Smile, Shield, Headphones, BookOpen, ArrowRight } from 'lucide-react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import Testimonials from '@/components/landing/Testimonials';
+import FAQ from '@/components/landing/FAQ';
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
@@ -129,6 +131,12 @@ const Landing: React.FC = () => {
           ))}
         </div>
       </section>
+
+      {/* Témoignages */}
+      <Testimonials />
+
+      {/* FAQ */}
+      <FAQ />
 
       {/* CTA final */}
       <section className="container mx-auto px-4 py-16 text-center max-w-2xl">
