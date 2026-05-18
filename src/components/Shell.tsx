@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { isPreviewMode } from '@/utils/mobileBootOptimizer';
 import { PreviewBanner } from './PreviewBanner';
 import { FeedbackButton } from './feedback/FeedbackButton';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 
 interface ShellProps {
   children?: ReactNode;
