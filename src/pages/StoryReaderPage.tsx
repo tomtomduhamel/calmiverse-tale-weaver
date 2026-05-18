@@ -48,7 +48,8 @@ const StoryReaderPage: React.FC = () => {
   const prevVideoPathRef = useRef<string | null | undefined>(undefined);
   const { toast } = useToast();
   const { reloadApp, isReloading } = usePWA();
-  const directFetchAttemptedRef = useRef<string | null>(null);
+  const [retryTick, setRetryTick] = useState(0);
+  const directFetchAttemptsRef = useRef<Record<string, number>>({});
 
   // Charger l'histoire depuis l'ID dans l'URL
   useEffect(() => {
@@ -99,17 +100,27 @@ const StoryReaderPage: React.FC = () => {
       return;
     }
 
-    if (directFetchAttemptedRef.current === id) {
-      // On a déjà tenté un fetch direct pour cet id et il a échoué
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 2000;
+    const attempts = directFetchAttemptsRef.current[id] || 0;
+
+    if (attempts >= MAX_RETRIES) {
+      // Toutes les tentatives épuisées
       return;
     }
 
-    directFetchAttemptedRef.current = id;
+    directFetchAttemptsRef.current[id] = attempts + 1;
     setIsLoading(true);
 
     (async () => {
       try {
-        console.log("[StoryReaderPage] Fallback fetch direct pour:", id);
+        console.log(`[StoryReaderPage] Fallback fetch direct pour: ${id} (tentative ${attempts + 1}/${MAX_RETRIES})`);
+
+        // Petit délai avant les retries pour laisser la session se stabiliser
+        if (attempts > 0) {
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        }
+
         const { data, error: fetchError } = await supabase
           .from("stories")
           .select("*")
@@ -118,18 +129,30 @@ const StoryReaderPage: React.FC = () => {
 
         if (fetchError) {
           console.error("[StoryReaderPage] Erreur fetch direct:", fetchError);
+          if (attempts + 1 < MAX_RETRIES) {
+            // Planifier un retry via retryTick (déclenche le useEffect)
+            setTimeout(() => setRetryTick(t => t + 1), RETRY_DELAY_MS);
+            return;
+          }
           setError({ kind: "network", message: fetchError.message });
           setIsLoading(false);
           return;
         }
 
         if (!data) {
-          console.warn("[StoryReaderPage] Histoire introuvable en base:", id);
+          console.warn(`[StoryReaderPage] Histoire introuvable en base: ${id} (tentative ${attempts + 1}/${MAX_RETRIES})`);
+          if (attempts + 1 < MAX_RETRIES) {
+            // Pas encore trouvée, retenter (l'histoire est peut-être en cours de création)
+            setTimeout(() => setRetryTick(t => t + 1), RETRY_DELAY_MS);
+            return;
+          }
           setError({ kind: "not_found" });
           setIsLoading(false);
           return;
         }
 
+        // Succès
+        directFetchAttemptsRef.current[id] = MAX_RETRIES; // Stopper les retries
         const formatted = formatStoryFromSupabase(data);
         setCurrentStory(formatted);
         setError(null);
@@ -139,11 +162,15 @@ const StoryReaderPage: React.FC = () => {
         fetchStories();
       } catch (err: any) {
         console.error("[StoryReaderPage] Exception fetch direct:", err);
+        if (attempts + 1 < MAX_RETRIES) {
+          setTimeout(() => setRetryTick(t => t + 1), RETRY_DELAY_MS);
+          return;
+        }
         setError({ kind: "network", message: err?.message });
         setIsLoading(false);
       }
     })();
-  }, [id, stories, user, toast, fetchStories]);
+  }, [id, stories, user, toast, fetchStories, retryTick]);
 
   // Enregistrer la lecture dans l'historique de l'utilisateur (gamification)
   useEffect(() => {

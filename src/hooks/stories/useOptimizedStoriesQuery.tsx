@@ -77,6 +77,7 @@ export const useOptimizedStoriesQuery = () => {
       const { data, error: queryError } = await supabase
         .from('stories')
         .select('*')
+        .eq('authorid', user.id)
         .order('createdat', { ascending: false });
       
       if (queryError) {

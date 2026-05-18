@@ -37,7 +37,7 @@ export const usePendingStoryMonitor = ({
     if (pendingStory) {
       console.log(`[PendingMonitor] Vérification de l'histoire: ${pendingStoryId}, statut: ${pendingStory.status}`);
       
-      if (pendingStory.status === "ready" || pendingStory.status === "read") {
+      if (pendingStory.status === "completed" || pendingStory.status === "ready" || pendingStory.status === "read") {
         console.log("Histoire complétée, affichage...");
         setPendingStoryId(null);
         onStoryCompleted(pendingStory);

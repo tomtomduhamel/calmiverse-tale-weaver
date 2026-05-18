@@ -115,6 +115,26 @@ serve(async (req) => {
 
     console.log(`👤 [n8n-webhook-${requestId}] Utilisateur validé: ${user.user.email}`);
 
+    // Récupérer le family_id de l'utilisateur
+    let familyId: string | null = null;
+    try {
+      const { data: membership, error: memberError } = await supabase
+        .from('family_members')
+        .select('family_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!memberError && membership) {
+        familyId = membership.family_id;
+        console.log(`👨‍👩‍👧 [n8n-webhook-${requestId}] Family trouvée: ${familyId}`);
+      } else {
+        console.warn(`⚠️ [n8n-webhook-${requestId}] Aucune famille trouvée pour l'utilisateur ${userId}`);
+      }
+    } catch (famErr: any) {
+      console.warn(`⚠️ [n8n-webhook-${requestId}] Erreur récupération famille (non-bloquant):`, famErr.message);
+    }
+
     // Créer l'histoire en base avec l'analyse
     const { data: story, error: insertError } = await supabase
       .from('stories')
@@ -128,6 +148,7 @@ serve(async (req) => {
         childrennames: childrenNames,
         childrenids: childrenIds,
         authorid: userId,
+        family_id: familyId,
         sound_id,
         story_analysis,
         createdat: new Date().toISOString(),
