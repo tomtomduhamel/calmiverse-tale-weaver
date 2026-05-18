@@ -11,6 +11,7 @@ import { logger } from '@/utils/logger';
 import { OfflineSyncIndicator } from './OfflineSyncIndicator';
 import { OfflineIndicator } from './OfflineIndicator';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { isReaderPathname } from '@/lib/readerPath';
 import { AuthGuard } from './auth/AuthGuard';
 import { StoryGenerationManager } from '@/services/stories/StoryGenerationManager';
 import { useNavigate } from 'react-router-dom';
@@ -38,8 +39,8 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   
   // Déterminer si le menu mobile doit être affiché
   // Ne pas l'afficher si nous sommes sur la route du lecteur d'histoire
-  const showMobileMenu = isMobile && !location.pathname.startsWith('/reader/');
-  const isReaderPage = location.pathname.startsWith('/reader/');
+  const isReaderPage = isReaderPathname(location.pathname);
+  const showMobileMenu = isMobile && !isReaderPage;
   
   logger.debug("[Shell] Configuration", {
     isMobile,
