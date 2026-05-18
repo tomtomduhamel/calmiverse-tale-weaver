@@ -1,0 +1,21 @@
+# Calmi
+
+> Calmi crée des histoires personnalisées pour enfants afin de favoriser le sommeil, la concentration, la détente et le plaisir de lire.
+
+Calmi est une application web (PWA) qui génère des contes uniques basés sur le prénom, les passions et l'imaginaire de chaque enfant. Quatre objectifs pédagogiques sont proposés : s'endormir, se concentrer, se détendre, s'amuser. Les histoires peuvent être lues, écoutées (audio narré) ou envoyées sur Kindle.
+
+## Pages
+
+- [Accueil](/): Présentation de Calmi et création rapide d'histoires personnalisées.
+- [Tarifs](/pricing): Plans d'abonnement Calmini, Calmidium, Calmix et Calmixxl.
+- [À propos](/about): Histoire et mission de Calmi.
+- [Démarrage rapide](/quick-start): Guide pour créer sa première histoire.
+- [Documentation](/documentation): Guide d'utilisation complet.
+- [Contact](/contact): Nous écrire pour toute question.
+- [Statut du service](/status): État opérationnel des services Calmi.
+
+## Optional
+
+- [Politique de confidentialité](/privacy-policy)
+- [Conditions d'utilisation](/terms)
+- [Politique cookies](/cookies)
