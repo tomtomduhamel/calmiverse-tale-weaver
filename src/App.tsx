@@ -248,7 +248,7 @@ function App() {
                 <Route path="/kids-profile" element={<Navigate to="/app/kids-profile" replace />} />
                 <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
                 <Route path="/library" element={<Navigate to="/app/library" replace />} />
-                <Route path="/reader/:id" element={<Navigate to="/app/reader/:id" replace />} />
+                <Route path="/reader/:id" element={<RedirectWithParams to="/app/reader/:id" />} />
                 <Route path="/create-story/step-1" element={<Navigate to="/app/create-story/step-1" replace />} />
                 <Route path="/create-story-titles" element={<Navigate to="/app/create-story-titles" replace />} />
                 <Route path="/subscription" element={<Navigate to="/app/subscription" replace />} />
