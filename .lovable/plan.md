@@ -1,75 +1,105 @@
 
-# Anthony Renard bloqué — diagnostic & plan d'action
+## Diagnostic — cause racine identifiée
 
-## 1. Diagnostic (certitude haute)
+### Ce qu'Anthony voit
+- **Écran 1** (vu comme "la couverture") : c'est en fait sa **bibliothèque** (`LibraryFeed` / `FeedCard`). Il voit la carte d'aperçu de « Le souffle de la forêt » (cover, durée, boutons Partager / Créer une suite). Sous celle-ci commence une autre carte « Écriture de votre aventure… » (un brouillon de 17/05 resté en `status: null`).
+- **Écran 2** : après avoir tapé sur la carte, il atterrit sur l'écran d'erreur « Histoire non trouvée » du `StoryReaderPage`.
 
-L'image montre l'écran générique Lovable :
-> « Publish or update your Lovable project for it to appear here. »
+### Vérifications base de données
+Compte `anthonyrenard5@hotmail.com` (id `f997ee22…`) → 4 histoires, dont **3 `completed` avec contenu valide** (`Le souffle de la forêt`, `Le duvet de la chouette`, `La plume sur l'oreiller`). Les données existent, la RLS est correcte (`auth.uid() = authorid`). Le problème n'est **pas** côté données.
 
-avec une URL tronquée se terminant par `…ories.lovable.app`. Il s'agit de l'**ancien sous-domaine publié** `calmi-stories.lovable.app`.
+### Cause racine — bug dans `src/App.tsx`
 
-URLs actuelles du projet :
-- Préviu : `id-preview--a3a7afdb-…lovable.app`
-- **Publiée actuelle** : `https://calmistory.lovable.app`
-- **Domaine officiel** : `https://calmistory.com` (et `www.`)
+```tsx
+// Ligne 250
+<Route path="/reader/:id" element={<Navigate to="/app/reader/:id" replace />} />
+```
 
-Quand le projet a été renommé / republié sous `calmistory`, l'ancien slug `calmi-stories` a été libéré. Lovable y sert désormais sa page placeholder. Anthony a donc :
-- soit installé la **PWA il y a longtemps** depuis l'ancienne URL (l'icône sur son écran d'accueil pointe vers `calmi-stories.lovable.app`),
-- soit conservé un **bookmark / lien partagé** vers cette URL.
+Le composant `<Navigate>` de React Router **ne fait pas** d'interpolation des paramètres dynamiques. Quand on clique sur une carte d'histoire :
 
-Aucun problème côté base, code, abonnement ou pipeline de génération — Anthony est sur **Calmix actif** (vérifié le 17 mai). Il ne voit simplement jamais l'application : son navigateur affiche la page placeholder Lovable, donc il ne peut pas accéder à la création d'histoire.
+1. La navigation interne (`FeedCard`, `useStorySelection`, notifications, etc.) appelle `navigate('/reader/<uuid-réel>')`.
+2. Cette route legacy redirige vers `'/app/reader/:id'` — **littéralement** la chaîne `:id`, pas l'UUID.
+3. `StoryReaderPage` reçoit `useParams().id === ":id"`.
+4. `stories.find(s => s.id === ":id")` → introuvable → **« Histoire non trouvée »**.
 
-Ce n'est **pas** le bug "Erreur de génération" du 17 mai. C'est un problème d'**adresse**.
+Ce bug touche **toutes** les histoires, pour **tous** les utilisateurs qui passent par les liens internes `/reader/:id` (FeedCard, Library, notifications PWA, ToastAction « Lire », `useStorySelection`, `ChatStoryCreator`, `CreateStoryTitles`, `StoryCompletionActions`, …). Anthony est juste le premier à le signaler clairement.
 
-## 2. Action immédiate — débloquer Anthony (aujourd'hui)
+Pourquoi ça « marche parfois » : les rares appels qui ciblent directement `/app/reader/<id>` (peu nombreux) fonctionnent. Les PWA installées avec une ancienne version du bundle qui naviguait déjà en `/app/...` ne voient pas le bug — Anthony a rafraîchi la sienne.
 
-Lui envoyer un message clair en français, avec ces étapes dans l'ordre :
+---
 
-1. **Ne plus utiliser** l'icône actuelle / le lien actuel (`calmi-stories.lovable.app`).
-2. **Désinstaller l'ancienne PWA** :
-   - Android : appui long sur l'icône → Désinstaller / Supprimer.
-   - iOS : appui long sur l'icône → Supprimer l'app.
-3. Ouvrir Chrome / Safari et aller sur **`https://calmistory.com`** (la bonne URL, définitive).
-4. Se reconnecter avec `anthonyrenard5@hotmail.com`.
-5. (Optionnel) **Réinstaller la PWA** depuis cette nouvelle URL : menu navigateur → « Ajouter à l'écran d'accueil » / « Installer l'application ». La nouvelle icône pointera vers `calmistory.com` et restera à jour.
+## Plan d'action
 
-Lui préciser que son abonnement Calmix et ses 3 histoires sont intacts — il les retrouvera dans sa bibliothèque dès la connexion.
+### Étape 1 — Corriger la redirection paramétrée (fix principal)
 
-## 3. Vérification post-déblocage
+Remplacer le `<Navigate>` cassé par un petit composant qui interpole correctement le paramètre :
 
-Demander à Anthony une capture d'écran de :
-- la nouvelle URL dans la barre d'adresse (`calmistory.com`),
-- l'écran d'accueil de l'app après connexion.
+```tsx
+// src/components/routing/RedirectWithParams.tsx
+const RedirectWithParams = ({ to }: { to: string }) => {
+  const params = useParams();
+  const resolved = Object.entries(params).reduce(
+    (acc, [k, v]) => acc.replaceAll(`:${k}`, v ?? ''),
+    to
+  );
+  return <Navigate to={resolved} replace />;
+};
+```
 
-Si à ce moment-là il rencontre **réellement** une erreur de création d'histoire, on bascule sur le diagnostic pipeline (cf. §5) — mais c'est un autre sujet.
+Puis dans `src/App.tsx` :
 
-## 4. Prévention pour les autres utilisateurs (haute priorité)
+```tsx
+<Route path="/reader/:id" element={<RedirectWithParams to="/app/reader/:id" />} />
+```
 
-Anthony n'est probablement pas le seul. Toute personne ayant installé la PWA ou bookmarké le site avant le renommage est dans le même état. Actions à prévoir (hors plan mode, lors de l'implémentation) :
+Appliquer la même logique aux autres redirections paramétrées si on en ajoute par la suite (`/shared/:token`, etc.).
 
-1. **Communication proactive** :
-   - Email à toute la base utilisateur via Resend/Supabase : « Calmi a une nouvelle adresse, voici comment réinstaller l'app ».
-   - Post sur les canaux existants (Instagram, communauté beta).
+### Étape 2 — Faire pointer toutes les navigations internes directement vers `/app/reader/:id`
 
-2. **Bandeau de redirection** : impossible à mettre sur `calmi-stories.lovable.app` (ce sous-domaine ne nous appartient plus côté Lovable, il sert la page placeholder). On ne peut donc **pas** y injecter une redirection. La seule chose à faire est la communication directe.
+La redirection legacy ne doit servir **que** pour les anciens liens (emails, PWA pré-refonte, partages externes). Les composants internes doivent éviter le ricochet :
 
-3. **Verrouiller l'URL canonique** : s'assurer que toutes les communications futures (emails transactionnels, partages d'histoires, signatures, factures Stripe, métadonnées OG, manifest PWA) pointent **exclusivement** vers `https://calmistory.com`. À auditer :
-   - `public/manifest.json` → `start_url`, `scope`.
-   - Edge functions envoyant des emails (lien dans le mail de confirmation, partage, Kindle).
-   - Liens dans `index.html` (canonical, og:url) — déjà fait.
-   - Webhooks Stripe et URLs de retour checkout.
+- `src/hooks/navigation/useAppNavigation.ts` → `navigateToStory` : `/reader/${id}` → `/app/reader/${id}`
+- `src/components/library/LibraryFeed.tsx` (lignes 89, 114)
+- `src/components/library/feed/FeedContainer.tsx` (ligne 53)
+- `src/pages/Library.tsx` (lignes 55, 64)
+- `src/pages/CreateStoryTitles.tsx` (ligne 43)
+- `src/components/story/chat/ChatStoryCreator.tsx` (ligne 106)
+- `src/hooks/notifications/useNotificationHandlers.ts` (ligne 111)
+- `src/hooks/stories/useStoryNotifications.tsx` (lignes 61, 101)
+- `src/services/stories/StoryCompletionActions.ts` (ligne 110)
 
-4. **Monitoring** : ajouter un évènement analytique « première connexion depuis nouveau domaine » pour estimer combien d'utilisateurs sont encore perdus.
+Centralisation : ajouter une constante `READER_PATH = (id: string) => `/app/reader/${id}`` dans `src/lib/config.ts` ou `useAppNavigation` et l'utiliser partout, pour éviter la régression.
 
-## 5. Note sur la fragilité du pipeline (rappel, pas l'objet immédiat)
+### Étape 3 — Durcir `StoryReaderPage` (défense en profondeur)
 
-Le 17 mai on avait identifié que le pipeline de génération de titres (`useStoryFormHandlers` → `generate-titles` n8n → Edge Function → DB) reste fragile. Ce n'est **pas** la cause du blocage d'aujourd'hui, mais à garder en tête : si Anthony revient sur la bonne URL et bute sur l'écran de génération, on aura confirmation que la robustesse du pipeline doit redevenir prioritaire (retry, timeout UX, message d'erreur clair, fallback).
+Dans `src/pages/StoryReaderPage.tsx` :
+- Valider que `id` ressemble à un UUID (regex). Si non → log + redirection immédiate vers `/app/library` au lieu d'afficher « Histoire non trouvée ».
+- Quand `stories.length > 0` et story introuvable, faire un **fallback fetch direct** : `supabase.from('stories').select('*').eq('id', id).maybeSingle()` avant de conclure à l'erreur (couvre le cas d'un cache obsolète après création récente).
+- Améliorer le message d'erreur final : distinguer « id invalide », « histoire supprimée », « pas d'accès » pour faciliter le support futur.
 
-## 6. Livrable de ce plan
+### Étape 4 — Nettoyer le brouillon orphelin d'Anthony
 
-Une fois validé, l'implémentation se résume à :
-- (a) répondre à Anthony avec le message du §2,
-- (b) auditer les URLs canoniques (§4.3),
-- (c) préparer un email de communication aux utilisateurs (§4.1).
+L'histoire `0feafabe-3348-4d5f-8d9b-3674a881fd72` (status `null`, content vide, titre vide) pollue son fil. À supprimer via migration ciblée ou à proposer dans une future passe « ménage des histoires fantômes » (job planifié qui supprime les stories sans status et sans contenu après 24 h).
 
-Aucun changement de code complexe — c'est principalement de la communication + un audit URL.
+### Étape 5 — Validation
+
+1. Test manuel dans la preview : ouvrir `/library`, cliquer sur chaque carte → arrivée sur le lecteur sans erreur.
+2. Test du lien legacy : aller manuellement sur `/reader/<uuid>` → doit rediriger vers `/app/reader/<uuid>` avec l'UUID préservé.
+3. Vérifier les logs `[StoryReaderPage]` dans la console pour confirmer la résolution.
+4. Demander à Anthony de forcer la mise à jour de sa PWA (vider le cache ou désinstaller/réinstaller) puis ré-ouvrir une histoire.
+
+### Étape 6 — Message à Anthony après déploiement
+
+> « C'était un bug de routage côté app, identifié et corrigé : tous les liens internes vers une histoire renvoyaient vers une URL non résolue. Fais une mise à jour de l'app (tire-vers-le-bas pour rafraîchir, ou ferme/rouvre la PWA) — tes 3 histoires sont intactes et redeviennent accessibles. »
+
+---
+
+## Détails techniques (annexe)
+
+- React Router v6 : `<Navigate to="...">` accepte une string statique ou un `To` object ; aucune interpolation `:param`. La résolution doit être faite manuellement via `useParams` + `generatePath` ou string-replace.
+- Alternative à l'étape 1 : utiliser `generatePath` de `react-router-dom` :
+  ```tsx
+  const { id } = useParams();
+  return <Navigate to={generatePath('/app/reader/:id', { id: id! })} replace />;
+  ```
+- Aucun changement de schéma DB, aucune Edge Function impactée, aucune migration nécessaire (sauf nettoyage optionnel de l'étape 4).
