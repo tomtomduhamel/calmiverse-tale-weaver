@@ -109,6 +109,11 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
         runtimeCaching: [
           {
+            // version.json must never be served from SW cache — always hit the network
+            urlPattern: /\/version\.json(\?.*)?$/,
+            handler: 'NetworkOnly',
+          },
+          {
             urlPattern: ({ request }) => request.mode === 'navigate',
             handler: 'NetworkFirst',
             options: {

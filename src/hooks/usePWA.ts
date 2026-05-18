@@ -26,13 +26,19 @@ export const usePWA = () => {
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
   /**
-   * Check if a newer version is deployed by fetching /version.json
-   * This is the primary, reliable mechanism for update detection.
+   * Check if a newer version is deployed by fetching /version.json.
+   * Returns { updateAvailable, checkFailed } so callers can distinguish
+   * a genuine "up to date" from a failed network/server request.
+   *
+   * Two independent signals trigger an update:
+   *   1. version string mismatch  (semver+buildId)
+   *   2. buildNumber increase     (YYMMDD.HHMM — always unique per build)
+   * Signal #2 guards against LOVABLE_BUILD_ID being a fixed env var that
+   * makes every deployment produce the same version string.
    */
-  const checkVersionFromServer = useCallback(async (manual = false) => {
+  const checkVersionFromServer = useCallback(async (manual = false): Promise<{ updateAvailable: boolean; checkFailed: boolean }> => {
     try {
       if (manual) setIsCheckingUpdate(true);
-      // Cache busting with timestamp parameter
       const response = await fetch(`/version.json?t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
@@ -43,31 +49,39 @@ export const usePWA = () => {
       });
 
       if (!response.ok) {
-        console.log('[usePWA] version.json not available (HTTP', response.status + ')');
-        return false;
+        console.warn('[usePWA] version.json not available (HTTP', response.status + ')');
+        return { updateAvailable: false, checkFailed: true };
       }
 
       const data = await response.json();
-      const serverVersion = data.version;
+      const serverVersion: string | undefined = data.version;
+      const serverBuild: string | undefined = data.buildNumber;
       const localVersion = APP_CONFIG.APP_VERSION;
+      const localBuild = APP_CONFIG.APP_BUILD_NUMBER;
 
-      if (serverVersion && serverVersion !== localVersion) {
-        console.log(`[usePWA] 🆕 New version detected! Local: ${localVersion}, Server: ${serverVersion}`);
+      // Signal 1: version string changed (catches semver bumps and buildId changes)
+      const versionMismatch = Boolean(serverVersion && serverVersion !== localVersion);
+      // Signal 2: build timestamp advanced (catches re-deploys with same version string)
+      // String comparison works for YYMMDD.HHMM format (zero-padded, lexicographically monotone).
+      const buildAdvanced = Boolean(serverBuild && localBuild && serverBuild > localBuild);
+
+      if (versionMismatch || buildAdvanced) {
+        console.log(
+          `[usePWA] 🆕 New version detected! version: ${localVersion} → ${serverVersion ?? '?'} | build: ${localBuild ?? '?'} → ${serverBuild ?? '?'}`
+        );
         setState(prev => ({ ...prev, updateAvailable: true }));
         track('pwa_update_available');
 
-        // Stop polling once we know an update is available
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
         }
-        return true;
+        return { updateAvailable: true, checkFailed: false };
       }
-      return false;
+      return { updateAvailable: false, checkFailed: false };
     } catch (error) {
-      // Silently fail - network might be offline or version.json missing in dev
-      console.debug('[usePWA] Version check failed (expected in dev):', error);
-      return false;
+      console.warn('[usePWA] Version check failed:', error);
+      return { updateAvailable: false, checkFailed: true };
     } finally {
       if (manual) setIsCheckingUpdate(false);
     }
