@@ -58,6 +58,7 @@ const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
 const CheckoutCancelled = lazy(() => import("./pages/CheckoutCancelled"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Welcome = lazy(() => import("./pages/Welcome"));
 import CookieConsent from "@/components/CookieConsent";
 
 // PageLoader avec détection de timeout et retry
@@ -218,6 +219,7 @@ function App() {
                 {/* Routes avec authentification et vérification beta */}
                 <Route path="/app" element={<BetaGuard><Shell /></BetaGuard>}>
                   <Route index element={<Index />} />
+                  <Route path="welcome" element={<Welcome />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="children" element={<ChildrenListPage />} />
                   <Route path="kids-profile" element={<KidsProfile />} />
