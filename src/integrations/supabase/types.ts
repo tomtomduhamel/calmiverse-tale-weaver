@@ -1351,6 +1351,7 @@ export type Database = {
           kindle_email: string | null
           language: string | null
           lastname: string | null
+          onboarding_completed: boolean
           reading_speed: number | null
           story_notifications: boolean | null
           system_notifications: boolean | null
@@ -1373,6 +1374,7 @@ export type Database = {
           kindle_email?: string | null
           language?: string | null
           lastname?: string | null
+          onboarding_completed?: boolean
           reading_speed?: number | null
           story_notifications?: boolean | null
           system_notifications?: boolean | null
@@ -1395,6 +1397,7 @@ export type Database = {
           kindle_email?: string | null
           language?: string | null
           lastname?: string | null
+          onboarding_completed?: boolean
           reading_speed?: number | null
           story_notifications?: boolean | null
           system_notifications?: boolean | null
