@@ -1,40 +1,75 @@
-# Correction de l'affichage "Calmiverse" dans le footer
 
-## Diagnostic
+# Anthony Renard bloqué — diagnostic & plan d'action
 
-Le code source est déjà correct :
-- `src/lib/config.ts` → `APP_NAME: 'Calmi'` et `COMPANY.NAME: 'Calmi'`
-- `src/components/Footer.tsx` lit `APP_CONFIG.APP_NAME` (pas de hardcode)
-- Tous les autres fichiers ont été nettoyés au tour précédent (sed sur 37 fichiers)
+## 1. Diagnostic (certitude haute)
 
-Le problème est uniquement que la **version publiée** sur `calmi-stories.lovable.app` est antérieure aux changements (build `260517.1818` du 17 mai 14:18). Le mécanisme "Vérifier les mises à jour" compare le service worker local à la version publiée → il dit "à jour" car les deux sont identiques (et obsolètes).
+L'image montre l'écran générique Lovable :
+> « Publish or update your Lovable project for it to appear here. »
 
-## Actions à exécuter
+avec une URL tronquée se terminant par `…ories.lovable.app`. Il s'agit de l'**ancien sous-domaine publié** `calmi-stories.lovable.app`.
 
-### 1. Vérification finale du code (1 min)
-- Re-grep `Calmiverse` (sensible et insensible à la casse) dans `src/`, `public/`, `index.html`
-- S'assurer qu'aucune occurrence visible utilisateur n'a été ratée
-- Garder volontairement intacts les emails `*@calmiverse.com` (adresses de support réelles)
+URLs actuelles du projet :
+- Préviu : `id-preview--a3a7afdb-…lovable.app`
+- **Publiée actuelle** : `https://calmistory.lovable.app`
+- **Domaine officiel** : `https://calmistory.com` (et `www.`)
 
-### 2. Republier l'application (action utilisateur)
-- Cliquer sur **Publish** dans Lovable pour générer un nouveau build
-- Le nouveau build aura un nouveau numéro (ex. `260517.2030+`) et la nouvelle date de déploiement
-- Le footer affichera alors "Calmi"
+Quand le projet a été renommé / republié sous `calmistory`, l'ancien slug `calmi-stories` a été libéré. Lovable y sert désormais sa page placeholder. Anthony a donc :
+- soit installé la **PWA il y a longtemps** depuis l'ancienne URL (l'icône sur son écran d'accueil pointe vers `calmi-stories.lovable.app`),
+- soit conservé un **bookmark / lien partagé** vers cette URL.
 
-### 3. Forcer la mise à jour côté client (après republication)
-Une fois republié, sur l'appareil de l'utilisateur :
-- Ouvrir l'app → aller dans Paramètres
-- Cliquer "Vérifier les mises à jour"
-- Cette fois le bouton "Installer la mise à jour" apparaîtra (téléchargement du nouveau service worker)
-- Cliquer dessus → l'app recharge avec le nouveau build et "Calmi" dans le footer
+Aucun problème côté base, code, abonnement ou pipeline de génération — Anthony est sur **Calmix actif** (vérifié le 17 mai). Il ne voit simplement jamais l'application : son navigateur affiche la page placeholder Lovable, donc il ne peut pas accéder à la création d'histoire.
 
-Note : si la PWA est installée en standalone (iOS/Android), il faut parfois la fermer complètement (swipe out) puis la rouvrir pour que le nouveau service worker s'active.
+Ce n'est **pas** le bug "Erreur de génération" du 17 mai. C'est un problème d'**adresse**.
 
-### 4. Vérification post-déploiement
-- Confirmer en bas de la page Paramètres que le numéro de build a changé
-- Confirmer que le footer affiche "Calmi"
-- Re-tester sur 1-2 autres pages contenant le nom de l'app (Pricing, légal)
+## 2. Action immédiate — débloquer Anthony (aujourd'hui)
 
-## Pourquoi pas de modification de code cette fois
+Lui envoyer un message clair en français, avec ces étapes dans l'ordre :
 
-Le bug visible n'est pas un bug de code mais un **cache de version publiée**. Toute nouvelle édition de code ne changerait rien tant que la republication n'a pas eu lieu. La seule action nécessaire est : **Publish**.
+1. **Ne plus utiliser** l'icône actuelle / le lien actuel (`calmi-stories.lovable.app`).
+2. **Désinstaller l'ancienne PWA** :
+   - Android : appui long sur l'icône → Désinstaller / Supprimer.
+   - iOS : appui long sur l'icône → Supprimer l'app.
+3. Ouvrir Chrome / Safari et aller sur **`https://calmistory.com`** (la bonne URL, définitive).
+4. Se reconnecter avec `anthonyrenard5@hotmail.com`.
+5. (Optionnel) **Réinstaller la PWA** depuis cette nouvelle URL : menu navigateur → « Ajouter à l'écran d'accueil » / « Installer l'application ». La nouvelle icône pointera vers `calmistory.com` et restera à jour.
+
+Lui préciser que son abonnement Calmix et ses 3 histoires sont intacts — il les retrouvera dans sa bibliothèque dès la connexion.
+
+## 3. Vérification post-déblocage
+
+Demander à Anthony une capture d'écran de :
+- la nouvelle URL dans la barre d'adresse (`calmistory.com`),
+- l'écran d'accueil de l'app après connexion.
+
+Si à ce moment-là il rencontre **réellement** une erreur de création d'histoire, on bascule sur le diagnostic pipeline (cf. §5) — mais c'est un autre sujet.
+
+## 4. Prévention pour les autres utilisateurs (haute priorité)
+
+Anthony n'est probablement pas le seul. Toute personne ayant installé la PWA ou bookmarké le site avant le renommage est dans le même état. Actions à prévoir (hors plan mode, lors de l'implémentation) :
+
+1. **Communication proactive** :
+   - Email à toute la base utilisateur via Resend/Supabase : « Calmi a une nouvelle adresse, voici comment réinstaller l'app ».
+   - Post sur les canaux existants (Instagram, communauté beta).
+
+2. **Bandeau de redirection** : impossible à mettre sur `calmi-stories.lovable.app` (ce sous-domaine ne nous appartient plus côté Lovable, il sert la page placeholder). On ne peut donc **pas** y injecter une redirection. La seule chose à faire est la communication directe.
+
+3. **Verrouiller l'URL canonique** : s'assurer que toutes les communications futures (emails transactionnels, partages d'histoires, signatures, factures Stripe, métadonnées OG, manifest PWA) pointent **exclusivement** vers `https://calmistory.com`. À auditer :
+   - `public/manifest.json` → `start_url`, `scope`.
+   - Edge functions envoyant des emails (lien dans le mail de confirmation, partage, Kindle).
+   - Liens dans `index.html` (canonical, og:url) — déjà fait.
+   - Webhooks Stripe et URLs de retour checkout.
+
+4. **Monitoring** : ajouter un évènement analytique « première connexion depuis nouveau domaine » pour estimer combien d'utilisateurs sont encore perdus.
+
+## 5. Note sur la fragilité du pipeline (rappel, pas l'objet immédiat)
+
+Le 17 mai on avait identifié que le pipeline de génération de titres (`useStoryFormHandlers` → `generate-titles` n8n → Edge Function → DB) reste fragile. Ce n'est **pas** la cause du blocage d'aujourd'hui, mais à garder en tête : si Anthony revient sur la bonne URL et bute sur l'écran de génération, on aura confirmation que la robustesse du pipeline doit redevenir prioritaire (retry, timeout UX, message d'erreur clair, fallback).
+
+## 6. Livrable de ce plan
+
+Une fois validé, l'implémentation se résume à :
+- (a) répondre à Anthony avec le message du §2,
+- (b) auditer les URLs canoniques (§4.3),
+- (c) préparer un email de communication aux utilisateurs (§4.1).
+
+Aucun changement de code complexe — c'est principalement de la communication + un audit URL.
