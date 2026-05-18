@@ -103,7 +103,7 @@ const ChatStoryCreator: React.FC<ChatStoryCreatorProps> = ({ children, onBack })
   const { isMonitoring, startMonitoring } = useRealtimeStoryMonitor({
     onStoryCreated: (story) => {
       console.log('[ChatStoryCreator] Histoire générée avec succès:', story.id);
-      navigate(`/reader/${story.id}`);
+      navigate(`/app/reader/${story.id}`);
     }
   });
 

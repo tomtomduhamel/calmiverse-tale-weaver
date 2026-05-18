@@ -40,7 +40,7 @@ const CreateStoryTitles: React.FC = () => {
       navigate("/library");
     } else {
       console.log("[CreateStoryTitles] Redirection vers l'histoire créée:", storyId);
-      navigate(`/reader/${storyId}`);
+      navigate(`/app/reader/${storyId}`);
     }
   };
 

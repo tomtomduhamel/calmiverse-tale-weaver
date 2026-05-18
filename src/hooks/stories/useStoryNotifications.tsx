@@ -58,7 +58,7 @@ const notifyStoryReady = useCallback(async (title: string, storyId: string) => {
   toast({
     title: "Histoire prête ! 📖",
     description: `"${title}" est disponible dans votre bibliothèque.`,
-    action: <ToastAction altText="Lire" onClick = {() => navigate(`/reader/${storyId}`)}> Lire </ToastAction>,
+    action: <ToastAction altText="Lire" onClick = {() => navigate(`/app/reader/${storyId}`)}> Lire </ToastAction>,
 duration: 8000,
     });
   }, [canNotify, toast, navigate]);
@@ -98,7 +98,7 @@ const notifyAudioReady = useCallback(async (title: string, storyId: string) => {
   toast({
     title: "Audio disponible ! 🎵",
     description: `L'audio de "${title}" est prêt à être écouté.`,
-    action: <ToastAction altText="Écouter" onClick = {() => navigate(`/reader/${storyId}`)}> Écouter </ToastAction>,
+    action: <ToastAction altText="Écouter" onClick = {() => navigate(`/app/reader/${storyId}`)}> Écouter </ToastAction>,
 duration: 8000,
     });
   }, [canNotify, toast, navigate]);

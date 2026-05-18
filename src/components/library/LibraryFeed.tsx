@@ -86,7 +86,7 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
       });
       return;
     }
-    navigate(`/reader/${story.id}`);
+    navigate(`/app/reader/${story.id}`);
   }, [navigate, toast]);
 
   // Handle series click - open modal
@@ -111,7 +111,7 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
       return;
     }
     setSelectedSeriesId(null); // Close modal
-    navigate(`/reader/${story.id}`);
+    navigate(`/app/reader/${story.id}`);
   }, [navigate, toast]);
 
   // Handle sequel creation

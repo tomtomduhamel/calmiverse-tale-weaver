@@ -50,7 +50,7 @@ const FeedContainer: React.FC<FeedContainerProps> = ({
       });
       return;
     }
-    navigate(`/reader/${story.id}`);
+    navigate(`/app/reader/${story.id}`);
   }, [navigate, toast]);
 
   // Setup IntersectionObserver for infinite scroll
