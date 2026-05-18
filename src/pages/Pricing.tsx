@@ -11,6 +11,10 @@ import { SubscriptionLimits } from '@/types/subscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import CurrencySelector from '@/components/pricing/CurrencySelector';
+import { Currency, CURRENCIES, detectDefaultCurrency, formatPrice, saveCurrency } from '@/lib/currency';
+import { analytics } from '@/utils/analytics';
+
 const Pricing: React.FC = () => {
   const { user } = useSupabaseAuth();
   const { subscription, loading: subscriptionLoading } = useSubscription();
@@ -18,7 +22,13 @@ const Pricing: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isAnnual, setIsAnnual] = useState(false);
   const [checkoutLoadingTier, setCheckoutLoadingTier] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<Currency>(() => detectDefaultCurrency());
   const navigate = useNavigate();
+
+  const handleCurrencyChange = (c: Currency) => {
+    setCurrency(c);
+    saveCurrency(c);
+  };
 
   useEffect(() => {
     const fetchLimits = async () => {
