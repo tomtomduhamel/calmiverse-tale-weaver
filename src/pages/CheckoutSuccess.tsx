@@ -3,17 +3,22 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { useSubscription } from '@/hooks/subscription/useSubscription';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { SubscriptionService } from '@/services/SubscriptionService';
+import { analytics } from '@/utils/analytics';
 
 const CheckoutSuccess: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useSupabaseAuth();
   const { subscription, refreshSubscription, loading: subLoading } = useSubscription();
+  const { completed: onboardingCompleted } = useOnboardingStatus();
   const [attempts, setAttempts] = useState(0);
   const [ready, setReady] = useState(false);
+  const [celebrated, setCelebrated] = useState(false);
 
   // Si pas connecté, rediriger
   useEffect(() => {
