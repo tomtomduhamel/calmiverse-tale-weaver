@@ -10,11 +10,10 @@ export const useAutoScrollState = () => {
   // Références pour le défilement
   const animationFrameRef = useRef<number | null>(null);
   const scrollStatusRef = useRef<ScrollStatus>('idle');
-  
-  // Mettre à jour la référence quand l'état change
-  useEffect(() => {
-    scrollStatusRef.current = scrollStatus;
-  }, [scrollStatus]);
+
+  // Mise à jour synchrone pendant le rendu — la ref est toujours cohérente
+  // avec l'état, y compris dans le même cycle de rendu où l'état change.
+  scrollStatusRef.current = scrollStatus;
 
   // Nettoyer les animations au démontage
   useEffect(() => {

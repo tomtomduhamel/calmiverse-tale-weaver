@@ -21,6 +21,14 @@ export const useReadingProgress = ({
   const pauseStartRef = useRef<number | null>(null);
   const frameRef = useRef<number | null>(null);
 
+  // Refs synchrones miroir des props — mis à jour pendant le rendu,
+  // lus dans le callback RAF pour stopper immédiatement sans attendre
+  // le cleanup asynchrone du useEffect.
+  const isScrollingRef = useRef(isAutoScrolling);
+  const isPausedRef = useRef(isPaused || isManuallyPaused);
+  isScrollingRef.current = isAutoScrolling;
+  isPausedRef.current = isPaused || isManuallyPaused;
+
   // Remise à zéro complète quand on sort de toute lecture (idle)
   useEffect(() => {
     if (!isAutoScrolling && !isPaused && !isManuallyPaused) {
@@ -61,6 +69,13 @@ export const useReadingProgress = ({
     const msPerWord = 1000 / wordsPerSecond;
 
     const animate = (time: number) => {
+      // Vérification synchrone via refs : stoppe immédiatement si pause/idle
+      // sans attendre le cleanup asynchrone du useEffect.
+      if (!isScrollingRef.current || isPausedRef.current) {
+        frameRef.current = null;
+        return;
+      }
+
       if (startTimeRef.current === null) {
         startTimeRef.current = time;
       }
