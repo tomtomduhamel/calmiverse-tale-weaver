@@ -95,8 +95,16 @@ export const useReadingStats = () => {
         }
       }
 
-      // formater les 10 dernières lectures pour le carnet
-      const recentReads = reads.slice(0, 10).map(r => {
+      // Dédupliquer par story_id (garder la lecture la plus récente par histoire)
+      const uniqueByStory = new Map<string, typeof reads[0]>();
+      reads.forEach(r => {
+        if (!uniqueByStory.has(r.story_id)) {
+          uniqueByStory.set(r.story_id, r);
+        }
+      });
+
+      // formater les 10 dernières lectures distinctes pour le carnet
+      const recentReads = Array.from(uniqueByStory.values()).slice(0, 10).map(r => {
         const story = Array.isArray(r.stories) ? r.stories[0] : r.stories;
         return {
           id: r.id,

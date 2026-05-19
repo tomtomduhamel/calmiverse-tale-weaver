@@ -96,7 +96,7 @@ export const StarLogbook: React.FC<StarLogbookProps> = ({ recentReads }) => {
               return (
                 <button
                   key={item.id}
-                  onClick={() => navigate(`/story/${item.story_id}`)}
+                  onClick={() => navigate(`/app/reader/${item.story_id}`)}
                   className={`
                     snap-start shrink-0 w-[72%] md:w-[44%] lg:w-[31%]
                     relative overflow-hidden text-left
