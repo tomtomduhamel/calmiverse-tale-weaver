@@ -122,7 +122,7 @@ export const APP_CONFIG = {
 
   // Support URLs
   SUPPORT: {
-    DOCUMENTATION: 'https://docs.calmiverse.com',
+    DOCUMENTATION: '/documentation',
     CONTACT: 'https://calmiverse.com/contact',
     STATUS: 'https://status.calmiverse.com'
   }

@@ -56,14 +56,12 @@ export const Footer: React.FC = () => {
               >
                 Contactez-nous
               </a>
-              <a 
-                href={APP_CONFIG.SUPPORT.DOCUMENTATION}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/documentation"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Documentation
-              </a>
+              </Link>
               <a 
                 href={APP_CONFIG.SUPPORT.STATUS}
                 target="_blank"
