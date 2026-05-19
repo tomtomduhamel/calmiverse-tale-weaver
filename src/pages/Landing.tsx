@@ -160,7 +160,7 @@ const Landing: React.FC = () => {
           <Link to="/terms" className="hover:text-foreground">CGU</Link>
           <Link to="/contact" className="hover:text-foreground">Contact</Link>
         </div>
-        <p>© {new Date().getFullYear()} Calmi · Fait avec ❤️ au Québec</p>
+        <p>© {new Date().getFullYear()} Calmi (calmistory.com) · Fait avec ❤️ au Québec</p>
       </footer>
     </div>
   );
