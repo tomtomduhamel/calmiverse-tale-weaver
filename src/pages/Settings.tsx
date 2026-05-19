@@ -220,16 +220,22 @@ const Settings = () => {
             {isReloading ? 'Mise à jour…' : 'Installer la mise à jour'}
           </Button>
         ) : (
-          <Button 
+          <Button
             onClick={async () => {
-              const hasUpdate = await checkForUpdate();
-              if (!hasUpdate) {
+              const result = await checkForUpdate();
+              if (result.checkFailed) {
+                toast({
+                  title: "Vérification impossible",
+                  description: "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+                  variant: "destructive",
+                });
+              } else if (!result.updateAvailable) {
                 toast({
                   title: "À jour",
                   description: "Vous utilisez déjà la dernière version.",
                 });
               }
-            }} 
+            }}
             variant="outline"
             disabled={isCheckingUpdate}
             className="w-full sm:w-auto flex items-center gap-2 text-muted-foreground hover:text-foreground"

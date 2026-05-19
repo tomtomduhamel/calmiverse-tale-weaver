@@ -170,9 +170,9 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
       startAutoScroll();
       console.log("Auto-scroll: Started manually");
     } else if (scrollStatusRef.current === 'running') {
-      stopAutoScroll();
+      pauseAutoScroll();
       setIsManuallyPaused(true);
-      console.log("Auto-scroll: Stopped manually");
+      console.log("Auto-scroll: Paused manually");
     } else if (scrollStatusRef.current === 'paused') {
       if (isManuallyPaused) {
         setIsManuallyPaused(false);

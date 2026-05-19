@@ -36,9 +36,10 @@ export const useReadingProgress = ({
   }, [isAutoScrolling, isPaused, isManuallyPaused]);
 
   useEffect(() => {
-    if (!isAutoScrolling) return;
+    // Sortir uniquement si l'état est idle — pas sur une pause
+    if (!isAutoScrolling && !isPaused && !isManuallyPaused) return;
 
-    // === Entrée en pause ===
+    // === Entrée en pause (s'exécute même quand isAutoScrolling est false) ===
     if (isPaused || isManuallyPaused) {
       if (pauseStartRef.current === null) {
         pauseStartRef.current = performance.now();
