@@ -14,8 +14,6 @@ import { StoryVideoIntro } from "@/components/story/StoryVideoIntro";
 import { getStoryVideoUrl } from "@/utils/supabaseImageUtils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import { useSubscription } from "@/hooks/subscription/useSubscription";
-import { useQuotaChecker } from "@/hooks/subscription/useQuotaChecker";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatStoryFromSupabase } from "@/hooks/stories/storyFormatters";
@@ -35,8 +33,6 @@ const StoryReaderPage: React.FC = () => {
   const { children } = useSupabaseChildren();
   const { toggleFavorite } = useStoryFavorites();
   const { userSettings } = useUserSettings();
-  const { limits, subscription } = useSubscription();
-  const { incrementUsage } = useQuotaChecker();
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<ReaderError | null>(null);
@@ -299,16 +295,12 @@ const StoryReaderPage: React.FC = () => {
   }
 
 
-  // Vérifier si la vidéo d'intro doit être affichée (avec vérification de quota)
+  // La lecture d'une vidéo déjà générée ne dépend pas du quota : le quota gouverne
+  // uniquement la génération. Une vidéo dont le video_path existe est toujours lisible.
   const videoUrl = currentStory.video_path ? getStoryVideoUrl(currentStory.video_path) : null;
-  const hasVideoQuota = limits && subscription && (
-    limits.max_video_intros_per_period > 0 && 
-    subscription.video_intros_used_this_period < limits.max_video_intros_per_period
-  );
 
   const showVideoIntro =
     videoUrl &&
-    hasVideoQuota &&
     ((userSettings.readingPreferences?.playVideoIntro !== false && !introPlayedRef.current) || forcePlayVideo);
 
   return (
