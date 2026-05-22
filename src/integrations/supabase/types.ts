@@ -1336,6 +1336,7 @@ export type Database = {
       }
       users: {
         Row: {
+          audio_mode: string
           auto_scroll_enabled: boolean | null
           background_music_enabled: boolean | null
           created_at: string
@@ -1359,6 +1360,7 @@ export type Database = {
           video_intro_enabled: boolean | null
         }
         Insert: {
+          audio_mode?: string
           auto_scroll_enabled?: boolean | null
           background_music_enabled?: boolean | null
           created_at?: string
@@ -1382,6 +1384,7 @@ export type Database = {
           video_intro_enabled?: boolean | null
         }
         Update: {
+          audio_mode?: string
           auto_scroll_enabled?: boolean | null
           background_music_enabled?: boolean | null
           created_at?: string
