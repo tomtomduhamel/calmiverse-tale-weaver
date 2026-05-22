@@ -58,6 +58,8 @@ const Landing = lazy(() => import("./pages/Landing"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
 const CheckoutCancelled = lazy(() => import("./pages/CheckoutCancelled"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const RoutinesPage = lazy(() => import("./pages/RoutinesPage"));
+const RoutineFormPage = lazy(() => import("./pages/RoutineFormPage"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 import CookieConsent from "@/components/CookieConsent";
@@ -231,6 +233,9 @@ function App() {
                   <Route path="create-story-titles" element={<CreateStoryTitles />} />
                   <Route path="create-story/step-1" element={<CreateStoryStep1 />} />
                   <Route path="subscription" element={<Subscription />} />
+                  <Route path="routines" element={<RoutinesPage />} />
+                  <Route path="routines/new" element={<RoutineFormPage />} />
+                  <Route path="routines/:id" element={<RoutineFormPage />} />
                   <Route path="test-connection" element={<TestConnection />} />
                   <Route path="diagnostic-connection" element={<DiagnosticConnection />} />
                   <Route path="admin/prompts" element={<AdminGuard><PromptAdmin /></AdminGuard>} />

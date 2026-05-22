@@ -118,3 +118,9 @@ verify_jwt = true
 [functions.superadmin-stripe-fetch]
 verify_jwt = true
 
+[functions.assemble-story-payload]
+verify_jwt = false
+
+[functions.due-story-routines]
+verify_jwt = false
+

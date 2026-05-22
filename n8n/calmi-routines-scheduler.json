@@ -1,0 +1,530 @@
+{
+  "name": "Calmi — Routines Histoires Auto",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Toutes les 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/due-story-routines",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": false
+            }
+          }
+        }
+      },
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "Réclamer les routines dues",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [320, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-jobs-gt-0",
+              "leftValue": "={{ $json.processed }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-0003-0003-000000000003",
+      "name": "Des jobs à traiter ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [540, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "jobs",
+        "options": {
+          "disableDotNotation": false,
+          "destinationFieldName": "",
+          "include": "noOtherFields"
+        }
+      },
+      "id": "a1b2c3d4-0004-0004-0004-000000000004",
+      "name": "Éclater les jobs",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [760, 200]
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "cond-fast",
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "fast",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "fast"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "cond-guided",
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "guided",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "guided"
+            }
+          ]
+        },
+        "fallbackOutput": "none",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0005-0005-0005-000000000005",
+      "name": "Mode fast ou guided ?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [980, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.assembleUrl }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ mode: 'fast', fastStoryPromptKey: $json.fastStoryPromptKey, durationMinutes: $json.durationMinutes, generateVideo: $json.generateVideo, userId: $json.userId }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a1b2c3d4-0006-0006-0006-000000000006",
+      "name": "Assembler payload (fast)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Mode fast ou guided ?').item.json.storyWebhookUrl }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Calmi-Webhook-Secret",
+              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "a1b2c3d4-0007-0007-0007-000000000007",
+      "name": "Déclencher histoire (fast)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1420, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.titleWebhookUrl }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Calmi-Webhook-Secret",
+              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.titlePayload) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a1b2c3d4-0008-0008-0008-000000000008",
+      "name": "Générer les titres",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 320]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-title",
+              "name": "selectedTitle",
+              "value": "={{ $json.title_1 ?? $json.titles?.[0] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-routineId",
+              "name": "routineId",
+              "value": "={{ $('Mode fast ou guided ?').item.json.routineId }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-userId",
+              "name": "userId",
+              "value": "={{ $('Mode fast ou guided ?').item.json.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-objective",
+              "name": "objective",
+              "value": "={{ $('Mode fast ou guided ?').item.json.objective }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-childrenIds",
+              "name": "childrenIds",
+              "value": "={{ $('Mode fast ou guided ?').item.json.childrenIds }}",
+              "type": "array"
+            },
+            {
+              "id": "assign-duration",
+              "name": "durationMinutes",
+              "value": "={{ $('Mode fast ou guided ?').item.json.durationMinutes }}",
+              "type": "number"
+            },
+            {
+              "id": "assign-video",
+              "name": "generateVideo",
+              "value": "={{ $('Mode fast ou guided ?').item.json.generateVideo }}",
+              "type": "boolean"
+            },
+            {
+              "id": "assign-assembleUrl",
+              "name": "assembleUrl",
+              "value": "={{ $('Mode fast ou guided ?').item.json.assembleUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-storyUrl",
+              "name": "storyWebhookUrl",
+              "value": "={{ $('Mode fast ou guided ?').item.json.storyWebhookUrl }}",
+              "type": "string"
+            }
+          ]
+        },
+        "include": "none",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0009-0009-0009-000000000009",
+      "name": "Préparer params (guided)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1420, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.assembleUrl }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ mode: 'guided', objective: $json.objective, childrenIds: $json.childrenIds, selectedTitle: $json.selectedTitle, durationMinutes: $json.durationMinutes, generateVideo: $json.generateVideo, userId: $json.userId }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a1b2c3d4-0010-0010-0010-000000000010",
+      "name": "Assembler payload (guided)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1640, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Préparer params (guided)').item.json.storyWebhookUrl }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Calmi-Webhook-Secret",
+              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "a1b2c3d4-0011-0011-0011-000000000011",
+      "name": "Déclencher histoire (guided)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1860, 320]
+    },
+    {
+      "parameters": {},
+      "id": "a1b2c3d4-0012-0012-0012-000000000012",
+      "name": "Aucun job (fin)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [760, 420]
+    }
+  ],
+  "connections": {
+    "Toutes les 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Réclamer les routines dues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Réclamer les routines dues": {
+      "main": [
+        [
+          {
+            "node": "Des jobs à traiter ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Des jobs à traiter ?": {
+      "main": [
+        [
+          {
+            "node": "Éclater les jobs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aucun job (fin)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Éclater les jobs": {
+      "main": [
+        [
+          {
+            "node": "Mode fast ou guided ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode fast ou guided ?": {
+      "main": [
+        [
+          {
+            "node": "Assembler payload (fast)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Générer les titres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assembler payload (fast)": {
+      "main": [
+        [
+          {
+            "node": "Déclencher histoire (fast)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Générer les titres": {
+      "main": [
+        [
+          {
+            "node": "Préparer params (guided)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer params (guided)": {
+      "main": [
+        [
+          {
+            "node": "Assembler payload (guided)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assembler payload (guided)": {
+      "main": [
+        [
+          {
+            "node": "Déclencher histoire (guided)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": ""
+  }
+}

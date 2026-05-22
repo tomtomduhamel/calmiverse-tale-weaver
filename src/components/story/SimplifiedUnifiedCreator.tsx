@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, CalendarClock } from "lucide-react";
 import type { Child } from "@/types/child";
 import type { Story } from "@/types/story";
 import { useStoryObjectives } from "@/hooks/useStoryObjectives";
@@ -25,6 +26,8 @@ const SimplifiedUnifiedCreator: React.FC<SimplifiedUnifiedCreatorProps> = ({
   onCreateChild,
   onStoryCreated,
 }) => {
+  const navigate = useNavigate();
+
   // États simples et directs
   const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
   const [selectedObjective, setSelectedObjective] = useState<string>("");
@@ -266,6 +269,19 @@ const SimplifiedUnifiedCreator: React.FC<SimplifiedUnifiedCreatorProps> = ({
           )}
         </Button>
       </form>
+
+      {/* ── Accès aux routines ──────────────────────────────────────────── */}
+      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full text-sm text-muted-foreground hover:text-primary gap-2"
+          onClick={() => navigate('/app/routines')}
+        >
+          <CalendarClock className="h-4 w-4" />
+          Automatiser avec les routines
+        </Button>
+      </div>
     </div>
   );
 };
