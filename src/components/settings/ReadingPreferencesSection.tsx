@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserSettings } from "@/types/user-settings";
-import { Snail, Turtle, Rabbit, RotateCcw, Lock, Wand2 } from "lucide-react";
+import { Snail, Turtle, Rabbit, RotateCcw, Lock, Wand2, Volume2 } from "lucide-react";
 import { useSubscription } from "@/hooks/subscription/useSubscription";
+import { useFeatureAccess } from "@/hooks/subscription/useFeatureAccess";
 
 // Valeurs par défaut des vitesses
 const DEFAULT_SPEEDS = {
@@ -36,7 +37,10 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
   onUpdateSettings
 }) => {
   const { limits } = useSubscription();
+  const { hasAccess } = useFeatureAccess();
   const canPlayVideoIntro = (limits?.max_video_intros_per_period ?? 0) > 0;
+  const canUsePremiumVoice = hasAccess('audio_generation');
+  const audioMode = userSettings.readingPreferences?.audioMode ?? 'browser';
   
   // État pour savoir quel champ est en cours d'édition
   const [editingKey, setEditingKey] = useState<'slow' | 'normal' | 'fast' | null>(null);
@@ -68,6 +72,18 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
       readingPreferences: {
         ...userSettings.readingPreferences,
         immersiveReadingMode: value
+      }
+    });
+  };
+
+  // Gérer le changement du moteur de lecture audio
+  const handleAudioModeChange = async (value: 'browser' | 'premium') => {
+    // Sécurité : un non-premium ne peut pas activer la voix premium
+    if (value === 'premium' && !canUsePremiumVoice) return;
+    await onUpdateSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        audioMode: value
       }
     });
   };
@@ -224,6 +240,54 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
           <div className="text-sm text-muted-foreground">
             Activer la musique de fond lors de la lecture des histoires
           </div>
+        </div>
+
+        {/* Option Voix de lecture audio */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Volume2 className="h-5 w-5 text-primary" />
+                <Label htmlFor="audio-mode" className="text-base font-medium">
+                  Voix de lecture audio
+                </Label>
+              </div>
+              <div className="text-sm text-muted-foreground mr-4">
+                Choisissez la voix utilisée pour lire l'histoire à voix haute.
+              </div>
+            </div>
+            <div className="w-48 xl:w-56">
+              <Select
+                value={audioMode}
+                onValueChange={(value) => handleAudioModeChange(value as 'browser' | 'premium')}
+                disabled={isLoading}
+              >
+                <SelectTrigger id="audio-mode">
+                  <SelectValue placeholder="Sélectionner une voix" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="browser">Voix du navigateur (gratuit)</SelectItem>
+                  <SelectItem value="premium" disabled={!canUsePremiumVoice}>
+                    <span className="flex items-center gap-2">
+                      Voix premium
+                      {!canUsePremiumVoice && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {audioMode === 'browser' && (
+            <div className="text-xs text-muted-foreground">
+              La voix du navigateur est gratuite mais sa qualité dépend de votre appareil.
+              Sur mobile, la lecture peut s'interrompre si l'écran se verrouille.
+            </div>
+          )}
+          {!canUsePremiumVoice && (
+            <div className="text-sm text-primary font-medium">
+              La voix premium est disponible avec le plan Calmix.
+            </div>
+          )}
         </div>
 
         {/* Option Vidéo d'introduction */}

@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share, Copy, Check } from "lucide-react";
-import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
+import { StoryAudioControl } from "./reader/StoryAudioControl";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 import { MarkAsReadButton } from "./reader/MarkAsReadButton";
 import { ShareStoryManager } from "./ShareStoryManager";
@@ -77,7 +77,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             
             {/* 1. Génération audio - compact */}
             <div className="shrink-0">
-              <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
+              <StoryAudioControl storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
             </div>
 
             {/* Séparateur visuel */}
@@ -154,9 +154,9 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             
             {/* Ligne 1 : Audio - centré */}
             <div className="flex items-center justify-center">
-              <N8nAudioPlayer 
-                storyId={storyId} 
-                text={story.content} 
+              <StoryAudioControl
+                storyId={storyId}
+                text={story.content}
                 isDarkMode={isDarkMode}
                 compact={true}
               />
