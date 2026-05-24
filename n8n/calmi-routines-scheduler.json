@@ -28,7 +28,7 @@
           "parameters": [
             {
               "name": "x-webhook-secret",
-              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
             },
             {
               "name": "Content-Type",
@@ -171,7 +171,7 @@
           "parameters": [
             {
               "name": "x-webhook-secret",
-              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
             },
             {
               "name": "Content-Type",
@@ -203,7 +203,7 @@
           "parameters": [
             {
               "name": "Calmi-Webhook-Secret",
-              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
             },
             {
               "name": "Content-Type",
@@ -235,7 +235,7 @@
           "parameters": [
             {
               "name": "Calmi-Webhook-Secret",
-              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
             },
             {
               "name": "Content-Type",
@@ -338,7 +338,7 @@
           "parameters": [
             {
               "name": "x-webhook-secret",
-              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
             },
             {
               "name": "Content-Type",
@@ -370,7 +370,7 @@
           "parameters": [
             {
               "name": "Calmi-Webhook-Secret",
-              "value": "={{ $vars.N8N_WEBHOOK_SECRET }}"
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
             },
             {
               "name": "Content-Type",
