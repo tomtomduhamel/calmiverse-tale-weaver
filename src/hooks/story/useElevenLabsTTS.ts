@@ -111,7 +111,7 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
 
     setIsLoading(true);
     setError(null);
-    setGenerationProgress('Connexion à ElevenLabs...');
+    setGenerationProgress('Connexion au service audio...');
 
     try {
       console.log('🎙️ Début génération ElevenLabs...', { 
@@ -123,7 +123,7 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
       if (showProgressToast) {
         toast({
           title: "Génération en cours",
-          description: "Création de l'audio avec ElevenLabs...",
+          description: "Création de l'audio en cours...",
         });
       }
 
@@ -230,9 +230,9 @@ export const useElevenLabsTTS = (options: UseElevenLabsTTSOptions = {}) => {
       // Messages d'erreur spécifiques
       let userMessage = "Impossible de générer l'audio";
       if (errorMessage.includes('Clé API') || errorMessage.includes('invalide')) {
-        userMessage = "Configuration ElevenLabs incorrecte. Vérifiez votre clé API.";
+        userMessage = "Erreur de configuration audio. Contactez le support.";
       } else if (errorMessage.includes('quota') || errorMessage.includes('limite')) {
-        userMessage = "Limite ElevenLabs atteinte. Vérifiez votre plan ou attendez.";
+        userMessage = "Limite audio atteinte. Réessayez ultérieurement.";
       } else if (errorMessage.includes('Timeout') || errorMessage.includes('timeout')) {
         userMessage = "La génération a pris trop de temps. Essayez un texte plus court.";
       } else if (errorMessage.includes('connexion')) {

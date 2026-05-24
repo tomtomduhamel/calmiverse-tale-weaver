@@ -20,7 +20,7 @@ export interface UserSettings {
     customSpeedNormal: number; // vitesse personnalisée Tortue (50-200)
     customSpeedFast: number; // vitesse personnalisée Lapin (50-200)
     immersiveReadingMode: 'none' | 'pulse' | 'karaoke' | 'brush'; // Mode de lecture immersive
-    audioMode: 'browser' | 'premium'; // Mode audio : navigateur (gratuit) ou premium (n8n/ElevenLabs)
+    audioMode: 'browser' | 'premium'; // Mode audio : navigateur (gratuit) ou premium (généré par IA)
   };
 }
 

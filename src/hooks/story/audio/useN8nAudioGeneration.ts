@@ -331,7 +331,7 @@ export const useN8nAudioGeneration = () => {
         .eq('id', audioFile.id);
 
       toast({
-        title: `🎵 Génération audio lancée (${provider})`,
+        title: `🎵 Génération audio lancée`,
         description: "Votre audio est en cours de génération...",
       });
 

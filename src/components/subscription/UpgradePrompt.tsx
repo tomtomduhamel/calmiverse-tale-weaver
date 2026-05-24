@@ -66,7 +66,7 @@ const UpgradePrompt: React.FC<UpgradePromptProps> = ({
         ];
       case 'audio':
         return [
-          'Génération audio avec ElevenLabs',
+          'Génération audio haute qualité',
           'Histoires racontées avec des voix naturelles',
           'Expérience immersive pour les enfants'
         ];

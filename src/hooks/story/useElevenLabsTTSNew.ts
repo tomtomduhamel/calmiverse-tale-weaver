@@ -44,7 +44,7 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
       }
 
       console.log('✅ [TTS] Connectivity OK:', connectTest);
-      setGenerationProgress("Génération audio ElevenLabs...");
+      setGenerationProgress("Génération audio en cours...");
 
       const { data, error } = await supabase.functions.invoke('tts-elevenlabs', {
         body: {
@@ -56,7 +56,7 @@ export const useElevenLabsTTSNew = ({ voiceId, modelId }: TTSHookProps = {}) => 
 
       if (error) {
         console.error('❌ [TTS] ElevenLabs error:', error);
-        throw new Error(error.message || 'Erreur ElevenLabs');
+        throw new Error(error.message || 'Erreur de génération audio');
       }
 
       if (!data?.success) {

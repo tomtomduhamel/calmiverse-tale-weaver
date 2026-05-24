@@ -55,7 +55,7 @@ export const AudioSection: React.FC<AudioSectionProps> = ({
       id: 'premium',
       icon: <Sparkles className="h-5 w-5" />,
       label: 'Audio premium',
-      description: 'Voix haute qualité générée par IA (ElevenLabs), disponible à tout moment.',
+      description: 'Voix haute qualité générée par IA, disponible à tout moment.',
       badge: 'Calmix',
       locked: !canUsePremiumAudio,
     },
