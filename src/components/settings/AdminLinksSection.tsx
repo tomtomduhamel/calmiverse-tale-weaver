@@ -20,42 +20,42 @@ export const AdminLinksSection = () => {
       title: 'Superadmin · Billing',
       description: 'Pilotage Stripe, abonnés et webhooks',
       icon: CreditCard,
-      path: '/superadmin',
+      path: '/app/superadmin',
       color: 'text-primary'
     }] : []),
     {
       title: 'Gestion Beta Testeurs',
       description: 'Valider les demandes et gérer les codes d\'invitation',
       icon: Users,
-      path: '/admin/beta-testers',
+      path: '/app/admin/beta-testers',
       color: 'text-blue-500'
     },
     {
       title: 'Gestion Prompts',
       description: 'Modifier les templates de prompts IA',
       icon: FileText,
-      path: '/admin/prompts',
+      path: '/app/admin/prompts',
       color: 'text-green-500'
     },
     {
       title: 'Configuration TTS',
       description: 'Paramètres de génération audio',
       icon: Volume2,
-      path: '/admin/tts-config',
+      path: '/app/admin/tts-config',
       color: 'text-purple-500'
     },
     {
       title: 'Musiques de fond',
       description: 'Uploader et gérer les musiques d\'ambiance',
       icon: Music,
-      path: '/admin/sounds',
+      path: '/app/admin/sounds',
       color: 'text-pink-500'
     },
     {
       title: 'Feedback Utilisateurs',
       description: 'Consulter les retours utilisateurs',
       icon: MessageSquare,
-      path: '/admin/feedback',
+      path: '/app/admin/feedback',
       color: 'text-orange-500'
     }
   ];
