@@ -866,6 +866,83 @@ export type Database = {
           },
         ]
       }
+      story_schedules: {
+        Row: {
+          child_ids: string[]
+          created_at: string
+          days_of_week: number[]
+          delivery_time: string
+          duration_minutes: number
+          family_id: string | null
+          id: string
+          is_active: boolean
+          label: string
+          last_skip_reason: string | null
+          last_triggered_at: string | null
+          next_trigger_at: string | null
+          objective: string | null
+          pause_until: string | null
+          prompt_key: string | null
+          recurrence_type: string
+          story_mode: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          child_ids?: string[]
+          created_at?: string
+          days_of_week?: number[]
+          delivery_time: string
+          duration_minutes?: number
+          family_id?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          last_skip_reason?: string | null
+          last_triggered_at?: string | null
+          next_trigger_at?: string | null
+          objective?: string | null
+          pause_until?: string | null
+          prompt_key?: string | null
+          recurrence_type: string
+          story_mode: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          child_ids?: string[]
+          created_at?: string
+          days_of_week?: number[]
+          delivery_time?: string
+          duration_minutes?: number
+          family_id?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          last_skip_reason?: string | null
+          last_triggered_at?: string | null
+          next_trigger_at?: string | null
+          objective?: string | null
+          pause_until?: string | null
+          prompt_key?: string | null
+          recurrence_type?: string
+          story_mode?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_schedules_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       story_series: {
         Row: {
           author_id: string
@@ -1336,6 +1413,7 @@ export type Database = {
       }
       users: {
         Row: {
+          audio_mode: string
           auto_scroll_enabled: boolean | null
           background_music_enabled: boolean | null
           created_at: string
@@ -1359,6 +1437,7 @@ export type Database = {
           video_intro_enabled: boolean | null
         }
         Insert: {
+          audio_mode?: string
           auto_scroll_enabled?: boolean | null
           background_music_enabled?: boolean | null
           created_at?: string
@@ -1382,6 +1461,7 @@ export type Database = {
           video_intro_enabled?: boolean | null
         }
         Update: {
+          audio_mode?: string
           auto_scroll_enabled?: boolean | null
           background_music_enabled?: boolean | null
           created_at?: string
