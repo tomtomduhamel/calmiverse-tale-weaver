@@ -26,9 +26,52 @@ export const usePWA = () => {
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
   /**
-   * Check if a newer version is deployed by fetching /version.json.
-   * Returns { updateAvailable, checkFailed } so callers can distinguish
-   * a genuine "up to date" from a failed network/server request.
+   * Primary update signal: ask the Service Worker to re-fetch its own script
+   * (sw.js) from the network, bypassing ALL caches including the SW cache itself.
+   * Vite always generates a new sw.js when any file changes (precache manifest
+   * contains content hashes), so this reliably detects any new deployment.
+   *
+   * Returns true if a new SW was found (updatefound event fired within timeout).
+   */
+  const checkSwUpdate = useCallback(async (timeoutMs = 8000): Promise<boolean> => {
+    if (!('serviceWorker' in navigator)) return false;
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) return false;
+
+      const swUpdateFound = await new Promise<boolean>((resolve) => {
+        let settled = false;
+        const settle = (result: boolean) => {
+          if (settled) return;
+          settled = true;
+          reg.removeEventListener('updatefound', onUpdateFound);
+          resolve(result);
+        };
+        const onUpdateFound = () => settle(true);
+        reg.addEventListener('updatefound', onUpdateFound);
+        // Safety net: if no updatefound within timeout, assume no SW update
+        setTimeout(() => settle(false), timeoutMs);
+        // This call goes directly to the network for sw.js, bypassing all caches
+        reg.update().catch(() => settle(false));
+      });
+
+      if (swUpdateFound) {
+        console.log('[usePWA] 🆕 New Service Worker detected via reg.update()');
+      }
+      return swUpdateFound;
+    } catch (e) {
+      console.warn('[usePWA] reg.update() failed:', e);
+      return false;
+    }
+  }, []);
+
+  /**
+   * Secondary update signal: fetch /version.json from the server and compare
+   * version + buildNumber against the values embedded in the running bundle.
+   *
+   * NOTE: this signal can return a false negative when the *old* Service Worker
+   * still controls the page and intercepts the fetch with stale cached data.
+   * Always combine with checkSwUpdate() for a reliable manual check.
    *
    * Two independent signals trigger an update:
    *   1. version string mismatch  (semver+buildId)
@@ -39,53 +82,70 @@ export const usePWA = () => {
   const checkVersionFromServer = useCallback(async (manual = false): Promise<{ updateAvailable: boolean; checkFailed: boolean }> => {
     try {
       if (manual) setIsCheckingUpdate(true);
-      const response = await fetch(`/version.json?t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
 
-      if (!response.ok) {
-        console.warn('[usePWA] version.json not available (HTTP', response.status + ')');
-        return { updateAvailable: false, checkFailed: true };
+      // --- Signal A: SW script update (primary, bypasses all SW caches) ---
+      // Run in parallel with the version.json fetch; don't await here yet.
+      const swUpdatePromise = manual ? checkSwUpdate() : Promise.resolve(false);
+
+      // --- Signal B: version.json comparison (secondary) ---
+      let versionUpdateAvailable = false;
+      let versionCheckFailed = false;
+      try {
+        const response = await fetch(`/version.json?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+
+        if (!response.ok) {
+          console.warn('[usePWA] version.json not available (HTTP', response.status + ')');
+          versionCheckFailed = true;
+        } else {
+          const data = await response.json();
+          const serverVersion: string | undefined = data.version;
+          const serverBuild: string | undefined = data.buildNumber;
+          const localVersion = APP_CONFIG.APP_VERSION;
+          const localBuild = APP_CONFIG.APP_BUILD_NUMBER;
+
+          const versionMismatch = Boolean(serverVersion && serverVersion !== localVersion);
+          const buildAdvanced = Boolean(serverBuild && localBuild && serverBuild > localBuild);
+
+          if (versionMismatch || buildAdvanced) {
+            console.log(
+              `[usePWA] 🆕 version.json mismatch: ${localVersion} → ${serverVersion ?? '?'} | build: ${localBuild ?? '?'} → ${serverBuild ?? '?'}`
+            );
+            versionUpdateAvailable = true;
+          }
+        }
+      } catch (e) {
+        console.warn('[usePWA] version.json fetch failed:', e);
+        versionCheckFailed = true;
       }
 
-      const data = await response.json();
-      const serverVersion: string | undefined = data.version;
-      const serverBuild: string | undefined = data.buildNumber;
-      const localVersion = APP_CONFIG.APP_VERSION;
-      const localBuild = APP_CONFIG.APP_BUILD_NUMBER;
+      // --- Combine signals ---
+      const swUpdate = await swUpdatePromise;
+      const updateAvailable = swUpdate || versionUpdateAvailable;
+      const checkFailed = !swUpdate && versionCheckFailed; // only truly failed if SW check also gave nothing
 
-      // Signal 1: version string changed (catches semver bumps and buildId changes)
-      const versionMismatch = Boolean(serverVersion && serverVersion !== localVersion);
-      // Signal 2: build timestamp advanced (catches re-deploys with same version string)
-      // String comparison works for YYMMDD.HHMM format (zero-padded, lexicographically monotone).
-      const buildAdvanced = Boolean(serverBuild && localBuild && serverBuild > localBuild);
-
-      if (versionMismatch || buildAdvanced) {
-        console.log(
-          `[usePWA] 🆕 New version detected! version: ${localVersion} → ${serverVersion ?? '?'} | build: ${localBuild ?? '?'} → ${serverBuild ?? '?'}`
-        );
+      if (updateAvailable) {
+        console.log(`[usePWA] 🆕 Update detected — SW: ${swUpdate}, version.json: ${versionUpdateAvailable}`);
         setState(prev => ({ ...prev, updateAvailable: true }));
         track('pwa_update_available');
-
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
         }
         return { updateAvailable: true, checkFailed: false };
       }
-      return { updateAvailable: false, checkFailed: false };
-    } catch (error) {
-      console.warn('[usePWA] Version check failed:', error);
-      return { updateAvailable: false, checkFailed: true };
+
+      return { updateAvailable: false, checkFailed };
     } finally {
       if (manual) setIsCheckingUpdate(false);
     }
-  }, [track]);
+  }, [track, checkSwUpdate]);
 
   useEffect(() => {
     // Skip in preview iframe
