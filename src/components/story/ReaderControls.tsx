@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bookmark, CheckCircle, BookOpenCheck, Sun, Moon, Share, Copy, Check } from "lucide-react";
 import { N8nAudioPlayer } from "./reader/N8nAudioPlayer";
+import { TextToSpeech } from "./TextToSpeech";
 import { TechnicalDiagnosticButton } from "./reader/TechnicalDiagnosticButton";
 import { MarkAsReadButton } from "./reader/MarkAsReadButton";
 import { ShareStoryManager } from "./ShareStoryManager";
@@ -13,6 +14,8 @@ import BackgroundSoundButton from "./reader/BackgroundSoundButton";
 import { extractObjectiveValue } from "@/utils/objectiveUtils";
 import { ReadingSpeedSelector } from "./reader/controls/ReadingSpeedSelector";
 import { toast } from "@/hooks/use-toast";
+import { useUserSettings } from "@/hooks/settings/useUserSettings";
+import { useSubscription } from "@/hooks/subscription/useSubscription";
 interface ReaderControlsProps {
   fontSize: number;
   setFontSize: (size: number) => void;
@@ -39,6 +42,14 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const { userSettings } = useUserSettings();
+  const { limits } = useSubscription();
+
+  // Utiliser le mode audio choisi dans les paramètres,
+  // mais forcer 'browser' si l'abonnement ne donne pas accès à l'audio premium
+  const canUsePremiumAudio = (limits?.audio_generations_per_month ?? 0) > 0;
+  const preferredAudioMode = userSettings.readingPreferences?.audioMode ?? 'browser';
+  const audioMode = (preferredAudioMode === 'premium' && canUsePremiumAudio) ? 'premium' : 'browser';
   const {
     showShareDialog,
     openShareDialog,
@@ -77,7 +88,11 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             
             {/* 1. Génération audio - compact */}
             <div className="shrink-0">
-              <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
+              {audioMode === 'premium' ? (
+                <N8nAudioPlayer storyId={storyId} text={story.content} isDarkMode={isDarkMode} />
+              ) : (
+                <TextToSpeech text={story.content} isDarkMode={isDarkMode} />
+              )}
             </div>
 
             {/* Séparateur visuel */}
@@ -154,12 +169,16 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             
             {/* Ligne 1 : Audio - centré */}
             <div className="flex items-center justify-center">
-              <N8nAudioPlayer 
-                storyId={storyId} 
-                text={story.content} 
-                isDarkMode={isDarkMode}
-                compact={true}
-              />
+              {audioMode === 'premium' ? (
+                <N8nAudioPlayer
+                  storyId={storyId}
+                  text={story.content}
+                  isDarkMode={isDarkMode}
+                  compact={true}
+                />
+              ) : (
+                <TextToSpeech text={story.content} isDarkMode={isDarkMode} />
+              )}
             </div>
 
             {/* Ligne 2 : Vitesse + Musique + Lu - tous centrés */}

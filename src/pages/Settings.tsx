@@ -9,6 +9,7 @@ import { NotificationsSection } from '@/components/settings/NotificationsSection
 import { SecuritySection } from '@/components/settings/SecuritySection';
 import { AccountManagementSection } from '@/components/settings/AccountManagementSection';
 import { ReadingPreferencesSection } from '@/components/settings/ReadingPreferencesSection';
+import { AudioSection } from '@/components/settings/AudioSection';
 import { ThemeSection } from '@/components/settings/ThemeSection';
 import { AdminLinksSection } from '@/components/settings/AdminLinksSection';
 import { FamilySection } from '@/components/settings/FamilySection';
@@ -184,6 +185,12 @@ const Settings = () => {
       <ThemeSection />
 
       <ReadingPreferencesSection
+        userSettings={userSettings}
+        isLoading={isSubmitting}
+        onUpdateSettings={updateUserSettings}
+      />
+
+      <AudioSection
         userSettings={userSettings}
         isLoading={isSubmitting}
         onUpdateSettings={updateUserSettings}
