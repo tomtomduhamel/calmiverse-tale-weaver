@@ -382,6 +382,17 @@ const SimplifiedUnifiedCreator: React.FC<SimplifiedUnifiedCreatorProps> = ({
           )}
         </Button>
       </form>
+
+      {/* Lien discret vers la gestion des routines existantes */}
+      <div className="mt-4 text-center">
+        <button
+          type="button"
+          onClick={() => navigate("/app/routines")}
+          className="text-xs text-muted-foreground hover:text-primary transition-colors underline-offset-2 hover:underline"
+        >
+          Gérer mes routines existantes
+        </button>
+      </div>
     </div>
   );
 };
