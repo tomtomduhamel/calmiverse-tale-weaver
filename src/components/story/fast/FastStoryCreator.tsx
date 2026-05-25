@@ -9,7 +9,7 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from '@/components/ui/drawer';
-import { Loader2, Sparkles, Video, BookOpen } from 'lucide-react';
+import { Loader2, Sparkles, Video, BookOpen, CalendarClock, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import FastStoryCard from './FastStoryCard';
@@ -22,11 +22,22 @@ import {
 import { useN8nFastStory } from '@/hooks/stories/useN8nFastStory';
 import { useQuotaChecker } from '@/hooks/subscription/useQuotaChecker';
 import { useSubscription } from '@/hooks/subscription/useSubscription';
+import { useStoryRoutines } from '@/hooks/useStoryRoutines';
 import UpgradePrompt from '@/components/subscription/UpgradePrompt';
 import type { StoryDurationMinutes } from '@/types/story';
 import { STORY_DURATION_OPTIONS } from '@/types/story';
 
 const DURATION_OPTIONS = STORY_DURATION_OPTIONS;
+
+const DAY_OPTIONS = [
+  { label: 'L', value: 1 },
+  { label: 'M', value: 2 },
+  { label: 'M', value: 3 },
+  { label: 'J', value: 4 },
+  { label: 'V', value: 5 },
+  { label: 'S', value: 6 },
+  { label: 'D', value: 7 },
+];
 
 const FastStoryCreator: React.FC = () => {
   const { toast } = useToast();
@@ -34,12 +45,19 @@ const FastStoryCreator: React.FC = () => {
   const { createFastStory, isCreatingStory } = useN8nFastStory();
   const { validateAction, incrementUsage } = useQuotaChecker();
   const { subscription, limits } = useSubscription();
+  const { createRoutine, hasAutoCreation, checkingAccess } = useStoryRoutines();
 
   const [selectedItem, setSelectedItem] = useState<FastStoryItem | null>(null);
   const [generateVideo, setGenerateVideo] = useState(false);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [quotaMessage, setQuotaMessage] = useState('');
   const isSubmittingRef = useRef(false);
+
+  // Routine state
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleDays, setScheduleDays] = useState<number[]>([]);
+  const [scheduleTime, setScheduleTime] = useState('20:30');
+  const [creatingRoutine, setCreatingRoutine] = useState(false);
 
   const canGenerateVideo = (limits?.max_video_intros_per_period || 0) > 0;
 
@@ -49,6 +67,23 @@ const FastStoryCreator: React.FC = () => {
 
   const handleCloseDrawer = () => {
     setSelectedItem(null);
+    setScheduleEnabled(false);
+    setScheduleDays([]);
+    setScheduleTime('20:30');
+  };
+
+  const handleScheduleToggle = (checked: boolean) => {
+    if (checked && hasAutoCreation === false) {
+      navigate('/app/subscription');
+      return;
+    }
+    setScheduleEnabled(checked);
+  };
+
+  const toggleDay = (day: number) => {
+    setScheduleDays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
   };
 
   const handleCreateStory = useCallback(async (durationMinutes: StoryDurationMinutes) => {
@@ -82,6 +117,36 @@ const FastStoryCreator: React.FC = () => {
         }
       }
 
+      // Créer la routine si activée
+      if (scheduleEnabled && scheduleDays.length > 0) {
+        setCreatingRoutine(true);
+        try {
+          await createRoutine({
+            mode: 'fast',
+            fast_story_prompt_key: selectedItem.promptKey,
+            duration_minutes: durationMinutes,
+            generate_video: useVideo,
+            schedule_type: 'weekly',
+            days_of_week: scheduleDays,
+            time_of_day: scheduleTime,
+            timezone: 'Europe/Paris',
+            is_active: true,
+          });
+          toast({
+            title: '🎉 Routine créée !',
+            description: `${scheduleDays.length} jour(s)/semaine à ${scheduleTime} — histoires automatiques activées.`,
+          });
+        } catch {
+          toast({
+            title: 'Routine non créée',
+            description: 'Une erreur est survenue. Réessayez depuis Gérer mes routines.',
+            variant: 'destructive',
+          });
+        } finally {
+          setCreatingRoutine(false);
+        }
+      }
+
       await createFastStory({
         promptKey: selectedItem.promptKey,
         durationMinutes,
@@ -107,7 +172,7 @@ const FastStoryCreator: React.FC = () => {
     } finally {
       isSubmittingRef.current = false;
     }
-  }, [selectedItem, generateVideo, isCreatingStory, validateAction, createFastStory, incrementUsage, toast, navigate]);
+  }, [selectedItem, generateVideo, scheduleEnabled, scheduleDays, scheduleTime, isCreatingStory, validateAction, createFastStory, createRoutine, incrementUsage, toast, navigate]);
 
   const renderCardGrid = (items: FastStoryItem[], label: string, color?: string) => (
     <div className="space-y-3">
@@ -200,7 +265,9 @@ const FastStoryCreator: React.FC = () => {
               </DrawerHeader>
 
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center mb-3 mt-2">
-                Quelle durée ?
+                {scheduleEnabled && scheduleDays.length > 0
+                  ? 'Choisir la durée et planifier'
+                  : 'Quelle durée ?'}
               </p>
 
               {/* Duration buttons */}
@@ -211,10 +278,15 @@ const FastStoryCreator: React.FC = () => {
                     variant="secondary"
                     className="h-12 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors"
                     onClick={() => handleCreateStory(duration)}
-                    disabled={isCreatingStory}
+                    disabled={isCreatingStory || creatingRoutine}
                   >
-                    {isCreatingStory ? (
+                    {isCreatingStory || creatingRoutine ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : scheduleEnabled && scheduleDays.length > 0 ? (
+                      <span className="flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        {duration} min
+                      </span>
                     ) : (
                       `${duration} min`
                     )}
@@ -237,6 +309,74 @@ const FastStoryCreator: React.FC = () => {
                   disabled={!canGenerateVideo || isCreatingStory}
                   className="data-[state=checked]:bg-primary"
                 />
+              </div>
+
+              {/* Routine toggle */}
+              <div className="rounded-xl bg-primary/5 border border-primary/10 px-4 py-3 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarClock className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">Répéter automatiquement</span>
+                    {!checkingAccess && hasAutoCreation === false && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                        <Lock className="h-3 w-3" />
+                        Calmix
+                      </span>
+                    )}
+                  </div>
+                  <Switch
+                    checked={scheduleEnabled}
+                    onCheckedChange={handleScheduleToggle}
+                    disabled={checkingAccess || isCreatingStory || creatingRoutine}
+                    aria-label="Activer la répétition automatique"
+                  />
+                </div>
+
+                {scheduleEnabled && (
+                  <div className="space-y-4 pt-1 border-t border-primary/10 animate-fade-in">
+                    {/* Jours */}
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Jours de la semaine
+                      </p>
+                      <div className="flex gap-1.5">
+                        {DAY_OPTIONS.map((day, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => toggleDay(day.value)}
+                            className={`w-9 h-9 rounded-full text-xs font-semibold transition-all duration-200 ${
+                              scheduleDays.includes(day.value)
+                                ? 'bg-primary text-primary-foreground shadow-sm scale-105'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            }`}
+                            aria-pressed={scheduleDays.includes(day.value)}
+                          >
+                            {day.label}
+                          </button>
+                        ))}
+                      </div>
+                      {scheduleDays.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          ~{Math.ceil(scheduleDays.length * 4.33)} histoires/mois
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Heure */}
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Heure
+                      </p>
+                      <input
+                        type="time"
+                        value={scheduleTime}
+                        onChange={(e) => setScheduleTime(e.target.value)}
+                        className="p-2 border border-border rounded-lg bg-background text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Quota info */}
