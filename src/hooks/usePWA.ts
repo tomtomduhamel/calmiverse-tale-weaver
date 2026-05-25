@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePWAAnalytics } from '@/hooks/usePWAAnalytics';
 import { isPreviewIframe } from '@/utils/previewDetection';
-import { APP_CONFIG } from '@/lib/config';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+/** How often we trigger reg.update() in the background. */
+const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PWAState {
   isInstalled: boolean;
@@ -10,36 +16,216 @@ interface PWAState {
   updateAvailable: boolean;
 }
 
-// Poll interval: check for updates every 5 minutes
-const VERSION_POLL_INTERVAL_MS = 5 * 60 * 1000;
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
+/**
+ * PWA update detection — reliable approach.
+ *
+ * WHY THIS DESIGN:
+ * The old approach relied on (a) `version.json` fetched from the CDN and
+ * (b) the `controllerchange` event to detect SW updates.  Both had
+ * systematic failure modes on Lovable's hosting:
+ *
+ *   • version.json CDN cache: Lovable's CDN does not honour `public/_headers`
+ *     (Netlify-only syntax), so version.json was served stale after deploys,
+ *     making the version comparison always return "up to date".
+ *
+ *   • controllerchange race condition: with `skipWaiting: true` in workbox,
+ *     the new SW auto-activated immediately on install.  If this happened
+ *     during the initial page load (before React's useEffect ran), the
+ *     controllerchange event was missed and updateAvailable stayed false.
+ *
+ * THE FIX:
+ *   1. `skipWaiting` removed from vite.config.ts → new SW waits in
+ *      `reg.waiting` instead of auto-activating.
+ *   2. We detect updates by checking `reg.waiting` directly — a synchronous,
+ *      persistent property, not a one-shot event.  No race condition possible.
+ *   3. We call `reg.update()` periodically to trigger fresh SW fetches.
+ *      When the SW content changes, the browser installs the new SW and
+ *      sets `reg.waiting`.  Our next periodic check (or the updatefound
+ *      listener) catches it immediately.
+ *   4. The update is only applied (SKIP_WAITING) when the user confirms
+ *      via the notification banner, never silently.
+ */
 export const usePWA = () => {
   const { track } = usePWAAnalytics();
+
   const [state, setState] = useState<PWAState>({
     isInstalled: false,
     isOnline: navigator.onLine,
     canInstall: false,
-    updateAvailable: false
+    updateAvailable: false,
   });
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
 
-  /**
-   * Primary update signal: ask the Service Worker to re-fetch its own script
-   * (sw.js) from the network, bypassing ALL caches including the SW cache itself.
-   * Vite always generates a new sw.js when any file changes (precache manifest
-   * contains content hashes), so this reliably detects any new deployment.
-   *
-   * Returns true if a new SW was found (updatefound event fired within timeout).
-   */
-  const checkSwUpdate = useCallback(async (timeoutMs = 8000): Promise<boolean> => {
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Guard: only call markUpdateAvailable once per session.
+  const updateMarkedRef = useRef(false);
+
+  // ── markUpdateAvailable ──────────────────────────────────────────────────
+
+  const markUpdateAvailable = useCallback(() => {
+    if (updateMarkedRef.current) return;
+    updateMarkedRef.current = true;
+    console.log('[usePWA] 🆕 Update available — waiting SW detected');
+    setState(prev => ({ ...prev, updateAvailable: true }));
+    track('pwa_update_available');
+    // Stop polling once an update is confirmed.
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  }, [track]);
+
+  // ── checkRegistration ────────────────────────────────────────────────────
+  //
+  // Core check: look at reg.waiting (reliable, no race condition), then
+  // trigger reg.update() so the browser re-fetches sw.js from the network.
+  // If the SW content has changed, the browser installs it and sets
+  // reg.waiting, which we catch via the `updatefound` listener below.
+
+  const checkRegistration = useCallback(async () => {
     if (!('serviceWorker' in navigator)) return false;
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       if (!reg) return false;
 
-      const swUpdateFound = await new Promise<boolean>((resolve) => {
+      // Primary signal: is there already a waiting SW?
+      if (reg.waiting) {
+        markUpdateAvailable();
+        return true;
+      }
+
+      // Secondary signal: ask the browser to re-fetch sw.js from the network.
+      // If the content changed, updatefound fires → statechange to 'installed'
+      // → reg.waiting is set → our updatefound listener (added in useEffect)
+      //   calls markUpdateAvailable().
+      reg.update().catch(() => {});
+      return false;
+    } catch {
+      return false;
+    }
+  }, [markUpdateAvailable]);
+
+  // ── Main effect ──────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (isPreviewIframe()) {
+      console.log('[usePWA] Preview mode: skipping update checks');
+      return;
+    }
+
+    // Detect install status
+    const isInstalled =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
+    setState(prev => ({ ...prev, isInstalled }));
+
+    if (!('serviceWorker' in navigator)) return;
+
+    // Set up SW listeners once the registration is available
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (!reg) return;
+
+      // Immediately check if a waiting SW already exists (e.g. was downloaded
+      // in a previous session and is sitting in reg.waiting).
+      if (reg.waiting) {
+        console.log('[usePWA] 🆕 Waiting SW found on mount');
+        markUpdateAvailable();
+        return;
+      }
+
+      // Watch for new SW installations during this session.
+      // When the new SW reaches 'installed' state it sits in reg.waiting —
+      // we mark the update available so the user sees the banner.
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          // 'installed' means the SW is ready and waiting.
+          // We do NOT call skipWaiting here — that's the user's choice.
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('[usePWA] 🆕 New SW installed — now in waiting state');
+            markUpdateAvailable();
+          }
+        });
+      });
+    });
+
+    // Periodic update trigger: call reg.update() every POLL_INTERVAL_MS.
+    // Also checks reg.waiting each time in case we somehow missed the event.
+    pollIntervalRef.current = setInterval(checkRegistration, POLL_INTERVAL_MS);
+
+    // Initial check after the app stabilises (10 s after mount).
+    const initialTimeout = setTimeout(checkRegistration, 10_000);
+
+    // Re-trigger on window focus (user switches back to the tab) and on
+    // coming back online.
+    const onFocusOrOnline = () => checkRegistration();
+    window.addEventListener('focus', onFocusOrOnline);
+    window.addEventListener('online', onFocusOrOnline);
+
+    // Online / offline state
+    const handleOnline = () => {
+      setState(prev => ({ ...prev, isOnline: true }));
+      track('pwa_online');
+    };
+    const handleOffline = () => {
+      setState(prev => ({ ...prev, isOnline: false }));
+      track('pwa_offline');
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Install prompt
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setState(prev => ({ ...prev, canInstall: true }));
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      window.removeEventListener('focus', onFocusOrOnline);
+      window.removeEventListener('online', onFocusOrOnline);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, [checkRegistration, markUpdateAvailable, track]);
+
+  // ── checkForUpdate (manual — Settings page button) ───────────────────────
+
+  /**
+   * Called when the user clicks "Vérifier les mises à jour".
+   * 1. Check reg.waiting immediately.
+   * 2. If nothing, call reg.update() and wait up to 12 s for the new SW
+   *    to install (updatefound → statechange → 'installed' → reg.waiting).
+   * 3. Check reg.waiting again after the wait.
+   */
+  const checkForUpdate = useCallback(async (): Promise<{ updateAvailable: boolean; checkFailed: boolean }> => {
+    setIsCheckingUpdate(true);
+    try {
+      if (!('serviceWorker' in navigator)) {
+        return { updateAvailable: false, checkFailed: true };
+      }
+
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) {
+        return { updateAvailable: false, checkFailed: true };
+      }
+
+      // Step 1 — immediate reg.waiting check
+      if (reg.waiting) {
+        markUpdateAvailable();
+        return { updateAvailable: true, checkFailed: false };
+      }
+
+      // Step 2 — trigger a fresh SW fetch from the network and wait
+      const found = await new Promise<boolean>((resolve) => {
         let settled = false;
         const settle = (result: boolean) => {
           if (settled) return;
@@ -47,227 +233,60 @@ export const usePWA = () => {
           reg.removeEventListener('updatefound', onUpdateFound);
           resolve(result);
         };
-        const onUpdateFound = () => settle(true);
+
+        const onUpdateFound = () => {
+          const newWorker = reg.installing;
+          if (!newWorker) { settle(false); return; }
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed') {
+              settle(true);
+            }
+          });
+        };
+
         reg.addEventListener('updatefound', onUpdateFound);
-        // Safety net: if no updatefound within timeout, assume no SW update
-        setTimeout(() => settle(false), timeoutMs);
-        // This call goes directly to the network for sw.js, bypassing all caches
+        // Give the network fetch up to 12 seconds.
+        setTimeout(() => settle(false), 12_000);
         reg.update().catch(() => settle(false));
       });
 
-      if (swUpdateFound) {
-        console.log('[usePWA] 🆕 New Service Worker detected via reg.update()');
-      }
-      return swUpdateFound;
-    } catch (e) {
-      console.warn('[usePWA] reg.update() failed:', e);
-      return false;
-    }
-  }, []);
-
-  /**
-   * Secondary update signal: fetch /version.json from the server and compare
-   * version + buildNumber against the values embedded in the running bundle.
-   *
-   * NOTE: this signal can return a false negative when the *old* Service Worker
-   * still controls the page and intercepts the fetch with stale cached data.
-   * Always combine with checkSwUpdate() for a reliable manual check.
-   *
-   * Two independent signals trigger an update:
-   *   1. version string mismatch  (semver+buildId)
-   *   2. buildNumber increase     (YYMMDD.HHMM — always unique per build)
-   * Signal #2 guards against LOVABLE_BUILD_ID being a fixed env var that
-   * makes every deployment produce the same version string.
-   */
-  const checkVersionFromServer = useCallback(async (manual = false): Promise<{ updateAvailable: boolean; checkFailed: boolean }> => {
-    try {
-      if (manual) setIsCheckingUpdate(true);
-
-      // --- Signal A: SW script update (primary, bypasses all SW caches) ---
-      // Run in parallel with the version.json fetch; don't await here yet.
-      const swUpdatePromise = manual ? checkSwUpdate() : Promise.resolve(false);
-
-      // --- Signal B: version.json comparison (secondary) ---
-      let versionUpdateAvailable = false;
-      let versionCheckFailed = false;
-      try {
-        const response = await fetch(`/version.json?t=${Date.now()}`, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-
-        if (!response.ok) {
-          console.warn('[usePWA] version.json not available (HTTP', response.status + ')');
-          versionCheckFailed = true;
-        } else {
-          const data = await response.json();
-          const serverVersion: string | undefined = data.version;
-          const serverBuild: string | undefined = data.buildNumber;
-          const localVersion = APP_CONFIG.APP_VERSION;
-          const localBuild = APP_CONFIG.APP_BUILD_NUMBER;
-
-          const versionMismatch = Boolean(serverVersion && serverVersion !== localVersion);
-          const buildAdvanced = Boolean(serverBuild && localBuild && serverBuild > localBuild);
-
-          if (versionMismatch || buildAdvanced) {
-            console.log(
-              `[usePWA] 🆕 version.json mismatch: ${localVersion} → ${serverVersion ?? '?'} | build: ${localBuild ?? '?'} → ${serverBuild ?? '?'}`
-            );
-            versionUpdateAvailable = true;
-          }
-        }
-      } catch (e) {
-        console.warn('[usePWA] version.json fetch failed:', e);
-        versionCheckFailed = true;
-      }
-
-      // --- Combine signals ---
-      const swUpdate = await swUpdatePromise;
-      const updateAvailable = swUpdate || versionUpdateAvailable;
-      const checkFailed = !swUpdate && versionCheckFailed; // only truly failed if SW check also gave nothing
-
-      if (updateAvailable) {
-        console.log(`[usePWA] 🆕 Update detected — SW: ${swUpdate}, version.json: ${versionUpdateAvailable}`);
-        setState(prev => ({ ...prev, updateAvailable: true }));
-        track('pwa_update_available');
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = null;
-        }
+      if (found) {
+        markUpdateAvailable();
         return { updateAvailable: true, checkFailed: false };
       }
 
-      return { updateAvailable: false, checkFailed };
-    } finally {
-      if (manual) setIsCheckingUpdate(false);
-    }
-  }, [track, checkSwUpdate]);
-
-  useEffect(() => {
-    // Skip in preview iframe
-    if (isPreviewIframe()) {
-      console.log('[usePWA] Preview mode: skipping all update checks');
-      return;
-    }
-
-    // --- Install status ---
-    const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
-                       (window.navigator as any).standalone === true;
-    setState(prev => ({ ...prev, isInstalled }));
-
-    // --- SW controllerchange (legacy, kept as backup) ---
-    let swUpdateInterval: ReturnType<typeof setInterval> | null = null;
-    const triggerSkipWaiting = (reg: ServiceWorkerRegistration) => {
+      // Step 3 — one final check in case the SW installed between steps
       if (reg.waiting) {
-        console.log('[usePWA] 📨 Posting SKIP_WAITING to waiting SW');
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        markUpdateAvailable();
+        return { updateAvailable: true, checkFailed: false };
       }
-    };
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        setState(prev => ({ ...prev, updateAvailable: true }));
-        track('pwa_update_available');
-      });
-
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        if (!reg) return;
-        // If a waiting SW already exists, activate it now.
-        triggerSkipWaiting(reg);
-
-        // Watch for new SW installations and auto-skip waiting.
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          if (!newWorker) return;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('[usePWA] 🆕 New SW installed — skipping waiting');
-              triggerSkipWaiting(reg);
-              setState(prev => ({ ...prev, updateAvailable: true }));
-            }
-          });
-        });
-
-        // Force update checks periodically + on focus/online
-        const checkSW = () => reg.update().catch(() => {});
-        swUpdateInterval = setInterval(checkSW, VERSION_POLL_INTERVAL_MS);
-        const onFocus = () => checkSW();
-        window.addEventListener('focus', onFocus);
-        window.addEventListener('online', onFocus);
-        // Cleanup attached below via returned function (closure capture)
-        (window as any).__calmiSWCleanup = () => {
-          window.removeEventListener('focus', onFocus);
-          window.removeEventListener('online', onFocus);
-        };
-      });
+      return { updateAvailable: false, checkFailed: false };
+    } catch (e) {
+      console.warn('[usePWA] checkForUpdate failed:', e);
+      return { updateAvailable: false, checkFailed: true };
+    } finally {
+      setIsCheckingUpdate(false);
     }
+  }, [markUpdateAvailable]);
 
-    // --- Version polling (primary mechanism) ---
-    // Initial check after a short delay to let the app stabilize
-    const initialCheckTimeout = setTimeout(() => {
-      checkVersionFromServer();
-    }, 10_000); // 10 seconds after mount
-
-    // Then poll periodically
-    pollIntervalRef.current = setInterval(checkVersionFromServer, VERSION_POLL_INTERVAL_MS);
-
-    // --- Online/offline status ---
-    const handleOnline = () => {
-      setState(prev => ({ ...prev, isOnline: true }));
-      track('pwa_online');
-      // Re-check version when coming back online
-      checkVersionFromServer();
-    };
-    const handleOffline = () => {
-      setState(prev => ({ ...prev, isOnline: false }));
-      track('pwa_offline');
-    };
-
-    // --- Install prompt ---
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setState(prev => ({ ...prev, canInstall: true }));
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      clearTimeout(initialCheckTimeout);
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-      if (swUpdateInterval) clearInterval(swUpdateInterval);
-      if ((window as any).__calmiSWCleanup) (window as any).__calmiSWCleanup();
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, [checkVersionFromServer, track]);
-
-  const [isReloading, setIsReloading] = useState(false);
+  // ── reloadApp ────────────────────────────────────────────────────────────
 
   const reloadApp = useCallback(async () => {
     if (isReloading) return;
     setIsReloading(true);
-    console.warn('[usePWA] Manual reload requested by user');
+    console.warn('[usePWA] Reload requested by user');
 
     const purgeCachesAndReload = async () => {
       try {
         if ('caches' in window) {
           const keys = await caches.keys();
           await Promise.all(keys.map((k) => caches.delete(k)));
-          console.log('[usePWA] 🧹 Caches purged');
+          console.log('[usePWA] 🧹 All caches purged');
         }
       } catch (e) {
         console.warn('[usePWA] Cache purge failed:', e);
       }
-      // Cache-busting query to defeat any remaining HTTP cache / bfcache
       const url = new URL(window.location.href);
       url.searchParams.set('_swr', Date.now().toString(36));
       window.location.replace(url.toString());
@@ -278,15 +297,16 @@ export const usePWA = () => {
         await purgeCachesAndReload();
         return;
       }
+
       const reg = await navigator.serviceWorker.getRegistration();
       if (!reg) {
         await purgeCachesAndReload();
         return;
       }
 
-      // If there's a waiting SW, ask it to activate, then reload on controllerchange
       const waiting = reg.waiting || reg.installing;
       if (waiting) {
+        // Post SKIP_WAITING to the new SW, then reload once it takes control.
         let done = false;
         const onControllerChange = async () => {
           if (done) return;
@@ -300,22 +320,19 @@ export const usePWA = () => {
         } catch (e) {
           console.warn('[usePWA] postMessage SKIP_WAITING failed:', e);
         }
-        // Safety net if controllerchange never fires
+        // Safety net: force reload if controllerchange never fires.
         setTimeout(() => {
           if (!done) {
             done = true;
-            console.warn('[usePWA] controllerchange timeout — forcing reload');
             navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+            console.warn('[usePWA] controllerchange timeout — forcing reload');
             purgeCachesAndReload();
           }
-        }, 3000);
+        }, 3_000);
         return;
       }
 
-      // No waiting SW — try to refresh registration first, then reload
-      try {
-        await reg.update();
-      } catch {}
+      // No waiting SW — just purge caches and reload.
       await purgeCachesAndReload();
     } catch (e) {
       console.error('[usePWA] reloadApp failed:', e);
@@ -323,11 +340,13 @@ export const usePWA = () => {
     }
   }, [isReloading]);
 
+  // ── Public API ───────────────────────────────────────────────────────────
+
   return {
     ...state,
     reloadApp,
     isReloading,
-    checkForUpdate: () => checkVersionFromServer(true),
-    isCheckingUpdate
+    checkForUpdate,
+    isCheckingUpdate,
   };
 };

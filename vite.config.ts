@@ -103,7 +103,9 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        skipWaiting: true,
+        // skipWaiting intentionally omitted (defaults to false):
+        // the new SW waits in `reg.waiting` instead of auto-activating.
+        // usePWA.ts detects reg.waiting reliably without any race condition.
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
