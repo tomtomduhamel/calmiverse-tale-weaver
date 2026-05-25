@@ -257,6 +257,11 @@ function App() {
                 <Route path="/create-story/step-1" element={<Navigate to="/app/create-story/step-1" replace />} />
                 <Route path="/create-story-titles" element={<Navigate to="/app/create-story-titles" replace />} />
                 <Route path="/subscription" element={<Navigate to="/app/subscription" replace />} />
+                {/* Routes admin/superadmin : filet de sécurité contre les bundles périmés
+                    ou liens externes qui ciblent ces pages sans le préfixe /app.
+                    Le splat (:*) préserve le sous-chemin (ex: /admin/prompts → /app/admin/prompts). */}
+                <Route path="/admin/*" element={<RedirectWithParams to="/app/admin/:*" />} />
+                <Route path="/superadmin" element={<Navigate to="/app/superadmin" replace />} />
 
                 {/* Route de fallback */}
                 <Route path="*" element={<Navigate to="/404" replace />} />
