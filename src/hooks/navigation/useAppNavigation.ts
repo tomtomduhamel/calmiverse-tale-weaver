@@ -59,6 +59,12 @@ export const useAppNavigation = () => {
     navigate('/settings');
   }, [navigate]);
 
+  // Navigation vers les routines
+  const navigateToRoutines = useCallback(() => {
+    console.log('[AppNavigation] Navigation vers les routines');
+    navigate('/app/routines');
+  }, [navigate]);
+
   // Navigation basée sur ViewType (pour compatibilité)
   const navigateToView = useCallback((view: ViewType) => {
     console.log('[AppNavigation] Navigation vers la vue:', view);
@@ -121,6 +127,7 @@ export const useAppNavigation = () => {
     navigateToProfiles,
     navigateToHome,
     navigateToSettings,
+    navigateToRoutines,
     navigateToView,
     
     // Actions avec logique métier

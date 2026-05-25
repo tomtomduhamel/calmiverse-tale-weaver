@@ -1,12 +1,13 @@
 
 import React from "react";
-import { 
-  Home, 
-  Library, 
-  Users, 
+import {
+  Home,
+  Library,
+  Users,
   Settings,
   PenSquare,
-  Sparkles
+  Sparkles,
+  CalendarClock
 } from "lucide-react";
 import { Badge } from '@/components/ui/badge';
 import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStoryGeneration';
@@ -21,7 +22,7 @@ import { useAppNavigation } from "@/hooks/navigation/useAppNavigation";
  */
 const MobileMenu: React.FC = () => {
   const location = useLocation();
-  const { navigateToHome, navigateToLibrary, navigateToCreate, navigateToDashboard, navigateToProfiles, navigateToSettings } = useAppNavigation();
+  const { navigateToHome, navigateToLibrary, navigateToCreate, navigateToDashboard, navigateToProfiles, navigateToSettings, navigateToRoutines } = useAppNavigation();
   const { totalActiveCount } = useBackgroundStoryGeneration();
   
   // Items for the bottom navigation
@@ -31,6 +32,7 @@ const MobileMenu: React.FC = () => {
     { icon: PenSquare, title: "Créer", path: "/create-story/step-1", action: navigateToCreate },
     { icon: Sparkles, title: "Mon ciel", path: "/dashboard", action: navigateToDashboard },
     { icon: Users, title: "Enfants", path: "/children", action: navigateToProfiles },
+    { icon: CalendarClock, title: "Routines", path: "/routines", action: navigateToRoutines },
     { icon: Settings, title: "Paramètres", path: "/settings", action: navigateToSettings }
   ];
 
