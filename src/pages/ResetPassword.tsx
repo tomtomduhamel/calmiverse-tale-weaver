@@ -16,18 +16,60 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Supabase places the recovery session in the URL hash automatically.
+    let active = true;
+
+    // 1. Gestion du flux PKCE (?code=...)
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+
+    const handlePkceAndSession = async () => {
+      if (code) {
+        console.log("[ResetPassword] Code PKCE détecté, échange contre session...");
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error("[ResetPassword] Erreur lors de l'échange du code PKCE:", error);
+            toast({
+              title: "Lien invalide ou expiré",
+              description: error.message || "Le lien de récupération n'est plus valide ou a déjà été utilisé.",
+              variant: "destructive"
+            });
+            return;
+          }
+          if (data?.session && active) {
+            console.log("[ResetPassword] Échange PKCE réussi, session active");
+            setReady(true);
+            
+            // Nettoyage de l'URL pour supprimer le paramètre 'code' afin d'éviter une double consommation au rechargement
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+          }
+        } catch (err: any) {
+          console.error("[ResetPassword] Erreur inattendue d'échange PKCE:", err);
+        }
+      } else {
+        // 2. Fallback sur session existante ou flux Implicit (#access_token=...)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && active) {
+          setReady(true);
+        }
+      }
+    };
+
+    handlePkceAndSession();
+
+    // 3. Écoute des changements d'état d'authentification (utile pour le flux Implicit)
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
-        setReady(true);
+        if (active) setReady(true);
       }
     });
-    // Also check if a session already exists (e.g. after hash parse)
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
-    return () => sub.subscription.unsubscribe();
-  }, []);
+
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
