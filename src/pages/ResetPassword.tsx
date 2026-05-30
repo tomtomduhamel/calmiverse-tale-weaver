@@ -23,6 +23,12 @@ const ResetPassword = () => {
     const code = params.get('code');
 
     const handlePkceAndSession = async () => {
+      console.log("[ResetPassword] Initialisation de la réinitialisation...", {
+        hasCode: !!code,
+        hash: window.location.hash ? "Présent" : "Absent",
+        pathname: window.location.pathname
+      });
+
       if (code) {
         console.log("[ResetPassword] Code PKCE détecté, échange contre session...");
         try {
@@ -37,7 +43,7 @@ const ResetPassword = () => {
             return;
           }
           if (data?.session && active) {
-            console.log("[ResetPassword] Échange PKCE réussi, session active");
+            console.log("[ResetPassword] Échange PKCE réussi. Utilisateur connecté:", data.session.user.id);
             setReady(true);
             
             // Nettoyage de l'URL pour supprimer le paramètre 'code' afin d'éviter une double consommation au rechargement
@@ -49,9 +55,14 @@ const ResetPassword = () => {
         }
       } else {
         // 2. Fallback sur session existante ou flux Implicit (#access_token=...)
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && active) {
-          setReady(true);
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          console.log("[ResetPassword] Vérification session existante...", { hasSession: !!session });
+          if (session && active) {
+            setReady(true);
+          }
+        } catch (err) {
+          console.error("[ResetPassword] Erreur lors de la récupération de session:", err);
         }
       }
     };
@@ -59,7 +70,8 @@ const ResetPassword = () => {
     handlePkceAndSession();
 
     // 3. Écoute des changements d'état d'authentification (utile pour le flux Implicit)
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[ResetPassword] Changement d'état auth détecté:", event, { hasSession: !!session });
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
         if (active) setReady(true);
       }
@@ -67,7 +79,14 @@ const ResetPassword = () => {
 
     return () => {
       active = false;
-      sub.subscription.unsubscribe();
+      if (sub && typeof sub.subscription !== 'undefined') {
+        try {
+          sub.subscription.unsubscribe();
+          console.log("[ResetPassword] Écouteur de session désinscrit avec succès");
+        } catch (err) {
+          console.error("[ResetPassword] Erreur lors de la désinscription de l'écouteur:", err);
+        }
+      }
     };
   }, [toast]);
 
