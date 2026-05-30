@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Loader2 } from "lucide-react";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -29,9 +30,9 @@ const ResetPassword = () => {
         pathname: window.location.pathname
       });
 
-      if (code) {
-        console.log("[ResetPassword] Code PKCE détecté, échange contre session...");
-        try {
+      try {
+        if (code) {
+          console.log("[ResetPassword] Code PKCE détecté, échange contre session...");
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
             console.error("[ResetPassword] Erreur lors de l'échange du code PKCE:", error);
@@ -50,19 +51,19 @@ const ResetPassword = () => {
             const newUrl = window.location.pathname;
             window.history.replaceState({}, document.title, newUrl);
           }
-        } catch (err: any) {
-          console.error("[ResetPassword] Erreur inattendue d'échange PKCE:", err);
-        }
-      } else {
-        // 2. Fallback sur session existante ou flux Implicit (#access_token=...)
-        try {
+        } else {
+          // 2. Fallback sur session existante ou flux Implicit (#access_token=...)
           const { data: { session } } = await supabase.auth.getSession();
           console.log("[ResetPassword] Vérification session existante...", { hasSession: !!session });
           if (session && active) {
             setReady(true);
           }
-        } catch (err) {
-          console.error("[ResetPassword] Erreur lors de la récupération de session:", err);
+        }
+      } catch (err: any) {
+        console.error("[ResetPassword] Erreur inattendue d'échange PKCE/Session:", err);
+      } finally {
+        if (active) {
+          setInitializing(false);
         }
       }
     };
@@ -73,7 +74,10 @@ const ResetPassword = () => {
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("[ResetPassword] Changement d'état auth détecté:", event, { hasSession: !!session });
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
-        if (active) setReady(true);
+        if (active) {
+          setReady(true);
+          setInitializing(false);
+        }
       }
     });
 
@@ -122,7 +126,14 @@ const ResetPassword = () => {
           <p className="text-sm text-muted-foreground mt-1">Choisissez un mot de passe sécurisé (8+ caractères).</p>
         </div>
 
-        {!ready ? (
+        {initializing ? (
+          <div className="flex flex-col items-center justify-center py-6 space-y-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-center text-sm text-muted-foreground animate-pulse">
+              Vérification de votre lien de récupération...
+            </p>
+          </div>
+        ) : !ready ? (
           <p className="text-center text-sm text-muted-foreground">
             Lien invalide ou expiré. Demandez un nouveau lien depuis la page « Mot de passe oublié ».
           </p>
