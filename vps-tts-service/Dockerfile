@@ -20,14 +20,14 @@ WORKDIR /app
 # Créer un dossier temporaire pour la synthèse et lui attribuer les droits
 RUN mkdir -p /app/temp && chmod 777 /app/temp
 
-# Installer PyTorch pré-compilé pour CPU uniquement (très léger comparé à CUDA)
-RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu
-
 # Copier le fichier des dépendances Python
 COPY requirements.txt .
 
-# Installer les dépendances de l'application
-RUN pip install --no-cache-dir -r requirements.txt
+# Installer l'ensemble des dépendances en forçant PyTorch CPU sur son dépôt dédié, 
+# tout en autorisant PyPI comme index secondaire pour éviter les conflits d'ABI.
+RUN pip install --no-cache-dir -r requirements.txt \
+    --index-url https://download.pytorch.org/whl/cpu \
+    --extra-index-url https://pypi.org/simple
 
 # Copier le code source dans le conteneur
 COPY main.py .
