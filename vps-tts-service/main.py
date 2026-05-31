@@ -9,7 +9,7 @@ from fastapi.security.api_key import APIKeyHeader
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
-from transformers import AutoProcessor, AutoModelForCausalLM
+from transformers import AutoProcessor, AutoModel
 
 app = FastAPI(
     title="Calmi Private TTS Service",
@@ -38,7 +38,7 @@ start_time = time.time()
 
 try:
     processor = AutoProcessor.from_pretrained(MODEL_NAME, trust_remote_code=True)
-    model = AutoModelForCausalLM.from_pretrained(
+    model = AutoModel.from_pretrained(
         MODEL_NAME,
         torch_dtype=torch.float32,  # float32 pour CPU
         device_map="cpu",
