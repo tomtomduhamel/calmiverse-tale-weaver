@@ -37,11 +37,12 @@ print(f"📦 Chargement du modèle {MODEL_NAME} sur CPU...")
 start_time = time.time()
 
 try:
-    processor = AutoProcessor.from_pretrained(MODEL_NAME)
+    processor = AutoProcessor.from_pretrained(MODEL_NAME, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
         torch_dtype=torch.float32,  # float32 pour CPU
-        device_map="cpu"
+        device_map="cpu",
+        trust_remote_code=True
     )
     print(f"✅ Modèle chargé avec succès en {time.time() - start_time:.2f} secondes !")
 except Exception as e:
