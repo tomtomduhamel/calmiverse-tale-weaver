@@ -366,10 +366,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     <div
       className={cn(
         "fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto md:w-[600px] md:-translate-x-1/2",
-        "backdrop-blur-xl border rounded-2xl shadow-floating z-[90] transition-all duration-500 overflow-hidden",
+        "backdrop-blur-2xl border rounded-2xl shadow-floating z-[90] transition-all duration-500 overflow-hidden",
         isDarkMode 
-          ? "bg-gray-900/80 border-white/10 text-white" 
-          : "bg-white/85 border-primary-soft/30 text-gray-800",
+          ? "bg-gray-900/[0.96] border-white/10 text-white" 
+          : "bg-white/[0.96] border-primary-soft/30 text-gray-800",
         isExpanded ? "p-5 max-h-[400px]" : "p-3 max-h-[70px] flex items-center justify-between"
       )}
     >
