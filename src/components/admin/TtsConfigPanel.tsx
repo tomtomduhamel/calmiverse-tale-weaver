@@ -46,8 +46,11 @@ export const TtsConfigPanel: React.FC = () => {
         <div className="space-y-2">
           <label className="text-sm font-medium text-muted-foreground">Provider actif</label>
           <div className="flex items-center gap-2">
-            <Badge variant={config.provider === 'elevenlabs' ? 'default' : 'secondary'} className="text-base px-3 py-1">
-              {config.provider === 'elevenlabs' ? 'ElevenLabs' : 'Speechify'}
+            <Badge 
+              variant={config.provider === 'elevenlabs' ? 'default' : config.provider === 'vps-hostinger' ? 'outline' : 'secondary'} 
+              className="text-base px-3 py-1"
+            >
+              {config.provider === 'elevenlabs' ? 'ElevenLabs' : config.provider === 'vps-hostinger' ? 'Hostinger VPS (Privé)' : 'Speechify'}
             </Badge>
           </div>
         </div>
@@ -77,7 +80,7 @@ export const TtsConfigPanel: React.FC = () => {
           <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
             <li>Accédez aux <strong>Secrets Supabase</strong> de votre projet</li>
             <li>Modifiez la valeur du secret <code className="bg-muted px-1 rounded">TTS_PROVIDER</code></li>
-            <li>Définissez <code className="bg-muted px-1 rounded">'elevenlabs'</code> ou <code className="bg-muted px-1 rounded">'speechify'</code></li>
+            <li>Définissez <code className="bg-muted px-1 rounded">'elevenlabs'</code>, <code className="bg-muted px-1 rounded">'speechify'</code> ou <code className="bg-muted px-1 rounded">'vps-hostinger'</code></li>
             <li>Actualisez cette page pour voir le changement</li>
           </ol>
           <Button
