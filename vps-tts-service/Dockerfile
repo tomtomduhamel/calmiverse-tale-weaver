@@ -5,11 +5,12 @@ FROM python:3.10-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Installer les dépendances système requises pour le traitement audio
+# Installer les dépendances système requises pour le traitement audio (y compris git pour transformers de source)
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     libsndfile1 \
     curl \
+    git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
