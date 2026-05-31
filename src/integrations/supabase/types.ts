@@ -1131,6 +1131,7 @@ export type Database = {
           id: string
           max_children: number | null
           max_video_intros_per_period: number | null
+          max_voice_clones: number
           monthly_price_usd: number
           stories_per_month: number
           tier: Database["public"]["Enums"]["subscription_tier"]
@@ -1147,6 +1148,7 @@ export type Database = {
           id?: string
           max_children?: number | null
           max_video_intros_per_period?: number | null
+          max_voice_clones?: number
           monthly_price_usd: number
           stories_per_month: number
           tier: Database["public"]["Enums"]["subscription_tier"]
@@ -1163,6 +1165,7 @@ export type Database = {
           id?: string
           max_children?: number | null
           max_video_intros_per_period?: number | null
+          max_voice_clones?: number
           monthly_price_usd?: number
           stories_per_month?: number
           tier?: Database["public"]["Enums"]["subscription_tier"]

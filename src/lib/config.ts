@@ -83,17 +83,17 @@ export const APP_CONFIG = {
     CALMIDIUM: {
       name: 'Calmidium', 
       monthlyPrice: 5.00,
-      features: ['30 histoires/mois', '10 enfants max', 'Suites d\'histoires', 'Support prioritaire']
+      features: ['30 histoires/mois', '10 enfants max', 'Suites d\'histoires', '10 générations audio/mois', '1 clonage vocal', 'Support prioritaire']
     },
     CALMIX: {
       name: 'Calmix',
       monthlyPrice: 10.00,
-      features: ['50 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', 'Vidéos d\'introduction (3/mois)', '1 audio/mois', 'Accès priorité', 'Communauté Calmos']
+      features: ['50 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', 'Vidéos d\'introduction (3/mois)', '20 générations audio/mois', '2 clonages vocaux', 'Accès priorité']
     },
     CALMIXXL: {
       name: 'Calmixxl',
       monthlyPrice: 20.00,
-      features: ['100 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', 'Vidéos d\'introduction (10/mois)', '4 audio/mois', 'Accès priorité', 'Communauté Calmos']
+      features: ['100 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', 'Vidéos d\'introduction (10/mois)', '50 générations audio/mois', '5 clonages vocaux', 'Accès priorité']
     }
   },
 

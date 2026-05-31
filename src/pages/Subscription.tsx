@@ -206,16 +206,16 @@ const Subscription: React.FC = () => {
                     {limits.audio_generations_per_month} génération{limits.audio_generations_per_month > 1 ? 's' : ''} audio/mois
                   </div>
                 )}
+                {limits.max_voice_clones > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
+                    {limits.max_voice_clones} clonage{limits.max_voice_clones > 1 ? 's' : ''} vocal{limits.max_voice_clones > 1 ? 'aux' : ''}
+                  </div>
+                )}
                 {limits.has_priority_access && (
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
                     Accès prioritaire
-                  </div>
-                )}
-                {limits.has_community_access && (
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
-                    Communauté Calmos
                   </div>
                 )}
               </div>

@@ -185,7 +185,7 @@ export const useN8nAudioGeneration = () => {
 
       const webhookUrl = ttsConfig.webhookUrl;
       const provider = ttsConfig.provider || 'elevenlabs';
-      const dynamicVoiceId = ttsConfig.voiceId || voiceId; // Utiliser voiceId de la config ou celui passé en param
+      const dynamicVoiceId = voiceId || ttsConfig.voiceId || '9BWtsMINqrJLrRacOk9x'; // Prioritize explicitly selected voiceId
 
       console.log(`🎙️ [N8nAudio] Génération audio via ${provider}:`, { 
         storyId, 
@@ -300,14 +300,43 @@ export const useN8nAudioGeneration = () => {
       }, TIMEOUT_DURATION);
 
       // 4. Envoyer la requête à n8n
-      const payload: N8nWebhookPayload = {
+      const payload: any = {
         text: text,
         storyId,
         voiceId: dynamicVoiceId,
         requestId
       };
 
-      console.log(`📤 [N8nAudio] Envoi vers ${provider} (n8n):`, { ...payload, webhookUrl: webhookUrl.substring(0, 40) + '...' });
+      // Check if this is a custom user voice clone
+      try {
+        const { data: customVoice } = await supabase
+          .from('user_voices')
+          .select('*')
+          .eq('id', dynamicVoiceId)
+          .single();
+
+        if (customVoice) {
+          // Generate a signed URL for the voice reference file (valid for 1 hour)
+          const { data: signedData } = await supabase.storage
+            .from('voice-clones')
+            .createSignedUrl(customVoice.voice_ref_path, 3600);
+
+          if (signedData?.signedUrl) {
+            payload.isCustomVoice = true;
+            payload.voice_ref_url = signedData.signedUrl;
+            payload.ref_text = customVoice.transcript || "";
+            console.log("🎙️ [N8nAudio] Custom voice clone detected. Signed reference URL added to payload.", {
+              voiceId: dynamicVoiceId,
+              relation: customVoice.relation
+            });
+          }
+        }
+      } catch (err) {
+        // Not a custom voice or database check failed, ignore and let standard ElevenLabs voice be used
+        console.log("[N8nAudio] Standard voice detected or check skipped.");
+      }
+
+      console.log(`📤 [N8nAudio] Envoi vers ${provider} (n8n):`, { ...payload, voice_ref_url: payload.voice_ref_url ? "SIGNED_URL_PRESENT" : undefined, webhookUrl: webhookUrl.substring(0, 40) + '...' });
 
       const response = await fetch(webhookUrl, {
         method: 'POST',

@@ -20,6 +20,8 @@ import { bootMonitor } from "@/utils/bootMonitor";
 
 // OPTIMIZED: Lazy loading pour toutes les routes secondaires
 const ChildrenListPage = lazy(() => import('./pages/ChildrenListPage'));
+const VoiceStudio = lazy(() => import('./pages/VoiceStudio'));
+const SharedVoiceRecord = lazy(() => import('./pages/SharedVoiceRecord'));
 const KidsProfile = lazy(() => import('./pages/KidsProfile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
@@ -217,6 +219,7 @@ function App() {
                 <Route path="/shared/:token" element={<SharedStory />} />
                 <Route path="/shared-story" element={<SharedStoryRedirect />} />
                 <Route path="/story/:id" element={<PublicStory />} />
+                <Route path="/shared-voice-record/:token" element={<SharedVoiceRecord />} />
                 <Route path="/404" element={<NotFound />} />
 
                 {/* Routes avec authentification et vérification beta */}
@@ -227,6 +230,7 @@ function App() {
                   <Route path="children" element={<ChildrenListPage />} />
                   <Route path="kids-profile" element={<KidsProfile />} />
                   <Route path="settings" element={<Settings />} />
+                  <Route path="voices" element={<VoiceStudio />} />
                   <Route path="library" element={<Library />} />
                   <Route path="reader/:id" element={<StoryReaderPage />} />
                   <Route path="create-story-n8n" element={<Navigate to="/app/create-story/step-1" replace />} />

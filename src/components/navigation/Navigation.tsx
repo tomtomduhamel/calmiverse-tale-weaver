@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
-import { Home, BookOpen, Users, Settings, LogOut, Menu, Sparkles } from 'lucide-react';
+import { Home, BookOpen, Users, Settings, LogOut, Menu, Sparkles, Mic } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useBackgroundStoryGeneration } from '@/hooks/stories/useBackgroundStoryGeneration';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -45,6 +45,10 @@ const Navigation = () => {
     icon: Sparkles,
     label: 'Mon ciel',
     path: '/dashboard'
+  }, {
+    icon: Mic,
+    label: 'Studio Vocal',
+    path: '/app/voices'
   }, {
     icon: Users,
     label: 'Enfants',

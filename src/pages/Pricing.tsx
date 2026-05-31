@@ -71,7 +71,7 @@ const Pricing: React.FC = () => {
     }
   };
 
-  const getFeatureList = (tierLimits: SubscriptionLimits) => {
+  const getFeatureList = (tierLimits: any) => {
     const features = [
       `${tierLimits.stories_per_month} histoires par mois`,
       tierLimits.max_children ? `${tierLimits.max_children} enfants maximum` : 'Enfants illimités',
@@ -82,8 +82,10 @@ const Pricing: React.FC = () => {
     if (tierLimits.audio_generations_per_month > 0) {
       features.push(`${tierLimits.audio_generations_per_month} génération${tierLimits.audio_generations_per_month > 1 ? 's' : ''} audio/mois`);
     }
+    if (tierLimits.max_voice_clones > 0) {
+      features.push(`${tierLimits.max_voice_clones} clonage${tierLimits.max_voice_clones > 1 ? 's' : ''} vocal${tierLimits.max_voice_clones > 1 ? 'aux' : ''}`);
+    }
     if (tierLimits.has_priority_access) features.push('Accès prioritaire');
-    if (tierLimits.has_community_access) features.push('Communauté Calmos');
     
     if (tierLimits.max_video_intros_per_period > 0) {
       features.push(`${tierLimits.max_video_intros_per_period} vidéos d'introduction par mois`);
