@@ -32,7 +32,7 @@ TEMP_DIR = "/app/temp"
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 # Chargement du modèle au démarrage (Qwen3-TTS-0.6B-Base)
-MODEL_NAME = "Qwen/Qwen3-TTS-0.6B-Base"
+MODEL_NAME = "Qwen/Qwen3-TTS-12Hz-0.6B-Base"
 print(f"📦 Chargement du modèle {MODEL_NAME} sur CPU...")
 start_time = time.time()
 
