@@ -29,3 +29,7 @@ dist-ssr
 *.sln
 *.sw?
 temp_dump.sql
+
+# Playwright
+playwright-report/
+test-results/

@@ -33,14 +33,14 @@ export const usePWAAnalytics = () => {
 
   // Load analytics from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(ANALYTICS_STORAGE_KEY);
-    if (stored) {
-      try {
+    try {
+      const stored = localStorage.getItem(ANALYTICS_STORAGE_KEY);
+      if (stored) {
         const data = JSON.parse(stored);
         setMetrics(data);
-      } catch (error) {
-        console.error('Error loading analytics data:', error);
       }
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
     }
   }, []);
 
