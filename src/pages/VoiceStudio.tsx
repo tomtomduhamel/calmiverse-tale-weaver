@@ -165,7 +165,22 @@ export const VoiceStudio: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
+        // Stop all tracks in stream to release microphone after recording is stopped
+        stream.getTracks().forEach(track => track.stop());
+
         const audioBlob = new Blob(audioChunksRef.current, { type: selectedFormat.mimeType || mediaRecorder.mimeType });
+        console.log("Recorded blob size:", audioBlob.size, "bytes");
+
+        if (audioBlob.size === 0) {
+          toast({
+            title: "Enregistrement vide",
+            description: "Aucun son n'a été capturé. Veuillez vérifier les autorisations de votre micro et réessayer.",
+            variant: "destructive"
+          });
+          setRecordingStep('info');
+          return;
+        }
+
         const url = URL.createObjectURL(audioBlob);
         setAudioBlob(audioBlob);
         setAudioUrl(url);
@@ -248,7 +263,10 @@ export const VoiceStudio: React.FC = () => {
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
-      // Stop all tracks in stream
+      if (discard) {
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      }
+    } else if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
 
@@ -268,8 +286,20 @@ export const VoiceStudio: React.FC = () => {
       const audio = audioPreviewRef.current || new Audio(audioUrl);
       audioPreviewRef.current = audio;
       audio.onended = () => setIsPlayingPreview(false);
-      audio.play();
-      setIsPlayingPreview(true);
+      
+      audio.play()
+        .then(() => {
+          setIsPlayingPreview(true);
+        })
+        .catch(err => {
+          console.error("Playback error:", err);
+          setIsPlayingPreview(false);
+          toast({
+            title: "Erreur de lecture",
+            description: "Impossible de lire l'extrait. L'enregistrement est peut-être vide ou bloqué par le navigateur.",
+            variant: "destructive"
+          });
+        });
     }
   };
 
@@ -369,7 +399,15 @@ export const VoiceStudio: React.FC = () => {
 
       if (data?.signedUrl) {
         const audio = new Audio(data.signedUrl);
-        audio.play();
+        audio.play()
+          .catch(err => {
+            console.error("Test listen play error:", err);
+            toast({
+              title: "Erreur de lecture",
+              description: "Impossible de lire l'échantillon vocal de référence.",
+              variant: "destructive"
+            });
+          });
         toast({
           title: `Écoute de la ${voice.name}…`,
           description: "Lecture de l'échantillon de référence.",

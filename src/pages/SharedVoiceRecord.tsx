@@ -168,7 +168,22 @@ export const SharedVoiceRecord: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
+        // Stop all tracks in stream to release microphone after recording is stopped
+        stream.getTracks().forEach(track => track.stop());
+
         const blob = new Blob(audioChunksRef.current, { type: selectedFormat.mimeType || mediaRecorder.mimeType });
+        console.log("Recorded blob size:", blob.size, "bytes");
+
+        if (blob.size === 0) {
+          toast({
+            title: "Enregistrement vide",
+            description: "Aucun son n'a été capturé. Veuillez vérifier les autorisations de votre micro et réessayer.",
+            variant: "destructive"
+          });
+          setRecordingState('welcome');
+          return;
+        }
+
         const url = URL.createObjectURL(blob);
         setAudioBlob(blob);
         setAudioUrl(url);
@@ -202,6 +217,7 @@ export const SharedVoiceRecord: React.FC = () => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
+    } else if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
   };
@@ -217,8 +233,20 @@ export const SharedVoiceRecord: React.FC = () => {
       const audio = audioPreviewRef.current || new Audio(audioUrl);
       audioPreviewRef.current = audio;
       audio.onended = () => setIsPlayingPreview(false);
-      audio.play();
-      setIsPlayingPreview(true);
+      
+      audio.play()
+        .then(() => {
+          setIsPlayingPreview(true);
+        })
+        .catch(err => {
+          console.error("Playback error:", err);
+          setIsPlayingPreview(false);
+          toast({
+            title: "Erreur de lecture",
+            description: "Impossible de lire votre voix. L'enregistrement est peut-être vide ou bloqué par le navigateur.",
+            variant: "destructive"
+          });
+        });
     }
   };
 
