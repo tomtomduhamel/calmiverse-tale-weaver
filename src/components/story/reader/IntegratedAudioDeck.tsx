@@ -265,11 +265,6 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     }
   };
 
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // Play Browser synthesis paragraph-by-paragraph with auto-advance
   const playBrowserParagraph = (index: number) => {
     if (!synthRef.current) return;
