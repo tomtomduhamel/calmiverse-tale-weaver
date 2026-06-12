@@ -12,8 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    // Récupérer le provider TTS configuré (elevenlabs ou speechify)
-    const ttsProvider = Deno.env.get('TTS_PROVIDER') || 'elevenlabs';
+    // Récupérer le provider TTS configuré (vps-hostinger, elevenlabs ou speechify)
+    const ttsProvider = Deno.env.get('TTS_PROVIDER') || 'vps-hostinger';
     
     console.log(`[get-tts-config] Checking TTS configuration for provider: ${ttsProvider}`);
     
@@ -69,8 +69,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: errorMessage,
-        provider: 'elevenlabs', // Fallback par défaut
-        webhookUrl: Deno.env.get('N8N_WEBHOOK_URL') || '',
+        provider: 'vps-hostinger', // Fallback par défaut
+        webhookUrl: Deno.env.get('N8N_SPEECHIFY_WEBHOOK_URL') || '',
         voiceId: '9BWtsMINqrJLrRacOk9x',
       }),
       {

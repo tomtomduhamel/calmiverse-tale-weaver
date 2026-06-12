@@ -16,6 +16,7 @@ import { audioCache } from '@/utils/audioCache';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { extractObjectiveValue } from '@/utils/objectiveUtils';
+import { useNavigate } from 'react-router-dom';
 
 interface IntegratedAudioDeckProps {
   storyId: string;
@@ -48,8 +49,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const [isOfflineReady, setIsOfflineReady] = useState(false);
   const [isCaching, setIsCaching] = useState(false);
   const [customVoices, setCustomVoices] = useState<CustomVoice[]>([]);
-  const [selectedVoiceId, setSelectedVoiceId] = useState('9BWtsMINqrJLrRacOk9x'); // Default ElevenLabs voice (Aria)
-  const [provider, setProvider] = useState<string>('elevenlabs');
+  const [selectedVoiceId, setSelectedVoiceId] = useState('local');
+  const [provider, setProvider] = useState<string>('vps-hostinger');
+  const navigate = useNavigate();
   
   // Browser SpeechSynthesis state
   const [isBrowserSpeaking, setIsBrowserSpeaking] = useState(false);
@@ -92,7 +94,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       await recoverErrorFiles(storyId);
       await fetchAudioFiles(storyId);
 
-      let activeProvider = 'elevenlabs';
+      let activeProvider = 'vps-hostinger';
       // Fetch active TTS provider config
       try {
         const { data: ttsConfig } = await supabase.functions.invoke('get-tts-config');
@@ -112,9 +114,11 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         if (!error && data) {
           setCustomVoices(data as CustomVoice[]);
           
-          // Si on utilise le serveur privé et qu'on a des voix, sélectionner la première par défaut
-          if (activeProvider === 'vps-hostinger' && data.length > 0) {
+          // Initialiser la voix sélectionnée selon les préférences et les autorisations
+          if (canUsePremiumAudio && preferredAudioMode === 'premium' && data.length > 0) {
             setSelectedVoiceId(data[0].id);
+          } else {
+            setSelectedVoiceId('local');
           }
         }
       } catch (err) {
@@ -261,6 +265,120 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     }
   };
 
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Play Browser synthesis paragraph-by-paragraph with auto-advance
+  const playBrowserParagraph = (index: number) => {
+    if (!synthRef.current) return;
+    
+    synthRef.current.cancel(); // Cancel any current utterance
+    
+    const pText = paragraphs[index];
+    if (!pText) {
+      setIsPlaying(false);
+      setIsBrowserSpeaking(false);
+      setIsBrowserPaused(false);
+      setCurrentParagraphIndex(0);
+      setProgress(0);
+      return;
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(pText);
+    utterance.lang = 'fr-FR';
+    
+    const voices = synthRef.current.getVoices();
+    const frVoice = voices.find(v => v.lang.startsWith('fr'));
+    if (frVoice) utterance.voice = frVoice;
+    
+    const speed = userSettings.readingPreferences?.readingSpeed || 1.0;
+    utterance.rate = speed;
+
+    utterance.onstart = () => {
+      setIsPlaying(true);
+      setIsBrowserSpeaking(true);
+      setIsBrowserPaused(false);
+      const pct = (index / (paragraphs.length - 1 || 1)) * 100;
+      setProgress(pct);
+    };
+
+    utterance.onend = () => {
+      const nextIndex = index + 1;
+      if (nextIndex < paragraphs.length) {
+        setCurrentParagraphIndex(nextIndex);
+        playBrowserParagraph(nextIndex);
+      } else {
+        setIsPlaying(false);
+        setIsBrowserSpeaking(false);
+        setIsBrowserPaused(false);
+        setCurrentParagraphIndex(0);
+        setProgress(0);
+      }
+    };
+
+    utterance.onerror = (event) => {
+      console.error("SpeechSynthesis error:", event);
+      setIsPlaying(false);
+      setIsBrowserSpeaking(false);
+      setIsBrowserPaused(false);
+    };
+
+    utteranceRef.current = utterance;
+    synthRef.current.speak(utterance);
+  };
+
+  // Voice Selection Dropdown handler
+  const handleVoiceChange = (value: string) => {
+    if (value === 'upgrade_info') {
+      toast({
+        title: "Fonctionnalité Premium",
+        description: "Abonnez-vous à un plan Calmi (Calmidium, Calmix, Calmixxl) pour débloquer le clonage vocal !",
+      });
+      return;
+    }
+
+    if (value === 'record_prompt') {
+      toast({
+        title: "Studio Vocal",
+        description: "Redirection vers le Studio Vocal pour enregistrer la voix de vos proches...",
+      });
+      navigate('/app/voices');
+      return;
+    }
+
+    if (isPlaying) {
+      if (audioRef.current) audioRef.current.pause();
+      if (synthRef.current) synthRef.current.cancel();
+      setIsPlaying(false);
+    }
+    if (isBrowserSpeaking) {
+      if (synthRef.current) synthRef.current.cancel();
+      setIsBrowserSpeaking(false);
+      setIsBrowserPaused(false);
+    }
+
+    setSelectedVoiceId(value);
+
+    const isCustomVoice = value !== 'local';
+    const newMode = isCustomVoice ? 'premium' : 'browser';
+
+    updateUserSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        audioMode: newMode
+      }
+    });
+
+    toast({
+      title: isCustomVoice ? "Mode Premium activé 🌟" : "Mode Gratuit activé 🔊",
+      description: isCustomVoice 
+        ? "Lecture haute-fidélité avec la voix clonée sélectionnée."
+        : "Lecture gratuite par synthèse locale de l'appareil."
+    });
+  };
+
   // Play/Pause control
   const handlePlayPause = async () => {
     if (isPremiumMode) {
@@ -377,86 +495,102 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         console.error("Audio playback error:", err);
       }
     } else {
-      // 🔊 Free Browser SpeechSynthesis Playback
+      // 🔊 Free Browser SpeechSynthesis Playback (Paragraph-by-Paragraph)
       if (!synthRef.current) return;
 
       if (isBrowserSpeaking) {
         if (isBrowserPaused) {
           synthRef.current.resume();
           setIsBrowserPaused(false);
+          setIsPlaying(true);
         } else {
           synthRef.current.pause();
           setIsBrowserPaused(true);
+          setIsPlaying(false);
         }
       } else {
-        synthRef.current.cancel(); // Stop any pending
-        const cleanText = text.replace(/\[.*?\]/g, ""); // Remove modulation tags
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'fr-FR';
-        
-        // Find best French voice
-        const voices = synthRef.current.getVoices();
-        const frVoice = voices.find(v => v.lang.startsWith('fr'));
-        if (frVoice) utterance.voice = frVoice;
-
-        utterance.onend = () => {
-          setIsBrowserSpeaking(false);
-          setIsBrowserPaused(false);
-          setProgress(0);
-        };
-        utterance.onerror = () => {
-          setIsBrowserSpeaking(false);
-          setIsBrowserPaused(false);
-        };
-
-        utteranceRef.current = utterance;
-        synthRef.current.speak(utterance);
-        setIsBrowserSpeaking(true);
-        setIsBrowserPaused(false);
+        playBrowserParagraph(currentParagraphIndex);
       }
     }
   };
 
   // Rewind to previous paragraph
   const handleRewind = () => {
-    if (isPremiumMode) {
-      const prevIndex = currentParagraphIndex - 1;
-      if (prevIndex >= 0) {
+    const prevIndex = currentParagraphIndex - 1;
+    if (prevIndex >= 0) {
+      if (isPremiumMode) {
         if (audioRef.current) {
           audioRef.current.pause();
         }
-        setCurrentParagraphIndex(prevIndex);
-        setProgress(0);
         setCurrentTime(0);
-        setAutoplayNext(isPlaying); // Autoplay if already playing
+      } else {
+        if (synthRef.current) {
+          synthRef.current.cancel();
+        }
+      }
+      setCurrentParagraphIndex(prevIndex);
+      setProgress((prevIndex / (paragraphs.length - 1 || 1)) * 100);
+      if (isPlaying) {
+        if (isPremiumMode) {
+          setAutoplayNext(true);
+        } else {
+          playBrowserParagraph(prevIndex);
+        }
       }
     }
   };
 
   // Fast forward to next paragraph
   const handleFastForward = () => {
-    if (isPremiumMode) {
-      const nextIndex = currentParagraphIndex + 1;
-      if (nextIndex < paragraphs.length) {
+    const nextIndex = currentParagraphIndex + 1;
+    if (nextIndex < paragraphs.length) {
+      if (isPremiumMode) {
         if (audioRef.current) {
           audioRef.current.pause();
         }
-        setCurrentParagraphIndex(nextIndex);
-        setProgress(0);
         setCurrentTime(0);
-        setAutoplayNext(isPlaying); // Autoplay if already playing
+      } else {
+        if (synthRef.current) {
+          synthRef.current.cancel();
+        }
+      }
+      setCurrentParagraphIndex(nextIndex);
+      setProgress((nextIndex / (paragraphs.length - 1 || 1)) * 100);
+      if (isPlaying) {
+        if (isPremiumMode) {
+          setAutoplayNext(true);
+        } else {
+          playBrowserParagraph(nextIndex);
+        }
       }
     }
   };
 
   // Seeking on the timeline for current paragraph
   const handleTimelineChange = (values: number[]) => {
-    if (isPremiumMode && audioRef.current && duration > 0) {
-      const pct = values[0];
-      const targetTime = (pct / 100) * duration;
-      audioRef.current.currentTime = targetTime;
-      setCurrentTime(targetTime);
-      setProgress(pct);
+    const pct = values[0];
+    if (isPremiumMode) {
+      if (audioRef.current && duration > 0) {
+        const targetTime = (pct / 100) * duration;
+        audioRef.current.currentTime = targetTime;
+        setCurrentTime(targetTime);
+        setProgress(pct);
+      }
+    } else {
+      const targetIndex = Math.min(
+        paragraphs.length - 1,
+        Math.max(0, Math.round((pct / 100) * (paragraphs.length - 1)))
+      );
+      if (targetIndex !== currentParagraphIndex) {
+        if (synthRef.current) {
+          synthRef.current.cancel();
+        }
+        setCurrentParagraphIndex(targetIndex);
+        setProgress((targetIndex / (paragraphs.length - 1 || 1)) * 100);
+        if (isPlaying) {
+          playBrowserParagraph(targetIndex);
+        }
+      }
     }
   };
 
@@ -469,12 +603,12 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
 
   // Narrator Label
   const getNarratorName = () => {
-    if (isPremiumMode) {
-      const custom = customVoices.find(v => v.id === selectedVoiceId);
-      if (custom) return `Voix : ${custom.name} (${custom.relation})`;
-      return "Voix Haute-Fidélité";
+    if (selectedVoiceId === 'local') {
+      return "Voix par défaut de votre appareil";
     }
-    return "Synthèse Vocale Locale (Gratuite)";
+    const custom = customVoices.find(v => v.id === selectedVoiceId);
+    if (custom) return `Voix : ${custom.name} (${custom.relation})`;
+    return "Voix Haute-Fidélité";
   };
 
   return (
@@ -494,7 +628,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <Button
               onClick={handlePlayPause}
-              disabled={isGenerating || !!currentPendingAudioFile}
+              disabled={isGenerating || (isPremiumMode && !!currentPendingAudioFile)}
               variant="ghost"
               size="icon"
               className={cn(
@@ -502,12 +636,12 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 isDarkMode ? "bg-primary/20 text-primary-soft hover:bg-primary/30" : "bg-primary-soft/30 text-primary hover:bg-primary-soft/50"
               )}
             >
-              {isGenerating || currentPendingAudioFile ? (
+              {isGenerating || (isPremiumMode && currentPendingAudioFile) ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
-              ) : isPremiumMode ? (
-                isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />
+              ) : isPlaying ? (
+                <Pause className="h-5 w-5" />
               ) : (
-                isBrowserSpeaking && !isBrowserPaused ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />
+                <Play className="h-5 w-5 ml-0.5" />
               )}
             </Button>
 
@@ -567,104 +701,81 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
             <div>
               <h3 className="font-display font-semibold italic text-base">Contrôles Audio</h3>
               <p className="text-xs text-muted-foreground">
-                Ajustez le volume et le narrateur de votre histoire
+                Ajustez la voix et la musique de fond
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleAudioMode}
-                className="text-[10px] h-7 px-2 font-semibold tracking-wider uppercase flex items-center gap-1 border-primary/20 text-primary hover:bg-primary/10"
-              >
-                <Sparkles className="w-3 h-3 text-[#E9C46A]" />
-                {isPremiumMode ? "Passer en gratuit" : "Débloquer Premium"}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsExpanded(false)}
-                className="h-7 w-7 rounded-full"
-              >
-                <ChevronDown className="h-5 w-5" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsExpanded(false)}
+              className="h-7 w-7 rounded-full"
+            >
+              <ChevronDown className="h-5 w-5" />
+            </Button>
           </div>
 
-          {/* Selector block (Narrator voices) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Voix du Conteur
+          {/* Selector block (Narrator voices & Background Music) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-2">
+            {/* Colonne 1 : Voix de lecture */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider opacity-70 flex items-center gap-1.5">
+                🎙️ Voix de lecture
               </label>
               <select
-                disabled={!isPremiumMode}
                 value={selectedVoiceId}
-                onChange={(e) => setSelectedVoiceId(e.target.value)}
+                onChange={(e) => handleVoiceChange(e.target.value)}
                 className={cn(
-                  "w-full text-xs font-medium rounded-lg p-2 border",
+                  "w-full text-xs font-medium rounded-lg p-2.5 border focus:outline-none focus:ring-1 transition-all",
                   isDarkMode 
-                    ? "bg-gray-800 border-gray-700 text-white focus:ring-primary" 
-                    : "bg-white border-primary-soft/50 text-gray-800 focus:ring-primary",
-                  !isPremiumMode && "opacity-50 cursor-not-allowed"
+                    ? "bg-gray-800 border-gray-700 text-white focus:ring-primary focus:border-primary" 
+                    : "bg-white border-primary-soft/50 text-gray-800 focus:ring-primary focus:border-primary"
                 )}
               >
-                {/* Custom Cloned Voices Group */}
+                <option value="local">🔊 Voix de l'appareil (Gratuit)</option>
                 {customVoices.length > 0 && (
-                  <optgroup label="Vos Voix Enregistrées">
+                  <optgroup label="Vos voix clonées (Premium)">
                     {customVoices.map((voice) => (
                       <option key={voice.id} value={voice.id}>
-                        🎙️ {voice.name} ({voice.relation})
+                        🎙️ Voix de {voice.relation}
                       </option>
                     ))}
                   </optgroup>
                 )}
-
-                {/* Stock voices - Uniquement si ce n'est pas le serveur privé */}
-                {provider !== 'vps-hostinger' && (
-                  <optgroup label="Voix Haute-Fidélité standard">
-                    <option value="9BWtsMINqrJLrRacOk9x">Aria (Féminine)</option>
-                    <option value="EXAVITQu4vr4xnSDxMaL">Sarah (Féminine)</option>
-                    <option value="IKne3meq5aSn9XLyUdCD">Charlie (Masculine)</option>
-                    <option value="onwK4e9ZLuTAKqWW03F9">Daniel (Masculine)</option>
-                  </optgroup>
+                {customVoices.length === 0 && (
+                  <>
+                    {canUsePremiumAudio && (limits?.max_voice_clones ?? 0) > 0 ? (
+                      <option value="record_prompt">🎙️ Enregistrer une voix clonée (Premium)</option>
+                    ) : (
+                      <option value="upgrade_info">🎙️ Cloner la voix d'un proche (Premium 🌟)</option>
+                    )}
+                  </>
                 )}
               </select>
-              {!isPremiumMode && (
-                <p className="text-[10px] text-primary mt-1 font-semibold flex items-center gap-0.5 animate-pulse">
-                  <Sparkles className="w-2.5 h-2.5" /> Activez le mode Premium pour enregistrer votre voix.
-                </p>
-              )}
-              {isPremiumMode && provider === 'vps-hostinger' && customVoices.length === 0 && (
-                <p className="text-[10px] text-primary mt-1 font-semibold">
-                  💡 Enregistrez d'abord une voix dans le Studio des Voix Familiales pour utiliser la lecture haute-fidélité.
-                </p>
-              )}
             </div>
 
-            {/* Background Sound controls */}
+            {/* Colonne 2 : Musique de fond */}
             {soundId && (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                    <Music className="w-3.5 h-3.5 text-primary" /> Musique de fond
+                  <label className="text-xs font-semibold uppercase tracking-wider opacity-70 flex items-center gap-1.5">
+                    🎵 Musique d'ambiance
                   </label>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={backgroundSound.togglePlay}
                     className={cn(
-                      "h-5 text-[10px] px-1.5 rounded",
+                      "h-6 text-[10px] px-2 rounded-lg font-semibold transition-all",
                       backgroundSound.isPlaying 
-                        ? "text-primary bg-primary-soft/20 font-bold" 
-                        : "text-muted-foreground"
+                        ? (isDarkMode ? "text-primary bg-primary/20" : "text-primary bg-primary-soft/30")
+                        : "text-muted-foreground hover:bg-muted"
                     )}
                   >
-                    {backgroundSound.isPlaying ? "Active" : "Désactivée"}
+                    {backgroundSound.isPlaying ? "Activée" : "Désactivée"}
                   </Button>
                 </div>
-                <div className="flex items-center gap-2 pt-1.5">
-                  <VolumeX className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <div className="flex items-center gap-3 pt-1">
+                  <VolumeX className="w-4 h-4 text-muted-foreground shrink-0" />
                   <Slider
                     disabled={!backgroundSound.isPlaying}
                     value={[backgroundSound.volume]}
@@ -673,15 +784,33 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                     onValueChange={handleMusicVolumeChange}
                     className="flex-1 cursor-pointer"
                   />
-                  <Volume2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <Volume2 className="w-4 h-4 text-muted-foreground shrink-0" />
                 </div>
               </div>
             )}
           </div>
 
-          {/* Timeline and timeline controls */}
-          <div className="space-y-1.5">
-            {isPremiumMode ? (
+          {/* Barre de Progression / Statut de Lecture */}
+          <div className="space-y-2 py-1">
+            {!isPremiumMode ? (
+              // Mode Gratuit (Synthèse vocale locale) - Toujours prêt
+              <>
+                <Slider
+                  value={[progress]}
+                  max={100}
+                  step={0.1}
+                  onValueChange={handleTimelineChange}
+                  className="w-full cursor-pointer h-2"
+                />
+                <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                  <span className="font-semibold text-primary">
+                    Paragraphe {currentParagraphIndex + 1} sur {paragraphs.length}
+                  </span>
+                  <span className="italic opacity-80">Voix de l'appareil (Gratuit)</span>
+                </div>
+              </>
+            ) : (
+              // Mode Premium (VPS) - Dépend de la génération
               <>
                 {currentAudioFile ? (
                   <>
@@ -694,7 +823,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                     />
                     <div className="flex justify-between items-center text-[10px] text-muted-foreground">
                       <span className="font-semibold text-primary">
-                        Phrase {currentParagraphIndex + 1} sur {paragraphs.length}
+                        Paragraphe {currentParagraphIndex + 1} sur {paragraphs.length}
                       </span>
                       <span className="font-mono">{formatTime(currentTime)} / {formatTime(duration)}</span>
                     </div>
@@ -702,14 +831,14 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 ) : (
                   <div className="text-xs py-2 text-center text-muted-foreground bg-muted/40 rounded-lg">
                     {currentPendingAudioFile ? (
-                      <div className="flex items-center justify-center gap-2 animate-pulse text-primary">
+                      <div className="flex items-center justify-center gap-2 animate-pulse text-primary font-medium">
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Préparation de la lecture haute-fidélité... (Prêt dans 30s)
+                        Génération de la voix par le VPS... (Prêt dans 30s)
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-1.5 py-1">
                         <span className="text-[11px] text-muted-foreground">
-                          Phrase {currentParagraphIndex + 1} sur {paragraphs.length} non préparée.
+                          Paragraphe {currentParagraphIndex + 1} sur {paragraphs.length} non préparé.
                         </span>
                         <Button 
                           onClick={handlePlayPause} 
@@ -720,10 +849,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                           {isGenerating ? (
                             <>
                               <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                              Préparation...
+                              Génération en cours...
                             </>
                           ) : (
-                            "Préparer cette phrase"
+                            "Générer l'audio (VPS)"
                           )}
                         </Button>
                       </div>
@@ -731,10 +860,6 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                   </div>
                 )}
               </>
-            ) : (
-              <div className="text-[10px] text-center p-2 rounded-lg bg-muted/40 text-muted-foreground">
-                💡 Mode Gratuit : Lecture par synthèse locale. Pour avancer de 10s ou naviguer dans le temps, activez l'Audio Premium.
-              </div>
             )}
           </div>
 
@@ -745,16 +870,16 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={handleRewind}
-                disabled={!isPremiumMode || currentParagraphIndex === 0}
+                disabled={currentParagraphIndex === 0}
                 className="h-9 w-9 rounded-full hover:bg-muted"
-                title="Phrase précédente"
+                title="Paragraphe précédent"
               >
                 <RotateCcw className="h-4.5 w-4.5" />
               </Button>
 
               <Button
                 onClick={handlePlayPause}
-                disabled={isGenerating || !!currentPendingAudioFile}
+                disabled={isGenerating || (isPremiumMode && !!currentPendingAudioFile)}
                 className={cn(
                   "h-12 w-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-105 shrink-0",
                   isDarkMode 
@@ -762,12 +887,12 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                     : "bg-primary text-primary-foreground hover:bg-primary/95"
                 )}
               >
-                {isGenerating || currentPendingAudioFile ? (
+                {isGenerating || (isPremiumMode && currentPendingAudioFile) ? (
                   <Loader2 className="h-6 w-6 animate-spin" />
-                ) : isPremiumMode ? (
-                  isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />
+                ) : isPlaying ? (
+                  <Pause className="h-6 w-6" />
                 ) : (
-                  isBrowserSpeaking && !isBrowserPaused ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />
+                  <Play className="h-6 w-6 ml-0.5" />
                 )}
               </Button>
 
@@ -775,9 +900,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={handleFastForward}
-                disabled={!isPremiumMode || currentParagraphIndex === paragraphs.length - 1}
+                disabled={currentParagraphIndex === paragraphs.length - 1}
                 className="h-9 w-9 rounded-full hover:bg-muted"
-                title="Phrase suivante"
+                title="Paragraphe suivant"
               >
                 <RotateCw className="h-4.5 w-4.5" />
               </Button>
@@ -794,7 +919,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                     if (url) window.open(url, '_blank');
                   }}
                   className="h-8 w-8 rounded-lg"
-                  title="Télécharger cette phrase en .mp3"
+                  title="Télécharger ce paragraphe en .mp3"
                 >
                   <Download className="h-4 w-4" />
                 </Button>

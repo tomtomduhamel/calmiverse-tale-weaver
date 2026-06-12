@@ -116,7 +116,7 @@ export const APP_CONFIG = {
   // External services
   SERVICES: {
     OPENAI_MODEL: 'gpt-4',
-    TTS_PROVIDER: 'elevenlabs',
+    TTS_PROVIDER: 'vps-hostinger',
     IMAGE_PROVIDER: 'supabase'
   },
 

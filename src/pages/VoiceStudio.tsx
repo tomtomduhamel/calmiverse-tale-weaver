@@ -50,6 +50,7 @@ export const VoiceStudio: React.FC = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const audioFormatRef = useRef<{ mimeType: string, ext: string }>({ mimeType: 'audio/webm', ext: 'webm' });
 
   // Distant Invitation State
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -137,7 +138,24 @@ export const VoiceStudio: React.FC = () => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      // Déterminer le format supporté
+      const formats = [
+        { mimeType: 'audio/webm', ext: 'webm' },
+        { mimeType: 'audio/ogg', ext: 'ogg' },
+        { mimeType: 'audio/mp4', ext: 'm4a' },
+        { mimeType: 'audio/aac', ext: 'aac' },
+      ];
+      let selectedFormat = { mimeType: '', ext: 'webm' };
+      for (const format of formats) {
+        if (MediaRecorder.isTypeSupported(format.mimeType)) {
+          selectedFormat = format;
+          break;
+        }
+      }
+      audioFormatRef.current = selectedFormat;
+
+      const options = selectedFormat.mimeType ? { mimeType: selectedFormat.mimeType } : undefined;
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -147,7 +165,7 @@ export const VoiceStudio: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: selectedFormat.mimeType || mediaRecorder.mimeType });
         const url = URL.createObjectURL(audioBlob);
         setAudioBlob(audioBlob);
         setAudioUrl(url);
@@ -262,13 +280,14 @@ export const VoiceStudio: React.FC = () => {
 
     try {
       const voiceId = crypto.randomUUID();
-      const filePath = `${user.id}/${voiceId}.wav`; // Upload inside user folder
+      const format = audioFormatRef.current;
+      const filePath = `${user.id}/${voiceId}.${format.ext}`; // Upload inside user folder with correct extension
 
       // 1. Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('voice-clones')
         .upload(filePath, audioBlob, {
-          contentType: 'audio/wav',
+          contentType: format.mimeType || audioBlob.type || 'audio/webm',
           cacheControl: '3600',
           upsert: true
         });

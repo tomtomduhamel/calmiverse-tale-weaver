@@ -184,7 +184,7 @@ export const useN8nAudioGeneration = () => {
       }
 
       const webhookUrl = ttsConfig.webhookUrl;
-      const provider = ttsConfig.provider || 'elevenlabs';
+      const provider = ttsConfig.provider || 'vps-hostinger';
       const dynamicVoiceId = voiceId || ttsConfig.voiceId || '9BWtsMINqrJLrRacOk9x'; // Prioritize explicitly selected voiceId
 
       console.log(`🎙️ [N8nAudio] Génération audio via ${provider}:`, { 
