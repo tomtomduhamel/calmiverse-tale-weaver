@@ -174,10 +174,10 @@ export const SharedVoiceRecord: React.FC = () => {
         const blob = new Blob(audioChunksRef.current, { type: selectedFormat.mimeType || mediaRecorder.mimeType });
         console.log("Recorded blob size:", blob.size, "bytes");
 
-        if (blob.size === 0) {
+        if (blob.size < 10000) {
           toast({
-            title: "Enregistrement vide",
-            description: "Aucun son n'a été capturé. Veuillez vérifier les autorisations de votre micro et réessayer.",
+            title: "Enregistrement trop court ou silencieux",
+            description: "Le microphone n'a capturé aucun son valide. Veuillez réessayer en parlant bien en face du micro.",
             variant: "destructive"
           });
           setRecordingState('welcome');
@@ -190,7 +190,7 @@ export const SharedVoiceRecord: React.FC = () => {
         setRecordingState('preview');
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(1000);
       setRecordingState('recording');
 
       // 15 seconds timer
@@ -233,6 +233,16 @@ export const SharedVoiceRecord: React.FC = () => {
       const audio = audioPreviewRef.current || new Audio(audioUrl);
       audioPreviewRef.current = audio;
       audio.onended = () => setIsPlayingPreview(false);
+      
+      audio.onerror = () => {
+        console.error("Audio element error during shared preview playback:", audio.error);
+        setIsPlayingPreview(false);
+        toast({
+          title: "Erreur de décodage",
+          description: `Impossible de charger votre voix (code ${audio.error?.code || 'inconnu'}).`,
+          variant: "destructive"
+        });
+      };
       
       audio.play()
         .then(() => {

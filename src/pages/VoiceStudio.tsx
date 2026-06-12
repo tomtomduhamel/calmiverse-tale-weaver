@@ -182,13 +182,20 @@ export const VoiceStudio: React.FC = () => {
         // Stop all tracks in stream to release microphone after recording is stopped
         stream.getTracks().forEach(track => track.stop());
 
+        // Clean up recording AudioContext and analyser immediately to free audio resources
+        if (audioContextRef.current) {
+          audioContextRef.current.close().catch(err => console.error("Error closing AudioContext:", err));
+          audioContextRef.current = null;
+        }
+        analyserRef.current = null;
+
         const audioBlob = new Blob(audioChunksRef.current, { type: selectedFormat.mimeType || mediaRecorder.mimeType });
         console.log("Recorded blob size:", audioBlob.size, "bytes");
 
-        if (audioBlob.size === 0) {
+        if (audioBlob.size < 10000) {
           toast({
-            title: "Enregistrement vide",
-            description: "Aucun son n'a été capturé. Veuillez vérifier les autorisations de votre micro et réessayer.",
+            title: "Enregistrement trop court ou silencieux",
+            description: "Le microphone n'a capturé aucun son valide. Veuillez réessayer en parlant bien en face du micro.",
             variant: "destructive"
           });
           setRecordingStep('info');
@@ -204,7 +211,7 @@ export const VoiceStudio: React.FC = () => {
       // Set up simple canvas waveform animation
       setupWaveform(stream);
 
-      mediaRecorder.start();
+      mediaRecorder.start(1000);
       setRecordingStep('recording');
 
       // 15 seconds timer
@@ -300,6 +307,16 @@ export const VoiceStudio: React.FC = () => {
       const audio = audioPreviewRef.current || new Audio(audioUrl);
       audioPreviewRef.current = audio;
       audio.onended = () => setIsPlayingPreview(false);
+      
+      audio.onerror = () => {
+        console.error("Audio element error during preview playback:", audio.error);
+        setIsPlayingPreview(false);
+        toast({
+          title: "Erreur de décodage",
+          description: `Impossible de charger l'échantillon (code ${audio.error?.code || 'inconnu'}).`,
+          variant: "destructive"
+        });
+      };
       
       audio.play()
         .then(() => {
@@ -432,6 +449,16 @@ export const VoiceStudio: React.FC = () => {
 
         audio.onended = () => {
           setPlayingVoiceId(null);
+        };
+
+        audio.onerror = () => {
+          console.error("Test listen audio error:", audio.error);
+          setPlayingVoiceId(null);
+          toast({
+            title: "Erreur de décodage",
+            description: `Impossible de charger l'échantillon vocal (code ${audio.error?.code || 'inconnu'}).`,
+            variant: "destructive"
+          });
         };
 
         audio.play()
