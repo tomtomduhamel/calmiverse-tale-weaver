@@ -304,7 +304,8 @@ export const useN8nAudioGeneration = () => {
         text: text,
         storyId,
         voiceId: dynamicVoiceId,
-        requestId
+        requestId,
+        provider: provider
       };
 
       // Check if this is a custom user voice clone

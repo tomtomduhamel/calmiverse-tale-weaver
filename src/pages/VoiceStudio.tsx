@@ -613,10 +613,10 @@ export const VoiceStudio: React.FC = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mic className="h-5 w-5 text-primary" />
-              Créer votre clone vocal
+              Créer votre voix personnalisée
             </DialogTitle>
             <DialogDescription>
-              Enregistrez un échantillon de 15 secondes pour notre IA
+              Enregistrez un échantillon de 15 secondes.
             </DialogDescription>
           </DialogHeader>
 
@@ -641,7 +641,7 @@ export const VoiceStudio: React.FC = () => {
                   1. Vous allez devoir lire à haute voix un court texte chaleureux de 15 secondes.
                 </p>
                 <p>
-                  2. Notre VPS TTS privé modélisera instantanément votre timbre de voix.
+                  2. Notre système modélisera instantanément votre timbre de voix.
                 </p>
                 <p>
                   3. Votre voix sera immédiatement disponible pour raconter n'importe quelle histoire !
@@ -733,7 +733,7 @@ export const VoiceStudio: React.FC = () => {
                   onClick={handleSaveVoice}
                   className="flex-1"
                 >
-                  Créer mon clone vocal
+                  Enregistrer ma voix
                 </Button>
               </div>
             </div>
@@ -744,9 +744,9 @@ export const VoiceStudio: React.FC = () => {
             <div className="space-y-4 py-8 text-center">
               <Loader2 className="w-12 h-12 text-primary mx-auto animate-spin" />
               <div>
-                <h4 className="font-bold text-base">Création du modèle IA…</h4>
+                <h4 className="font-bold text-base">Création de votre voix…</h4>
                 <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-                  Nous sécurisons votre flux et structurons votre clone vocal. Cela ne prend que quelques secondes…
+                  Nous sécurisons votre flux et structurons votre voix personnalisée. Cela ne prend que quelques secondes…
                 </p>
               </div>
             </div>

@@ -2,6 +2,9 @@ import os
 import time
 import uuid
 import torch
+# Optimisation critique pour VPS KVM2 (2 vCPUs) : évite l'explosion de threads et la saturation CPU
+torch.set_num_threads(2)
+torch.set_num_interop_threads(2)
 import urllib.request
 import soundfile as sf
 from fastapi import FastAPI, HTTPException, Security, Depends

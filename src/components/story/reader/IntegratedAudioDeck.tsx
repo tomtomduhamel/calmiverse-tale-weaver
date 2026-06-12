@@ -49,6 +49,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const [isCaching, setIsCaching] = useState(false);
   const [customVoices, setCustomVoices] = useState<CustomVoice[]>([]);
   const [selectedVoiceId, setSelectedVoiceId] = useState('9BWtsMINqrJLrRacOk9x'); // Default ElevenLabs voice (Aria)
+  const [provider, setProvider] = useState<string>('elevenlabs');
   
   // Browser SpeechSynthesis state
   const [isBrowserSpeaking, setIsBrowserSpeaking] = useState(false);
@@ -91,6 +92,18 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       await recoverErrorFiles(storyId);
       await fetchAudioFiles(storyId);
 
+      let activeProvider = 'elevenlabs';
+      // Fetch active TTS provider config
+      try {
+        const { data: ttsConfig } = await supabase.functions.invoke('get-tts-config');
+        if (ttsConfig?.provider) {
+          activeProvider = ttsConfig.provider;
+          setProvider(ttsConfig.provider);
+        }
+      } catch (err) {
+        console.error('Error fetching TTS provider:', err);
+      }
+
       // Fetch custom user voices
       try {
         const { data, error } = await supabase
@@ -98,6 +111,11 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           .select('id, name, relation, voice_ref_path, transcript');
         if (!error && data) {
           setCustomVoices(data as CustomVoice[]);
+          
+          // Si on utilise le serveur privé et qu'on a des voix, sélectionner la première par défaut
+          if (activeProvider === 'vps-hostinger' && data.length > 0) {
+            setSelectedVoiceId(data[0].id);
+          }
         }
       } catch (err) {
         console.error('Error fetching custom voices:', err);
@@ -117,38 +135,86 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     };
   }, [storyId, fetchAudioFiles, cleanupStuckFiles, recoverErrorFiles]);
 
-  const readyAudioFile = audioFiles.find(file => file.status === 'ready' && file.audio_url);
-  const pendingAudioFile = audioFiles.find(file => file.status === 'pending' || file.status === 'processing');
+  // Split text into sentences dynamically
+  const paragraphs = React.useMemo(() => {
+    if (!text) return [];
+    
+    // First, strip all modulation tags from the entire text
+    const cleanText = text
+      .replace(/\[.*?\]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+      
+    // Split by sentences using positive lookbehind to preserve punctuation
+    return cleanText
+      .split(/(?<=[.!?])\s+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+  }, [text]);
 
-  // Cache prefetching for premium offline use
+  const [currentParagraphIndex, setCurrentParagraphIndex] = useState<number>(0);
+  const [autoplayNext, setAutoplayNext] = useState<boolean>(false);
+
+  // Find audio file for the current paragraph
+  const currentParagraphText = paragraphs[currentParagraphIndex] || '';
+  const currentAudioFile = audioFiles.find(
+    file => file.text_content === currentParagraphText && file.voice_id === selectedVoiceId && file.status === 'ready' && file.audio_url
+  );
+  const currentPendingAudioFile = audioFiles.find(
+    file => file.text_content === currentParagraphText && file.voice_id === selectedVoiceId && (file.status === 'pending' || file.status === 'processing')
+  );
+
+  // Cache checking for current paragraph
   useEffect(() => {
-    const prefetchAudio = async () => {
-      if (readyAudioFile?.audio_url && isPremiumMode) {
-        try {
-          const cached = await audioCache.has(storyId);
-          if (cached) {
-            setIsOfflineReady(true);
-            return;
-          }
-
-          setIsCaching(true);
-          const signedUrl = await getSignedAudioUrl(readyAudioFile.audio_url);
-          if (signedUrl) {
-            await audioCache.prefetchAndCache(storyId, signedUrl);
-            setIsOfflineReady(true);
-          }
-        } catch (error) {
-          console.error('[AudioDeck] Cache prefetch error:', error);
-        } finally {
-          setIsCaching(false);
-        }
+    const checkCache = async () => {
+      if (isPremiumMode && paragraphs.length > 0) {
+        const cacheKey = `${storyId}_p_${currentParagraphIndex}`;
+        const cached = await audioCache.has(cacheKey);
+        setIsOfflineReady(cached);
       } else {
         setIsOfflineReady(false);
       }
     };
+    checkCache();
+  }, [currentParagraphIndex, isPremiumMode, storyId, paragraphs]);
 
-    prefetchAudio();
-  }, [readyAudioFile?.audio_url, storyId, isPremiumMode]);
+  // Background prefetching for the NEXT paragraph
+  useEffect(() => {
+    const prefetchNextParagraph = async () => {
+      if (!isPremiumMode || !isPlaying) return;
+      const nextIndex = currentParagraphIndex + 1;
+      if (nextIndex < paragraphs.length) {
+        const nextText = paragraphs[nextIndex];
+        const nextAudioFile = audioFiles.find(
+          file => file.text_content === nextText && file.voice_id === selectedVoiceId
+        );
+        if (!nextAudioFile) {
+          console.log(`🚀 [AudioDeck] Prefetching paragraph ${nextIndex + 1}/${paragraphs.length} in background`);
+          await generateAudio(storyId, nextText, selectedVoiceId);
+        }
+      }
+    };
+    prefetchNextParagraph();
+  }, [currentParagraphIndex, isPlaying, audioFiles, selectedVoiceId, isPremiumMode, storyId, paragraphs]);
+
+  // Autoplay next paragraph transition
+  useEffect(() => {
+    if (autoplayNext && isPremiumMode) {
+      setAutoplayNext(false);
+      const pText = paragraphs[currentParagraphIndex];
+      const pAudioFile = audioFiles.find(
+        file => file.text_content === pText && file.voice_id === selectedVoiceId && file.status === 'ready'
+      );
+      if (pAudioFile) {
+        console.log(`▶️ [AudioDeck] Autoplaying paragraph ${currentParagraphIndex + 1}`);
+        handlePlayPause();
+      } else {
+        setIsPlaying(false);
+        setProgress(0);
+        setCurrentTime(0);
+      }
+    }
+  }, [currentParagraphIndex, autoplayNext, audioFiles, isPremiumMode, selectedVoiceId, paragraphs]);
 
   // Sync volume with background audio player
   const handleMusicVolumeChange = (values: number[]) => {
@@ -187,7 +253,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       toast({
         title: `Mode audio : ${newMode === 'premium' ? 'Premium 🌟' : 'Synthèse locale 🔊'}`,
         description: newMode === 'premium' 
-          ? "Vous écoutez les voix haute fidélité générées par IA" 
+          ? "Vous écoutez les voix haute fidélité" 
           : "Vous utilisez le synthétiseur gratuit de votre appareil"
       });
     } catch (err) {
@@ -198,14 +264,33 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   // Play/Pause control
   const handlePlayPause = async () => {
     if (isPremiumMode) {
-      // 🌟 Premium Audio Playback (VPS/MP3)
-      if (!readyAudioFile?.audio_url) {
+      // 🌟 Premium Audio Playback (VPS/MP3 - Paragraph Chunking)
+      if (paragraphs.length === 0) return;
+      
+      const pText = paragraphs[currentParagraphIndex];
+      const pAudioFile = audioFiles.find(
+        file => file.text_content === pText && file.voice_id === selectedVoiceId
+      );
+
+      if (!pAudioFile || pAudioFile.status === 'error') {
         // Not generated yet, trigger generation
         toast({
-          title: "Génération audio lancée",
+          title: "Préparation de la lecture",
           description: "La synthèse vocale haute-fidélité démarre...",
         });
-        await generateAudio(storyId, text, selectedVoiceId);
+        const generatedId = await generateAudio(storyId, pText, selectedVoiceId);
+        if (generatedId) {
+          // Immediately trigger play by fetching latest files
+          await fetchAudioFiles(storyId);
+        }
+        return;
+      }
+
+      if (pAudioFile.status === 'pending' || pAudioFile.status === 'processing') {
+        toast({
+          title: "Lecture en cours de préparation",
+          description: "Veuillez patienter quelques instants...",
+        });
         return;
       }
 
@@ -217,11 +302,12 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
 
       try {
         let audioUrl = "";
-        const cachedBlob = await audioCache.get(storyId);
+        const cacheKey = `${storyId}_p_${currentParagraphIndex}`;
+        const cachedBlob = await audioCache.get(cacheKey);
 
         if (cachedBlob) {
           audioUrl = URL.createObjectURL(cachedBlob);
-          console.log("⚡ [AudioDeck] Playing from IndexedDB offline cache");
+          console.log("⚡ [AudioDeck] Playing paragraph from IndexedDB cache");
         } else {
           if (!navigator.onLine) {
             toast({
@@ -231,16 +317,23 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
             });
             return;
           }
-          const signedUrl = await getSignedAudioUrl(readyAudioFile.audio_url);
+          const signedUrl = await getSignedAudioUrl(pAudioFile.audio_url!);
           if (!signedUrl) throw new Error("Could not get signed URL");
           audioUrl = signedUrl;
+
+          // Cache in background for offline use
+          audioCache.prefetchAndCache(cacheKey, signedUrl).then(() => {
+            console.log(`✅ [AudioDeck] Cached paragraph ${currentParagraphIndex}`);
+            setIsOfflineReady(true);
+          }).catch(err => {
+            console.error('[AudioDeck] Cache error:', err);
+          });
         }
 
         const audio = audioRef.current || new Audio();
         audio.src = audioUrl;
         audioRef.current = audio;
 
-        // Set speed (if settings have speeds)
         const speed = userSettings.readingPreferences?.readingSpeed || 1.0;
         audio.playbackRate = speed;
 
@@ -252,9 +345,17 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           setProgress((audio.currentTime / audio.duration) * 100);
         };
         audio.onended = () => {
-          setIsPlaying(false);
-          setProgress(0);
-          setCurrentTime(0);
+          // Play next paragraph automatically!
+          const nextIndex = currentParagraphIndex + 1;
+          if (nextIndex < paragraphs.length) {
+            setCurrentParagraphIndex(nextIndex);
+            setAutoplayNext(true);
+          } else {
+            setIsPlaying(false);
+            setProgress(0);
+            setCurrentTime(0);
+            setCurrentParagraphIndex(0);
+          }
         };
         audio.onerror = () => {
           toast({
@@ -289,7 +390,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         }
       } else {
         synthRef.current.cancel(); // Stop any pending
-        const cleanText = text.replace(/\[.*?\]/g, ""); // Remove n8n tags
+        const cleanText = text.replace(/\[.*?\]/g, ""); // Remove modulation tags
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'fr-FR';
         
@@ -316,25 +417,39 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     }
   };
 
-  // 10 seconds rewind
+  // Rewind to previous paragraph
   const handleRewind = () => {
-    if (isPremiumMode && audioRef.current) {
-      const targetTime = Math.max(0, audioRef.current.currentTime - 10);
-      audioRef.current.currentTime = targetTime;
-      setCurrentTime(targetTime);
+    if (isPremiumMode) {
+      const prevIndex = currentParagraphIndex - 1;
+      if (prevIndex >= 0) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        setCurrentParagraphIndex(prevIndex);
+        setProgress(0);
+        setCurrentTime(0);
+        setAutoplayNext(isPlaying); // Autoplay if already playing
+      }
     }
   };
 
-  // 10 seconds skip forward
+  // Fast forward to next paragraph
   const handleFastForward = () => {
-    if (isPremiumMode && audioRef.current) {
-      const targetTime = Math.min(duration, audioRef.current.currentTime + 10);
-      audioRef.current.currentTime = targetTime;
-      setCurrentTime(targetTime);
+    if (isPremiumMode) {
+      const nextIndex = currentParagraphIndex + 1;
+      if (nextIndex < paragraphs.length) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        setCurrentParagraphIndex(nextIndex);
+        setProgress(0);
+        setCurrentTime(0);
+        setAutoplayNext(isPlaying); // Autoplay if already playing
+      }
     }
   };
 
-  // Scrubbing/seeking on timeline
+  // Seeking on the timeline for current paragraph
   const handleTimelineChange = (values: number[]) => {
     if (isPremiumMode && audioRef.current && duration > 0) {
       const pct = values[0];
@@ -356,8 +471,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const getNarratorName = () => {
     if (isPremiumMode) {
       const custom = customVoices.find(v => v.id === selectedVoiceId);
-      if (custom) return `Clone : ${custom.name} (${custom.relation})`;
-      return "Voix Haute-Fidélité IA";
+      if (custom) return `Voix : ${custom.name} (${custom.relation})`;
+      return "Voix Haute-Fidélité";
     }
     return "Synthèse Vocale Locale (Gratuite)";
   };
@@ -379,7 +494,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <Button
               onClick={handlePlayPause}
-              disabled={isGenerating || !!pendingAudioFile}
+              disabled={isGenerating || !!currentPendingAudioFile}
               variant="ghost"
               size="icon"
               className={cn(
@@ -387,7 +502,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 isDarkMode ? "bg-primary/20 text-primary-soft hover:bg-primary/30" : "bg-primary-soft/30 text-primary hover:bg-primary-soft/50"
               )}
             >
-              {isGenerating || pendingAudioFile ? (
+              {isGenerating || currentPendingAudioFile ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : isPremiumMode ? (
                 isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />
@@ -496,7 +611,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               >
                 {/* Custom Cloned Voices Group */}
                 {customVoices.length > 0 && (
-                  <optgroup label="Vos Clones Vocaux (Premium)">
+                  <optgroup label="Vos Voix Enregistrées">
                     {customVoices.map((voice) => (
                       <option key={voice.id} value={voice.id}>
                         🎙️ {voice.name} ({voice.relation})
@@ -505,17 +620,24 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                   </optgroup>
                 )}
 
-                {/* Stock voices */}
-                <optgroup label="Voix Haute-Fidélité standard">
-                  <option value="9BWtsMINqrJLrRacOk9x">Aria (Féminine)</option>
-                  <option value="EXAVITQu4vr4xnSDxMaL">Sarah (Féminine)</option>
-                  <option value="IKne3meq5aSn9XLyUdCD">Charlie (Masculine)</option>
-                  <option value="onwK4e9ZLuTAKqWW03F9">Daniel (Masculine)</option>
-                </optgroup>
+                {/* Stock voices - Uniquement si ce n'est pas le serveur privé */}
+                {provider !== 'vps-hostinger' && (
+                  <optgroup label="Voix Haute-Fidélité standard">
+                    <option value="9BWtsMINqrJLrRacOk9x">Aria (Féminine)</option>
+                    <option value="EXAVITQu4vr4xnSDxMaL">Sarah (Féminine)</option>
+                    <option value="IKne3meq5aSn9XLyUdCD">Charlie (Masculine)</option>
+                    <option value="onwK4e9ZLuTAKqWW03F9">Daniel (Masculine)</option>
+                  </optgroup>
+                )}
               </select>
               {!isPremiumMode && (
                 <p className="text-[10px] text-primary mt-1 font-semibold flex items-center gap-0.5 animate-pulse">
-                  <Sparkles className="w-2.5 h-2.5" /> Activez le mode Premium pour cloner votre voix.
+                  <Sparkles className="w-2.5 h-2.5" /> Activez le mode Premium pour enregistrer votre voix.
+                </p>
+              )}
+              {isPremiumMode && provider === 'vps-hostinger' && customVoices.length === 0 && (
+                <p className="text-[10px] text-primary mt-1 font-semibold">
+                  💡 Enregistrez d'abord une voix dans le Studio des Voix Familiales pour utiliser la lecture haute-fidélité.
                 </p>
               )}
             </div>
@@ -561,7 +683,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           <div className="space-y-1.5">
             {isPremiumMode ? (
               <>
-                {readyAudioFile ? (
+                {currentAudioFile ? (
                   <>
                     <Slider
                       value={[progress]}
@@ -570,20 +692,41 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                       onValueChange={handleTimelineChange}
                       className="w-full cursor-pointer h-2"
                     />
-                    <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
-                      <span>{formatTime(currentTime)}</span>
-                      <span>{formatTime(duration)}</span>
+                    <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                      <span className="font-semibold text-primary">
+                        Phrase {currentParagraphIndex + 1} sur {paragraphs.length}
+                      </span>
+                      <span className="font-mono">{formatTime(currentTime)} / {formatTime(duration)}</span>
                     </div>
                   </>
                 ) : (
                   <div className="text-xs py-2 text-center text-muted-foreground bg-muted/40 rounded-lg">
-                    {pendingAudioFile ? (
+                    {currentPendingAudioFile ? (
                       <div className="flex items-center justify-center gap-2 animate-pulse text-primary">
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Génération vocale en cours par votre VPS... (Prêt dans 30s)
+                        Préparation de la lecture haute-fidélité... (Prêt dans 30s)
                       </div>
                     ) : (
-                      "Générez d'abord la lecture haute-fidélité pour accéder au lecteur complet."
+                      <div className="flex flex-col items-center gap-1.5 py-1">
+                        <span className="text-[11px] text-muted-foreground">
+                          Phrase {currentParagraphIndex + 1} sur {paragraphs.length} non préparée.
+                        </span>
+                        <Button 
+                          onClick={handlePlayPause} 
+                          disabled={isGenerating}
+                          size="sm" 
+                          className="h-6 text-[10px] px-3 font-semibold"
+                        >
+                          {isGenerating ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                              Préparation...
+                            </>
+                          ) : (
+                            "Préparer cette phrase"
+                          )}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -602,16 +745,16 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={handleRewind}
-                disabled={!isPremiumMode || !readyAudioFile}
+                disabled={!isPremiumMode || currentParagraphIndex === 0}
                 className="h-9 w-9 rounded-full hover:bg-muted"
-                title="Reculer de 10s"
+                title="Phrase précédente"
               >
                 <RotateCcw className="h-4.5 w-4.5" />
               </Button>
 
               <Button
                 onClick={handlePlayPause}
-                disabled={isGenerating || !!pendingAudioFile}
+                disabled={isGenerating || !!currentPendingAudioFile}
                 className={cn(
                   "h-12 w-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-105 shrink-0",
                   isDarkMode 
@@ -619,7 +762,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                     : "bg-primary text-primary-foreground hover:bg-primary/95"
                 )}
               >
-                {isGenerating || pendingAudioFile ? (
+                {isGenerating || currentPendingAudioFile ? (
                   <Loader2 className="h-6 w-6 animate-spin" />
                 ) : isPremiumMode ? (
                   isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />
@@ -632,9 +775,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={handleFastForward}
-                disabled={!isPremiumMode || !readyAudioFile}
+                disabled={!isPremiumMode || currentParagraphIndex === paragraphs.length - 1}
                 className="h-9 w-9 rounded-full hover:bg-muted"
-                title="Avancer de 10s"
+                title="Phrase suivante"
               >
                 <RotateCw className="h-4.5 w-4.5" />
               </Button>
@@ -642,16 +785,16 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
 
             {/* Offline caching indicators and downloads */}
             <div className="flex items-center gap-2">
-              {isPremiumMode && readyAudioFile && (
+              {isPremiumMode && currentAudioFile && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={async () => {
-                    const url = await getSignedAudioUrl(readyAudioFile.audio_url);
+                    const url = await getSignedAudioUrl(currentAudioFile.audio_url!);
                     if (url) window.open(url, '_blank');
                   }}
                   className="h-8 w-8 rounded-lg"
-                  title="Télécharger l'histoire en .mp3"
+                  title="Télécharger cette phrase en .mp3"
                 >
                   <Download className="h-4 w-4" />
                 </Button>

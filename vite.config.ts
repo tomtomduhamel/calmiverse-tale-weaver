@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    hmr: {
+    hmr: process.env.OS === 'Windows_NT' ? undefined : {
       clientPort: 443,
       protocol: 'wss'
     }

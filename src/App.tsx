@@ -56,6 +56,7 @@ const BetaPending = lazy(() => import("./pages/BetaPending"));
 const VipAccess = lazy(() => import("./pages/VipAccess"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const SuperAdmin = lazy(() => import("./pages/superadmin/SuperAdmin"));
+const SuperAdminGuard = lazy(() => import("./components/superadmin/SuperAdminGuard"));
 const Landing = lazy(() => import("./pages/Landing"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
 const CheckoutCancelled = lazy(() => import("./pages/CheckoutCancelled"));
@@ -230,7 +231,7 @@ function App() {
                   <Route path="children" element={<ChildrenListPage />} />
                   <Route path="kids-profile" element={<KidsProfile />} />
                   <Route path="settings" element={<Settings />} />
-                  <Route path="voices" element={<VoiceStudio />} />
+                  <Route path="voices" element={<SuperAdminGuard><VoiceStudio /></SuperAdminGuard>} />
                   <Route path="library" element={<Library />} />
                   <Route path="reader/:id" element={<StoryReaderPage />} />
                   <Route path="create-story-n8n" element={<Navigate to="/app/create-story/step-1" replace />} />

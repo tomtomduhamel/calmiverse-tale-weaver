@@ -234,7 +234,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
           </div>;
       }
       if (pendingAudioFile.status === 'processing') {
-        return <div className="text-xs text-center text-primary animate-pulse">Génération vocale en cours par votre VPS...</div>;
+        return <div className="text-xs text-center text-primary animate-pulse">Préparation de la lecture haute-fidélité...</div>;
       }
     }
     if (recoverableAudioFile) {

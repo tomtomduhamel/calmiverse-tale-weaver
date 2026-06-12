@@ -10,6 +10,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { GlobalThemeToggle } from '@/components/ui/GlobalThemeToggle';
 import { usePendingShares } from '@/hooks/stories/useStorySharing';
+import { useIsSuperAdmin } from '@/hooks/auth/useIsSuperAdmin';
+
 const Navigation = () => {
   const {
     user,
@@ -20,6 +22,7 @@ const Navigation = () => {
   const isMobile = useIsMobile();
   const { totalActiveCount } = useBackgroundStoryGeneration();
   const { pendingCount } = usePendingShares();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const handleLogout = async () => {
     try {
       await logout();
@@ -45,11 +48,11 @@ const Navigation = () => {
     icon: Sparkles,
     label: 'Mon ciel',
     path: '/dashboard'
-  }, {
+  }, ...(isSuperAdmin ? [{
     icon: Mic,
     label: 'Studio Vocal',
     path: '/app/voices'
-  }, {
+  }] : []), {
     icon: Users,
     label: 'Enfants',
     path: '/children'
