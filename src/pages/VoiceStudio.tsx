@@ -51,6 +51,8 @@ export const VoiceStudio: React.FC = () => {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const audioFormatRef = useRef<{ mimeType: string, ext: string }>({ mimeType: 'audio/webm', ext: 'webm' });
+  const testAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
 
   // Distant Invitation State
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -105,6 +107,13 @@ export const VoiceStudio: React.FC = () => {
     fetchVoices();
   }, [user]);
 
+  // Clean up all audio resources on unmount
+  useEffect(() => {
+    return () => {
+      cleanupAudioResources();
+    };
+  }, []);
+
   // Clean timer & playback on modal close
   const closeRecordingModal = () => {
     setIsRecordingModalOpen(false);
@@ -123,11 +132,16 @@ export const VoiceStudio: React.FC = () => {
       audioPreviewRef.current.pause();
       audioPreviewRef.current = null;
     }
+    if (testAudioRef.current) {
+      testAudioRef.current.pause();
+      testAudioRef.current = null;
+    }
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
     }
     setIsPlayingPreview(false);
+    setPlayingVoiceId(null);
   };
 
   // Start micro recording
@@ -392,6 +406,20 @@ export const VoiceStudio: React.FC = () => {
 
   // Test listen existing cloned voice
   const handleTestListen = async (voice: CustomVoice) => {
+    // If this exact voice is already playing, stop it
+    if (playingVoiceId === voice.id && testAudioRef.current) {
+      testAudioRef.current.pause();
+      testAudioRef.current = null;
+      setPlayingVoiceId(null);
+      return;
+    }
+
+    // Stop any other test voice currently playing
+    if (testAudioRef.current) {
+      testAudioRef.current.pause();
+      testAudioRef.current = null;
+    }
+
     try {
       const { data } = await supabase.storage
         .from('voice-clones')
@@ -399,15 +427,24 @@ export const VoiceStudio: React.FC = () => {
 
       if (data?.signedUrl) {
         const audio = new Audio(data.signedUrl);
+        testAudioRef.current = audio;
+        setPlayingVoiceId(voice.id);
+
+        audio.onended = () => {
+          setPlayingVoiceId(null);
+        };
+
         audio.play()
           .catch(err => {
             console.error("Test listen play error:", err);
+            setPlayingVoiceId(null);
             toast({
               title: "Erreur de lecture",
-              description: "Impossible de lire l'échantillon vocal de référence.",
+              description: "Impossible de lire l'échantillon vocal de référence. L'enregistrement est peut-être vide, corrompu, ou bloqué par le navigateur.",
               variant: "destructive"
             });
           });
+          
         toast({
           title: `Écoute de la ${voice.name}…`,
           description: "Lecture de l'échantillon de référence.",
@@ -415,6 +452,7 @@ export const VoiceStudio: React.FC = () => {
       }
     } catch (err) {
       console.error('Test play error:', err);
+      setPlayingVoiceId(null);
     }
   };
 
@@ -553,10 +591,18 @@ export const VoiceStudio: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-xs h-8 text-primary hover:bg-primary-soft/10"
+                      className={`text-xs h-8 text-primary hover:bg-primary-soft/10 ${playingVoiceId === voice.id ? 'text-amber-500 hover:text-amber-600 bg-amber-50' : ''}`}
                       onClick={() => handleTestListen(voice)}
                     >
-                      <Volume2 className="w-3.5 h-3.5 mr-1" /> Écouter
+                      {playingVoiceId === voice.id ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Arrêter
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3.5 h-3.5 mr-1" /> Écouter
+                        </>
+                      )}
                     </Button>
                     <Button 
                       variant="ghost" 
