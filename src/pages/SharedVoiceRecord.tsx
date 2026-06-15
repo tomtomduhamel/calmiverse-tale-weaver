@@ -33,6 +33,8 @@ export const SharedVoiceRecord: React.FC = () => {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
 
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -114,6 +116,30 @@ export const SharedVoiceRecord: React.FC = () => {
     };
   }, []);
 
+  // Enumerate microphones
+  const loadMicrophones = async () => {
+    try {
+      // Temporary permission request to get device labels
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+
+      const deviceList = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = deviceList.filter(d => d.kind === 'audioinput');
+      setDevices(audioInputs);
+      if (audioInputs.length > 0 && !selectedDeviceId) {
+        setSelectedDeviceId(audioInputs[0].deviceId);
+      }
+    } catch (err) {
+      console.error("Error enumerating audio devices:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (invitation) {
+      loadMicrophones();
+    }
+  }, [invitation]);
+
   // Transcript tailored for senior readability
   const getTranscriptText = () => {
     if (!invitation) return "";
@@ -140,7 +166,10 @@ export const SharedVoiceRecord: React.FC = () => {
     setRecordingSeconds(0);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const constraints: MediaStreamConstraints = {
+        audio: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : true
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       // Déterminer le format supporté
       const formats = [
         { mimeType: 'audio/webm', ext: 'webm' },
@@ -414,6 +443,25 @@ export const SharedVoiceRecord: React.FC = () => {
                   Parlez naturellement d'un ton chaleureux et doux.
                 </p>
               </div>
+
+              {devices.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block text-center">
+                    Choisir votre microphone :
+                  </label>
+                  <select
+                    value={selectedDeviceId}
+                    onChange={(e) => setSelectedDeviceId(e.target.value)}
+                    className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {devices.map((device) => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {device.label || `Microphone ${device.deviceId.substring(0, 5)}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="flex justify-center pt-2">
                 <Button 

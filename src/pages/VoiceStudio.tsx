@@ -40,17 +40,14 @@ export const VoiceStudio: React.FC = () => {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
   
   // MediaRecorder Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const visualStreamRef = useRef<MediaStream | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
   const audioFormatRef = useRef<{ mimeType: string, ext: string }>({ mimeType: 'audio/webm', ext: 'webm' });
   const testAudioRef = useRef<HTMLAudioElement | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
@@ -128,7 +125,6 @@ export const VoiceStudio: React.FC = () => {
 
   const cleanupAudioResources = () => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     if (audioPreviewRef.current) {
       audioPreviewRef.current.pause();
       audioPreviewRef.current = null;
@@ -137,20 +133,37 @@ export const VoiceStudio: React.FC = () => {
       testAudioRef.current.pause();
       testAudioRef.current = null;
     }
-    if (audioContextRef.current) {
-      audioContextRef.current.close().catch(err => console.error("Error closing AudioContext:", err));
-      audioContextRef.current = null;
-    }
-    if (visualStreamRef.current) {
-      visualStreamRef.current.getTracks().forEach(track => track.stop());
-      visualStreamRef.current = null;
-    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
     setIsPlayingPreview(false);
     setPlayingVoiceId(null);
   };
+
+  // Enumerate microphones
+  const loadMicrophones = async () => {
+    try {
+      // Temporary permission request to get device labels
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+
+      const deviceList = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = deviceList.filter(d => d.kind === 'audioinput');
+      setDevices(audioInputs);
+      if (audioInputs.length > 0 && !selectedDeviceId) {
+        setSelectedDeviceId(audioInputs[0].deviceId);
+      }
+    } catch (err) {
+      console.error("Error enumerating audio devices:", err);
+    }
+  };
+
+  // Load mics when the recording modal opens
+  useEffect(() => {
+    if (isRecordingModalOpen) {
+      loadMicrophones();
+    }
+  }, [isRecordingModalOpen]);
 
   // Start micro recording
   const startRecording = async () => {
@@ -159,9 +172,10 @@ export const VoiceStudio: React.FC = () => {
     setRecordingSeconds(0);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const visualStream = stream.clone();
-      visualStreamRef.current = visualStream;
+      const constraints: MediaStreamConstraints = {
+        audio: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : true
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
       // Déterminer le format supporté
       const formats = [
@@ -201,17 +215,6 @@ export const VoiceStudio: React.FC = () => {
       mediaRecorder.onstop = () => {
         // Stop all tracks in stream to release microphone after recording is stopped
         stream.getTracks().forEach(track => track.stop());
-        if (visualStreamRef.current) {
-          visualStreamRef.current.getTracks().forEach(track => track.stop());
-          visualStreamRef.current = null;
-        }
-
-        // Clean up recording AudioContext and analyser immediately to free audio resources
-        if (audioContextRef.current) {
-          audioContextRef.current.close().catch(err => console.error("Error closing AudioContext:", err));
-          audioContextRef.current = null;
-        }
-        analyserRef.current = null;
 
         // Detect actual mimeType and extension dynamically from MediaRecorder
         const actualMimeType = mediaRecorder.mimeType || selectedFormat.mimeType || 'audio/webm';
@@ -252,9 +255,6 @@ export const VoiceStudio: React.FC = () => {
       mediaRecorder.start(1000);
       setRecordingStep('recording');
 
-      // Set up simple canvas waveform animation after starting the recorder using the visualStream clone
-      setupWaveform(visualStream);
-
       // 15 seconds timer
       let seconds = 0;
       timerIntervalRef.current = setInterval(() => {
@@ -276,65 +276,9 @@ export const VoiceStudio: React.FC = () => {
     }
   };
 
-  // Waveform canvas helper
-  const setupWaveform = (stream: MediaStream) => {
-    if (!canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const canvasCtx = canvas.getContext('2d');
-    if (!canvasCtx) return;
-
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContextRef.current = audioCtx;
-    
-    // Resume context if suspended (Chrome/Safari autoplay policies)
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume().catch(err => console.error("Error resuming AudioContext:", err));
-    }
-
-    const source = audioCtx.createMediaStreamSource(stream);
-    const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-    source.connect(analyser);
-    
-    // Connect to a silent gain node and to destination to prevent node garbage collection
-    const silentGain = audioCtx.createGain();
-    silentGain.gain.value = 0;
-    analyser.connect(silentGain);
-    silentGain.connect(audioCtx.destination);
-
-    analyserRef.current = analyser;
-
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const draw = () => {
-      if (!analyserRef.current) return;
-      animationFrameRef.current = requestAnimationFrame(draw);
-
-      analyserRef.current.getByteFrequencyData(dataArray);
-
-      canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-      const barWidth = (canvas.width / bufferLength) * 1.5;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
-
-        // Custom pink/indigo pastel gradient wave
-        canvasCtx.fillStyle = `rgba(168, 218, 220, ${0.3 + barHeight / canvas.height})`;
-        canvasCtx.fillRect(x, canvas.height / 2 - barHeight / 2, barWidth, barHeight);
-
-        x += barWidth + 2;
-      }
-    };
-
-    draw();
-  };
-
   // Stop micro recording
   const stopRecording = (discard = false) => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
@@ -819,6 +763,25 @@ export const VoiceStudio: React.FC = () => {
                 />
               </div>
 
+              {devices.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Choisir votre microphone
+                  </label>
+                  <select
+                    value={selectedDeviceId}
+                    onChange={(e) => setSelectedDeviceId(e.target.value)}
+                    className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {devices.map((device) => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {device.label || `Microphone ${device.deviceId.substring(0, 5)}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="text-xs text-muted-foreground space-y-2 leading-relaxed bg-muted/30 p-3 rounded-lg border">
                 <p className="font-semibold">Comment ça marche ?</p>
                 <p>
@@ -847,15 +810,30 @@ export const VoiceStudio: React.FC = () => {
           {/* ÉTAPE 2 : Enregistrement actif */}
           {recordingStep === 'recording' && (
             <div className="space-y-4 py-2 text-center">
-              <div className="relative h-16 w-full flex items-center justify-center mb-2">
-                <canvas 
-                  ref={canvasRef} 
-                  width={350} 
-                  height={60} 
-                  className="w-full h-full rounded-lg bg-muted/10"
-                />
+              <div className="relative h-16 w-full flex items-center justify-center mb-2 bg-muted/10 rounded-lg overflow-hidden">
+                <style>
+                  {`
+                    @keyframes bounce-bar {
+                      0% { transform: scaleY(0.25); }
+                      100% { transform: scaleY(1); }
+                    }
+                    .animate-equalizer-bar {
+                      animation: bounce-bar 0.5s ease-in-out infinite alternate;
+                      transform-origin: bottom;
+                    }
+                  `}
+                </style>
+                <div className="flex items-end justify-center gap-1.5 h-10 w-full py-1 opacity-40">
+                  <div className="w-1.5 h-8 bg-primary rounded-full animate-equalizer-bar" style={{ animationDelay: '0.1s', animationDuration: '0.4s' }} />
+                  <div className="w-1.5 h-8 bg-primary rounded-full animate-equalizer-bar" style={{ animationDelay: '0.3s', animationDuration: '0.6s' }} />
+                  <div className="w-1.5 h-8 bg-primary rounded-full animate-equalizer-bar" style={{ animationDelay: '0.2s', animationDuration: '0.3s' }} />
+                  <div className="w-1.5 h-8 bg-primary rounded-full animate-equalizer-bar" style={{ animationDelay: '0.5s', animationDuration: '0.5s' }} />
+                  <div className="w-1.5 h-8 bg-primary rounded-full animate-equalizer-bar" style={{ animationDelay: '0.15s', animationDuration: '0.45s' }} />
+                  <div className="w-1.5 h-8 bg-primary rounded-full animate-equalizer-bar" style={{ animationDelay: '0.35s', animationDuration: '0.55s' }} />
+                  <div className="w-1.5 h-8 bg-primary rounded-full animate-equalizer-bar" style={{ animationDelay: '0.25s', animationDuration: '0.35s' }} />
+                </div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-red-500 text-white text-xs font-mono font-bold px-3 py-1 rounded-full animate-pulse flex items-center gap-1.5">
+                  <div className="bg-red-500 text-white text-xs font-mono font-bold px-3 py-1 rounded-full animate-pulse flex items-center gap-1.5 shadow-md">
                     <div className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
                     REC · {recordingSeconds}s / 15s
                   </div>
