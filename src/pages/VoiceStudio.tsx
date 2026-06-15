@@ -236,7 +236,7 @@ export const VoiceStudio: React.FC = () => {
         if (audioBlob.size < 10000) {
           toast({
             title: "Enregistrement trop court ou silencieux",
-            description: "Le microphone n'a capturé aucun son valide. Veuillez réessayer en parlant bien en face du micro.",
+            description: `Le microphone n'a capturé aucun son valide. (Taille : ${(audioBlob.size / 1024).toFixed(1)} Ko, Format : ${audioFormatRef.current.mimeType}, Blocs : ${audioChunksRef.current.length}). Veuillez réessayer en parlant bien en face du micro.`,
             variant: "destructive"
           });
           setRecordingStep('info');
