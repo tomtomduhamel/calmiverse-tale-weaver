@@ -433,13 +433,29 @@ export async function buildGuidedStoryPayload(supabase: any, params: GuidedParam
   const promptKey = `story_prompt_${params.objective}`;
   const storyPromptTemplate = prompts[promptKey];
 
-  const storyPrompt = buildStoryPromptFromTemplate(
+  // Récupérer les dernières histoires pour éviter les répétitions
+  const { data: recentStories } = await supabase
+    .from("stories")
+    .select("title, summary")
+    .eq("authorid", params.userId)
+    .eq("status", "completed")
+    .order("createdat", { ascending: false })
+    .limit(5);
+
+  let storyPrompt = buildStoryPromptFromTemplate(
     storyPromptTemplate,
     { objective: params.objective, selectedTitle: params.selectedTitle, durationMinutes: durationMinutes ?? undefined },
     children,
     targetWordCount,
     variation,
   );
+
+  if (recentStories && recentStories.length > 0) {
+    const historyList = recentStories
+      .map((s: any, idx: number) => `- "${s.title}" : ${s.summary || "Pas de résumé."}`)
+      .join("\n");
+    storyPrompt += `\n\n⚠️ CONTEXTE CRITIQUE - ÉVITER LES RÉPÉTITIONS :\nVoici les titres et résumés des dernières histoires générées pour cet utilisateur. Tu devez ABSOLUMENT créer un scénario, des rebondissements, des personnages secondaires et un univers narratif différents de ceux-ci pour éviter toute redondance :\n${historyList}`;
+  }
 
   const promptSource = storyPromptTemplate ? `database-${params.objective}` : "fallback";
 
@@ -520,7 +536,17 @@ export async function buildFastStoryPayload(supabase: any, params: FastParams): 
   const variation = await selectVariation(supabase, 6, params.fastStoryPromptKey);
 
   const storyPromptRaw = prompts[params.fastStoryPromptKey];
-  const storyPrompt = storyPromptRaw
+
+  // Récupérer les dernières histoires pour éviter les répétitions
+  const { data: recentStories } = await supabase
+    .from("stories")
+    .select("title, summary")
+    .eq("authorid", params.userId)
+    .eq("status", "completed")
+    .order("createdat", { ascending: false })
+    .limit(5);
+
+  let storyPrompt = storyPromptRaw
     ? replacePromptVariables(storyPromptRaw, {
       target_word_count: targetWordCount?.toString() || "1500",
       duration_minutes: params.durationMinutes.toString(),
@@ -535,6 +561,13 @@ export async function buildFastStoryPayload(supabase: any, params: FastParams): 
       ericksonian_pattern: variation.ericksonianTechnique?.linguistic_pattern || "",
     })
     : `Génère une histoire courte (${targetWordCount} mots) pour un enfant d'environ 6 ans, avec un protagoniste surprise adapté au thème : ${params.fastStoryPromptKey}.`;
+
+  if (recentStories && recentStories.length > 0) {
+    const historyList = recentStories
+      .map((s: any, idx: number) => `- "${s.title}" : ${s.summary || "Pas de résumé."}`)
+      .join("\n");
+    storyPrompt += `\n\n⚠️ CONTEXTE CRITIQUE - ÉVITER LES RÉPÉTITIONS :\nVoici les titres et résumés des dernières histoires générées pour cet utilisateur. Tu devez ABSOLUMENT créer un scénario, des rebondissements, des personnages secondaires et un univers narratif différents de ceux-ci pour éviter toute redondance :\n${historyList}`;
+  }
 
   return {
     action: "create_fast_story",
