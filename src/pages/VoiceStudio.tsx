@@ -172,6 +172,15 @@ export const VoiceStudio: React.FC = () => {
       const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
 
+      mediaRecorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event);
+        toast({
+          title: "Erreur d'enregistrement",
+          description: "Le périphérique d'enregistrement a rencontré une erreur.",
+          variant: "destructive"
+        });
+      };
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
@@ -189,8 +198,25 @@ export const VoiceStudio: React.FC = () => {
         }
         analyserRef.current = null;
 
-        const audioBlob = new Blob(audioChunksRef.current, { type: selectedFormat.mimeType || mediaRecorder.mimeType });
-        console.log("Recorded blob size:", audioBlob.size, "bytes");
+        // Detect actual mimeType and extension dynamically from MediaRecorder
+        const actualMimeType = mediaRecorder.mimeType || selectedFormat.mimeType || 'audio/webm';
+        let actualExt = selectedFormat.ext || 'webm';
+        if (actualMimeType.includes('mp4') || actualMimeType.includes('m4a')) {
+          actualExt = 'm4a';
+        } else if (actualMimeType.includes('ogg')) {
+          actualExt = 'ogg';
+        } else if (actualMimeType.includes('webm')) {
+          actualExt = 'webm';
+        } else if (actualMimeType.includes('aac')) {
+          actualExt = 'aac';
+        } else if (actualMimeType.includes('wav')) {
+          actualExt = 'wav';
+        }
+
+        audioFormatRef.current = { mimeType: actualMimeType, ext: actualExt };
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+        console.log("Recorded blob size:", audioBlob.size, "bytes", "format:", audioFormatRef.current);
 
         if (audioBlob.size < 10000) {
           toast({
@@ -208,11 +234,11 @@ export const VoiceStudio: React.FC = () => {
         setRecordingStep('preview');
       };
 
-      // Set up simple canvas waveform animation
-      setupWaveform(stream);
-
       mediaRecorder.start(1000);
       setRecordingStep('recording');
+
+      // Set up simple canvas waveform animation after starting the recorder
+      setupWaveform(stream);
 
       // 15 seconds timer
       let seconds = 0;
@@ -244,6 +270,12 @@ export const VoiceStudio: React.FC = () => {
 
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     audioContextRef.current = audioCtx;
+    
+    // Resume context if suspended (Chrome/Safari autoplay policies)
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(err => console.error("Error resuming AudioContext:", err));
+    }
+
     const source = audioCtx.createMediaStreamSource(stream);
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 256;

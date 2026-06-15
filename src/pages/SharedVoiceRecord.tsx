@@ -161,6 +161,15 @@ export const SharedVoiceRecord: React.FC = () => {
       const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
 
+      mediaRecorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event);
+        toast({
+          title: "Erreur d'enregistrement",
+          description: "Le périphérique d'enregistrement a rencontré une erreur.",
+          variant: "destructive"
+        });
+      };
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
@@ -171,8 +180,25 @@ export const SharedVoiceRecord: React.FC = () => {
         // Stop all tracks in stream to release microphone after recording is stopped
         stream.getTracks().forEach(track => track.stop());
 
-        const blob = new Blob(audioChunksRef.current, { type: selectedFormat.mimeType || mediaRecorder.mimeType });
-        console.log("Recorded blob size:", blob.size, "bytes");
+        // Detect actual mimeType and extension dynamically from MediaRecorder
+        const actualMimeType = mediaRecorder.mimeType || selectedFormat.mimeType || 'audio/webm';
+        let actualExt = selectedFormat.ext || 'webm';
+        if (actualMimeType.includes('mp4') || actualMimeType.includes('m4a')) {
+          actualExt = 'm4a';
+        } else if (actualMimeType.includes('ogg')) {
+          actualExt = 'ogg';
+        } else if (actualMimeType.includes('webm')) {
+          actualExt = 'webm';
+        } else if (actualMimeType.includes('aac')) {
+          actualExt = 'aac';
+        } else if (actualMimeType.includes('wav')) {
+          actualExt = 'wav';
+        }
+
+        audioFormatRef.current = { mimeType: actualMimeType, ext: actualExt };
+
+        const blob = new Blob(audioChunksRef.current, { type: actualMimeType });
+        console.log("Recorded blob size:", blob.size, "bytes", "format:", audioFormatRef.current);
 
         if (blob.size < 10000) {
           toast({
