@@ -49,6 +49,7 @@ export const VoiceStudio: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const visualStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const audioFormatRef = useRef<{ mimeType: string, ext: string }>({ mimeType: 'audio/webm', ext: 'webm' });
   const testAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -137,8 +138,15 @@ export const VoiceStudio: React.FC = () => {
       testAudioRef.current = null;
     }
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      audioContextRef.current.close().catch(err => console.error("Error closing AudioContext:", err));
       audioContextRef.current = null;
+    }
+    if (visualStreamRef.current) {
+      visualStreamRef.current.getTracks().forEach(track => track.stop());
+      visualStreamRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
     setIsPlayingPreview(false);
     setPlayingVoiceId(null);
@@ -152,6 +160,9 @@ export const VoiceStudio: React.FC = () => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const visualStream = stream.clone();
+      visualStreamRef.current = visualStream;
+
       // Déterminer le format supporté
       const formats = [
         { mimeType: 'audio/webm', ext: 'webm' },
@@ -190,6 +201,10 @@ export const VoiceStudio: React.FC = () => {
       mediaRecorder.onstop = () => {
         // Stop all tracks in stream to release microphone after recording is stopped
         stream.getTracks().forEach(track => track.stop());
+        if (visualStreamRef.current) {
+          visualStreamRef.current.getTracks().forEach(track => track.stop());
+          visualStreamRef.current = null;
+        }
 
         // Clean up recording AudioContext and analyser immediately to free audio resources
         if (audioContextRef.current) {
@@ -237,8 +252,8 @@ export const VoiceStudio: React.FC = () => {
       mediaRecorder.start(1000);
       setRecordingStep('recording');
 
-      // Set up simple canvas waveform animation after starting the recorder
-      setupWaveform(stream);
+      // Set up simple canvas waveform animation after starting the recorder using the visualStream clone
+      setupWaveform(visualStream);
 
       // 15 seconds timer
       let seconds = 0;
@@ -280,6 +295,13 @@ export const VoiceStudio: React.FC = () => {
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 256;
     source.connect(analyser);
+    
+    // Connect to a silent gain node and to destination to prevent node garbage collection
+    const silentGain = audioCtx.createGain();
+    silentGain.gain.value = 0;
+    analyser.connect(silentGain);
+    silentGain.connect(audioCtx.destination);
+
     analyserRef.current = analyser;
 
     const bufferLength = analyser.frequencyBinCount;
