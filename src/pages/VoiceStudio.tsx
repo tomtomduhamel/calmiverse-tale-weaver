@@ -64,8 +64,24 @@ export const VoiceStudio: React.FC = () => {
   const isSlotLimitReached = voices.length >= maxClones;
 
   // Guides transcripts depending on relationship
+  // Guides transcripts depending on relationship or character role
   const getTranscriptText = () => {
     const norm = relationName.trim().toLowerCase();
+    if (norm.includes('volant') || norm.includes('oiseau') || norm.includes('chouette') || norm.includes('hibou')) {
+      return "Hou hou ! Je suis le gardien du ciel étoilé. Mes ailes déployées me permettent de voler tout là-haut au-dessus des nuages. Suis-moi dans les étoiles pour un voyage magique ce soir !";
+    }
+    if (norm.includes('aquatique') || norm.includes('dauphin') || norm.includes('baleine') || norm.includes('poisson')) {
+      return "Plouf ! Je nage calmement dans les profondeurs bleues de l'océan enchanté. Écoute le chant des vagues et laisse-toi porter au fil de l'eau vers des rêves merveilleux...";
+    }
+    if (norm.includes('terrestre') || norm.includes('ours') || norm.includes('chien') || norm.includes('chat') || norm.includes('renard')) {
+      return "Bienvenue dans la forêt magique ! Je suis ton compagnon tout doux. Avec mes grosses pattes et mon pelage réconfortant, je suis là pour veiller sur ton sommeil en toute sécurité.";
+    }
+    if (norm.includes('fille') || norm.includes('princesse')) {
+      return "Coucou ! Je suis prête pour une grande aventure magique. Je ferme les yeux, j'écoute les fées chuchoter dans le vent et je m'apprête à faire les plus beaux rêves du monde !";
+    }
+    if (norm.includes('garçon') || norm.includes('prince')) {
+      return "Salut ! Avec mon doudou et mon super courage, rien ne me fait peur. Je m'installe confortablement sous la couette pour écouter la plus belle histoire de la nuit !";
+    }
     if (norm.includes('maman') || norm.includes('mère')) {
       return "Ferme les yeux doucement mon petit ange, je suis tout près de toi. Les étoiles brillent dans la nuit pour veiller sur tes rêves les plus doux. Écoute ma voix te transporter vers un pays de nuages merveilleux ce soir...";
     }
@@ -753,14 +769,26 @@ export const VoiceStudio: React.FC = () => {
             <div className="space-y-4 py-2">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Qui enregistre sa voix ?
+                  Qui enregistre sa voix / Quel rôle ?
                 </label>
                 <Input
-                  placeholder="Ex: Papa, Maman, Mamie Nicole..."
+                  placeholder="Ex: Maman, Papa, Enfant Garçon, Animal Terrestre..."
                   value={relationName}
                   onChange={(e) => setRelationName(e.target.value)}
                   className="w-full"
                 />
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {['Narrateur (Papa/Maman)', 'Enfant Garçon', 'Enfant Fille', 'Animal Terrestre (Ours/Chien)', 'Animal Volant (Oiseau)', 'Animal Aquatique (Dauphin)'].map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => setRelationName(role)}
+                      className="text-[11px] bg-muted/60 hover:bg-primary-soft/20 hover:text-primary px-2.5 py-1 rounded-full border transition-colors"
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {devices.length > 0 && (

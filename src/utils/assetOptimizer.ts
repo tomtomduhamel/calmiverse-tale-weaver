@@ -194,6 +194,12 @@ class AssetOptimizer {
       // Détermine le type de ressource
       if (url.match(/\.(jpg|jpeg|png|webp|gif)$/i)) {
         link.as = 'image';
+      } else if (url.match(/\.(mp3|wav|ogg|m4a|aac)$/i)) {
+        link.as = 'fetch';
+        link.crossOrigin = 'anonymous';
+      } else if (url.match(/\.(mp4|webm)$/i)) {
+        link.as = 'fetch';
+        link.crossOrigin = 'anonymous';
       } else if (url.match(/\.(woff|woff2|ttf|otf)$/i)) {
         link.as = 'font';
         link.crossOrigin = 'anonymous';
@@ -204,6 +210,13 @@ class AssetOptimizer {
       }
       
       document.head.appendChild(link);
+
+      // Warm up Cache API pour le mode hors-ligne / PWA
+      if ('caches' in window) {
+        caches.open('supabase-storage-cache').then((cache) => {
+          cache.add(url).catch(() => {});
+        });
+      }
     });
   }
 

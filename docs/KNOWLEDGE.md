@@ -480,8 +480,20 @@ docs/
 ### Caching Strategy
 - **localStorage** : Cache 5min pour children (Story Creation Fix)
 - **React Query** : Cache mémoire avec invalidation
-- **Service Worker** : Cache réseau par stratégie
-- **CDN** : Assets statiques via Supabase Storage
+- **Service Worker / PWA Cache** : Cache `CacheFirst` (30 jours) pour les images WebP (80 Ko) et médias audio/vidéo (`useStoryMediaPreloader`)
+- **CDN Supabase Storage** : Rendu dynamique avec transformation `/render/image/public/`
+
+### Optimisation du Stockage Supabase (Juillet 2026)
+- **Gain global** : Empreinte de stockage réduite de **1,03 Go à 174 Mo (-83% d'espace disque total)**.
+- **Images (`storyimages`)** : 292 images compressées en WebP (qualité 80%, max 1280px). Taille totale réduite de **710 Mo à 33 Mo** (-95,3%).
+- **Vidéos (`storyvideos`)** : 30 vidéos d'intro re-compressées en H.264/AAC 720p. Taille réduite de **79 Mo à 13 Mo** (-83,5%).
+- **Sons d'ambiance (`story_sounds`)** : 7 sons d'ambiance ré-encodés en MP3 96 kbps. Taille réduite de **108 Mo à 40 Mo** (-63,0%).
+- **EPUB temporaires (`epub-files`)** : Purge automatique des anciens fichiers EPUB (> 30 jours). Bucket réduit de **39 Mo à 0 Mo**.
+- **Purge BDD Postgres** : 8 471 lignes de logs d'audit et tokens expirés supprimés.
+- **Automatisation cron (`pg_cron`)** :
+  - `monthly_storage_orphan_cleanup` : Purge mensuelle des fichiers orphelins (le 1er du mois à 03h00 UTC).
+  - `monthly_auth_logs_cleanup` : Purge mensuelle des logs d'audit (+30 jours) (le 1er du mois à 03h30 UTC).
+  - `monthly_epub_files_cleanup` : Purge mensuelle des fichiers EPUB temporaires (+30 jours) (le 1er du mois à 03h45 UTC).
 
 ### Monitoring
 - **Logs structurés** : `logger.debug()` avec métadonnées

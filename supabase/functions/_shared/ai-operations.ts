@@ -51,7 +51,7 @@ export const generateStoryText = async (
             content: `Tu es un expert en création d'histoires pour enfants. 
             
 FORMAT DE L'HISTOIRE :
-- Longueur : 6000-10000 mots
+- Longueur : Adapte scrupuleusement la longueur selon le nombre de mots demandé dans le prompt (5 min ~750 mots, 10 min ~1500 mots, 15 min ~2250 mots, max 3000 mots).
 - Structure narrative fluide et continue, sans découpage visible
 - Pas de titre explicite
 
@@ -72,7 +72,7 @@ RÈGLES FONDAMENTALES POUR PERSONNAGES MULTIPLES :
           }
         ],
         temperature: isRetry ? 0.8 : 0.7,
-        max_tokens: 3500,
+        max_tokens: 8192,
       }),
     });
 

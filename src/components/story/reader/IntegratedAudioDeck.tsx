@@ -64,7 +64,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const { limits } = useSubscription();
 
   // Premium audio checking
-  const canUsePremiumAudio = (limits?.audio_generations_per_month ?? 0) > 0;
+  const canUsePremiumAudio = limits?.has_multivoice_audio ?? false;
   const preferredAudioMode = userSettings.readingPreferences?.audioMode ?? 'browser';
   const isPremiumMode = (preferredAudioMode === 'premium' && canUsePremiumAudio);
 
@@ -230,7 +230,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     if (!canUsePremiumAudio) {
       toast({
         title: "Fonctionnalité Premium",
-        description: "Abonnez-vous à Calmidium, Calmix ou Calmixxl pour débloquer le clonage vocal et les voix haute-fidélité.",
+        description: "Abonnez-vous à Calmix ou Calmixxl pour débloquer le livre audio multi-voix haute-fidélité.",
       });
       return;
     }
@@ -824,30 +824,35 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                     </div>
                   </>
                 ) : (
-                  <div className="text-xs py-2 text-center text-muted-foreground bg-muted/40 rounded-lg">
+                  <div className="text-xs py-2.5 px-3 text-center text-muted-foreground bg-muted/40 rounded-lg border border-primary/10">
                     {currentPendingAudioFile ? (
-                      <div className="flex items-center justify-center gap-2 animate-pulse text-primary font-medium">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Génération de la voix par le VPS... (Prêt dans 30s)
+                      <div className="flex flex-col items-center gap-1.5 animate-pulse text-primary font-medium">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Génération du livre audio multi-voix...
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-normal">
+                          Inférence et assemblage sur notre serveur privé (environ 2-3 minutes). Vous pouvez continuer à lire en attendant.
+                        </span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-1.5 py-1">
                         <span className="text-[11px] text-muted-foreground">
-                          Paragraphe {currentParagraphIndex + 1} sur {paragraphs.length} non préparé.
+                          Livre audio multi-voix pour ce conte non généré.
                         </span>
                         <Button 
                           onClick={handlePlayPause} 
                           disabled={isGenerating}
                           size="sm" 
-                          className="h-6 text-[10px] px-3 font-semibold"
+                          className="h-7 text-[10px] px-3 font-semibold"
                         >
                           {isGenerating ? (
                             <>
                               <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                              Génération en cours...
+                              Lancement de la synthèse (2-3 min)...
                             </>
                           ) : (
-                            "Générer l'audio (VPS)"
+                            "Générer le livre audio multi-voix (VPS)"
                           )}
                         </Button>
                       </div>

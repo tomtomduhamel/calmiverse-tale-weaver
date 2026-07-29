@@ -3,13 +3,25 @@
  */
 
 /**
+ * Option d'optimisation de rendu Supabase
+ */
+export interface ImageOptimizationOptions {
+  width?: number;
+  quality?: number;
+  transform?: boolean;
+}
+
+/**
  * Génère l'URL publique d'une image stockée dans le bucket storyimages
  * @param imagePath Le chemin de l'image (ex: "story-id.jpeg")
+ * @param options Options optionnelles de redimensionnement et compression
  * @returns L'URL publique de l'image ou null si pas d'image
  */
-export const getStoryImageUrl = (imagePath?: string | null): string | null => {
+export const getStoryImageUrl = (
+  imagePath?: string | null,
+  options?: ImageOptimizationOptions
+): string | null => {
   if (!imagePath) {
-    
     return null;
   }
   
@@ -19,6 +31,16 @@ export const getStoryImageUrl = (imagePath?: string | null): string | null => {
   const cleanPath = imagePath.startsWith('storyimages/') 
     ? imagePath.substring('storyimages/'.length)
     : imagePath;
+  
+  // Si des options de transformation sont spécifiées, utiliser l'endpoint /render/image/public
+  if (options?.transform || options?.width || options?.quality) {
+    const params = new URLSearchParams();
+    if (options.width) params.append('width', options.width.toString());
+    params.append('quality', (options.quality || 80).toString());
+    params.append('format', 'origin'); // préserve webp ou convertit si nécessaire
+    
+    return `${supabaseUrl}/storage/v1/render/image/public/storyimages/${cleanPath}?${params.toString()}`;
+  }
   
   const imageUrl = `${supabaseUrl}/storage/v1/object/public/storyimages/${cleanPath}`;
   

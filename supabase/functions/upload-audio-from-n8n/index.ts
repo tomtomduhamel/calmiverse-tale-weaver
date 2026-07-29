@@ -160,8 +160,8 @@ serve(async (req) => {
       throw new Error('Le fichier doit être un fichier audio');
     }
 
-    // Vérifier la taille du fichier (10MB max pour éviter les timeouts)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Vérifier la taille du fichier (50MB max pour supporter les formats longs ou non compressés)
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (audioFile.size > maxSize) {
       console.error(`❌ [upload-audio-from-n8n-${requestId}] Fichier trop volumineux: ${audioFile.size} bytes`);
       throw new Error(`Fichier trop volumineux: ${audioFile.size} bytes. Maximum autorisé: ${maxSize} bytes`);

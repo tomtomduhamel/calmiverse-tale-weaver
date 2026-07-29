@@ -21,7 +21,7 @@ export const AudioSection: React.FC<AudioSectionProps> = ({
   onUpdateSettings,
 }) => {
   const { limits } = useSubscription();
-  const canUsePremiumAudio = (limits?.audio_generations_per_month ?? 0) > 0;
+  const canUsePremiumAudio = limits?.has_multivoice_audio ?? false;
 
   const currentMode = userSettings.readingPreferences?.audioMode ?? 'browser';
 
@@ -53,9 +53,9 @@ export const AudioSection: React.FC<AudioSectionProps> = ({
     },
     {
       id: 'premium',
-      icon: <Sparkles className="h-5 w-5" />,
-      label: 'Audio premium',
-      description: 'Voix haute qualité générée par IA, disponible à tout moment.',
+      icon: <Headphones className="h-5 w-5" />,
+      label: 'Audiobook multi-voix premium',
+      description: 'Livre audio multi-voix haute fidélité généré par IA pour chaque personnage de votre conte.',
       badge: 'Calmix',
       locked: !canUsePremiumAudio,
     },

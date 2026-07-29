@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Upload, X } from "lucide-react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSupabaseStorage } from "@/hooks/useSupabaseStorage";
+import { assetOptimizer } from "@/utils/assetOptimizer";
 
 interface TeddyPhotoUploadProps {
   childId: string;
@@ -72,11 +73,16 @@ const SupabaseTeddyPhotoUpload: React.FC<TeddyPhotoUploadProps> = ({
       return;
     }
 
-    const fileName = `${Date.now()}-${file.name}`;
+    const cleanBaseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const fileName = `${Date.now()}-${cleanBaseName}.webp`;
     const filePath = `${userId}/${childId}/${fileName}`;
 
     try {
-      const result = await uploadFile(BUCKET_NAME, filePath, file, (progress) => {
+      // Optimiser l'image vers WebP avant l'upload (réduction de 60-80% de taille)
+      const optimizedBlob = await assetOptimizer.convertToWebP(file);
+      const optimizedFile = new File([optimizedBlob], fileName, { type: "image/webp" });
+
+      const result = await uploadFile(BUCKET_NAME, filePath, optimizedFile, (progress) => {
         setUploadProgress(progress);
       });
 

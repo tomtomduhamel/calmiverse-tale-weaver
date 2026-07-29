@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-export type Feature = 'story_series' | 'background_music' | 'priority_access' | 'community_access' | 'audio_generation';
+export type Feature = 'story_series' | 'background_music' | 'priority_access' | 'community_access' | 'audio_generation' | 'multivoice_audio';
 
 export const useFeatureAccess = () => {
   const { user } = useSupabaseAuth();
@@ -11,7 +11,8 @@ export const useFeatureAccess = () => {
     background_music: false,
     priority_access: false,
     community_access: false,
-    audio_generation: false
+    audio_generation: false,
+    multivoice_audio: false
   });
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +39,7 @@ export const useFeatureAccess = () => {
 
     setLoading(true);
     
-    const features: Feature[] = ['story_series', 'background_music', 'priority_access', 'community_access', 'audio_generation'];
+    const features: Feature[] = ['story_series', 'background_music', 'priority_access', 'community_access', 'audio_generation', 'multivoice_audio'];
     const results: Record<Feature, boolean> = {} as Record<Feature, boolean>;
 
     for (const feature of features) {
