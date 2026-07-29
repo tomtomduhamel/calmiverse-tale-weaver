@@ -159,13 +159,13 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState<number>(0);
   const [autoplayNext, setAutoplayNext] = useState<boolean>(false);
 
-  // Find audio file for the current paragraph
+  // Find audio file for the current story or paragraph
   const currentParagraphText = paragraphs[currentParagraphIndex] || '';
   const currentAudioFile = audioFiles.find(
-    file => file.text_content === currentParagraphText && file.voice_id === selectedVoiceId && file.status === 'ready' && file.audio_url
+    file => file.status === 'ready' && file.audio_url && (file.text_content === currentParagraphText || file.story_id === storyId)
   );
   const currentPendingAudioFile = audioFiles.find(
-    file => file.text_content === currentParagraphText && file.voice_id === selectedVoiceId && (file.status === 'pending' || file.status === 'processing')
+    file => (file.status === 'pending' || file.status === 'processing') && (file.story_id === storyId)
   );
 
   // Cache checking for current paragraph
@@ -825,14 +825,14 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                   </>
                 ) : (
                   <div className="text-xs py-2.5 px-3 text-center text-muted-foreground bg-muted/40 rounded-lg border border-primary/10">
-                    {currentPendingAudioFile ? (
+                    {(currentPendingAudioFile || isGenerating) ? (
                       <div className="flex flex-col items-center gap-1.5 animate-pulse text-primary font-medium">
                         <div className="flex items-center gap-2">
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          Génération du livre audio multi-voix...
+                          Génération du livre audio multi-voix en cours…
                         </div>
                         <span className="text-[10px] text-muted-foreground font-normal">
-                          Inférence et assemblage sur notre serveur privé (environ 2-3 minutes). Vous pouvez continuer à lire en attendant.
+                          La production peut prendre jusqu'à 60 minutes. Vous pouvez quitter cette page ou continuer votre navigation, l'audio apparaîtra automatiquement dès qu'il sera prêt.
                         </span>
                       </div>
                     ) : (
@@ -849,10 +849,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                           {isGenerating ? (
                             <>
                               <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                              Lancement de la synthèse (2-3 min)...
+                              Lancement de la création…
                             </>
                           ) : (
-                            "Générer le livre audio multi-voix (VPS)"
+                            "Générer le livre audio multi-voix"
                           )}
                         </Button>
                       </div>

@@ -361,8 +361,8 @@ export const useN8nAudioGeneration = () => {
         .eq('id', audioFile.id);
 
       toast({
-        title: `🎵 Génération audio lancée`,
-        description: "Votre audio est en cours de génération...",
+        title: `🎵 Génération audio lancée !`,
+        description: "La production du livre audio multi-voix est en cours en arrière-plan et peut prendre jusqu'à 60 minutes. Vous pouvez continuer à naviguer ou quitter la page en toute tranquillité.",
       });
 
       // 6. Rafraîchir la liste des fichiers
