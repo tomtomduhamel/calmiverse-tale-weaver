@@ -445,6 +445,54 @@ export const useN8nAudioGeneration = () => {
     };
   }, [fetchAudioFiles, checkPendingFiles, toast]);
 
+  // Mettre à jour un fichier audio (appelé par webhook de retour n8n)
+  const updateAudioFile = useCallback(async (
+    audioFileId: string,
+    updates: Partial<AudioFile>
+  ): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('audio_files')
+        .update(updates)
+        .eq('id', audioFileId);
+
+      if (error) throw error;
+
+      console.log('✅ [N8nAudio] Fichier audio mis à jour:', audioFileId);
+      return true;
+    } catch (error: any) {
+      console.error('❌ [N8nAudio] Erreur mise à jour:', error);
+      return false;
+    }
+  }, []);
+
+  // Supprimer un fichier audio
+  const deleteAudioFile = useCallback(async (audioFileId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('audio_files')
+        .delete()
+        .eq('id', audioFileId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Fichier supprimé",
+        description: "Le fichier audio a été supprimé",
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error('❌ [N8nAudio] Erreur suppression:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le fichier audio",
+        variant: "destructive"
+      });
+      return false;
+    }
+  }, [toast]);
+
   return {
     // State
     isGenerating,
