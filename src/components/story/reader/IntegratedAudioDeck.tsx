@@ -86,6 +86,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     subscribeToAudioFiles
   } = useN8nAudioGeneration();
 
+  const [isCheckingAudioStatus, setIsCheckingAudioStatus] = useState<boolean>(true);
+
   // Activer la souscription Realtime et les écouteurs de visibilité
   useEffect(() => {
     if (!storyId) return;
@@ -100,39 +102,44 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     synthRef.current = window.speechSynthesis;
 
     const loadData = async () => {
-      await cleanupStuckFiles(storyId);
-      await recoverErrorFiles(storyId);
-      await fetchAudioFiles(storyId);
-
-      let activeProvider = 'vps-hostinger';
-      // Fetch active TTS provider config
+      setIsCheckingAudioStatus(true);
       try {
-        const { data: ttsConfig } = await supabase.functions.invoke('get-tts-config');
-        if (ttsConfig?.provider) {
-          activeProvider = ttsConfig.provider;
-          setProvider(ttsConfig.provider);
-        }
-      } catch (err) {
-        console.error('Error fetching TTS provider:', err);
-      }
+        await cleanupStuckFiles(storyId);
+        await recoverErrorFiles(storyId);
+        await fetchAudioFiles(storyId);
 
-      // Fetch custom user voices
-      try {
-        const { data, error } = await supabase
-          .from('user_voices')
-          .select('id, name, relation, voice_ref_path, transcript');
-        if (!error && data) {
-          setCustomVoices(data as CustomVoice[]);
-          
-          // Initialiser la voix sélectionnée selon les préférences et les autorisations
-          if (canUsePremiumAudio && preferredAudioMode === 'premium' && data.length > 0) {
-            setSelectedVoiceId(data[0].id);
-          } else {
-            setSelectedVoiceId('local');
+        let activeProvider = 'vps-hostinger';
+        // Fetch active TTS provider config
+        try {
+          const { data: ttsConfig } = await supabase.functions.invoke('get-tts-config');
+          if (ttsConfig?.provider) {
+            activeProvider = ttsConfig.provider;
+            setProvider(ttsConfig.provider);
           }
+        } catch (err) {
+          console.error('Error fetching TTS provider:', err);
         }
-      } catch (err) {
-        console.error('Error fetching custom voices:', err);
+
+        // Fetch custom user voices
+        try {
+          const { data, error } = await supabase
+            .from('user_voices')
+            .select('id, name, relation, voice_ref_path, transcript');
+          if (!error && data) {
+            setCustomVoices(data as CustomVoice[]);
+            
+            // Initialiser la voix sélectionnée selon les préférences et les autorisations
+            if (canUsePremiumAudio && preferredAudioMode === 'premium' && data.length > 0) {
+              setSelectedVoiceId(data[0].id);
+            } else {
+              setSelectedVoiceId('local');
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching custom voices:', err);
+        }
+      } finally {
+        setIsCheckingAudioStatus(false);
       }
     };
 
@@ -834,37 +841,62 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                     </div>
                   </>
                 ) : (
-                  <div className="text-xs py-2.5 px-3 text-center text-muted-foreground bg-muted/40 rounded-lg border border-primary/10">
-                    {(currentPendingAudioFile || isGenerating) ? (
-                      <div className="flex flex-col items-center gap-1.5 animate-pulse text-primary font-medium">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          Génération du livre audio multi-voix en cours…
+                  <div>
+                    {isCheckingAudioStatus ? (
+                      <div className="text-xs py-3 px-4 text-center text-muted-foreground bg-muted/30 rounded-xl border border-primary/10 flex items-center justify-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        <span>Vérification du statut du livre audio Studio…</span>
+                      </div>
+                    ) : (currentPendingAudioFile || isGenerating) ? (
+                      <div className="relative overflow-hidden rounded-xl border border-amber-500/40 bg-gradient-to-br from-amber-950/40 via-purple-950/30 to-slate-900/60 p-3.5 shadow-xl backdrop-blur-md text-left transition-all">
+                        <div className="flex items-start gap-3">
+                          <div className="relative flex-shrink-0 mt-0.5">
+                            <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300">
+                              <Sparkles className="w-4 h-4 animate-spin text-amber-400" />
+                            </div>
+                            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                            </span>
+                          </div>
+
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-xs font-semibold text-amber-200 flex items-center gap-1.5">
+                                <span>🎙️ Production du Livre Audio en cours…</span>
+                              </h4>
+                              <Badge variant="outline" className="text-[9px] bg-amber-500/20 text-amber-300 border-amber-500/40 px-1.5 py-0">
+                                Arrière-plan actif
+                              </Badge>
+                            </div>
+                            <p className="text-[11px] text-slate-300 leading-relaxed">
+                              L'IA produit la narration multi-voix sur notre serveur. <strong className="text-amber-200 font-medium">Vous pouvez quitter cette page ou l'application</strong>, l'audio apparaîtra automatiquement dès sa finalisation.
+                            </p>
+                          </div>
                         </div>
-                        <span className="text-[10px] text-muted-foreground font-normal">
-                          La production peut prendre jusqu'à 60 minutes. Vous pouvez quitter cette page ou continuer votre navigation, l'audio apparaîtra automatiquement dès qu'il sera prêt.
-                        </span>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center gap-1.5 py-1">
-                        <span className="text-[11px] text-muted-foreground">
-                          Livre audio multi-voix pour ce conte non généré.
-                        </span>
-                        <Button 
-                          onClick={handlePlayPause} 
-                          disabled={isGenerating}
-                          size="sm" 
-                          className="h-7 text-[10px] px-3 font-semibold"
-                        >
-                          {isGenerating ? (
-                            <>
-                              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                              Lancement de la création…
-                            </>
-                          ) : (
-                            "Générer le livre audio multi-voix"
-                          )}
-                        </Button>
+                      <div className="text-xs py-2.5 px-3 text-center text-muted-foreground bg-muted/40 rounded-lg border border-primary/10">
+                        <div className="flex flex-col items-center gap-1.5 py-1">
+                          <span className="text-[11px] text-muted-foreground">
+                            Livre audio multi-voix pour ce conte non généré.
+                          </span>
+                          <Button 
+                            onClick={handlePlayPause} 
+                            disabled={isGenerating}
+                            size="sm" 
+                            className="h-7 text-[10px] px-3 font-semibold"
+                          >
+                            {isGenerating ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                                Lancement de la création…
+                              </>
+                            ) : (
+                              "Générer le livre audio multi-voix"
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>

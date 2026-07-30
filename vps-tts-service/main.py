@@ -70,13 +70,13 @@ def get_cached_voice_path(url: str) -> str:
 # Classes de requêtes pour l'API
 class TTSRequest(BaseModel):
     text: str
-    voice_ref_url: str  # URL du fichier .wav de référence
+    voice_ref_url: Optional[str] = None  # URL du fichier .wav de référence (optionnel)
     ref_text: Optional[str] = None  # Transcription optionnelle du fichier de référence
     language: str = "fr"  # Code de la langue (ex: "fr", "en")
 
 class SegmentRequest(BaseModel):
     text: str
-    voice_ref_url: str
+    voice_ref_url: Optional[str] = None
     ref_text: Optional[str] = None
     language: str = "fr"
 
@@ -107,15 +107,22 @@ async def synthesize_speech(request: TTSRequest):
 
     try:
         # 1. Télécharger l'audio de référence (hors du lock CPU pour ne pas bloquer)
-        print(f"📥 [{req_id}] Téléchargement du fichier de référence depuis : {request.voice_ref_url}")
+        DEFAULT_REF_URL = "https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/public/storyimages/default_fr_narrator.wav"
+        target_ref_url = request.voice_ref_url.strip() if (request.voice_ref_url and request.voice_ref_url.strip()) else DEFAULT_REF_URL
+
+        print(f"📥 [{req_id}] Téléchargement du fichier de référence depuis : {target_ref_url}")
         try:
             opener = urllib.request.build_opener()
             opener.addheaders = [('User-Agent', 'Calmi-TTS-Microservice')]
             urllib.request.install_opener(opener)
-            urllib.request.urlretrieve(request.voice_ref_url, ref_audio_path)
+            urllib.request.urlretrieve(target_ref_url, ref_audio_path)
             print(f"✅ [{req_id}] Téléchargement de l'audio de référence réussi.")
         except Exception as dl_error:
-            raise HTTPException(status_code=400, detail=f"Échec du téléchargement du fichier audio de référence : {dl_error}")
+            print(f"⚠️ [{req_id}] Échec téléchargement URL spécifique ({dl_error}), tentative avec secours...")
+            try:
+                urllib.request.urlretrieve(DEFAULT_REF_URL, ref_audio_path)
+            except Exception as backup_error:
+                raise HTTPException(status_code=400, detail=f"Échec du téléchargement de l'audio de référence : {dl_error}")
 
         # 2. Préparer les paramètres de langue
         prompt_text = request.ref_text if request.ref_text else ""
