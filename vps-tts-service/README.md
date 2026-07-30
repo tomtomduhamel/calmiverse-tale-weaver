@@ -57,7 +57,7 @@ Pour lancer le service de façon persistante en arrière-plan, utilisez la comma
 ```bash
 docker run -d \
   --name tts-service \
-  -p 8000:8000 \
+  -p 8085:8000 \
   -e TTS_API_KEY="VOTRE_CLE_API_SECURISEE_ICI" \
   --restart unless-stopped \
   calmi-tts-service
