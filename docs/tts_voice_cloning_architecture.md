@@ -65,6 +65,7 @@ Cette section sert de base de départ pour la prochaine conversation concernant 
   - Port de l'hôte : `8085` (ouvert et accessible à n8n).
   - Port du conteneur : `8000` (FastAPI Uvicorn interne).
 - **Authentification par Clé d'API** : Exige le header HTTP `X-API-Key` défini dans la variable d'environnement `TTS_API_KEY` lors du lancement du conteneur Docker.
+- **Support des Voix Standards / Stock** : Dans [`vps-tts-service/main.py`](file:///c:/Users/thoma/Calmi/calmiverse-tale-weaver/vps-tts-service/main.py#L70), `voice_ref_url` est désormais optionnel (`Optional[str] = None`). Si aucune voix personnalisée n'est transmise (voix stock ou local), le serveur bascule automatiquement sur l'audio de référence français par défaut `DEFAULT_REF_URL` pour éliminer tout risque d'erreur 422 Unprocessable Entity.
 
 ### B. Routeur n8n Dynamique (`1RQWc4s1fNwDQkIj`)
 - **Webhook d'entrée** : `https://n8n.srv856374.hstgr.cloud/webhook/d2d88f5d-78c0-49c1-83b8-096d4b21190c`
@@ -76,7 +77,11 @@ Cette section sert de base de départ pour la prochaine conversation concernant 
   - Transmet le binaire audio généré par le VPS à `https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/upload-audio-from-n8n`.
   - Transmet le header d'authentification `x-webhook-secret: qpga8m5UFVedaXVf8D/coKlMoycSuA0qqFGk1UuvTQc=` qui valide la réception et fait passer le statut de `audio_files` de `pending`/`processing` à `ready`.
 
-### C. Résilience Client & Écoute en Temps Réel (PWA Calmi)
+### C. Résilience Client & Expérience Utilisateur (PWA Calmi v1.3.11)
 - **Supabase Realtime Channel** : Le hook [`useN8nAudioGeneration.ts`](file:///c:/Users/thoma/Calmi/calmiverse-tale-weaver/src/hooks/story/audio/useN8nAudioGeneration.ts) s'abonne via WebSockets aux événements `postgres_changes` sur la table `audio_files`. Dès que le VPS valide le statut `ready`, l'interface met à jour le lecteur sans rechargement.
 - **Écouteurs de Visibilité (`visibilitychange` / `focus`)** : Lorsque l'utilisateur quitte l'application ou verrouille son téléphone pendant la génération puis revient sur l'application, l'événement de visibilité déclenche un rafraîchissement immédiat en < 100ms depuis la base de données.
-- **Validation Automatisée** : Suite de tests Vitest dans [`src/__tests__/audio/audioGenerationPersistence.test.ts`](file:///c:/Users/thoma/Calmi/calmiverse-tale-weaver/src/__tests__/audio/audioGenerationPersistence.test.ts) (4/4 tests passés avec succès).
+- **Bandeau de Production en Arrière-Plan Haute-Qualité (`IntegratedAudioDeck.tsx`)** :
+  - Intégration d'un statut d'attente `isCheckingAudioStatus` prévenant tout saut d'interface au chargement.
+  - Affichage d'une carte néon dorée/violette (`bg-gradient-to-br from-amber-950/40 via-purple-950/30 to-slate-900/60`) avec badge rétro-éclairé **`[🎙️ Production du Livre Audio en cours... | Arrière-plan actif]`**.
+  - Message explicite et rassurant indiquant que l'utilisateur peut fermer l'application et que la production continue sur le serveur.
+- **Validation Automatisée** : Suite de tests Vitest dans [`src/__tests__/audio/audioGenerationPersistence.test.ts`](file:///c:/Users/thoma/Calmi/calmiverse-tale-weaver/src/__tests__/audio/audioGenerationPersistence.test.ts) (8/8 tests passés avec succès).
