@@ -848,11 +848,11 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                         <span>Vérification du statut du livre audio Studio…</span>
                       </div>
                     ) : (currentPendingAudioFile || isGenerating) ? (
-                      <div className="relative overflow-hidden rounded-xl border border-amber-500/40 bg-gradient-to-br from-amber-950/40 via-purple-950/30 to-slate-900/60 p-3.5 shadow-xl backdrop-blur-md text-left transition-all">
+                      <div className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-purple-500/10 to-amber-500/5 dark:from-amber-950/50 dark:via-purple-950/40 dark:to-slate-900/70 p-3.5 shadow-sm text-left transition-all">
                         <div className="flex items-start gap-3">
                           <div className="relative flex-shrink-0 mt-0.5">
-                            <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300">
-                              <Sparkles className="w-4 h-4 animate-spin text-amber-400" />
+                            <div className="w-8 h-8 rounded-full bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-300">
+                              <Sparkles className="w-4 h-4 animate-spin text-amber-600 dark:text-amber-400" />
                             </div>
                             <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -862,15 +862,15 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
 
                           <div className="flex-1 space-y-1">
                             <div className="flex items-center justify-between">
-                              <h4 className="text-xs font-semibold text-amber-200 flex items-center gap-1.5">
+                              <h4 className="text-xs font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
                                 <span>🎙️ Production du Livre Audio en cours…</span>
                               </h4>
-                              <Badge variant="outline" className="text-[9px] bg-amber-500/20 text-amber-300 border-amber-500/40 px-1.5 py-0">
+                              <Badge variant="outline" className="text-[9px] bg-amber-500/15 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40 px-1.5 py-0 font-medium">
                                 Arrière-plan actif
                               </Badge>
                             </div>
-                            <p className="text-[11px] text-slate-300 leading-relaxed">
-                              L'IA produit la narration multi-voix sur notre serveur. <strong className="text-amber-200 font-medium">Vous pouvez quitter cette page ou l'application</strong>, l'audio apparaîtra automatiquement dès sa finalisation.
+                            <p className="text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
+                              L'IA produit la narration multi-voix sur notre serveur. <strong className="text-amber-900 dark:text-amber-100 font-semibold">Vous pouvez quitter cette page ou l'application</strong>, l'audio apparaîtra automatiquement dès sa finalisation.
                             </p>
                           </div>
                         </div>
