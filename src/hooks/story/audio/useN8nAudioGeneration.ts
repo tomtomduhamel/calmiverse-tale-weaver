@@ -382,6 +382,9 @@ export const useN8nAudioGeneration = () => {
         description: error?.message || "Impossible de lancer la génération audio",
         variant: "destructive"
       });
+      return null;
+    }
+  }, [cleanupStuckFiles, recoverErrorFiles, fetchAudioFiles, toast]);
 
   // Souscrire aux changements Realtime et aux événements de visibilité/focus du navigateur
   const subscribeToAudioFiles = useCallback((storyId: string) => {
