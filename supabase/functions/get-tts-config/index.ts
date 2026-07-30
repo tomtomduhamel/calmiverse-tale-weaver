@@ -20,35 +20,22 @@ serve(async (req) => {
     let webhookUrl: string;
     let voiceId: string | null = null;
     
+    const DEFAULT_N8N_WEBHOOK = "https://n8n.srv856374.hstgr.cloud/webhook/d2d88f5d-78c0-49c1-83b8-096d4b21190c";
+    
     // Sélectionner l'URL webhook selon le provider
     if (ttsProvider === 'speechify' || ttsProvider === 'Speechify') {
-      const speechifyUrl = Deno.env.get('N8N_SPEECHIFY_WEBHOOK_URL');
-      console.log(`[get-tts-config] Speechify webhook URL check: ${speechifyUrl ? 'FOUND' : 'NOT FOUND'}`);
-      webhookUrl = speechifyUrl || '';
-      voiceId = 'b09ef0e3-8257-4a43-8431-a104f81561c2'; // Voice ID Speechify par défaut
+      webhookUrl = Deno.env.get('N8N_SPEECHIFY_WEBHOOK_URL') || DEFAULT_N8N_WEBHOOK;
+      voiceId = 'b09ef0e3-8257-4a43-8431-a104f81561c2';
     } else if (ttsProvider === 'vps-hostinger' || ttsProvider === 'vps') {
-      // Pour le VPS, on utilise le même webhook que Speechify comme demandé
-      const vpsUrl = Deno.env.get('N8N_SPEECHIFY_WEBHOOK_URL');
-      console.log(`[get-tts-config] VPS webhook URL check (using Speechify webhook): ${vpsUrl ? 'FOUND' : 'NOT FOUND'}`);
-      webhookUrl = vpsUrl || '';
-      voiceId = '9BWtsMINqrJLrRacOk9x'; // Voice ID ElevenLabs par défaut (Aria) comme fallback stock
+      webhookUrl = Deno.env.get('N8N_SPEECHIFY_WEBHOOK_URL') || Deno.env.get('N8N_WEBHOOK_URL') || DEFAULT_N8N_WEBHOOK;
+      voiceId = '9BWtsMINqrJLrRacOk9x';
     } else {
-      // Par défaut ou si 'elevenlabs'
-      const elevenlabsUrl = Deno.env.get('N8N_WEBHOOK_URL');
-      console.log(`[get-tts-config] ElevenLabs webhook URL check: ${elevenlabsUrl ? 'FOUND' : 'NOT FOUND'}`);
-      webhookUrl = elevenlabsUrl || '';
-      voiceId = '9BWtsMINqrJLrRacOk9x'; // Voice ID ElevenLabs par défaut
+      webhookUrl = Deno.env.get('N8N_WEBHOOK_URL') || DEFAULT_N8N_WEBHOOK;
+      voiceId = '9BWtsMINqrJLrRacOk9x';
     }
     
     if (!webhookUrl) {
-      const availableSecrets = {
-        TTS_PROVIDER: Deno.env.get('TTS_PROVIDER') ? 'SET' : 'NOT SET',
-        N8N_WEBHOOK_URL: Deno.env.get('N8N_WEBHOOK_URL') ? 'SET' : 'NOT SET',
-        N8N_SPEECHIFY_WEBHOOK_URL: Deno.env.get('N8N_SPEECHIFY_WEBHOOK_URL') ? 'SET' : 'NOT SET'
-      };
-      console.error(`[get-tts-config] Missing webhook URL. Current secrets status:`, availableSecrets);
-      const expectedSecretName = (ttsProvider === 'speechify' || ttsProvider === 'vps-hostinger') ? 'N8N_SPEECHIFY_WEBHOOK_URL' : 'N8N_WEBHOOK_URL';
-      throw new Error(`Webhook URL not configured for provider: ${ttsProvider}. Please verify that ${expectedSecretName} is set in Supabase Secrets.`);
+      webhookUrl = DEFAULT_N8N_WEBHOOK;
     }
     
     console.log(`TTS Config requested - Provider: ${ttsProvider}, URL: ${webhookUrl.substring(0, 30)}...`);

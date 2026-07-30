@@ -55,3 +55,17 @@ Cette section sert de base de départ pour la prochaine conversation concernant 
     }
     ```
 3.  Le VPS génère instantanément la voix clonée de l'utilisateur sans aucun réentraînement lourd et stocke le `.mp3` dans Supabase Storage, prêt à être synchronisé dans l'IndexedDB de l'appareil.
+
+---
+
+## 3. Architecture Opérationnelle n8n & VPS Hostinger (Mise à jour Juillet 2026)
+
+### A. Routeur n8n Dynamique (`1RQWc4s1fNwDQkIj`)
+- **Webhook d'entrée** : `https://n8n.srv856374.hstgr.cloud/webhook/d2d88f5d-78c0-49c1-83b8-096d4b21190c`
+- **Nœud de décision (`Is VPS or Custom Voice?`)** :
+  - Évalue `isCustomVoice === true` OU `provider === 'vps-hostinger'`.
+  - Si **VRAI** : Oriente le flux vers le microservice VPS Hostinger (`http://31.97.40.49:8085/synthesize` ou `/synthesize-multivoice`) avec authentification `X-API-Key`.
+  - Si **FAUX** : Oriente le flux vers le fallback ElevenLabs.
+- **Nœud d'upload Supabase (`upload-audio-from-n8n`)** :
+  - Transmet le binaire audio généré par le VPS à `https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/upload-audio-from-n8n`.
+  - Transmet le header d'authentification `x-webhook-secret: qpga8m5UFVedaXVf8D/coKlMoycSuA0qqFGk1UuvTQc=` qui valide la réception et fait passer le statut de `audio_files` à `ready`.
