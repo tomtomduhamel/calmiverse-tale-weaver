@@ -60,12 +60,23 @@ Cette section sert de base de départ pour la prochaine conversation concernant 
 
 ## 3. Architecture Opérationnelle n8n & VPS Hostinger (Mise à jour Juillet 2026)
 
-### A. Routeur n8n Dynamique (`1RQWc4s1fNwDQkIj`)
+### A. Serveur d'Inférence IA VPS Hostinger (31.97.40.49:8085)
+- **Mapping de Port Docker** : `docker run -d --name tts-service -p 8085:8000 -e TTS_API_KEY="..." --restart unless-stopped calmi-tts-service`
+  - Port de l'hôte : `8085` (ouvert et accessible à n8n).
+  - Port du conteneur : `8000` (FastAPI Uvicorn interne).
+- **Authentification par Clé d'API** : Exige le header HTTP `X-API-Key` défini dans la variable d'environnement `TTS_API_KEY` lors du lancement du conteneur Docker.
+
+### B. Routeur n8n Dynamique (`1RQWc4s1fNwDQkIj`)
 - **Webhook d'entrée** : `https://n8n.srv856374.hstgr.cloud/webhook/d2d88f5d-78c0-49c1-83b8-096d4b21190c`
 - **Nœud de décision (`Is VPS or Custom Voice?`)** :
   - Évalue `isCustomVoice === true` OU `provider === 'vps-hostinger'`.
-  - Si **VRAI** : Oriente le flux vers le microservice VPS Hostinger (`http://31.97.40.49:8085/synthesize` ou `/synthesize-multivoice`) avec authentification `X-API-Key`.
+  - Si **VRAI** : Oriente le flux vers le microservice VPS Hostinger (`http://31.97.40.49:8085/synthesize`) avec le header `X-API-Key`.
   - Si **FAUX** : Oriente le flux vers le fallback ElevenLabs.
 - **Nœud d'upload Supabase (`upload-audio-from-n8n`)** :
   - Transmet le binaire audio généré par le VPS à `https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/upload-audio-from-n8n`.
-  - Transmet le header d'authentification `x-webhook-secret: qpga8m5UFVedaXVf8D/coKlMoycSuA0qqFGk1UuvTQc=` qui valide la réception et fait passer le statut de `audio_files` à `ready`.
+  - Transmet le header d'authentification `x-webhook-secret: qpga8m5UFVedaXVf8D/coKlMoycSuA0qqFGk1UuvTQc=` qui valide la réception et fait passer le statut de `audio_files` de `pending`/`processing` à `ready`.
+
+### C. Résilience Client & Écoute en Temps Réel (PWA Calmi)
+- **Supabase Realtime Channel** : Le hook [`useN8nAudioGeneration.ts`](file:///c:/Users/thoma/Calmi/calmiverse-tale-weaver/src/hooks/story/audio/useN8nAudioGeneration.ts) s'abonne via WebSockets aux événements `postgres_changes` sur la table `audio_files`. Dès que le VPS valide le statut `ready`, l'interface met à jour le lecteur sans rechargement.
+- **Écouteurs de Visibilité (`visibilitychange` / `focus`)** : Lorsque l'utilisateur quitte l'application ou verrouille son téléphone pendant la génération puis revient sur l'application, l'événement de visibilité déclenche un rafraîchissement immédiat en < 100ms depuis la base de données.
+- **Validation Automatisée** : Suite de tests Vitest dans [`src/__tests__/audio/audioGenerationPersistence.test.ts`](file:///c:/Users/thoma/Calmi/calmiverse-tale-weaver/src/__tests__/audio/audioGenerationPersistence.test.ts) (4/4 tests passés avec succès).
