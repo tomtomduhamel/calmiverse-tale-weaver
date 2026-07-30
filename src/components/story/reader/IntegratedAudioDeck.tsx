@@ -82,8 +82,18 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     generateAudio,
     fetchAudioFiles,
     cleanupStuckFiles,
-    recoverErrorFiles
+    recoverErrorFiles,
+    subscribeToAudioFiles
   } = useN8nAudioGeneration();
+
+  // Activer la souscription Realtime et les écouteurs de visibilité
+  useEffect(() => {
+    if (!storyId) return;
+    const cleanup = subscribeToAudioFiles(storyId);
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [storyId, subscribeToAudioFiles]);
 
   // Load voices & files
   useEffect(() => {

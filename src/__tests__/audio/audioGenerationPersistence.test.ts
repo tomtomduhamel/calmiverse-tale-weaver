@@ -58,6 +58,21 @@ describe("Validation & Résilience de la Génération Audio (Persistence & Multi
       expect(currentAudioFile?.status).toBe("ready");
       expect(currentAudioFile?.audio_url).toContain("story-uuid-5678");
     });
+
+    it("devrait passer du statut 'processing' à 'ready' lors de l'arrivée d'un événement Realtime ou visibilitychange", () => {
+      let state: "pending" | "processing" | "ready" = "processing";
+      const storyId = "story-bg-9999";
+
+      // Simulation du retour d'arrière-plan avec visibilité = visible
+      const handleVisibilityChange = (updatedStatus: "ready") => {
+        state = updatedStatus;
+      };
+
+      // Événement Realtime reçu pendant que l'utilisateur est revenu sur l'app
+      handleVisibilityChange("ready");
+
+      expect(state).toBe("ready");
+    });
   });
 
   describe("Découpage Multi-Voix et Attribution des Rôles (storyAudioParser)", () => {

@@ -383,59 +383,64 @@ export const useN8nAudioGeneration = () => {
         variant: "destructive"
       });
 
-      return null;
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [toast, fetchAudioFiles, cleanupStuckFiles, recoverErrorFiles]);
+  // Souscrire aux changements Realtime et aux événements de visibilité/focus du navigateur
+  const subscribeToAudioFiles = useCallback((storyId: string) => {
+    if (!storyId) return () => {};
 
-  // Mettre à jour un fichier audio (appelé par webhook de retour n8n)
-  const updateAudioFile = useCallback(async (
-    audioFileId: string,
-    updates: Partial<AudioFile>
-  ): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('audio_files')
-        .update(updates)
-        .eq('id', audioFileId);
+    console.log(`📡 [N8nAudio] Activation de l'écoute Realtime et Visibilité pour l'histoire: ${storyId}`);
 
-      if (error) throw error;
+    // 1. Canal Supabase Realtime
+    const channel = supabase
+      .channel(`audio_files_realtime_${storyId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'audio_files',
+          filter: `story_id=eq.${storyId}`
+        },
+        async (payload) => {
+          console.log('⚡ [N8nAudio] Changement détecté en temps réel sur audio_files:', payload);
+          const updatedRow = payload.new as AudioFile | undefined;
+          
+          if (updatedRow?.status === 'ready') {
+            setIsGenerating(false);
+            toast({
+              title: "🎉 Audio généré !",
+              description: "Votre livre audio est prêt à être écouté.",
+            });
+          } else if (updatedRow?.status === 'error') {
+            setIsGenerating(false);
+          }
+          
+          await fetchAudioFiles(storyId);
+        }
+      )
+      .subscribe();
 
-      console.log('✅ [N8nAudio] Fichier audio mis à jour:', audioFileId);
-      return true;
-    } catch (error: any) {
-      console.error('❌ [N8nAudio] Erreur mise à jour:', error);
-      return false;
-    }
-  }, []);
+    // 2. Écouteurs de visibilité (changement d'app, retour sur l'onglet, déverrouillage)
+    const handleVisibilityOrFocus = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log('👁️ [N8nAudio] Application repassée au premier plan, rafraîchissement immédiat du statut audio...');
+        const files = await fetchAudioFiles(storyId);
+        const hasPending = files.some(f => f.status === 'pending' || f.status === 'processing');
+        setIsGenerating(hasPending);
+        if (hasPending) {
+          await checkPendingFiles(storyId);
+        }
+      }
+    };
 
-  // Supprimer un fichier audio
-  const deleteAudioFile = useCallback(async (audioFileId: string): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('audio_files')
-        .delete()
-        .eq('id', audioFileId);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
 
-      if (error) throw error;
-
-      toast({
-        title: "Fichier supprimé",
-        description: "Le fichier audio a été supprimé",
-      });
-
-      return true;
-    } catch (error: any) {
-      console.error('❌ [N8nAudio] Erreur suppression:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le fichier audio",
-        variant: "destructive"
-      });
-      return false;
-    }
-  }, [toast]);
+    return () => {
+      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+    };
+  }, [fetchAudioFiles, checkPendingFiles, toast]);
 
   return {
     // State
@@ -449,6 +454,7 @@ export const useN8nAudioGeneration = () => {
     deleteAudioFile,
     cleanupStuckFiles,
     checkPendingFiles,
-    recoverErrorFiles
+    recoverErrorFiles,
+    subscribeToAudioFiles
   };
 };

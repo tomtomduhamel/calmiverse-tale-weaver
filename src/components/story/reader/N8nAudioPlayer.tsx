@@ -37,8 +37,18 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
     fetchAudioFiles,
     deleteAudioFile,
     cleanupStuckFiles,
-    recoverErrorFiles
+    recoverErrorFiles,
+    subscribeToAudioFiles
   } = useN8nAudioGeneration();
+
+  // Activer la souscription Realtime et les écouteurs de visibilité
+  useEffect(() => {
+    if (!storyId) return;
+    const cleanup = subscribeToAudioFiles(storyId);
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [storyId, subscribeToAudioFiles]);
 
   // Charger les fichiers audio existants et nettoyer/récupérer les fichiers
   useEffect(() => {
