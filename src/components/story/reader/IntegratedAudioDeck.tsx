@@ -740,10 +740,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
 
           {/* Selector block (Narrator voices & Background Music) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-2">
-            {/* Colonne 1 : Voix de lecture */}
+            {/* Colonne 1 : Voix du Narrateur Principal */}
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider opacity-70 flex items-center gap-1.5">
-                🎙️ Voix de lecture
+                🎙️ Voix du Narrateur Principal
               </label>
               <select
                 value={selectedVoiceId}
@@ -757,12 +757,12 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               >
                 <option value="local">🔊 Voix de l'appareil (Gratuit)</option>
                 {customVoices.length > 0 && (
-                  <optgroup label="Vos voix clonées Studio (Premium)">
+                  <optgroup label="Vos voix de narration (Studio)">
                     {customVoices.map((voice) => {
                       const hasReadyAudio = audioFiles.some(f => f.status === 'ready' && f.voice_id === voice.id && f.story_id === storyId);
                       return (
                         <option key={voice.id} value={voice.id}>
-                          🎙️ Voix de {voice.relation} {hasReadyAudio ? '✅ (Audio Studio prêt)' : ''}
+                          🎙️ Narrateur : Voix de {voice.relation} {hasReadyAudio ? '✅ (Prêt à l\'écoute)' : ''}
                         </option>
                       );
                     })}
@@ -771,7 +771,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 {customVoices.length === 0 && (
                   <>
                     {canUsePremiumAudio && (limits?.max_voice_clones ?? 0) > 0 ? (
-                      <option value="record_prompt">🎙️ Enregistrer une voix clonée (Premium)</option>
+                      <option value="record_prompt">🎙️ Enregistrer la voix du narrateur (Premium)</option>
                     ) : (
                       <option value="upgrade_info">🎙️ Cloner la voix d'un proche (Premium 🌟)</option>
                     )}
@@ -779,14 +779,27 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 )}
               </select>
 
-              {/* Bouton explicite pour re-générer l'histoire avec la voix sélectionnée */}
+              {/* Mention d'attribution automatique multi-voix pour les personnages */}
+              {selectedVoiceId !== 'local' && (
+                <div className="bg-purple-500/10 border border-purple-500/20 text-purple-900 dark:text-purple-200 p-2 rounded-lg text-[11px] space-y-1">
+                  <div className="flex items-center gap-1 font-semibold text-purple-700 dark:text-purple-300">
+                    <Sparkles className="w-3 h-3 text-purple-500" />
+                    <span>Multi-Voix Automatique Actif</span>
+                  </div>
+                  <p className="text-[10px] opacity-90 leading-tight">
+                    Les répliques et dialogues des personnages seront automatiquement interprétés par vos autres voix clonées.
+                  </p>
+                </div>
+              )}
+
+              {/* Bouton explicite pour générer/re-générer l'histoire avec cette voix de narrateur */}
               {selectedVoiceId !== 'local' && (
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={handleForceRegenerate}
                   disabled={isGenerating || !!currentPendingAudioFile}
-                  className="w-full text-xs font-semibold h-7.5 mt-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center gap-1.5 transition-all"
+                  className="w-full text-xs font-semibold h-7.5 mt-1 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center gap-1.5 transition-all"
                 >
                   {isGenerating || currentPendingAudioFile ? (
                     <>
@@ -796,7 +809,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                   ) : (
                     <>
                       <RefreshCw className="w-3.5 h-3.5 text-primary" />
-                      <span>Re-générer l'histoire avec cette voix</span>
+                      <span>Générer avec ce Narrateur</span>
                     </>
                   )}
                 </Button>

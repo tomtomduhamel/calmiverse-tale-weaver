@@ -309,32 +309,49 @@ export const useN8nAudioGeneration = () => {
       };
 
       // Check if this is a custom user voice clone
+      // Fetch all custom user voice clones for automatic character assignment
       try {
-        const { data: customVoice } = await supabase
+        const { data: userVoices } = await supabase
           .from('user_voices')
-          .select('*')
-          .eq('id', dynamicVoiceId)
-          .single();
+          .select('*');
 
-        if (customVoice) {
-          // Generate a signed URL for the voice reference file (valid for 1 hour)
-          const { data: signedData } = await supabase.storage
-            .from('voice-clones')
-            .createSignedUrl(customVoice.voice_ref_path, 3600);
+        if (userVoices && userVoices.length > 0) {
+          const voicesWithSignedUrls = await Promise.all(
+            userVoices.map(async (v) => {
+              const { data: signed } = await supabase.storage
+                .from('voice-clones')
+                .createSignedUrl(v.voice_ref_path, 3600);
+              return {
+                id: v.id,
+                relation: v.relation,
+                signedUrl: signed?.signedUrl || null,
+                transcript: v.transcript || ""
+              };
+            })
+          );
 
-          if (signedData?.signedUrl) {
-            payload.isCustomVoice = true;
-            payload.voice_ref_url = signedData.signedUrl;
-            payload.ref_text = customVoice.transcript || "";
-            console.log("🎙️ [N8nAudio] Custom voice clone detected. Signed reference URL added to payload.", {
-              voiceId: dynamicVoiceId,
-              relation: customVoice.relation
-            });
+          payload.allUserVoices = voicesWithSignedUrls.filter(v => v.signedUrl);
+
+          // Voice selected specifically as the Main Narrator
+          const mainNarratorVoice = userVoices.find(v => v.id === dynamicVoiceId);
+          if (mainNarratorVoice) {
+            const { data: signedData } = await supabase.storage
+              .from('voice-clones')
+              .createSignedUrl(mainNarratorVoice.voice_ref_path, 3600);
+
+            if (signedData?.signedUrl) {
+              payload.isCustomVoice = true;
+              payload.voice_ref_url = signedData.signedUrl;
+              payload.ref_text = mainNarratorVoice.transcript || "";
+              console.log("🎙️ [N8nAudio] Main Narrator Voice & Family Voice Catalog attached to payload.", {
+                narratorVoiceId: dynamicVoiceId,
+                totalFamilyVoices: payload.allUserVoices.length
+              });
+            }
           }
         }
       } catch (err) {
-        // Not a custom voice or database check failed, ignore and let standard ElevenLabs voice be used
-        console.log("[N8nAudio] Standard voice detected or check skipped.");
+        console.log("[N8nAudio] Standard voice detected or check skipped.", err);
       }
 
       console.log(`📤 [N8nAudio] Envoi vers ${provider} (n8n):`, { ...payload, voice_ref_url: payload.voice_ref_url ? "SIGNED_URL_PRESENT" : undefined, webhookUrl: webhookUrl.substring(0, 40) + '...' });
