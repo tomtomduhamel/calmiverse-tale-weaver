@@ -128,8 +128,11 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           if (!error && data) {
             setCustomVoices(data as CustomVoice[]);
             
-            // Initialiser la voix sélectionnée selon les préférences et les autorisations
-            if (canUsePremiumAudio && preferredAudioMode === 'premium' && data.length > 0) {
+            // Vérifier si un fichier audio Studio prêt existe pour cette histoire
+            const readyFile = audioFiles.find(f => f.status === 'ready' && f.audio_url && f.story_id === storyId);
+            if (readyFile && readyFile.voice_id && readyFile.voice_id !== 'local') {
+              setSelectedVoiceId(readyFile.voice_id);
+            } else if (canUsePremiumAudio && preferredAudioMode === 'premium' && data.length > 0) {
               setSelectedVoiceId(data[0].id);
             } else {
               setSelectedVoiceId('local');
@@ -745,12 +748,15 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               >
                 <option value="local">🔊 Voix de l'appareil (Gratuit)</option>
                 {customVoices.length > 0 && (
-                  <optgroup label="Vos voix clonées (Premium)">
-                    {customVoices.map((voice) => (
-                      <option key={voice.id} value={voice.id}>
-                        🎙️ Voix de {voice.relation}
-                      </option>
-                    ))}
+                  <optgroup label="Vos voix clonées Studio (Premium)">
+                    {customVoices.map((voice) => {
+                      const hasReadyAudio = audioFiles.some(f => f.status === 'ready' && f.voice_id === voice.id && f.story_id === storyId);
+                      return (
+                        <option key={voice.id} value={voice.id}>
+                          🎙️ Voix de {voice.relation} {hasReadyAudio ? '✅ (Audio Studio prêt)' : ''}
+                        </option>
+                      );
+                    })}
                   </optgroup>
                 )}
                 {customVoices.length === 0 && (
@@ -826,6 +832,15 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               <>
                 {currentAudioFile ? (
                   <>
+                    <div className="flex items-center justify-between text-[11px] font-medium bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-500/30 text-emerald-900 dark:text-emerald-200 px-3 py-1.5 rounded-lg mb-2">
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">🎙️ Narration Studio :</span>
+                        <span>Voix de {customVoices.find(v => v.id === currentAudioFile.voice_id)?.relation || 'Papa'}</span>
+                      </span>
+                      <span className="text-[10px] bg-emerald-600 text-white font-semibold px-2 py-0.5 rounded-full">
+                        Prêt à l'écoute ✅
+                      </span>
+                    </div>
                     <Slider
                       value={[progress]}
                       max={100}
@@ -833,9 +848,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                       onValueChange={handleTimelineChange}
                       className="w-full cursor-pointer h-2"
                     />
-                    <div className="flex justify-between items-center text-[10px] text-muted-foreground">
-                      <span className="font-semibold text-primary">
-                        Paragraphe {currentParagraphIndex + 1} sur {paragraphs.length}
+                    <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-1">
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+                        Livre Audio Multi-Voix Studio
                       </span>
                       <span className="font-mono">{formatTime(currentTime)} / {formatTime(duration)}</span>
                     </div>
