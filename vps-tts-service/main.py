@@ -1,10 +1,40 @@
 import os
+import re
 import time
 import uuid
 import torch
 import asyncio
 import hashlib
 import numpy as np
+
+def chunk_text(text: str, max_chars: int = 250) -> List[str]:
+    # Supprimer les balises de modulation comme [chuchoté], [joyeux], etc.
+    clean = re.sub(r'\[.*?\]', '', text).strip()
+    clean = re.sub(r'\s+', ' ', clean)
+    
+    if not clean:
+        return []
+
+    # Découper selon la ponctuation forte (. ! ?) en préservant la ponctuation
+    sentences = re.split(r'(?<=[.!?])\s+', clean)
+    chunks = []
+    current_chunk = ""
+
+    for sentence in sentences:
+        s = sentence.strip()
+        if not s:
+            continue
+        if len(current_chunk) + len(s) + 1 <= max_chars:
+            current_chunk = f"{current_chunk} {s}".strip()
+        else:
+            if current_chunk:
+                chunks.append(current_chunk)
+            current_chunk = s
+
+    if current_chunk:
+        chunks.append(current_chunk)
+
+    return chunks if chunks else [clean]
 # Optimisation critique pour VPS KVM2 (2 vCPUs) : évite l'explosion de threads et la saturation CPU
 torch.set_num_threads(2)
 torch.set_num_interop_threads(2)
@@ -133,22 +163,46 @@ async def synthesize_speech(request: TTSRequest):
         }
         tts_lang = lang_map.get(request.language.lower(), "French")
 
-        # 3. Lancement de la génération vocale sous verrou de sérialisation
+        # 3. Découpage du texte long en segments naturels
+        text_chunks = chunk_text(request.text, max_chars=250)
+        print(f"🧩 [{req_id}] Découpage du texte complet ({len(request.text)} chars) en {len(text_chunks)} segments (Max 250 chars/chunk)...")
+
+        # 4. Lancement de la génération vocale sous verrou de sérialisation
         async with generation_lock:
-            print(f"⚡ [{req_id}] Inférence CPU Qwen3-TTS en cours (sous verrou)...")
+            print(f"⚡ [{req_id}] Inférence CPU Qwen3-TTS séquentielle en cours (sous verrou)...")
             start_inference = time.time()
             
-            wavs, sr = model.generate_voice_clone(
-                text=request.text,
-                language=tts_lang,
-                ref_audio=ref_audio_path,
-                ref_text=prompt_text
-            )
+            generated_wavs = []
+            sr = 24000  # Frequence d'échantillonnage par défaut
             
-            # Sauvegarder le fichier audio de sortie
-            sf.write(output_audio_path, wavs[0], sr)
+            for idx, chunk in enumerate(text_chunks):
+                print(f"   🗣️ [{req_id}] Synthèse segment {idx+1}/{len(text_chunks)} ({len(chunk)} chars)...")
+                start_chunk_time = time.time()
+                
+                wavs, current_sr = model.generate_voice_clone(
+                    text=chunk,
+                    language=tts_lang,
+                    ref_audio=ref_audio_path,
+                    ref_text=prompt_text
+                )
+                sr = current_sr
+                
+                # Ajouter un silence naturel (250ms) entre les phrases
+                if idx > 0:
+                    pause_samples = int(sr * 0.25)
+                    silence = np.zeros(pause_samples, dtype=np.float32)
+                    generated_wavs.append(silence)
+                
+                generated_wavs.append(wavs[0])
+                print(f"   ✅ [{req_id}] Segment {idx+1}/{len(text_chunks)} généré en {time.time() - start_chunk_time:.2f}s")
+            
+            # Concaténer tous les tableaux audio NumPy en un seul fichier audio binaire
+            final_wav = np.concatenate(generated_wavs)
+            
+            # Sauvegarder le fichier audio de sortie complet
+            sf.write(output_audio_path, final_wav, sr)
             inference_time = time.time() - start_inference
-            print(f"🎉 [{req_id}] Synthèse réussie en {inference_time:.2f}s !")
+            print(f"🎉 [{req_id}] Synthèse intégrale réussie ({len(text_chunks)} segments concaténés) en {inference_time:.2f}s !")
 
         return FileResponse(
             output_audio_path,
