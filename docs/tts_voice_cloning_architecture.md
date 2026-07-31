@@ -66,6 +66,10 @@ Cette section sert de base de départ pour la prochaine conversation concernant 
   - Port du conteneur : `8000` (FastAPI Uvicorn interne).
 - **Authentification par Clé d'API** : Exige le header HTTP `X-API-Key` défini dans la variable d'environnement `TTS_API_KEY` lors du lancement du conteneur Docker.
 - **Support des Voix Standards / Stock** : Dans [`vps-tts-service/main.py`](file:///c:/Users/thoma/Calmi/calmiverse-tale-weaver/vps-tts-service/main.py#L70), `voice_ref_url` est désormais optionnel (`Optional[str] = None`). Si aucune voix personnalisée n'est transmise (voix stock ou local), le serveur bascule automatiquement sur l'audio de référence français par défaut `DEFAULT_REF_URL` pour éliminer tout risque d'erreur 422 Unprocessable Entity.
+- **Synthèse Vocale Intégrale par Chunking & Concaténation (v1.4.0)** :
+  - **Fonction `chunk_text(text, max_chars=250)`** : Fragmente dynamiquement le texte complet de l'histoire (750 à 2500 mots) en phrases naturelles tout en respectant la ponctuation (`. ! ?`).
+  - **Inférence Séquentielle sous Verrou CPU** : Le microservice FastAPI `/synthesize` synthétise chaque segment séquentiellement avec le modèle `Qwen3-TTS`.
+  - **Concaténation Audio Binaire NumPy** : Insère un silence naturel de 250 ms entre les phrases et concatène l'ensemble des tableaux `np.concatenate(generated_wavs)` avant d'écrire le fichier binaire `.wav` final. Le fichier résultant couvre **100% de l'histoire du premier au dernier mot** sans aucune troncature de jetons.
 
 ### B. Routeur n8n Dynamique (`1RQWc4s1fNwDQkIj`)
 - **Webhook d'entrée** : `https://n8n.srv856374.hstgr.cloud/webhook/d2d88f5d-78c0-49c1-83b8-096d4b21190c`
