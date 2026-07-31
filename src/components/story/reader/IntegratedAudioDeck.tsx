@@ -202,24 +202,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     checkCache();
   }, [currentParagraphIndex, isPremiumMode, storyId, paragraphs]);
 
-  // Background prefetching for the NEXT paragraph
-  useEffect(() => {
-    const prefetchNextParagraph = async () => {
-      if (!isPremiumMode || !isPlaying) return;
-      const nextIndex = currentParagraphIndex + 1;
-      if (nextIndex < paragraphs.length) {
-        const nextText = paragraphs[nextIndex];
-        const nextAudioFile = audioFiles.find(
-          file => file.text_content === nextText && file.voice_id === selectedVoiceId
-        );
-        if (!nextAudioFile) {
-          console.log(`🚀 [AudioDeck] Prefetching paragraph ${nextIndex + 1}/${paragraphs.length} in background`);
-          await generateAudio(storyId, nextText, selectedVoiceId);
-        }
-      }
-    };
-    prefetchNextParagraph();
-  }, [currentParagraphIndex, isPlaying, audioFiles, selectedVoiceId, isPremiumMode, storyId, paragraphs]);
+
 
   // Autoplay next paragraph transition
   useEffect(() => {
@@ -394,69 +377,41 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     });
   };
 
-  // Play/Pause control
+  // Control Play/Pause (Priorité absolue aux fichiers audio Studio prêts)
   const handlePlayPause = async () => {
-    if (isPremiumMode) {
-      // 🌟 Premium Audio Playback (VPS/MP3 - Paragraph Chunking)
-      if (paragraphs.length === 0) return;
-      
-      const pText = paragraphs[currentParagraphIndex];
-      const pAudioFile = audioFiles.find(
-        file => file.text_content === pText && file.voice_id === selectedVoiceId
-      );
+    // 1. Chercher un fichier binaire Studio prêt pour cette histoire (ex: Voix de Papa)
+    const targetReadyFile = audioFiles.find(
+      file => file.status === 'ready' && file.audio_url && file.story_id === storyId
+    );
 
-      if (!pAudioFile || pAudioFile.status === 'error') {
-        // Not generated yet, trigger generation
-        toast({
-          title: "Préparation de la lecture",
-          description: "La synthèse vocale haute-fidélité démarre...",
-        });
-        const generatedId = await generateAudio(storyId, pText, selectedVoiceId);
-        if (generatedId) {
-          // Immediately trigger play by fetching latest files
-          await fetchAudioFiles(storyId);
-        }
-        return;
-      }
-
-      if (pAudioFile.status === 'pending' || pAudioFile.status === 'processing') {
-        toast({
-          title: "Lecture en cours de préparation",
-          description: "Veuillez patienter quelques instants...",
-        });
-        return;
-      }
-
+    if (targetReadyFile?.audio_url) {
       if (isPlaying && audioRef.current) {
         audioRef.current.pause();
         setIsPlaying(false);
         return;
       }
 
+      if (isBrowserSpeaking && synthRef.current) {
+        synthRef.current.cancel();
+        setIsBrowserSpeaking(false);
+        setIsBrowserPaused(false);
+      }
+
       try {
         let audioUrl = "";
-        const cacheKey = `${storyId}_p_${currentParagraphIndex}`;
+        const cacheKey = `story_${storyId}`;
         const cachedBlob = await audioCache.get(cacheKey);
 
         if (cachedBlob) {
           audioUrl = URL.createObjectURL(cachedBlob);
-          console.log("⚡ [AudioDeck] Playing paragraph from IndexedDB cache");
+          console.log("⚡ [AudioDeck] Lecture de l'histoire complète depuis le cache IndexedDB");
         } else {
-          if (!navigator.onLine) {
-            toast({
-              title: "Hors-ligne",
-              description: "Cet audio premium n'est pas disponible hors-ligne. Activez la mise en cache.",
-              variant: "destructive"
-            });
-            return;
-          }
-          const signedUrl = await getSignedAudioUrl(pAudioFile.audio_url!);
-          if (!signedUrl) throw new Error("Could not get signed URL");
+          const signedUrl = await getSignedAudioUrl(targetReadyFile.audio_url);
+          if (!signedUrl) throw new Error("Impossible d'obtenir l'URL du fichier audio");
           audioUrl = signedUrl;
 
-          // Cache in background for offline use
+          // Mise en cache hors-ligne en arrière-plan
           audioCache.prefetchAndCache(cacheKey, signedUrl).then(() => {
-            console.log(`✅ [AudioDeck] Cached paragraph ${currentParagraphIndex}`);
             setIsOfflineReady(true);
           }).catch(err => {
             console.error('[AudioDeck] Cache error:', err);
@@ -464,7 +419,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         }
 
         const audio = audioRef.current || new Audio();
-        audio.src = audioUrl;
+        if (audio.src !== audioUrl) {
+          audio.src = audioUrl;
+        }
         audioRef.current = audio;
 
         const speed = userSettings.readingPreferences?.readingSpeed || 1.0;
@@ -475,42 +432,47 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         };
         audio.ontimeupdate = () => {
           setCurrentTime(audio.currentTime);
-          setProgress((audio.currentTime / audio.duration) * 100);
+          if (audio.duration) {
+            setProgress((audio.currentTime / audio.duration) * 100);
+          }
         };
         audio.onended = () => {
-          // Play next paragraph automatically!
-          const nextIndex = currentParagraphIndex + 1;
-          if (nextIndex < paragraphs.length) {
-            setCurrentParagraphIndex(nextIndex);
-            setAutoplayNext(true);
-          } else {
-            setIsPlaying(false);
-            setProgress(0);
-            setCurrentTime(0);
-            setCurrentParagraphIndex(0);
-          }
+          setIsPlaying(false);
+          setProgress(0);
+          setCurrentTime(0);
         };
         audio.onerror = () => {
           toast({
             title: "Erreur audio",
-            description: "Impossible de lire le fichier audio",
+            description: "Impossible de lire le fichier audio Studio",
             variant: "destructive"
           });
           setIsPlaying(false);
         };
 
-        // Resume at current time if paused
         if (currentTime > 0 && currentTime < duration) {
           audio.currentTime = currentTime;
         }
 
         await audio.play();
         setIsPlaying(true);
-      } catch (err) {
+
+        if (targetReadyFile.voice_id && targetReadyFile.voice_id !== 'local') {
+          setSelectedVoiceId(targetReadyFile.voice_id);
+        }
+      } catch (err: any) {
         console.error("Audio playback error:", err);
+        toast({
+          title: "Erreur de lecture",
+          description: err?.message || "Impossible de lire le fichier audio Studio",
+          variant: "destructive"
+        });
       }
-    } else {
-      // 🔊 Free Browser SpeechSynthesis Playback (Paragraph-by-Paragraph)
+      return;
+    }
+
+    // 2. Si aucun fichier Studio n'est prêt et que la voix locale est sélectionnée : lire avec la synthèse vocale de l'appareil (Gratuit)
+    if (selectedVoiceId === 'local' || !isPremiumMode) {
       if (!synthRef.current) return;
 
       if (isBrowserSpeaking) {
@@ -526,7 +488,24 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       } else {
         playBrowserParagraph(currentParagraphIndex);
       }
+      return;
     }
+
+    // 3. Si l'utilisateur a choisi une voix Premium et qu'aucune génération n'est prête
+    if (currentPendingAudioFile || isGenerating) {
+      toast({
+        title: "Génération en cours",
+        description: "Le livre audio est en cours de création sur notre serveur...",
+      });
+      return;
+    }
+
+    // Déclencher la génération uniquement si aucun audio n'existe
+    toast({
+      title: "Lancement de la création",
+      description: "Le livre audio Studio démarre en arrière-plan...",
+    });
+    await generateAudio(storyId, text, selectedVoiceId);
   };
 
   // Rewind to previous paragraph
