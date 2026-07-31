@@ -6,6 +6,7 @@ import torch
 import asyncio
 import hashlib
 import numpy as np
+from typing import Optional, List
 
 def chunk_text(text: str, max_chars: int = 250) -> List[str]:
     # Supprimer les balises de modulation comme [chuchoté], [joyeux], etc.
