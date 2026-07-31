@@ -187,12 +187,19 @@ async def synthesize_speech(request: TTSRequest):
                 print(f"   🗣️ [{req_id}] Synthèse segment {idx+1}/{len(text_chunks)} ({len(chunk)} chars)...")
                 start_chunk_time = time.time()
                 
-                wavs, current_sr = model.generate_voice_clone(
-                    text=chunk,
-                    language=tts_lang,
-                    ref_audio=ref_audio_path,
-                    ref_text=prompt_text
-                )
+                clean_prompt = prompt_text.strip() if prompt_text else ""
+                clone_kwargs = {
+                    "text": chunk,
+                    "language": tts_lang,
+                    "ref_audio": ref_audio_path,
+                }
+                if clean_prompt:
+                    clone_kwargs["ref_text"] = clean_prompt
+                    clone_kwargs["x_vector_only_mode"] = False
+                else:
+                    clone_kwargs["x_vector_only_mode"] = True
+
+                wavs, current_sr = model.generate_voice_clone(**clone_kwargs)
                 sr = current_sr
                 
                 # Ajouter un silence naturel (250ms) entre les phrases
@@ -287,12 +294,19 @@ async def synthesize_multi_voice(request: MultiVoiceRequest):
                 
                 # Inférence pour le segment
                 start_inf = time.time()
-                wavs, current_sr = model.generate_voice_clone(
-                    text=segment.text,
-                    language=tts_lang,
-                    ref_audio=ref_path,
-                    ref_text=prompt_text
-                )
+                clean_prompt = prompt_text.strip() if prompt_text else ""
+                clone_kwargs = {
+                    "text": segment.text,
+                    "language": tts_lang,
+                    "ref_audio": ref_path,
+                }
+                if clean_prompt:
+                    clone_kwargs["ref_text"] = clean_prompt
+                    clone_kwargs["x_vector_only_mode"] = False
+                else:
+                    clone_kwargs["x_vector_only_mode"] = True
+
+                wavs, current_sr = model.generate_voice_clone(**clone_kwargs)
                 print(f"   ✅ [{req_id}] Généré en {time.time() - start_inf:.2f}s (SR: {current_sr})")
                 
                 sr = current_sr
