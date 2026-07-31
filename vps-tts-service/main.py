@@ -3,6 +3,7 @@ import re
 import time
 import uuid
 import torch
+import shutil
 import asyncio
 import hashlib
 import numpy as np
@@ -137,23 +138,29 @@ async def synthesize_speech(request: TTSRequest):
     output_audio_path = os.path.join(TEMP_DIR, f"{req_id}_out.wav")
 
     try:
-        # 1. Télécharger l'audio de référence (hors du lock CPU pour ne pas bloquer)
-        DEFAULT_REF_URL = "https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/public/storyimages/default_fr_narrator.wav"
-        target_ref_url = request.voice_ref_url.strip() if (request.voice_ref_url and request.voice_ref_url.strip()) else DEFAULT_REF_URL
-
-        print(f"📥 [{req_id}] Téléchargement du fichier de référence depuis : {target_ref_url}")
-        try:
-            opener = urllib.request.build_opener()
-            opener.addheaders = [('User-Agent', 'Calmi-TTS-Microservice')]
-            urllib.request.install_opener(opener)
-            urllib.request.urlretrieve(target_ref_url, ref_audio_path)
-            print(f"✅ [{req_id}] Téléchargement de l'audio de référence réussi.")
-        except Exception as dl_error:
-            print(f"⚠️ [{req_id}] Échec téléchargement URL spécifique ({dl_error}), tentative avec secours...")
+        # 1. Télécharger l'audio de référence ou utiliser le fichier local de secours
+        DEFAULT_LOCAL_REF = os.path.join(os.path.dirname(__file__), "default_ref.wav")
+        if request.voice_ref_url and request.voice_ref_url.strip():
+            target_ref_url = request.voice_ref_url.strip()
+            print(f"📥 [{req_id}] Téléchargement de la voix de référence depuis : {target_ref_url}")
             try:
-                urllib.request.urlretrieve(DEFAULT_REF_URL, ref_audio_path)
-            except Exception as backup_error:
-                raise HTTPException(status_code=400, detail=f"Échec du téléchargement de l'audio de référence : {dl_error}")
+                opener = urllib.request.build_opener()
+                opener.addheaders = [('User-Agent', 'Calmi-TTS-Microservice')]
+                urllib.request.install_opener(opener)
+                urllib.request.urlretrieve(target_ref_url, ref_audio_path)
+                print(f"✅ [{req_id}] Téléchargement de l'audio de référence réussi.")
+            except Exception as dl_error:
+                print(f"⚠️ [{req_id}] Échec du téléchargement ({dl_error}), utilisation du fichier local de secours...")
+                if os.path.exists(DEFAULT_LOCAL_REF):
+                    shutil.copyfile(DEFAULT_LOCAL_REF, ref_audio_path)
+                else:
+                    raise HTTPException(status_code=400, detail=f"Échec du téléchargement de la voix : {dl_error}")
+        else:
+            print(f"🎙️ [{req_id}] Aucune URL de voix spécifiée, utilisation de la voix par défaut.")
+            if os.path.exists(DEFAULT_LOCAL_REF):
+                shutil.copyfile(DEFAULT_LOCAL_REF, ref_audio_path)
+            else:
+                raise HTTPException(status_code=400, detail="Fichier local de référence manquant.")
 
         # 2. Préparer les paramètres de langue
         prompt_text = request.ref_text if request.ref_text else ""
