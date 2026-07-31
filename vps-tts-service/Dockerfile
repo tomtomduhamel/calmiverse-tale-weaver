@@ -29,8 +29,8 @@ RUN pip install --no-cache-dir -r requirements.txt \
     --index-url https://download.pytorch.org/whl/cpu \
     --extra-index-url https://pypi.org/simple
 
-# Copier le code source dans le conteneur
-COPY main.py .
+# Copier le code source et l'audio de référence dans le conteneur
+COPY main.py default_ref.wav ./
 
 # Exposer le port de l'application FastAPI
 EXPOSE 8000
