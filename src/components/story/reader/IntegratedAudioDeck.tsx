@@ -4,7 +4,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import {
   Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX,
-  Music, Sliders, ChevronUp, ChevronDown, Check, Loader2, Sparkles, Download
+  Music, Sliders, ChevronUp, ChevronDown, Check, Loader2, Sparkles, Download, RefreshCw
 } from 'lucide-react';
 import { useN8nAudioGeneration } from '@/hooks/story/audio/useN8nAudioGeneration';
 import { useBackgroundSound } from '@/hooks/story/sound/useBackgroundSound';
@@ -375,6 +375,36 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         ? "Lecture haute-fidélité avec la voix clonée sélectionnée."
         : "Lecture gratuite par synthèse locale de l'appareil."
     });
+  // Re-génération explicite de l'audio Studio avec la voix actuellement sélectionnée
+  const handleForceRegenerate = async () => {
+    if (isGenerating || currentPendingAudioFile) {
+      toast({
+        title: "Génération en cours",
+        description: "Le livre audio est en cours de création sur le serveur...",
+      });
+      return;
+    }
+
+    const selectedVoice = customVoices.find(v => v.id === selectedVoiceId);
+    const voiceName = selectedVoice ? `la voix de ${selectedVoice.relation}` : "la voix sélectionnée";
+
+    toast({
+      title: "🚀 Re-génération lancée !",
+      description: `Création d'une nouvelle version du livre audio avec ${voiceName}...`,
+    });
+
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+
+    if (isBrowserSpeaking && synthRef.current) {
+      synthRef.current.cancel();
+      setIsBrowserSpeaking(false);
+      setIsBrowserPaused(false);
+    }
+
+    await generateAudio(storyId, text, selectedVoiceId);
   };
 
   // Control Play/Pause (Priorité absolue aux fichiers audio Studio prêts)
@@ -748,6 +778,29 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                   </>
                 )}
               </select>
+
+              {/* Bouton explicite pour re-générer l'histoire avec la voix sélectionnée */}
+              {selectedVoiceId !== 'local' && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleForceRegenerate}
+                  disabled={isGenerating || !!currentPendingAudioFile}
+                  className="w-full text-xs font-semibold h-7.5 mt-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center gap-1.5 transition-all"
+                >
+                  {isGenerating || currentPendingAudioFile ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                      <span>Création de la narration en cours…</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 text-primary" />
+                      <span>Re-générer l'histoire avec cette voix</span>
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
 
             {/* Colonne 2 : Musique de fond */}
@@ -816,9 +869,22 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                         <span className="text-emerald-600 dark:text-emerald-400 font-bold">🎙️ Narration Studio :</span>
                         <span>Voix de {customVoices.find(v => v.id === currentAudioFile.voice_id)?.relation || 'Papa'}</span>
                       </span>
-                      <span className="text-[10px] bg-emerald-600 text-white font-semibold px-2 py-0.5 rounded-full">
-                        Prêt à l'écoute ✅
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] bg-emerald-600 text-white font-semibold px-2 py-0.5 rounded-full">
+                          Prêt à l'écoute ✅
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleForceRegenerate}
+                          disabled={isGenerating || !!currentPendingAudioFile}
+                          className="h-6 text-[10px] px-2 border-emerald-500/40 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-500/20 font-semibold flex items-center gap-1"
+                          title="Re-créer l'histoire avec la voix actuellement sélectionnée"
+                        >
+                          <RefreshCw className={cn("w-3 h-3", (isGenerating || !!currentPendingAudioFile) && "animate-spin")} />
+                          <span>Re-générer</span>
+                        </Button>
+                      </div>
                     </div>
                     <Slider
                       value={[progress]}
