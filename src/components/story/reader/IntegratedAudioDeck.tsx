@@ -762,7 +762,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                       const hasReadyAudio = audioFiles.some(f => f.status === 'ready' && f.voice_id === voice.id && f.story_id === storyId);
                       return (
                         <option key={voice.id} value={voice.id}>
-                          🎙️ Narrateur : Voix de {voice.relation} {hasReadyAudio ? '✅ (Prêt à l\'écoute)' : ''}
+                          🎙️ Narrateur : Voix de {voice.relation} {hasReadyAudio ? "✅ (Prêt à l'écoute)" : ""}
                         </option>
                       );
                     })}
