@@ -780,42 +780,6 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                   </>
                 )}
               </select>
-
-              {/* Mention d'attribution automatique multi-voix pour les personnages */}
-              {selectedVoiceId !== 'local' && (
-                <div className="bg-purple-500/10 border border-purple-500/20 text-purple-900 dark:text-purple-200 p-2 rounded-lg text-[11px] space-y-1">
-                  <div className="flex items-center gap-1 font-semibold text-purple-700 dark:text-purple-300">
-                    <Sparkles className="w-3 h-3 text-purple-500" />
-                    <span>Multi-Voix Automatique Actif</span>
-                  </div>
-                  <p className="text-[10px] opacity-90 leading-tight">
-                    Les répliques et dialogues des personnages seront automatiquement interprétés par vos autres voix clonées.
-                  </p>
-                </div>
-              )}
-
-              {/* Bouton explicite pour générer/re-générer l'histoire avec cette voix de narrateur */}
-              {selectedVoiceId !== 'local' && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleForceRegenerate}
-                  disabled={isGenerating || !!currentPendingAudioFile}
-                  className="w-full text-xs font-semibold h-7.5 mt-1 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center gap-1.5 transition-all"
-                >
-                  {isGenerating || currentPendingAudioFile ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                      <span>Création de la narration en cours…</span>
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 text-primary" />
-                      <span>Générer avec ce Narrateur</span>
-                    </>
-                  )}
-                </Button>
-              )}
             </div>
 
             {/* Colonne 2 : Musique de fond */}
@@ -854,6 +818,42 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               </div>
             )}
           </div>
+
+          {/* Bandeau d'information et d'action pleine largeur (Full Width) */}
+          {selectedVoiceId !== 'local' && (
+            <div className="w-full space-y-2 my-2">
+              <div className="bg-purple-500/10 border border-purple-500/20 text-purple-900 dark:text-purple-200 p-2.5 rounded-xl text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
+                  <div>
+                    <span className="font-semibold text-purple-800 dark:text-purple-300">Multi-Voix Automatique Actif</span>
+                    <p className="text-[11px] opacity-80 leading-tight">
+                      Les répliques et dialogues des personnages seront automatiquement interprétés par vos autres voix clonées.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleForceRegenerate}
+                  disabled={isGenerating || !!currentPendingAudioFile}
+                  className="w-full sm:w-auto text-xs font-semibold h-8 px-3.5 shrink-0 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                >
+                  {isGenerating || currentPendingAudioFile ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                      <span>Création en cours…</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 text-primary" />
+                      <span>Générer avec ce Narrateur</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Barre de Progression / Statut de Lecture */}
           <div className="space-y-2 py-1">
