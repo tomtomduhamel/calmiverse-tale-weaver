@@ -34,6 +34,19 @@ interface CustomVoice {
   transcript: string | null;
 }
 
+const getNormalizedPlaybackRate = (rawSpeed?: number): number => {
+  if (typeof rawSpeed !== 'number' || isNaN(rawSpeed) || rawSpeed <= 0) {
+    return 1.0;
+  }
+  // Si la valeur est en mots par minute (ex: 100, 110, 120, 150 wpm)
+  if (rawSpeed > 5.0) {
+    const calculatedRate = rawSpeed / 120.0;
+    return Math.min(Math.max(calculatedRate, 0.5), 2.0);
+  }
+  // Sinon c'est un multiplicateur (ex: 0.75, 1.0, 1.25, 1.5, 2.0)
+  return Math.min(Math.max(rawSpeed, 0.5), 2.0);
+};
+
 export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   storyId,
   text,
@@ -291,7 +304,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     const frVoice = voices.find(v => v.lang.startsWith('fr'));
     if (frVoice) utterance.voice = frVoice;
     
-    const speed = userSettings.readingPreferences?.readingSpeed || 1.0;
+    const speed = getNormalizedPlaybackRate(userSettings.readingPreferences?.readingSpeed);
     utterance.rate = speed;
 
     utterance.onstart = () => {
@@ -456,7 +469,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         }
         audioRef.current = audio;
 
-        const speed = userSettings.readingPreferences?.readingSpeed || 1.0;
+        const speed = getNormalizedPlaybackRate(userSettings.readingPreferences?.readingSpeed);
         audio.playbackRate = speed;
 
         audio.onloadedmetadata = () => {
