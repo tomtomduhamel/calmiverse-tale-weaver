@@ -9,7 +9,7 @@ import hashlib
 import numpy as np
 from typing import Optional, List
 
-def chunk_text(text: str, max_chars: int = 480) -> List[str]:
+def chunk_text(text: str, max_chars: int = 750) -> List[str]:
     # Supprimer les balises de modulation comme [chuchoté], [joyeux], etc.
     clean = re.sub(r'\[.*?\]', '', text).strip()
     clean = re.sub(r'\s+', ' ', clean)
@@ -172,8 +172,8 @@ async def synthesize_speech(request: TTSRequest):
         tts_lang = lang_map.get(request.language.lower(), "French")
 
         # 3. Découpage du texte long en segments naturels
-        text_chunks = chunk_text(request.text, max_chars=480)
-        print(f"🧩 [{req_id}] Découpage du texte complet ({len(request.text)} chars) en {len(text_chunks)} segments (Max 480 chars/chunk)...")
+        text_chunks = chunk_text(request.text, max_chars=750)
+        print(f"🧩 [{req_id}] Découpage du texte complet ({len(request.text)} chars) en {len(text_chunks)} segments (Max 750 chars/chunk)...")
 
         # 4. Lancement de la génération vocale sous verrou de sérialisation
         async with generation_lock:
