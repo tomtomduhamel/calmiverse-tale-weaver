@@ -24,7 +24,7 @@ interface N8nWebhookPayload {
   requestId: string;
 }
 
-const TIMEOUT_DURATION = 3600000; // 60 minutes timeout (laisse le temps d'inférence CPU VPS et création)
+const TIMEOUT_DURATION = 18000000; // 5 heures timeout (supporte l'inférence CPU VPS pour toutes les durées d'histoires : 5 min, 10 min, 15 min)
 
 export const useN8nAudioGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
