@@ -375,6 +375,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         ? "Lecture haute-fidélité avec la voix clonée sélectionnée."
         : "Lecture gratuite par synthèse locale de l'appareil."
     });
+  };
+
   // Re-génération explicite de l'audio Studio avec la voix actuellement sélectionnée
   const handleForceRegenerate = async () => {
     if (isGenerating || currentPendingAudioFile) {
