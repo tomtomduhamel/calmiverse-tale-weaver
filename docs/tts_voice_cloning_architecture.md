@@ -89,3 +89,41 @@ Cette section sert de base de départ pour la prochaine conversation concernant 
   - Affichage d'une carte néon dorée/violette (`bg-gradient-to-br from-amber-950/40 via-purple-950/30 to-slate-900/60`) avec badge rétro-éclairé **`[🎙️ Production du Livre Audio en cours... | Arrière-plan actif]`**.
   - Message explicite et rassurant indiquant que l'utilisateur peut fermer l'application et que la production continue sur le serveur.
 - **Validation Automatisée** : Suite de tests Vitest dans [`src/__tests__/audio/audioGenerationPersistence.test.ts`](file:///c:/Users/thoma/Calmi/calmiverse-tale-weaver/src/__tests__/audio/audioGenerationPersistence.test.ts) (8/8 tests passés avec succès).
+
+---
+
+## 4. Guide Opérationnel & Procédures v1.5.0 (Août 2026)
+
+### A. Intégration des Standards Alexandria / Qwen3-TTS
+1. **Prosodie des Échantillons Vocaux** : L'échantillon de référence (`ref_audio`) doit durer entre 5 et 15 secondes en format WAV 24 kHz mono et être enregistré avec de la **variation prosodique** (question -> insistance -> adoucissement). La transcription exact mot-à-mot (`ref_text`) est obligatoire.
+2. **Consignes d'Acteur (`instruct`)** : Les instructions d'émotion et de rythme doivent impérativement être transmises en **anglais** (ex: `"Calm, soothing, warm bedtime storyteller for children. Soft, gentle pace."`), le modèle Qwen3-TTS ayant été entraîné sur des tokens de direction anglophones.
+3. **Plafonnement des Chunks à 500 Chars** : La fonction `chunk_text(text, max_chars=500)` découpe le texte en segments de 500 caractères maximum **après** nettoyage des balises.
+4. **Gate de Validation Qualité Audio RMS** : La fonction `validate_audio_signal()` contrôle le Root Mean Square et la durée minimale (≥ 0.5s) avant le retour HTTP 200 pour éliminer tout risque de livraison de fichiers corrompus ou silencieux.
+5. **Support des Histoires Longues (5 min / 10 min / 15 min - Timeout 5h)** : `TIMEOUT_DURATION` est configuré à 5 heures (`18 000 000 ms`) dans [`useN8nAudioGeneration.ts`](file:///c:/Users/thoma/Calmi/calmiverse-tale-weaver/src/hooks/story/audio/useN8nAudioGeneration.ts#L27) afin de laisser le temps nécessaire à l'inférence CPU VPS pour synthétiser les histoires de 10 000+ caractères.
+
+### B. Procédure de Redéploiement sur le VPS Hostinger
+En cas de modification du code Python du microservice `vps-tts-service`, la procédure exacte pour mettre à jour le conteneur Docker sur le VPS est :
+
+```bash
+# 1. Se placer dans le sous-dossier du microservice
+cd ~/calmi-tts/vps-tts-service
+
+# 2. Réinitialiser les éventuels fichiers locaux modifiés et tirer main
+git reset --hard
+git clean -fd
+git pull origin main
+
+# 3. Reconstruire l'image Docker sans cache et redémarrer
+docker build --no-cache -t calmi-tts-service .
+docker restart tts-service
+
+# 4. Tester la réponse de santé (Le port 8085 de l'hôte redirige vers 8000 interne)
+curl http://127.0.0.1:8085/health
+```
+
+### C. Évaluation Rapide A/B de Référence
+Pour tester une nouvelle voix avant d'engager un livre audio complet :
+```bash
+python test_ab_voice.py --ref clone_voices/maman_sample.wav --text "Transcription exacte" --out test_maman.wav
+```
+
