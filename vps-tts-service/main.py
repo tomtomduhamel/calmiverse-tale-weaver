@@ -9,7 +9,7 @@ import hashlib
 import numpy as np
 from typing import Optional, List
 
-def chunk_text(text: str, max_chars: int = 750) -> List[str]:
+def chunk_text(text: str, max_chars: int = 500) -> List[str]:
     # Supprimer les balises de modulation comme [chuchoté], [joyeux], etc.
     clean = re.sub(r'\[.*?\]', '', text).strip()
     clean = re.sub(r'\s+', ' ', clean)
@@ -37,6 +37,21 @@ def chunk_text(text: str, max_chars: int = 750) -> List[str]:
         chunks.append(current_chunk)
 
     return chunks if chunks else [clean]
+
+def validate_audio_signal(wav: np.ndarray, sr: int, min_duration_sec: float = 0.5) -> bool:
+    """
+    Valide qu'un signal audio NumPy n'est ni vide, ni trop court, ni silencieux (Gate Qualité Alexandria).
+    """
+    if wav is None or len(wav) == 0:
+        return False
+    duration = len(wav) / float(sr)
+    if duration < min_duration_sec:
+        return False
+    rms = float(np.sqrt(np.mean(np.square(wav))))
+    if rms < 1e-4:  # silence quasiment total (< -80 dB)
+        return False
+    return True
+
 # Optimisation critique pour VPS KVM2 (2 vCPUs) : évite l'explosion de threads et la saturation CPU
 torch.set_num_threads(2)
 torch.set_num_interop_threads(2)
@@ -51,8 +66,8 @@ from qwen_tts import Qwen3TTSModel
 
 app = FastAPI(
     title="Calmi Private TTS Service",
-    description="Microservice privé d'inférence TTS avec clonage de voix zero-shot propulsé par Qwen3-TTS et qwen-tts",
-    version="1.1.0"
+    description="Microservice privé d'inférence TTS avec clonage de voix zero-shot et direction vocale (instruct) propulsé par Qwen3-TTS",
+    version="1.5.0"
 )
 
 # Configuration de la sécurité API Key
@@ -65,11 +80,20 @@ async def get_api_key(api_key_header: str = Depends(api_key_header)):
         return api_key_header
     raise HTTPException(status_code=403, detail="Clé API non autorisée ou invalide")
 
-# Définition des dossiers temporaires et de cache
+# Définition des dossiers temporaires, de cache et de données requis
 TEMP_DIR = "/app/temp"
 VOICES_CACHE_DIR = os.path.join(TEMP_DIR, "voices_cache")
-os.makedirs(TEMP_DIR, exist_ok=True)
-os.makedirs(VOICES_CACHE_DIR, exist_ok=True)
+REQUIRED_DIRS = [
+    TEMP_DIR,
+    VOICES_CACHE_DIR,
+    "/app/data/output",
+    "/app/clone_voices",
+    "/app/scripts",
+    "/app/voicelines",
+    "/app/designed_voices"
+]
+for d in REQUIRED_DIRS:
+    os.makedirs(d, exist_ok=True)
 
 # Lock global de sérialisation pour éviter la saturation CPU du VPS
 generation_lock = asyncio.Lock()
@@ -104,12 +128,14 @@ class TTSRequest(BaseModel):
     text: str
     voice_ref_url: Optional[str] = None  # URL du fichier .wav de référence (optionnel)
     ref_text: Optional[str] = None  # Transcription optionnelle du fichier de référence
+    instruct: Optional[str] = None  # Direction d'acteur vocale en Anglais (ex: "Calm, soothing bedtime story narrator")
     language: str = "fr"  # Code de la langue (ex: "fr", "en")
 
 class SegmentRequest(BaseModel):
     text: str
     voice_ref_url: Optional[str] = None
     ref_text: Optional[str] = None
+    instruct: Optional[str] = None
     language: str = "fr"
 
 class MultiVoiceRequest(BaseModel):
@@ -172,8 +198,8 @@ async def synthesize_speech(request: TTSRequest):
         tts_lang = lang_map.get(request.language.lower(), "French")
 
         # 3. Découpage du texte long en segments naturels
-        text_chunks = chunk_text(request.text, max_chars=750)
-        print(f"🧩 [{req_id}] Découpage du texte complet ({len(request.text)} chars) en {len(text_chunks)} segments (Max 750 chars/chunk)...")
+        text_chunks = chunk_text(request.text, max_chars=500)
+        print(f"🧩 [{req_id}] Découpage du texte complet ({len(request.text)} chars) en {len(text_chunks)} segments (Max 500 chars/chunk)...")
 
         # 4. Lancement de la génération vocale sous verrou de sérialisation
         async with generation_lock:
@@ -199,6 +225,9 @@ async def synthesize_speech(request: TTSRequest):
                 else:
                     clone_kwargs["x_vector_only_mode"] = True
 
+                if request.instruct and request.instruct.strip():
+                    clone_kwargs["instruct"] = request.instruct.strip()
+
                 wavs, current_sr = model.generate_voice_clone(**clone_kwargs)
                 sr = current_sr
                 
@@ -214,6 +243,10 @@ async def synthesize_speech(request: TTSRequest):
             # Concaténer tous les tableaux audio NumPy en un seul fichier audio binaire
             final_wav = np.concatenate(generated_wavs)
             
+            # Validation du signal audio (Gate Qualité Alexandria)
+            if not validate_audio_signal(final_wav, sr):
+                raise HTTPException(status_code=500, detail="Fichier audio généré invalide (silence ou durée trop courte)")
+
             # Sauvegarder le fichier audio de sortie complet
             sf.write(output_audio_path, final_wav, sr)
             inference_time = time.time() - start_inference
@@ -306,6 +339,9 @@ async def synthesize_multi_voice(request: MultiVoiceRequest):
                 else:
                     clone_kwargs["x_vector_only_mode"] = True
 
+                if segment.instruct and segment.instruct.strip():
+                    clone_kwargs["instruct"] = segment.instruct.strip()
+
                 wavs, current_sr = model.generate_voice_clone(**clone_kwargs)
                 print(f"   ✅ [{req_id}] Généré en {time.time() - start_inf:.2f}s (SR: {current_sr})")
                 
@@ -328,6 +364,10 @@ async def synthesize_multi_voice(request: MultiVoiceRequest):
         print(f"🔗 [{req_id}] Concaténation de tous les segments...")
         combined_wav = np.concatenate(generated_wavs)
         
+        # Validation du signal audio (Gate Qualité Alexandria)
+        if not validate_audio_signal(combined_wav, sr):
+            raise HTTPException(status_code=500, detail="Fichier audio multi-voix généré invalide (silence ou durée trop courte)")
+
         # Sauvegarder le fichier audio complet
         sf.write(output_audio_path, combined_wav, sr)
         print(f"🎉 [{req_id}] Livre audio multi-voix assemblé avec succès !")

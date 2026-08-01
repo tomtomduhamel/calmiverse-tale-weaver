@@ -112,15 +112,24 @@ Pour que Supabase (Edge Functions) puisse appeler votre VPS en toute sécurité,
 
 ---
 
+## ⚡ Nouveautés v1.5.0 (Optimisations Alexandria / Qwen3-TTS)
+
+1. **Direction Vocale d'Acteur (`instruct`)** : Possibilité d'injecter des consignes d'émotion et de prosodie en anglais (ex: `"Calm, soothing, warm bedtime storyteller for children. Soft, gentle pace."`).
+2. **Gate de Validation Qualité Automatisée** : Rejet automatique des fichiers audio corrompus, silences ou < 0.5s via calcul d'énergie RMS du signal audio.
+3. **Chunking Optima (500 chars)** : Plafonnement de la taille des segments à 500 caractères max pour éviter la dégradation du modèle.
+4. **Tool de Test A/B (`test_ab_voice.py`)** : Outil d'évaluation rapide des échantillons de voix de référence avant engagement sur un livre audio complet.
+
+---
+
 ## 📡 Endpoints de l'API à appeler depuis Supabase/n8n
 
-Une fois votre serveur lancé et exposé sur `https://tts.calmi.fr` :
+Une fois votre serveur lancé et exposé sur `https://tts.calmi.fr` (ou `http://31.97.40.49:8085`) :
 
 ### 1. Test de bonne santé (Pas d'authentification requise)
 *   **Méthode :** `GET`
 *   **URL :** `https://tts.calmi.fr/health`
 
-### 2. Synthèse et clonage de voix (Authentification requise)
+### 2. Synthèse et clonage de voix avec direction vocale (Authentification requise)
 *   **Méthode :** `POST`
 *   **URL :** `https://tts.calmi.fr/synthesize`
 *   **Headers :**
@@ -131,8 +140,20 @@ Une fois votre serveur lancé et exposé sur `https://tts.calmi.fr` :
     {
       "text": "Bonjour, je suis Thomas. Je vous raconte aujourd'hui une magnifique histoire dans Calmi.",
       "voice_ref_url": "https://[votre-instance-supabase]/storage/v1/object/public/voice-clones/thomas.wav",
-      "ref_text": "Optionnel: transcription exacte du fichier .wav de référence pour un meilleur rendu.",
-      "language": "fr"
+      "ref_text": "Transcription exacte mot-à-mot du fichier .wav de référence",
+      "instruct": "Calm, soothing, warm bedtime storyteller for children. Soft, gentle pace.",
+      "language": "French"
     }
     ```
-*   **Réponse :** Un fichier binaire `.wav` contenant l'audio généré avec la voix clonée, prêt à être sauvegardé dans Supabase Storage.
+*   **Réponse :** Un fichier binaire `.wav` validé par la gate de qualité, prêt à être sauvegardé dans Supabase Storage.
+
+---
+
+## 🧪 Test A/B Rapide d'une Voix de Référence
+
+Avant de lancer la génération d'un livre audio complet, testez l'échantillon sur 3 phrases neutres en ~3 minutes :
+
+```bash
+python test_ab_voice.py --ref clone_voices/maman_sample.wav --text "La transcription exacte" --out test_maman.wav
+```
+
