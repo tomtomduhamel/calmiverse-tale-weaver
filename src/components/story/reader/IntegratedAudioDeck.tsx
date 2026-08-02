@@ -63,10 +63,13 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const { userSettings, updateUserSettings } = useUserSettings();
   const { limits } = useSubscription();
 
-  // Premium audio checking
+  // Premium audio checking (S'active si le mode premium est sélectionné OU si un audio Studio existe déjà)
   const canUsePremiumAudio = limits?.has_multivoice_audio ?? false;
   const preferredAudioMode = userSettings.readingPreferences?.audioMode ?? 'browser';
-  const isPremiumMode = (preferredAudioMode === 'premium' && canUsePremiumAudio);
+  const readyStoryAudioFile = audioFiles.find(
+    file => file.status === 'ready' && file.audio_url && file.story_id === storyId
+  );
+  const isPremiumMode = (preferredAudioMode === 'premium' && canUsePremiumAudio && selectedVoiceId !== 'local') || !!readyStoryAudioFile;
 
   // Background Sound Hook
   const backgroundSound = useBackgroundSound({
@@ -106,7 +109,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       try {
         await cleanupStuckFiles(storyId);
         await recoverErrorFiles(storyId);
-        await fetchAudioFiles(storyId);
+        const fetchedFiles = await fetchAudioFiles(storyId);
 
         let activeProvider = 'vps-hostinger';
         // Fetch active TTS provider config
@@ -129,9 +132,12 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
             setCustomVoices(data as CustomVoice[]);
             
             // Vérifier si un fichier audio Studio prêt existe pour cette histoire
-            const readyFile = audioFiles.find(f => f.status === 'ready' && f.audio_url && f.story_id === storyId);
-            if (readyFile && readyFile.voice_id && readyFile.voice_id !== 'local') {
-              setSelectedVoiceId(readyFile.voice_id);
+            const readyFile = fetchedFiles.find(f => f.status === 'ready' && f.audio_url && f.story_id === storyId);
+            if (readyFile) {
+              const matchingVoiceId = (readyFile.voice_id && readyFile.voice_id !== 'local')
+                ? readyFile.voice_id
+                : (data.length > 0 ? data[0].id : 'local');
+              setSelectedVoiceId(matchingVoiceId);
             } else if (canUsePremiumAudio && preferredAudioMode === 'premium' && data.length > 0) {
               setSelectedVoiceId(data[0].id);
             } else {
@@ -181,12 +187,31 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
 
   // Find audio file for the current story or paragraph
   const currentParagraphText = paragraphs[currentParagraphIndex] || '';
-  const currentAudioFile = audioFiles.find(
-    file => file.status === 'ready' && file.audio_url && (file.text_content === currentParagraphText || file.story_id === storyId)
+  const currentAudioFile = readyStoryAudioFile || (
+    (selectedVoiceId !== 'local')
+      ? audioFiles.find(
+          file => file.status === 'ready' && file.audio_url && (file.voice_id === selectedVoiceId || !file.voice_id) && (file.text_content === currentParagraphText || file.story_id === storyId)
+        )
+      : undefined
   );
-  const currentPendingAudioFile = audioFiles.find(
-    file => (file.status === 'pending' || file.status === 'processing') && (file.story_id === storyId)
-  );
+  const currentPendingAudioFile = (selectedVoiceId !== 'local')
+    ? audioFiles.find(
+        file => (file.status === 'pending' || file.status === 'processing') && file.story_id === storyId
+      )
+    : undefined;
+
+  // Auto-synchroniser le sélecteur de voix sur l'audio généré disponible
+  useEffect(() => {
+    if (readyStoryAudioFile) {
+      if (readyStoryAudioFile.voice_id && readyStoryAudioFile.voice_id !== 'local') {
+        if (selectedVoiceId !== readyStoryAudioFile.voice_id) {
+          setSelectedVoiceId(readyStoryAudioFile.voice_id);
+        }
+      } else if (selectedVoiceId === 'local' && customVoices.length > 0) {
+        setSelectedVoiceId(customVoices[0].id);
+      }
+    }
+  }, [readyStoryAudioFile, customVoices]);
 
   // Cache checking for current paragraph
   useEffect(() => {
@@ -408,12 +433,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     await generateAudio(storyId, text, selectedVoiceId);
   };
 
-  // Control Play/Pause (Priorité absolue aux fichiers audio Studio prêts)
+  // Control Play/Pause (Priorité absolue à l'audio généré s'il existe)
   const handlePlayPause = async () => {
-    // 1. Chercher un fichier binaire Studio prêt pour cette histoire (ex: Voix de Papa)
-    const targetReadyFile = audioFiles.find(
-      file => file.status === 'ready' && file.audio_url && file.story_id === storyId
-    );
+    // 1. Si un fichier audio Studio est déjà prêt pour cette histoire, ON LE LANCE DIRECTEMENT !
+    const targetReadyFile = currentAudioFile || readyStoryAudioFile;
 
     if (targetReadyFile?.audio_url) {
       if (isPlaying && audioRef.current) {
@@ -438,7 +461,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           console.log("⚡ [AudioDeck] Lecture de l'histoire complète depuis le cache IndexedDB");
         } else {
           const signedUrl = await getSignedAudioUrl(targetReadyFile.audio_url);
-          if (!signedUrl) throw new Error("Impossible d'obtenir l'URL du fichier audio");
+          if (!signedUrl) throw new Error("Impossible d'obtenir l'URL d'accès au fichier audio");
           audioUrl = signedUrl;
 
           // Mise en cache hors-ligne en arrière-plan
@@ -471,10 +494,11 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           setProgress(0);
           setCurrentTime(0);
         };
-        audio.onerror = () => {
+        audio.onerror = (e) => {
+          console.error('[AudioDeck] Audio element error:', e);
           toast({
-            title: "Erreur audio",
-            description: "Impossible de lire le fichier audio Studio",
+            title: "Erreur d'accès audio",
+            description: "Impossible d'accéder au fichier audio Studio. Utilisez le bouton 'Re-générer' pour le recréer.",
             variant: "destructive"
           });
           setIsPlaying(false);
@@ -497,31 +521,12 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           description: err?.message || "Impossible de lire le fichier audio Studio",
           variant: "destructive"
         });
+        setIsPlaying(false);
       }
       return;
     }
 
-    // 2. Si aucun fichier Studio n'est prêt et que la voix locale est sélectionnée : lire avec la synthèse vocale de l'appareil (Gratuit)
-    if (selectedVoiceId === 'local' || !isPremiumMode) {
-      if (!synthRef.current) return;
-
-      if (isBrowserSpeaking) {
-        if (isBrowserPaused) {
-          synthRef.current.resume();
-          setIsBrowserPaused(false);
-          setIsPlaying(true);
-        } else {
-          synthRef.current.pause();
-          setIsBrowserPaused(true);
-          setIsPlaying(false);
-        }
-      } else {
-        playBrowserParagraph(currentParagraphIndex);
-      }
-      return;
-    }
-
-    // 3. Si l'utilisateur a choisi une voix Premium et qu'aucune génération n'est prête
+    // 3. Si une voix Premium est sélectionnée mais qu'aucune génération n'est encore prête
     if (currentPendingAudioFile || isGenerating) {
       toast({
         title: "Génération en cours",
@@ -830,25 +835,28 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                     </p>
                   </div>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleForceRegenerate}
-                  disabled={isGenerating || !!currentPendingAudioFile}
-                  className="w-full sm:w-auto text-xs font-semibold h-8 px-3.5 shrink-0 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center gap-1.5 transition-all shadow-sm"
-                >
-                  {isGenerating || currentPendingAudioFile ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                      <span>Création en cours…</span>
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 text-primary" />
-                      <span>Générer avec ce Narrateur</span>
-                    </>
-                  )}
-                </Button>
+                {/* N'afficher le bouton ici QUE si l'audio n'est pas encore prêt */}
+                {!currentAudioFile && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleForceRegenerate}
+                    disabled={isGenerating || !!currentPendingAudioFile}
+                    className="w-full sm:w-auto text-xs font-semibold h-8 px-3.5 shrink-0 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                  >
+                    {isGenerating || currentPendingAudioFile ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                        <span>Création en cours…</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 text-primary" />
+                        <span>Générer avec ce Narrateur</span>
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -951,24 +959,26 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                     ) : (
                       <div className="text-xs py-2.5 px-3 text-center text-muted-foreground bg-muted/40 rounded-lg border border-primary/10">
                         <div className="flex flex-col items-center gap-1.5 py-1">
-                          <span className="text-[11px] text-muted-foreground">
-                            Livre audio multi-voix pour ce conte non généré.
+                          <span className="text-[11px] text-muted-foreground font-medium">
+                            Livre audio multi-voix pas encore généré pour ce conte.
                           </span>
-                          <Button 
-                            onClick={handlePlayPause} 
-                            disabled={isGenerating}
-                            size="sm" 
-                            className="h-7 text-[10px] px-3 font-semibold"
-                          >
-                            {isGenerating ? (
-                              <>
-                                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                                Lancement de la création…
-                              </>
-                            ) : (
-                              "Générer le livre audio multi-voix"
-                            )}
-                          </Button>
+                          {selectedVoiceId === 'local' && (
+                            <Button 
+                              onClick={handlePlayPause} 
+                              disabled={isGenerating}
+                              size="sm" 
+                              className="h-7 text-[10px] px-3 font-semibold"
+                            >
+                              {isGenerating ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                                  Lancement de la création…
+                                </>
+                              ) : (
+                                "Générer le livre audio multi-voix"
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     )}

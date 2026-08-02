@@ -13,12 +13,15 @@ export async function getSignedAudioUrl(audioPath: string | null): Promise<strin
     return audioPath;
   }
 
+  // Clean path: strip leading slashes and optional 'audio-files/' bucket prefix if present
+  const cleanPath = audioPath.replace(/^\/+/, '').replace(/^audio-files\//, '');
+
   const { data, error } = await supabase.storage
     .from('audio-files')
-    .createSignedUrl(audioPath, 3600); // 1 hour
+    .createSignedUrl(cleanPath, 3600); // 1 hour
 
   if (error) {
-    console.error('[storageUtils] Error creating signed URL for audio:', error);
+    console.error('[storageUtils] Error creating signed URL for audio:', error, 'cleanPath:', cleanPath);
     return null;
   }
 
