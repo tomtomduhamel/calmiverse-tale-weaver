@@ -58,11 +58,26 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
 }));
 
+import fs from 'fs';
+import path from 'path';
+
 describe('IntegratedAudioDeck - Tests unitaires et d\'accès audio', () => {
   it('devrait importer le composant IntegratedAudioDeck sans erreur', async () => {
     const module = await import('@/components/story/reader/IntegratedAudioDeck');
     expect(module.IntegratedAudioDeck).toBeDefined();
     expect(typeof module.IntegratedAudioDeck).toBe('function');
+  });
+
+  it('devrait s\'assurer que useN8nAudioGeneration est appelé AVANT l\'utilisation de audioFiles (non-régression ReferenceError)', () => {
+    const filePath = path.resolve(__dirname, '../../../../components/story/reader/IntegratedAudioDeck.tsx');
+    const content = fs.readFileSync(filePath, 'utf-8');
+
+    const hookDeclarationIndex = content.indexOf('useN8nAudioGeneration()');
+    const audioFilesUsageIndex = content.indexOf('readyStoryAudioFile = audioFiles');
+
+    expect(hookDeclarationIndex).toBeGreaterThan(-1);
+    expect(audioFilesUsageIndex).toBeGreaterThan(-1);
+    expect(hookDeclarationIndex).toBeLessThan(audioFilesUsageIndex);
   });
 
   describe('Utilitaire getSignedAudioUrl', () => {
@@ -88,3 +103,4 @@ describe('IntegratedAudioDeck - Tests unitaires et d\'accès audio', () => {
     });
   });
 });
+
