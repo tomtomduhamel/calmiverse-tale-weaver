@@ -65,3 +65,12 @@
 
 **Statut** : Phase 1 Complétée ✅  
 **Prochaine étape** : Configuration manuelle Supabase Auth puis Phase 2
+
+---
+
+## 🛠️ Correctifs Post-Implémentation & Post-Mortem
+
+### Reader Histoires - ReferenceError dans IntegratedAudioDeck (2026-08-02)
+- **Symptôme** : Écran d'erreur "Erreur inattendue" lors de l'accès au lecteur d'histoire `/app/reader/:id`.
+- **Cause Racine** : `audioFiles` (retourné par le hook `useN8nAudioGeneration`) était référencé dans `readyStoryAudioFile` à la ligne 69, ALORS QUE l'appel au hook `useN8nAudioGeneration()` n'était exécuté qu'à la ligne 84. En JavaScript/React, accéder à une variable `const` issue d'une déstructuration avant sa ligne de déclaration déclenche un `ReferenceError: Cannot access 'audioFiles' before initialization`.
+- **Solution & Règle de Code** : Toujours exécuter les hooks personnalisés au tout début du corps du composant React avant d'évaluer tout état dérive basé sur leurs valeurs de retour. Fichier corrigé : `src/components/story/reader/IntegratedAudioDeck.tsx`.

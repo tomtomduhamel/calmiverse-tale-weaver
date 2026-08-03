@@ -63,6 +63,17 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const { userSettings, updateUserSettings } = useUserSettings();
   const { limits } = useSubscription();
 
+  // Premium Voice Generation Hook
+  const {
+    isGenerating,
+    audioFiles,
+    generateAudio,
+    fetchAudioFiles,
+    cleanupStuckFiles,
+    recoverErrorFiles,
+    subscribeToAudioFiles
+  } = useN8nAudioGeneration();
+
   // Premium audio checking (S'active si le mode premium est sélectionné OU si un audio Studio existe déjà)
   const canUsePremiumAudio = limits?.has_multivoice_audio ?? false;
   const preferredAudioMode = userSettings.readingPreferences?.audioMode ?? 'browser';
@@ -77,17 +88,6 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     storyObjective: extractObjectiveValue(objective) || undefined,
     autoPlay: false
   });
-
-  // Premium Voice Generation Hook
-  const {
-    isGenerating,
-    audioFiles,
-    generateAudio,
-    fetchAudioFiles,
-    cleanupStuckFiles,
-    recoverErrorFiles,
-    subscribeToAudioFiles
-  } = useN8nAudioGeneration();
 
   const [isCheckingAudioStatus, setIsCheckingAudioStatus] = useState<boolean>(true);
 
