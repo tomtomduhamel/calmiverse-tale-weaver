@@ -420,7 +420,7 @@ docs/
 - **Edge Function** : `get-tts-config` retourne configuration active
 - **Status** : pending → completed/error
 - **Stockage** : Bucket Supabase `audio-files`
-- **Player** : Intégré dans StoryReader avec contrôles
+- **Player / Pupitre Audio (`IntegratedAudioDeck.tsx`)** : Implémente une architecture responsive Mobile-First (`max-h-[85vh]`, `flex flex-col` avec zone de contenu `overflow-y-auto` et panneau de contrôle fixe en bas) pour garantir zéro troncature de boutons sur tous types d'écrans (mobile et desktop).
 - **Hook** : `useN8nAudioGeneration` appelle automatiquement `get-tts-config`
 - **Métriques** : Temps de génération, taille fichier, taux de succès automatiquement trackés
 - **Interface Admin** : `/admin/tts-config` pour visualiser config et dashboard métriques
