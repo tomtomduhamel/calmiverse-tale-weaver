@@ -640,273 +640,240 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     return "Voix Haute-Fidélité";
   };
 
-  return (
-    <div
-      className={cn(
-        "fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto md:w-[600px] md:-translate-x-1/2",
-        "backdrop-blur-2xl border rounded-2xl shadow-floating z-[90] transition-all duration-500 overflow-hidden",
-        isDarkMode 
-          ? "bg-gray-900/[0.96] border-white/10 text-white" 
-          : "bg-white/[0.96] border-primary-soft/30 text-gray-800",
-        isExpanded ? "p-5 max-h-[400px]" : "p-3 max-h-[70px] flex items-center justify-between"
-      )}
-    >
-      {/* 🟢 COLLAPSED VIEW */}
-      {!isExpanded && (
-        <>
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <Button
-              onClick={handlePlayPause}
-              disabled={isGenerating || (isPremiumMode && !!currentPendingAudioFile)}
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-10 w-10 rounded-full flex items-center justify-center transition-transform hover:scale-105 shrink-0",
-                isDarkMode ? "bg-primary/20 text-primary-soft hover:bg-primary/30" : "bg-primary-soft/30 text-primary hover:bg-primary-soft/50"
-              )}
-            >
-              {isGenerating || (isPremiumMode && currentPendingAudioFile) ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : isPlaying ? (
-                <Pause className="h-5 w-5" />
-              ) : (
-                <Play className="h-5 w-5 ml-0.5" />
-              )}
-            </Button>
+    return (
+      <div
+        className={cn(
+          "fixed bottom-2 left-2 right-2 sm:bottom-4 sm:left-1/2 sm:right-auto sm:w-[600px] sm:-translate-x-1/2",
+          "backdrop-blur-2xl border rounded-2xl shadow-floating z-[90] transition-all duration-300 ease-out",
+          isDarkMode 
+            ? "bg-gray-950/95 border-white/10 text-white shadow-black/50" 
+            : "bg-white/95 border-primary-soft/40 text-gray-900 shadow-xl",
+          isExpanded 
+            ? "p-3.5 sm:p-5 max-h-[85vh] sm:max-h-[600px] flex flex-col" 
+            : "p-3 max-h-[70px] flex items-center justify-between"
+        )}
+      >
+        {/* 🟢 COLLAPSED VIEW */}
+        {!isExpanded && (
+          <>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Button
+                onClick={handlePlayPause}
+                disabled={isGenerating || (isPremiumMode && !!currentPendingAudioFile)}
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-10 w-10 rounded-full flex items-center justify-center transition-transform hover:scale-105 shrink-0",
+                  isDarkMode ? "bg-primary/20 text-primary-soft hover:bg-primary/30" : "bg-primary-soft/30 text-primary hover:bg-primary-soft/50"
+                )}
+              >
+                {isGenerating || (isPremiumMode && currentPendingAudioFile) ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : isPlaying ? (
+                  <Pause className="h-5 w-5" />
+                ) : (
+                  <Play className="h-5 w-5 ml-0.5" />
+                )}
+              </Button>
 
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold tracking-wide uppercase opacity-70">
-                {isPremiumMode ? "🌟 Audio Premium" : "🔊 Audio Gratuit"}
-              </p>
-              <h4 className="text-sm font-bold truncate">
-                {getNarratorName()}
-              </h4>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] sm:text-xs font-semibold tracking-wide uppercase opacity-70">
+                  {isPremiumMode ? "🌟 Audio Premium" : "🔊 Audio Gratuit"}
+                </p>
+                <h4 className="text-xs sm:text-sm font-bold truncate">
+                  {getNarratorName()}
+                </h4>
+              </div>
+
+              {/* Caching badge */}
+              {isPremiumMode && isOfflineReady && (
+                <Badge variant="outline" className="hidden sm:inline-flex border-green-500/30 text-green-500 bg-green-500/5 text-[10px] gap-1 py-0 px-2 shrink-0">
+                  <Check className="w-3 h-3" /> Hors-ligne
+                </Badge>
+              )}
             </div>
 
-            {/* Caching badge */}
-            {isPremiumMode && isOfflineReady && (
-              <Badge variant="outline" className="hidden sm:inline-flex border-green-500/30 text-green-500 bg-green-500/5 text-[10px] gap-1 py-0 px-2 shrink-0">
-                <Check className="w-3 h-3" /> Hors-ligne
-              </Badge>
-            )}
-          </div>
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-2 sm:ml-4">
+              {/* Toggle background music directly from collapsed */}
+              {soundId && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={backgroundSound.togglePlay}
+                  className={cn(
+                    "h-8 w-8 rounded-lg",
+                    backgroundSound.isPlaying 
+                      ? "text-primary bg-primary-soft/20" 
+                      : "text-muted-foreground hover:bg-muted"
+                  )}
+                  title="Musique de fond"
+                >
+                  <Music className="h-4 w-4" />
+                </Button>
+              )}
 
-          <div className="flex items-center gap-2 shrink-0 ml-4">
-            {/* Toggle background music directly from collapsed */}
-            {soundId && (
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={backgroundSound.togglePlay}
-                className={cn(
-                  "h-8 w-8 rounded-lg",
-                  backgroundSound.isPlaying 
-                    ? "text-primary bg-primary-soft/20" 
-                    : "text-muted-foreground hover:bg-muted"
-                )}
-                title="Musique de fond"
+                onClick={() => setIsExpanded(true)}
+                className="h-8 w-8 rounded-lg"
+                title="Déplier les contrôles audio"
               >
-                <Music className="h-4 w-4" />
+                <ChevronUp className="h-5 w-5" />
               </Button>
-            )}
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsExpanded(true)}
-              className="h-8 w-8 rounded-lg"
-            >
-              <ChevronUp className="h-5 w-5" />
-            </Button>
-          </div>
-        </>
-      )}
-
-      {/* 🔴 EXPANDED VIEW */}
-      {isExpanded && (
-        <div className="space-y-4 w-full flex flex-col">
-          {/* Header Panel */}
-          <div className="flex justify-between items-center pb-2 border-b border-white/10 dark:border-white/5">
-            <div>
-              <h3 className="font-display font-semibold italic text-base">Contrôles Audio</h3>
-              <p className="text-xs text-muted-foreground">
-                Ajustez la voix et la musique de fond
-              </p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsExpanded(false)}
-              className="h-7 w-7 rounded-full"
-            >
-              <ChevronDown className="h-5 w-5" />
-            </Button>
-          </div>
+          </>
+        )}
 
-          {/* Selector block (Narrator voices & Background Music) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-2">
-            {/* Colonne 1 : Voix du Narrateur Principal */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider opacity-70 flex items-center gap-1.5">
-                🎙️ Voix du Narrateur Principal
-              </label>
-              <select
-                value={selectedVoiceId}
-                onChange={(e) => handleVoiceChange(e.target.value)}
-                className={cn(
-                  "w-full text-xs font-medium rounded-lg p-2.5 border focus:outline-none focus:ring-1 transition-all",
-                  isDarkMode 
-                    ? "bg-gray-800 border-gray-700 text-white focus:ring-primary focus:border-primary" 
-                    : "bg-white border-primary-soft/50 text-gray-800 focus:ring-primary focus:border-primary"
-                )}
+        {/* 🔴 EXPANDED VIEW */}
+        {isExpanded && (
+          <div className="w-full flex flex-col max-h-[calc(85vh-1.75rem)] sm:max-h-[550px]">
+            {/* Header Panel (Fixe en haut) */}
+            <div className="flex justify-between items-center pb-2.5 mb-2 border-b border-gray-200/80 dark:border-white/10 shrink-0">
+              <div>
+                <h3 className="font-display font-semibold italic text-sm sm:text-base flex items-center gap-1.5">
+                  <span>🎵 Contrôles Audio Studio</span>
+                </h3>
+                <p className="text-[11px] sm:text-xs text-muted-foreground">
+                  Ajustez la voix, la musique et lancez la lecture
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsExpanded(false)}
+                className="h-7 w-7 rounded-full hover:bg-muted shrink-0"
+                title="Fermer les contrôles"
               >
-                <option value="local">🔊 Voix de l'appareil (Gratuit)</option>
-                {customVoices.length > 0 && (
-                  <optgroup label="Vos voix de narration (Studio)">
-                    {customVoices.map((voice) => {
-                      const hasReadyAudio = audioFiles.some(f => f.status === 'ready' && f.voice_id === voice.id && f.story_id === storyId);
-                      return (
-                        <option key={voice.id} value={voice.id}>
-                          🎙️ Narrateur : Voix de {voice.relation} {hasReadyAudio ? "✅ (Prêt à l'écoute)" : ""}
-                        </option>
-                      );
-                    })}
-                  </optgroup>
-                )}
-                {customVoices.length === 0 && (
-                  <>
-                    {canUsePremiumAudio && (limits?.max_voice_clones ?? 0) > 0 ? (
-                      <option value="record_prompt">🎙️ Enregistrer la voix du narrateur (Premium)</option>
-                    ) : (
-                      <option value="upgrade_info">🎙️ Cloner la voix d'un proche (Premium 🌟)</option>
-                    )}
-                  </>
-                )}
-              </select>
+                <ChevronDown className="h-5 w-5" />
+              </Button>
             </div>
 
-            {/* Colonne 2 : Musique de fond */}
-            {soundId && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-semibold uppercase tracking-wider opacity-70 flex items-center gap-1.5">
-                    🎵 Musique d'ambiance
+            {/* Zone Scrollable Interne (Contenu Dépliable) */}
+            <div className="overflow-y-auto flex-1 pr-1 space-y-3 sm:space-y-4">
+              {/* Selector block (Narrator voices & Background Music) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
+                {/* Colonne 1 : Voix du Narrateur Principal */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider opacity-70 flex items-center gap-1.5">
+                    🎙️ Voix du Narrateur Principal
                   </label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={backgroundSound.togglePlay}
+                  <select
+                    value={selectedVoiceId}
+                    onChange={(e) => handleVoiceChange(e.target.value)}
                     className={cn(
-                      "h-6 text-[10px] px-2 rounded-lg font-semibold transition-all",
-                      backgroundSound.isPlaying 
-                        ? (isDarkMode ? "text-primary bg-primary/20" : "text-primary bg-primary-soft/30")
-                        : "text-muted-foreground hover:bg-muted"
+                      "w-full text-xs font-medium rounded-xl p-2.5 border focus:outline-none focus:ring-1 transition-all h-10",
+                      isDarkMode 
+                        ? "bg-gray-900 border-gray-800 text-white focus:ring-primary focus:border-primary" 
+                        : "bg-white border-primary-soft/50 text-gray-900 focus:ring-primary focus:border-primary"
                     )}
                   >
-                    {backgroundSound.isPlaying ? "Activée" : "Désactivée"}
-                  </Button>
+                    <option value="local">🔊 Voix de l'appareil (Gratuit)</option>
+                    {customVoices.length > 0 && (
+                      <optgroup label="Vos voix de narration (Studio)">
+                        {customVoices.map((voice) => {
+                          const hasReadyAudio = audioFiles.some(f => f.status === 'ready' && f.voice_id === voice.id && f.story_id === storyId);
+                          return (
+                            <option key={voice.id} value={voice.id}>
+                              🎙️ Narrateur : Voix de {voice.relation} {hasReadyAudio ? "✅ (Prêt à l'écoute)" : ""}
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    )}
+                    {customVoices.length === 0 && (
+                      <>
+                        {canUsePremiumAudio && (limits?.max_voice_clones ?? 0) > 0 ? (
+                          <option value="record_prompt">🎙️ Enregistrer la voix du narrateur (Premium)</option>
+                        ) : (
+                          <option value="upgrade_info">🎙️ Cloner la voix d'un proche (Premium 🌟)</option>
+                        )}
+                      </>
+                    )}
+                  </select>
                 </div>
-                <div className="flex items-center gap-3 pt-1">
-                  <VolumeX className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <Slider
-                    disabled={!backgroundSound.isPlaying}
-                    value={[backgroundSound.volume]}
-                    max={1}
-                    step={0.05}
-                    onValueChange={handleMusicVolumeChange}
-                    className="flex-1 cursor-pointer"
-                  />
-                  <Volume2 className="w-4 h-4 text-muted-foreground shrink-0" />
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Bandeau d'information et d'action pleine largeur (Full Width) */}
-          {selectedVoiceId !== 'local' && (
-            <div className="w-full space-y-2 my-2">
-              <div className="bg-purple-500/10 border border-purple-500/20 text-purple-900 dark:text-purple-200 p-2.5 rounded-xl text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
-                  <div>
-                    <span className="font-semibold text-purple-800 dark:text-purple-300">Multi-Voix Automatique Actif</span>
-                    <p className="text-[11px] opacity-80 leading-tight">
-                      Les répliques et dialogues des personnages seront automatiquement interprétés par vos autres voix clonées.
-                    </p>
+                {/* Colonne 2 : Musique de fond */}
+                {soundId && (
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider opacity-70 flex items-center gap-1.5">
+                        🎵 Musique d'ambiance
+                      </label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={backgroundSound.togglePlay}
+                        className={cn(
+                          "h-6 text-[10px] px-2 rounded-lg font-semibold transition-all",
+                          backgroundSound.isPlaying 
+                            ? (isDarkMode ? "text-primary bg-primary/20" : "text-primary bg-primary-soft/30")
+                            : "text-muted-foreground hover:bg-muted"
+                        )}
+                      >
+                        {backgroundSound.isPlaying ? "Activée" : "Désactivée"}
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2.5 pt-0.5 h-10">
+                      <VolumeX className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <Slider
+                        disabled={!backgroundSound.isPlaying}
+                        value={[backgroundSound.volume]}
+                        max={1}
+                        step={0.05}
+                        onValueChange={handleMusicVolumeChange}
+                        className="flex-1 cursor-pointer"
+                      />
+                      <Volume2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                    </div>
                   </div>
-                </div>
-                {/* N'afficher le bouton ici QUE si l'audio n'est pas encore prêt */}
-                {!currentAudioFile && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleForceRegenerate}
-                    disabled={isGenerating || !!currentPendingAudioFile}
-                    className="w-full sm:w-auto text-xs font-semibold h-8 px-3.5 shrink-0 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center gap-1.5 transition-all shadow-sm"
-                  >
-                    {isGenerating || currentPendingAudioFile ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                        <span>Création en cours…</span>
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 text-primary" />
-                        <span>Générer avec ce Narrateur</span>
-                      </>
-                    )}
-                  </Button>
                 )}
               </div>
-            </div>
-          )}
 
-          {/* Barre de Progression / Statut de Lecture */}
-          <div className="space-y-2 py-1">
-            {!isPremiumMode ? (
-              // Mode Gratuit (Synthèse vocale locale) - Toujours prêt
-              <>
-                <Slider
-                  value={[progress]}
-                  max={100}
-                  step={0.1}
-                  onValueChange={handleTimelineChange}
-                  className="w-full cursor-pointer h-2"
-                />
-                <div className="flex justify-between items-center text-[10px] text-muted-foreground">
-                  <span className="font-semibold text-primary">
-                    Paragraphe {currentParagraphIndex + 1} sur {paragraphs.length}
-                  </span>
-                  <span className="italic opacity-80">Voix de l'appareil (Gratuit)</span>
-                </div>
-              </>
-            ) : (
-              // Mode Premium (VPS) - Dépend de la génération
-              <>
-                {currentAudioFile ? (
-                  <>
-                    <div className="flex items-center justify-between text-[11px] font-medium bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-500/30 text-emerald-900 dark:text-emerald-200 px-3 py-1.5 rounded-lg mb-2">
-                      <span className="flex items-center gap-1.5">
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">🎙️ Narration Studio :</span>
-                        <span>Voix de {customVoices.find(v => v.id === currentAudioFile.voice_id)?.relation || 'Papa'}</span>
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] bg-emerald-600 text-white font-semibold px-2 py-0.5 rounded-full">
-                          Prêt à l'écoute ✅
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleForceRegenerate}
-                          disabled={isGenerating || !!currentPendingAudioFile}
-                          className="h-6 text-[10px] px-2 border-emerald-500/40 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-500/20 font-semibold flex items-center gap-1"
-                          title="Re-créer l'histoire avec la voix actuellement sélectionnée"
-                        >
-                          <RefreshCw className={cn("w-3 h-3", (isGenerating || !!currentPendingAudioFile) && "animate-spin")} />
-                          <span>Re-générer</span>
-                        </Button>
+              {/* Bandeau d'information et d'action pleine largeur (Full Width) */}
+              {selectedVoiceId !== 'local' && (
+                <div className="w-full space-y-2 my-1">
+                  <div className="bg-purple-500/10 border border-purple-500/20 text-purple-900 dark:text-purple-200 p-2.5 rounded-xl text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
+                      <div>
+                        <span className="font-semibold text-purple-800 dark:text-purple-300">Multi-Voix Automatique Actif</span>
+                        <p className="text-[11px] opacity-80 leading-tight">
+                          Les répliques des personnages seront automatiquement interprétées par vos autres voix clonées.
+                        </p>
                       </div>
                     </div>
+                    {/* N'afficher le bouton ici QUE si l'audio n'est pas encore prêt */}
+                    {!currentAudioFile && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleForceRegenerate}
+                        disabled={isGenerating || !!currentPendingAudioFile}
+                        className="w-full sm:w-auto text-xs font-semibold h-8 px-3.5 shrink-0 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                      >
+                        {isGenerating || currentPendingAudioFile ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                            <span>Création en cours…</span>
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 text-primary" />
+                            <span>Générer avec ce Narrateur</span>
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Barre de Progression / Statut de Lecture */}
+              <div className="space-y-2 py-0.5">
+                {!isPremiumMode ? (
+                  // Mode Gratuit (Synthèse vocale locale) - Toujours prêt
+                  <>
                     <Slider
                       value={[progress]}
                       max={100}
@@ -914,159 +881,201 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                       onValueChange={handleTimelineChange}
                       className="w-full cursor-pointer h-2"
                     />
-                    <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-1">
-                      <span className="font-semibold text-emerald-700 dark:text-emerald-300">
-                        Livre Audio Multi-Voix Studio
+                    <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                      <span className="font-semibold text-primary">
+                        Paragraphe {currentParagraphIndex + 1} sur {paragraphs.length}
                       </span>
-                      <span className="font-mono">{formatTime(currentTime)} / {formatTime(duration)}</span>
+                      <span className="italic opacity-80">Voix de l'appareil (Gratuit)</span>
                     </div>
                   </>
                 ) : (
-                  <div>
-                    {isCheckingAudioStatus ? (
-                      <div className="text-xs py-3 px-4 text-center text-muted-foreground bg-muted/30 rounded-xl border border-primary/10 flex items-center justify-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                        <span>Vérification du statut du livre audio Studio…</span>
-                      </div>
-                    ) : (currentPendingAudioFile || isGenerating) ? (
-                      <div className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-purple-500/10 to-amber-500/5 dark:from-amber-950/50 dark:via-purple-950/40 dark:to-slate-900/70 p-3.5 shadow-sm text-left transition-all">
-                        <div className="flex items-start gap-3">
-                          <div className="relative flex-shrink-0 mt-0.5">
-                            <div className="w-8 h-8 rounded-full bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-300">
-                              <Sparkles className="w-4 h-4 animate-spin text-amber-600 dark:text-amber-400" />
-                            </div>
-                            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                            </span>
-                          </div>
-
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center justify-between">
-                              <h4 className="text-xs font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                                <span>🎙️ Production du Livre Audio en cours…</span>
-                              </h4>
-                              <Badge variant="outline" className="text-[9px] bg-amber-500/15 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40 px-1.5 py-0 font-medium">
-                                Arrière-plan actif
-                              </Badge>
-                            </div>
-                            <p className="text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
-                              L'IA produit la narration multi-voix sur notre serveur. <strong className="text-amber-900 dark:text-amber-100 font-semibold">Vous pouvez quitter cette page ou l'application</strong>, l'audio apparaîtra automatiquement dès sa finalisation.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs py-2.5 px-3 text-center text-muted-foreground bg-muted/40 rounded-lg border border-primary/10">
-                        <div className="flex flex-col items-center gap-1.5 py-1">
-                          <span className="text-[11px] text-muted-foreground font-medium">
-                            Livre audio multi-voix pas encore généré pour ce conte.
+                  // Mode Premium (VPS) - Dépend de la génération
+                  <>
+                    {currentAudioFile ? (
+                      <>
+                        <div className="flex items-center justify-between text-[11px] font-medium bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-500/30 text-emerald-900 dark:text-emerald-200 px-3 py-1.5 rounded-lg mb-2">
+                          <span className="flex items-center gap-1.5 truncate">
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold shrink-0">🎙️ Narration Studio :</span>
+                            <span className="truncate">Voix de {customVoices.find(v => v.id === currentAudioFile.voice_id)?.relation || 'Papa'}</span>
                           </span>
-                          {selectedVoiceId === 'local' && (
-                            <Button 
-                              onClick={handlePlayPause} 
-                              disabled={isGenerating}
-                              size="sm" 
-                              className="h-7 text-[10px] px-3 font-semibold"
+                          <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                            <span className="text-[10px] bg-emerald-600 text-white font-semibold px-2 py-0.5 rounded-full hidden xs:inline-block">
+                              Prêt ✅
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleForceRegenerate}
+                              disabled={isGenerating || !!currentPendingAudioFile}
+                              className="h-6 text-[10px] px-2 border-emerald-500/40 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-500/20 font-semibold flex items-center gap-1"
+                              title="Re-créer l'histoire avec la voix actuellement sélectionnée"
                             >
-                              {isGenerating ? (
-                                <>
-                                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                                  Lancement de la création…
-                                </>
-                              ) : (
-                                "Générer le livre audio multi-voix"
-                              )}
+                              <RefreshCw className={cn("w-3 h-3", (isGenerating || !!currentPendingAudioFile) && "animate-spin")} />
+                              <span>Re-générer</span>
                             </Button>
-                          )}
+                          </div>
                         </div>
+                        <Slider
+                          value={[progress]}
+                          max={100}
+                          step={0.1}
+                          onValueChange={handleTimelineChange}
+                          className="w-full cursor-pointer h-2"
+                        />
+                        <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-1">
+                          <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+                            Livre Audio Multi-Voix Studio
+                          </span>
+                          <span className="font-mono">{formatTime(currentTime)} / {formatTime(duration)}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div>
+                        {isCheckingAudioStatus ? (
+                          <div className="text-xs py-3 px-4 text-center text-muted-foreground bg-muted/30 rounded-xl border border-primary/10 flex items-center justify-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            <span>Vérification du statut du livre audio Studio…</span>
+                          </div>
+                        ) : (currentPendingAudioFile || isGenerating) ? (
+                          <div className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-purple-500/10 to-amber-500/5 dark:from-amber-950/50 dark:via-purple-950/40 dark:to-slate-900/70 p-3 shadow-sm text-left transition-all">
+                            <div className="flex items-start gap-2.5">
+                              <div className="relative flex-shrink-0 mt-0.5">
+                                <div className="w-7 h-7 rounded-full bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-300">
+                                  <Sparkles className="w-3.5 h-3.5 animate-spin text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <span className="absolute -bottom-0.5 -right-0.5 flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                </span>
+                              </div>
+
+                              <div className="flex-1 space-y-0.5">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-xs font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                                    <span>🎙️ Production du Livre Audio en cours…</span>
+                                  </h4>
+                                  <Badge variant="outline" className="text-[9px] bg-amber-500/15 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40 px-1.5 py-0 font-medium">
+                                    Arrière-plan actif
+                                  </Badge>
+                                </div>
+                                <p className="text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
+                                  L'IA produit la narration multi-voix sur notre serveur. <strong className="text-amber-900 dark:text-amber-100 font-semibold">Vous pouvez quitter cette page ou l'application</strong>, l'audio apparaîtra automatiquement dès sa finalisation.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xs py-2.5 px-3 text-center text-muted-foreground bg-muted/40 rounded-lg border border-primary/10">
+                            <div className="flex flex-col items-center gap-1.5 py-1">
+                              <span className="text-[11px] text-muted-foreground font-medium">
+                                Livre audio multi-voix pas encore généré pour ce conte.
+                              </span>
+                              {selectedVoiceId === 'local' && (
+                                <Button 
+                                  onClick={handlePlayPause} 
+                                  disabled={isGenerating}
+                                  size="sm" 
+                                  className="h-7 text-[10px] px-3 font-semibold"
+                                >
+                                  {isGenerating ? (
+                                    <>
+                                      <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                                      Lancement de la création…
+                                    </>
+                                  ) : (
+                                    "Générer le livre audio multi-voix"
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
+                  </>
                 )}
-              </>
-            )}
-          </div>
-
-          {/* Narrator Controls Panel (Rewind, Play/Pause, Fast Forward, Volume/Speed) */}
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleRewind}
-                disabled={currentParagraphIndex === 0}
-                className="h-9 w-9 rounded-full hover:bg-muted"
-                title="Paragraphe précédent"
-              >
-                <RotateCcw className="h-4.5 w-4.5" />
-              </Button>
-
-              <Button
-                onClick={handlePlayPause}
-                disabled={isGenerating || (isPremiumMode && !!currentPendingAudioFile)}
-                className={cn(
-                  "h-12 w-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-105 shrink-0",
-                  isDarkMode 
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                    : "bg-primary text-primary-foreground hover:bg-primary/95"
-                )}
-              >
-                {isGenerating || (isPremiumMode && currentPendingAudioFile) ? (
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                ) : isPlaying ? (
-                  <Pause className="h-6 w-6" />
-                ) : (
-                  <Play className="h-6 w-6 ml-0.5" />
-                )}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleFastForward}
-                disabled={currentParagraphIndex === paragraphs.length - 1}
-                className="h-9 w-9 rounded-full hover:bg-muted"
-                title="Paragraphe suivant"
-              >
-                <RotateCw className="h-4.5 w-4.5" />
-              </Button>
+              </div>
             </div>
 
-            {/* Offline caching indicators and downloads */}
-            <div className="flex items-center gap-2">
-              {isPremiumMode && currentAudioFile && (
+            {/* Narrator Controls Panel (Fixe en bas : Rewind, Play/Pause, Fast Forward, Download) */}
+            <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-gray-200/80 dark:border-white/10 shrink-0">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={async () => {
-                    const url = await getSignedAudioUrl(currentAudioFile.audio_url!);
-                    if (url) window.open(url, '_blank');
-                  }}
-                  className="h-8 w-8 rounded-lg"
-                  title="Télécharger ce paragraphe en .mp3"
+                  onClick={handleRewind}
+                  disabled={currentParagraphIndex === 0}
+                  className="h-9 w-9 rounded-full hover:bg-muted"
+                  title="Paragraphe précédent"
                 >
-                  <Download className="h-4 w-4" />
+                  <RotateCcw className="h-4.5 w-4.5" />
                 </Button>
-              )}
 
-              {/* Status information badge */}
-              {isPremiumMode && isOfflineReady && (
-                <div className="flex items-center gap-1 text-[10px] text-green-500 font-semibold px-2 bg-green-500/5 rounded-full border border-green-500/10">
-                  <Check className="w-3 h-3" /> Dispo hors-ligne 🛌
-                </div>
-              )}
-              {isCaching && (
-                <div className="text-[10px] text-muted-foreground animate-pulse">
-                  Mise en cache...
-                </div>
-              )}
+                <Button
+                  onClick={handlePlayPause}
+                  disabled={isGenerating || (isPremiumMode && !!currentPendingAudioFile)}
+                  className={cn(
+                    "h-11 w-11 sm:h-12 sm:w-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-105 shrink-0",
+                    isDarkMode 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                      : "bg-primary text-primary-foreground hover:bg-primary/95"
+                  )}
+                >
+                  {isGenerating || (isPremiumMode && currentPendingAudioFile) ? (
+                    <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
+                  ) : isPlaying ? (
+                    <Pause className="h-5 w-5 sm:h-6 sm:w-6" />
+                  ) : (
+                    <Play className="h-5 w-5 sm:h-6 sm:w-6 ml-0.5" />
+                  )}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleFastForward}
+                  disabled={currentParagraphIndex === paragraphs.length - 1}
+                  className="h-9 w-9 rounded-full hover:bg-muted"
+                  title="Paragraphe suivant"
+                >
+                  <RotateCw className="h-4.5 w-4.5" />
+                </Button>
+              </div>
+
+              {/* Offline caching indicators and downloads */}
+              <div className="flex items-center gap-2">
+                {isPremiumMode && currentAudioFile && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={async () => {
+                      const url = await getSignedAudioUrl(currentAudioFile.audio_url!);
+                      if (url) window.open(url, '_blank');
+                    }}
+                    className="h-8 w-8 rounded-lg"
+                    title="Télécharger l'audio en .mp3"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                )}
+
+                {/* Status information badge */}
+                {isPremiumMode && isOfflineReady && (
+                  <div className="flex items-center gap-1 text-[10px] text-green-500 font-semibold px-2 bg-green-500/5 rounded-full border border-green-500/10">
+                    <Check className="w-3 h-3" /> Dispo hors-ligne 🛌
+                  </div>
+                )}
+                {isCaching && (
+                  <div className="text-[10px] text-muted-foreground animate-pulse">
+                    Mise en cache...
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
+      </div>
+    );
+  };
 
-export default IntegratedAudioDeck;
+  export default IntegratedAudioDeck;
