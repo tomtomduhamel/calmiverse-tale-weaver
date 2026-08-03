@@ -99,7 +99,9 @@ Cette section sert de base de départ pour la prochaine conversation concernant 
 2. **Consignes d'Acteur (`instruct`)** : Les instructions d'émotion et de rythme doivent impérativement être transmises en **anglais** (ex: `"Calm, soothing, warm bedtime storyteller for children. Soft, gentle pace."`), le modèle Qwen3-TTS ayant été entraîné sur des tokens de direction anglophones.
 3. **Plafonnement des Chunks à 500 Chars** : La fonction `chunk_text(text, max_chars=500)` découpe le texte en segments de 500 caractères maximum **après** nettoyage des balises.
 4. **Gate de Validation Qualité Audio RMS** : La fonction `validate_audio_signal()` contrôle le Root Mean Square et la durée minimale (≥ 0.5s) avant le retour HTTP 200 pour éliminer tout risque de livraison de fichiers corrompus ou silencieux.
-5. **Support des Histoires Longues (5 min / 10 min / 15 min - Timeout 5h)** : `TIMEOUT_DURATION` est configuré à 5 heures (`18 000 000 ms`) dans [`useN8nAudioGeneration.ts`](file:///c:/Users/thoma/Calmi/calmiverse-tale-weaver/src/hooks/story/audio/useN8nAudioGeneration.ts#L27) afin de laisser le temps nécessaire à l'inférence CPU VPS pour synthétiser les histoires de 10 000+ caractères.
+5. **Support des Histoires Longues (5 min / 10 min / 15 min - Timeouts 3h/5h)** :
+   - **Côté n8n (`Lecture audio VPS`)** : Le nœud *HTTP Request* (`http://31.97.40.49:8085/synthesize`) est configuré avec un timeout de **3 heures (`10 800 000 ms`)** via l'API n8n. Cela permet de tolérer l'inférence CPU complète (mesure réelle : ~52 min de calcul pour un conte de 10 min de lecture, ~1h20 pour 15 min).
+   - **Côté Frontend (`useN8nAudioGeneration.ts`)** : `TIMEOUT_DURATION` est configuré à **5 heures (`18 000 000 ms`)** pour permettre l'attente silencieuse en arrière-plan sans bloquer l'utilisateur.
 
 ### B. Procédure de Redéploiement sur le VPS Hostinger
 En cas de modification du code Python du microservice `vps-tts-service`, la procédure exacte pour mettre à jour le conteneur Docker sur le VPS est :
