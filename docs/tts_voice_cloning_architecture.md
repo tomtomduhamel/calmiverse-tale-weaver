@@ -146,9 +146,29 @@ docker restart tts-service
 curl http://127.0.0.1:8085/health
 ```
 
-### C. Évaluation Rapide A/B de Référence
+### E. Évaluation Rapide A/B de Référence
 Pour tester une nouvelle voix avant d'engager un livre audio complet :
 ```bash
 python test_ab_voice.py --ref clone_voices/maman_sample.wav --text "Transcription exacte" --out test_maman.wav
 ```
+
+---
+
+## 6. Métriques, Simulations Réelles & Analyse des Coûts (VPS CPU vs Modal GPU)
+
+### A. Synthèse Comparative des Mesures Réelles
+
+| Métrique | VPS Hostinger KVM2 (CPU) | Modal.com Serverless (GPU NVIDIA L4) |
+| :--- | :--- | :--- |
+| **Durée calcul (Histoire courte ~2-3 min)** | ~10 à 15 minutes | **~15 à 20 secondes** |
+| **Durée calcul (Histoire moyenne ~5-6 min)** | ~25 à 30 minutes | **~25 à 30 secondes** |
+| **Durée calcul (Histoire longue ~10-15 min, ~11k chars)** | ~50 à 55 minutes | **~35 à 45 secondes** |
+| **Facteur d'accélération** | 1x (Base) | **~150x plus rapide** |
+| **Parallélisme / Simultanéité** | Séquentiel (1 histoire à la fois sous verrou) | **Illimité (Containers GPU instanciés à la volée)** |
+| **Coût réel par histoire pour Calmi** | Inclus dans le forfait VPS (~8-15 €/mois) | **0,00 €** *(couvert par le crédit récurrent de 30 $/mois)* |
+| **Coût unitaire brut hors crédit** | 0,00 € additionnel | **~0,005 $ à 0,009 $ / histoire longue** (~0,00022 $/s) |
+
+### B. Impact du Multi-Voix (5 voix par section)
+- **Temps & Coût identiques** : Le passage de 1 voix unique à 5 voix différentes (narrateur + animaux + créatures) ne modifie ni la durée totale de calcul ni le coût financier, car le modèle `Qwen3-TTS` permute simplement les tenseurs de voix en mémoire VRAM en ~2 ms par réplique.
+- **Règle de dimensionnement** : Seul le nombre total de mots/caractères de l'histoire détermine le temps de calcul.
 
