@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import {
   Mic, Trash2, Copy, Plus, Volume2, Share2, Check, Loader2,
   Sparkles, ArrowLeft, Heart, Smartphone, HelpCircle,
-  BookOpen, PawPrint, Feather, Waves, Ghost, FolderPlus
+  BookOpen, PawPrint, Feather, Waves, Ghost, FolderPlus, Pencil
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -49,6 +49,13 @@ export const VoiceStudio: React.FC = () => {
   const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
   const [newCategoryLabel, setNewCategoryLabel] = useState('');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+
+  // Edit Voice State
+  const [editingVoice, setEditingVoice] = useState<UserVoice | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editRelation, setEditRelation] = useState('');
+  const [editCategorySlug, setEditCategorySlug] = useState('narrator_family');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // MediaRecorder Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -329,6 +336,53 @@ export const VoiceStudio: React.FC = () => {
         description: "Impossible de supprimer la catégorie",
         variant: "destructive"
       });
+    }
+  };
+
+  // Open edit modal for a voice
+  const openEditVoice = (voice: UserVoice) => {
+    setEditingVoice(voice);
+    setEditName(voice.name);
+    setEditRelation(voice.relation);
+    setEditCategorySlug(voice.category || 'narrator_family');
+  };
+
+  // Save updated voice details (name, relation/role, category)
+  const handleSaveVoiceEdit = async () => {
+    if (!editingVoice || !editName.trim() || !editRelation.trim()) return;
+    setIsSavingEdit(true);
+
+    try {
+      const targetCat = allCategories.find((c) => c.id === editCategorySlug);
+      const { error } = await supabase
+        .from('user_voices')
+        .update({
+          name: editName.trim(),
+          relation: editRelation.trim(),
+          category: editCategorySlug,
+          category_name: targetCat?.label || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingVoice.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "🎉 Voix mise à jour !",
+        description: `La voix est désormais enregistrée sous « ${editName.trim()} ».`,
+      });
+
+      setEditingVoice(null);
+      await fetchVoicesAndCategories();
+    } catch (err: any) {
+      console.error('Error updating voice:', err);
+      toast({
+        title: "Erreur",
+        description: err.message || "Impossible de modifier la voix",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -838,7 +892,7 @@ export const VoiceStudio: React.FC = () => {
                 <CardContent className="pb-3 text-xs text-muted-foreground truncate">
                   "{voice.transcript?.substring(0, 50)}..."
                 </CardContent>
-                <CardFooter className="pt-2 border-t flex justify-between">
+                <CardFooter className="pt-2 border-t flex justify-between items-center">
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -858,14 +912,26 @@ export const VoiceStudio: React.FC = () => {
                       </>
                     )}
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-xs h-8 text-destructive hover:bg-destructive/10"
-                    onClick={() => handleDeleteVoice(voice)}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs h-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                      onClick={() => openEditVoice(voice)}
+                      title="Modifier le nom ou le rôle de cette voix"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs h-8 text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDeleteVoice(voice)}
+                      title="Supprimer cette voix"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             ))}
@@ -1309,6 +1375,85 @@ export const VoiceStudio: React.FC = () => {
               >
                 {isCreatingCategory && <Loader2 className="w-4 h-4 animate-spin" />}
                 Créer la catégorie
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ✏️ 4. MODALE DE MODIFICATION D'UNE VOIX */}
+      <Dialog open={!!editingVoice} onOpenChange={(open) => !open && setEditingVoice(null)}>
+        <DialogContent className="max-w-md p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-primary" />
+              Modifier la voix
+            </DialogTitle>
+            <DialogDescription>
+              Personnalisez le nom affiché, le rôle associé ou la catégorie de cette voix.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Nom de la voix
+              </label>
+              <Input
+                placeholder="Ex: Voix de Papa, Voix de L'Ours Gaston..."
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Rôle ou personnage associé
+              </label>
+              <Input
+                placeholder="Ex: Papa, Ours Gaston, Chouette..."
+                value={editRelation}
+                onChange={(e) => setEditRelation(e.target.value)}
+                className="w-full"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Ce rôle permet à l'intelligence artificielle d'attribuer automatiquement les dialogues à ce personnage.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Catégorie
+              </label>
+              <select
+                value={editCategorySlug}
+                onChange={(e) => setEditCategorySlug(e.target.value)}
+                className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {allCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.emoji} {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setEditingVoice(null)}
+                disabled={isSavingEdit}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleSaveVoiceEdit}
+                disabled={!editName.trim() || !editRelation.trim() || isSavingEdit}
+                className="flex items-center gap-2"
+              >
+                {isSavingEdit && <Loader2 className="w-4 h-4 animate-spin" />}
+                Enregistrer les modifications
               </Button>
             </DialogFooter>
           </div>
