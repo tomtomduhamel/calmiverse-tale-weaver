@@ -160,13 +160,13 @@ python test_ab_voice.py --ref clone_voices/maman_sample.wav --text "Transcriptio
 
 | Métrique | VPS Hostinger KVM2 (CPU) | Modal.com Serverless (GPU NVIDIA L4) |
 | :--- | :--- | :--- |
-| **Durée calcul (Histoire courte ~2-3 min)** | ~10 à 15 minutes | **~15 à 20 secondes** |
-| **Durée calcul (Histoire moyenne ~5-6 min)** | ~25 à 30 minutes | **~25 à 30 secondes** |
-| **Durée calcul (Histoire longue ~10-15 min, ~11k chars)** | ~50 à 55 minutes | **~35 à 45 secondes** |
-| **Facteur d'accélération** | 1x (Base) | **~150x plus rapide** |
+| **Durée calcul (Extrait court ~300 chars)** | ~1 à 2 minutes | **~5 à 10 secondes** |
+| **Durée calcul (Histoire moyenne ~5 min)** | ~25 à 30 minutes | **~8 à 9 minutes** |
+| **Durée calcul (Histoire longue 10 min, ~10 424 chars)** | **~50 à 55 minutes** (ratio 1:5) | **~16,9 à 17,9 minutes** *(~37 min avant optimisation des blocs)* |
+| **Facteur d'accélération** | 1x (Base) | **~3x plus rapide que CPU** *(autorégressif)* |
 | **Parallélisme / Simultanéité** | Séquentiel (1 histoire à la fois sous verrou) | **Illimité (Containers GPU instanciés à la volée)** |
-| **Coût réel par histoire pour Calmi** | Inclus dans le forfait VPS (~8-15 €/mois) | **0,00 €** *(couvert par le crédit récurrent de 30 $/mois)* |
-| **Coût unitaire brut hors crédit** | 0,00 € additionnel | **~0,005 $ à 0,009 $ / histoire longue** (~0,00022 $/s) |
+| **Coût réel par histoire de 10 min** | Inclus dans le forfait VPS (~8-15 €/mois) | **0,00 €** *(couvert par les 30 $ USD / 41,50 $ CAD offerts/mois)* |
+| **Coût unitaire brut hors crédit** | 0,00 € additionnel | **~0,23 $ USD (~0,32 $ CAD) / histoire longue de 10 min** |
 
 ### B. Impact du Multi-Voix (5 voix par section)
 - **Temps & Coût identiques** : Le passage de 1 voix unique à 5 voix différentes (narrateur + animaux + créatures) ne modifie ni la durée totale de calcul ni le coût financier, car le modèle `Qwen3-TTS` permute simplement les tenseurs de voix en mémoire VRAM en ~2 ms par réplique.
