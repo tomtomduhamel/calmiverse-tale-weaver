@@ -263,6 +263,7 @@ const StoryIngredients: React.FC = () => {
                 { key: "type" as any, label: "Type", type: "text" },
                 { key: "description" as any, label: "Description", type: "text" },
                 { key: "mechanism" as any, label: "Mécanisme", type: "text" },
+                { key: "objective_affinity" as any, label: "Affinité objectifs", type: "array" },
               ]}
               data={narrativeSchemas.data}
               isLoading={narrativeSchemas.isLoading}
@@ -275,6 +276,7 @@ const StoryIngredients: React.FC = () => {
               columns={[
                 { key: "sensory_type" as any, label: "Canal sensoriel", type: "text" },
                 { key: "sensory_keywords" as any, label: "Mots-clés", type: "array" },
+                { key: "objective_affinity" as any, label: "Affinité objectifs", type: "array" },
               ]}
               data={vakogFocus.data}
               isLoading={vakogFocus.isLoading}

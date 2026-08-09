@@ -1,0 +1,646 @@
+{
+  "updatedAt": "2025-12-22T14:11:01.000Z",
+  "createdAt": "2025-12-01T19:47:20.123Z",
+  "id": "inuAiqQJf0ja11iA",
+  "name": "Création histoires optimisée",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "calmi-story-v2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -768,
+        -288
+      ],
+      "id": "0f386d23-fbfa-47c5-b173-a937e7de02a1",
+      "name": "Webhook",
+      "webhookId": "1b5549ea-a18c-4b77-9ea4-f2f370cd04b7"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Tu es un conteur d'histoires pour enfants expert.\n\nGénère une histoire COMPLÈTE d'environ {{ $json.body.targetWordCount }} mots (minimum {{ $json.body.targetWordCount * 0.8 }} mots) basée sur:\n- Titre: {{ $json.body.selectedTitle }}\n- Prompt: {{ $json.body.storyPrompt }}\n- Enfants: {{ $json.body.childrenNames }}\n- Objectif: {{ $json.body.objective }}\n\nUtilise l'outil 'historique' pour récupérer les 10 dernières histoires de l'utilisateur (userId={{ $json.body.userId }}) pour éviter redondance.\nUtilise l'outil 'sound_backgrounds' pour trouver un son approprié selon l'objectif {{ $json.body.objective }}.\n\nCrée une analyse JSON COMPLÈTE de l'histoire avec: style, keywords, structure (beginning/middle/end), main_characters, secondary_characters, themes.\n\nRéponds UNIQUEMENT avec un JSON valide.",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -544,
+        -288
+      ],
+      "id": "854fac54-2e63-4601-adf0-5521871eb9c2",
+      "name": "1. Generate & Analyze"
+    },
+    {
+      "parameters": {
+        "jsCode": "const content = $json.output?.content || '';\nconst wordCount = content.trim().split(/\\s+/).filter(Boolean).length;\n$json.wordCount = wordCount;\n$json.needsLengthening = wordCount < $json.body.targetWordCount * 0.8;\nreturn $json;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        -288
+      ],
+      "id": "8c3adc27-85ca-43c1-ae74-2c99ba39e017",
+      "name": "2. Count Words"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "{{ $json.needsLengthening }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        -288
+      ],
+      "id": "d1b5b19c-ed88-46b2-a074-45b3a2ba6e79",
+      "name": "3. Too Short?"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Cette histoire ({{ $json.wordCount }} mots) est trop courte. Cible: {{ $json.body.targetWordCount * 0.8 }} mots minimum.\n\n{{ $json.output.content }}\n\nAllonge-la en ajoutant détails et péripéties tout en gardant le style. Réponds UNIQUEMENT avec le texte allongé.",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        240,
+        -160
+      ],
+      "id": "99cb3465-3c81-41dd-a9c6-5ed6e2dae4b5",
+      "name": "3a. Lengthen",
+      "credentials": {
+        "openAiApi": {
+          "id": "MSayxruZLmsTpuw2",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        608,
+        -288
+      ],
+      "id": "9645068f-bdc7-4369-a89c-7059ded70739",
+      "name": "4. Merge"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Corrige cette histoire:\n{{ $json.output.content || $json.message.content }}\n\nVérifications: ✓ Orthographe/grammaire ✓ Français correct ✓ Cohérence ✓ Pas de répétitions ✓ Niveau 3-10 ans ✓ Pas de titre en début ✓ Pas de 'fin' à la fin\n\nRéponds UNIQUEMENT: {\"content\": \"texte corrigé\"}",
+              "role": "system"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        832,
+        -288
+      ],
+      "id": "4be9bb43-0379-44af-b6c8-86c3013d75e7",
+      "name": "5. Verify",
+      "credentials": {
+        "openAiApi": {
+          "id": "MSayxruZLmsTpuw2",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "stories",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $node['Webhook'].json.body.selectedTitle }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $node['5. Verify'].json.message.content }}"
+            },
+            {
+              "fieldId": "summary",
+              "fieldValue": "={{ $json.output?.summary || '' }}"
+            },
+            {
+              "fieldId": "story_analysis",
+              "fieldValue": "={{ $json.output?.story_analysis || {} }}"
+            },
+            {
+              "fieldId": "childrennames",
+              "fieldValue": "={{ $node['Webhook'].json.body.childrenNames }}"
+            },
+            {
+              "fieldId": "childrenids",
+              "fieldValue": "={{ $node['Webhook'].json.body.childrenIds }}"
+            },
+            {
+              "fieldId": "authorid",
+              "fieldValue": "={{ $node['Webhook'].json.body.userId }}"
+            },
+            {
+              "fieldId": "objective",
+              "fieldValue": "={{ $node['Webhook'].json.body.objective }}"
+            },
+            {
+              "fieldId": "sound_id",
+              "fieldValue": "={{ $json.output?.sound_id || '' }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "completed"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        -288
+      ],
+      "id": "2867f20a-5ade-4ca9-a0a0-9ff4ff350b8c",
+      "name": "6. Create in DB",
+      "credentials": {
+        "supabaseApi": {
+          "id": "wigd9LqEY8DlWzkn",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "=Image jeunesse: '{{ $node['Webhook'].json.body.selectedTitle }}' - {{ $json.output?.summary || '' }}. Adapté enfants 10 ans. Coloré, bienveillant. Titre visible en haut."
+            },
+            {
+              "name": "model",
+              "value": "dall-e-3"
+            },
+            {
+              "name": "size",
+              "value": "1024x1024"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1408,
+        -288
+      ],
+      "id": "1e9c585b-ff1c-45a7-8dbb-7875215550a1",
+      "name": "7. Generate Image",
+      "credentials": {
+        "openAiApi": {
+          "id": "MSayxruZLmsTpuw2",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data[0].b64_json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1632,
+        -288
+      ],
+      "id": "eb3db6cd-dbd5-4e3e-8cb7-51de959e48ec",
+      "name": "8. Convert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyimages/{{ $node['6. Create in DB'].json.id }}.jpeg",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "image/jpeg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1856,
+        -288
+      ],
+      "id": "8303c33e-08c9-4510-be50-c9b1b891de08",
+      "name": "9. Upload",
+      "credentials": {
+        "supabaseApi": {
+          "id": "wigd9LqEY8DlWzkn",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "stories",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "image_path",
+              "fieldValue": "=storyimages/{{ $node['6. Create in DB'].json.id }}.jpeg"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        -288
+      ],
+      "id": "1264e20c-4ab2-499f-bfe0-c9ea186f1ed5",
+      "name": "10. Update DB",
+      "credentials": {
+        "supabaseApi": {
+          "id": "wigd9LqEY8DlWzkn",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const total = ($input.all().reduce((sum, item) => sum + (item.json?.usage?.total_tokens || 0), 0));\nreturn { total_tokens: total };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        -288
+      ],
+      "id": "c75e9389-62bd-4203-b713-5feba7ffa98c",
+      "name": "11. Tokens"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/n8n-story-completion-callback",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\"Content-Type\":\"application/json\",\"x-webhook-secret\":\"qpga8m5UFVedaXVf8D/coKlMoycSuA0qqFGk1UuvTQc=\"}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "storyId",
+              "value": "={{ $node['6. Create in DB'].json.id }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $node['Webhook'].json.body.userId }}"
+            },
+            {
+              "name": "status",
+              "value": "completed"
+            },
+            {
+              "name": "title",
+              "value": "={{ $node['Webhook'].json.body.selectedTitle }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "requestId",
+              "value": "={{ $node['Webhook'].json.body.requestId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2528,
+        -288
+      ],
+      "id": "b7af0ea7-9da1-4e6d-8671-a5056ab1d315",
+      "name": "12. Callback"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "gpt-5"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -688,
+        -80
+      ],
+      "id": "66f3b30f-6929-4b16-8343-dca68606ccb9",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "MSayxruZLmsTpuw2",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -560,
+        -80
+      ],
+      "id": "6c7c27c4-b846-4406-a339-3543d87a066b",
+      "name": "Simple Memory"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "1. Generate & Analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Generate & Analyze": {
+      "main": [
+        [
+          {
+            "node": "2. Count Words",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Count Words": {
+      "main": [
+        [
+          {
+            "node": "3. Too Short?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Too Short?": {
+      "main": [
+        [
+          {
+            "node": "4. Merge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "3a. Lengthen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3a. Lengthen": {
+      "main": [
+        [
+          {
+            "node": "4. Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "4. Merge": {
+      "main": [
+        [
+          {
+            "node": "5. Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Verify": {
+      "main": [
+        [
+          {
+            "node": "6. Create in DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. Create in DB": {
+      "main": [
+        [
+          {
+            "node": "7. Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7. Generate Image": {
+      "main": [
+        [
+          {
+            "node": "8. Convert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8. Convert": {
+      "main": [
+        [
+          {
+            "node": "9. Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9. Upload": {
+      "main": [
+        [
+          {
+            "node": "10. Update DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10. Update DB": {
+      "main": [
+        [
+          {
+            "node": "11. Tokens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "11. Tokens": {
+      "main": [
+        [
+          {
+            "node": "12. Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "1. Generate & Analyze",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "1. Generate & Analyze",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "80d49c02-47bd-49db-8cee-9d719ffd8f35",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "shared": [
+    {
+      "updatedAt": "2025-12-01T19:47:20.127Z",
+      "createdAt": "2025-12-01T19:47:20.127Z",
+      "role": "workflow:owner",
+      "workflowId": "inuAiqQJf0ja11iA",
+      "projectId": "Awb8mD1I5ATrGCa2",
+      "project": {
+        "updatedAt": "2025-06-05T20:38:52.105Z",
+        "createdAt": "2025-06-05T20:37:29.445Z",
+        "id": "Awb8mD1I5ATrGCa2",
+        "name": "thomas Duhamel <tomtom.duhamel@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "afb0d3c7-6b3a-42f7-808b-41eab210632f"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

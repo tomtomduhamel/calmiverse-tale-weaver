@@ -91,22 +91,28 @@ export const extractVariables = (template: string): string[] => {
  */
 export const OBJECTIVE_DESCRIPTIONS: Record<string, string> = {
   sleep: "Aider à s'endormir de manière apaisante et régénératrice",
-  focus: "Améliorer la concentration et l'attention",
-  relax: "Favoriser la détente et la relaxation",
-  fun: "S'amuser et passer un bon moment",
+  focus: "Améliorer la concentration, la curiosité et l'esprit de déduction",
+  relax: "Favoriser la détente, la sérénité et le lâcher-prise",
+  fun: "S'amuser, rire et passer un moment plein d'énergie joyeuse",
 };
 
 /**
  * Génère les instructions de vocabulaire selon l'âge
  */
 export const getVocabularyInstructions = (youngestAge: number): string => {
+  const onomatopoeiaRule = "- RÈGLE DES ONOMATOPÉES : Maximum 3 onomatopées dans TOUTE l'histoire (ex: Hop !, Plouf !, Chut...).";
+  const metaphorRule = "- RÈGLE ZÉRO MÉTAPHORE SUPERFLUE : Maximum 1 à 2 comparaisons physiques simples dans toute l'histoire (ex: 'un ballon gros comme une pastèque'). INTERDICTION FORMELLE des comparaisons poétiques lentes ('comme du miel', 'comme une onde', 'comme une offrande', 'comme un pli dans le ciel'). Raconter l'action avec des verbes directs et vivants.";
+  const blacklistRule = "- LISTE NOIRE STRICTE (MOTS PROSCRITS) : Ne JAMAIS utiliser les mots suivants : 'irisé', 'nacre', 'nacré', 'diaphane', 'béatitude', 'onde', 'offrande', 'cérémonieux', 'cérémonieuse', 'murmure machinal', 'alcôve', 'zéphyr', 'lueur feutrée', 'contemplation', 'indicible'.";
+
   if (youngestAge <= 3) {
-    return "Utilise un vocabulaire très simple avec des mots familiers et quelques onomatopées.";
+    return `- VOCABULAIRE TOUT-PETITS (0-3 ans) : Phrases très courtes (Sujet + Verbe + Complément). Mots simples et concrets du quotidien direct (doudou, chat, pomme, bain, dodo, ballon). Interdiction totale du vocabulaire abstrait ou littéraire.\n${metaphorRule}\n${blacklistRule}\n${onomatopoeiaRule}`;
   } else if (youngestAge <= 5) {
-    return "Utilise un vocabulaire simple et accessible. Évite les mots complexes.";
+    return `- VOCABULAIRE MATERNELLE (4-6 ans) : Vocabulaire simple, vivant, concret et chaleureux. Verbes d'action directs (courir, grimper, cacher, rire, attraper). Aucun terme pompeux ou complexe.\n${metaphorRule}\n${blacklistRule}\n${onomatopoeiaRule}`;
   } else if (youngestAge <= 7) {
-    return "Utilise un vocabulaire adapté aux enfants d'âge scolaire. Introduis quelques mots nouveaux avec contexte.";
+    return `- VOCABULAIRE PRIMAIRE (7-8 ans) : Vocabulaire adapté à l'école primaire. Maximum 2 à 3 mots enrichissants immédiatement compréhensibles en contexte. Syntaxe claire et vivante.\n${metaphorRule}\n${blacklistRule}\n${onomatopoeiaRule}`;
+  } else if (youngestAge <= 12) {
+    return `- VOCABULAIRE JUNIOR (8-12 ans) : Vocabulaire riche mais fluide et accessible. Dialogues rythmés, esprit vif, sans tournures artificiellement vieillottes.\n${metaphorRule}\n${blacklistRule}\n${onomatopoeiaRule}`;
   } else {
-    return "Utilise un vocabulaire plus riche et varié. Peux introduire des concepts plus complexes.";
+    return `- VOCABULAIRE ADO (13+ ans) : Vocabulaire précis et dynamique. Dialogues modernes avec autodérision bienveillante et maturité, sans infantilisation.\n${metaphorRule}\n${blacklistRule}\n${onomatopoeiaRule}`;
   }
 };

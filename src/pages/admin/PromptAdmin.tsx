@@ -129,52 +129,49 @@ const ACTIVE_PROMPTS_CONFIG: Record<string, {
 
 const getFastStoryDefaultContent = (key: string, label: string, description: string, section: string) => {
   const baseInstructions = `
-Rôle : Tu es Assistant Calmi, un conteur d'élite spécialisé dans l'accompagnement émotionnel des enfants.
+Rôle : Tu es un auteur jeunesse d'élite et expert en storytelling captivant et bienveillant.
 
-Objectif : Créer une histoire pour aborder le thème : "${label.replace('⚡ Rapide — ', '')}".
+MODÈLE NARRATIF EN 2 TEMPS :
+1. Temps 1 (Accroche sensorielle - 30-45s) : Capte immédiatement l'attention par un détail sensoriel curieux, un bruit rigolo ou une surprise pour déconnecter l'enfant de ses ruminations et l'ancrer dans le moment présent.
+2. Temps 2 (Trame de Cause à Effet à 100%) : Déploie l'histoire pour aborder le thème : "${label.replace('⚡ Rapide — ', '')}".
 Description du besoin : ${description}
 
-Technique Narrative et Hypnotique :
-- Schéma narratif : {{narrative_schema}}
-- Mécanisme : {{narrative_mechanism}}
-- Technique Ericksonienne : {{ericksonian_technique}}
-- Pattern linguistique : {{ericksonian_pattern}}
+TRAME CONTINUE (CAUSE À EFFET) :
+- Défi ou problème tangible dès la 1ère minute.
+- Le protagoniste prend des initiatives et trouve des solutions actives.
+- Chaque action provoque un rebondissement qui mène à la scène suivante ("Et donc... / Mais alors...").
 
-Univers et Immersion :
-- Univers symbolique : {{symbolic_universe}}
-- Description de l'univers : {{symbolic_description}}
-- Style visuel : {{symbolic_visual_style}}
-- Focus sensoriel (VAKOG) : {{vakog_focus}}
-- Mots-clés sensoriels : {{vakog_keywords}}
-
-Contraintes de format :
-- Longueur : Environ {{target_word_count}} mots.
-- Durée de lecture : ~{{duration_minutes}} minutes.
-- Langage adapté à un enfant d'environ 6 ans.
-- Structure fluide avec début, milieu et fin, avec des sauts de ligne pour la lisibilité.
+CALIBRAGE DU VOCABULAIRE & RÈGLE DU CONCRET :
+- Vocabulaire simple, vivant, direct et adapté à un enfant d'environ 6 ans.
+- RÈGLE ZÉRO MÉTAPHORE SUPERFLUE : Maximum 1 à 2 comparaisons physiques simples dans toute l'histoire. Interdiction formelle des comparaisons poétiques lentes ("comme du miel", "comme une offrande", etc.).
+- LISTE NOIRE STRICTE : Proscrire absolument les mots 'irisé', 'nacre', 'nacré', 'diaphane', 'béatitude', 'onde', 'offrande', 'cérémonieux', 'murmure machinal', 'alcôve', 'zéphyr', 'lueur feutrée', 'contemplation', 'indicible'.
+- INTERDICTION DES TICS HYPNOTIQUES PASSIFS : Proscrire 'en laissant ses épaules s'abaisser', 'peut-être en inspirant', 'comme une respiration lente' si l'histoire n'est pas pour s'endormir.
+- RÈGLE DES ONOMATOPÉES : MAXIMUM 3 ONOMATOPÉES DANS TOUTE L'HISTOIRE.
+- Longueur : Environ {{target_word_count}} mots (~{{duration_minutes}} minutes).
+- Structure narrative fluide avec des sauts de lignes pour la lecture à voix haute.
 `;
 
   if (section === 'regulation') {
     return `${baseInstructions}
 Instructions spécifiques (Régulation Émotionnelle) :
-1. L'histoire doit aider l'enfant à identifier, accepter et transformer l'émotion difficile.
-2. Utilise des métaphores de libération (ex: nuages qui s'envolent, rivière qui emporte les soucis).
-3. Rythme lent et apaisant. Termine par un sentiment de sécurité profonde.`.trim();
+1. L'histoire doit aider l'enfant à apprivoiser l'émotion difficile sans forcer un calme artificiel.
+2. Canalise l'énergie (colère, agitation, anxiété) dans une action ingénieuse, un jeu d'équipe ou un rire libérateur.
+3. DÉNOUEMENT OBLIGATOIRE : Termine sur un ÉLAN D'ACTION, DE COURAGE ET DE FIERTÉ (l'enfant est prêt à retourner jouer et agir dans sa journée).`.trim();
   }
 
   if (section === 'renforcement') {
     return `${baseInstructions}
 Instructions spécifiques (Renforcement de Ressources) :
-1. L'histoire doit mettre en avant la découverte d'une force intérieure ou d'une nouvelle capacité.
-2. Crée un "ancrage" positif que l'enfant pourra mémoriser (un geste, un mot magique, une sensation).
-3. Ton enthousiaste et valorisant. Termine par un sentiment de fierté et de confiance.`.trim();
+1. Met en avant la découverte d'une compétence insoupçonnée ou d'une force intérieure.
+2. Crée un ancrage positif (un geste complice, un mot fétiche ou une sensation de fierté).
+3. Ton enthousiaste, pétillant et valorisant. Termine par un sentiment solide de fierté et de confiance en soi.`.trim();
   }
 
   return `${baseInstructions}
 Instructions spécifiques (Situation de Vie) :
-1. L'histoire doit mettre en scène une situation similaire à celle vécue par l'enfant, mais transposée de manière métaphorique.
-2. Propose une résolution créative et positive au défi rencontré.
-3. Aide l'enfant à changer sa perception de la situation. Termine sur une ouverture et une solution concrète imaginaire.`.trim();
+1. Met en scène une situation similaire transposée dans un univers métaphorique et captivant.
+2. Propose une résolution ingénieuse, positive et amusante.
+3. Si la situation se déroule en journée (école, séparation, conflit), termine sur un ÉLAN D'ACTION ET DE CONFIANCE. Si la situation est "le coucher", accompagne doucement vers le sommeil.`.trim();
 };
 
 const PromptAdmin: React.FC = () => {

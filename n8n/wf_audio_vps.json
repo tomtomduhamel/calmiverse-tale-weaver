@@ -1,0 +1,542 @@
+{
+  "updatedAt": "2026-07-30T15:55:16.145Z",
+  "createdAt": "2025-06-27T22:55:24.111Z",
+  "id": "1RQWc4s1fNwDQkIj",
+  "name": "Lecture audio VPS Hostinger & ElevenLabs",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d2d88f5d-78c0-49c1-83b8-096d4b21190c",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Calmi-Webhook-Secret",
+                "value": "qpga8m5UFVedaXVf8D/coKlMoycSuA0qqFGk1UuvTQc="
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6186ea82-55b0-4bc5-814e-b598e216f99a",
+      "name": "Webhook",
+      "webhookId": "d2d88f5d-78c0-49c1-83b8-096d4b21190c"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "vps-check",
+              "leftValue": "={{ $json.body.isCustomVoice || $json.body.provider === 'vps-hostinger' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "check-vps-provider",
+      "name": "Is VPS or Custom Voice?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://31.97.40.49:8085/synthesize",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "thomas_calmi_tts_secure_token_2026"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify($('Webhook').item.json.body.text) }},\n  \"voice_ref_url\": \"{{ $('Webhook').item.json.body.voice_ref_url }}\",\n  \"ref_text\": {{ JSON.stringify($('Webhook').item.json.body.ref_text || \"\") }},\n  \"language\": \"fr\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        -96
+      ],
+      "id": "vps-tts-node",
+      "name": "VPS Hostinger Qwen3-TTS"
+    },
+    {
+      "parameters": {
+        "resource": "speech",
+        "voice": {
+          "__rl": true,
+          "value": "8GmpqPsfVfdIxZECRGSA",
+          "mode": "list",
+          "cachedResultName": "Lecture d'histoires pour s'endormir"
+        },
+        "text": "={{ $json.body.text }}",
+        "additionalOptions": {
+          "model": {
+            "mode": "list",
+            "value": "eleven_multilingual_v2"
+          },
+          "outputFormat": "mp3_44100_128",
+          "languageCode": "fr-ca",
+          "voiceSettings": "{\n  \"stability\": 1,\n  \"similarity_boost\": 1,\n  \"style\": 0,\n  \"use_speaker_boost\": true,\n  \"speed\": 0.9\n}"
+        },
+        "requestOptions": {}
+      },
+      "type": "@elevenlabs/n8n-nodes-elevenlabs.elevenLabs",
+      "typeVersion": 1,
+      "position": [
+        480,
+        112
+      ],
+      "id": "78a400af-cffc-4a4b-b456-0bb1a08d401b",
+      "name": "ElevenLabs audio",
+      "credentials": {
+        "elevenLabsApi": {
+          "id": "KvWJFa30pXPv7LEz",
+          "name": "ElevenLabs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/upload-audio-from-n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "multipart/form-data"
+            },
+            {
+              "name": "x-webhook-secret",
+              "value": "qpga8m5UFVedaXVf8D/coKlMoycSuA0qqFGk1UuvTQc="
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "audioFile",
+              "inputDataFieldName": "=data"
+            },
+            {
+              "name": "requestId",
+              "value": "={{ $('Webhook').item.json.body.requestId }}"
+            },
+            {
+              "name": "storyId",
+              "value": "={{ $('Webhook').item.json.body.storyId }}"
+            },
+            {
+              "name": "voiceId",
+              "value": "={{ $('Webhook').item.json.body.voiceId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        752,
+        0
+      ],
+      "id": "2d99d11f-2d84-45a1-956e-5019ebe6ed8a",
+      "name": "Upload to Supabase"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is VPS or Custom Voice?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is VPS or Custom Voice?": {
+      "main": [
+        [
+          {
+            "node": "VPS Hostinger Qwen3-TTS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ElevenLabs audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VPS Hostinger Qwen3-TTS": {
+      "main": [
+        [
+          {
+            "node": "Upload to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs audio": {
+      "main": [
+        [
+          {
+            "node": "Upload to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "a32082ab-26de-471e-9b47-72341e306941",
+  "activeVersionId": "a32082ab-26de-471e-9b47-72341e306941",
+  "versionCounter": 25,
+  "triggerCount": 1,
+  "sourceWorkflowId": null,
+  "shared": [
+    {
+      "updatedAt": "2025-06-27T22:55:24.115Z",
+      "createdAt": "2025-06-27T22:55:24.115Z",
+      "role": "workflow:owner",
+      "workflowId": "1RQWc4s1fNwDQkIj",
+      "projectId": "Awb8mD1I5ATrGCa2",
+      "project": {
+        "updatedAt": "2025-06-05T20:38:52.105Z",
+        "createdAt": "2025-06-05T20:37:29.445Z",
+        "id": "Awb8mD1I5ATrGCa2",
+        "name": "thomas Duhamel <tomtom.duhamel@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "afb0d3c7-6b3a-42f7-808b-41eab210632f"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-07-30T15:55:21.000Z",
+    "createdAt": "2026-07-30T15:55:16.148Z",
+    "versionId": "a32082ab-26de-471e-9b47-72341e306941",
+    "workflowId": "1RQWc4s1fNwDQkIj",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "d2d88f5d-78c0-49c1-83b8-096d4b21190c",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Calmi-Webhook-Secret",
+                  "value": "qpga8m5UFVedaXVf8D/coKlMoycSuA0qqFGk1UuvTQc="
+                }
+              ]
+            }
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "id": "6186ea82-55b0-4bc5-814e-b598e216f99a",
+        "name": "Webhook",
+        "webhookId": "d2d88f5d-78c0-49c1-83b8-096d4b21190c"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "vps-check",
+                "leftValue": "={{ $json.body.isCustomVoice || $json.body.provider === 'vps-hostinger' }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          224,
+          0
+        ],
+        "id": "check-vps-provider",
+        "name": "Is VPS or Custom Voice?"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://31.97.40.49:8085/synthesize",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "X-API-Key",
+                "value": "thomas_calmi_tts_secure_token_2026"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"text\": {{ JSON.stringify($('Webhook').item.json.body.text) }},\n  \"voice_ref_url\": \"{{ $('Webhook').item.json.body.voice_ref_url }}\",\n  \"ref_text\": {{ JSON.stringify($('Webhook').item.json.body.ref_text || \"\") }},\n  \"language\": \"fr\"\n}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          480,
+          -96
+        ],
+        "id": "vps-tts-node",
+        "name": "VPS Hostinger Qwen3-TTS"
+      },
+      {
+        "parameters": {
+          "resource": "speech",
+          "voice": {
+            "__rl": true,
+            "value": "8GmpqPsfVfdIxZECRGSA",
+            "mode": "list",
+            "cachedResultName": "Lecture d'histoires pour s'endormir"
+          },
+          "text": "={{ $json.body.text }}",
+          "additionalOptions": {
+            "model": {
+              "mode": "list",
+              "value": "eleven_multilingual_v2"
+            },
+            "outputFormat": "mp3_44100_128",
+            "languageCode": "fr-ca",
+            "voiceSettings": "{\n  \"stability\": 1,\n  \"similarity_boost\": 1,\n  \"style\": 0,\n  \"use_speaker_boost\": true,\n  \"speed\": 0.9\n}"
+          },
+          "requestOptions": {}
+        },
+        "type": "@elevenlabs/n8n-nodes-elevenlabs.elevenLabs",
+        "typeVersion": 1,
+        "position": [
+          480,
+          112
+        ],
+        "id": "78a400af-cffc-4a4b-b456-0bb1a08d401b",
+        "name": "ElevenLabs audio",
+        "credentials": {
+          "elevenLabsApi": {
+            "id": "KvWJFa30pXPv7LEz",
+            "name": "ElevenLabs account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/upload-audio-from-n8n",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "multipart/form-data"
+              },
+              {
+                "name": "x-webhook-secret",
+                "value": "qpga8m5UFVedaXVf8D/coKlMoycSuA0qqFGk1UuvTQc="
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "parameterType": "formBinaryData",
+                "name": "audioFile",
+                "inputDataFieldName": "=data"
+              },
+              {
+                "name": "requestId",
+                "value": "={{ $('Webhook').item.json.body.requestId }}"
+              },
+              {
+                "name": "storyId",
+                "value": "={{ $('Webhook').item.json.body.storyId }}"
+              },
+              {
+                "name": "voiceId",
+                "value": "={{ $('Webhook').item.json.body.voiceId }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          752,
+          0
+        ],
+        "id": "2d99d11f-2d84-45a1-956e-5019ebe6ed8a",
+        "name": "Upload to Supabase"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Is VPS or Custom Voice?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is VPS or Custom Voice?": {
+        "main": [
+          [
+            {
+              "node": "VPS Hostinger Qwen3-TTS",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "ElevenLabs audio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "VPS Hostinger Qwen3-TTS": {
+        "main": [
+          [
+            {
+              "node": "Upload to Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ElevenLabs audio": {
+        "main": [
+          [
+            {
+              "node": "Upload to Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "thomas Duhamel",
+    "name": "Version a32082ab",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-07-30T15:55:21.306Z",
+        "id": 700,
+        "workflowId": "1RQWc4s1fNwDQkIj",
+        "versionId": "a32082ab-26de-471e-9b47-72341e306941",
+        "event": "activated",
+        "userId": "afb0d3c7-6b3a-42f7-808b-41eab210632f"
+      }
+    ]
+  }
+}

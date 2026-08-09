@@ -17,9 +17,9 @@ export const AdminLinksSection = () => {
 
   const adminLinks = [
     ...(isSuperAdmin ? [{
-      title: 'Superadmin · Billing',
-      description: 'Pilotage Stripe, abonnés et webhooks',
-      icon: CreditCard,
+      title: 'Superadmin · Qualité & Billing',
+      description: 'Cockpit qualité littéraire, critique IA et pilotage Stripe',
+      icon: Shield,
       path: '/app/superadmin',
       color: 'text-primary'
     }] : []),

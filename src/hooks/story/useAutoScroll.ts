@@ -6,6 +6,7 @@ import { useAutoScrollState } from "./useAutoScrollState";
 import { useScrollDomUtils } from "./scrollDomUtils";
 import { calculateScrollSpeed, calculateScrollMetrics, calculateTargetPosition } from "./scrollCalculations";
 import { useWakeLock } from "@/hooks/useWakeLock";
+import { logger } from "@/utils/logger";
 
 interface UseAutoScrollProps {
   wordCount: number;
@@ -53,7 +54,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
     const { maxScrollPosition, isAtBottom } = calculateScrollMetrics(viewportEl);
     
     if (isAtBottom) {
-      console.log("Auto-scroll: Already at the bottom, not starting");
+      logger.debug("Auto-scroll: Already at the bottom, not starting");
       return;
     }
     
@@ -78,8 +79,8 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
     const startTime = Date.now();
     const startPosition = viewportEl.scrollTop;
     
-    console.log(`[AutoScroll] ${forceRestart ? 'Redémarrage forcé' : 'Démarrage'} - ${readingSpeed} mots/min`);
-    console.log(`[AutoScroll] Vitesse de défilement calculée: ${pixelsPerSecond.toFixed(2)} pixels/seconde`);
+    logger.debug(`[AutoScroll] ${forceRestart ? 'Redémarrage forcé' : 'Démarrage'} - ${readingSpeed} mots/min`);
+    logger.debug(`[AutoScroll] Vitesse de défilement calculée: ${pixelsPerSecond.toFixed(2)} pixels/seconde`);
     
     const performScroll = () => {
       const viewportEl = getViewportElement();
@@ -105,7 +106,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
       
       if (targetPosition >= maxScrollPosition) {
         scrollToPosition(maxScrollPosition);
-        console.log("Auto-scroll: Reached the end");
+        logger.debug("Auto-scroll: Reached the end");
         setScrollStatus('idle');
         // Notifier que le défilement s'arrête
         notifyScrollStateChange(false);
@@ -135,7 +136,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
     setScrollStatus('idle');
     // Notifier que le défilement s'arrête
     notifyScrollStateChange(false);
-    console.log("Auto-scroll: Stopped");
+    logger.debug("Auto-scroll: Stopped");
   }, [animationFrameRef, setScrollStatus, notifyScrollStateChange, wakeLockSupported, releaseWakeLock]);
   
   // Mettre en pause
@@ -149,7 +150,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
       setScrollStatus('paused');
       // Notifier que le défilement se met en pause
       notifyScrollStateChange(false);
-      console.log("Auto-scroll: Paused");
+      logger.debug("Auto-scroll: Paused");
     }
   }, [scrollStatusRef, animationFrameRef, setScrollStatus, notifyScrollStateChange]);
   
@@ -159,7 +160,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
       setScrollStatus('running');
       // Notifier que le défilement reprend
       notifyScrollStateChange(true);
-      console.log("Auto-scroll: Resumed");
+      logger.debug("Auto-scroll: Resumed");
       startAutoScroll();
     }
   }, [scrollStatusRef, setScrollStatus, startAutoScroll, notifyScrollStateChange]);
@@ -168,19 +169,19 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
   const toggleAutoScroll = useCallback(() => {
     if (scrollStatusRef.current === 'idle') {
       startAutoScroll();
-      console.log("Auto-scroll: Started manually");
+      logger.debug("Auto-scroll: Started manually");
     } else if (scrollStatusRef.current === 'running') {
       pauseAutoScroll();
       setIsManuallyPaused(true);
-      console.log("Auto-scroll: Paused manually");
+      logger.debug("Auto-scroll: Paused manually");
     } else if (scrollStatusRef.current === 'paused') {
       if (isManuallyPaused) {
         setIsManuallyPaused(false);
         startAutoScroll();
-        console.log("Auto-scroll: Restarted after manual pause");
+        logger.debug("Auto-scroll: Restarted after manual pause");
       } else {
         stopAutoScroll();
-        console.log("Auto-scroll: Stopped from pause state");
+        logger.debug("Auto-scroll: Stopped from pause state");
       }
     }
   }, [isManuallyPaused, startAutoScroll, stopAutoScroll, scrollStatusRef, setIsManuallyPaused]);
@@ -188,7 +189,7 @@ export const useAutoScroll = ({ wordCount, scrollAreaRef, onScrollStateChange }:
   // Redémarrer le scroll quand la vitesse change (si déjà en cours)
   useEffect(() => {
     if (scrollStatusRef.current === 'running') {
-      console.log(`[AutoScroll] Vitesse changée en ${readingSpeed} mots/min - redémarrage immédiat`);
+      logger.debug(`[AutoScroll] Vitesse changée en ${readingSpeed} mots/min - redémarrage immédiat`);
       // Forcer le redémarrage avec la nouvelle vitesse
       startAutoScroll(true);
     }

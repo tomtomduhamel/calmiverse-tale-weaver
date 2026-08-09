@@ -1,0 +1,252 @@
+{
+  "name": "Critique Littéraire Jeunesse & Notation (Calmiverse)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "critique-histoire",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "authorization, content-type, apikey, x-client-info"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS, GET"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -680,
+        140
+      ],
+      "id": "1a2b3c4d-webhook-critique",
+      "name": "1. Webhook - Évaluation Histoire",
+      "webhookId": "critique-histoire-webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "manual-input-story",
+              "name": "body",
+              "value": "={{ { content: $json.content || $json.text || 'Il était une fois un petit renard nommé Barnabé qui cherchait son doudou dans la grande forêt magique. Tout à coup, un papillon scintillant passa en disant : Viens avec moi ! Barnabé sauta de joie. Hop ! Hop ! Plouf ! Youpi ! Et ils vécurent heureux.', title: $json.title || 'Barnabé et le doudou perdu', objective: $json.objective || 'sleep', targetAge: $json.targetAge || '4-6 ans', targetWordCount: $json.targetWordCount || 300 } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -680,
+        340
+      ],
+      "id": "2b3c4d5e-manual-test",
+      "name": "1b. Déclencheur Test Manuel"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================================================\n// Pré-analyse statistique et validation de l'histoire avant critique LLM\n// ==========================================================================\nconst rawData = $json.body || $json;\n\n// Récupération sécurisée du texte de l'histoire\nconst content = (rawData.content || rawData.story || rawData.text || rawData.histoire || '').trim();\nconst title = (rawData.title || rawData.titre || 'Sans titre').trim();\nconst objective = (rawData.objective || rawData.objectif || 'Non spécifié').trim();\nconst targetAge = (rawData.targetAge || rawData.age || rawData.age_range || '4-6 ans').trim();\nconst targetWordCount = rawData.targetWordCount || rawData.wordCount || 0;\nconst storyId = rawData.storyId || rawData.id || null;\nconst userId = rawData.userId || null;\n\nif (!content || content.length < 20) {\n  return [{\n    json: {\n      error: true,\n      message: \"Le texte de l'histoire est manquant ou trop court pour être évalué.\",\n      received: rawData\n    }\n  }];\n}\n\n// 1. Analyse quantitative du texte\nconst words = content.split(/\\s+/).filter(w => w.length > 0);\nconst wordCount = words.length;\nconst charactersCount = content.length;\n\n// 2. Détection des phrases\nconst sentences = content.split(/[.!?…]+/).map(s => s.trim()).filter(s => s.length > 0);\nconst sentenceCount = sentences.length || 1;\nconst avgWordsPerSentence = Math.round((wordCount / sentenceCount) * 10) / 10;\n\n// 3. Détection des onomatopées courantes en littérature jeunesse\nconst onomatopoeiaRegex = /\\b(hop|plouf|youpi|oups|chut|boum|crac|toc|vlan|paf|splash|snif|hihi|haha|bzz|meuh|miaou|wouf|cocorico|ding|dong|patatras|tada|tadam|froufrou|glou|miam|beurk|brrr|tic-tac|chuuut|ouah|hourra)\\b[!?,.]*/gi;\nconst matchesOnomatopoeia = content.match(onomatopoeiaRegex) || [];\nconst onomatopoeiaCount = matchesOnomatopoeia.length;\n\n// 4. Détection des clichés récurrents de l'IA jeunesse\nconst aiClichePatterns = [\n  { pattern: /\\bmagique[s]?\\b/gi, label: \"'magique' (facilité descriptive)\" },\n  { pattern: /\\bmerveilleu[x|se|ses]?\\b/gi, label: \"'merveilleux' (adjectif laudatif plat)\" },\n  { pattern: /\\bscintillant[e|es|s]?\\b/gi, label: \"'scintillant' (cliché visuel IA)\" },\n  { pattern: /\\bétincelant[e|es|s]?\\b/gi, label: \"'étincelant' (cliché visuel IA)\" },\n  { pattern: /\\btout à coup\\b/gi, label: \"'tout à coup' (rupture artificielle)\" },\n  { pattern: /\\bsoudainement\\b/gi, label: \"'soudainement' (adverbe lourd)\" },\n  { pattern: /\\bet ils vécurent heureux\\b/gi, label: \"'et ils vécurent heureux' (fin paresseuse)\" },\n  { pattern: /\\bapprit une grande leçon\\b/gi, label: \"'grande leçon' (moralisme asséné)\" }\n];\n\nconst detectedCliches = [];\nfor (const c of aiClichePatterns) {\n  const found = content.match(c.pattern);\n  if (found && found.length > 0) {\n    detectedCliches.push(`${c.label} (${found.length}x)`);\n  }\n}\n\n// 5. Normalisation des métadonnées pour le prompt\nreturn [{\n  json: {\n    storyMeta: {\n      storyId,\n      userId,\n      title,\n      objective,\n      targetAge,\n      targetWordCount,\n      actualWordCount: wordCount,\n      actualSentenceCount: sentenceCount,\n      avgWordsPerSentence,\n      onomatopoeiaCount,\n      onomatopoeiaList: matchesOnomatopoeia.slice(0, 10),\n      detectedCliches\n    },\n    storyContent: content\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        240
+      ],
+      "id": "3c4d5e6f-preprocess-story",
+      "name": "2. Pré-analyse & Statistiques"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "valid-check",
+              "leftValue": "={{ $json.storyMeta ? true : false }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -140,
+        240
+      ],
+      "id": "4d5e6f7a-check-valid-input",
+      "name": "3. Entrée Valide ?"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Tu es un GRAND JURÉ ET CRITIQUE LITTÉRAIRE D'ÉLITE spécialisé en LITTÉRATURE JEUNESSE (style comités éditoriaux de L'école des loisirs, Gallimard Jeunesse, Seuil Jeunesse, Milan, Bologna Ragazzi).\n\nTON IDENTITÉ & POSTURE :\n- Tu es impitoyable, lucide, honnête et direct (\"sans scrupule\"). Zéro complaisance, zéro flatterie, zéro formule creuse.\n- Tu traites l'enfant comme un lecteur intelligent, sensible aux rythmes, aux vraies émotions, à la musique des mots et au respect de sa psychologie.\n- Tu détestes par-dessus tout : la mièvrerie niaise, les leçons de morale martelées au pied-de-biche, les facilités narratives (deus ex machina), les adjectifs creux de l'IA (magique, merveilleux, scintillant), les accumulations d'onomatopées inutiles et le faux style littéraire ampoulé.\n- Ton but suprême : Élever drastiquement le niveau d'écriture pour transformer un brouillon en chef-d'œuvre de la littérature jeunesse.\n\n---\nINFORMATIONS SUR L'HISTOIRE À ÉVALUER :\n- Titre : \"{{ $json.storyMeta.title }}\"\n- Objectif visé : {{ $json.storyMeta.objective }}\n- Public cible (Tranche d'âge) : {{ $json.storyMeta.targetAge }}\n- Longueur cible : {{ $json.storyMeta.targetWordCount }} mots (Longueur réelle : {{ $json.storyMeta.actualWordCount }} mots)\n- Moyenne mots/phrase : {{ $json.storyMeta.avgWordsPerSentence }} mots/phrase\n- Onomatopées détectées : {{ $json.storyMeta.onomatopoeiaCount }} (Liste : {{ $json.storyMeta.onomatopoeiaList.join(', ') || 'Aucune' }})\n- Clichés IA repérés par l'analyseur : {{ $json.storyMeta.detectedCliches.join(', ') || 'Aucun' }}\n\n---\nTEXTE INTÉGRAL DE L'HISTOIRE :\n```text\n{{ $json.storyContent }}\n```\n\n---\nGRILLE DE NOTATION STRICTE (SUR 10) :\n1. `overall_score` (Note Globale /10, avec 1 décimale ex: 6.8) :\n   - 9.0 - 10.0 : Chef-d'œuvre jeunesse (originalité foudroyante, oralité parfaite, émotion brute, fin mémorable).\n   - 7.5 - 8.9 : Très bon texte, publiable avec de légers ajustements de rythme ou de dialogues.\n   - 5.5 - 7.4 : Histoire moyenne / convenable mais trop générique, mécanique ou perfectible.\n   - 3.5 - 5.4 : Brouillon faible (incohérences, moralisme lourd, vocabulaire inadapté, personnage creux).\n   - 0.0 - 3.4 : Échec narratif complet (verbiage, hors-sujet, clichés insupportables).\n\n2. Sous-scores détaillés (sur 10) :\n   - `structure_rythme` : Progression dramatique, gestion de la tension, qualité du début/milieu/fin, pas de fin bâclée.\n   - `style_prosodie_oralite` : Musique des phrases lues à voix haute, justesse lexicale adaptée à l'âge, rejet du style précieux ou précieux-pédant.\n   - `personnages_empathie` : Épaisseur des protagonistes, crédibilité des réactions d'enfants, pas de pantins sans âme.\n   - `originalite_imaginaire` : Singularité du monde et des situations, absence de copier-coller des contes génériques.\n   - `adequation_objectif_age` : Adéquation avec la tranche d'âge et l'objectif (ex: s'il s'agit de 'sleep', décélération apaisante ; si 'fun', rire franc et énergie sans ton mielleux).\n   - `rigueur_technique_calmi` : Respect de la limite de maximum 3 onomatopées, absence de moralisme appuyé (\"Show, Don't Tell\").\n\n---\nCONSIGNES SUR LES RETOURS CRITIQUES :\n- Sois chirurgical : cite des passages EXACTS de l'histoire entre guillemets pour prouver tes remarques.\n- Donne un VRAI exemple de réécriture d'un passage faible (Avant vs Après) pour démontrer concrètement comment sublimer l'histoire.\n\n---\nFORMAT DE RÉPONSE OBLIGATOIRE :\nTu dois retourner UNIQUEMENT un objet JSON valide respectant rigoureusement la structure suivante :\n{\n  \"overall_score\": number,\n  \"verdict_punchline\": \"string (1 phrase percutante et tranchante résumant la qualité de l'histoire)\",\n  \"detailed_scores\": {\n    \"structure_rythme\": number,\n    \"style_prosodie_oralite\": number,\n    \"personnages_empathie\": number,\n    \"originalite_imaginaire\": number,\n    \"adequation_objectif_age\": number,\n    \"rigueur_technique_calmi\": number\n  },\n  \"critique_summary\": {\n    \"executive_summary\": \"string (synthèse critique lucide de 2-3 paragraphes)\",\n    \"audience_fit\": \"string (analyse de l'adéquation exacte avec la tranche d'âge indiquée)\",\n    \"emotional_impact\": \"string (ce que l'enfant va réellement ressentir : ennui, rire, émerveillement, confusion)\"\n  },\n  \"strengths\": [\n    {\n      \"aspect\": \"string\",\n      \"analysis\": \"string\",\n      \"quote\": \"string\"\n    }\n  ],\n  \"weaknesses\": [\n    {\n      \"issue\": \"string\",\n      \"impact\": \"string\",\n      \"quote\": \"string\",\n      \"severity\": \"critique\"\n    }\n  ],\n  \"calmi_pitfalls_analysis\": {\n    \"excessive_onomatopoeia\": false,\n    \"onomatopoeia_critique\": \"string\",\n    \"ai_cliches_critique\": \"string\",\n    \"heavy_moralizing_detected\": false,\n    \"moralizing_critique\": \"string\"\n  },\n  \"actionable_improvements\": [\n    {\n      \"priority\": 1,\n      \"target_area\": \"string\",\n      \"recommendation\": \"string\"\n    }\n  ],\n  \"rewrite_demonstration\": {\n    \"scene_context\": \"string\",\n    \"original_excerpt\": \"string\",\n    \"rewritten_version\": \"string\",\n    \"editor_explanation\": \"string\"\n  }\n}",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3,
+          "responseFormat": "json_object"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        120,
+        140
+      ],
+      "id": "5e6f7a8b-llm-literary-critic",
+      "name": "4. Critique Littéraire LLM",
+      "credentials": {
+        "openAiApi": {
+          "id": "MSayxruZLmsTpuw2",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================================================\n// Formatage du rapport critique en JSON et Markdown professionnel\n// ==========================================================================\nconst step2 = $('2. Pré-analyse & Statistiques').item?.json || {};\nif (step2.error) {\n  return [{\n    json: {\n      success: false,\n      error: true,\n      message: step2.message || 'Texte manquant ou trop court',\n      received: step2.received\n    }\n  }];\n}\n\nconst meta = step2.storyMeta || {};\nconst rawLlmOutput = $json;\n\nlet critique = {};\ntry {\n  let rawText = '';\n  if (rawLlmOutput.message && rawLlmOutput.message.content) {\n    rawText = rawLlmOutput.message.content;\n  } else if (rawLlmOutput.output) {\n    rawText = rawLlmOutput.output;\n  } else if (typeof rawLlmOutput === 'string') {\n    rawText = rawLlmOutput;\n  } else {\n    critique = rawLlmOutput;\n  }\n\n  if (typeof rawText === 'string') {\n    const cleaned = rawText.replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/i, '').trim();\n    critique = JSON.parse(cleaned);\n  }\n} catch (e) {\n  critique = {\n    overall_score: 5.0,\n    verdict_punchline: \"Erreur de parsing de l'évaluation critique.\",\n    detailed_scores: {},\n    error: e.message,\n    raw: rawLlmOutput\n  };\n}\n\n// Badges de note\nconst score = critique.overall_score || 0;\nlet badge = \"🔴 À REVOIR\";\nif (score >= 8.5) {\n  badge = \"🌟 CHEF-D'ŒUVRE JEUNESSE\";\n} else if (score >= 7.0) {\n  badge = \"🟢 TRÈS BON NIVEAU\";\n} else if (score >= 5.5) {\n  badge = \"🟡 PASSABLE / PERFECTIBLE\";\n} else if (score >= 4.0) {\n  badge = \"🟠 BROUILLON FRAGILE\";\n}\n\n// Génération du rapport Markdown\nlet md = `# 📖 Rapport Critique Littéraire Jeunesse : \"${meta.title}\"\\n\\n`;\nmd += `**Note Globale :** \\`${score}/10\\` — **${badge}**\\n\\n`;\nmd += `> 💡 *\"${critique.verdict_punchline || 'Aucun verdict'}\"*\\n\\n`;\n\nmd += `### 🎯 Métadonnées & Calibrage\\n`;\nmd += `- **Public cible :** ${meta.targetAge}\\n`;\nmd += `- **Objectif de l'histoire :** ${meta.objective}\\n`;\nmd += `- **Nombre de mots :** ${meta.actualWordCount} mots (cible: ${meta.targetWordCount || 'N/A'})\\n`;\nmd += `- **Rythme moyen :** ${meta.avgWordsPerSentence} mots / phrase\\n`;\nmd += `- **Onomatopées :** ${meta.onomatopoeiaCount} détectée(s) (règle Calmi: max 3)\\n\\n`;\n\nmd += `### 📊 Grille d'Évaluation Détaillée\\n\\n`;\nmd += `| Critère Littéraire | Note | Appréciation |\\n`;\nmd += `| :--- | :---: | :--- |\\n`;\nif (critique.detailed_scores) {\n  const ds = critique.detailed_scores;\n  md += `| 🎭 **Structure & Arc Narratif** | **${ds.structure_rythme || 'N/A'}/10** | Progression, enjeu, dénouement |\\n`;\n  md += `| ✍️ **Style, Prosodie & Oralité** | **${ds.style_prosodie_oralite || 'N/A'}/10** | Musicalité lecture à voix haute, lexique |\\n`;\n  md += `| 🧸 **Personnages & Empathie** | **${ds.personnages_empathie || 'N/A'}/10** | Authenticité des émotions d'enfant |\\n`;\n  md += `| 💡 **Originalité & Imaginaire** | **${ds.originalite_imaginaire || 'N/A'}/10** | Fraîcheur des situations, anti-clichés |\\n`;\n  md += `| 🎯 **Adéquation Âge & Objectif** | **${ds.adequation_objectif_age || 'N/A'}/10** | Respect du public cible |\\n`;\n  md += `| ⚙️ **Rigueur Technique & Règle Calmi** | **${ds.rigueur_technique_calmi || 'N/A'}/10** | Onomatopées <= 3, Show don't tell |\\n\\n`;\n}\n\nmd += `### 📝 Analyse de Fond\\n`;\nif (critique.critique_summary) {\n  md += `${critique.critique_summary.executive_summary || ''}\\n\\n`;\n  md += `**Adéquation public :** ${critique.critique_summary.audience_fit || ''}\\n\\n`;\n  md += `**Impact émotionnel ressenti :** ${critique.critique_summary.emotional_impact || ''}\\n\\n`;\n}\n\nmd += `### ✨ Points Forts (Ce qui fonctionne)\\n`;\nif (Array.isArray(critique.strengths)) {\n  for (const s of critique.strengths) {\n    md += `- **${s.aspect}** : ${s.analysis}\\n`;\n    if (s.quote) md += `  > *${s.quote}*\\n`;\n  }\n  md += `\\n`;\n}\n\nmd += `### ⚠️ Faiblesses & Écueils (Ce qui pêche)\\n`;\nif (Array.isArray(critique.weaknesses)) {\n  for (const w of critique.weaknesses) {\n    const sev = w.severity === 'critique' ? '🔴 [CRITIQUE]' : w.severity === 'majeur' ? '🟠 [MAJEUR]' : '🟡 [MINEUR]';\n    md += `- ${sev} **${w.issue}** : ${w.impact}\\n`;\n    if (w.quote) md += `  > *${w.quote}*\\n`;\n  }\n  md += `\\n`;\n}\n\nmd += `### 🚀 Plan d'Action & Axes d'Amélioration\\n`;\nif (Array.isArray(critique.actionable_improvements)) {\n  for (const act of critique.actionable_improvements) {\n    md += `1. **[${act.target_area}]** : ${act.recommendation}\\n`;\n  }\n  md += `\\n`;\n}\n\nif (critique.rewrite_demonstration) {\n  const rw = critique.rewrite_demonstration;\n  md += `### 🛠️ Démonstration de Réécriture (Avant / Après)\\n\\n`;\n  md += `*Contexte : ${rw.scene_context || 'Extrait clé'}*\\n\\n`;\n  md += `**Version originale :**\\n> ${rw.original_excerpt || ''}\\n\\n`;\n  md += `**Version sublimée (Critique) :**\\n> 🌟 **${rw.rewritten_version || ''}**\\n\\n`;\n  md += `*Explication éditoriale :* ${rw.editor_explanation || ''}\\n\\n`;\n}\n\nreturn [{\n  json: {\n    success: true,\n    storyMeta: meta,\n    score,\n    verdict: critique.verdict_punchline,\n    badge,\n    critique,\n    markdownReport: md\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        140
+      ],
+      "id": "6f7a8b9c-postprocess-report",
+      "name": "5. Formatage Rapport & Markdown"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        140
+      ],
+      "id": "7a8b9c0d-respond-webhook",
+      "name": "6. Réponse Webhook"
+    }
+  ],
+  "connections": {
+    "1. Webhook - Évaluation Histoire": {
+      "main": [
+        [
+          {
+            "node": "2. Pré-analyse & Statistiques",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1b. Déclencheur Test Manuel": {
+      "main": [
+        [
+          {
+            "node": "2. Pré-analyse & Statistiques",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Pré-analyse & Statistiques": {
+      "main": [
+        [
+          {
+            "node": "3. Entrée Valide ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Entrée Valide ?": {
+      "main": [
+        [
+          {
+            "node": "4. Critique Littéraire LLM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "5. Formatage Rapport & Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Critique Littéraire LLM": {
+      "main": [
+        [
+          {
+            "node": "5. Formatage Rapport & Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Formatage Rapport & Markdown": {
+      "main": [
+        [
+          {
+            "node": "6. Réponse Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  }
+}

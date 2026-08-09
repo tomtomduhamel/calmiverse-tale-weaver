@@ -571,12 +571,54 @@ docs/
 - Vérifier `mounted` avant render
 - `next-themes` provider dans `main.tsx`
 
+## 13. Standards Narratifs & Règles de Génération des Histoires
+
+### Modèle en 2 Temps (Dissociation Hypnose / Objectif)
+1. **Temps 1 : Induction & Focalisation (30-45s)** :
+   - Rupture de pattern et absorption sensorielle (VAKOG adapté à l'objectif).
+   - Ancrage et reconnexion au moment présent.
+## 13. Standards Narratifs & Règles de Génération des Histoires (v3.4)
+
+### 1. Modèle en 2 Temps (Dissociation Hypnose / Objectif)
+1. **Temps 1 : Focalisation Sensorielle (30-45s)** : Accroche immédiate par un détail sensoriel curieux ou une rupture d'attente pour couper court aux ruminations et ancrer dans le présent.
+2. **Temps 2 : Déploiement à 100% de l'Objectif** :
+   - **S'amuser (`fun`)** : Énergie haute, péripéties comiques, quiproquos, bêtises innocentes, dialogues vifs. **Interdiction formelle de ton soporifique, de lenteur monotone ou de métaphores contemplatives**.
+   - **Se concentrer (`focus`)** : Énigmes, mystères stimulants, détails d'observation concrets.
+   - **Se détendre (`relax`)** : Sérénité et moments doux sans obligation de sommeil.
+   - **S'endormir (`sleep`)** : Seul objectif avec décélération progressive vers le sommeil.
+   - **Émotions & Situations (Jour)** : Dénouement sur un **élan d'action, de courage ou de fierté**, prêt à retourner agir dans le monde réel.
+
+### 2. Trame Narrative de Cause à Effet Continue (Consistance & Captation)
+- **Mini-enjeu / Défi dès la 1ère minute** : Problème concret à résoudre (ex: compte à rebours, objet égaré à rattraper, défi d'équipe).
+- **Règle du « Et donc... / Mais alors... »** : Chaque action découle logiquement de la précédente. Pas de déambulation descriptive passive.
+- **Enfants Moteurs & Décideurs (Empowerment)** : Ce sont les enfants qui prennent les décisions, ont les bonnes idées et résolvent l'énigme.
+
+### 3. Règle « Zéro Métaphore Superflue » (Action First)
+- **Plafond strict** : Maximum 1 à 2 comparaisons physiques simples dans toute l'histoire.
+- **Interdiction formelle des comparaisons poétiques lentes** (*« comme du miel »*, *« comme une onde »*, *« comme une offrande »*, *« comme un pli dans le ciel »*). Privilégier les verbes d'action directs (courir, sauter, attraper, glisser, rire).
+
+### 4. Calibrage Strict du Vocabulaire & Liste Noire
+- **Liste noire proscrite (< 10 ans)** : *irisé, nacre, nacré, diaphane, béatitude, onde, offrande, cérémonieux, murmure machinal, alcôve, zéphyr, lueur feutrée, contemplation, indicible*.
+- **0-3 ans** : Phrases très courtes (Sujet-Verbe-Complément), mots familiers du quotidien direct (doudou, chat, pomme, bain, dodo).
+- **4-6 ans** : Vocabulaire simple, vivant, imagé et chaleureux. Verbes d'action concrets.
+- **7-10 ans** : Vocabulaire scolaire fluide. 2 à 3 mots enrichissants contextualisés max par histoire.
+- **11+ ans** : Dialogues vivants, ironie bienveillante, esprit critique sans infantilisation.
+
+### 5. Règle Stricte sur les Onomatopées
+- **Plafond absolu de 3 onomatopées par histoire** (ex: *Hop !*, *Plouf !*, *Chut...*).
+
+### 6. Interdiction des Tics Hypnotiques Passifs
+- Dans toute histoire hors `sleep` (fun, focus, émotions de jour), proscrire les phrases d'induction de relaxation corporelle (*« en laissant leurs épaules s'abaisser »*, *« peut-être en inspirant »*, etc.).
+
+---
+
 ## 14. Roadmap & Évolutions
 
 ### Implémenté ✅
 - Système abonnements 4 tiers complet
 - PWA avec cache avancé (désactivée dev)
 - Génération histoires IA optimisée
+- Standards narratifs V3.4 (Modèle 2 temps, Cause à effet, Zéro métaphore superflue, Vocabulaire calibré, Max 3 onomatopées)
 - Audio ElevenLabs asynchrone
 - Bibliothèque filtres + swipe-to-delete
 - Profils enfants détaillés
@@ -608,6 +650,7 @@ docs/
 
 ---
 
-**Dernière mise à jour** : 2025-12-29  
-**Version** : 3.2 (Chatbot interactif n8n avec boutons de choix)  
+**Dernière mise à jour** : 2026-08-08  
+**Version** : 3.4 (Standards Narratifs v3.4 : Trame Cause à Effet, Zéro Métaphore Superflue, Vocabulaire Concret, Max 3 Onomatopées)  
 **Statut** : Production ready avec PWA désactivée dev
+

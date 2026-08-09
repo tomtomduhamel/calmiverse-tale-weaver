@@ -7,36 +7,121 @@ import shutil
 import asyncio
 import hashlib
 import numpy as np
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
-def chunk_text(text: str, max_chars: int = 500) -> List[str]:
-    # Supprimer les balises de modulation comme [chuchoté], [joyeux], etc.
-    clean = re.sub(r'\[.*?\]', '', text).strip()
-    clean = re.sub(r'\s+', ' ', clean)
-    
-    if not clean:
+EMOTION_MAP = {
+    "warm": "Warm, soothing, gentle bedtime narrator for children.",
+    "whisper": "Soft, gentle whispering voice, quiet bedtime narrator.",
+    "excited": "Enthusiastic, cheerful, joyful storytelling voice for children.",
+    "mysterious": "Curious, gentle, mysterious bedtime storytelling voice.",
+    "calm": "Calm, peaceful, relaxed storytelling voice.",
+    "sleepy": "Very slow, soft, sleepy bedtime voice."
+}
+
+def chunk_text(
+    text: str, 
+    max_chars: int = 500,
+    sentence_pause_sec: float = 0.25,
+    paragraph_pause_sec: float = 1.0,
+    chapter_pause_sec: float = 3.0,
+    default_instruct: Optional[str] = None,
+    enable_sleep_pacing: bool = True
+) -> List[Tuple[str, float, Optional[str]]]:
+    if not text or not text.strip():
         return []
 
-    # Découper selon la ponctuation forte (. ! ?) en préservant la ponctuation
-    sentences = re.split(r'(?<=[.!?])\s+', clean)
-    chunks = []
-    current_chunk = ""
+    # Séparer par paragraphes (double retour à la ligne ou plus)
+    raw_paragraphs = re.split(r'(?:\r?\n\s*){2,}', text.strip())
+    paragraphs = [p.strip() for p in raw_paragraphs if p.strip()]
 
-    for sentence in sentences:
-        s = sentence.strip()
-        if not s:
-            continue
-        if len(current_chunk) + len(s) + 1 <= max_chars:
-            current_chunk = f"{current_chunk} {s}".strip()
+    total_paras = len(paragraphs)
+    chunks_with_pauses = []
+    
+    # Regex pour détecter les chapitres/sections (incluant markdown ou non)
+    chapter_pattern = r'^\s*(?:#+\s*|#*\s*(?:chapitre|partie|épisode|prologue|épilogue|introduction|conclusion)\b)'
+    
+    # Regex pour détecter les balises d'émotion ou d'instruct au tout début d'un paragraphe/chunk
+    tag_pattern = r'^\s*\[(warm|whisper|excited|mysterious|calm|sleepy|instruct:\s*[^\]]+)\]'
+
+    current_instruct = default_instruct
+
+    for idx, para in enumerate(paragraphs):
+        # Progression dans l'histoire (de 0.0 au début à 1.0 à la fin)
+        progress = (idx / float(total_paras - 1)) if total_paras > 1 else 0.0
+
+        # 1. Extraction et mise à jour éventuelle de l'émotion pour ce paragraphe
+        match_tag = re.search(tag_pattern, para, re.IGNORECASE)
+        if match_tag:
+            tag_val = match_tag.group(1).strip()
+            if tag_val.lower().startswith("instruct:"):
+                current_instruct = tag_val[len("instruct:"):].strip()
+            else:
+                current_instruct = EMOTION_MAP.get(tag_val.lower(), default_instruct)
+
+        # Nettoyer toutes les balises [...] du paragraphe pour la détection et la synthèse
+        para_clean_for_detect = re.sub(r'\[.*?\]', '', para).strip()
+        
+        # 2. Déterminer la pause avant ce paragraphe (si ce n'est pas le premier)
+        if idx == 0:
+            pause_before = 0.0
         else:
+            if re.match(chapter_pattern, para_clean_for_detect, re.IGNORECASE):
+                pause_before = chapter_pause_sec
+            else:
+                # Échelle progressive du Sleep Pacing pour les paragraphes ordinaires
+                if enable_sleep_pacing:
+                    if progress < 0.33:
+                        pause_before = paragraph_pause_sec
+                    elif progress < 0.66:
+                        pause_before = paragraph_pause_sec * 1.5
+                    else:
+                        pause_before = paragraph_pause_sec * 2.5
+                else:
+                    pause_before = paragraph_pause_sec
+        
+        # 3. Ajustement du Sleep Pacing sur l'instruction vocale dans le dernier tiers de l'histoire
+        final_chunk_instruct = current_instruct
+        if enable_sleep_pacing and progress >= 0.66:
+            sleep_suffix = ", very slow, soft, sleepy bedtime pace"
+            if final_chunk_instruct:
+                if sleep_suffix not in final_chunk_instruct:
+                    final_chunk_instruct = final_chunk_instruct + sleep_suffix
+            else:
+                final_chunk_instruct = "Very slow, soft, sleepy bedtime voice"
+
+        # Nettoyer le paragraphe pour la synthèse
+        para_for_synth = re.sub(r'\[.*?\]', '', para).strip()
+        para_for_synth = re.sub(r'\s+', ' ', para_for_synth)
+        
+        if not para_for_synth:
+            continue
+            
+        # 4. Découper si nécessaire selon max_chars
+        if len(para_for_synth) <= max_chars:
+            chunks_with_pauses.append((para_for_synth, pause_before, final_chunk_instruct))
+        else:
+            sentences = re.split(r'(?<=[.!?])\s+', para_for_synth)
+            current_chunk = ""
+            is_first_chunk_of_para = True
+            
+            for sentence in sentences:
+                s = sentence.strip()
+                if not s:
+                    continue
+                if len(current_chunk) + len(s) + 1 <= max_chars:
+                    current_chunk = f"{current_chunk} {s}".strip()
+                else:
+                    if current_chunk:
+                        p = pause_before if is_first_chunk_of_para else sentence_pause_sec
+                        chunks_with_pauses.append((current_chunk, p, final_chunk_instruct))
+                        is_first_chunk_of_para = False
+                    current_chunk = s
+            
             if current_chunk:
-                chunks.append(current_chunk)
-            current_chunk = s
+                p = pause_before if is_first_chunk_of_para else sentence_pause_sec
+                chunks_with_pauses.append((current_chunk, p, final_chunk_instruct))
 
-    if current_chunk:
-        chunks.append(current_chunk)
-
-    return chunks if chunks else [clean]
+    return chunks_with_pauses
 
 def validate_audio_signal(wav: np.ndarray, sr: int, min_duration_sec: float = 0.5) -> bool:
     """
@@ -130,6 +215,10 @@ class TTSRequest(BaseModel):
     ref_text: Optional[str] = None  # Transcription optionnelle du fichier de référence
     instruct: Optional[str] = None  # Direction d'acteur vocale en Anglais (ex: "Calm, soothing bedtime story narrator")
     language: str = "fr"  # Code de la langue (ex: "fr", "en")
+    sentence_pause_ms: Optional[int] = 250
+    paragraph_pause_ms: Optional[int] = 1000
+    chapter_pause_ms: Optional[int] = 3000
+    enable_sleep_pacing: Optional[bool] = True
 
 class SegmentRequest(BaseModel):
     text: str
@@ -197,8 +286,22 @@ async def synthesize_speech(request: TTSRequest):
         }
         tts_lang = lang_map.get(request.language.lower(), "French")
 
-        # 3. Découpage du texte long en segments naturels
-        text_chunks = chunk_text(request.text, max_chars=500)
+        # 3. Découpage du texte long en segments naturels avec pauses configurables et émotions dynamiques
+        sentence_pause_sec = request.sentence_pause_ms / 1000.0 if request.sentence_pause_ms is not None else 0.25
+        paragraph_pause_sec = request.paragraph_pause_ms / 1000.0 if request.paragraph_pause_ms is not None else 1.0
+        chapter_pause_sec = request.chapter_pause_ms / 1000.0 if request.chapter_pause_ms is not None else 3.0
+        global_instruct = request.instruct.strip() if request.instruct and request.instruct.strip() else None
+        enable_pacing = request.enable_sleep_pacing if request.enable_sleep_pacing is not None else True
+
+        text_chunks = chunk_text(
+            request.text, 
+            max_chars=500,
+            sentence_pause_sec=sentence_pause_sec,
+            paragraph_pause_sec=paragraph_pause_sec,
+            chapter_pause_sec=chapter_pause_sec,
+            default_instruct=global_instruct,
+            enable_sleep_pacing=enable_pacing
+        )
         print(f"🧩 [{req_id}] Découpage du texte complet ({len(request.text)} chars) en {len(text_chunks)} segments (Max 500 chars/chunk)...")
 
         # 4. Lancement de la génération vocale sous verrou de sérialisation
@@ -209,8 +312,9 @@ async def synthesize_speech(request: TTSRequest):
             generated_wavs = []
             sr = 24000  # Frequence d'échantillonnage par défaut
             
-            for idx, chunk in enumerate(text_chunks):
-                print(f"   🗣️ [{req_id}] Synthèse segment {idx+1}/{len(text_chunks)} ({len(chunk)} chars)...")
+            for idx, chunk_data in enumerate(text_chunks):
+                chunk, pause_before, chunk_instruct = chunk_data
+                print(f"   🗣️ [{req_id}] Synthèse segment {idx+1}/{len(text_chunks)} ({len(chunk)} chars, pause_before: {pause_before}s, instruct: '{chunk_instruct}')...")
                 start_chunk_time = time.time()
                 
                 clean_prompt = prompt_text.strip() if prompt_text else ""
@@ -225,15 +329,15 @@ async def synthesize_speech(request: TTSRequest):
                 else:
                     clone_kwargs["x_vector_only_mode"] = True
 
-                if request.instruct and request.instruct.strip():
-                    clone_kwargs["instruct"] = request.instruct.strip()
+                if chunk_instruct:
+                    clone_kwargs["instruct"] = chunk_instruct
 
                 wavs, current_sr = model.generate_voice_clone(**clone_kwargs)
                 sr = current_sr
                 
-                # Ajouter un silence naturel (250ms) entre les phrases
-                if idx > 0:
-                    pause_samples = int(sr * 0.25)
+                # Ajouter un silence avant le segment (si pause_before > 0)
+                if pause_before > 0:
+                    pause_samples = int(sr * pause_before)
                     silence = np.zeros(pause_samples, dtype=np.float32)
                     generated_wavs.append(silence)
                 

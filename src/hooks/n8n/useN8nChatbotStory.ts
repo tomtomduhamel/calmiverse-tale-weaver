@@ -12,6 +12,7 @@ import { calculateAge } from '@/utils/age';
 import { usePersistedChatbotState } from './usePersistedChatbotState';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_CHAT_WEBHOOK_URL || 'https://n8n.srv856374.hstgr.cloud/webhook/ec1e6586-86dc-4755-b73e-80a19762ddd2';
 
@@ -87,11 +88,11 @@ export const useN8nChatbotStory = () => {
 
   // Traiter les données de réponse n8n
   const handleResponseData = useCallback((data: any) => {
-    console.log('[useN8nChatbotStory] Réponse brute n8n:', data);
+    logger.debug('[useN8nChatbotStory] Réponse brute n8n:', data);
 
     // Synchronisation du sessionId avec n8n
     if (data.sessionId && data.sessionId !== conversationId) {
-      console.log('[useN8nChatbotStory] Synchronisation sessionId:', conversationId, '->', data.sessionId);
+      logger.debug('[useN8nChatbotStory] Synchronisation sessionId:', conversationId, '->', data.sessionId);
       setConversationId(data.sessionId);
     }
 
@@ -105,7 +106,7 @@ export const useN8nChatbotStory = () => {
 
     // Gestion de story_complete - histoire générée par n8n
     if (data.type === 'story_complete') {
-      console.log('[useN8nChatbotStory] Histoire complète reçue:', {
+      logger.info('[useN8nChatbotStory] Histoire complète reçue:', {
         title: data.title,
         objective: data.objective,
         childrenNames: data.childrennames,
@@ -124,7 +125,7 @@ export const useN8nChatbotStory = () => {
 
     // Message avec choix (détection basée sur la présence de choices, pas sur le type)
     if (data.choices && Array.isArray(data.choices) && data.choices.length > 0) {
-      console.log('[useN8nChatbotStory] Message avec choix:', data.choices.length);
+      logger.debug('[useN8nChatbotStory] Message avec choix:', data.choices.length);
       addMessage('assistant', content, {
         choices: data.choices,
         choiceType: data.choiceType || 'single'
@@ -137,11 +138,11 @@ export const useN8nChatbotStory = () => {
   }, [conversationId, addMessage, setPersistedStoryId, setConversationId]);
 
   const handleResponse = useCallback((response: ChatbotResponse) => {
-    console.log('[useN8nChatbotStory] Réponse reçue:', response);
+    logger.debug('[useN8nChatbotStory] Réponse reçue:', response);
 
     // Synchronisation du sessionId avec n8n
     if (response.sessionId && response.sessionId !== conversationId) {
-      console.log('[useN8nChatbotStory] Synchronisation sessionId (init):', conversationId, '->', response.sessionId);
+      logger.debug('[useN8nChatbotStory] Synchronisation sessionId (init):', conversationId, '->', response.sessionId);
       setConversationId(response.sessionId);
     }
 
@@ -153,7 +154,7 @@ export const useN8nChatbotStory = () => {
 
     // Gestion de story_complete
     if (response.type === 'story_complete') {
-      console.log('[useN8nChatbotStory] Histoire complète reçue:', response.title);
+      logger.info('[useN8nChatbotStory] Histoire complète reçue:', response.title);
       const successMessage = response.content || `L'histoire "${response.title}" a été créée avec succès !`;
       addMessage('assistant', successMessage);
       if (response.storyId) {
@@ -176,7 +177,7 @@ export const useN8nChatbotStory = () => {
   }, [conversationId, addMessage, setPersistedStoryId, setConversationId]);
 
   const sendToWebhook = useCallback(async (payload: ChatbotInitPayload | ChatbotMessagePayload): Promise<ChatbotResponse> => {
-    console.log('[useN8nChatbotStory] Envoi vers n8n:', payload);
+    logger.debug('[useN8nChatbotStory] Envoi vers n8n:', payload);
 
     // Timeout étendu pour la génération d'histoire (3 minutes)
     const TIMEOUT_MS = 180000;
@@ -196,7 +197,7 @@ export const useN8nChatbotStory = () => {
         throw new Error(result.error);
       }
 
-      console.log('[useN8nChatbotStory] Réponse n8n:', result);
+      logger.debug('[useN8nChatbotStory] Réponse n8n:', result);
 
       // Le proxy renvoie déjà un objet JSON parsé
       const data = result;
@@ -239,19 +240,19 @@ export const useN8nChatbotStory = () => {
   const initConversation = useCallback(async (userId: string, children: Child[]) => {
     // VERROU SYNCHRONE - empêche les appels multiples simultanés
     if (isInitializingRef.current) {
-      console.log('[useN8nChatbotStory] Initialisation déjà en cours, skip');
+      logger.debug('[useN8nChatbotStory] Initialisation déjà en cours, skip');
       return;
     }
 
     // Si session déjà valide, ne pas réinitialiser
     if (isInitialized && hasValidSession()) {
-      console.log('[useN8nChatbotStory] Session valide existante, skip init');
+      logger.debug('[useN8nChatbotStory] Session valide existante, skip init');
       return;
     }
 
     // Poser le verrou AVANT toute opération async
     isInitializingRef.current = true;
-    console.log('[useN8nChatbotStory] Initialisation conversation pour', children.length, 'enfants');
+    logger.info('[useN8nChatbotStory] Initialisation conversation pour', children.length, 'enfants');
     setIsLoading(true);
     setError(null);
 
@@ -272,7 +273,7 @@ export const useN8nChatbotStory = () => {
       setInitialized(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
-      console.error('[useN8nChatbotStory] Erreur init:', errorMessage);
+      logger.error('[useN8nChatbotStory] Erreur init:', errorMessage);
       setError(errorMessage);
       addMessage('assistant', "Désolé, je n'arrive pas à me connecter. Veuillez réessayer.");
     } finally {
@@ -284,7 +285,7 @@ export const useN8nChatbotStory = () => {
   const sendMessage = useCallback(async (message: string, userId: string) => {
     if (!message.trim()) return;
 
-    console.log('[useN8nChatbotStory] Envoi message:', message);
+    logger.debug('[useN8nChatbotStory] Envoi message:', message);
 
     // Ajouter le message utilisateur immédiatement
     addMessage('user', message);
@@ -316,7 +317,7 @@ export const useN8nChatbotStory = () => {
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
-      console.error('[useN8nChatbotStory] Erreur message:', errorMessage);
+      logger.error('[useN8nChatbotStory] Erreur message:', errorMessage);
       setError(errorMessage);
       addMessage('assistant', "Désolé, je n'ai pas pu traiter votre message. Veuillez réessayer.");
     } finally {
@@ -364,7 +365,7 @@ export const useN8nChatbotStory = () => {
   }, [messages, updateMessage, sendMessage]);
 
   const resetConversation = useCallback(() => {
-    console.log('[useN8nChatbotStory] Reset conversation');
+    logger.info('[useN8nChatbotStory] Reset conversation');
     resetSession();
     setError(null);
   }, [resetSession]);

@@ -13,6 +13,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "sonner";
 import { Loader2, RefreshCw, XCircle, Gift, RotateCcw, Trash2, Plus, ExternalLink, HelpCircle } from "lucide-react";
 
+import { QualityCockpitSection } from "@/components/superadmin/quality/QualityCockpitSection";
+import { ShieldCheck, CreditCard } from "lucide-react";
+
 type Subscription = {
   user_id: string;
   tier: string;
@@ -51,28 +54,70 @@ type WebhookEvent = {
 const TIERS = ["calmini", "calmidium", "calmix", "calmixxl"] as const;
 
 const SuperAdmin: React.FC = () => {
+  const [mainModule, setMainModule] = useState<"quality" | "billing">("quality");
+
   return (
     <SuperAdminGuard>
       <div className="min-h-screen bg-background p-4 md:p-8">
-        <div className="max-w-7xl mx-auto space-y-4">
-          <header className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
             <div>
-              <h1 className="text-2xl font-bold">Superadmin · Billing</h1>
-              <p className="text-sm text-muted-foreground">Pilotage Stripe, abonnés et webhooks</p>
+              <h1 className="text-2xl font-black tracking-tight flex items-center gap-2.5">
+                <span>Superadmin</span>
+                <span className="text-muted-foreground font-light">/</span>
+                <span className="text-primary">{mainModule === "quality" ? "Cockpit Qualité Littéraire" : "Billing & Stripe"}</span>
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Accès exclusif superadministrateur Calmiverse
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 bg-muted/60 p-1 rounded-xl border border-border">
+              <Button
+                size="sm"
+                variant={mainModule === "quality" ? "default" : "ghost"}
+                onClick={() => setMainModule("quality")}
+                className="text-xs font-semibold gap-1.5 h-8 rounded-lg"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Qualité & Critique IA</span>
+              </Button>
+              <Button
+                size="sm"
+                variant={mainModule === "billing" ? "default" : "ghost"}
+                onClick={() => setMainModule("billing")}
+                className="text-xs font-semibold gap-1.5 h-8 rounded-lg"
+              >
+                <CreditCard className="w-4 h-4" />
+                <span>Billing & Stripe</span>
+              </Button>
             </div>
           </header>
-          <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="subscribers">Abonnés</TabsTrigger>
-              <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
-              <TabsTrigger value="prices">Price mapping</TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview"><OverviewTab /></TabsContent>
-            <TabsContent value="subscribers"><SubscribersTab /></TabsContent>
-            <TabsContent value="webhooks"><WebhooksTab /></TabsContent>
-            <TabsContent value="prices"><PricesTab /></TabsContent>
-          </Tabs>
+
+          {mainModule === "quality" && (
+            <QualityCockpitSection />
+          )}
+
+          {mainModule === "billing" && (
+            <div className="space-y-4">
+              <div className="pb-1">
+                <h2 className="text-lg font-bold">Pilotage Stripe, abonnés et webhooks</h2>
+                <p className="text-xs text-muted-foreground">Gestion des quotas, abonnements et mapping de prix</p>
+              </div>
+              <Tabs defaultValue="overview" className="space-y-4">
+                <TabsList>
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="subscribers">Abonnés</TabsTrigger>
+                  <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+                  <TabsTrigger value="prices">Price mapping</TabsTrigger>
+                </TabsList>
+                <TabsContent value="overview"><OverviewTab /></TabsContent>
+                <TabsContent value="subscribers"><SubscribersTab /></TabsContent>
+                <TabsContent value="webhooks"><WebhooksTab /></TabsContent>
+                <TabsContent value="prices"><PricesTab /></TabsContent>
+              </Tabs>
+            </div>
+          )}
         </div>
       </div>
     </SuperAdminGuard>

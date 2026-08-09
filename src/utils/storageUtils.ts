@@ -50,3 +50,28 @@ export async function getSignedEpubUrl(filePath: string | null): Promise<string 
 
   return data.signedUrl;
 }
+
+/**
+ * Get a signed URL for a file in the teddy-photos bucket.
+ * If the path is already a full URL (legacy), returns it as-is.
+ */
+export async function getSignedTeddyPhotoUrl(filePath: string | null): Promise<string | null> {
+  if (!filePath) return null;
+
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    return filePath;
+  }
+
+  const cleanPath = filePath.replace(/^\/+/, '').replace(/^teddy-photos\//, '');
+
+  const { data, error } = await supabase.storage
+    .from('teddy-photos')
+    .createSignedUrl(cleanPath, 3600);
+
+  if (error) {
+    console.error('[storageUtils] Error creating signed URL for teddy photo:', error);
+    return null;
+  }
+
+  return data.signedUrl;
+}
