@@ -30,6 +30,8 @@ interface CustomVoice {
   id: string;
   name: string;
   relation: string;
+  category?: string;
+  category_name?: string | null;
   voice_ref_path: string;
   transcript: string | null;
 }
@@ -127,7 +129,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         try {
           const { data, error } = await supabase
             .from('user_voices')
-            .select('id, name, relation, voice_ref_path, transcript');
+            .select('id, name, relation, category, category_name, voice_ref_path, transcript');
           if (!error && data) {
             setCustomVoices(data as CustomVoice[]);
             

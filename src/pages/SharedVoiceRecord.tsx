@@ -13,6 +13,8 @@ interface InvitationDetails {
   id: string;
   user_id: string;
   relation_name: string;
+  category?: string;
+  category_name?: string | null;
   is_used: boolean;
   expires_at: string;
   user_email?: string;
@@ -56,7 +58,7 @@ export const SharedVoiceRecord: React.FC = () => {
         // Query public invitation details
         const { data, error } = await supabase
           .from('voice_invitations')
-          .select('id, user_id, relation_name, is_used, expires_at')
+          .select('id, user_id, relation_name, category, category_name, is_used, expires_at')
           .eq('token', token)
           .single();
 
@@ -345,7 +347,9 @@ export const SharedVoiceRecord: React.FC = () => {
           name: `Voix de ${invitation.relation_name}`,
           voice_ref_path: filePath,
           transcript: getTranscriptText(),
-          relation: invitation.relation_name
+          relation: invitation.relation_name,
+          category: invitation.category || 'narrator_family',
+          category_name: invitation.category_name || null
         });
 
       if (dbError) throw dbError;

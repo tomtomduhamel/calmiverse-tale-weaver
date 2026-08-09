@@ -323,7 +323,10 @@ export const useN8nAudioGeneration = () => {
                 .createSignedUrl(v.voice_ref_path, 3600);
               return {
                 id: v.id,
+                name: v.name,
                 relation: v.relation,
+                category: v.category || 'narrator_family',
+                category_name: v.category_name || null,
                 signedUrl: signed?.signedUrl || null,
                 transcript: v.transcript || ""
               };

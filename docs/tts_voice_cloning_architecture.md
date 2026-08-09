@@ -103,7 +103,30 @@ Cette section sert de base de départ pour la prochaine conversation concernant 
    - **Côté n8n (`Lecture audio VPS`)** : Le nœud *HTTP Request* (`http://31.97.40.49:8085/synthesize`) est configuré avec un timeout de **3 heures (`10 800 000 ms`)** via l'API n8n. Cela permet de tolérer l'inférence CPU complète (mesure réelle : ~52 min de calcul pour un conte de 10 min de lecture, ~1h20 pour 15 min).
    - **Côté Frontend (`useN8nAudioGeneration.ts`)** : `TIMEOUT_DURATION` est configuré à **5 heures (`18 000 000 ms`)** pour permettre l'attente silencieuse en arrière-plan sans bloquer l'utilisateur.
 
-### B. Procédure de Redéploiement sur le VPS Hostinger
+---
+
+## 5. Architecture Multi-Catégories & Attribution Intelligente (Août 2026)
+
+### A. Organisation par Sections Thématiques (5 Voix par Section)
+Le Studio des Voix Familiales est structuré en **sections thématiques avec 5 slots chacune** :
+1. 📖 **Narrateurs et famille** (`narrator_family`) : Voix de narration principale (Papa, Maman, Papy, Mamie, etc.).
+2. 🐻 **Animaux terrestres** (`animal_land`) : Compagnons à 4 pattes (Ours, Renard, Chien, Loup, Chat, etc.).
+3. 🦉 **Animaux volants et célestes** (`animal_flying`) : Créatures des airs (Chouette, Oiseau, Aigle, Dragon, etc.).
+4. 🐬 **Animaux marins et aquatiques** (`animal_aquatic`) : Créatures océaniques (Dauphin, Baleine, Poisson, Sirène, etc.).
+5. 👦👧 **Enfants** (`children`) : Petits héros et héroïnes des contes.
+6. 👾 **Monstres et créatures magiques** (`magical_creatures`) : Monstres gentils, trolls, lutins, fées, robots.
+7. ➕ **Catégories personnalisées** : Table `user_voice_categories` pour créer des sections sur-mesure (5 slots chacune).
+
+### B. Règles Typographiques Françaises (UI & Design)
+- **Casse de phrase obligatoire** : En français, ne pas mettre de majuscule à chaque mot pour les titres de sections ou de catégories (ex: *« Animaux terrestres »*, *« Monstres et créatures magiques »*, et non *« Animaux Terrestres »*).
+
+### C. Moteur d'Attribution Intelligente des Voix (`storyAudioParser.ts`)
+1. **Découpage Dialogue vs Narration** : Détecte les guillemets et tirets cadratins.
+2. **Recherche par Correspondance Directe du Nom** : Si le dialogue ou son contexte immédiat mentionne le nom ou le rôle d'une voix enregistrée (ex: *« dit l'ours »* -> voix *Ours doux*), elle est attribuée en priorité.
+3. **Recherche par Catégorie** : Si aucun nom précis ne correspond, associe le dialogue à la première voix active de la catégorie détectée (`animal_land`, `animal_flying`, `magical_creatures`, etc.).
+4. **Fallback Narrateur** : Si aucune voix de cette catégorie n'existe, bascule automatiquement sur le Narrateur sélectionné.
+
+### D. Procédure de Redéploiement sur le VPS Hostinger
 En cas de modification du code Python du microservice `vps-tts-service`, la procédure exacte pour mettre à jour le conteneur Docker sur le VPS est :
 
 ```bash

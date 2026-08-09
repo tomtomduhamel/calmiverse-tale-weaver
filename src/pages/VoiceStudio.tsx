@@ -6,22 +6,22 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import {
   Mic, Trash2, Copy, Plus, Volume2, Share2, Check, Loader2,
-  Sparkles, Clock, ArrowLeft, Heart, Smartphone, HelpCircle
+  Sparkles, ArrowLeft, Heart, Smartphone, HelpCircle,
+  BookOpen, PawPrint, Feather, Waves, Ghost, FolderPlus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useSubscription } from '@/hooks/subscription/useSubscription';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-
-interface CustomVoice {
-  id: string;
-  name: string;
-  relation: string;
-  voice_ref_path: string;
-  transcript: string | null;
-  created_at: string;
-}
+import { 
+  UserVoice, 
+  CustomVoiceCategory, 
+  DEFAULT_VOICE_CATEGORIES, 
+  SLOTS_PER_SECTION,
+  VoiceCategoryConfig 
+} from '@/types/voices';
+import { cn } from '@/lib/utils';
 
 export const VoiceStudio: React.FC = () => {
   const { user } = useSupabaseAuth();
@@ -29,11 +29,13 @@ export const VoiceStudio: React.FC = () => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
-  const [voices, setVoices] = useState<CustomVoice[]>([]);
-  const [activeTab, setActiveTab] = useState<'studio' | 'invitations'>('studio');
+  const [voices, setVoices] = useState<UserVoice[]>([]);
+  const [customCategories, setCustomCategories] = useState<CustomVoiceCategory[]>([]);
+  const [activeCategorySlug, setActiveCategorySlug] = useState<string>('narrator_family');
 
   // Recording State
   const [isRecordingModalOpen, setIsRecordingModalOpen] = useState(false);
+  const [targetCategorySlug, setTargetCategorySlug] = useState<string>('narrator_family');
   const [relationName, setRelationName] = useState('');
   const [recordingStep, setRecordingStep] = useState<'info' | 'recording' | 'preview' | 'uploading'>('info');
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -43,6 +45,11 @@ export const VoiceStudio: React.FC = () => {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
   
+  // Custom Category Creation State
+  const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
+  const [newCategoryLabel, setNewCategoryLabel] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+
   // MediaRecorder Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -55,32 +62,62 @@ export const VoiceStudio: React.FC = () => {
   // Distant Invitation State
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteRelation, setInviteRelation] = useState('');
+  const [inviteCategorySlug, setInviteCategorySlug] = useState<string>('narrator_family');
   const [generatedInviteLink, setGeneratedInviteLink] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
 
-  // Maximum allowed voice clones based on tier limits
-  const maxClones = limits?.max_voice_clones ?? 0;
-  const isSlotLimitReached = voices.length >= maxClones;
+  // Merged categories list (Native + Custom)
+  const allCategories: VoiceCategoryConfig[] = [
+    ...DEFAULT_VOICE_CATEGORIES,
+    ...customCategories.map((c) => ({
+      id: c.slug,
+      label: c.label,
+      icon: 'Sparkles',
+      emoji: '✨',
+      description: 'Catégorie personnalisée pour vos histoires.',
+      defaultRoles: ['Héros', 'Compagnon', 'Personnage spécial'],
+      defaultTranscript: "Bienvenue dans Calmi ! Je m'apprête à te raconter une histoire merveilleuse. Respire calmement et laisse tes rêves s'envoler..."
+    }))
+  ];
 
-  // Guides transcripts depending on relationship
-  // Guides transcripts depending on relationship or character role
-  const getTranscriptText = () => {
+  const currentCategoryConfig = allCategories.find((c) => c.id === activeCategorySlug) || DEFAULT_VOICE_CATEGORIES[0];
+  const activeVoices = voices.filter((v) => (v.category || 'narrator_family') === activeCategorySlug);
+  const isCategoryFull = activeVoices.length >= SLOTS_PER_SECTION;
+
+  // Icon mapping helper
+  const renderCategoryIcon = (iconName: string, className: string = "w-4 h-4") => {
+    switch (iconName) {
+      case 'BookOpen': return <BookOpen className={className} />;
+      case 'PawPrint': return <PawPrint className={className} />;
+      case 'Feather': return <Feather className={className} />;
+      case 'Waves': return <Waves className={className} />;
+      case 'Ghost': return <Ghost className={className} />;
+      case 'Sparkles':
+      default:
+        return <Sparkles className={className} />;
+    }
+  };
+
+  // Guided transcripts depending on relationship or character role
+  const getTranscriptText = (catSlug?: string) => {
+    const targetSlug = catSlug || targetCategorySlug;
     const norm = relationName.trim().toLowerCase();
-    if (norm.includes('volant') || norm.includes('oiseau') || norm.includes('chouette') || norm.includes('hibou')) {
+
+    if (targetSlug === 'animal_flying' || norm.includes('volant') || norm.includes('oiseau') || norm.includes('chouette') || norm.includes('hibou')) {
       return "Hou hou ! Je suis le gardien du ciel étoilé. Mes ailes déployées me permettent de voler tout là-haut au-dessus des nuages. Suis-moi dans les étoiles pour un voyage magique ce soir !";
     }
-    if (norm.includes('aquatique') || norm.includes('dauphin') || norm.includes('baleine') || norm.includes('poisson')) {
+    if (targetSlug === 'animal_aquatic' || norm.includes('aquatique') || norm.includes('dauphin') || norm.includes('baleine') || norm.includes('poisson')) {
       return "Plouf ! Je nage calmement dans les profondeurs bleues de l'océan enchanté. Écoute le chant des vagues et laisse-toi porter au fil de l'eau vers des rêves merveilleux...";
     }
-    if (norm.includes('terrestre') || norm.includes('ours') || norm.includes('chien') || norm.includes('chat') || norm.includes('renard')) {
+    if (targetSlug === 'animal_land' || norm.includes('terrestre') || norm.includes('ours') || norm.includes('chien') || norm.includes('chat') || norm.includes('renard') || norm.includes('loup')) {
       return "Bienvenue dans la forêt magique ! Je suis ton compagnon tout doux. Avec mes grosses pattes et mon pelage réconfortant, je suis là pour veiller sur ton sommeil en toute sécurité.";
     }
-    if (norm.includes('fille') || norm.includes('princesse')) {
-      return "Coucou ! Je suis prête pour une grande aventure magique. Je ferme les yeux, j'écoute les fées chuchoter dans le vent et je m'apprête à faire les plus beaux rêves du monde !";
+    if (targetSlug === 'magical_creatures' || norm.includes('monstre') || norm.includes('troll') || norm.includes('robot') || norm.includes('fée') || norm.includes('lutin')) {
+      return "Bip boup ! Groaar tout doux ! Ne t'inquiète pas, je suis un monstre très gentil venu d'une lointaine planète magique pour te faire rire et t'accompagner au pays des merveilles !";
     }
-    if (norm.includes('garçon') || norm.includes('prince')) {
-      return "Salut ! Avec mon doudou et mon super courage, rien ne me fait peur. Je m'installe confortablement sous la couette pour écouter la plus belle histoire de la nuit !";
+    if (targetSlug === 'children' || norm.includes('fille') || norm.includes('garçon') || norm.includes('prince') || norm.includes('princesse')) {
+      return "Coucou ! Avec mon doudou et mon super courage, rien ne me fait peur. Je ferme les yeux, j'écoute les fées chuchoter dans le vent et je m'apprête à vivre la plus belle des aventures !";
     }
     if (norm.includes('maman') || norm.includes('mère')) {
       return "Ferme les yeux doucement mon petit ange, je suis tout près de toi. Les étoiles brillent dans la nuit pour veiller sur tes rêves les plus doux. Écoute ma voix te transporter vers un pays de nuages merveilleux ce soir...";
@@ -91,20 +128,34 @@ export const VoiceStudio: React.FC = () => {
     if (norm.includes('papy') || norm.includes('grand-père') || norm.includes('mamie') || norm.includes('grand-mère')) {
       return "Coucou mon chéri, installe-toi bien chaudement. Papy et Mamie sont là pour te faire voyager dans un monde plein de magie et d'aventures ce soir. Laisse mon histoire t'envelopper comme un doux câlin...";
     }
-    return "Bienvenue dans Calmi, je m'apprête à te raconter une histoire merveilleuse pour t'endormir paisiblement. Respire calmement, écoute ma voix t'emmener dans les étoiles, et laisse tes rêves s'envoler doucement...";
+    
+    const catConfig = allCategories.find((c) => c.id === targetSlug);
+    return catConfig?.defaultTranscript || "Bienvenue dans Calmi, je m'apprête à te raconter une histoire merveilleuse pour t'endormir paisiblement. Respire calmement, écoute ma voix t'emmener dans les étoiles, et laisse tes rêves s'envoler doucement...";
   };
 
-  const fetchVoices = async () => {
+  const fetchVoicesAndCategories = async () => {
     if (!user) return;
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // 1. Fetch user voices
+      const { data: voiceData, error: voiceError } = await supabase
         .from('user_voices')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setVoices(data as CustomVoice[]);
+      if (voiceError) throw voiceError;
+      setVoices((voiceData as UserVoice[]) || []);
+
+      // 2. Fetch custom categories
+      const { data: catData, error: catError } = await supabase
+        .from('user_voice_categories')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (!catError && catData) {
+        setCustomCategories(catData as CustomVoiceCategory[]);
+      }
     } catch (err: any) {
       console.error('Error fetching voices:', err);
       toast({
@@ -118,7 +169,7 @@ export const VoiceStudio: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchVoices();
+    fetchVoicesAndCategories();
   }, [user]);
 
   // Clean up all audio resources on unmount
@@ -159,7 +210,6 @@ export const VoiceStudio: React.FC = () => {
   // Enumerate microphones
   const loadMicrophones = async () => {
     try {
-      // Temporary permission request to get device labels
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(track => track.stop());
 
@@ -174,12 +224,113 @@ export const VoiceStudio: React.FC = () => {
     }
   };
 
-  // Load mics when the recording modal opens
   useEffect(() => {
     if (isRecordingModalOpen) {
       loadMicrophones();
     }
   }, [isRecordingModalOpen]);
+
+  // Open recording modal with preselected category
+  const openRecordingForCategory = (categorySlug: string) => {
+    setTargetCategorySlug(categorySlug);
+    setRelationName('');
+    setRecordingStep('info');
+    setIsRecordingModalOpen(true);
+  };
+
+  // Open invitation modal with preselected category
+  const openInviteForCategory = (categorySlug: string) => {
+    setInviteCategorySlug(categorySlug);
+    setInviteRelation('');
+    setGeneratedInviteLink('');
+    setIsInviteModalOpen(true);
+  };
+
+  // Create new custom category
+  const handleCreateCategory = async () => {
+    if (!newCategoryLabel.trim() || !user) return;
+    setIsCreatingCategory(true);
+
+    try {
+      const rawSlug = newCategoryLabel
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+
+      const slug = `custom_${rawSlug || Date.now()}`;
+
+      const { data, error } = await supabase
+        .from('user_voice_categories')
+        .insert({
+          user_id: user.id,
+          slug: slug,
+          label: newCategoryLabel.trim(),
+          icon: 'Sparkles'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "🎉 Catégorie créée !",
+        description: `La section « ${newCategoryLabel.trim()} » a été ajoutée avec 5 nouveaux slots.`,
+      });
+
+      setNewCategoryLabel('');
+      setIsNewCategoryModalOpen(false);
+      await fetchVoicesAndCategories();
+      setActiveCategorySlug(slug);
+    } catch (err: any) {
+      console.error('Error creating custom category:', err);
+      toast({
+        title: "Erreur",
+        description: err.message || "Impossible de créer la catégorie",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  };
+
+  // Delete custom category
+  const handleDeleteCategory = async (cat: CustomVoiceCategory) => {
+    const categoryVoicesCount = voices.filter(v => v.category === cat.slug).length;
+    if (categoryVoicesCount > 0) {
+      if (!window.confirm(`Cette catégorie contient ${categoryVoicesCount} voix enregistrée(s). La suppression de la catégorie supprimera également ces voix. Voulez-vous continuer ?`)) {
+        return;
+      }
+    } else {
+      if (!window.confirm(`Voulez-vous supprimer la catégorie « ${cat.label} » ?`)) return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('user_voice_categories')
+        .delete()
+        .eq('id', cat.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Catégorie supprimée",
+        description: `La catégorie « ${cat.label} » a été retirée.`,
+      });
+
+      setActiveCategorySlug('narrator_family');
+      fetchVoicesAndCategories();
+    } catch (err: any) {
+      console.error('Error deleting category:', err);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la catégorie",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Start micro recording
   const startRecording = async () => {
@@ -193,7 +344,6 @@ export const VoiceStudio: React.FC = () => {
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      // Déterminer le format supporté
       const formats = [
         { mimeType: 'audio/webm', ext: 'webm' },
         { mimeType: 'audio/ogg', ext: 'ogg' },
@@ -229,10 +379,8 @@ export const VoiceStudio: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        // Stop all tracks in stream to release microphone after recording is stopped
         stream.getTracks().forEach(track => track.stop());
 
-        // Detect actual mimeType and extension dynamically from MediaRecorder
         const actualMimeType = mediaRecorder.mimeType || selectedFormat.mimeType || 'audio/webm';
         let actualExt = selectedFormat.ext || 'webm';
         if (actualMimeType.includes('mp4') || actualMimeType.includes('m4a')) {
@@ -248,22 +396,20 @@ export const VoiceStudio: React.FC = () => {
         }
 
         audioFormatRef.current = { mimeType: actualMimeType, ext: actualExt };
+        const recordedBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
 
-        const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
-        console.log("Recorded blob size:", audioBlob.size, "bytes", "format:", audioFormatRef.current);
-
-        if (audioBlob.size < 10000) {
+        if (recordedBlob.size < 10000) {
           toast({
             title: "Enregistrement trop court ou silencieux",
-            description: `Le microphone n'a capturé aucun son valide. (Taille : ${(audioBlob.size / 1024).toFixed(1)} Ko, Format : ${audioFormatRef.current.mimeType}, Blocs : ${audioChunksRef.current.length}). Veuillez réessayer en parlant bien en face du micro.`,
+            description: `Le microphone n'a capturé aucun son valide. Veuillez réessayer en parlant bien en face du micro.`,
             variant: "destructive"
           });
           setRecordingStep('info');
           return;
         }
 
-        const url = URL.createObjectURL(audioBlob);
-        setAudioBlob(audioBlob);
+        const url = URL.createObjectURL(recordedBlob);
+        setAudioBlob(recordedBlob);
         setAudioUrl(url);
         setRecordingStep('preview');
       };
@@ -271,7 +417,6 @@ export const VoiceStudio: React.FC = () => {
       mediaRecorder.start(1000);
       setRecordingStep('recording');
 
-      // 15 seconds timer
       let seconds = 0;
       timerIntervalRef.current = setInterval(() => {
         seconds += 1;
@@ -323,11 +468,10 @@ export const VoiceStudio: React.FC = () => {
       audio.onended = () => setIsPlayingPreview(false);
       
       audio.onerror = () => {
-        console.error("Audio element error during preview playback:", audio.error);
         setIsPlayingPreview(false);
         toast({
           title: "Erreur de décodage",
-          description: `Impossible de charger l'échantillon (code ${audio.error?.code || 'inconnu'}).`,
+          description: `Impossible de charger l'échantillon vocal.`,
           variant: "destructive"
         });
       };
@@ -341,7 +485,7 @@ export const VoiceStudio: React.FC = () => {
           setIsPlayingPreview(false);
           toast({
             title: "Erreur de lecture",
-            description: "Impossible de lire l'extrait. L'enregistrement est peut-être vide ou bloqué par le navigateur.",
+            description: "Impossible de lire l'extrait. L'enregistrement est peut-être bloqué par le navigateur.",
             variant: "destructive"
           });
         });
@@ -356,7 +500,8 @@ export const VoiceStudio: React.FC = () => {
     try {
       const voiceId = crypto.randomUUID();
       const format = audioFormatRef.current;
-      const filePath = `${user.id}/${voiceId}.${format.ext}`; // Upload inside user folder with correct extension
+      const filePath = `${user.id}/${voiceId}.${format.ext}`;
+      const activeCat = allCategories.find((c) => c.id === targetCategorySlug);
 
       // 1. Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -377,19 +522,21 @@ export const VoiceStudio: React.FC = () => {
           user_id: user.id,
           name: `Voix de ${relationName}`,
           voice_ref_path: filePath,
-          transcript: getTranscriptText(),
-          relation: relationName
+          transcript: getTranscriptText(targetCategorySlug),
+          relation: relationName,
+          category: targetCategorySlug,
+          category_name: activeCat?.label || null
         });
 
       if (dbError) throw dbError;
 
       toast({
         title: "🎉 Clone vocal créé !",
-        description: `La voix de ${relationName} est maintenant prête à être utilisée dans le lecteur.`,
+        description: `La voix de « ${relationName} » est prête dans la section ${activeCat?.label || 'du Studio'}.`,
       });
 
       closeRecordingModal();
-      fetchVoices();
+      fetchVoicesAndCategories();
     } catch (err: any) {
       console.error('Error saving voice:', err);
       toast({
@@ -402,11 +549,10 @@ export const VoiceStudio: React.FC = () => {
   };
 
   // Delete Cloned Voice
-  const handleDeleteVoice = async (voice: CustomVoice) => {
+  const handleDeleteVoice = async (voice: UserVoice) => {
     if (!window.confirm(`Voulez-vous vraiment supprimer la ${voice.name} ?`)) return;
 
     try {
-      // 1. Delete from DB
       const { error: dbError } = await supabase
         .from('user_voices')
         .delete()
@@ -414,7 +560,6 @@ export const VoiceStudio: React.FC = () => {
 
       if (dbError) throw dbError;
 
-      // 2. Delete from storage
       await supabase.storage
         .from('voice-clones')
         .remove([voice.voice_ref_path]);
@@ -424,7 +569,7 @@ export const VoiceStudio: React.FC = () => {
         description: "La voix a été retirée de vos profils."
       });
 
-      fetchVoices();
+      fetchVoicesAndCategories();
     } catch (err: any) {
       console.error('Error deleting voice:', err);
       toast({
@@ -436,8 +581,7 @@ export const VoiceStudio: React.FC = () => {
   };
 
   // Test listen existing cloned voice
-  const handleTestListen = async (voice: CustomVoice) => {
-    // If this exact voice is already playing, stop it
+  const handleTestListen = async (voice: UserVoice) => {
     if (playingVoiceId === voice.id && testAudioRef.current) {
       testAudioRef.current.pause();
       testAudioRef.current = null;
@@ -445,7 +589,6 @@ export const VoiceStudio: React.FC = () => {
       return;
     }
 
-    // Stop any other test voice currently playing
     if (testAudioRef.current) {
       testAudioRef.current.pause();
       testAudioRef.current = null;
@@ -466,25 +609,23 @@ export const VoiceStudio: React.FC = () => {
         };
 
         audio.onerror = () => {
-          console.error("Test listen audio error:", audio.error);
           setPlayingVoiceId(null);
           toast({
             title: "Erreur de décodage",
-            description: `Impossible de charger l'échantillon vocal (code ${audio.error?.code || 'inconnu'}).`,
+            description: `Impossible de charger l'échantillon vocal.`,
             variant: "destructive"
           });
         };
 
-        audio.play()
-          .catch(err => {
-            console.error("Test listen play error:", err);
-            setPlayingVoiceId(null);
-            toast({
-              title: "Erreur de lecture",
-              description: "Impossible de lire l'échantillon vocal de référence. L'enregistrement est peut-être vide, corrompu, ou bloqué par le navigateur.",
-              variant: "destructive"
-            });
+        audio.play().catch(err => {
+          console.error("Test play error:", err);
+          setPlayingVoiceId(null);
+          toast({
+            title: "Erreur de lecture",
+            description: "Impossible de lire l'échantillon vocal de référence.",
+            variant: "destructive"
           });
+        });
           
         toast({
           title: `Écoute de la ${voice.name}…`,
@@ -497,29 +638,30 @@ export const VoiceStudio: React.FC = () => {
     }
   };
 
-  // Generate distant sharing invitation link for grandparents
+  // Generate distant sharing invitation link
   const handleGenerateInvite = async () => {
     if (!inviteRelation.trim() || !user) return;
     setInviteLoading(true);
 
     try {
       const inviteToken = crypto.randomUUID();
+      const catConfig = allCategories.find((c) => c.id === inviteCategorySlug);
       
       const { error } = await supabase
         .from('voice_invitations')
         .insert({
           user_id: user.id,
           relation_name: inviteRelation,
+          category: inviteCategorySlug,
+          category_name: catConfig?.label || null,
           token: inviteToken,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days expiration
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
         });
 
       if (error) throw error;
 
-      // Create full public link
       const publicLink = `${window.location.origin}/shared-voice-record/${inviteToken}`;
       setGeneratedInviteLink(publicLink);
-      setRecordingStep('info'); // Reset recording steps
     } catch (err: any) {
       console.error('Error creating invitation:', err);
       toast({
@@ -558,14 +700,16 @@ export const VoiceStudio: React.FC = () => {
     );
   }
 
+  const customCatObj = customCategories.find(c => c.slug === activeCategorySlug);
+
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-6 space-y-6 md:space-y-8 pb-24">
+    <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-6 md:space-y-8 pb-24">
       {/* Header and Back Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <button
             onClick={() => navigate('/settings')}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-2"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-2 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Retour aux paramètres
           </button>
@@ -574,184 +718,252 @@ export const VoiceStudio: React.FC = () => {
             Studio des Voix Familiales
           </h1>
           <p className="text-sm text-muted-foreground">
-            Enregistrez ou invitez des membres de la famille à cloner leur voix pour lire les histoires de vos enfants.
+            Enregistrez jusqu'à 5 voix par section pour donner vie aux narrateurs et personnages secondaires de vos histoires.
           </p>
         </div>
 
-        {/* Display limit badges */}
+        {/* Global stats badge */}
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs bg-primary-soft/10 text-primary border-primary/20 py-1 px-3">
-            <Sparkles className="w-3 h-3 text-[#E9C46A] mr-1" />
-            Slots Vocaux : {voices.length} / {maxClones}
+          <Badge variant="outline" className="text-xs bg-primary-soft/10 text-primary border-primary/20 py-1.5 px-3">
+            <Sparkles className="w-3.5 h-3.5 text-[#E9C46A] mr-1.5" />
+            Total voix actives : {voices.length}
           </Badge>
         </div>
       </div>
 
-      {/* Slots Description / Warning */}
-      {maxClones === 0 ? (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-6 text-center space-y-4">
-            <Sparkles className="w-10 h-10 mx-auto text-[#E9C46A] animate-pulse" />
-            <div>
-              <h3 className="font-bold text-lg">Débloquez le Clonage Vocal</h3>
-              <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-                Le clonage vocal est une fonctionnalité premium réservée aux membres de nos abonnements Calmi. 
-                Faites cloner la voix de Maman, Papa ou Papy pour raconter des histoires uniques !
-              </p>
-            </div>
-            <Button onClick={() => navigate('/pricing')} className="px-6">
-              Découvrir nos plans
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* 🌟 Slots and Cards Grid */}
-          <div className="md:col-span-2 space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Custom voices cards */}
-              {voices.map((voice) => (
-                <Card key={voice.id} className="relative overflow-hidden group hover:shadow-md transition-shadow">
-                  <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-base font-bold">{voice.name}</CardTitle>
-                        <Badge variant="secondary" className="text-[10px] mt-1 capitalize">
-                          {voice.relation}
-                        </Badge>
-                      </div>
-                      <Heart className="w-5 h-5 text-red-400 fill-red-400/20" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-3 text-xs text-muted-foreground truncate">
-                    "{voice.transcript?.substring(0, 50)}..."
-                  </CardContent>
-                  <CardFooter className="pt-2 border-t flex justify-between">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className={`text-xs h-8 text-primary hover:bg-primary-soft/10 ${playingVoiceId === voice.id ? 'text-amber-500 hover:text-amber-600 bg-amber-50' : ''}`}
-                      onClick={() => handleTestListen(voice)}
-                    >
-                      {playingVoiceId === voice.id ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Arrêter
-                        </>
-                      ) : (
-                        <>
-                          <Volume2 className="w-3.5 h-3.5 mr-1" /> Écouter
-                        </>
-                      )}
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-xs h-8 text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDeleteVoice(voice)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+      {/* 🧭 Horizontal Tabs Navigation Bar */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Catégories de voix
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsNewCategoryModalOpen(true)}
+            className="text-xs h-8 border-dashed border-primary/40 text-primary hover:bg-primary-soft/10"
+          >
+            <FolderPlus className="w-3.5 h-3.5 mr-1.5" /> Nouvelle catégorie
+          </Button>
+        </div>
 
-              {/* Remaining Empty slots cards */}
-              {Array.from({ length: Math.max(0, maxClones - voices.length) }).map((_, index) => (
-                <Card 
-                  key={index} 
-                  className="border-dashed border-2 hover:border-primary-soft/80 bg-muted/20 flex flex-col items-center justify-center p-6 text-center min-h-[160px] transition-colors"
-                >
-                  <div className="h-10 w-10 rounded-full bg-primary-soft/10 flex items-center justify-center mb-2">
-                    <Plus className="h-6 w-6 text-primary" />
-                  </div>
-                  <h4 className="font-bold text-sm text-foreground">Emplacement vide</h4>
-                  <p className="text-xs text-muted-foreground mt-1 mb-3">
-                    Prêt pour une nouvelle voix
-                  </p>
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      className="text-xs"
-                      onClick={() => setIsRecordingModalOpen(true)}
-                    >
-                      Enregistrer
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="text-xs"
-                      onClick={() => setIsInviteModalOpen(true)}
-                    >
-                      <Share2 className="w-3 h-3 mr-1" /> Inviter
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted">
+          {allCategories.map((cat) => {
+            const count = voices.filter(v => (v.category || 'narrator_family') === cat.id).length;
+            const isActive = activeCategorySlug === cat.id;
+
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategorySlug(cat.id)}
+                className={cn(
+                  "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all border shrink-0",
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-background hover:bg-muted/60 text-muted-foreground hover:text-foreground border-border"
+                )}
+              >
+                <span className="text-sm">{cat.emoji}</span>
+                <span>{cat.label}</span>
+                <span className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
+                  isActive
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {count}/{SLOTS_PER_SECTION}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 🌟 Active Category View */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Left 2 Cols: 5 Slots Grid */}
+        <div className="md:col-span-2 space-y-4">
+          
+          {/* Section banner & Description */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-card border shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary-soft/10 text-primary flex items-center justify-center text-xl shrink-0">
+                {currentCategoryConfig.emoji}
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  {currentCategoryConfig.label}
+                  <Badge variant="secondary" className="text-[10px] py-0 px-2">
+                    {activeVoices.length} / {SLOTS_PER_SECTION} voix
+                  </Badge>
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {currentCategoryConfig.description}
+                </p>
+              </div>
             </div>
+
+            {customCatObj && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-destructive hover:bg-destructive/10 h-8"
+                onClick={() => handleDeleteCategory(customCatObj)}
+                title="Supprimer cette catégorie"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
           </div>
 
-          {/* 📱 Distant grandparent information panel */}
-          <div className="space-y-6">
-            <Card className="bg-[#A8DADC]/5 border-[#A8DADC]/30">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Smartphone className="w-5 h-5 text-primary" />
-                  Le Lien Papy & Mamie
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Connectez les générations éloignées
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-xs space-y-3 leading-relaxed">
-                <p>
-                  Vous avez un grand-parent qui vit loin ou qui ne peut pas se déplacer ? 
-                  Envoyez-lui simplement un **Lien d'invitation à distance** !
-                </p>
-                <p>
-                  Il cliquera dessus depuis son smartphone, lira un court texte à voix haute sans aucune inscription, 
-                  et sa voix s'ajoutera automatiquement dans votre compte Calmi pour lire les histoires.
-                </p>
-                <div className="flex justify-center pt-2">
+          {/* Slots Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            {/* 1. Recorded custom voices in this category */}
+            {activeVoices.map((voice) => (
+              <Card key={voice.id} className="relative overflow-hidden group hover:shadow-md transition-shadow">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-base font-bold truncate max-w-[170px]">{voice.name}</CardTitle>
+                      <Badge variant="secondary" className="text-[10px] mt-1 capitalize">
+                        {voice.relation}
+                      </Badge>
+                    </div>
+                    <Heart className="w-5 h-5 text-red-400 fill-red-400/20 shrink-0" />
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-3 text-xs text-muted-foreground truncate">
+                  "{voice.transcript?.substring(0, 50)}..."
+                </CardContent>
+                <CardFooter className="pt-2 border-t flex justify-between">
                   <Button 
-                    variant="outline" 
-                    onClick={() => setIsInviteModalOpen(true)}
-                    disabled={isSlotLimitReached}
-                    className="w-full text-xs font-semibold"
+                    variant="ghost" 
+                    size="sm" 
+                    className={cn(
+                      "text-xs h-8 text-primary hover:bg-primary-soft/10",
+                      playingVoiceId === voice.id && "text-amber-500 hover:text-amber-600 bg-amber-50"
+                    )}
+                    onClick={() => handleTestListen(voice)}
                   >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Générer une invitation
+                    {playingVoiceId === voice.id ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Arrêter
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5 mr-1" /> Écouter
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs h-8 text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDeleteVoice(voice)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+
+            {/* 2. Remaining Empty slots cards for this section (up to 5) */}
+            {Array.from({ length: Math.max(0, SLOTS_PER_SECTION - activeVoices.length) }).map((_, index) => (
+              <Card 
+                key={`empty_${index}`} 
+                className="border-dashed border-2 hover:border-primary-soft/80 bg-muted/20 flex flex-col items-center justify-center p-6 text-center min-h-[160px] transition-colors"
+              >
+                <div className="h-10 w-10 rounded-full bg-primary-soft/10 flex items-center justify-center mb-2">
+                  <Plus className="h-6 w-6 text-primary" />
+                </div>
+                <h4 className="font-bold text-sm text-foreground">Emplacement disponible</h4>
+                <p className="text-xs text-muted-foreground mt-1 mb-3">
+                  Slot {activeVoices.length + index + 1} / {SLOTS_PER_SECTION} ({currentCategoryConfig.label})
+                </p>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => openRecordingForCategory(activeCategorySlug)}
+                  >
+                    <Mic className="w-3.5 h-3.5 mr-1" /> Enregistrer
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="text-xs"
+                    onClick={() => openInviteForCategory(activeCategorySlug)}
+                  >
+                    <Share2 className="w-3 h-3 mr-1" /> Inviter
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Micro FAQ */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-1">
-                  <HelpCircle className="w-4 h-4 text-muted-foreground" />
-                  Conseils d'enregistrement
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-[11px] text-muted-foreground space-y-2">
-                <p>
-                  🎙️ **Silence** : Enregistrez dans une pièce parfaitement calme sans bruit de fond.
-                </p>
-                <p>
-                  😊 **Ton** : Adoptez une voix posée, chaleureuse et souriante, comme si vous lisiez directement au lit.
-                </p>
-                <p>
-                  📱 **Distance** : Parlez à environ 15-20 cm du microphone, sans souffler directement dedans.
-                </p>
-              </CardContent>
-            </Card>
+              </Card>
+            ))}
           </div>
         </div>
-      )}
 
-      {/* 🔴 1. ASSISTANT D'ENREGISTREMENT MODAL (PAS-À-PAS) */}
+        {/* Right 1 Col: Distance invite info & Micro FAQ */}
+        <div className="space-y-6">
+          <Card className="bg-[#A8DADC]/5 border-[#A8DADC]/30">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-primary" />
+                Lien d'invitation à distance
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Faites participer vos proches facilement
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-xs space-y-3 leading-relaxed">
+              <p>
+                Vous avez un proche (grand-parent, ami, parrain) qui vit loin ? 
+                Générez un <strong>lien d'invitation temporaire</strong> !
+              </p>
+              <p>
+                Il cliquera dessus depuis son smartphone, lira un court texte de 15 secondes sans inscription, 
+                et sa voix s'ajoutera automatiquement dans votre section <strong>{currentCategoryConfig.label}</strong>.
+              </p>
+              <div className="flex justify-center pt-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => openInviteForCategory(activeCategorySlug)}
+                  disabled={isCategoryFull}
+                  className="w-full text-xs font-semibold"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Inviter dans cette section
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Micro FAQ */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-1">
+                <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                Conseils d'enregistrement
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-[11px] text-muted-foreground space-y-2">
+              <p>
+                🎙️ <strong>Silence</strong> : Enregistrez dans une pièce parfaitement calme sans bruit de fond.
+              </p>
+              <p>
+                🎭 <strong>Intonation</strong> : Jouez le personnage ! Adoptez une voix chaleureuse pour un narrateur, grave pour un ours, ou enjouée pour un petit compagnon.
+              </p>
+              <p>
+                📱 <strong>Distance</strong> : Parlez à environ 15-20 cm du microphone, sans souffler directement dedans.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* 🔴 1. MODALE D'ENREGISTREMENT PAS-À-PAS */}
       <Dialog open={isRecordingModalOpen} onOpenChange={closeRecordingModal}>
         <DialogContent className="max-w-md p-6">
           <DialogHeader>
@@ -760,25 +972,47 @@ export const VoiceStudio: React.FC = () => {
               Créer votre voix personnalisée
             </DialogTitle>
             <DialogDescription>
-              Enregistrez un échantillon de 15 secondes.
+              Enregistrez un échantillon de 15 secondes pour la section <strong>{allCategories.find(c => c.id === targetCategorySlug)?.label}</strong>.
             </DialogDescription>
           </DialogHeader>
 
-          {/* ÉTAPE 1 : Choix de la relation */}
+          {/* ÉTAPE 1 : Choix de la relation et du rôle */}
           {recordingStep === 'info' && (
             <div className="space-y-4 py-2">
+              
+              {/* Category Selector */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Catégorie
+                </label>
+                <select
+                  value={targetCategorySlug}
+                  onChange={(e) => setTargetCategorySlug(e.target.value)}
+                  className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  {allCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.emoji} {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Character Role Name */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Qui enregistre sa voix / Quel rôle ?
+                  Nom du personnage ou rôle
                 </label>
                 <Input
-                  placeholder="Ex: Maman, Papa, Enfant Garçon, Animal Terrestre..."
+                  placeholder="Ex: L'Ours doux, Le Petit Renard, Papa, Monstre rigolo..."
                   value={relationName}
                   onChange={(e) => setRelationName(e.target.value)}
                   className="w-full"
                 />
+                
+                {/* Suggestions chips for target category */}
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {['Narrateur (Papa/Maman)', 'Enfant Garçon', 'Enfant Fille', 'Animal Terrestre (Ours/Chien)', 'Animal Volant (Oiseau)', 'Animal Aquatique (Dauphin)'].map((role) => (
+                  {(allCategories.find(c => c.id === targetCategorySlug)?.defaultRoles || []).map((role) => (
                     <button
                       key={role}
                       type="button"
@@ -791,15 +1025,16 @@ export const VoiceStudio: React.FC = () => {
                 </div>
               </div>
 
+              {/* Microphone choice */}
               {devices.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Choisir votre microphone
                   </label>
                   <select
                     value={selectedDeviceId}
                     onChange={(e) => setSelectedDeviceId(e.target.value)}
-                    className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   >
                     {devices.map((device) => (
                       <option key={device.deviceId} value={device.deviceId}>
@@ -810,17 +1045,10 @@ export const VoiceStudio: React.FC = () => {
                 </div>
               )}
 
-              <div className="text-xs text-muted-foreground space-y-2 leading-relaxed bg-muted/30 p-3 rounded-lg border">
-                <p className="font-semibold">Comment ça marche ?</p>
-                <p>
-                  1. Vous allez devoir lire à haute voix un court texte chaleureux de 15 secondes.
-                </p>
-                <p>
-                  2. Notre système modélisera instantanément votre timbre de voix.
-                </p>
-                <p>
-                  3. Votre voix sera immédiatement disponible pour raconter n'importe quelle histoire !
-                </p>
+              <div className="text-xs text-muted-foreground space-y-1.5 leading-relaxed bg-muted/30 p-3 rounded-lg border">
+                <p className="font-semibold text-foreground">Comment ça marche ?</p>
+                <p>1. Lisez à voix haute le court texte guidé de 15 secondes.</p>
+                <p>2. Le système modélise votre voix et l'attribue aux dialogues du personnage dans le livre audio.</p>
               </div>
 
               <DialogFooter>
@@ -870,10 +1098,10 @@ export const VoiceStudio: React.FC = () => {
 
               <div className="bg-primary-soft/10 p-4 rounded-xl border border-primary/10 text-left">
                 <p className="text-xs text-primary font-bold uppercase tracking-wider mb-2">
-                  Lisez ce texte avec amour :
+                  Lisez ce texte avec l'intonation du personnage :
                 </p>
                 <p className="text-sm font-medium leading-relaxed italic text-foreground">
-                  "{getTranscriptText()}"
+                  "{getTranscriptText(targetCategorySlug)}"
                 </p>
               </div>
 
@@ -902,7 +1130,7 @@ export const VoiceStudio: React.FC = () => {
 
               <div className="flex justify-center py-2">
                 <Button 
-                  variant="outline"
+                  variant="outline" 
                   onClick={togglePreviewPlayback}
                   className="flex items-center gap-2"
                 >
@@ -944,7 +1172,7 @@ export const VoiceStudio: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 🔵 2. INVITATION À DISTANCE MODAL */}
+      {/* 🔵 2. MODALE D'INVITATION À DISTANCE */}
       <Dialog open={isInviteModalOpen} onOpenChange={closeInviteModal}>
         <DialogContent className="max-w-md p-6">
           <DialogHeader>
@@ -958,9 +1186,25 @@ export const VoiceStudio: React.FC = () => {
           </DialogHeader>
 
           {!generatedInviteLink ? (
-            // Form to create link
             <div className="space-y-4 py-2">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Catégorie d'attribution
+                </label>
+                <select
+                  value={inviteCategorySlug}
+                  onChange={(e) => setInviteCategorySlug(e.target.value)}
+                  className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  {allCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.emoji} {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Relation ou Prénom du proche
                 </label>
@@ -988,7 +1232,6 @@ export const VoiceStudio: React.FC = () => {
               </DialogFooter>
             </div>
           ) : (
-            // Generated link view
             <div className="space-y-4 py-2">
               <div className="text-center space-y-2">
                 <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center mx-auto text-green-500">
@@ -996,7 +1239,7 @@ export const VoiceStudio: React.FC = () => {
                 </div>
                 <h4 className="font-bold text-sm">Lien généré avec succès !</h4>
                 <p className="text-xs text-muted-foreground">
-                  Envoyez ce lien à **{inviteRelation}**. Il expirera dans exactement 7 jours.
+                  Envoyez ce lien à <strong>{inviteRelation}</strong>. Il expirera dans exactement 7 jours.
                 </p>
               </div>
 
@@ -1022,6 +1265,53 @@ export const VoiceStudio: React.FC = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ➕ 3. MODALE DE CRÉATION DE CATÉGORIE PERSONNALISÉE */}
+      <Dialog open={isNewCategoryModalOpen} onOpenChange={setIsNewCategoryModalOpen}>
+        <DialogContent className="max-w-md p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FolderPlus className="h-5 w-5 text-primary" />
+              Créer une nouvelle catégorie
+            </DialogTitle>
+            <DialogDescription>
+              Ajoutez une section personnalisée (ex: « Véhicules parlants », « Objets enchantés ») qui bénéficiera de ses 5 slots vocaux dédiés.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Titre de la catégorie
+              </label>
+              <Input
+                placeholder="Ex: Véhicules et engins, Objets enchantés..."
+                value={newCategoryLabel}
+                onChange={(e) => setNewCategoryLabel(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsNewCategoryModalOpen(false)}
+                disabled={isCreatingCategory}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleCreateCategory}
+                disabled={!newCategoryLabel.trim() || isCreatingCategory}
+                className="flex items-center gap-2"
+              >
+                {isCreatingCategory && <Loader2 className="w-4 h-4 animate-spin" />}
+                Créer la catégorie
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

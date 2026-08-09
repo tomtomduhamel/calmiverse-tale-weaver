@@ -92,7 +92,7 @@ Léo répondit avec un grand sourire : « Je sais, la forêt est magnifique ! »
       expect(segments.length).toBeGreaterThan(1);
       
       // Vérifier le premier segment narrateur
-      const narratorSegment = segments.find(s => s.roleCategory === 'narrator');
+      const narratorSegment = segments.find(s => s.roleCategory === 'narrator' || s.roleCategory === 'narrator_family');
       expect(narratorSegment).toBeDefined();
       expect(narratorSegment?.voiceRefUrl).toBe("https://storage.supabase/voice_maman.wav");
 
