@@ -58,8 +58,8 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
       console.log("[StoryReaderHeader] DEBUG: onToggleFavorite n'est pas défini");
     }
   };
-    return <header className="sticky top-0 z-10 border-b p-4 bg-background">
-      <div className="flex items-center justify-between max-w-4xl mx-auto">
+    return <header className="sticky top-0 z-20 w-full py-2.5 mb-3 bg-background/85 backdrop-blur-xl border-b border-border/40 rounded-b-2xl transition-colors">
+      <div className="flex items-center justify-between w-full px-3">
         {/* Bouton retour */}
         <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4 mr-2" />

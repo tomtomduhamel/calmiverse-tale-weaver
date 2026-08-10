@@ -447,7 +447,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const isAudioProcessing = isGenerating || !!currentPendingAudioFile;
 
   return (
-    <div className="fixed bottom-3 sm:bottom-6 inset-x-0 mx-auto z-40 w-[calc(100%-2.5rem)] max-w-[580px] pointer-events-none transition-all duration-300">
+    <div className="fixed bottom-3 sm:bottom-6 inset-x-0 mx-auto z-40 w-[calc(100%-2rem)] max-w-[608px] pointer-events-none transition-all duration-300">
       <div 
         className={cn(
           "pointer-events-auto relative overflow-hidden rounded-2xl border shadow-2xl backdrop-blur-2xl transition-all duration-300",

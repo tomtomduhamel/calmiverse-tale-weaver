@@ -42,9 +42,9 @@ export const StoryReaderContent: React.FC<StoryReaderContentProps> = ({
   return (
     <ScrollArea
       ref={scrollAreaRef}
-      className="flex-1 pr-4"
+      className="flex-1 w-full"
     >
-      <Card className="p-6 transition-all duration-300 mb-6 bg-card animate-fade-in">
+      <Card className="p-6 transition-all duration-300 mb-6 bg-card animate-fade-in w-full">
         <StoryHeader
           story={story}
           childName={childName}
