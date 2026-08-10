@@ -447,16 +447,16 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const isAudioProcessing = isGenerating || !!currentPendingAudioFile;
 
   return (
-    <div className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.25rem)] max-w-lg transition-all duration-300">
+    <div className="fixed bottom-3 sm:bottom-6 inset-x-0 mx-auto z-40 w-[calc(100%-2.5rem)] max-w-[580px] pointer-events-none transition-all duration-300">
       <div 
         className={cn(
-          "relative overflow-hidden rounded-2xl border shadow-2xl backdrop-blur-2xl transition-all duration-300",
+          "pointer-events-auto relative overflow-hidden rounded-2xl border shadow-2xl backdrop-blur-2xl transition-all duration-300",
           isDarkMode 
-            ? "bg-gray-950/85 border-white/15 text-white shadow-black/70" 
+            ? "bg-gray-950/90 border-white/15 text-white shadow-black/80" 
             : "bg-white/90 border-primary-soft/35 text-gray-900 shadow-xl"
         )}
       >
-        {/* 🌟 1. FINE BARRE DE PROGRESSION UNIFIÉE (3 px) */}
+        {/* 🌟 1. FINE BARRE DE PROGRESSION UNIFIÉE (3.5 px) */}
         <div 
           ref={progressBarRef}
           onClick={handleProgressBarClick}
@@ -629,10 +629,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
             </Button>
           </div>
 
-          {/* DROITE : AMBIANCE SONORE (🌙) & OPTIONS */}
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Bouton Ambiance Zen avec Popover Volume */}
-            {soundId && (
+          {/* DROITE : AMBIANCE SONORE (🌙) ÉPURÉE */}
+          <div className="flex items-center shrink-0">
+            {soundId ? (
               <Popover open={isSoundPopoverOpen} onOpenChange={setIsSoundPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -682,35 +681,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                   </div>
                 </PopoverContent>
               </Popover>
-            )}
-
-            {/* Timer / Progression discrète */}
-            <div className="text-[11px] font-mono text-muted-foreground hidden sm:inline-block ml-1">
-              {isAudioActive && duration > 0 ? (
-                `${formatTime(currentTime)} / ${formatTime(duration)}`
-              ) : (
-                `${Math.round(readingProgress)}%`
-              )}
-            </div>
-
-            {/* Bouton Re-générer discret si audio déjà prêt */}
-            {isAudioReady && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={async () => {
-                  toast({
-                    title: "Re-génération",
-                    description: "Recréation du livre audio...",
-                  });
-                  await generateAudio(storyId, text, selectedVoiceId);
-                }}
-                disabled={isAudioProcessing}
-                className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 hidden xs:inline-flex"
-                title="Recréer l'audio avec cette voix"
-              >
-                <RefreshCw className={cn("w-3.5 h-3.5", isAudioProcessing && "animate-spin")} />
-              </Button>
+            ) : (
+              <div className="w-8.5" />
             )}
           </div>
 
