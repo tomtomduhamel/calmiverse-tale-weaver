@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import type { Story, SequelData, StoryDurationMinutes } from '@/types/story';
-import { STORY_DURATION_OPTIONS } from '@/types/story';
+import { STORY_DURATION_OPTIONS, STORY_DURATION_CONFIG } from '@/types/story';
 
 interface CreateSequelButtonProps {
   story: Story;
@@ -187,15 +187,19 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
             <div>
               <Label className="text-sm font-medium flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                Durée de l'histoire
-              </Label>
-              <RadioGroup value={duration.toString()} onValueChange={value => setDuration(parseInt(value) as StoryDurationMinutes)} className="flex gap-4 mt-2">
-                {STORY_DURATION_OPTIONS.map(durationOption => <div key={durationOption} className="flex items-center space-x-2">
-                  <RadioGroupItem value={durationOption.toString()} id={`duration-${durationOption}`} />
-                  <Label htmlFor={`duration-${durationOption}`} className="text-sm">
-                    {durationOption} min
-                  </Label>
-                </div>)}
+              <RadioGroup value={duration.toString()} onValueChange={value => setDuration(parseInt(value) as StoryDurationMinutes)} className="flex flex-wrap gap-4 mt-2">
+                {STORY_DURATION_OPTIONS.map(durationOption => {
+                  const config = STORY_DURATION_CONFIG[durationOption];
+                  return (
+                    <div key={durationOption} className="flex items-center space-x-2">
+                      <RadioGroupItem value={durationOption.toString()} id={`duration-${durationOption}`} />
+                      <Label htmlFor={`duration-${durationOption}`} className="text-sm cursor-pointer">
+                        <span className="font-medium">{config.label}</span>{' '}
+                        <span className="text-muted-foreground text-xs font-normal">({config.sublabel})</span>
+                      </Label>
+                    </div>
+                  );
+                })}
               </RadioGroup>
             </div>
 

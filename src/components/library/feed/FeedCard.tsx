@@ -11,7 +11,7 @@ import { FavoriteButton } from "@/components/story/FavoriteButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Clock, Share2, BookPlus, Loader2, Heart, Library, BookCheck } from "lucide-react";
+import { Clock, Share2, BookPlus, BookOpen, Loader2, Heart, Library, BookCheck } from "lucide-react";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { getStoryIdentity } from "@/utils/objectiveUtils";
@@ -221,11 +221,10 @@ const FeedCard: React.FC<FeedCardProps> = ({
                 Lu
               </span>
             )}
-            <span className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              {readingTime}
+            <span className="flex items-center gap-1.5 font-medium">
+              <BookOpen className="h-3.5 w-3.5 text-primary/80" />
+              <span>{readingTime}</span>
             </span>
-            <span className="text-xs">•</span>
             <span className="text-xs">•</span>
             <span>Il y a {timeAgo}</span>
           </div>

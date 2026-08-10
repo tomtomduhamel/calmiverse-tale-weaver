@@ -25,7 +25,7 @@ import { useSubscription } from '@/hooks/subscription/useSubscription';
 import { useStoryRoutines } from '@/hooks/useStoryRoutines';
 import UpgradePrompt from '@/components/subscription/UpgradePrompt';
 import type { StoryDurationMinutes } from '@/types/story';
-import { STORY_DURATION_OPTIONS } from '@/types/story';
+import { STORY_DURATION_OPTIONS, STORY_DURATION_CONFIG } from '@/types/story';
 
 const DURATION_OPTIONS = STORY_DURATION_OPTIONS;
 
@@ -272,26 +272,35 @@ const FastStoryCreator: React.FC = () => {
 
               {/* Duration buttons */}
               <div className="grid grid-cols-3 gap-3 mb-5">
-                {DURATION_OPTIONS.map(duration => (
-                  <Button
-                    key={duration}
-                    variant="secondary"
-                    className="h-12 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors"
-                    onClick={() => handleCreateStory(duration)}
-                    disabled={isCreatingStory || creatingRoutine}
-                  >
-                    {isCreatingStory || creatingRoutine ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : scheduleEnabled && scheduleDays.length > 0 ? (
-                      <span className="flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
-                        {duration} min
-                      </span>
-                    ) : (
-                      `${duration} min`
-                    )}
-                  </Button>
-                ))}
+                {DURATION_OPTIONS.map(duration => {
+                  const config = STORY_DURATION_CONFIG[duration];
+                  return (
+                    <Button
+                      key={duration}
+                      variant="secondary"
+                      className="h-14 flex flex-col items-center justify-center p-2 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors"
+                      onClick={() => handleCreateStory(duration)}
+                      disabled={isCreatingStory || creatingRoutine}
+                    >
+                      {isCreatingStory || creatingRoutine ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : scheduleEnabled && scheduleDays.length > 0 ? (
+                        <>
+                          <span className="flex items-center gap-1 font-semibold text-xs leading-tight">
+                            <Sparkles className="w-3 h-3 text-primary" />
+                            {config.label}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-normal leading-tight">{config.sublabel}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-semibold text-xs leading-tight">{config.label}</span>
+                          <span className="text-[10px] text-muted-foreground font-normal leading-tight">{config.sublabel}</span>
+                        </>
+                      )}
+                    </Button>
+                  );
+                })}
               </div>
 
               {/* Video toggle */}

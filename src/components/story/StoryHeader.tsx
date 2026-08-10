@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Info, Clock, Heart, ZoomIn } from "lucide-react";
+import { Info, Clock, Heart, ZoomIn, BookOpen } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -55,8 +55,8 @@ export const StoryHeader: React.FC<StoryHeaderProps> = ({
         {story.childrenNames && story.childrenNames.length > 0 && <p className={`mt-1 ${isDarkMode ? "text-gray-300" : "text-muted-foreground"}`}>
             Histoire personnalisée pour {story.childrenNames.join(", ")}
           </p>}
-        <div className={`flex items-center justify-center gap-2 mt-1 text-sm ${isDarkMode ? "text-gray-400" : "text-muted-foreground"}`}>
-          <Clock className="h-4 w-4" />
+        <div className={`flex items-center justify-center gap-1.5 mt-1 text-sm ${isDarkMode ? "text-gray-400" : "text-muted-foreground"}`}>
+          <BookOpen className="h-4 w-4 text-primary/70" />
           <span>{readingTime}</span>
         </div>
         <p className={`text-xs mt-1 ${isDarkMode ? "text-gray-400" : "text-muted-foreground"}`}>{formattedDate}</p>

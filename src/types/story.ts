@@ -106,6 +106,49 @@ export type StoryDurationMinutes = 5 | 10 | 15;
 
 export const STORY_DURATION_OPTIONS: readonly StoryDurationMinutes[] = [5, 10, 15] as const;
 
+export interface StoryDurationOption {
+  minutes: StoryDurationMinutes;
+  label: string;
+  sublabel: string;
+  badge: string;
+  shortDescription: string;
+  description: string;
+}
+
+export const STORY_DURATION_CONFIG: Record<StoryDurationMinutes, StoryDurationOption> = {
+  5: {
+    minutes: 5,
+    label: 'Courte',
+    sublabel: '~5 min',
+    badge: 'Courte (~5 min)',
+    shortDescription: 'Moment calme express',
+    description: 'Une histoire courte et douce (~5 min)',
+  },
+  10: {
+    minutes: 10,
+    label: 'Moyenne',
+    sublabel: '~10 min',
+    badge: 'Moyenne (~10 min)',
+    shortDescription: "L'histoire du soir idéale",
+    description: "Le format idéal pour le rituel du coucher (~10 min)",
+  },
+  15: {
+    minutes: 15,
+    label: 'Longue',
+    sublabel: '~15 min',
+    badge: 'Longue (~15 min)',
+    shortDescription: 'Grande aventure immersive',
+    description: 'Une grande aventure riche et captivante (~15 min)',
+  },
+};
+
+export const getStoryDurationConfig = (minutes?: number | null): StoryDurationOption => {
+  if (minutes === 5 || minutes === 10 || minutes === 15) {
+    return STORY_DURATION_CONFIG[minutes];
+  }
+  return STORY_DURATION_CONFIG[10];
+};
+
 // Rough reading speed for kids-friendly text (words per minute)
 // Unification avec la constante utilisée dans l'affichage du temps de lecture
 import { READING_SPEED_WPM } from '@/utils/readingTime';

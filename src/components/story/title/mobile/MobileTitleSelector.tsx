@@ -3,8 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Loader2, Video, Lock, BookOpen } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { StoryDurationMinutes } from '@/types/story';
+import { STORY_DURATION_OPTIONS, STORY_DURATION_CONFIG, StoryDurationMinutes } from '@/types/story';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { SubscriptionLimits } from '@/types/subscription';
@@ -137,18 +136,22 @@ const MobileTitleSelector: React.FC<MobileTitleSelectorProps> = ({
 
                 {/* Boutons de durée */}
                 <div className="grid grid-cols-3 gap-2">
-                  {([5, 10, 15] as StoryDurationMinutes[]).map(duration => (
-                    <Button
-                      key={duration}
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleTitleClick(title.title, duration)}
-                      disabled={isCreatingStory || isRegenerating}
-                      className="h-9 text-xs font-medium border-none shadow-none hover:bg-primary/5 active:bg-primary/10"
-                    >
-                      {duration} min
-                    </Button>
-                  ))}
+                  {STORY_DURATION_OPTIONS.map(duration => {
+                    const config = STORY_DURATION_CONFIG[duration];
+                    return (
+                      <Button
+                        key={duration}
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleTitleClick(title.title, duration)}
+                        disabled={isCreatingStory || isRegenerating}
+                        className="h-10 px-1 py-1 flex flex-col items-center justify-center text-xs font-medium border-none shadow-none hover:bg-primary/5 active:bg-primary/10"
+                      >
+                        <span className="font-semibold text-[11px] leading-tight">{config.label}</span>
+                        <span className="text-[9px] text-muted-foreground font-normal leading-tight">{config.sublabel}</span>
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>

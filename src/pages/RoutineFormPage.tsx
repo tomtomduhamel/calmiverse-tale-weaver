@@ -27,7 +27,7 @@ import {
   FAST_STORIES_SITUATIONS,
 } from '@/config/fastStoryConfig';
 import type { StoryDurationMinutes } from '@/types/story';
-import { STORY_DURATION_OPTIONS } from '@/types/story';
+import { STORY_DURATION_OPTIONS, STORY_DURATION_CONFIG } from '@/types/story';
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
@@ -411,20 +411,26 @@ const RoutineFormPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {STORY_DURATION_OPTIONS.map(mins => (
-              <button
-                key={mins}
-                type="button"
-                onClick={() => setDurationMinutes(mins)}
-                className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
-                  durationMinutes === mins
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'border-border hover:border-primary/40'
-                }`}
-              >
-                {mins} min
-              </button>
-            ))}
+            {STORY_DURATION_OPTIONS.map(mins => {
+              const config = STORY_DURATION_CONFIG[mins];
+              return (
+                <button
+                  key={mins}
+                  type="button"
+                  onClick={() => setDurationMinutes(mins)}
+                  className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                    durationMinutes === mins
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'border-border hover:border-primary/40'
+                  }`}
+                >
+                  <span>{config.label}</span>{' '}
+                  <span className={durationMinutes === mins ? 'text-primary-foreground/80 text-xs' : 'text-muted-foreground text-xs'}>
+                    ({config.sublabel})
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { STORY_DURATION_OPTIONS, StoryDurationMinutes } from '@/types/story';
+import { STORY_DURATION_OPTIONS, STORY_DURATION_CONFIG, StoryDurationMinutes } from '@/types/story';
 import MobileTitleSelector from './mobile/MobileTitleSelector';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { Switch } from '@/components/ui/switch';
@@ -205,18 +205,28 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="grid grid-cols-3 gap-3">
-                  {STORY_DURATION_OPTIONS.map((duration) => (
-                    <Button
-                      key={duration}
-                      onClick={() => onSelectTitle(title.title, duration, generateVideo)}
-                      disabled={isCreatingStory || isRegenerating}
-                      variant="calm"
-                      size="sm"
-                      className="h-10"
-                    >
-                      {isCreatingStory ? "Création..." : `${duration} min`}
-                    </Button>
-                  ))}
+                  {STORY_DURATION_OPTIONS.map((duration) => {
+                    const config = STORY_DURATION_CONFIG[duration];
+                    return (
+                      <Button
+                        key={duration}
+                        onClick={() => onSelectTitle(title.title, duration, generateVideo)}
+                        disabled={isCreatingStory || isRegenerating}
+                        variant="calm"
+                        size="sm"
+                        className="h-11 flex flex-col items-center justify-center py-1 gap-0.5"
+                      >
+                        {isCreatingStory ? (
+                          "Création..."
+                        ) : (
+                          <>
+                            <span className="font-semibold text-xs leading-tight">{config.label}</span>
+                            <span className="text-[10px] opacity-75 font-normal leading-tight">{config.sublabel}</span>
+                          </>
+                        )}
+                      </Button>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
