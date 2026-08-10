@@ -1,5 +1,62 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeAll } from 'vitest';
+
+beforeAll(() => {
+  if (typeof window === 'undefined') {
+    (globalThis as any).window = {
+      speechSynthesis: {
+        cancel: vi.fn(),
+        speak: vi.fn(),
+        getVoices: vi.fn().mockReturnValue([]),
+      },
+      location: { href: 'http://localhost' },
+      __CALMI_PREVIEW_MODE: false,
+    };
+  }
+});
+
+// Mocks Supabase, Router, et Toasts
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      delete: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+    })),
+    storage: {
+      from: vi.fn(() => ({
+        createSignedUrl: vi.fn().mockImplementation((path: string) => {
+          return Promise.resolve({
+            data: { signedUrl: `https://supabase.storage/audio-files/${path}?token=abc` },
+            error: null,
+          });
+        }),
+      })),
+    },
+    channel: vi.fn(() => ({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn(),
+    })),
+    removeChannel: vi.fn(),
+    functions: {
+      invoke: vi.fn().mockResolvedValue({ data: { provider: 'vps-hostinger' }, error: null }),
+    },
+  },
+}));
+
+vi.mock('@/hooks/use-toast', () => ({
+  toast: vi.fn(),
+  useToast: () => ({
+    toast: vi.fn(),
+  }),
+}));
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
+
 import fs from 'fs';
 import path from 'path';
 
