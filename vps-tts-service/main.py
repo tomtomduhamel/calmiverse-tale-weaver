@@ -123,6 +123,8 @@ def chunk_text(
 
     return chunks_with_pauses
 
+import subprocess
+
 def validate_audio_signal(wav: np.ndarray, sr: int, min_duration_sec: float = 0.5) -> bool:
     """
     Valide qu'un signal audio NumPy n'est ni vide, ni trop court, ni silencieux (Gate Qualité Alexandria).
@@ -136,6 +138,22 @@ def validate_audio_signal(wav: np.ndarray, sr: int, min_duration_sec: float = 0.
     if rms < 1e-4:  # silence quasiment total (< -80 dB)
         return False
     return True
+
+def convert_to_wav(input_path: str, output_path: str) -> str:
+    """
+    Convertit n'importe quel fichier audio (webm, opus, mp3, m4a, etc.) en WAV PCM 24kHz mono pour Qwen3-TTS via FFmpeg.
+    """
+    try:
+        cmd = [
+            "ffmpeg", "-y", "-i", input_path,
+            "-ar", "24000", "-ac", "1", "-c:a", "pcm_s16le",
+            output_path
+        ]
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return output_path
+    except Exception as e:
+        print(f"⚠️ Erreur conversion FFmpeg ({e}), utilisation du fichier brut...")
+        return input_path
 
 # Optimisation critique pour VPS KVM2 (2 vCPUs) : évite l'explosion de threads et la saturation CPU
 torch.set_num_threads(2)
@@ -259,11 +277,15 @@ async def synthesize_speech(request: TTSRequest):
             target_ref_url = request.voice_ref_url.strip()
             print(f"📥 [{req_id}] Téléchargement de la voix de référence depuis : {target_ref_url}")
             try:
+                raw_dl_path = os.path.join(TEMP_DIR, f"{req_id}_raw_dl")
                 opener = urllib.request.build_opener()
                 opener.addheaders = [('User-Agent', 'Calmi-TTS-Microservice')]
                 urllib.request.install_opener(opener)
-                urllib.request.urlretrieve(target_ref_url, ref_audio_path)
-                print(f"✅ [{req_id}] Téléchargement de l'audio de référence réussi.")
+                urllib.request.urlretrieve(target_ref_url, raw_dl_path)
+                convert_to_wav(raw_dl_path, ref_audio_path)
+                if os.path.exists(raw_dl_path):
+                    os.remove(raw_dl_path)
+                print(f"✅ [{req_id}] Téléchargement et conversion audio en WAV 24kHz réussis.")
             except Exception as dl_error:
                 print(f"⚠️ [{req_id}] Échec du téléchargement ({dl_error}), utilisation du fichier local de secours...")
                 if os.path.exists(DEFAULT_LOCAL_REF):
@@ -393,18 +415,22 @@ async def synthesize_multi_voice(request: MultiVoiceRequest):
             url = segment.voice_ref_url
             if url not in ref_paths:
                 cached_path = get_cached_voice_path(url)
-                if os.path.exists(cached_path):
+                if os.path.exists(cached_path) and os.path.getsize(cached_path) > 0:
                     print(f"💾 [{req_id}] Voix de référence trouvée dans le cache pour : {url}")
                     ref_paths[url] = cached_path
                 else:
                     print(f"📥 [{req_id}] Téléchargement de la voix de référence : {url}")
                     try:
+                        raw_dl_path = os.path.join(TEMP_DIR, f"{req_id}_multi_raw_{idx}")
                         opener = urllib.request.build_opener()
                         opener.addheaders = [('User-Agent', 'Calmi-TTS-Microservice')]
                         urllib.request.install_opener(opener)
-                        urllib.request.urlretrieve(url, cached_path)
+                        urllib.request.urlretrieve(url, raw_dl_path)
+                        convert_to_wav(raw_dl_path, cached_path)
+                        if os.path.exists(raw_dl_path):
+                            os.remove(raw_dl_path)
                         ref_paths[url] = cached_path
-                        print(f"✅ [{req_id}] Téléchargement réussi et mis en cache.")
+                        print(f"✅ [{req_id}] Téléchargement et conversion WAV réussis et mis en cache.")
                     except Exception as dl_error:
                         raise HTTPException(status_code=400, detail=f"Échec du téléchargement de la voix de référence {url} : {dl_error}")
 
