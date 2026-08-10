@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Pause, ArrowDown, Info, Moon, Sun, Trash2 } from "lucide-react";
+import { ArrowLeft, Play, Pause, ScrollText, Info, Moon, Sun, Trash2 } from "lucide-react";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { FavoriteReaderButton } from "./FavoriteReaderButton";
 import { ShareStoryButton } from "./ShareStoryButton";
@@ -159,39 +159,49 @@ const AutoScrollHeaderButton: React.FC<{
   const getButtonState = () => {
     if (isAutoScrolling) {
       return {
-        icon: <Pause className="h-4 w-4" />,
-        tooltip: "Arrêter le défilement",
-        className: "bg-primary/20 border-primary/50 text-primary hover:bg-primary/30"
+        icon: <Pause className="h-3.5 w-3.5" />,
+        label: "Défilement",
+        tooltip: "Arrêter le défilement automatique",
+        className: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 font-medium"
       };
     } else if (isPaused || isManuallyPaused) {
       return {
-        icon: <Play className="h-4 w-4" />,
+        icon: <Play className="h-3.5 w-3.5" />,
+        label: "En pause",
         tooltip: "Reprendre le défilement",
-        className: "bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50"
+        className: "bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/30"
       };
     } else {
       return {
-        icon: <ArrowDown className="h-4 w-4" />,
-        tooltip: "Démarrer le défilement",
-        className: "text-muted-foreground hover:text-foreground"
+        icon: <ScrollText className="h-3.5 w-3.5" />,
+        label: "Défilement",
+        tooltip: "Activer le défilement automatique du conte",
+        className: "text-muted-foreground hover:text-foreground hover:bg-muted border border-border/50"
       };
     }
   };
-  const {
-    icon,
-    tooltip,
-    className
-  } = getButtonState();
-  return <TooltipProvider>
+
+  const { icon, label, tooltip, className } = getButtonState();
+
+  return (
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="sm" onClick={onToggleAutoScroll} className={`transition-transform hover:scale-105 ${className}`} aria-label={tooltip}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onToggleAutoScroll} 
+            className={`h-8 px-2.5 rounded-full text-xs flex items-center gap-1.5 transition-all duration-300 ${className}`} 
+            aria-label={tooltip}
+          >
             {icon}
+            <span className="hidden xs:inline sm:inline font-sans">{label}</span>
           </Button>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent side="bottom">
           <p>{tooltip}</p>
         </TooltipContent>
       </Tooltip>
-    </TooltipProvider>;
+    </TooltipProvider>
+  );
 };

@@ -2,15 +2,12 @@
 import React from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
-import { FloatingAutoScrollButton } from "./story/reader/FloatingAutoScrollButton";
 import { EmptyStoryView } from "./story/reader/EmptyStoryView";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
 import { StoryReaderLayout } from "./story/reader/StoryReaderLayout";
 import { StoryReaderHeader } from "./story/reader/StoryReaderHeader";
 import { StoryReaderContent } from "./story/reader/StoryReaderContent";
 import ReaderControls from "./story/ReaderControls";
-import { FloatingToggleButton } from "./story/reader/controls/FloatingToggleButton";
-import { CollapsibleControls } from "./story/reader/controls/CollapsibleControls";
 import { useStoryReader } from "@/hooks/story/reader/useStoryReader";
 
 interface StoryReaderProps {
@@ -118,39 +115,18 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         isManuallyPaused={isManuallyPaused}
       />
 
-      {/* Contrôles rétractables */}
-      <CollapsibleControls
-        isVisible={controlsVisible}
+      {/* Contrôles du lecteur & Capsule Audio Zen */}
+      <ReaderControls
+        fontSize={fontSize}
+        setFontSize={setFontSize}
         isDarkMode={isDarkMode}
-      >
-        <ReaderControls
-          fontSize={fontSize}
-          setFontSize={setFontSize}
-          isDarkMode={isDarkMode}
-          setIsDarkMode={setIsDarkMode}
-          storyId={story.id}
-          title={story.title}
-          story={story}
-          onMarkAsRead={handleMarkAsRead}
-          isRead={story.status === 'read'}
-          isUpdatingReadStatus={isUpdatingReadStatus}
-        />
-      </CollapsibleControls>
-
-      {/* Bouton flottant de toggle */}
-      <FloatingToggleButton
-        isVisible={controlsVisible}
-        onToggle={toggleControls}
-        isDarkMode={isDarkMode}
-      />
-
-      {/* Nouveau bouton flottant d'auto-scroll */}
-      <FloatingAutoScrollButton
-        isAutoScrolling={isAutoScrolling}
-        isPaused={isPaused}
-        isManuallyPaused={isManuallyPaused}
-        onToggleAutoScroll={toggleAutoScroll}
-        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+        storyId={story.id}
+        title={story.title}
+        story={story}
+        onMarkAsRead={handleMarkAsRead}
+        isRead={story.status === 'read'}
+        isUpdatingReadStatus={isUpdatingReadStatus}
       />
 
       <StorySummaryDialog 
