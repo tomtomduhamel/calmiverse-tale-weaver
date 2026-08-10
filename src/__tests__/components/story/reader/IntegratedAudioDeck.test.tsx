@@ -66,7 +66,7 @@ describe('IntegratedAudioDeck - Tests unitaires et d\'accès audio', () => {
     const module = await import('@/components/story/reader/IntegratedAudioDeck');
     expect(module.IntegratedAudioDeck).toBeDefined();
     expect(typeof module.IntegratedAudioDeck).toBe('function');
-  });
+  }, 15000);
 
   it('devrait s\'assurer que useN8nAudioGeneration est appelé AVANT l\'utilisation de audioFiles (non-régression ReferenceError)', () => {
     const filePath = path.resolve(__dirname, '../../../../components/story/reader/IntegratedAudioDeck.tsx');

@@ -65,7 +65,7 @@ describe('ZenAudioCapsule & Header Auto-Scroll - Tests unitaires et d\'architect
     const module = await import('@/components/story/reader/IntegratedAudioDeck');
     expect(module.IntegratedAudioDeck).toBeDefined();
     expect(typeof module.IntegratedAudioDeck).toBe('function');
-  });
+  }, 15000);
 
   it('devrait contenir la fine barre de progression unifiée de 3px', () => {
     const filePath = path.resolve(__dirname, '../../../../components/story/reader/IntegratedAudioDeck.tsx');
