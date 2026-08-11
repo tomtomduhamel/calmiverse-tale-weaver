@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { IntegratedAudioDeck } from "./reader/IntegratedAudioDeck";
 import { ShareStoryManager } from "./ShareStoryManager";
 import { useShareDialog } from "@/hooks/story/reader/useShareDialog";
@@ -33,10 +33,6 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
     openShareDialog,
     closeShareDialog
   } = useShareDialog();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   return (
     <>
