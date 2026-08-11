@@ -187,6 +187,8 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
             <div>
               <Label className="text-sm font-medium flex items-center gap-2">
                 <Clock className="w-4 h-4" />
+                Durée de l'histoire
+              </Label>
               <RadioGroup value={duration.toString()} onValueChange={value => setDuration(parseInt(value) as StoryDurationMinutes)} className="flex flex-wrap gap-4 mt-2">
                 {STORY_DURATION_OPTIONS.map(durationOption => {
                   const config = STORY_DURATION_CONFIG[durationOption];
