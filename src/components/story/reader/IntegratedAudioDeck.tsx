@@ -146,16 +146,21 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
             .from('user_voices')
             .select('id, name, relation, category, category_name, voice_ref_path, transcript');
           if (!error && data) {
-            setCustomVoices(data as CustomVoice[]);
+            const allVoices = data as CustomVoice[];
+            setCustomVoices(allVoices);
+            
+            const narrators = allVoices.filter(
+              v => (v.category || 'narrator_family') === 'narrator_family' || v.category?.startsWith('narrator')
+            );
             
             const readyFile = fetchedFiles.find(f => f.status === 'ready' && f.audio_url && f.story_id === storyId);
             if (readyFile) {
               const matchingVoiceId = (readyFile.voice_id && readyFile.voice_id !== 'local')
                 ? readyFile.voice_id
-                : (data.length > 0 ? data[0].id : 'local');
+                : (narrators.length > 0 ? narrators[0].id : 'local');
               setSelectedVoiceId(matchingVoiceId);
-            } else if (canUsePremiumAudio && preferredAudioMode === 'premium' && data.length > 0) {
-              setSelectedVoiceId(data[0].id);
+            } else if (canUsePremiumAudio && preferredAudioMode === 'premium' && narrators.length > 0) {
+              setSelectedVoiceId(narrators[0].id);
             } else {
               setSelectedVoiceId('local');
             }
@@ -434,6 +439,13 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  // Seules les voix de la catégorie Narrateurs & Famille sont sélectionnables pour la narration dans le Reader
+  const narratorVoices = React.useMemo(() => {
+    return customVoices.filter(
+      v => (v.category || 'narrator_family') === 'narrator_family' || v.category?.startsWith('narrator')
+    );
+  }, [customVoices]);
+
   // Voix active affichée
   const currentVoiceObj = customVoices.find(v => v.id === selectedVoiceId);
   const voiceDisplayName = selectedVoiceId === 'local' 
@@ -480,7 +492,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         {/* 🌟 2. CONTENUS DE LA CAPSULE ZEN (Hauteur compacte ~52 px) */}
         <div className="h-13 px-3 sm:px-4 flex items-center justify-between gap-2 pt-1">
           
-          {/* GAUCHE : SÉLECTEUR DE VOIX DISCRET */}
+          {/* GAUCHE : SÉLECTEUR DE NARRATEUR DISCRET */}
           <Popover open={isVoicePopoverOpen} onOpenChange={setIsVoicePopoverOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -508,7 +520,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               className="w-64 p-2 rounded-2xl backdrop-blur-2xl shadow-2xl border bg-background/95 text-foreground z-[100]"
             >
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">
-                Choisir le conteur
+                Choisir le narrateur
               </div>
               <div className="space-y-1 mt-1 max-h-56 overflow-y-auto pr-1">
                 {/* Option Gratuite */}
@@ -528,8 +540,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                   {selectedVoiceId === 'local' && <Check className="w-3.5 h-3.5" />}
                 </button>
 
-                {/* Voix Familiales Studio */}
-                {customVoices.map((voice) => {
+                {/* Voix de Narrateurs Studio (Famille) */}
+                {narratorVoices.map((voice) => {
                   const hasReadyAudio = audioFiles.some(f => f.status === 'ready' && f.voice_id === voice.id && f.story_id === storyId);
                   const isSelected = selectedVoiceId === voice.id;
                   return (
@@ -555,13 +567,13 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                   );
                 })}
 
-                {/* Enregistrer une voix */}
+                {/* Enregistrer une voix de narrateur */}
                 <button
                   onClick={() => handleVoiceChange('studio_redirect')}
                   className="w-full text-left px-2.5 py-2 rounded-xl text-xs flex items-center gap-2 text-primary hover:bg-primary/10 transition-colors border-t border-border/40 mt-1 pt-1.5 font-medium"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  <span>+ Enregistrer une nouvelle voix</span>
+                  <span>+ Enregistrer une voix de narrateur</span>
                 </button>
               </div>
             </PopoverContent>

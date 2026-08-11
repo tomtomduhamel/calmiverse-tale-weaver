@@ -93,12 +93,13 @@ describe('ZenAudioCapsule & Header Auto-Scroll - Tests unitaires et d\'architect
     expect(content).toContain('Sparkles');
   });
 
-  it('devrait avoir un sélecteur de voix compact avec Popover sans blabla', () => {
+  it('devrait avoir un sélecteur de voix filtrant exclusivement les narrateurs (sans les voix de personnages)', () => {
     const filePath = path.resolve(__dirname, '../../../../components/story/reader/IntegratedAudioDeck.tsx');
     const content = fs.readFileSync(filePath, 'utf-8');
 
     expect(content).toContain('isVoicePopoverOpen');
-    expect(content).toContain('Choisir le conteur');
+    expect(content).toContain('Choisir le narrateur');
+    expect(content).toContain('narratorVoices');
   });
 
   it('devrait avoir supprimé les boutons flottants FloatingToggleButton et FloatingAutoScrollButton de StoryReader', () => {
