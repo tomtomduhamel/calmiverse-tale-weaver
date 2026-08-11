@@ -61,7 +61,7 @@ const MobileChildrenSelectionStep: React.FC<MobileChildrenSelectionStepProps> = 
       });
       return;
     }
-    navigate('/create-story/step-2');
+    navigate('/app/create-story/step-2');
   }, [selectedChildrenIds, navigate, toast]);
 
   const selectedChildren = children.filter(child => selectedChildrenIds.includes(child.id));

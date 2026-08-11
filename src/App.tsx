@@ -33,6 +33,7 @@ const SharedStoryRedirect = lazy(() => import('./pages/SharedStoryRedirect'));
 const PublicStory = lazy(() => import('./pages/PublicStory'));
 const CreateStoryTitles = lazy(() => import("./pages/CreateStoryTitles"));
 const CreateStoryStep1 = lazy(() => import("./pages/CreateStoryStep1"));
+const CreateStoryStep2 = lazy(() => import("./pages/CreateStoryStep2"));
 const Library = lazy(() => import("./pages/Library"));
 const StoryReaderPage = lazy(() => import("./pages/StoryReaderPage"));
 const PromptAdmin = lazy(() => import('./pages/admin/PromptAdmin'));
@@ -237,6 +238,7 @@ function App() {
                   <Route path="create-story-n8n" element={<Navigate to="/app/create-story/step-1" replace />} />
                   <Route path="create-story-titles" element={<CreateStoryTitles />} />
                   <Route path="create-story/step-1" element={<CreateStoryStep1 />} />
+                  <Route path="create-story/step-2" element={<CreateStoryStep2 />} />
                   <Route path="subscription" element={<Subscription />} />
                   <Route path="routines" element={<RoutinesPage />} />
                   <Route path="routines/new" element={<RoutineFormPage />} />
@@ -260,6 +262,7 @@ function App() {
                 <Route path="/library" element={<Navigate to="/app/library" replace />} />
                 <Route path="/reader/:id" element={<RedirectWithParams to="/app/reader/:id" />} />
                 <Route path="/create-story/step-1" element={<Navigate to="/app/create-story/step-1" replace />} />
+                <Route path="/create-story/step-2" element={<Navigate to="/app/create-story/step-2" replace />} />
                 <Route path="/create-story-titles" element={<Navigate to="/app/create-story-titles" replace />} />
                 <Route path="/subscription" element={<Navigate to="/app/subscription" replace />} />
                 {/* Routes admin/superadmin : filet de sécurité contre les bundles périmés

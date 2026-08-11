@@ -65,7 +65,7 @@ const ChildrenSelectionStep: React.FC<ChildrenSelectionStepProps> = ({
       });
       return;
     }
-    navigate('/create-story/step-2');
+    navigate('/app/create-story/step-2');
   }, [selectedChildrenIds, navigate, toast]);
 
   const handleRestart = useCallback(() => {

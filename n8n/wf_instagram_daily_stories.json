@@ -1,0 +1,506 @@
+{
+  "name": "Calmi — Publications Automatiques Instagram (Stories & Reels)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-morning-6h",
+      "name": "Matin 06h00 (Histoire 3min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [100, 100]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-noon-12h",
+      "name": "Midi 12h00 (Histoire 5min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 19 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-evening-19h",
+      "name": "Soir 19h00 (Conte 10min + Reel)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [100, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst hours = now.getHours();\n\nlet slot = 'evening_19h';\nlet theme = '🌙 Conte du Soir • Rituel du Sommeil';\nlet durationText = '10 min de lecture';\nlet targetDurationMinutes = 10;\nlet publicationType = 'story_and_reel';\nlet soundObjective = 'sleep';\n\nif (hours >= 4 && hours < 10) {\n  slot = 'morning_6h';\n  theme = '☀️ Calmi Réveil • Sérénité & Énergie Douce';\n  durationText = '3 min de lecture';\n  targetDurationMinutes = 3;\n  publicationType = 'story';\n  soundObjective = 'focus';\n} else if (hours >= 10 && hours < 16) {\n  slot = 'noon_12h';\n  theme = '🌸 Pause Midi • Déconnexion & Respiration';\n  durationText = '5 min de lecture';\n  targetDurationMinutes = 5;\n  publicationType = 'story';\n  soundObjective = 'relax';\n}\n\nreturn [{\n  json: {\n    slot,\n    theme,\n    durationText,\n    targetDurationMinutes,\n    publicationType,\n    soundObjective,\n    targetDate: now.toISOString().split('T')[0]\n  }\n}];"
+      },
+      "id": "code-slot-params",
+      "name": "Déterminer le Créneau & Paramètres",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [360, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "messages": {
+          "messageValues": [
+            {
+              "role": "system",
+              "message": "Tu es un auteur et conteur poétique expert pour l'application Calmi (contes apaisants, bien-être, méditation et rituel du coucher pour enfants et familles). Ton style est doux, immersif, sensoriel et bienveillant."
+            },
+            {
+              "role": "user",
+              "message": "=Génère une histoire originale pour le créneau : {{$json.theme}}.\n\nContraintes :\n1. Durée de lecture cible dans l'app : {{$json.targetDurationMinutes}} minutes.\n2. Donne un titre féerique et poétique.\n3. Rédige un extrait d'introduction immersif structuré exactement en 3 paragraphes courts (25 à 35 mots chacun), captivant et très apaisant.\n4. Propose un prompt DALL-E 3 en anglais pour créer l'illustration verticale 9:16 (style féerique, éclairage doux, atmosphère magique sans texte).\n\nRéponds UNIQUEMENT au format JSON strict suivant :\n{\n  \"title\": \"Le titre du conte\",\n  \"excerptParagraph1\": \"Premier paragraphe...\",\n  \"excerptParagraph2\": \"Deuxième paragraphe...\",\n  \"excerptParagraph3\": \"Troisième paragraphe...\",\n  \"dallePrompt\": \"A magical ethereal digital painting of... in vertical 9:16 format, cinematic lighting, calm atmosphere\"\n}"
+            }
+          ]
+        },
+        "jsonOutput": true
+      },
+      "id": "openai-generate-story",
+      "name": "Générer Conte & Extrait par IA",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.4,
+      "position": [620, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/marketing_publications",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZWlobm94dnRweHRxaHhrbHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODQ1MzYsImV4cCI6MjA2MTU2MDUzNn0.5KolFPfnppqfb8lbYnWhJKo6GZL_VCxn3Zx1hxyLaro"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"slot\": \"{{ $('Déterminer le Créneau & Paramètres').item.json.slot }}\",\n  \"theme\": \"{{ $('Déterminer le Créneau & Paramètres').item.json.theme }}\",\n  \"target_duration_minutes\": {{ $('Déterminer le Créneau & Paramètres').item.json.targetDurationMinutes }},\n  \"publication_type\": \"{{ $('Déterminer le Créneau & Paramètres').item.json.publicationType }}\",\n  \"title\": \"{{ $json.title }}\",\n  \"excerpt\": \"{{ $json.excerptParagraph1 }}\\n\\n{{ $json.excerptParagraph2 }}\\n\\n{{ $json.excerptParagraph3 }}\",\n  \"image_prompt\": \"{{ $json.dallePrompt }}\",\n  \"status\": \"generating\",\n  \"cta_keyword\": \"CALMI\"\n}"
+      },
+      "id": "supabase-create-record",
+      "name": "Enregistrer dans Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://31.97.40.49:8085/render-instagram-story",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"publicationId\": \"{{ $json[0].id }}\",\n  \"slot\": \"{{ $('Déterminer le Créneau & Paramètres').item.json.slot }}\",\n  \"title\": \"{{ $('Générer Conte & Extrait par IA').item.json.title }}\",\n  \"theme\": \"{{ $('Déterminer le Créneau & Paramètres').item.json.theme }}\",\n  \"durationText\": \"{{ $('Déterminer le Créneau & Paramètres').item.json.durationText }}\",\n  \"excerpt\": \"{{ $('Générer Conte & Extrait par IA').item.json.excerptParagraph1 }}\\n\\n{{ $('Générer Conte & Extrait par IA').item.json.excerptParagraph2 }}\\n\\n{{ $('Générer Conte & Extrait par IA').item.json.excerptParagraph3 }}\",\n  \"soundObjective\": \"{{ $('Déterminer le Créneau & Paramètres').item.json.soundObjective }}\",\n  \"ctaKeyword\": \"CALMI\"\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "vps-render-story-video",
+      "name": "Générer la Vidéo 9:16 (Moteur Calmi)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-has-ig-keys",
+              "leftValue": "={{ $env.INSTAGRAM_USER_ID }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-ig-configured",
+      "name": "Clés Instagram Configurées ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1360, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.INSTAGRAM_USER_ID }}/media",
+        "authentication": "none",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "STORIES"
+            },
+            {
+              "name": "video_url",
+              "value": "={{ $json.publicVideoUrl }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.INSTAGRAM_ACCESS_TOKEN }}"
+            }
+          ]
+        }
+      },
+      "id": "ig-create-story-container",
+      "name": "Instagram — Créer Conteneur Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1620, 200]
+    },
+    {
+      "parameters": {
+        "amount": 20,
+        "unit": "seconds"
+      },
+      "id": "wait-story-processing",
+      "name": "Attente Encodage Meta (20s)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1860, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.INSTAGRAM_USER_ID }}/media_publish",
+        "authentication": "none",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('Instagram — Créer Conteneur Story').item.json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.INSTAGRAM_ACCESS_TOKEN }}"
+            }
+          ]
+        }
+      },
+      "id": "ig-publish-story",
+      "name": "Instagram — Publier la Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2100, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-is-19h-reel",
+              "leftValue": "={{ $('Déterminer le Créneau & Paramètres').item.json.publicationType }}",
+              "rightValue": "story_and_reel",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-publish-reel",
+      "name": "Publier aussi en Reel (19h) ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2340, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.INSTAGRAM_USER_ID }}/media",
+        "authentication": "none",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "REELS"
+            },
+            {
+              "name": "video_url",
+              "value": "={{ $('Générer la Vidéo 9:16 (Moteur Calmi)').item.json.publicVideoUrl }}"
+            },
+            {
+              "name": "caption",
+              "value": "=✨ {{ $('Générer Conte & Extrait par IA').item.json.title }}\n\n{{ $('Déterminer le Créneau & Paramètres').item.json.theme }}\n\n🎧 Écoutez ce conte complet avec nos voix immersives et sons d'ambiance 3D dans l'application Calmi.\n\n💬 Répondez « CALMI » en message privé pour recevoir votre accès gratuit !\n\n#calmi #sommeil #relaxation #conte #méditation #bienetre #dodo"
+            },
+            {
+              "name": "share_to_feed",
+              "value": "true"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.INSTAGRAM_ACCESS_TOKEN }}"
+            }
+          ]
+        }
+      },
+      "id": "ig-create-reel-container",
+      "name": "Instagram — Créer Conteneur Reel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2580, 100]
+    },
+    {
+      "parameters": {
+        "amount": 25,
+        "unit": "seconds"
+      },
+      "id": "wait-reel-processing",
+      "name": "Attente Encodage Reel (25s)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2820, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.INSTAGRAM_USER_ID }}/media_publish",
+        "authentication": "none",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('Instagram — Créer Conteneur Reel').item.json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.INSTAGRAM_ACCESS_TOKEN }}"
+            }
+          ]
+        }
+      },
+      "id": "ig-publish-reel",
+      "name": "Instagram — Publier le Reel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3060, 100]
+    }
+  ],
+  "connections": {
+    "Matin 06h00 (Histoire 3min)": {
+      "main": [
+        [
+          {
+            "node": "Déterminer le Créneau & Paramètres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Midi 12h00 (Histoire 5min)": {
+      "main": [
+        [
+          {
+            "node": "Déterminer le Créneau & Paramètres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Soir 19h00 (Conte 10min + Reel)": {
+      "main": [
+        [
+          {
+            "node": "Déterminer le Créneau & Paramètres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Déterminer le Créneau & Paramètres": {
+      "main": [
+        [
+          {
+            "node": "Générer Conte & Extrait par IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Générer Conte & Extrait par IA": {
+      "main": [
+        [
+          {
+            "node": "Enregistrer dans Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enregistrer dans Supabase": {
+      "main": [
+        [
+          {
+            "node": "Générer la Vidéo 9:16 (Moteur Calmi)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Générer la Vidéo 9:16 (Moteur Calmi)": {
+      "main": [
+        [
+          {
+            "node": "Clés Instagram Configurées ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clés Instagram Configurées ?": {
+      "main": [
+        [
+          {
+            "node": "Instagram — Créer Conteneur Story",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Instagram — Créer Conteneur Story": {
+      "main": [
+        [
+          {
+            "node": "Attente Encodage Meta (20s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attente Encodage Meta (20s)": {
+      "main": [
+        [
+          {
+            "node": "Instagram — Publier la Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram — Publier la Story": {
+      "main": [
+        [
+          {
+            "node": "Publier aussi en Reel (19h) ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publier aussi en Reel (19h) ?": {
+      "main": [
+        [
+          {
+            "node": "Instagram — Créer Conteneur Reel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Instagram — Créer Conteneur Reel": {
+      "main": [
+        [
+          {
+            "node": "Attente Encodage Reel (25s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attente Encodage Reel (25s)": {
+      "main": [
+        [
+          {
+            "node": "Instagram — Publier le Reel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  }
+}

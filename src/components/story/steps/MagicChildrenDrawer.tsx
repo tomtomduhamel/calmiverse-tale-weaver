@@ -69,7 +69,10 @@ export const MagicChildrenDrawer: React.FC<MagicChildrenDrawerProps> = ({
         {displayChildren.length === 0 ? (
            <div className="py-8 text-center text-muted-foreground flex flex-col items-center">
              <p className="mb-4">Aucun personnage ne correspond aux filtres.</p>
-             <Button variant="outline" onClick={() => navigate('/children?action=create')}>
+             <Button variant="outline" onClick={() => {
+                onOpenChange(false);
+                navigate('/app/children?action=create');
+             }}>
                 <UserPlus className="w-4 h-4 mr-2" />
                 Créer un personnage
              </Button>

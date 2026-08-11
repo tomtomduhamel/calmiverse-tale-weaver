@@ -84,18 +84,18 @@ const CreateStoryStep1: React.FC = () => {
           </div>
 
           <button
-            onClick={() => navigate("/children")}
+            onClick={() => navigate("/app/children?action=create")}
             className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-4 px-6 text-base font-semibold hover:bg-primary/90 transition-all duration-400 ease-calm shadow-floating hover:shadow-glow-primary"
           >
             <Sparkles className="w-5 h-5" strokeWidth={1.75} />
-            Ajouter un profil
+            Ajouter un profil d'enfant
           </button>
 
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/app")}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
           >
-            Retour à l'accueil
+            Retour au tableau de bord
           </button>
         </div>
       </div>

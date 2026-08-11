@@ -10,8 +10,9 @@ interface SupabaseAuthContextType {
   error: string | null; // Changed from AuthError to string for consistency
   timeoutReached: boolean;
   retryAuth: () => void;
-  signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string, inviteCode?: string | null) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<any>;
+  signUpWithEmail: (email: string, password: string, inviteCode?: string | null) => Promise<{ user: User | null; session: Session | null; needsEmailConfirmation: boolean }>;
+  resendConfirmationEmail: (email: string) => Promise<boolean>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -23,6 +24,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   const { user, session, loading, error: sessionError, timeoutReached, retryAuth } = useAuthSession();
   const { signInWithEmail: authSignInWithEmail, 
           signUpWithEmail: authSignUpWithEmail, 
+          resendConfirmationEmail: authResendConfirmationEmail,
           signInWithGoogle: authSignInWithGoogle, 
           logout: authLogout } = useAuthOperations();
 
@@ -33,7 +35,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   const signInWithEmail = async (email: string, password: string) => {
     try {
       setError(null);
-      await authSignInWithEmail(email, password);
+      return await authSignInWithEmail(email, password);
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : (typeof err === 'string' ? err : 'Erreur de connexion');
       setError(errorMessage);
@@ -44,9 +46,20 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   const signUpWithEmail = async (email: string, password: string, inviteCode?: string | null) => {
     try {
       setError(null);
-      await authSignUpWithEmail(email, password, inviteCode);
+      return await authSignUpWithEmail(email, password, inviteCode);
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : (typeof err === 'string' ? err : 'Erreur d\'inscription');
+      setError(errorMessage);
+      throw err;
+    }
+  };
+
+  const resendConfirmationEmail = async (email: string) => {
+    try {
+      setError(null);
+      return await authResendConfirmationEmail(email);
+    } catch (err: any) {
+      const errorMessage = err instanceof Error ? err.message : (typeof err === 'string' ? err : 'Erreur de renvoi d\'email');
       setError(errorMessage);
       throw err;
     }
@@ -84,6 +97,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
       retryAuth,
       signInWithEmail,
       signUpWithEmail,
+      resendConfirmationEmail,
       signInWithGoogle,
       logout
     }}>

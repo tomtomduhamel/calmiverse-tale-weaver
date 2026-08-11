@@ -57,7 +57,7 @@ export const useAuthOperations = () => {
         throw handleAuthError(error, "Erreur d'inscription");
       }
       
-      console.log("Inscription réussie:", data.user?.id);
+      console.log("Inscription réussie:", data.user?.id, "Session immédiate:", !!data.session);
       if (data.user) {
         try {
           const { analytics } = await import('@/utils/analytics');
@@ -91,20 +91,53 @@ export const useAuthOperations = () => {
           title: "Bienvenue dans le programme beta !",
           description: "Votre compte est créé. Vous serez prévenu dès que votre accès sera activé par un administrateur.",
         });
+      } else if (!data.session) {
+        // Confirmation email requise
+        toast({
+          title: "Vérifiez vos emails !",
+          description: `Un lien de confirmation a été envoyé à ${email}.`,
+        });
       } else {
         toast({
           title: "Bienvenue sur Calmi !",
-          description: "Votre compte est créé. Vérifiez votre email pour confirmer votre adresse.",
+          description: "Votre compte est prêt. Commençons par créer votre première histoire !",
         });
       }
       
-      return data;
+      return {
+        user: data.user,
+        session: data.session,
+        needsEmailConfirmation: !data.session && !data.user?.confirmed_at
+      };
     } catch (err: any) {
       console.error('Erreur d\'inscription:', err);
       throw err;
     }
   }, [toast, handleAuthError]);
 
+  const resendConfirmationEmail = useCallback(async (email: string) => {
+    try {
+      console.log("Renvoi de l'email de confirmation pour:", email);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+      if (error) {
+        throw handleAuthError(error, "Erreur lors du renvoi");
+      }
+      toast({
+        title: "Email envoyé !",
+        description: `Un nouveau lien de confirmation a été envoyé à ${email}.`,
+      });
+      return true;
+    } catch (err: any) {
+      console.error("Erreur renvoi email:", err);
+      throw err;
+    }
+  }, [toast, handleAuthError]);
 
   const signInWithGoogle = useCallback(async () => {
     try {
@@ -154,6 +187,7 @@ export const useAuthOperations = () => {
   return {
     signInWithEmail,
     signUpWithEmail,
+    resendConfirmationEmail,
     signInWithGoogle,
     logout
   };

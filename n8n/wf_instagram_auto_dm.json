@@ -1,0 +1,119 @@
+{
+  "name": "Calmi — Auto-DM Lead Magnet Instagram (Chatbot)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "instagram-dm-webhook",
+        "options": {}
+      },
+      "id": "webhook-meta-dm",
+      "name": "Webhook Instagram Messaging",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraction des messages reçus via Meta Graph Webhook\nconst body = $json.body || $json;\n\nif (body.object !== 'instagram') {\n  return [];\n}\n\nconst entries = body.entry || [];\nconst results = [];\n\nfor (const entry of entries) {\n  const messaging = entry.messaging || [];\n  for (const event of messaging) {\n    const senderId = event.sender?.id;\n    const messageText = (event.message?.text || '').trim();\n    const quickReplyPayload = event.message?.quick_reply?.payload;\n\n    if (senderId && (messageText || quickReplyPayload)) {\n      const normalized = (messageText || quickReplyPayload).toUpperCase();\n      const isKeyword = ['CALMI', 'DODO', 'HISTOIRE', 'CONTE', 'ACCES', 'ACCÈS', 'SOMMEIL', 'RELAX'].some(k => normalized.includes(k));\n\n      results.push({\n        senderId,\n        messageText,\n        isKeyword,\n        timestamp: event.timestamp\n      });\n    }\n  }\n}\n\nreturn results.map(r => ({ json: r }));"
+      },
+      "id": "code-extract-msg",
+      "name": "Extraire & Filtrer le Mot-Clé",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [340, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-keyword",
+              "leftValue": "={{ $json.isKeyword }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-keyword-matched",
+      "name": "Mot-Clé Détecté ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [580, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/me/messages",
+        "authentication": "none",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $env.INSTAGRAM_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": {\n    \"id\": \"{{ $json.senderId }}\"\n  },\n  \"message\": {\n    \"text\": \"🌙 Bonsoir et bienvenue dans l'univers Calmi !\\n\\nVoici votre accès direct pour écouter l'histoire complète avec nos voix immersives et sons d'ambiance 3D :\\n\\n👉 https://calmi.app?ref=insta_dm\\n\\n🎁 Profitez de votre essai gratuit dès maintenant pour des nuits calmes et sereines ! ✨\"\n  }\n}"
+      },
+      "id": "meta-send-direct-message",
+      "name": "Envoyer le Message Privé (Lien + Accès)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [840, 200]
+    }
+  ],
+  "connections": {
+    "Webhook Instagram Messaging": {
+      "main": [
+        [
+          {
+            "node": "Extraire & Filtrer le Mot-Clé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraire & Filtrer le Mot-Clé": {
+      "main": [
+        [
+          {
+            "node": "Mot-Clé Détecté ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mot-Clé Détecté ?": {
+      "main": [
+        [
+          {
+            "node": "Envoyer le Message Privé (Lien + Accès)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  }
+}

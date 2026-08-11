@@ -26,8 +26,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useStoryRoutines, describeSchedule, StoryRoutine, QuotaCheck } from '@/hooks/useStoryRoutines';
 import { FAST_STORIES_REGULATION, FAST_STORIES_RENFORCEMENT, FAST_STORIES_SITUATIONS } from '@/config/fastStoryConfig';
-import { useSupabaseChildren } from '@/hooks/useSupabaseChildren';
-import { useSupabaseStories } from '@/hooks/stories/useSupabaseStories';
+import { getStoryDurationConfig } from '@/types/story';
 import { useN8nFastStory } from '@/hooks/stories/useN8nFastStory';
 import { useN8nTitleGeneration } from '@/hooks/stories/useN8nTitleGeneration';
 import { useN8nStoryFromTitle } from '@/hooks/stories/useN8nStoryFromTitle';
@@ -845,9 +844,9 @@ const RoutinesPage: React.FC = () => {
 
                 {/* Durée de l'histoire */}
                 <div className="flex justify-between items-center gap-2">
-                  <span className="text-muted-foreground font-normal">Longueur estimée :</span>
+                  <span className="text-muted-foreground font-normal">Format & Durée :</span>
                   <span className="font-semibold text-foreground">
-                    ⏱️ {selectedRoutine.duration_minutes} minutes de lecture
+                    📖 {getStoryDurationConfig(selectedRoutine.duration_minutes).badge}
                   </span>
                 </div>
 
