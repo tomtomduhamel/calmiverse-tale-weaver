@@ -6,6 +6,7 @@ import { calculateReadingTime } from '@/utils/readingTime';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { fetchStoryImageBlob } from '@/utils/supabaseImageUtils';
+import { stripStoryEmotionTags } from '@/utils/storyContentFormatter';
 
 export interface EpubGenerationResult {
   success: boolean;
@@ -238,9 +239,10 @@ export const clientEpubGenerator = {
     const cleanTitle = formatFrenchTitle(this.cleanEpubTitle(story.title));
     const readingTime = calculateReadingTime(story.content);
     const formattedDate = format(new Date(story.createdAt), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr });
+    const cleanContent = stripStoryEmotionTags(story.content);
 
     // Formater le contenu en paragraphes
-    const formattedContent = story.content
+    const formattedContent = cleanContent
       .split('\n')
       .filter(line => line.trim())
       .map(paragraph => `    <p>${this.escapeXml(paragraph.trim())}</p>`)

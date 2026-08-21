@@ -1,4 +1,6 @@
 
+import { stripStoryEmotionTags } from './storyContentFormatter';
+
 // Constante de vitesse de lecture alignée avec la vitesse "Tortue" (Normal) du ReadingSpeedSelector
 // Cette valeur correspond à une lecture douce et expressive d'un parent à son enfant (~120 mots/min)
 export const READING_SPEED_WPM = 120;
@@ -12,8 +14,14 @@ export const calculateReadingTime = (text: string | undefined): string => {
     return "0 min de lecture";
   }
 
+  // Nettoyer les éventuelles balises d'émotions audio avant de compter les mots
+  const cleanText = stripStoryEmotionTags(text);
+  if (!cleanText) {
+    return "0 min de lecture";
+  }
+
   // Vitesse de lecture adaptée aux enfants, alignée avec estimateWordCountForDuration
-  const wordCount = text.trim().split(/\s+/).length;
+  const wordCount = cleanText.trim().split(/\s+/).length;
   const minutes = Math.round(wordCount / READING_SPEED_WPM);
 
   if (minutes < 1) {

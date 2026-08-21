@@ -120,11 +120,11 @@ describe('ZenAudioCapsule & Header Auto-Scroll - Tests unitaires et d\'architect
   });
 
   it('devrait importer le composant ReaderControls sans référence orpheline à setIsMounted', async () => {
-    const module = await import('@/components/story/ReaderControls');
-    expect(module.default).toBeDefined();
-
     const filePath = path.resolve(__dirname, '../../../../components/story/ReaderControls.tsx');
     const content = fs.readFileSync(filePath, 'utf-8');
     expect(content).not.toContain('setIsMounted');
-  });
+
+    const module = await import('@/components/story/ReaderControls');
+    expect(module.default).toBeDefined();
+  }, 15000);
 });

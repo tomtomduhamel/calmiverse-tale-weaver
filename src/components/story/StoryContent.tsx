@@ -5,6 +5,7 @@ import type { Story } from '@/types/story';
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
 import { useReadingProgress } from '@/hooks/story/reader/useReadingProgress';
 import { useReadingSpeed } from '@/contexts/ReadingSpeedContext';
+import { stripStoryEmotionTags } from '@/utils/storyContentFormatter';
 
 interface StoryContentProps {
   story: Story;
@@ -25,6 +26,9 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [totalWords, setTotalWords] = useState(0);
+
+  // Nettoyage strict et transparent des balises d'émotions audio pour le lecteur
+  const cleanContent = useMemo(() => stripStoryEmotionTags(story.content), [story.content]);
 
   const { userSettings } = useUserSettings();
   const immersiveMode = userSettings.readingPreferences?.immersiveReadingMode || 'pulse';
@@ -89,14 +93,14 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 
     setTotalWords(wordIdx);
     contentRef.current.setAttribute('data-tokenized', 'true');
-  }, [story.content, story.status]);
+  }, [cleanContent, story.status]);
 
   // Réinitialisation de la tokenisation si l'histoire change
   useEffect(() => {
     if (contentRef.current) {
       contentRef.current.removeAttribute('data-tokenized');
     }
-  }, [story.id, story.content]);
+  }, [story.id, cleanContent]);
 
   // Effets visuels (Mise à jour DOM sans re-render React pour max perf)
   useEffect(() => {
@@ -217,9 +221,9 @@ export const StoryContent: React.FC<StoryContentProps> = ({
         ),
       }}
     >
-      {story.content}
+      {cleanContent}
     </ReactMarkdown>
-  ), [story.content]);
+  ), [cleanContent]);
 
   const textColor = 'text-foreground';
   
@@ -236,7 +240,7 @@ export const StoryContent: React.FC<StoryContentProps> = ({
         </div>
         
         <div className="opacity-30">
-          <ReactMarkdown>{story.content}</ReactMarkdown>
+          <ReactMarkdown>{cleanContent}</ReactMarkdown>
         </div>
       </div>
     );

@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Story } from '@/types/story';
 import { translateObjective, cleanEpubTitle } from '@/utils/objectiveTranslations';
+import { stripStoryEmotionTags } from '@/utils/storyContentFormatter';
 
 interface EpubCache {
   [key: string]: {
@@ -20,7 +20,8 @@ export const optimizedEpubService = {
    * Génère un hash du contenu pour le cache
    */
   generateContentHash(story: Story): string {
-    const content = `${story.title}|${story.content}|${story.childrenNames?.join(',')}`;
+    const cleanContent = stripStoryEmotionTags(story.content);
+    const content = `${story.title}|${cleanContent}|${story.childrenNames?.join(',')}`;
     return btoa(content).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
   },
 
@@ -62,8 +63,8 @@ export const optimizedEpubService = {
   optimizeContent(story: Story): string {
     if (!story.content) return '';
     
-    // Nettoyer et optimiser le contenu
-    let optimizedContent = story.content
+    // Nettoyer les balises d'émotions et optimiser le contenu
+    let optimizedContent = stripStoryEmotionTags(story.content)
       .replace(/\n{3,}/g, '\n\n') // Réduire les sauts de ligne multiples
       .replace(/\s{2,}/g, ' ') // Réduire les espaces multiples
       .trim();

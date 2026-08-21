@@ -6,6 +6,7 @@ import { calculateReadingTime } from '@/utils/readingTime';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { fetchStoryImageBlob } from '@/utils/supabaseImageUtils';
+import { stripStoryEmotionTags } from '@/utils/storyContentFormatter';
 
 export const generateAndUploadEpub = async (story: Story): Promise<string> => {
   try {
@@ -182,8 +183,9 @@ function formatStoryForKindle(story: Story): string {
       </div>
     `;
 
-    // CORRECTION: Contenu de l'histoire formaté avec le bon champ 'content'
-    const storyContent = story.content
+    // CORRECTION: Contenu de l'histoire formaté avec le bon champ 'content' (sans balises d'émotions)
+    const cleanContent = stripStoryEmotionTags(story.content);
+    const storyContent = cleanContent
       .split('\n')
       .map(paragraph => paragraph.trim())
       .filter(paragraph => paragraph.length > 0)

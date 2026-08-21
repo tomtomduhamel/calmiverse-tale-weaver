@@ -244,6 +244,16 @@ ${vocabularyInstructions}
 - Âge des enfants : de ${analysis.youngestAge} à ${analysis.oldestAge} ans (moyenne: ${analysis.averageAge} ans)
 - INTERDICTION FORMELLE DES TICS HYPNOTIQUES PASSIFS : Si l'objectif n'est pas le sommeil, proscrire les phrases du type 'en laissant leurs épaules s'abaisser', 'peut-être en inspirant', 'le monde s'apaise comme une respiration lente'.
 
+DIRECTION AUDIO & BALISES ÉMOTIONNELLES :
+- Place en tête de paragraphes clés ou de répliques marquantes une balise d'émotion entre crochets pour guider le jeu d'acteur du livre audio :
+  * [warm] : ton chaleureux, rassurant et bienveillant (accueil, introduction, moments doux)
+  * [excited] : enthousiasme, joie, rire, action vive
+  * [mysterious] : suspense léger, découverte curieuse, secrets magiques
+  * [whisper] : confidence, chuchotement doux, petits mots glissés à l'oreille
+  * [calm] : détente, contemplation, respiration fluide
+  * [sleepy] : voix très douce, lente et berçante (fin d'histoire pour le sommeil)
+- Insère ces balises naturellement (environ 1 balise en début de paragraphe ou devant une réplique expressive) pour donner du relief à la lecture vocale.
+
 STRUCTURE NARRATIVE (~${targetWords} mots) :
 - Début (~${startWords} mots) : Accroche immédiate et découverte du défi/problème.
 - Péripéties (~${middleWords} mots) : Actions rythmées de cause à effet, dialogues vivants et progression de l'objectif.

@@ -458,8 +458,27 @@ async def synthesize_multi_voice(request: MultiVoiceRequest):
                 # Inférence pour le segment
                 start_inf = time.time()
                 clean_prompt = prompt_text.strip() if prompt_text else ""
+                
+                # Extraction et nettoyage robuste des balises d'émotions
+                seg_text = segment.text
+                seg_instruct = segment.instruct.strip() if segment.instruct and segment.instruct.strip() else None
+                tag_match = re.search(r'^\s*\[(warm|whisper|excited|mysterious|calm|sleepy|instruct:\s*[^\]]+)\]', seg_text, re.IGNORECASE)
+                if tag_match:
+                    tag_val = tag_match.group(1).strip()
+                    if not seg_instruct:
+                        if tag_val.lower().startswith("instruct:"):
+                            seg_instruct = tag_val[len("instruct:"):].strip()
+                        else:
+                            seg_instruct = EMOTION_MAP.get(tag_val.lower(), None)
+                
+                clean_seg_text = re.sub(r'\[.*?\]', '', seg_text).strip()
+                clean_seg_text = re.sub(r'\s+', ' ', clean_seg_text)
+                
+                if not clean_seg_text:
+                    continue
+
                 clone_kwargs = {
-                    "text": segment.text,
+                    "text": clean_seg_text,
                     "language": tts_lang,
                     "ref_audio": ref_path,
                 }
@@ -469,8 +488,8 @@ async def synthesize_multi_voice(request: MultiVoiceRequest):
                 else:
                     clone_kwargs["x_vector_only_mode"] = True
 
-                if segment.instruct and segment.instruct.strip():
-                    clone_kwargs["instruct"] = segment.instruct.strip()
+                if seg_instruct:
+                    clone_kwargs["instruct"] = seg_instruct
 
                 wavs, current_sr = model.generate_voice_clone(**clone_kwargs)
                 print(f"   ✅ [{req_id}] Généré en {time.time() - start_inf:.2f}s (SR: {current_sr})")

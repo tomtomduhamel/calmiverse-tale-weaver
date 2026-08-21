@@ -1,11 +1,16 @@
 {
-  "updatedAt": "2026-08-09T01:50:25.615Z",
-  "createdAt": "2025-08-07T01:41:06.497Z",
   "id": "ELHHH65cZrtgl89v",
   "name": "Histoire avec choix du titre",
   "description": null,
   "active": true,
+  "activeVersionId": "2d4b1cb3-e0ca-4758-a556-de7a4e99d5ae",
+  "createdAt": "2025-08-07T01:41:06.497Z",
+  "updatedAt": "2026-08-21T02:26:16.224Z",
   "isArchived": false,
+  "versionId": "2d4b1cb3-e0ca-4758-a556-de7a4e99d5ae",
+  "versionCounter": 1205,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
   "nodes": [
     {
       "parameters": {
@@ -1299,7 +1304,7 @@
           "mode": "list",
           "cachedResultName": "models/veo-3.1-lite-generate-preview"
         },
-        "prompt": "=Génère une vidéo cinématique au format vertical (9:16), optimisée pour une visualisation sur téléphone mobile. La vidéo ne doit contenir aucun texte et doit illustrer l'histoire dont le titre est le suivant : {{ $('Creation_histoire_dans_supabase1').item.json.title }}\n\nCONTEXTE THÉRAPEUTIQUE : \nCette vidéo illustre un conte hypnotique pour enfants (0-10 ans). Elle doit servir d'amorce visuelle pour la régulation émotionnelle.\n\nRÉSUMÉ DE L'HISTOIRE : \n{{ $('Creation_histoire_dans_supabase1').item.json.summary }}\n\nDIRECTIVES VISUELLES ET AMBIANCE (Basées sur l'image de couverture) :\n{{ $('Analyze image').isExecuted ? ($('Analyze image').first().json[0]?.content?.[0]?.text || $('Analyze image').first().json?.text || '') : ($('Analyze_image').isExecuted ? ($('Analyze_image').first().json?.content?.parts?.[0]?.text || '') : '') }}\nAssure toi d'adpapter le style de la vidéo au style de l'image (ex : réaliste, bande dessinée, cartoon, cyberpunk, etc.). Il faut vraiment avoir l'impression que la vidéo est la continuité visuelle de l'image à tout le moins dans son style artistique.\n\nSPÉCIFICATIONS TECHNIQUES DE MOUVEMENT :\n1. RYTHME : Le mouvement doit être extrêmement lent et fluide, calqué sur une respiration calme (environ 60 BPM). Aucune coupure brusque, aucun flash, aucun mouvement de caméra rapide.\n2. CADRAGE MOBILE : Place le sujet principal (personnages ou symbole métaphorique) au centre exact de l'écran pour éviter qu'il ne soit masqué par les éléments d'interface du téléphone.\n3. TEXTURES (VAKOG) : Accentue les textures douces et apaisantes (effet aquarelle, reflets de lumière tamisée, balancement léger des éléments).\n4. PROFONDEUR : Utilise une profondeur de champ courte (arrière-plan légèrement flou/bokeh) pour aider l'enfant à se focaliser sur la ressource positive centrale, favorisant ainsi l'état de transe légère.\n\nLa vidéo doit se terminer par un sentiment de paix, de sécurité et de stabilité.",
+        "prompt": "=Generate a cinematic video in vertical format (9:16), optimized for mobile phone viewing. The video must contain no text and must illustrate the story with the following title: {{ $('Creation_histoire_dans_supabase1').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old). It should serve as a visual primer for emotional regulation.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase1').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image').isExecuted ? ($('Analyze image').first().json[0]?.content?.[0]?.text || $('Analyze image').first().json?.text || '') : ($('Analyze_image').isExecuted ? ($('Analyze_image').first().json?.content?.parts?.[0]?.text || '') : '') }}\nMake sure to adapt the video's style to the image's style (e.g., realistic, comic book, cartoon, cyberpunk, etc.). It must truly feel like the video is the visual continuity of the image, at least in its artistic style.\n\nTECHNICAL MOVEMENT SPECIFICATIONS:\n1. PACE: The movement must be extremely slow and fluid, modeled after calm breathing (around 60 BPM). No abrupt cuts, no flashes, no fast camera movements.\n2. MOBILE FRAMING: Place the main subject (characters or metaphorical symbol) at the exact center of the screen to prevent it from being obscured by phone interface elements.\n3. TEXTURES (VAKOG): Emphasize soft and soothing textures (watercolor effect, reflections of dim light, gentle swaying of elements).\n4. DEPTH: Use a shallow depth of field (slightly blurred background/bokeh) to help the child focus on the central positive resource, fostering a light trance state.\n\nThe video must end with a feeling of peace, safety, and stability.",
         "options": {
           "durationSeconds": 8,
           "aspectRatio": "9:16"
@@ -1578,7 +1583,7 @@
           "mode": "list",
           "cachedResultName": "SORA-2"
         },
-        "prompt": "=Génère une vidéo cinématique au format vertical (9:16), optimisée pour une visualisation sur téléphone mobile. La vidéo ne doit contenir aucun texte et doit illustrer l'histoire dont le titre est le suivant : {{ $('Creation_histoire_dans_supabase1').item.json.title }}\n\nCONTEXTE THÉRAPEUTIQUE : \nCette vidéo illustre un conte hypnotique pour enfants (0-10 ans). Elle doit servir d'amorce visuelle pour la régulation émotionnelle.\n\nRÉSUMÉ DE L'HISTOIRE : \n{{ $('Creation_histoire_dans_supabase1').item.json.summary }}\n\nDIRECTIVES VISUELLES ET AMBIANCE (Basées sur l'image de couverture) :\n{{ $('Analyze image').isExecuted ? ($('Analyze image').first().json[0]?.content?.[0]?.text || $('Analyze image').first().json?.text || '') : ($('Analyze_image').isExecuted ? ($('Analyze_image').first().json?.content?.parts?.[0]?.text || '') : '') }}\nAssure toi d'adpapter le style de la vidéo au style de l'image (ex : réaliste, bande dessinée, cartoon, cyberpunk, etc.). Il faut vraiment avoir l'impression que la vidéo est la continuité visuelle de l'image à tout le moins dans son style artistique.\n\nSPÉCIFICATIONS TECHNIQUES DE MOUVEMENT :\n1. RYTHME : Le mouvement doit être extrêmement lent et fluide, calqué sur une respiration calme (environ 60 BPM). Aucune coupure brusque, aucun flash, aucun mouvement de caméra rapide.\n2. CADRAGE MOBILE : Place le sujet principal (personnages ou symbole métaphorique) au centre exact de l'écran pour éviter qu'il ne soit masqué par les éléments d'interface du téléphone.\n3. TEXTURES (VAKOG) : Accentue les textures douces et apaisantes (effet aquarelle, reflets de lumière tamisée, balancement léger des éléments).\n4. PROFONDEUR : Utilise une profondeur de champ courte (arrière-plan légèrement flou/bokeh) pour aider l'enfant à se focaliser sur la ressource positive centrale, favorisant ainsi l'état de transe légère.\n\nLa vidéo doit se terminer par un sentiment de paix, de sécurité et de stabilité.",
+        "prompt": "=Generate a cinematic video in vertical format (9:16), optimized for mobile phone viewing. The video must contain no text and must illustrate the story with the following title: {{ $('Creation_histoire_dans_supabase1').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old). It should serve as a visual primer for emotional regulation.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase1').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image').isExecuted ? ($('Analyze image').first().json[0]?.content?.[0]?.text || $('Analyze image').first().json?.text || '') : ($('Analyze_image').isExecuted ? ($('Analyze_image').first().json?.content?.parts?.[0]?.text || '') : '') }}\nMake sure to adapt the video's style to the image's style (e.g., realistic, comic book, cartoon, cyberpunk, etc.). It must truly feel like the video is the visual continuity of the image, at least in its artistic style.\n\nTECHNICAL MOVEMENT SPECIFICATIONS:\n1. PACE: The movement must be extremely slow and fluid, modeled after calm breathing (around 60 BPM). No abrupt cuts, no flashes, no fast camera movements.\n2. MOBILE FRAMING: Place the main subject (characters or metaphorical symbol) at the exact center of the screen to prevent it from being obscured by phone interface elements.\n3. TEXTURES (VAKOG): Emphasize soft and soothing textures (watercolor effect, reflections of dim light, gentle swaying of elements).\n4. DEPTH: Use a shallow depth of field (slightly blurred background/bokeh) to help the child focus on the central positive resource, fostering a light trance state.\n\nThe video must end with a feeling of peace, safety, and stability.",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.openAi",
@@ -1598,7 +1603,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{\n  json: $input.first().json,\n  binary: $('If1').item.binary\n}];"
+        "jsCode": "return [{\n  json: {\n    title: $('Creation_histoire_dans_supabase1').item.json.title,\n    summary: $('Creation_histoire_dans_supabase1').item.json.summary\n  },\n  binary: $('If1').item.binary\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -2302,6 +2307,7 @@
       ]
     }
   },
+  "nodeGroups": [],
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
@@ -2310,10 +2316,6 @@
     "binaryMode": "separate"
   },
   "staticData": null,
-  "meta": {
-    "templateCredsSetupCompleted": true
-  },
-  "nodeGroups": [],
   "pinData": {
     "Webhook": [
       {
@@ -2321,13 +2323,13 @@
           "headers": {
             "host": "n8n.srv856374.hstgr.cloud",
             "user-agent": "Deno/2.1.4 (variant; SupabaseEdgeRuntime/1.74.3)",
-            "content-length": "9193",
+            "content-length": "9395",
             "accept": "*/*",
             "accept-encoding": "gzip,br",
             "accept-language": "*",
             "calmi-webhook-secret": "HcI94LVVH/MUOEVZ2hIlxNcsIII1yzQtXfeVcRc9Bhs=",
             "content-type": "application/json",
-            "traceparent": "00-ed9c3b4932ae743832ff08bf80851a65-5e894991f21b3776-01",
+            "traceparent": "00-7887a35c6a02e83cc00d8d5aef4add7f-0c19c55f04dc568a-01",
             "x-forwarded-for": "172.18.0.1",
             "x-forwarded-host": "n8n.srv856374.hstgr.cloud",
             "x-forwarded-port": "443",
@@ -2338,27 +2340,77 @@
           "params": {},
           "query": {},
           "body": {
-            "action": "create_fast_story",
-            "is_fast_story": true,
-            "fast_story_prompt_key": "fast_story_autonomy",
-            "objective": "custom",
-            "durationMinutes": 10,
-            "targetWordCount": 1200,
-            "userId": "59d2c73c-673c-4022-8f0e-a74d23975560",
-            "userEmail": "thomas.duhamel@tbmaestro.ca",
-            "storyPrompt": "Créer une histoire valorisante sur l'autonomie et le plaisir de faire les choses par soi-même pour un enfant d'environ 6 ans.\nDÉFI & DÉMARCHE : Prendre une initiative réussie sans l'aide permanente des grands.\nTRAME CAUSE À EFFET : L'enfant agit par lui-même, surmonte un petit obstacle et savoure sa victoire.\nSORTIE : Sentiment d'être grand, fierté d'autonomie et confiance dans ses gestes.\nCONSIGNES : Vocabulaire clair et concret. MAXIMUM 3 ONOMATOPÉES. Longueur : environ 1200 mots.\n\n⚠️ CONTEXTE CRITIQUE - ÉVITER LES RÉPÉTITIONS :\nVoici les titres et résumés des dernières histoires générées pour cet utilisateur. Tu dois ABSOLUMENT créer un scénario, des rebondissements, des personnages secondaires et un univers narratif différents de ceux-ci.\nINTERDICTIONS STRICTES DE REDONDANCE :\n- Varier le décor principal, les acolytes et le type de résolution.\nHistorique récent :\n- \"La boîte aux boutons\" : Dans le vieux théâtre, une petite lampe éclaire la Boîte aux boutons perdus, où vit Pépito, un bouton de cuivre attentif. Un soir, deux nouveaux boutons, Capitaine (bleu, d’un uniforme) et Rosette (rose, de ballerine), se disputent la même place. Une petite clef mène au placard des costumes oubliés : Capitaine et Rosette partent explorer, suivis par Pépito, Écheveau, Monsieur Dé et Plume. Dans l’armoire, une porte cache le Salon des rôles et une vieille machine à coudre demande de l’aide pour réparer des costumes incomplets. Après quelques querelles, Pépito explique que chacun a sa valeur. Capitaine est cousu sur un manteau d’hiver, Rosette sur une cape de printemps. Ensemble, ils apprennent à se respecter et trouvent une place qui leur convient. De retour dans la boîte, tout est apaisé. L’histoire se termine comme une berceuse, invitant l’enfant à transformer ses petites disputes en douceur et à se laisser aller au repos.\n- \"Le parapluie bleu\" : Dans une petite gare au bord de la mer, un vieux parapluie bleu nommé Parapluie‑Poil veille dans un panier. Quand Bulle, une botte rouge, cherche sa sœur Boum près des vagues, Parapluie‑Poil les accompagne. Sur le quai, deux nuages — Rondin et Zigzag — se chamaillent et perturbent la mer. Boum, dans une barque en papier, a du mal à regarder la lune sans être arrosée ou éclairée. Ensemble, ils voguent vers le phare où la porte est bloquée par des coquillages exigeant « le bruit parfait ». Parapluie‑Poil montre que le vrai son vient d’un mélange : pluie douce, petits éclairs, tapements de bottes et le souffle du parapluie. Leur musique réveille la flamme du Gardien des Marées, une grande théière qui rallume le phare. Après avoir rétabli la lumière, ils retournent à la gare, amis et apaisés, avec une petite chanson qui berce la nuit.\n- \"Une chèvre dans la baignoire\" : Tous couchés sur le carrelage chaud, Gustave, Joseph, Thomas, Maryse, Boubou et Misa se laissent envelopper par une sensation de douceur. Le sol se transforme en une immense baignoire de porcelaine pleine de mousse parfumée à la vanille et à la fleur d’oranger. En devenant minuscules figurines, ils découvrent Choupette, une petite chèvre au pelage chocolat qui, coiffée de palmes et d’un masque, chante et fait jaillir de petits dragons de brume rose. Pistache le lémurien raconte l’histoire d’une cuillère qui apprend à savourer la tisane; Plouf et Barnabé apportent des instants cocasses. Entre chapeaux de mousse, glissades et chatouilles, les rires réchauffent la scène. Peu à peu Choupette se pelotonne sur le nombril de Gustave et s’apaise. Sur un rythme de respiration guidée, la baignoire s’efface, le carrelage revient et chacun sent une douce tranquillité l’envahir, prêt à se laisser glisser vers le sommeil.\n- \"Le slip de la tortue\" : Gustave, Joseph, Boubou et Misa sont allongés sur l'herbe fraîche, dans un calme rassurant. La pelouse se transforme doucement en une forêt miniature où marguerites et perles de rosée deviennent de grands parasols et petits miroirs. Au milieu, Coquille la tortue joue avec un slip de bain rouge à pois blancs qui prend vie : il flotte, chante et résiste à être porté. Après quelques pirouettes et un nuage de pollen qui fait éternuer Coquille, un cricri des prés nommé Barnabé s'accroche au slip, provoquant des loopings et des rires. Le slip finit par se poser tour à tour sur la tête de Misa puis sur le ventre de Gustave, tandis que la fatigue douce gagne tous les personnages. Le récit se termine en invitation à la détente : poser les mains sur le ventre, sentir la respiration s'apaiser, ranger les rires dans un coffre de souvenirs et glisser vers un sommeil sûr et tranquille.\n- \"Une autruche dans le placard\" : Allongés côte à côte dans la buanderie, Gustave, Joseph, Boubou et Misa se laissent aller au calme. Le sol chaud devient une mer de chocolat où la lumière danse. Lulu, une autruche très chic, sort du placard et, croyant souffler du feu, laisse tomber des petits bonbons en faisant pop‑fizz. Pour cacher ses yeux, elle met un grand gant de toilette vert et glisse sur la crème chocolatée, atterrissant en vrac sur Boubou. Un petit dragon nommé Koko arrive pour aider, mais plonge dans un pot d'abricot et ressort tout orangé. Entre glissades, rires et léchouilles, la pièce se remplit de douceur. Lulu finit par se blottir contre le ventre posé d'une des personnes : on invite alors à poser ses mains sur le ventre, à respirer lentement et à sentir la chaleur rassurante. Peu à peu, le chocolat redevient linoléum, tout le monde s'apaise et glisse doucement vers le sommeil, réconforté et en sécurité.",
+            "action": "create_story_from_title",
+            "selectedTitle": "Le fil rouge du labyrinthe",
+            "objective": "fun",
+            "childrenIds": [
+              "917df3b7-a4b9-410f-9257-e5c0ba2f3be5"
+            ],
+            "childrenNames": [
+              "Noah"
+            ],
+            "childrenGenders": [
+              "boy"
+            ],
+            "childrenData": [
+              {
+                "id": "917df3b7-a4b9-410f-9257-e5c0ba2f3be5",
+                "name": "Noah",
+                "gender": "boy",
+                "age": 0,
+                "teddyName": "Loulou",
+                "teddyDescription": "petite couverte blanche ",
+                "imaginaryWorld": "",
+                "petType": null,
+                "petTypeCustom": null
+              }
+            ],
+            "durationMinutes": 5,
+            "targetWordCount": 600,
+            "userId": "eb7b717a-2cf5-4f14-a18b-0bbf33039960",
+            "userEmail": "eliot.jacquin@gmail.com",
+            "storyPrompt": "Créer une histoire très amusante, pleine de rebondissements comiques, d'action et de joie pour Noah.\n\nDYNAMIQUE DE L'OBJECTIF \"S'AMUSER\" (ÉNERGIE HAUTE & RIRE) :\n- L'histoire doit faire rire, sourire et donner de l'énergie aux enfants !\n- INTERDICTION FORMELLE d'en faire une histoire apaisante, soporifique, lénifiante ou poético-contemplative.\n- Selon l'âge des enfants :\n  * 0-3 ans : Comique visuel simple, animaux maladroits, petits jeux de cache-cache rigolos.\n  * 4-6 ans : Quiproquos loufoques, bêtises innocentes, doudou gaffeur, inversion des rôles.\n  * 7-10 ans : Aventures rythmées, défis déjantés, running gags et chutes inattendues.\n  * 11+ ans : Dialogues piquants, autodérision bienveillante et situations absurdes.\n\nTRAME NARRATIVE DE CAUSE À EFFET CONTINUE :\n- Défi ou bêtise rigolote dès le début à résoudre en équipe.\n- Les enfants Noah sont les héros actifs qui trouvent les astuces et mènent l'action.\n- Chaque péripétie découle directement de la bêtise ou de l'action précédente.\n\nTitre : \"Le fil rouge du labyrinthe\"\nPERSONNAGES PRINCIPAUX (HÉROS ACTIFS DU RÉCIT) :\n- Noah : garçon de 0 an\n\n\nCONSIGNES LINGUISTIQUES & VOCABULAIRE :\n- VOCABULAIRE TOUT-PETITS (0-3 ans) : Phrases très courtes (Sujet + Verbe + Complément). Mots simples et concrets du quotidien direct (doudou, chat, pomme, bain, dodo, ballon). Interdiction totale du vocabulaire abstrait ou littéraire.\n- RÈGLE ZÉRO MÉTAPHORE SUPERFLUE : Maximum 1 à 2 comparaisons physiques simples dans toute l'histoire (ex: 'un ballon gros comme une pastèque'). INTERDICTION FORMELLE des comparaisons poétiques lentes ('comme du miel', 'comme une onde', 'comme une offrande', 'comme un pli dans le ciel'). Raconter l'action avec des verbes directs et vivants.\n- LISTE NOIRE STRICTE (MOTS PROSCRITS) : Ne JAMAIS utiliser les mots suivants : 'irisé', 'nacre', 'nacré', 'diaphane', 'béatitude', 'onde', 'offrande', 'cérémonieux', 'cérémonieuse', 'murmure machinal', 'alcôve', 'zéphyr', 'lueur feutrée', 'contemplation', 'indicible'.\n- RÈGLE DES ONOMATOPÉES : Maximum 3 onomatopées dans TOUTE l'histoire (ex: Hop !, Plouf !, Chut...).\n- RÈGLE ZÉRO MÉTAPHORE SUPERFLUE : Pas de comparaisons lentes (\"comme du miel\", \"comme une offrande\"). Verbes d'action vivants.\n- MAXIMUM 3 ONOMATOPÉES dans toute l'histoire.\n- INTERDICTION DES TICS HYPNOTIQUES : Pas de suggestions de respiration lente ou de détente musculaire.\n\nLongueur attendue : environ 600 mots.\n\n⚠️ CONTEXTE CRITIQUE - ÉVITER LES RÉPÉTITIONS :\nVoici les titres et résumés des dernières histoires générées pour cet utilisateur. Tu dois ABSOLUMENT créer un scénario, des rebondissements, des personnages secondaires et un univers narratif différents de ceux-ci.\nINTERDICTIONS STRICTES DE REDONDANCE :\n- Ne pas réutiliser le même type de décor principal (ex: si la forêt a été utilisée, choisir un atelier miniature, un milieu urbain insolite, une cuisine féerique, des fonds marins, etc.).\n- Ne pas réutiliser le même type d'animal-compagnon ou le même mentor.\n- Varier le moteur de l'intrigue et les ressorts comiques/d'aventure.\nHistorique récent :\n- \"Le silence au creux des mains\" : Noah est assis sur le tapis dans la cuisine de Mamie Rose. Devant lui, trois bols contiennent des objets en bois et des tissus ; un torchon est posé à côté. Mamie Rose s’assoit près de lui, calme et attentive. Ensemble, ils explorent les objets : Noah manipule un rond, un carré, un bâtonnet, touche différentes textures et écoute les petits sons que font les bois. Mamie Rose guide doucement ses gestes, essuie ses mains après qu’il a mangé un morceau de pomme, joue à cacher et retrouver les mains sous le torchon, et lui demande d’observer ses paumes. La scène est faite de gestes lents, d’attention au toucher et de présence chaleureuse. À la fin, Mamie Rose prend Noah dans ses bras ; il se détend, les mains au creux de lui, apaisé. Le récit montre comment la présence bienveillante et les petits rituels sensoriels apportent sécurité et calme à l’enfant.\n- \"Le secret de l'oreiller\" : Noah est dans son petit lit, en pyjama bleu, serrant son doudou. La lampe est douce, papa et maman sont près de lui. L’oreiller cache un secret : il garde les petites joies de la journée. Papa et maman expliquent que l’oreiller compte le bain chaud, le lait, la balle rouge, et les câlins. Ils invitent Noah à sentir son souffle, à respirer lentement et calmement. La couverture vient envelopper Noah sans serrer, le doudou reste contre sa joue, et les parents posent des gestes tendres — une main sur le ventre, un baiser sur le front. Peu à peu, les mouvements s’apaisent, les yeux se ferment, et le secret de l’oreiller conserve ces petits trésors de la journée. Dans la maison silencieuse, Noah s’endort en sécurité, peut‑être déjà en train de rêver de la balle rouge et du chat endormi. Bonne nuit, Noah.",
             "imageGenerationPrompt": "Agis comme un directeur artistique de maison d'édition jeunesse de prestige. \nCrée une couverture de livre épurée et poétique pour l'histoire : {{ $json.summary }}.\n\nSTYLE VISUEL :\n- Style \"Illustration Narrative Contemporaine\" (ex : mélange de gouache, fusain et textures papier).\n- Palette de couleurs : Harmonieuse, 4 à 5 tons doux, ambiance lumineuse et sereine.\n- Rendu : Artistique et artisanal (pas de style 3D ou plastique).\n\nAUDIT ET NOMBRE DES PERSONNAGES (STRICT) :\n- Analyse le résumé et représente EXCLUSIVEMENT :\n  1. LE GROUPE D'ENFANTS : Respecte le nombre exact d'enfants et leurs âges ({{ $('Webhook').item.json.body.childrenData }}). Un enfant de 3 ans doit être visiblement plus petit qu'un enfant de 5 ans.\n  2. LES ADULTES : Si des adultes (ex : Mami, Papi, parents) sont mentionnés, représente-les comme des figures protectrices en arrière-plan ou aux côtés des enfants.\n  3. LES ANIMAUX / DOUDOUS : Distingue bien les humains des animaux ou doudous (jouets en tissu qui s'animent).\n- Unité : Tous les personnages doivent former une scène de groupe cohérente dans la moitié inférieure de l'image.\n\nCOMPOSITION ET ESPACE NÉGATIF :\n- Tiers supérieur : Doit être un \"Espace Négatif\" totalement vide et dégagé (fond uni ou dégradé très léger).\n- Sujet principal : Le groupe de personnages est placé dans les deux tiers inférieurs.\n- Décor : Minimaliste, suggéré par quelques détails simples.\n\nTEXTE ET TITRE :\n- Titre : \"{{ $('Webhook').item.json.body.selectedTitle }}\".\n- Emplacement : Centré dans l'espace vide en haut.\n- Typographie : Lettres d'imprimerie élégantes, sobres et parfaitement lisibles. \n- IMPORTANT : Vérifie l'orthographe du titre lettre par lettre.\n\nQUALITÉ FINALE :\n- Cadrage : Plan large (Full Shot) non tronqué.\n- L'image doit évoquer la complicité et la tendresse, sans surcharge visuelle.",
             "videoGenerationPrompt": "Génère un prompt pour la création d'une courte vidéo d'introduction d'une histoire pour enfants. Ce prompt sera envoyé à une IA génératrice de vidéo (ex: Kling AI, Luma Dream Machine, Runway).\nVoici le résumé de l'histoire : {{ $json.summary }}.\nLes enfants qui participent à l'histoire sont : {{ $('Webhook').item.json.body.childrenData }}.\n\nLa vidéo doit être immersive, cinématographique et au format portrait (9:16).\nElle doit représenter le personnage principal ou le monde imaginaire de l'histoire.\nRédige le prompt UNIQUEMENT EN ANGLAIS, car les IA vidéos le comprennent mieux.\nUtilise des mots-clés descriptifs séparés par des virgules pour définir l'ambiance, les mouvements de caméra (ex: slow pan, zoom in) et le style visuel adapté aux enfants (ex: 3d animation, pixar style, soft lighting, vibrant colors, magical atmosphere).\nLe résultat doit être directement utilisable par l'IA vidéo sans aucun texte supplémentaire.",
-            "generateVideo": true,
+            "promptSource": "database-fun",
             "narrativeVariation": {
-              "schema": "Enquête Mystère",
-              "vakog": "Kinesthésique Apaisant",
-              "universe": "Animaux ressources",
-              "technique": "Saupoudrage",
-              "theme": "autonomie"
+              "schema": "Linéaire",
+              "vakog": "Visuel",
+              "universe": "L'Île aux Énigmes Renversées",
+              "technique": "Ancrage d'Empowerment",
+              "ageCognition": "0-2 ans"
             },
-            "timestamp": "2026-08-09T00:52:47.006Z",
-            "requestId": "fast-story-1786236767006-guovwsfwv"
+            "titleGenerationCost": {
+              "total_input_tokens": 614,
+              "total_output_tokens": 1245,
+              "total_cost_usd": 0.001635,
+              "details_par_noeud": [
+                {
+                  "nodeName": "tokens_creation_titres",
+                  "model_llm": "gpt-5",
+                  "status": "success",
+                  "input_tokens": 258,
+                  "output_tokens": 46,
+                  "cost_input_usd": 0.000161,
+                  "cost_output_usd": 0.00023,
+                  "cost_total_usd": 0.000391
+                },
+                {
+                  "nodeName": "tokens_verifications_titres",
+                  "model_llm": "gpt-5-mini-2025-08-07",
+                  "status": "success",
+                  "input_tokens": 356,
+                  "output_tokens": 1199,
+                  "cost_input_usd": 4.4e-05,
+                  "cost_output_usd": 0.001199,
+                  "cost_total_usd": 0.001244
+                }
+              ],
+              "timestamp": "2026-08-20T01:00:35.379Z"
+            },
+            "generateVideo": true,
+            "timestamp": "2026-08-20T01:09:06.570Z",
+            "requestId": "story-1787188146570-89gen5guw"
           },
           "webhookUrl": "https://n8n.srv856374.hstgr.cloud/webhook/816f3f78-bbdc-4b51-88b6-13232fcf3c78",
           "executionMode": "production"
@@ -2369,36 +2421,32 @@
       }
     ]
   },
-  "versionId": "a1ff1559-bb77-4991-957a-281913e27109",
-  "activeVersionId": "a40effcb-b1da-4013-a442-8bade39c967c",
-  "versionCounter": 1202,
-  "triggerCount": 1,
-  "sourceWorkflowId": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [],
   "shared": [
     {
-      "updatedAt": "2025-08-07T01:41:06.503Z",
-      "createdAt": "2025-08-07T01:41:06.503Z",
       "role": "workflow:owner",
       "workflowId": "ELHHH65cZrtgl89v",
       "projectId": "Awb8mD1I5ATrGCa2",
       "project": {
-        "updatedAt": "2025-06-05T20:38:52.105Z",
-        "createdAt": "2025-06-05T20:37:29.445Z",
         "id": "Awb8mD1I5ATrGCa2",
         "name": "thomas Duhamel <tomtom.duhamel@gmail.com>",
         "type": "personal",
         "icon": null,
         "description": null,
         "customTelemetryTags": [],
-        "creatorId": "afb0d3c7-6b3a-42f7-808b-41eab210632f"
-      }
+        "creatorId": "afb0d3c7-6b3a-42f7-808b-41eab210632f",
+        "createdAt": "2025-06-05T20:37:29.445Z",
+        "updatedAt": "2025-06-05T20:38:52.105Z"
+      },
+      "createdAt": "2025-08-07T01:41:06.503Z",
+      "updatedAt": "2025-08-07T01:41:06.503Z"
     }
   ],
-  "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-08-07T23:41:15.000Z",
-    "createdAt": "2026-08-07T23:41:07.197Z",
-    "versionId": "a40effcb-b1da-4013-a442-8bade39c967c",
+    "versionId": "2d4b1cb3-e0ca-4758-a556-de7a4e99d5ae",
     "workflowId": "ELHHH65cZrtgl89v",
     "nodes": [
       {
@@ -3693,7 +3741,7 @@
             "mode": "list",
             "cachedResultName": "models/veo-3.1-lite-generate-preview"
           },
-          "prompt": "=Génère une vidéo cinématique au format vertical (9:16), optimisée pour une visualisation sur téléphone mobile. La vidéo ne doit contenir aucun texte et doit illustrer l'histoire dont le titre est le suivant : {{ $('Creation_histoire_dans_supabase1').item.json.title }}\n\nCONTEXTE THÉRAPEUTIQUE : \nCette vidéo illustre un conte hypnotique pour enfants (0-10 ans). Elle doit servir d'amorce visuelle pour la régulation émotionnelle.\n\nRÉSUMÉ DE L'HISTOIRE : \n{{ $('Creation_histoire_dans_supabase1').item.json.summary }}\n\nDIRECTIVES VISUELLES ET AMBIANCE (Basées sur l'image de couverture) :\n{{ $('Analyze image').isExecuted ? ($('Analyze image').first().json[0]?.content?.[0]?.text || $('Analyze image').first().json?.text || '') : ($('Analyze_image').isExecuted ? ($('Analyze_image').first().json?.content?.parts?.[0]?.text || '') : '') }}\nAssure toi d'adpapter le style de la vidéo au style de l'image (ex : réaliste, bande dessinée, cartoon, cyberpunk, etc.). Il faut vraiment avoir l'impression que la vidéo est la continuité visuelle de l'image à tout le moins dans son style artistique.\n\nSPÉCIFICATIONS TECHNIQUES DE MOUVEMENT :\n1. RYTHME : Le mouvement doit être extrêmement lent et fluide, calqué sur une respiration calme (environ 60 BPM). Aucune coupure brusque, aucun flash, aucun mouvement de caméra rapide.\n2. CADRAGE MOBILE : Place le sujet principal (personnages ou symbole métaphorique) au centre exact de l'écran pour éviter qu'il ne soit masqué par les éléments d'interface du téléphone.\n3. TEXTURES (VAKOG) : Accentue les textures douces et apaisantes (effet aquarelle, reflets de lumière tamisée, balancement léger des éléments).\n4. PROFONDEUR : Utilise une profondeur de champ courte (arrière-plan légèrement flou/bokeh) pour aider l'enfant à se focaliser sur la ressource positive centrale, favorisant ainsi l'état de transe légère.\n\nLa vidéo doit se terminer par un sentiment de paix, de sécurité et de stabilité.",
+          "prompt": "=Generate a cinematic video in vertical format (9:16), optimized for mobile phone viewing. The video must contain no text and must illustrate the story with the following title: {{ $('Creation_histoire_dans_supabase1').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old). It should serve as a visual primer for emotional regulation.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase1').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image').isExecuted ? ($('Analyze image').first().json[0]?.content?.[0]?.text || $('Analyze image').first().json?.text || '') : ($('Analyze_image').isExecuted ? ($('Analyze_image').first().json?.content?.parts?.[0]?.text || '') : '') }}\nMake sure to adapt the video's style to the image's style (e.g., realistic, comic book, cartoon, cyberpunk, etc.). It must truly feel like the video is the visual continuity of the image, at least in its artistic style.\n\nTECHNICAL MOVEMENT SPECIFICATIONS:\n1. PACE: The movement must be extremely slow and fluid, modeled after calm breathing (around 60 BPM). No abrupt cuts, no flashes, no fast camera movements.\n2. MOBILE FRAMING: Place the main subject (characters or metaphorical symbol) at the exact center of the screen to prevent it from being obscured by phone interface elements.\n3. TEXTURES (VAKOG): Emphasize soft and soothing textures (watercolor effect, reflections of dim light, gentle swaying of elements).\n4. DEPTH: Use a shallow depth of field (slightly blurred background/bokeh) to help the child focus on the central positive resource, fostering a light trance state.\n\nThe video must end with a feeling of peace, safety, and stability.",
           "options": {
             "durationSeconds": 8,
             "aspectRatio": "9:16"
@@ -3972,7 +4020,7 @@
             "mode": "list",
             "cachedResultName": "SORA-2"
           },
-          "prompt": "Génère une vidéo cinématique au format vertical (9:16), optimisée pour une visualisation sur téléphone mobile. La vidéo ne doit contenir aucun texte et doit illustrer l'histoire dont le titre est le suivant : {{ $('Creation_histoire_dans_supabase1').item.json.title }}\n\nCONTEXTE THÉRAPEUTIQUE : \nCette vidéo illustre un conte hypnotique pour enfants (0-10 ans). Elle doit servir d'amorce visuelle pour la régulation émotionnelle.\n\nRÉSUMÉ DE L'HISTOIRE : \n{{ $('Creation_histoire_dans_supabase1').item.json.summary }}\n\nDIRECTIVES VISUELLES ET AMBIANCE (Basées sur l'image de couverture) :\n{{ $('Analyze image').isExecuted ? ($('Analyze image').first().json[0]?.content?.[0]?.text || $('Analyze image').first().json?.text || '') : ($('Analyze_image').isExecuted ? ($('Analyze_image').first().json?.content?.parts?.[0]?.text || '') : '') }}\nAssure toi d'adpapter le style de la vidéo au style de l'image (ex : réaliste, bande dessinée, cartoon, cyberpunk, etc.). Il faut vraiment avoir l'impression que la vidéo est la continuité visuelle de l'image à tout le moins dans son style artistique.\n\nSPÉCIFICATIONS TECHNIQUES DE MOUVEMENT :\n1. RYTHME : Le mouvement doit être extrêmement lent et fluide, calqué sur une respiration calme (environ 60 BPM). Aucune coupure brusque, aucun flash, aucun mouvement de caméra rapide.\n2. CADRAGE MOBILE : Place le sujet principal (personnages ou symbole métaphorique) au centre exact de l'écran pour éviter qu'il ne soit masqué par les éléments d'interface du téléphone.\n3. TEXTURES (VAKOG) : Accentue les textures douces et apaisantes (effet aquarelle, reflets de lumière tamisée, balancement léger des éléments).\n4. PROFONDEUR : Utilise une profondeur de champ courte (arrière-plan légèrement flou/bokeh) pour aider l'enfant à se focaliser sur la ressource positive centrale, favorisant ainsi l'état de transe légère.\n\nLa vidéo doit se terminer par un sentiment de paix, de sécurité et de stabilité.",
+          "prompt": "=Generate a cinematic video in vertical format (9:16), optimized for mobile phone viewing. The video must contain no text and must illustrate the story with the following title: {{ $('Creation_histoire_dans_supabase1').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old). It should serve as a visual primer for emotional regulation.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase1').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image').isExecuted ? ($('Analyze image').first().json[0]?.content?.[0]?.text || $('Analyze image').first().json?.text || '') : ($('Analyze_image').isExecuted ? ($('Analyze_image').first().json?.content?.parts?.[0]?.text || '') : '') }}\nMake sure to adapt the video's style to the image's style (e.g., realistic, comic book, cartoon, cyberpunk, etc.). It must truly feel like the video is the visual continuity of the image, at least in its artistic style.\n\nTECHNICAL MOVEMENT SPECIFICATIONS:\n1. PACE: The movement must be extremely slow and fluid, modeled after calm breathing (around 60 BPM). No abrupt cuts, no flashes, no fast camera movements.\n2. MOBILE FRAMING: Place the main subject (characters or metaphorical symbol) at the exact center of the screen to prevent it from being obscured by phone interface elements.\n3. TEXTURES (VAKOG): Emphasize soft and soothing textures (watercolor effect, reflections of dim light, gentle swaying of elements).\n4. DEPTH: Use a shallow depth of field (slightly blurred background/bokeh) to help the child focus on the central positive resource, fostering a light trance state.\n\nThe video must end with a feeling of peace, safety, and stability.",
           "options": {}
         },
         "type": "@n8n/n8n-nodes-langchain.openAi",
@@ -3992,7 +4040,7 @@
       },
       {
         "parameters": {
-          "jsCode": "return [{\n  json: $input.first().json,\n  binary: $('If1').item.binary\n}];"
+          "jsCode": "return [{\n  json: {\n    title: $('Creation_histoire_dans_supabase1').item.json.title,\n    summary: $('Creation_histoire_dans_supabase1').item.json.summary\n  },\n  binary: $('If1').item.binary\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -4698,17 +4746,27 @@
     },
     "nodeGroups": [],
     "authors": "thomas Duhamel",
-    "name": "Version a40effcb",
-    "description": "",
-    "autosaved": true,
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-08-21T02:26:16.227Z",
+    "updatedAt": "2026-08-21T02:26:16.227Z",
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-08-07T23:41:15.584Z",
-        "id": 726,
+        "id": 751,
         "workflowId": "ELHHH65cZrtgl89v",
-        "versionId": "a40effcb-b1da-4013-a442-8bade39c967c",
+        "versionId": "2d4b1cb3-e0ca-4758-a556-de7a4e99d5ae",
         "event": "activated",
-        "userId": "afb0d3c7-6b3a-42f7-808b-41eab210632f"
+        "userId": "afb0d3c7-6b3a-42f7-808b-41eab210632f",
+        "createdAt": "2026-08-21T02:26:16.371Z"
+      },
+      {
+        "id": 750,
+        "workflowId": "ELHHH65cZrtgl89v",
+        "versionId": "2d4b1cb3-e0ca-4758-a556-de7a4e99d5ae",
+        "event": "deactivated",
+        "userId": "afb0d3c7-6b3a-42f7-808b-41eab210632f",
+        "createdAt": "2026-08-21T02:26:16.338Z"
       }
     ]
   }

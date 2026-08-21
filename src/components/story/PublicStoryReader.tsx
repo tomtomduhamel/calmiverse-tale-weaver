@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Story } from "@/types/story";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Minus, Plus, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
+import { stripStoryEmotionTags } from "@/utils/storyContentFormatter";
 
 interface PublicStoryReaderProps {
   story: Story;
@@ -15,6 +16,9 @@ const PublicStoryReader: React.FC<PublicStoryReaderProps> = ({ story, onClose })
   const [fontSize, setFontSize] = useState(18);
   const { resolvedTheme, setTheme } = useTheme();
   const isDarkMode = resolvedTheme === "dark";
+
+  // Nettoyage transparent des balises d'émotions audio
+  const cleanContent = useMemo(() => stripStoryEmotionTags(story.content), [story.content]);
 
   const increaseFontSize = () => setFontSize((prev) => Math.min(prev + 2, 32));
   const decreaseFontSize = () => setFontSize((prev) => Math.max(prev - 2, 12));
@@ -164,7 +168,7 @@ const PublicStoryReader: React.FC<PublicStoryReaderProps> = ({ story, onClose })
               ),
             }}
           >
-            {story.content || ""}
+            {cleanContent}
           </ReactMarkdown>
         </article>
 

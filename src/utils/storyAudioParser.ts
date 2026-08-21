@@ -1,6 +1,4 @@
-/**
- * Utilitaire de découpage de texte d'histoire et d'attribution intelligente multi-voix pour la synthèse audio (TTS)
- */
+import { stripStoryEmotionTags } from './storyContentFormatter';
 
 export type VoiceCategorySlug = 
   | 'narrator'
@@ -13,6 +11,15 @@ export type VoiceCategorySlug =
   | 'child_girl'
   | 'magical_creatures'
   | string;
+
+export const EMOTION_INSTRUCT_MAP: Record<string, string> = {
+  warm: "Warm, soothing, gentle bedtime narrator for children.",
+  whisper: "Soft, gentle whispering voice, quiet bedtime narrator.",
+  excited: "Enthusiastic, cheerful, joyful storytelling voice for children.",
+  mysterious: "Curious, gentle, mysterious bedtime storytelling voice.",
+  calm: "Calm, peaceful, relaxed storytelling voice.",
+  sleepy: "Very slow, soft, sleepy bedtime voice."
+};
 
 export interface VoiceCatalogItem {
   id: string;
@@ -45,7 +52,53 @@ export interface AudioSegment {
   voiceId?: string;
   voiceRefUrl?: string;
   language: string;
+  emotion?: string;
+  instruct?: string;
 }
+
+/**
+ * Détecte l'émotion et l'instruction vocale à partir de balises explicites ou d'heuristiques textuelles
+ */
+export const detectEmotionAndInstruct = (
+  rawText: string,
+  contextAround: string = '',
+  fallbackInstruct?: string
+): { emotion?: string; instruct?: string } => {
+  const tagMatch = rawText.match(/\[(warm|whisper|excited|mysterious|calm|sleepy|instruct:\s*[^\]]+)\]/i);
+  if (tagMatch) {
+    const val = tagMatch[1].trim();
+    if (val.toLowerCase().startsWith('instruct:')) {
+      const customInstruct = val.substring('instruct:'.length).trim();
+      return { emotion: 'custom', instruct: customInstruct };
+    }
+    const emotionKey = val.toLowerCase();
+    return {
+      emotion: emotionKey,
+      instruct: EMOTION_INSTRUCT_MAP[emotionKey] || fallbackInstruct
+    };
+  }
+
+  // Heuristiques sur verbes d'action et ponctuations
+  const combined = (contextAround + ' ' + rawText).toLowerCase();
+  
+  if (/chuchot|murmur|tout bas|à voix basse|chut\b|discrètement|secret/i.test(combined)) {
+    return { emotion: 'whisper', instruct: EMOTION_INSTRUCT_MAP.whisper };
+  }
+  if (/s'exclama|s'écria|cria|hurla|youpi|hourra|génial|sauta de joie|éclata de rire|riant/i.test(combined) || rawText.includes('!')) {
+    return { emotion: 'excited', instruct: EMOTION_INSTRUCT_MAP.excited };
+  }
+  if (/bâill|s'endorm|fatigué|sommeil|paupières lourdes|ronfl|dodo/i.test(combined)) {
+    return { emotion: 'sleepy', instruct: EMOTION_INSTRUCT_MAP.sleepy };
+  }
+  if (/mystère|bizarre|étrange|sombre|qui va là|curieux|inconnu/i.test(combined) || rawText.includes('?')) {
+    return { emotion: 'mysterious', instruct: EMOTION_INSTRUCT_MAP.mysterious };
+  }
+  if (/doucement|paisible|calme|serein|repos/i.test(combined)) {
+    return { emotion: 'calm', instruct: EMOTION_INSTRUCT_MAP.calm };
+  }
+
+  return { emotion: 'warm', instruct: fallbackInstruct || EMOTION_INSTRUCT_MAP.warm };
+};
 
 /**
  * Tente d'identifier la catégorie de rôle et le nom du personnage dans un dialogue
@@ -205,6 +258,9 @@ export const parseStoryToAudioSegments = (
     const trimmed = paragraph.trim();
     if (!trimmed) continue;
 
+    // Détection de l'émotion globale du paragraphe
+    const paraEmotion = detectEmotionAndInstruct(trimmed);
+
     let lastIndex = 0;
     let match: RegExpExecArray | null;
     const localRegex = new RegExp(dialogueRegex.source, 'gm');
@@ -214,34 +270,44 @@ export const parseStoryToAudioSegments = (
       
       // Texte du narrateur avant le dialogue
       if (matchIndex > lastIndex) {
-        const narratorText = trimmed.substring(lastIndex, matchIndex).trim();
-        if (narratorText.length > 0) {
+        const rawNarratorText = trimmed.substring(lastIndex, matchIndex).trim();
+        const cleanNarratorText = stripStoryEmotionTags(rawNarratorText);
+        if (cleanNarratorText.length > 0) {
+          const narratorEmotion = detectEmotionAndInstruct(rawNarratorText, '', paraEmotion.instruct);
           segments.push({
-            text: narratorText,
+            text: cleanNarratorText,
             speakerType: 'narrator',
             roleCategory: 'narrator_family',
             voiceId: fallbackNarrator?.id,
             voiceRefUrl: fallbackNarrator?.signedUrl || undefined,
-            language: language
+            language: language,
+            emotion: narratorEmotion.emotion,
+            instruct: narratorEmotion.instruct
           });
         }
       }
 
       // Texte du dialogue
-      const dialogueText = match[0].replace(/^[«"——-]\s*|\s*[»"]$/g, '').trim();
-      if (dialogueText.length > 0) {
-        const contextAround = trimmed.substring(Math.max(0, matchIndex - 60), Math.min(trimmed.length, matchIndex + match[0].length + 60));
-        const { category, detectedName } = detectCharacterCategoryAndName(dialogueText, contextAround);
+      const rawDialogueMatch = match[0];
+      const dialogueText = rawDialogueMatch.replace(/^[«"——-]\s*|\s*[»"]$/g, '').trim();
+      const cleanDialogueText = stripStoryEmotionTags(dialogueText);
+
+      if (cleanDialogueText.length > 0) {
+        const contextAround = trimmed.substring(Math.max(0, matchIndex - 60), Math.min(trimmed.length, matchIndex + rawDialogueMatch.length + 60));
+        const { category, detectedName } = detectCharacterCategoryAndName(cleanDialogueText, contextAround);
         const resolved = resolveSmartVoice(category, detectedName, allUserVoices, fallbackNarrator);
+        const dialogueEmotion = detectEmotionAndInstruct(rawDialogueMatch, contextAround, paraEmotion.instruct);
 
         segments.push({
-          text: dialogueText,
+          text: cleanDialogueText,
           speakerType: 'dialogue',
           roleCategory: category,
           speakerName: detectedName,
           voiceId: resolved.voiceId,
           voiceRefUrl: resolved.voiceRefUrl,
-          language: language
+          language: language,
+          emotion: dialogueEmotion.emotion,
+          instruct: dialogueEmotion.instruct
         });
       }
 
@@ -250,15 +316,19 @@ export const parseStoryToAudioSegments = (
 
     // Texte restant dans le paragraphe
     if (lastIndex < trimmed.length) {
-      const remainingNarratorText = trimmed.substring(lastIndex).trim();
-      if (remainingNarratorText.length > 0) {
+      const rawRemainingNarratorText = trimmed.substring(lastIndex).trim();
+      const cleanRemainingNarratorText = stripStoryEmotionTags(rawRemainingNarratorText);
+      if (cleanRemainingNarratorText.length > 0) {
+        const remainingEmotion = detectEmotionAndInstruct(rawRemainingNarratorText, '', paraEmotion.instruct);
         segments.push({
-          text: remainingNarratorText,
+          text: cleanRemainingNarratorText,
           speakerType: 'narrator',
           roleCategory: 'narrator_family',
           voiceId: fallbackNarrator?.id,
           voiceRefUrl: fallbackNarrator?.signedUrl || undefined,
-          language: language
+          language: language,
+          emotion: remainingEmotion.emotion,
+          instruct: remainingEmotion.instruct
         });
       }
     }
