@@ -246,7 +246,7 @@ const Settings = () => {
           <Button 
             onClick={reloadApp} 
             disabled={isReloading}
-            className="w-full sm:w-auto flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="w-full sm:w-auto flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
           >
             {isReloading ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -256,29 +256,40 @@ const Settings = () => {
             {isReloading ? 'Mise à jour…' : 'Installer la mise à jour'}
           </Button>
         ) : (
-          <Button
-            onClick={async () => {
-              const result = await checkForUpdate();
-              if (result.checkFailed) {
-                toast({
-                  title: "Vérification impossible",
-                  description: "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
-                  variant: "destructive",
-                });
-              } else if (!result.updateAvailable) {
-                toast({
-                  title: "À jour",
-                  description: "Vous utilisez déjà la dernière version.",
-                });
-              }
-            }}
-            variant="outline"
-            disabled={isCheckingUpdate}
-            className="w-full sm:w-auto flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <RefreshCw className={`h-4 w-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
-            {isCheckingUpdate ? 'Vérification...' : 'Vérifier les mises à jour'}
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            <Button
+              onClick={async () => {
+                const result = await checkForUpdate();
+                if (result.checkFailed) {
+                  toast({
+                    title: "Vérification impossible",
+                    description: "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+                    variant: "destructive",
+                  });
+                } else if (!result.updateAvailable) {
+                  toast({
+                    title: "À jour",
+                    description: "Vous utilisez déjà la dernière version disponible sur le serveur.",
+                  });
+                }
+              }}
+              variant="outline"
+              disabled={isCheckingUpdate || isReloading}
+              className="w-full sm:w-auto flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className={`h-4 w-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+              {isCheckingUpdate ? 'Vérification…' : 'Vérifier les mises à jour'}
+            </Button>
+            <Button
+              onClick={reloadApp}
+              variant="ghost"
+              size="sm"
+              disabled={isReloading || isCheckingUpdate}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              {isReloading ? 'Rechargement…' : 'Forcer le rechargement'}
+            </Button>
+          </div>
         )}
         <div className="text-center text-xs text-muted-foreground space-y-1">
           <p className="font-medium">
