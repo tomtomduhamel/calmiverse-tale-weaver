@@ -29,9 +29,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Plus, Save, CheckCircle2, Zap, BookOpen, Sparkles, Archive,
   HelpCircle, Copy, Check, ChevronLeft, MoreVertical, AlertTriangle,
-  FileText, History, Settings,
+  FileText, History, Settings, Bot, RefreshCw,
 } from "lucide-react";
 import { FAST_STORY_PROMPT_CONFIG, FAST_STORY_PROMPT_KEYS } from "@/config/fastStoryConfig";
+import { autoPromptOptimizerService } from "@/services/prompts/autoPromptOptimizerService";
 
 interface PromptTemplate {
   id: string;
@@ -207,6 +208,47 @@ const PromptAdmin: React.FC = () => {
   const [newVersionDraft, setNewVersionDraft] = useState<{ content: string; changelog: string }>(
     { content: "", changelog: "" }
   );
+
+  const [optimizing, setOptimizing] = useState(false);
+
+  const handleAutoOptimize = async () => {
+    if (!selected) return;
+    setOptimizing(true);
+    try {
+      let objective = "all";
+      if (selected.key.startsWith("story_prompt_")) {
+        objective = selected.key.replace("story_prompt_", "");
+      }
+      
+      toast({
+        title: "Auto-optimisation lancée 🚀",
+        description: `Analyse des 20 dernières histoires avec gpt-5.6-terra pour ${selected.title}...`,
+      });
+
+      const res = await autoPromptOptimizerService.triggerOptimization({
+        objective: objective as any,
+        batchSize: 20
+      });
+
+      if (res.success) {
+        toast({
+          title: "Nouvelle version générée !",
+          description: "La version optimisée par gpt-5.6-terra est disponible dans l'onglet Versions. Vous pouvez l'activer en 1 clic.",
+        });
+        await fetchVersions(selected.id);
+      } else {
+        throw new Error(res.error || "Erreur lors de l'optimisation");
+      }
+    } catch (err: any) {
+      toast({
+        title: "Erreur d'optimisation",
+        description: err?.message || "Impossible de joindre le workflow n8n",
+        variant: "destructive",
+      });
+    } finally {
+      setOptimizing(false);
+    }
+  };
 
   const groupedTemplates = useMemo(() => {
     const active: PromptTemplate[] = [];
@@ -764,22 +806,73 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
           {/* ─ Tab: Versions ─ */}
           <TabsContent value="versions" className="flex-1 overflow-y-auto px-4 pb-4 mt-0">
             <div className="space-y-3 pt-3">
+              {/* Carte d'action d'auto-optimisation IA pour les prompts d'histoire */}
+              {selected.key.startsWith('story_prompt_') && (
+                <Card className="p-3 bg-gradient-to-br from-purple-500/10 via-primary/5 to-background border-purple-500/30">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 mt-0.5">
+                        <Bot className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-semibold text-purple-400">
+                            Auto-Optimisation Continue (gpt-5.6-terra)
+                          </h4>
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-purple-500/40 text-purple-300">
+                            n8n Flywheel
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Analyse les 20 dernières histoires, notes parents et critiques IA pour proposer une nouvelle version affinée.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleAutoOptimize}
+                      disabled={optimizing}
+                      className="bg-purple-600 hover:bg-purple-500 text-white text-xs shrink-0 gap-1.5"
+                    >
+                      {optimizing ? (
+                        <>
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          Analyse en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Lancer l'optimisation IA
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
               {versions.length === 0 && (
                 <p className="text-sm text-muted-foreground py-8 text-center">Aucune version</p>
               )}
               {versions.map(v => {
                 const isVersionActive = selected.active_version_id === v.id;
+                const isAiGenerated = v.changelog?.includes('gpt-5.6-terra') || v.changelog?.includes('Auto-n8n');
                 return (
                   <Card
                     key={v.id}
-                    className={`p-3 ${isVersionActive ? 'border-primary bg-primary/5' : ''}`}
+                    className={`p-3 ${isVersionActive ? 'border-primary bg-primary/5' : isAiGenerated ? 'border-purple-500/40 bg-purple-500/5' : ''}`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
                         <span className="font-medium text-sm">v{v.version}</span>
                         {isVersionActive && (
                           <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
                             Active
+                          </Badge>
+                        )}
+                        {isAiGenerated && (
+                          <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/40 text-[10px] flex items-center gap-1">
+                            <Bot className="h-2.5 w-2.5" />
+                            gpt-5.6-terra
                           </Badge>
                         )}
                       </div>

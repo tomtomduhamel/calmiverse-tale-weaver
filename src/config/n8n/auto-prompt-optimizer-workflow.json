@@ -1,0 +1,319 @@
+{
+  "name": "Calmi - Auto-Optimisation Continue des Prompts (gpt-5.6-terra)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "auto-optimize-prompts",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        180,
+        300
+      ],
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        500
+      ],
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger (Hebdomadaire)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Déterminer l'objectif cible et les paramètres\nconst inputData = $input.item.json.body || $input.item.json || {};\nconst requestedObjective = inputData.objective || 'sleep';\nconst batchSize = Number(inputData.batchSize) || 20;\n\nconst TEMPLATE_MAP = {\n  'sleep': { key: 'story_prompt_sleep', title: 'Histoire du Soir (Sommeil)' },\n  'focus': { key: 'story_prompt_focus', title: 'Histoire Focus (Concentration)' },\n  'relax': { key: 'story_prompt_relax', title: 'Histoire Détente (Relaxation)' },\n  'fun': { key: 'story_prompt_fun', title: 'Histoire Ludique (S\\'amuser)' }\n};\n\nconst target = TEMPLATE_MAP[requestedObjective] || { key: `story_prompt_${requestedObjective}`, title: `Objectif ${requestedObjective}` };\n\nreturn {\n  json: {\n    template_key: target.key,\n    objective: requestedObjective,\n    title: target.title,\n    batch_size: batchSize\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        400
+      ],
+      "id": "prepare-target",
+      "name": "Préparer Paramètres"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/v_active_prompt_templates?key=eq.{{ $json.template_key }}&select=key,active_content",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ],
+      "id": "fetch-active-prompt",
+      "name": "Récupérer Prompt Actuel",
+      "credentials": {
+        "supabaseApi": {
+          "id": "wigd9LqEY8DlWzkn",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/v_story_learning_batch?objective=eq.{{ $('Préparer Paramètres').item.json.objective }}&order=created_at.desc&limit={{ $('Préparer Paramètres').item.json.batch_size || 20 }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        500
+      ],
+      "id": "fetch-stories-batch",
+      "name": "Récupérer 20 Dernières Histoires",
+      "credentials": {
+        "supabaseApi": {
+          "id": "wigd9LqEY8DlWzkn",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Agrégation des retours critiques IA + retours parents réels\nconst targetContext = $('Préparer Paramètres').item.json;\nconst activePromptData = $('Récupérer Prompt Actuel').item.json;\nconst storiesBatch = $input.all().map(i => i.json);\n\nlet currentPrompt = '';\nif (Array.isArray(activePromptData) && activePromptData.length > 0) {\n  currentPrompt = activePromptData[0].active_content || '';\n} else if (activePromptData && activePromptData.active_content) {\n  currentPrompt = activePromptData.active_content;\n}\n\n// 1. Analyse des retours utilisateurs (Notes étoiles & commentaires)\nconst ratedStories = storiesBatch.filter(s => s.user_rating != null);\nconst userRatings = ratedStories.map(s => Number(s.user_rating));\nconst avgUserRating = userRatings.length > 0 \n  ? (userRatings.reduce((a, b) => a + b, 0) / userRatings.length).toFixed(1) \n  : 'N/A';\n\nconst userComments = storiesBatch\n  .filter(s => s.user_comment && s.user_comment.trim())\n  .map(s => ({ rating: s.user_rating, comment: s.user_comment }));\n\n// 2. Analyse des critiques IA\nconst critiqueScores = storiesBatch.filter(s => s.critique_score != null).map(s => Number(s.critique_score));\nconst avgCritiqueScore = critiqueScores.length > 0 \n  ? (critiqueScores.reduce((a, b) => a + b, 0) / critiqueScores.length).toFixed(1) \n  : 'N/A';\n\n// Extraction des faiblesses récurrentes\nconst weaknessesList = [];\nconst strengthsList = [];\nconst actionableList = [];\nlet excessiveOnomatopoeiaCount = 0;\nlet moralizingCount = 0;\n\nstoriesBatch.forEach(s => {\n  if (Array.isArray(s.weaknesses)) {\n    s.weaknesses.forEach(w => {\n      if (w.issue) weaknessesList.push({ issue: w.issue, impact: w.impact, severity: w.severity });\n    });\n  }\n  if (Array.isArray(s.strengths)) {\n    s.strengths.forEach(st => {\n      if (st.aspect) strengthsList.push({ aspect: st.aspect, analysis: st.analysis });\n    });\n  }\n  if (Array.isArray(s.actionable_improvements)) {\n    s.actionable_improvements.forEach(act => {\n      if (act.recommendation) actionableList.push(act.recommendation);\n    });\n  }\n  if (s.calmi_pitfalls) {\n    if (s.calmi_pitfalls.excessive_onomatopoeia) excessiveOnomatopoeiaCount++;\n    if (s.calmi_pitfalls.heavy_moralizing_detected) moralizingCount++;\n  }\n});\n\nconst userPrompt = `Voici les données pour l'objectif: ${targetContext.title} (Clé: ${targetContext.template_key})\\n\\n--- PROMPT ACTUEL ---\\n${currentPrompt}\\n\\n--- STATISTIQUES DU LOT (${storiesBatch.length} histoires) ---\\n- Note moyenne des parents : ${avgUserRating}/5 (sur ${ratedStories.length} avis)\\n- Score technique moyen IA : ${avgCritiqueScore}/10\\n- Alertes onomatopées excessives : ${excessiveOnomatopoeiaCount}\\n- Alertes moralisation lourde : ${moralizingCount}\\n\\n--- COMMENTAIRES REELS DES PARENTS ---\\n${JSON.stringify(userComments, null, 2)}\\n\\n--- PRINCIPALES FAIBLESSES TECHNIQUES DETECTEES ---\\n${JSON.stringify(weaknessesList.slice(0, 12), null, 2)}\\n\\n--- POINTS FORTS A CONSERVER ---\\n${JSON.stringify(strengthsList.slice(0, 8), null, 2)}\\n\\n--- RECOMMANDATIONS D'ACTION IA ---\\n${JSON.stringify(actionableList.slice(0, 10), null, 2)}\\n\\nGénère la nouvelle version optimisée du template au format JSON requis.`;\n\nconst openaiPayload = {\n  model: \"gpt-5.6-terra\",\n  response_format: { type: \"json_object\" },\n  messages: [\n    {\n      role: \"system\",\n      content: \"Tu es le Directeur Éditorial et Pédagogique en Chef de Calmi. Ton rôle est de perfectionner continuellement les templates de prompts de génération d'histoires pour enfants.\\n\\nTu disposes :\\n1. Du template de prompt actuellement utilisé pour l'objectif ciblé.\\n2. Des retours réels des parents/enfants (notes étoiles et commentaires libres).\\n3. Des analyses critiques techniques générées par le module qualité (faiblesses récurrentes, pièges Calmi détectés tels que la moralisation lourde ou les onomatopées superflues, points forts à sanctuariser).\\n\\nCONSIGNES CALMI IMPORTANTES :\\n- Préserves scrupuleusement la structure et les balises variables indispensables du prompt (ex: {child_name}, {target_age}, {duration}, etc.).\\n- Renforces les règles 'Show Don't Tell', la musicalité de lecture à voix haute, et la douceur émotionnelle.\\n- Si les parents signalent une peur, une longueur inadaptée ou un manque d'engagement, intègre des consignes explicites et bien calibrées pour y remédier.\\n- Tu dois répondre EXCLUSIVEMENT sous la forme d'un objet JSON valide contenant :\\n  - \\\"improved_prompt\\\": le texte complet et révisé du template de prompt.\\n  - \\\"changelog\\\": un résumé clair, vulgarisé et concis (en français) expliquant ce qui a été amélioré et pourquoi (en citant les retours parents et critiques corrigées).\\n  - \\\"key_improvements\\\": une liste de 3 à 5 points clés d'amélioration.\"\n    },\n    {\n      role: \"user\",\n      content: userPrompt\n    }\n  ]\n};\n\nreturn {\n  json: {\n    template_key: targetContext.template_key,\n    objective: targetContext.objective,\n    title: targetContext.title,\n    current_prompt: currentPrompt,\n    openai_payload: openaiPayload,\n    stats: {\n      total_stories: storiesBatch.length,\n      rated_count: ratedStories.length,\n      avg_user_rating: avgUserRating,\n      avg_critique_score: avgCritiqueScore,\n      excessive_onomatopoeia_count: excessiveOnomatopoeiaCount,\n      heavy_moralizing_count: moralizingCount\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        400
+      ],
+      "id": "synthesize-feedback",
+      "name": "Synthèse Retours & Critiques"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.openai_payload }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        400
+      ],
+      "id": "openai-gpt-5-6-terra",
+      "name": "OpenAI (gpt-5.6-terra)",
+      "credentials": {
+        "openAiApi": {
+          "id": "MSayxruZLmsTpuw2",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire la réponse JSON de gpt-5.6-terra\nconst rawResponse = $input.item.json;\nconst synthContext = $('Synthèse Retours & Critiques').item.json;\n\nlet parsedResult = {};\ntry {\n  const messageContent = rawResponse.choices[0].message.content;\n  parsedResult = typeof messageContent === 'string' ? JSON.parse(messageContent) : messageContent;\n} catch (err) {\n  throw new Error(`Erreur lors du parsing de la réponse gpt-5.6-terra: ${err.message}`);\n}\n\nconst improvedPrompt = parsedResult.improved_prompt || '';\nconst changelog = parsedResult.changelog || 'Optimisation automatique continue par gpt-5.6-terra';\nconst keyImprovements = Array.isArray(parsedResult.key_improvements) \n  ? parsedResult.key_improvements.join(' | ') \n  : '';\n\nconst fullChangelog = `🤖 Auto-n8n (gpt-5.6-terra) — ${changelog}${keyImprovements ? ` [Points clés: ${keyImprovements}]` : ''}`;\n\nreturn {\n  json: {\n    template_key: synthContext.template_key,\n    objective: synthContext.objective,\n    title: synthContext.title,\n    new_content: improvedPrompt,\n    changelog: fullChangelog,\n    stats: synthContext.stats\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        400
+      ],
+      "id": "parse-llm-output",
+      "name": "Extraire Version & Changelog"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/rpc/insert_auto_optimized_prompt_version",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"p_template_key\": \"{{ $json.template_key }}\",\n  \"p_new_content\": {{ JSON.stringify($json.new_content) }},\n  \"p_changelog\": {{ JSON.stringify($json.changelog) }}\n}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        400
+      ],
+      "id": "insert-prompt-version",
+      "name": "Sauvegarder Version vN+1 dans Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "wigd9LqEY8DlWzkn",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Auto-optimisation continue terminée avec succès via gpt-5.6-terra.\",\n  \"result\": $json\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        400
+      ],
+      "id": "respond-webhook",
+      "name": "Réponse Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Préparer Paramètres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger (Hebdomadaire)": {
+      "main": [
+        [
+          {
+            "node": "Préparer Paramètres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer Paramètres": {
+      "main": [
+        [
+          {
+            "node": "Récupérer Prompt Actuel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Récupérer 20 Dernières Histoires",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Récupérer Prompt Actuel": {
+      "main": [
+        [
+          {
+            "node": "Synthèse Retours & Critiques",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Récupérer 20 Dernières Histoires": {
+      "main": [
+        [
+          {
+            "node": "Synthèse Retours & Critiques",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Synthèse Retours & Critiques": {
+      "main": [
+        [
+          {
+            "node": "OpenAI (gpt-5.6-terra)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI (gpt-5.6-terra)": {
+      "main": [
+        [
+          {
+            "node": "Extraire Version & Changelog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraire Version & Changelog": {
+      "main": [
+        [
+          {
+            "node": "Sauvegarder Version vN+1 dans Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sauvegarder Version vN+1 dans Supabase": {
+      "main": [
+        [
+          {
+            "node": "Réponse Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
