@@ -122,11 +122,6 @@ export const useUpdateUserSettings = (
       // Mettre à jour l'état local avec les nouvelles valeurs
       setUserSettings(prev => ({ ...prev, ...newSettings }));
       console.log('Paramètres mis à jour avec succès');
-
-      toast({
-        title: "Succès",
-        description: "Vos paramètres ont été mis à jour",
-      });
     } catch (error) {
       console.error('Erreur détaillée lors de la mise à jour:', error);
 
