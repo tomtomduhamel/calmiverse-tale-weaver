@@ -90,24 +90,24 @@ export const ProfileSection = ({ userSettings, onSubmit }: ProfileSectionProps) 
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="h-5 w-5" />
+    <Card className="border border-border/70 bg-card/60 backdrop-blur-md">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-display italic">
+          <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           Profil
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...userForm}>
-          <form onSubmit={userForm.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={userForm.handleSubmit(handleSubmit)} className="space-y-3">
             <FormField
               control={userForm.control}
               name="firstName"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Prénom</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs sm:text-sm font-medium">Prénom</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} className="h-9 text-xs sm:text-sm bg-background/50" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -117,25 +117,25 @@ export const ProfileSection = ({ userSettings, onSubmit }: ProfileSectionProps) 
               control={userForm.control}
               name="lastName"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nom</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs sm:text-sm font-medium">Nom</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} className="h-9 text-xs sm:text-sm bg-background/50" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Fuseau horaire</label>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">
+            <div className="grid gap-1 pt-1">
+              <label className="text-xs sm:text-sm font-medium text-foreground">Fuseau horaire</label>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                <span>
                   {userSettings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
                 </span>
               </div>
             </div>
-            <Button type="submit" className="flex gap-2 items-center">
+            <Button type="submit" size="sm" className="w-full sm:w-auto flex gap-2 items-center text-xs sm:text-sm h-9 mt-2">
               <Save className="h-4 w-4" />
               Enregistrer les modifications
             </Button>

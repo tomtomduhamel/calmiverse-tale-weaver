@@ -91,12 +91,15 @@ export const FeedbackButton = () => {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
-          size="lg"
-          className={`fixed right-6 z-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105`}
-          style={{ bottom: isMobile ? 'calc(5rem + env(safe-area-inset-bottom, 8px))' : '1.5rem' }}
+          size={isMobile ? "icon" : "default"}
+          className={`fixed right-4 z-40 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 ${
+            isMobile ? 'h-9 w-9 bg-primary/80 backdrop-blur-md text-primary-foreground border border-primary-foreground/20' : 'right-6'
+          }`}
+          style={{ bottom: isMobile ? 'calc(4.5rem + env(safe-area-inset-bottom, 8px))' : '1.5rem' }}
+          aria-label="Donner votre avis"
         >
-          <MessageSquarePlus className="h-5 w-5 mr-2" />
-          Feedback
+          <MessageSquarePlus className={isMobile ? "h-4 w-4" : "h-4 w-4 mr-2"} />
+          {!isMobile && "Feedback"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">

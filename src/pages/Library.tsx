@@ -95,26 +95,26 @@ const Library: React.FC = () => {
   return (
     <PWAGestures onPullToRefresh={handlePullToRefresh} className="min-h-screen">
       <div className="min-h-screen bg-background pwa-safe-area overflow-x-clip">
-        <div className="w-full max-w-4xl mx-auto px-4 py-6">
+        <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 py-2 sm:py-4">
           {/* Header */}
-          <div className="mb-6 text-center animate-fade-up-slow">
-            <h1 className="font-display italic text-3xl sm:text-4xl tracking-tight mb-1">
+          <div className="mb-3 sm:mb-4 text-center animate-fade-up-slow">
+            <h1 className="font-display italic text-2xl sm:text-3xl tracking-tight mb-0.5">
               Ma Bibliothèque
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Vos histoires personnalisées
             </p>
           </div>
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full max-w-xs mx-auto grid-cols-2 mb-6">
-              <TabsTrigger value="stories" className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
+            <TabsList className="grid w-full max-w-xs mx-auto grid-cols-2 mb-3 sm:mb-4 h-9">
+              <TabsTrigger value="stories" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                <BookOpen className="w-3.5 h-3.5" />
                 Histoires
               </TabsTrigger>
-              <TabsTrigger value="shared" className="flex items-center gap-2 relative">
-                <Share2 className="w-4 h-4" />
+              <TabsTrigger value="shared" className="flex items-center gap-1.5 text-xs sm:text-sm relative">
+                <Share2 className="w-3.5 h-3.5" />
                 Partagées
                 {pendingCount > 0 && (
                   <Badge className="ml-1 bg-primary text-primary-foreground text-xs min-w-[1.2rem] h-5 px-1">

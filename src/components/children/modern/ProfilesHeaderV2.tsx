@@ -1,7 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Plus, BookOpen, Users, Heart, UserCircle, Cat } from "lucide-react";
+import { Plus, BookOpen, Users, UserCircle, Cat, Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProfilesHeaderV2Props {
@@ -22,99 +21,79 @@ const ProfilesHeaderV2: React.FC<ProfilesHeaderV2Props> = ({
   totalStories = 0
 }) => {
   const isMobile = useIsMobile();
-  const totalProfiles = childrenCount + adultsCount + petsCount;
 
   return (
-    <div className={`space-y-4 ${isMobile ? 'px-2' : 'space-y-6'}`}>
-      {/* Hero Section */}
-      <div className="text-center space-y-3">
-        <h1 className={`font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent ${isMobile ? 'text-xl' : 'text-3xl'}`}>
-          L'univers de vos proches
-        </h1>
-        <p className={`text-muted-foreground max-w-2xl mx-auto ${isMobile ? 'text-sm px-2' : ''}`}>
-          Créez des profils personnalisés pour vos enfants, adultes et animaux, puis générez des histoires magiques adaptées à chacun.
-        </p>
-      </div>
-
-      {/* Stats Cards - 4 columns now */}
-      <div className="w-full">
-        <div className={`grid grid-cols-4 w-full ${isMobile ? 'gap-2' : 'gap-4'}`}>
-          {/* Children */}
-          <Card className={`bg-gradient-to-br from-blue-500/5 to-blue-500/10 border-blue-500/20 ${isMobile ? 'p-2' : 'p-4'}`}>
-            <div className={`flex items-center ${isMobile ? 'flex-col text-center space-y-1' : 'space-x-3'}`}>
-              <div className={`bg-blue-500/20 rounded-lg flex items-center justify-center ${isMobile ? 'w-8 h-8 mb-1' : 'w-10 h-10'}`}>
-                <Users className={`text-blue-500 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
-              </div>
-              <div>
-                <p className={`font-bold text-blue-500 ${isMobile ? 'text-base leading-none' : 'text-2xl'}`}>{childrenCount}</p>
-                <p className={`text-muted-foreground truncate ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'}`}>Enfant{childrenCount > 1 ? 's' : ''}</p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Adults */}
-          <Card className={`bg-gradient-to-br from-purple-500/5 to-purple-500/10 border-purple-500/20 ${isMobile ? 'p-2' : 'p-4'}`}>
-            <div className={`flex items-center ${isMobile ? 'flex-col text-center space-y-1' : 'space-x-3'}`}>
-              <div className={`bg-purple-500/20 rounded-lg flex items-center justify-center ${isMobile ? 'w-8 h-8 mb-1' : 'w-10 h-10'}`}>
-                <UserCircle className={`text-purple-500 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
-              </div>
-              <div>
-                <p className={`font-bold text-purple-500 ${isMobile ? 'text-base leading-none' : 'text-2xl'}`}>{adultsCount}</p>
-                <p className={`text-muted-foreground truncate ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'}`}>Adulte{adultsCount > 1 ? 's' : ''}</p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Pets */}
-          <Card className={`bg-gradient-to-br from-orange-500/5 to-orange-500/10 border-orange-500/20 ${isMobile ? 'p-2' : 'p-4'}`}>
-            <div className={`flex items-center ${isMobile ? 'flex-col text-center space-y-1' : 'space-x-3'}`}>
-              <div className={`bg-orange-500/20 rounded-lg flex items-center justify-center ${isMobile ? 'w-8 h-8 mb-1' : 'w-10 h-10'}`}>
-                <Cat className={`text-orange-500 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
-              </div>
-              <div>
-                <p className={`font-bold text-orange-500 ${isMobile ? 'text-base leading-none' : 'text-2xl'}`}>{petsCount}</p>
-                <p className={`text-muted-foreground truncate ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'}`}>Anim{petsCount > 1 ? 'aux' : 'al'}</p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Stories */}
-          <Card className={`bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20 ${isMobile ? 'p-2' : 'p-4'}`}>
-            <div className={`flex items-center ${isMobile ? 'flex-col text-center space-y-1' : 'space-x-3'}`}>
-              <div className={`bg-accent/20 rounded-lg flex items-center justify-center ${isMobile ? 'w-8 h-8 mb-1' : 'w-10 h-10'}`}>
-                <BookOpen className={`text-accent ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
-              </div>
-              <div>
-                <p className={`font-bold text-accent ${isMobile ? 'text-base leading-none' : 'text-2xl'}`}>{totalStories}</p>
-                <p className={`text-muted-foreground truncate ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'}`}>Histoire{totalStories > 1 ? 's' : ''}</p>
-              </div>
-            </div>
-          </Card>
+    <div className={`space-y-3 ${isMobile ? 'px-1' : 'space-y-4 max-w-4xl mx-auto'}`}>
+      {/* Header Compact */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+        <div>
+          <h1 className="font-display italic text-2xl sm:text-3xl tracking-tight text-foreground">
+            L'univers de vos proches
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Gérez les profils pour des histoires magiques personnalisées
+          </p>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className={`flex justify-center ${isMobile ? 'flex-col gap-2 px-2' : 'flex-row gap-4'}`}>
         <Button 
           onClick={onShowForm} 
-          size={isMobile ? "default" : "lg"} 
-          className={`bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg ${isMobile ? 'h-10 text-sm' : ''}`}
+          size="sm"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-soft rounded-xl h-9 px-4 text-xs sm:text-sm font-medium w-full sm:w-auto shrink-0"
         >
-          <Plus className={`mr-2 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
+          <Plus className="w-4 h-4 mr-1.5" />
           Ajouter un profil
         </Button>
+      </div>
 
-        {onCreateStory && totalProfiles > 0 && (
-          <Button 
-            onClick={onCreateStory} 
-            variant="outline" 
-            size={isMobile ? "default" : "lg"} 
-            className={`border-accent text-accent hover:bg-accent/10 ${isMobile ? 'h-10 text-sm' : ''}`}
-          >
-            <BookOpen className={`mr-2 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
-            Créer une histoire
-          </Button>
-        )}
+      {/* Stats Bar - Compact single row */}
+      <div className="grid grid-cols-4 gap-2 bg-card/60 backdrop-blur-md rounded-2xl border border-primary-soft/30 p-2 sm:p-3">
+        {/* Children */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-center sm:text-left">
+          <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center text-blue-500 shrink-0">
+            <Users className="w-3.5 h-3.5" />
+          </div>
+          <div>
+            <span className="font-bold text-xs sm:text-sm text-blue-500">{childrenCount}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground ml-1 hidden sm:inline">Enfant{childrenCount > 1 ? 's' : ''}</span>
+            <p className="text-[10px] text-muted-foreground leading-none sm:hidden">Enfants</p>
+          </div>
+        </div>
+
+        {/* Adults */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-center sm:text-left border-l border-border/40">
+          <div className="w-7 h-7 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-500 shrink-0">
+            <UserCircle className="w-3.5 h-3.5" />
+          </div>
+          <div>
+            <span className="font-bold text-xs sm:text-sm text-purple-500">{adultsCount}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground ml-1 hidden sm:inline">Adulte{adultsCount > 1 ? 's' : ''}</span>
+            <p className="text-[10px] text-muted-foreground leading-none sm:hidden">Adultes</p>
+          </div>
+        </div>
+
+        {/* Pets */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-center sm:text-left border-l border-border/40">
+          <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center text-amber-500 shrink-0">
+            <Cat className="w-3.5 h-3.5" />
+          </div>
+          <div>
+            <span className="font-bold text-xs sm:text-sm text-amber-500">{petsCount}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground ml-1 hidden sm:inline">Anim{petsCount > 1 ? 'aux' : 'al'}</span>
+            <p className="text-[10px] text-muted-foreground leading-none sm:hidden">Animaux</p>
+          </div>
+        </div>
+
+        {/* Stories */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-center sm:text-left border-l border-border/40">
+          <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0">
+            <BookOpen className="w-3.5 h-3.5" />
+          </div>
+          <div>
+            <span className="font-bold text-xs sm:text-sm text-primary">{totalStories}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground ml-1 hidden sm:inline">Histoire{totalStories > 1 ? 's' : ''}</span>
+            <p className="text-[10px] text-muted-foreground leading-none sm:hidden">Histoires</p>
+          </div>
+        </div>
       </div>
     </div>
   );

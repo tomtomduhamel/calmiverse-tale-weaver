@@ -12,21 +12,21 @@ const CreationModeToggle: React.FC<CreationModeToggleProps> = ({ mode, onModeCha
   const { isSuperAdmin } = useIsSuperAdmin();
 
   return (
-    <div className="flex items-center justify-center mb-6">
-      <div className="inline-flex rounded-xl bg-muted/50 p-1 border border-border/50">
+    <div className="flex items-center justify-center mb-3 sm:mb-5">
+      <div className="inline-flex rounded-xl bg-card/60 backdrop-blur-md p-1 border border-primary-soft/30 max-w-md w-full justify-center">
         <button
           type="button"
           onClick={() => onModeChange('guided')}
           className={`
-            flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+            flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium
             transition-all duration-200
             ${mode === 'guided'
-              ? 'bg-background text-foreground shadow-sm'
+              ? 'bg-primary text-primary-foreground shadow-soft'
               : 'text-muted-foreground hover:text-foreground'
             }
           `}
         >
-          <ListChecks className="h-4 w-4" />
+          <ListChecks className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Mode guidé</span>
         </button>
 
@@ -34,16 +34,16 @@ const CreationModeToggle: React.FC<CreationModeToggleProps> = ({ mode, onModeCha
           type="button"
           onClick={() => onModeChange('fast')}
           className={`
-            flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+            flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium
             transition-all duration-200
             ${mode === 'fast'
-              ? 'bg-background text-foreground shadow-sm'
+              ? 'bg-primary text-primary-foreground shadow-soft'
               : 'text-muted-foreground hover:text-foreground'
             }
           `}
         >
-          <Zap className="h-4 w-4" />
-          <span>Histoires rapides</span>
+          <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <span>Rapide</span>
         </button>
 
         {isSuperAdmin && (
@@ -51,16 +51,16 @@ const CreationModeToggle: React.FC<CreationModeToggleProps> = ({ mode, onModeCha
             type="button"
             onClick={() => onModeChange('chat')}
             className={`
-              flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+              flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium
               transition-all duration-200
               ${mode === 'chat'
-                ? 'bg-background text-foreground shadow-sm'
+                ? 'bg-primary text-primary-foreground shadow-soft'
                 : 'text-muted-foreground hover:text-foreground'
               }
             `}
           >
-            <MessageCircle className="h-4 w-4" />
-            <span>BETA - Discuter avec Calmi</span>
+            <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span>Discussion IA</span>
           </button>
         )}
       </div>

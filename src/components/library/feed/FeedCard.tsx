@@ -128,9 +128,9 @@ const FeedCard: React.FC<FeedCardProps> = ({
     <Card className="overflow-hidden border-0 shadow-none bg-transparent w-full mx-auto sm:max-w-[500px]">
       {/* Header: Title + Favorite */}
       {/* Header: Title + Favorite */}
-      <div className="flex items-center justify-between px-1 py-3">
+      <div className="flex items-center justify-between px-1 py-2 gap-2">
         <h3
-          className="font-semibold text-base leading-tight line-clamp-1 flex-1 cursor-pointer hover:text-primary transition-colors"
+          className="font-display italic font-semibold text-sm sm:text-base leading-snug line-clamp-2 flex-1 cursor-pointer hover:text-primary transition-colors text-foreground"
           onClick={handleImageClick}
         >
           {story.status === 'pending' 
@@ -138,7 +138,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
              : (isSeriesStory && story.series?.title ? story.series.title : story.title)}
         </h3>
         {story.status !== 'pending' && (
-          <div data-favorite-button>
+          <div data-favorite-button className="shrink-0">
             <FavoriteButton
               isFavorite={story.isFavorite || false}
               onToggle={handleToggleFavorite}
@@ -150,10 +150,10 @@ const FeedCard: React.FC<FeedCardProps> = ({
         )}
       </div>
 
-      {/* Image container: 4:5 ratio with double-tap */}
+      {/* Image container: responsive height with double-tap */}
       <div
         ref={imageRef}
-        className="relative aspect-[4/5] w-full max-h-[400px] overflow-hidden rounded-lg cursor-pointer bg-muted"
+        className="relative aspect-[4/3] sm:aspect-[4/5] w-full max-h-[300px] sm:max-h-[400px] overflow-hidden rounded-xl cursor-pointer bg-muted border border-border/50"
         onClick={handleDoubleTap}
       >
         {/* Series badge */}

@@ -14,9 +14,9 @@ const FastStoryCard: React.FC<FastStoryCardProps> = ({ item, onClick, disabled =
       onClick={() => !disabled && onClick(item)}
       disabled={disabled}
       className={cn(
-        'group relative flex flex-col items-center justify-center gap-2 rounded-2xl p-4 text-center transition-all duration-300',
+        'group relative flex flex-col items-center justify-center gap-1.5 rounded-2xl p-2.5 sm:p-4 text-center transition-all duration-300',
         'border border-white/10 bg-gradient-to-br backdrop-blur-sm',
-        'hover:scale-[1.04] hover:shadow-lg hover:border-white/20 active:scale-95',
+        'hover:scale-[1.03] hover:shadow-lg hover:border-white/20 active:scale-95',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         item.gradientFrom,
         item.gradientTo,
@@ -25,7 +25,7 @@ const FastStoryCard: React.FC<FastStoryCardProps> = ({ item, onClick, disabled =
     >
       {/* Icon */}
       <span
-        className="text-3xl transition-transform duration-300 group-hover:scale-110"
+        className="text-2xl sm:text-3xl transition-transform duration-300 group-hover:scale-110"
         role="img"
         aria-label={item.label}
       >
@@ -33,7 +33,7 @@ const FastStoryCard: React.FC<FastStoryCardProps> = ({ item, onClick, disabled =
       </span>
 
       {/* Label */}
-      <span className="text-sm font-semibold leading-tight text-foreground/90">
+      <span className="text-xs sm:text-sm font-semibold leading-tight text-foreground/90">
         {item.label}
       </span>
     </button>

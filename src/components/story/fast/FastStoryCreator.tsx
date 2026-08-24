@@ -206,38 +206,34 @@ const FastStoryCreator: React.FC = () => {
         onCancel={() => setShowUpgradePrompt(false)}
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-3">
-            <Sparkles className="w-4 h-4" />
-            Histoires rapides
-          </div>
-          <h1 className="text-xl font-semibold text-foreground/90">
+        <div className="text-center mb-3 sm:mb-5">
+          <h1 className="font-display italic text-xl sm:text-2xl font-semibold text-foreground">
             De quoi votre enfant a-t-il besoin ?
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Choisissez un thème pour générer une histoire adaptée en un instant.
           </p>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="emotion" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="emotion" className="gap-2">
+          <TabsList className="grid w-full max-w-xs mx-auto grid-cols-2 mb-3 sm:mb-4 h-9">
+            <TabsTrigger value="emotion" className="gap-1.5 text-xs sm:text-sm">
               <span>✨</span>
               Émotion
             </TabsTrigger>
-            <TabsTrigger value="situation" className="gap-2">
+            <TabsTrigger value="situation" className="gap-1.5 text-xs sm:text-sm">
               <span>🧭</span>
               Situation
             </TabsTrigger>
           </TabsList>
 
           {/* Tab: Émotion */}
-          <TabsContent value="emotion" className="space-y-6 mt-0">
+          <TabsContent value="emotion" className="space-y-4 mt-0">
             {renderCardGrid(FAST_STORIES_REGULATION, '🌙 Pour apaiser', 'text-blue-400')}
-            <div className="border-t border-border/50 pt-6">
+            <div className="border-t border-border/40 pt-3">
               {renderCardGrid(FAST_STORIES_RENFORCEMENT, '☀️ Pour stimuler', 'text-amber-400')}
             </div>
           </TabsContent>
