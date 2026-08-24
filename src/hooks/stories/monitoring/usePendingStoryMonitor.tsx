@@ -41,11 +41,6 @@ export const usePendingStoryMonitor = ({
         console.log("Histoire complétée, affichage...");
         setPendingStoryId(null);
         onStoryCompleted(pendingStory);
-        
-        toast({
-          title: "Histoire prête",
-          description: "Votre histoire personnalisée est maintenant prête à être lue!",
-        });
       } else if (pendingStory.status === 'error') {
         console.log("Erreur détectée dans la génération d'histoire");
         setPendingStoryId(null);

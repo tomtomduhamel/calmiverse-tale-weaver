@@ -65,14 +65,9 @@ const Library: React.FC = () => {
   }, [navigate]);
 
   const handlePullToRefresh = useCallback(() => {
-    // Dispatch event to refresh library data instead of full page reload
+    // Dispatch event to refresh library data silently
     window.dispatchEvent(new CustomEvent('library-refresh'));
-    toast({
-      title: "Actualisation",
-      description: "La bibliothèque a été rafraîchie",
-      duration: 2000
-    });
-  }, [toast]);
+  }, []);
 
   // Loading state
   if (authLoading) {

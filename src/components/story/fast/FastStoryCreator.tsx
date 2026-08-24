@@ -155,11 +155,6 @@ const FastStoryCreator: React.FC = () => {
 
       await incrementUsage('story');
 
-      toast({
-        title: '✨ Création lancée !',
-        description: 'Vous recevrez une notification quand votre histoire sera prête.',
-      });
-
       handleCloseDrawer();
       navigate('/library');
     } catch (error: any) {
