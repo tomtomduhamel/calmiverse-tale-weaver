@@ -2,7 +2,7 @@ import React from "react";
 import { BookOpen, Users, Library, Sparkles, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import type { Child } from "@/types/child";
 
@@ -22,7 +22,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ children = [] }) => {
       key: "create",
       icon: BookOpen,
       title: "Créer une histoire",
-      desc: "Choisissez parmi 3 titres générés",
+      desc: "3 titres magiques générés sur-mesure",
       cta: "Commencer",
       onClick: handleTitleStoryClick,
       primary: true,
@@ -31,7 +31,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ children = [] }) => {
       key: "children",
       icon: Users,
       title: "Univers des enfants",
-      desc: "Gérez les profils de vos enfants",
+      desc: "Gérez les profils et leurs préférences",
       cta: "Explorer",
       to: "/children",
     },
@@ -39,14 +39,14 @@ const HomeHero: React.FC<HomeHeroProps> = ({ children = [] }) => {
       key: "library",
       icon: Library,
       title: "Bibliothèque",
-      desc: "Retrouvez vos histoires créées",
+      desc: "Retrouvez tous vos contes créés",
       cta: "Consulter",
       onClick: handleLibraryClick,
     },
   ];
 
   return (
-    <div className="relative flex flex-col w-full flex-1 min-h-0 justify-between animate-fade-in px-2 sm:px-4 py-1 sm:py-3">
+    <div className="relative flex flex-col w-full flex-1 min-h-0 justify-between animate-fade-in px-3 sm:px-4 py-2 sm:py-3">
       {/* Halos d'ambiance */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-90" />
@@ -58,25 +58,25 @@ const HomeHero: React.FC<HomeHeroProps> = ({ children = [] }) => {
         {/* Header Compact Mobile / Spacieux Desktop */}
         <header className="text-center space-y-1 sm:space-y-2 flex-shrink-0 pt-1 pb-1 sm:pt-2 sm:pb-3 animate-fade-up-slow">
           <div className="inline-flex items-center justify-center">
-            <div className="rounded-full bg-primary-soft/30 backdrop-blur-sm border border-primary-soft/40 px-2.5 py-0.5 sm:px-3 sm:py-1">
-              <span className="text-[10px] sm:text-[11px] font-medium text-primary flex items-center gap-1.5">
+            <div className="rounded-full bg-primary-soft/30 backdrop-blur-sm border border-primary-soft/40 px-3 py-0.5 sm:px-3 sm:py-1">
+              <span className="text-[11px] sm:text-xs font-medium text-primary flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3" />
                 Histoires personnalisées
               </span>
             </div>
           </div>
 
-          <h1 className="font-display italic text-xl sm:text-3xl md:text-5xl tracking-tight text-foreground leading-tight">
+          <h1 className="font-display italic text-2xl sm:text-4xl md:text-5xl tracking-tight text-foreground leading-tight">
             Bienvenue sur Calmi
           </h1>
 
-          <p className="text-[11px] sm:text-sm md:text-base text-muted-foreground max-w-xl mx-auto px-2 leading-tight sm:leading-snug">
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground max-w-xl mx-auto px-2 leading-snug">
             Créez des histoires personnalisées pour accompagner vos enfants
           </p>
         </header>
 
-        {/* 3 Cartes : format rangées compactes sur mobile (<md), colonnes aérées sur desktop (>=md) */}
-        <div className="flex flex-col md:grid md:grid-cols-3 gap-2.5 sm:gap-3.5 md:gap-6 flex-1 min-h-0 my-auto justify-center max-w-lg md:max-w-none mx-auto w-full">
+        {/* 3 Cartes : format compact sans ellipses sur mobile (<md), colonnes aérées sur desktop (>=md) */}
+        <div className="flex flex-col md:grid md:grid-cols-3 gap-3 md:gap-6 flex-1 min-h-0 my-auto justify-center max-w-md md:max-w-none mx-auto w-full">
           {tiles.map((tile, i) => {
             const handleClick = tile.onClick || (() => tile.to && navigate(tile.to));
 
@@ -103,9 +103,9 @@ const HomeHero: React.FC<HomeHeroProps> = ({ children = [] }) => {
                   }`}
                   style={{ animationDelay: `${100 + i * 60}ms` }}
                 >
-                  {/* Mobile Layout (< md) : Row compact */}
-                  <div className="flex md:hidden items-center justify-between p-3 gap-3 h-full">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {/* Mobile Layout (< md) : Row compact avec texte intégral et chevron */}
+                  <div className="flex md:hidden items-center justify-between p-3.5 gap-3 h-full">
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
                       <div
                         className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${
                           tile.primary
@@ -116,27 +116,23 @@ const HomeHero: React.FC<HomeHeroProps> = ({ children = [] }) => {
                         <tile.icon className="h-5 w-5" strokeWidth={2} />
                       </div>
                       <div className="min-w-0 flex-1 text-left">
-                        <h3 className="font-display italic text-sm font-semibold text-card-foreground leading-tight truncate">
+                        <h3 className="font-display italic text-base font-semibold text-card-foreground leading-snug">
                           {tile.title}
                         </h3>
-                        <p className="text-muted-foreground text-[11px] leading-tight line-clamp-1 mt-0.5">
+                        <p className="text-muted-foreground text-xs leading-normal mt-0.5">
                           {tile.desc}
                         </p>
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant={tile.primary ? "glow" : "calm"}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleClick();
-                      }}
-                      className="shrink-0 h-8 px-3 text-xs font-medium rounded-xl pointer-events-none"
-                      tabIndex={-1}
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 ${
+                        tile.primary
+                          ? "bg-primary text-primary-foreground shadow-soft"
+                          : "bg-primary-soft/30 text-primary"
+                      }`}
                     >
-                      {tile.cta}
-                      <ChevronRight className="h-3.5 w-3.5 ml-0.5 opacity-70" />
-                    </Button>
+                      <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
+                    </div>
                   </div>
 
                   {/* Desktop Layout (>= md) : Column spacious */}
@@ -174,7 +170,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ children = [] }) => {
 
         {/* Footer info compact */}
         <div className="text-center flex-shrink-0 pt-1 pb-1">
-          <p className="text-[10px] sm:text-[11px] text-muted-foreground/70">
+          <p className="text-[11px] text-muted-foreground/70">
             Histoires personnalisées pour le bien-être des enfants
           </p>
         </div>

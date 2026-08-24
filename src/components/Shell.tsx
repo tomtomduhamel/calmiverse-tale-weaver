@@ -91,8 +91,8 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
             </StoryGenerationManager>
           </div>
           
-          {/* Footer */}
-          <Footer />
+          {/* Footer - Desktop uniquement */}
+          {!isMobile && <Footer />}
           
           {/* Indicateurs PWA et synchronisation */}
           <OfflineIndicator />
@@ -123,8 +123,8 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
             </StoryGenerationManager>
           </div>
           
-          {/* Footer */}
-          <Footer />
+          {/* Footer - Desktop uniquement (sur mobile, MobileMenu gère la navigation sans encombrer la vue) */}
+          {!isMobile && <Footer />}
           
           {/* Indicateurs PWA et synchronisation */}
           <OfflineIndicator />
