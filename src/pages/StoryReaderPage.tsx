@@ -69,18 +69,6 @@ const StoryReaderPage: React.FC = () => {
       if (story) {
         console.log("[StoryReaderPage] Histoire trouvée en cache:", story.id);
 
-        if (prevVideoPathRef.current === null && story.video_path) {
-          toast({
-            title: "🎬 Votre vidéo est prête !",
-            description: "La magie a opéré, la vidéo d'introduction est disponible.",
-            duration: 8000,
-            action: (
-              <ToastAction altText="Voir la vidéo" onClick={() => setForcePlayVideo(true)}>
-                Regarder
-              </ToastAction>
-            ),
-          });
-        }
         prevVideoPathRef.current = story.video_path;
 
         setCurrentStory(story);

@@ -25,8 +25,8 @@ const HomeView: React.FC<HomeViewProps> = ({ showGuide, children }) => {
   });
 
   return (
-    <div className="flex flex-col min-h-[100dvh] w-full">
-      <div className="container mx-auto px-4 pt-4 space-y-4">
+    <div className="flex flex-col flex-1 min-h-0 w-full">
+      <div className="container mx-auto px-2 pt-1 empty:hidden">
         <PWANotificationBanner />
         <ActiveGenerationsCard />
       </div>

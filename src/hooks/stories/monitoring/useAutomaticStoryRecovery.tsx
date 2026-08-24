@@ -67,22 +67,10 @@ export const useAutomaticStoryRecovery = (
     recoveryAttemptsRef.current.set(story.id, attempts + 1);
     
     try {
-      // Afficher une notification discrète
-      toast({
-        title: "🔄 Récupération automatique",
-        description: `Tentative de récupération de "${story.title}"...`,
-        duration: 3000,
-      });
-
       const success = await recoverStuckStory(story);
       
       if (success) {
         console.log(`[AutoRecovery] ✅ Récupération réussie: ${story.title}`);
-        toast({
-          title: "✅ Histoire récupérée",
-          description: `"${story.title}" a été relancée automatiquement.`,
-          duration: 5000,
-        });
       } else {
         console.warn(`[AutoRecovery] ⚠️ Récupération échouée: ${story.title}`);
         

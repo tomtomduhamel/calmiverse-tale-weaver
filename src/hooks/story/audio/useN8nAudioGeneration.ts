@@ -140,16 +140,11 @@ export const useN8nAudioGeneration = () => {
         }
 
         await fetchAudioFiles(storyId);
-        
-        toast({
-          title: "Fichiers récupérés",
-          description: `${errorFilesWithUrl.length} fichier(s) audio récupéré(s)`,
-        });
       }
     } catch (error) {
       console.error('❌ [N8nAudio] Erreur récupération fichiers:', error);
     }
-  }, [fetchAudioFiles, toast]);
+  }, [fetchAudioFiles]);
 
   // Générer un audio via n8n avec gestion intelligente du timeout
   const generateAudio = useCallback(async (
@@ -235,11 +230,6 @@ export const useN8nAudioGeneration = () => {
               duration: updatedFile.duration ? `${updatedFile.duration}s` : 'N/A',
             });
             
-            toast({
-              title: "🎉 Audio généré !",
-              description: "Votre audio est prêt à être écouté",
-            });
-            
             await fetchAudioFiles(storyId);
             return;
           } else if (updatedFile.status === 'error') {
@@ -249,8 +239,8 @@ export const useN8nAudioGeneration = () => {
             setIsGenerating(false);
             
             toast({
-              title: "Erreur de génération",
-              description: "La génération audio a échoué",
+              title: "Erreur audio",
+              description: "La génération audio n'a pas pu aboutir.",
               variant: "destructive"
             });
             
@@ -273,11 +263,7 @@ export const useN8nAudioGeneration = () => {
           .single();
 
         if (finalCheck?.status === 'ready' && finalCheck.audio_url) {
-          // Le fichier est prêt, ne pas marquer comme erreur
-          toast({
-            title: "🎉 Audio généré !",
-            description: "Votre audio est prêt (détecté lors du timeout)",
-          });
+          // Le fichier est prêt
         } else {
           // Marquer comme erreur seulement si vraiment pas prêt
           await supabase
@@ -409,10 +395,6 @@ export const useN8nAudioGeneration = () => {
         if (timeoutId) clearTimeout(timeoutId);
         if (checkInterval) clearInterval(checkInterval);
         setIsGenerating(false);
-        toast({
-          title: "🎉 Audio généré (Secours Haute-Qualité) !",
-          description: "Votre histoire a été générée avec succès via la voix de secours.",
-        });
         await fetchAudioFiles(storyId);
         return audioFile.id;
       }
@@ -425,11 +407,6 @@ export const useN8nAudioGeneration = () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', audioFile.id);
-
-      toast({
-        title: `🎵 Génération audio lancée !`,
-        description: "La production du livre audio multi-voix est en cours en arrière-plan sur GPU. Vous pouvez continuer à naviguer ou quitter la page.",
-      });
 
       // 6. Rafraîchir la liste des fichiers
       await fetchAudioFiles(storyId);
@@ -444,8 +421,8 @@ export const useN8nAudioGeneration = () => {
       if (checkInterval) clearInterval(checkInterval);
       
       toast({
-        title: "Erreur génération audio",
-        description: error?.message || "Impossible de lancer la génération audio",
+        title: "Erreur audio",
+        description: error?.message || "Impossible de générer l'audio",
         variant: "destructive"
       });
       return null;
@@ -475,10 +452,6 @@ export const useN8nAudioGeneration = () => {
           
           if (updatedRow?.status === 'ready') {
             setIsGenerating(false);
-            toast({
-              title: "🎉 Audio généré !",
-              description: "Votre livre audio est prêt à être écouté.",
-            });
           } else if (updatedRow?.status === 'error') {
             setIsGenerating(false);
           }

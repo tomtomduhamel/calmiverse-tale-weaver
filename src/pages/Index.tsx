@@ -69,8 +69,8 @@ const Index = () => {
   };
 
   return (
-    <div className="h-full w-full overflow-x-hidden">
-      <div className={`index-container max-w-7xl mx-auto p-2 sm:p-4 ${isMobile ? 'pb-32' : 'mb-20'}`}>
+    <div className="h-full w-full overflow-x-hidden flex flex-col flex-1">
+      <div className={`index-container max-w-7xl mx-auto w-full flex-1 flex flex-col p-2 sm:p-4 ${isMobile ? 'pb-2' : 'mb-20'}`}>
         <ContentView {...contentViewProps} />
       </div>
     </div>

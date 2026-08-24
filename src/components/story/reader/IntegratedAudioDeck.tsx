@@ -279,13 +279,6 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         audioMode: isCustomVoice ? 'premium' : 'browser'
       }
     });
-
-    toast({
-      title: isCustomVoice ? "Voix familiale sélectionnée ✨" : "Voix de l'appareil active 🔊",
-      description: isCustomVoice 
-        ? `Lecture avec ${customVoices.find(v => v.id === value)?.name || 'votre voix'}` 
-        : "Lecture gratuite par synthèse locale."
-    });
   };
 
   // Lancement / Pause de l'audio
@@ -366,10 +359,6 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
 
     // 2. Si l'audio est déjà en cours de génération
     if (currentPendingAudioFile || isGenerating) {
-      toast({
-        title: "Création en cours",
-        description: "L'audio est en cours de production sur le serveur...",
-      });
       return;
     }
 
@@ -385,11 +374,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       return;
     }
 
-    // 4. Si une voix personnalisée est choisie sans audio généré : on lance la génération !
-    toast({
-      title: "🪄 Création de l'audio lancée !",
-      description: "Le livre audio est en cours de création magique en arrière-plan.",
-    });
+    // 4. Si une voix personnalisée est choisie sans audio généré : lancement fluide en arrière-plan
     await generateAudio(storyId, text, selectedVoiceId);
   };
 

@@ -29,11 +29,6 @@ export const useMarkAsRead = ({ story, onMarkAsRead, setStory }: UseMarkAsReadPr
           // Le statut sera mis à jour par le parent (StoryReaderPage)
           const newStatus = story.status === "read" ? "completed" : "read";
           console.log("[useMarkAsRead] DEBUG: Success! New status should be:", newStatus);
-          
-          toast({
-            title: newStatus === "read" ? "Histoire marquée comme lue" : "Histoire marquée comme non lue",
-            description: "Le statut de l'histoire a été mis à jour"
-          });
           return true;
         } else {
           console.log("[useMarkAsRead] DEBUG: Failed to update status");

@@ -29,13 +29,6 @@ export const useStoryFavorites = () => {
         return false;
       }
       
-      toast({
-        title: newFavoriteStatus ? "Ajouté aux favoris" : "Retiré des favoris",
-        description: newFavoriteStatus 
-          ? "L'histoire a été ajoutée à vos favoris" 
-          : "L'histoire a été retirée de vos favoris",
-      });
-      
       return true;
     } catch (error) {
       console.error('Erreur lors du toggle favori:', error);
