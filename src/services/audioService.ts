@@ -30,7 +30,7 @@ class AudioService {
       console.log(`🎵 [AudioService] Validation de l'URL pour: ${filePath}`);
       
       // Construire l'URL publique via Supabase
-      const { data } = supabase.storage.from('story_sounds').getPublicUrl(filePath);
+      const { data } = supabase.storage.from('audio-files').getPublicUrl(filePath);
       const url = data.publicUrl;
       
       if (!url) {

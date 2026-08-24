@@ -68,7 +68,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://31.97.40.49:8085/synthesize",
+        "url": "https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize.modal.run",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -348,7 +348,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "http://31.97.40.49:8085/synthesize",
+          "url": "https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize.modal.run",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [

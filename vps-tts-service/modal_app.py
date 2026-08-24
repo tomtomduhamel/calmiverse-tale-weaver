@@ -173,6 +173,13 @@ class TTSRequest(BaseModel):
     enable_sleep_pacing: Optional[bool] = True
     webhook_id: Optional[str] = None
     story_id: Optional[str] = None
+    # Aliases for frontend compatibility
+    requestId: Optional[str] = None
+    storyId: Optional[str] = None
+    voiceId: Optional[str] = None
+    isCustomVoice: Optional[bool] = None
+    provider: Optional[str] = None
+    allUserVoices: Optional[list] = None
 
 @app.cls(
     gpu="L4",
@@ -302,12 +309,17 @@ class CalmiTTSGPU:
     def synthesize_async(self, request: TTSRequest):
         from fastapi.responses import JSONResponse
         req_id = str(uuid.uuid4())[:8]
-        print(f"🚀 [{req_id}] Requête GPU reçue (Asynchrone). Webhook ID: {request.webhook_id}")
+        effective_webhook_id = request.webhook_id or request.requestId
+        effective_story_id = request.story_id or request.storyId
+        print(f"🚀 [{req_id}] Requête GPU reçue (Asynchrone). Webhook ID: {effective_webhook_id}, Story ID: {effective_story_id}")
         
-        if not request.webhook_id:
-            return JSONResponse(status_code=400, content={"error": "webhook_id est obligatoire pour le mode asynchrone"})
+        if not effective_webhook_id:
+            return JSONResponse(status_code=400, content={"error": "webhook_id ou requestId est obligatoire pour le mode asynchrone"})
 
-        self.process_async_task.spawn(request.model_dump(), req_id)
+        req_dict = request.model_dump()
+        req_dict["webhook_id"] = effective_webhook_id
+        req_dict["story_id"] = effective_story_id
+        self.process_async_task.spawn(req_dict, req_id)
 
         return JSONResponse(
             status_code=202,
@@ -315,7 +327,7 @@ class CalmiTTSGPU:
                 "status": "accepted",
                 "message": "Génération audio lancée sur GPU en arrière-plan.",
                 "request_id": req_id,
-                "webhook_id": request.webhook_id
+                "webhook_id": effective_webhook_id
             }
         )
 
@@ -329,14 +341,16 @@ class CalmiTTSGPU:
         SUPABASE_UPLOAD_URL = "https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/upload-audio-from-n8n"
         WEBHOOK_SECRET = "qpga8m5UFVedaXVf8D/coKlMoycSuA0qqFGk1UuvTQc="
 
-        target_story_id = request.story_id or "9d01b668-5861-4cf5-9a28-ba4106dd7cfb"
-        target_webhook_id = request.webhook_id or "0d52395c-e658-45d9-a995-3509acaeed08"
+        target_story_id = request.story_id or request.storyId
+        target_webhook_id = request.webhook_id or request.requestId
+        target_voice_id = request.voiceId or "custom"
 
-        print(f"📤 [{req_id}] Téléversement de l'audio vers Supabase (storyId: {target_story_id})...")
+        print(f"📤 [{req_id}] Téléversement de l'audio vers Supabase (storyId: {target_story_id}, requestId: {target_webhook_id})...")
         files = {"audioFile": (f"{target_webhook_id}.wav", wav_bytes, "audio/wav")}
         data = {
             "requestId": target_webhook_id,
-            "storyId": target_story_id
+            "storyId": target_story_id,
+            "voiceId": target_voice_id
         }
         headers = {"x-webhook-secret": WEBHOOK_SECRET}
 

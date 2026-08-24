@@ -122,8 +122,6 @@ serve(async (req) => {
       console.log(`✅ [n8n-audio-callback-${requestId}] Marquage comme prêt`);
     } else {
       updateData.status = 'error';
-      updateData.error = error || 'Erreur lors de la génération audio';
-      
       console.log(`❌ [n8n-audio-callback-${requestId}] Marquage comme erreur:`, error);
     }
 

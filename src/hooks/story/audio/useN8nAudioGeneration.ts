@@ -299,12 +299,14 @@ export const useN8nAudioGeneration = () => {
         await fetchAudioFiles(storyId);
       }, TIMEOUT_DURATION);
 
-      // 4. Envoyer la requête à n8n
+      // 4. Envoyer la requête à n8n ou Modal GPU
       const payload: any = {
         text: text,
         storyId,
+        story_id: storyId,
         voiceId: dynamicVoiceId,
         requestId,
+        webhook_id: requestId,
         provider: provider
       };
 
@@ -357,18 +359,62 @@ export const useN8nAudioGeneration = () => {
         console.log("[N8nAudio] Standard voice detected or check skipped.", err);
       }
 
-      console.log(`📤 [N8nAudio] Envoi vers ${provider} (n8n):`, { ...payload, voice_ref_url: payload.voice_ref_url ? "SIGNED_URL_PRESENT" : undefined, webhookUrl: webhookUrl.substring(0, 40) + '...' });
+      // Sélection de l'URL cible (Modal GPU pour les voice clones ou provider modal-gpu)
+      const targetWebhookUrl = (payload.isCustomVoice || provider === 'modal-gpu' || provider === 'modal') && ttsConfig.modalWebhookUrl
+        ? ttsConfig.modalWebhookUrl
+        : webhookUrl;
 
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+      console.log(`📤 [N8nAudio] Envoi vers ${payload.isCustomVoice ? 'Modal GPU (Voice Cloning)' : provider}:`, {
+        ...payload,
+        voice_ref_url: payload.voice_ref_url ? "SIGNED_URL_PRESENT" : undefined,
+        targetWebhookUrl: targetWebhookUrl.substring(0, 45) + '...'
       });
 
-      if (!response.ok) {
-        throw new Error(`Webhook n8n failed: ${response.status} - ${response.statusText}`);
+      let sendSuccess = false;
+      try {
+        const response = await fetch(targetWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          sendSuccess = true;
+        } else {
+          console.warn(`⚠️ [N8nAudio] Échec Modal (${response.status}), bascule automatique vers le secours OpenAI TTS...`);
+        }
+      } catch (fetchErr) {
+        console.warn(`⚠️ [N8nAudio] Erreur réseau Modal, bascule automatique vers le secours OpenAI TTS...`, fetchErr);
+      }
+
+      // Si Modal a échoué, bascule automatique vers le secours OpenAI TTS ultra-rapide
+      if (!sendSuccess) {
+        console.log(`🛡️ [N8nAudio] Lancement du fallback OpenAI TTS de secours...`);
+        const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('generate-openai-tts', {
+          body: {
+            text,
+            storyId,
+            requestId,
+            voiceId: dynamicVoiceId
+          }
+        });
+
+        if (fallbackError || !fallbackData?.success) {
+          throw new Error(fallbackError?.message || "Échec de la génération audio (Modal & Secours OpenAI)");
+        }
+
+        console.log(`✅ [N8nAudio] Fallback OpenAI TTS terminé avec succès !`);
+        if (timeoutId) clearTimeout(timeoutId);
+        if (checkInterval) clearInterval(checkInterval);
+        setIsGenerating(false);
+        toast({
+          title: "🎉 Audio généré (Secours Haute-Qualité) !",
+          description: "Votre histoire a été générée avec succès via la voix de secours.",
+        });
+        await fetchAudioFiles(storyId);
+        return audioFile.id;
       }
 
       // 5. Mettre à jour le statut en "processing"
@@ -382,7 +428,7 @@ export const useN8nAudioGeneration = () => {
 
       toast({
         title: `🎵 Génération audio lancée !`,
-        description: "La production du livre audio multi-voix est en cours en arrière-plan et peut prendre jusqu'à 60 minutes. Vous pouvez continuer à naviguer ou quitter la page en toute tranquillité.",
+        description: "La production du livre audio multi-voix est en cours en arrière-plan sur GPU. Vous pouvez continuer à naviguer ou quitter la page.",
       });
 
       // 6. Rafraîchir la liste des fichiers
