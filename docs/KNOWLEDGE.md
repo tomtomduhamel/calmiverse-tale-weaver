@@ -19,14 +19,25 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - Limitation selon tier d'abonnement (2 à illimité)
 
 ### Génération d'histoires
-- IA Lovable AI (GPT-4o-mini) pour contenu adapté enfants
+- IA Lovable AI (GPT-4o-mini) & n8n pour contenu adapté enfants
 - 4 objectifs pédagogiques : Sommeil, Concentration, Détente, Amusement
-- Histoires 6000-10000 mots avec structure narrative complète
+- **Durées calibrées** : 3 min (Express, ~250-350 mots), 5 min (Courte, ~600 mots), 10 min (Moyenne, ~1200 mots), 15 min (Longue, ~1800 mots)
+- **Formule de calibration unifiée** : $\text{Mots} = \text{Durée (min)} \times \text{Vitesse utilisateur (mots/min)}$ (chargée depuis `users.reading_speed`) avec encadrement strict min/max au LLM
+- **Calibrage syntaxique selon l'âge** :
+  - **0-3 ans (Tout-petits)** : 5 à 8 mots par phrase max, structure directe Sujet+Verbe+Complément, zéro proposition subordonnée complexe, paragraphes courts de 2 phrases max.
+  - **4-6 ans (Maternelle)** : 8 à 12 mots par phrase max, verbes d'action concrets, dialogues simples et vifs.
+  - **7-9 ans (Primaire)** : 10 à 15 mots par phrase, 2-3 mots de vocabulaire contextualisés, esprit de déduction.
+  - **10-12 ans & 13+** : Intrigues rythmées, dialogues spontanés, autodérision et maturité.
 - Génération titre + résumé automatique
 - Système de séries avec tomes numérotés
-- Déduplication automatique (évite doublons)
+- Déduplication automatique (évite doublons et redondances de décors/acolytes)
 - Quotas mensuels selon abonnement
 - **Mode chatbot interactif** : Création guidée via conversation n8n avec boutons de choix
+
+### Studio Vocal Familial & Clonage de Voix 🎙️
+- Route `/app/voices` accessible à tous les abonnés ayant des quotas de clonage (`max_voice_clones > 0` : Calmidium, Calmix, Calmixxl)
+- Enregistrement direct in-app ou invitation à distance pour les proches (Maman, Papa, Grands-parents)
+- Découpage multi-voix et attribution intelligente des personnages (narrateur, maman, papa, animaux, créatures)
 
 ### Bibliothèque d'histoires
 - Filtrage avancé : enfants, objectifs, favoris, statuts
@@ -39,7 +50,8 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - **Interface immersive** avec mode plein écran
 - **Audio ElevenLabs** intégré avec contrôles (génération via N8nAudioPlayer)
 - **Musique de fond** par objectif (optionnel, désactivable)
-- **Auto-scroll intelligent** avec détection vitesse de lecture (125 mots/min par défaut)
+- **Temps de lecture dynamique** : calculé avec la vitesse personnalisée du parent (`ReadingSpeedContext`)
+- **Auto-scroll intelligent** avec détection vitesse de lecture (120 mots/min par défaut)
 - **Thème adaptatif** sombre/clair avec préférences utilisateur persistantes
 - **Taille de police ajustable** (3 niveaux : petit, moyen, grand)
 - **Support Markdown** avec ReactMarkdown pour mise en forme enrichie
@@ -61,14 +73,15 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 ### Système d'abonnements
 - 4 tiers : Calmini, Calmidium, Calmix, Calmixxl
 - Trial automatique 1 mois pour nouveaux utilisateurs
-- Quotas mensuels : histoires, audios, enfants
-- Features premium : séries, communauté, musique, priorité
+- Quotas mensuels : histoires, audios, enfants, clonages de voix (`max_voice_clones`)
+- Features premium : séries, communauté, musique, priorité, studio vocal, multi-voix
 - Remise annuelle 20%
 - Guards React : SubscriptionGuard, useQuotaChecker, useFeatureAccess
 
 ### Paramètres utilisateur
 - Gestion compte et sécurité
-- Préférences lecture (vitesse, auto-scroll)
+- Accès Studio Vocal Familial 🎙️ (carte avec redirection)
+- Préférences lecture (vitesse de lecture personnalisée `reading_speed`, auto-scroll)
 - Notifications granulaires (email, in-app, système)
 - Thème apparence (clair/sombre)
 - Musique de fond activable
