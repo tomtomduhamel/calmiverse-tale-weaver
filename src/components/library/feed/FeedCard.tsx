@@ -14,6 +14,7 @@ import type { Story } from "@/types/story";
 import { Clock, Share2, BookPlus, BookOpen, Loader2, Heart, Library, BookCheck } from "lucide-react";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
 import { calculateReadingTime } from "@/utils/readingTime";
+import { useReadingSpeed } from "@/contexts/ReadingSpeedContext";
 import { getStoryIdentity } from "@/utils/objectiveUtils";
 import { cn } from "@/lib/utils";
 
@@ -75,8 +76,9 @@ const FeedCard: React.FC<FeedCardProps> = ({
   const lastTapRef = useRef<number>(0);
   const imageRef = useRef<HTMLDivElement>(null);
 
+  const { readingSpeed } = useReadingSpeed();
   const storyImageUrl = getStoryImageUrl(story.image_path);
-  const readingTime = calculateReadingTime(story.content);
+  const readingTime = calculateReadingTime(story.content, readingSpeed);
   const timeAgo = formatDistanceToNow(story.createdAt, { addSuffix: false, locale: fr });
   const storyIdentity = getStoryIdentity(story);
 

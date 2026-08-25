@@ -163,6 +163,7 @@ const PageLoader = () => {
 import { TitleGenerationProvider } from "@/contexts/TitleGenerationContext";
 import { TitleGenerationIndicator } from "@/components/story/TitleGenerationIndicator";
 import { UserSettingsProvider } from "@/contexts/UserSettingsContext";
+import { ReadingSpeedProvider } from "@/contexts/ReadingSpeedContext";
 
 function App() {
   const isDemoMode = (window as any).__CALMI_DEMO_MODE === true;
@@ -193,6 +194,7 @@ function App() {
     <ErrorBoundary>
       <Router>
         <UserSettingsProvider>
+        <ReadingSpeedProvider>
         <TitleGenerationProvider>
           {isDemoMode && <DemoBanner />}
           <div className={isDemoMode ? "pt-[60px]" : ""}>
@@ -232,7 +234,7 @@ function App() {
                   <Route path="children" element={<ChildrenListPage />} />
                   <Route path="kids-profile" element={<KidsProfile />} />
                   <Route path="settings" element={<Settings />} />
-                  <Route path="voices" element={<SuperAdminGuard><VoiceStudio /></SuperAdminGuard>} />
+                  <Route path="voices" element={<VoiceStudio />} />
                   <Route path="library" element={<Library />} />
                   <Route path="reader/:id" element={<StoryReaderPage />} />
                   <Route path="create-story-n8n" element={<Navigate to="/app/create-story/step-1" replace />} />
@@ -284,6 +286,7 @@ function App() {
           <OfflineIndicator />
           <CookieConsent />
         </TitleGenerationProvider>
+        </ReadingSpeedProvider>
         </UserSettingsProvider>
       </Router>
     </ErrorBoundary>

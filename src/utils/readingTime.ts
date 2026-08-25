@@ -8,8 +8,10 @@ export const READING_SPEED_WPM = 120;
 /**
  * Calcule le temps de lecture estimé pour un parent lisant une histoire.
  * Inclut le tilde '~' pour marquer la nature estimative et bienveillante du temps de lecture.
+ * @param text Le texte de l'histoire
+ * @param customWpm Vitesse personnalisée en mots par minute (défaut 120)
  */
-export const calculateReadingTime = (text: string | undefined): string => {
+export const calculateReadingTime = (text: string | undefined, customWpm?: number): string => {
   if (!text) {
     return "0 min de lecture";
   }
@@ -20,9 +22,11 @@ export const calculateReadingTime = (text: string | undefined): string => {
     return "0 min de lecture";
   }
 
+  const wpm = customWpm && customWpm >= 50 && customWpm <= 300 ? customWpm : READING_SPEED_WPM;
+
   // Vitesse de lecture adaptée aux enfants, alignée avec estimateWordCountForDuration
   const wordCount = cleanText.trim().split(/\s+/).length;
-  const minutes = Math.round(wordCount / READING_SPEED_WPM);
+  const minutes = Math.round(wordCount / wpm);
 
   if (minutes < 1) {
     return "< 1 min de lecture";

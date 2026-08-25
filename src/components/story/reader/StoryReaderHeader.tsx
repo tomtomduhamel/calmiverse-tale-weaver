@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, Pause, ScrollText, Info, Moon, Sun, Trash2 } from "lucide-react";
 import { calculateReadingTime } from "@/utils/readingTime";
+import { useReadingSpeed } from "@/contexts/ReadingSpeedContext";
 import { FavoriteReaderButton } from "./FavoriteReaderButton";
 import { ShareStoryButton } from "./ShareStoryButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -48,7 +49,8 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
   onDelete,
   isDeleting = false
 }) => {
-  const readingTime = calculateReadingTime(story.content);
+  const { readingSpeed } = useReadingSpeed();
+  const readingTime = calculateReadingTime(story.content, readingSpeed);
   const handleToggleFavorite = () => {
     console.log("[StoryReaderHeader] DEBUG: Clic sur bouton favoris pour histoire:", story.id);
     if (onToggleFavorite) {

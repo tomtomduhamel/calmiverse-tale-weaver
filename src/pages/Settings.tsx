@@ -186,28 +186,26 @@ const Settings = () => {
 
       <SubscriptionPlanCard />
 
-      {isSuperAdmin && (
-        <Card 
-          className="cursor-pointer hover:border-primary-soft/80 hover:shadow-md transition-all duration-300 relative overflow-hidden group"
-          onClick={() => navigate('/app/voices')}
-        >
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
-          <CardHeader className="pb-3 flex flex-row items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary-soft/20 text-primary flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-              <Mic className="h-5 w-5" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-bold flex items-center gap-1.5">
-                Studio Vocal Familial 🎙️
-                <Badge variant="outline" className="text-[9px] bg-primary-soft/10 text-primary border-primary/20">Premium</Badge>
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Enregistrez ou invitez à distance Maman, Papa ou les grands-parents à cloner leur voix.
-              </CardDescription>
-            </div>
-          </CardHeader>
-        </Card>
-      )}
+      <Card 
+        className="cursor-pointer hover:border-primary-soft/80 hover:shadow-md transition-all duration-300 relative overflow-hidden group"
+        onClick={() => navigate('/app/voices')}
+      >
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
+        <CardHeader className="pb-3 flex flex-row items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary-soft/20 text-primary flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+            <Mic className="h-5 w-5" />
+          </div>
+          <div>
+            <CardTitle className="text-base font-bold flex items-center gap-1.5">
+              Studio Vocal Familial 🎙️
+              <Badge variant="outline" className="text-[9px] bg-primary-soft/10 text-primary border-primary/20">Premium</Badge>
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Enregistrez ou invitez à distance Maman, Papa ou les grands-parents à cloner leur voix.
+            </CardDescription>
+          </div>
+        </CardHeader>
+      </Card>
 
       <FamilySection />
 

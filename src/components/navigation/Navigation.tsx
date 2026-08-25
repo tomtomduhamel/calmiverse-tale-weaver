@@ -11,6 +11,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { GlobalThemeToggle } from '@/components/ui/GlobalThemeToggle';
 import { usePendingShares } from '@/hooks/stories/useStorySharing';
 import { useIsSuperAdmin } from '@/hooks/auth/useIsSuperAdmin';
+import { useSubscription } from '@/hooks/subscription/useSubscription';
 
 const Navigation = () => {
   const {
@@ -23,6 +24,7 @@ const Navigation = () => {
   const { totalActiveCount } = useBackgroundStoryGeneration();
   const { pendingCount } = usePendingShares();
   const { isSuperAdmin } = useIsSuperAdmin();
+  const { limits } = useSubscription();
   const handleLogout = async () => {
     try {
       await logout();
@@ -36,6 +38,8 @@ const Navigation = () => {
   if (!user) {
     return null;
   }
+  const hasVoiceAccess = isSuperAdmin || (limits?.max_voice_clones !== undefined && limits.max_voice_clones > 0);
+
   const navItems = [{
     icon: Home,
     label: 'Accueil',
@@ -48,7 +52,7 @@ const Navigation = () => {
     icon: Sparkles,
     label: 'Mon ciel',
     path: '/dashboard'
-  }, ...(isSuperAdmin ? [{
+  }, ...(hasVoiceAccess ? [{
     icon: Mic,
     label: 'Studio Vocal',
     path: '/app/voices'

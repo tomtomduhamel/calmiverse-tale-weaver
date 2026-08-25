@@ -32,6 +32,7 @@ describe('Story Duration & Reading Time Utilities', () => {
   describe('formatReadingMinutes', () => {
     it('formats minutes into explicit parent reading duration', () => {
       expect(formatReadingMinutes(0)).toBe('< 1 min de lecture');
+      expect(formatReadingMinutes(3)).toBe('~3 min de lecture');
       expect(formatReadingMinutes(5)).toBe('~5 min de lecture');
       expect(formatReadingMinutes(10)).toBe('~10 min de lecture');
       expect(formatReadingMinutes(15)).toBe('~15 min de lecture');
@@ -48,7 +49,10 @@ describe('Story Duration & Reading Time Utilities', () => {
   });
 
   describe('STORY_DURATION_CONFIG & getStoryDurationConfig', () => {
-    it('provides narrative format metadata for 5, 10, and 15 minutes', () => {
+    it('provides narrative format metadata for 3, 5, 10, and 15 minutes', () => {
+      expect(STORY_DURATION_CONFIG[3].label).toBe('Express');
+      expect(STORY_DURATION_CONFIG[3].sublabel).toBe('~3 min');
+
       expect(STORY_DURATION_CONFIG[5].label).toBe('Courte');
       expect(STORY_DURATION_CONFIG[5].sublabel).toBe('~5 min');
 
@@ -60,6 +64,7 @@ describe('Story Duration & Reading Time Utilities', () => {
     });
 
     it('returns correct config or fallback to 10 min', () => {
+      expect(getStoryDurationConfig(3).label).toBe('Express');
       expect(getStoryDurationConfig(5).label).toBe('Courte');
       expect(getStoryDurationConfig(10).label).toBe('Moyenne');
       expect(getStoryDurationConfig(15).label).toBe('Longue');
@@ -67,13 +72,21 @@ describe('Story Duration & Reading Time Utilities', () => {
       expect(getStoryDurationConfig(99 as any).label).toBe('Moyenne');
     });
 
-    it('estimates target words accurately for story generation', () => {
+    it('estimates target words accurately for story generation with default and custom WPM', () => {
+      // 3 min * 120 wpm = 360 words
+      expect(estimateWordCountForDuration(3)).toBe(360);
       // 5 min * 120 wpm = 600 words
       expect(estimateWordCountForDuration(5)).toBe(600);
       // 10 min * 120 wpm = 1200 words
       expect(estimateWordCountForDuration(10)).toBe(1200);
       // 15 min * 120 wpm = 1800 words
       expect(estimateWordCountForDuration(15)).toBe(1800);
+
+      // Custom WPM (e.g. 90 words/min)
+      expect(estimateWordCountForDuration(5, 90)).toBe(450);
+      expect(estimateWordCountForDuration(3, 90)).toBe(270);
+      // Custom WPM (e.g. 150 words/min)
+      expect(estimateWordCountForDuration(10, 150)).toBe(1500);
     });
   });
 });

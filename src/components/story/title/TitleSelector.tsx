@@ -204,7 +204,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 gap-2">
                   {STORY_DURATION_OPTIONS.map((duration) => {
                     const config = STORY_DURATION_CONFIG[duration];
                     return (

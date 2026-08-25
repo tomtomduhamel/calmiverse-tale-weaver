@@ -62,7 +62,10 @@ export const ReadingSpeedProvider: React.FC<{ children: React.ReactNode }> = ({ 
 export const useReadingSpeed = () => {
   const context = useContext(ReadingSpeedContext);
   if (!context) {
-    throw new Error('useReadingSpeed doit être utilisé dans un ReadingSpeedProvider');
+    return {
+      readingSpeed: 120,
+      setReadingSpeed: async () => {},
+    };
   }
   return context;
 };

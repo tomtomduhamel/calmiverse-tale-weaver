@@ -262,7 +262,7 @@ const FastStoryCreator: React.FC = () => {
               </p>
 
               {/* Duration buttons */}
-              <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="grid grid-cols-4 gap-2 mb-5">
                 {DURATION_OPTIONS.map(duration => {
                   const config = STORY_DURATION_CONFIG[duration];
                   return (

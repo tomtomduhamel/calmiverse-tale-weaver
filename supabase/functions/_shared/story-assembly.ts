@@ -7,9 +7,10 @@
 
 const READING_SPEED_WPM = 120;
 
-export const estimateWordCountForDuration = (minutes: number): number => {
-  const words = Math.round(minutes * READING_SPEED_WPM);
-  return Math.min(Math.max(words, 400), 3000);
+export const estimateWordCountForDuration = (minutes: number, customWpm?: number): number => {
+  const wpm = customWpm && customWpm >= 50 && customWpm <= 300 ? customWpm : READING_SPEED_WPM;
+  const words = Math.round(minutes * wpm);
+  return Math.min(Math.max(words, 200), 3500);
 };
 
 export function calculateAge(birthDate: string | Date): number {
@@ -49,18 +50,50 @@ export const OBJECTIVE_DESCRIPTIONS: Record<string, string> = {
 export const getVocabularyInstructions = (youngestAge: number): string => {
   const onomatopoeiaRule = "- RÈGLE DES ONOMATOPÉES : Maximum 3 onomatopées dans TOUTE l'histoire (ex: Hop !, Plouf !, Chut...).";
   const metaphorRule = "- RÈGLE ZÉRO MÉTAPHORE SUPERFLUE : Maximum 1 à 2 comparaisons physiques simples dans toute l'histoire (ex: 'un ballon gros comme une pastèque'). INTERDICTION FORMELLE des comparaisons poétiques lentes ('comme du miel', 'comme une onde', 'comme une offrande', 'comme un pli dans le ciel'). Raconter l'action avec des verbes directs et vivants.";
-  const blacklistRule = "- LISTE NOIRE STRICTE (MOTS PROSCRITS) : Ne JAMAIS utiliser les mots suivants : 'irisé', 'nacre', 'nacré', 'diaphane', 'béatitude', 'onde', 'offrande', 'cérémonieux', 'cérémonieuse', 'murmure machinal', 'alcôve', 'zéphyr', 'lueur feutrée', 'contemplation', 'indicible'.";
+  const blacklistRule = "- LISTE NOIRE STRICTE (MOTS PROSCRITS) : Ne JAMAIS utiliser les mots suivants : 'irisé', 'nacre', 'nacré', 'diaphane', 'béatitude', 'onde', 'offrande', 'cérémonieux', 'cérémonieuse', 'murmure machinal', 'alcôve', 'zéphyr', 'lueur feutrée', 'contemplation', 'indicible', 'ineffable', 'volupté'.";
 
   if (youngestAge <= 3) {
-    return `- VOCABULAIRE TOUT-PETITS (0-3 ans) : Phrases très courtes (Sujet + Verbe + Complément). Mots simples et concrets du quotidien direct (doudou, chat, pomme, bain, dodo, ballon). Interdiction totale du vocabulaire abstrait ou littéraire.\n${metaphorRule}\n${blacklistRule}\n${onomatopoeiaRule}`;
-  } else if (youngestAge <= 5) {
-    return `- VOCABULAIRE MATERNELLE (4-6 ans) : Vocabulaire simple, vivant, concret et chaleureux. Verbes d'action directs (courir, grimper, cacher, rire, attraper). Aucun terme pompeux ou complexe.\n${metaphorRule}\n${blacklistRule}\n${onomatopoeiaRule}`;
-  } else if (youngestAge <= 7) {
-    return `- VOCABULAIRE PRIMAIRE (7-8 ans) : Vocabulaire adapté à l'école primaire. Maximum 2 à 3 mots enrichissants immédiatement compréhensibles en contexte. Syntaxe claire et vivante.\n${metaphorRule}\n${blacklistRule}\n${onomatopoeiaRule}`;
+    return `- VOCABULAIRE & SYNTAXE TOUT-PETITS (0-3 ans) :
+* SYNTAXE TRÈS COURTE : 5 à 8 mots par phrase MAXIMUM. 1 seule idée par phrase.
+* STRUCTURE DIRECTE OBLIGATOIRE : Sujet + Verbe + Complément direct (ex: "Léo prend son doudou. Le doudou est tout doux.").
+* INTERDICTION ABSOLUE : Zéro proposition subordonnée relative complexe ("qui", "dont", "alors que..."), zéro vocabulaire abstrait ou littéraire.
+* MOTS DU QUOTIDIEN CONCRET : doudou, chat, pomme, bain, dodo, ballon, lit, bisou, rire, courir.
+* PARAGRAPHES COURTS : 2 phrases courtes par paragraphe maximum pour rythmer la lecture à voix haute.
+${metaphorRule}
+${blacklistRule}
+${onomatopoeiaRule}`;
+  } else if (youngestAge <= 6) {
+    return `- VOCABULAIRE & SYNTAXE MATERNELLE (4-6 ans) :
+* SYNTAXE COURTE ET VIVANTE : 8 à 12 mots par phrase MAXIMUM.
+* STRUCTURE DIRECTE : Verbes d'action concrets (courir, grimper, cacher, rire, attraper, construire).
+* INTERDICTION FORMELLE : Aucun terme pompeux, précieux ou complexe.
+* DIALOGUES SIMPLES ET SPONTANÉS : Répliques d'enfants naturelles et courtes.
+* PARAGRAPHES AÉRÉS : 2 à 3 phrases par paragraphe.
+${metaphorRule}
+${blacklistRule}
+${onomatopoeiaRule}`;
+  } else if (youngestAge <= 9) {
+    return `- VOCABULAIRE & SYNTAXE PRIMAIRE (7-9 ans) :
+* SYNTAXE FLUIDE ET CLAIRE : Phrases équilibrées (10 à 15 mots en moyenne).
+* VOCABULAIRE ENRICHISSANT CONTEXTUALISÉ : Maximum 2 à 3 mots enrichissants immédiatement compréhensibles par l'action.
+* INTRIGUE RYTHMÉE : Enchaînement de cause à effet dynamique, esprit de déduction.
+${metaphorRule}
+${blacklistRule}
+${onomatopoeiaRule}`;
   } else if (youngestAge <= 12) {
-    return `- VOCABULAIRE JUNIOR (8-12 ans) : Vocabulaire riche mais fluide et accessible. Dialogues rythmés, esprit vif, sans tournures artificiellement vieillottes.\n${metaphorRule}\n${blacklistRule}\n${onomatopoeiaRule}`;
+    return `- VOCABULAIRE & SYNTAXE JUNIOR (10-12 ans) :
+* SYNTAXE DYNAMIQUE : Dialogues rythmés, esprit vif, suspense et humour de situation.
+* VOCABULAIRE RICHE ET ACCESSIBLE : Tournures naturelles, vivantes, sans archaïsmes.
+${metaphorRule}
+${blacklistRule}
+${onomatopoeiaRule}`;
   } else {
-    return `- VOCABULAIRE ADO (13+ ans) : Vocabulaire précis et dynamique. Dialogues modernes avec autodérision bienveillante et maturité, sans infantilisation.\n${metaphorRule}\n${blacklistRule}\n${onomatopoeiaRule}`;
+    return `- VOCABULAIRE & SYNTAXE ADO (13+ ans) :
+* SYNTAXE MODERNE : Précision, rythme soutenu, autodérision bienveillante et maturité.
+* REJET DE L'INFANTILISATION : Thématiques et dialogues ancrés dans le réalisme adolescent.
+${metaphorRule}
+${blacklistRule}
+${onomatopoeiaRule}`;
   }
 };
 
@@ -173,7 +206,7 @@ export const generateAdvancedStoryPrompt = (
   objective: string,
   children: AssemblyChild[],
   selectedTitle?: string,
-  options?: { durationMinutes?: number; targetWordCount?: number },
+  options?: { durationMinutes?: number; targetWordCount?: number; readingSpeed?: number },
 ): string => {
   const analysis = analyzeCharacters(children);
   const characterContext = generateCharacterContext(analysis);
@@ -181,10 +214,13 @@ export const generateAdvancedStoryPrompt = (
   const genderInstructions = generateGenderInstructions(analysis);
 
   const targetWords = options?.targetWordCount ??
-    (options?.durationMinutes ? estimateWordCountForDuration(options.durationMinutes) : 1500);
-  const startWords = Math.max(200, Math.round(targetWords * 0.25));
-  const middleWords = Math.max(400, Math.round(targetWords * 0.5));
-  const endWords = Math.max(200, Math.round(targetWords * 0.25));
+    (options?.durationMinutes ? estimateWordCountForDuration(options.durationMinutes, options.readingSpeed) : 1200);
+  const minWords = Math.round(targetWords * 0.9);
+  const maxWords = Math.round(targetWords * 1.1);
+
+  const startWords = Math.max(60, Math.round(targetWords * 0.25));
+  const middleWords = Math.max(100, Math.round(targetWords * 0.5));
+  const endWords = Math.max(60, Math.round(targetWords * 0.25));
 
   const allNames = [...analysis.children.map((c) => c.child.name), ...analysis.pets.map((p) => p.name)];
   const namesText = allNames.length === 1
@@ -222,7 +258,7 @@ DYNAMIQUE S'AMUSER (ÉNERGIE HAUTE & RIRE) :
   }
 
   const durationNote = options?.durationMinutes
-    ? `- L'histoire doit pouvoir être lue en environ ${options.durationMinutes} minutes\n`
+    ? `- Durée de lecture ciblée : ${options.durationMinutes} minutes\n`
     : "";
 
   return `MODÈLE NARRATIF EN 2 TEMPS :
@@ -261,7 +297,7 @@ STRUCTURE NARRATIVE (~${targetWords} mots) :
 - Structure avec des sauts de lignes pour faciliter la lecture à voix haute.
 - Interdire tout contenu effrayant ou angoissant.
 ${durationNote}
-Générer maintenant l'histoire complète en français en respectant le nombre de mots demandés (environ ${targetWords} mots).`;
+⚠️ CONTRAINTE STRICTE DE LONGUEUR : L'histoire complète DOIT impérativement faire entre ${minWords} et ${maxWords} mots (Cible: ${targetWords} mots). Ne jamais dépasser ${maxWords} mots pour respecter le temps de lecture.`;
 };
 
 // --- Variation narrative (5 tables DB) ---
@@ -282,6 +318,7 @@ const findAgeCognition = (age: number, entries: any[]): any | null => {
   if (age <= 2) return entries.find((e) => e.range === "0-2 ans") || null;
   if (age <= 4) return entries.find((e) => e.range === "2-4 ans") || null;
   if (age <= 6) return entries.find((e) => e.range === "4-6 ans") || null;
+  if (age <= 8) return entries.find((e) => e.range === "4-6 ans" || e.range === "8-12 ans") || null;
   if (age <= 12) return entries.find((e) => e.range === "8-12 ans") || null;
   return entries.find((e) => e.range === "13+ ans") || null;
 };
@@ -342,9 +379,20 @@ export async function fetchActivePrompts(supabase: any): Promise<Record<string, 
   return prompts;
 }
 
-async function fetchUserEmail(supabase: any, userId: string): Promise<string | null> {
-  const { data } = await supabase.from("users").select("email").eq("id", userId).maybeSingle();
-  return data?.email ?? null;
+export interface UserData {
+  email: string | null;
+  readingSpeed: number;
+}
+
+async function fetchUserData(supabase: any, userId: string): Promise<UserData> {
+  const { data } = await supabase.from("users").select("email, reading_speed").eq("id", userId).maybeSingle();
+  const readingSpeed = data?.reading_speed && data.reading_speed >= 50 && data.reading_speed <= 300
+    ? data.reading_speed
+    : READING_SPEED_WPM;
+  return {
+    email: data?.email ?? null,
+    readingSpeed,
+  };
 }
 
 async function fetchChildren(supabase: any, childrenIds: string[], userId: string): Promise<AssemblyChild[]> {
@@ -369,7 +417,7 @@ const buildNamesText = (analysis: CharacterAnalysis): string => {
 
 function buildStoryPromptFromTemplate(
   template: string | undefined,
-  params: { objective: string; selectedTitle: string; durationMinutes?: number },
+  params: { objective: string; selectedTitle: string; durationMinutes?: number; readingSpeed?: number },
   children: AssemblyChild[],
   targetWordCount: number | undefined,
   variation: StoryVariation,
@@ -379,7 +427,7 @@ function buildStoryPromptFromTemplate(
       params.objective,
       children,
       params.selectedTitle,
-      { durationMinutes: params.durationMinutes, targetWordCount },
+      { durationMinutes: params.durationMinutes, targetWordCount, readingSpeed: params.readingSpeed },
     );
   }
 
@@ -431,7 +479,7 @@ export async function buildGuidedStoryPayload(supabase: any, params: GuidedParam
     throw new Error("Aucun enfant trouvé pour cette routine/création");
   }
 
-  const userEmail = await fetchUserEmail(supabase, params.userId);
+  const userData = await fetchUserData(supabase, params.userId);
   const prompts = await fetchActivePrompts(supabase);
 
   const childrenNames = children.map((c) => c.name);
@@ -450,7 +498,7 @@ export async function buildGuidedStoryPayload(supabase: any, params: GuidedParam
   }));
 
   const durationMinutes = params.durationMinutes ?? null;
-  const targetWordCount = durationMinutes ? estimateWordCountForDuration(durationMinutes) : undefined;
+  const targetWordCount = durationMinutes ? estimateWordCountForDuration(durationMinutes, userData.readingSpeed) : undefined;
 
   const analysis = analyzeCharacters(children);
   const variation = await selectVariation(supabase, analysis.youngestAge, params.objective);
@@ -469,7 +517,12 @@ export async function buildGuidedStoryPayload(supabase: any, params: GuidedParam
 
   let storyPrompt = buildStoryPromptFromTemplate(
     storyPromptTemplate,
-    { objective: params.objective, selectedTitle: params.selectedTitle, durationMinutes: durationMinutes ?? undefined },
+    {
+      objective: params.objective,
+      selectedTitle: params.selectedTitle,
+      durationMinutes: durationMinutes ?? undefined,
+      readingSpeed: userData.readingSpeed,
+    },
     children,
     targetWordCount,
     variation,
@@ -501,8 +554,9 @@ ${historyList}`;
     childrenData: enrichedChildrenData,
     durationMinutes,
     targetWordCount: targetWordCount ?? undefined,
+    userReadingSpeed: userData.readingSpeed,
     userId: params.userId,
-    userEmail,
+    userEmail: userData.email,
     storyPrompt,
     imageGenerationPrompt: prompts.image_generation_prompt || null,
     videoGenerationPrompt: prompts.video_generation_prompt || null,
@@ -559,10 +613,10 @@ export interface FastParams {
 }
 
 export async function buildFastStoryPayload(supabase: any, params: FastParams): Promise<any> {
-  const userEmail = await fetchUserEmail(supabase, params.userId);
+  const userData = await fetchUserData(supabase, params.userId);
   const prompts = await fetchActivePrompts(supabase);
 
-  const targetWordCount = estimateWordCountForDuration(params.durationMinutes);
+  const targetWordCount = estimateWordCountForDuration(params.durationMinutes, userData.readingSpeed);
 
   // Le frontend utilise un âge moyen de 6 ans pour la sélection narrative (pas d'enfant ciblé)
   const variation = await selectVariation(supabase, 6, params.fastStoryPromptKey);
@@ -613,8 +667,9 @@ ${historyList}`;
     objective: "custom",
     durationMinutes: params.durationMinutes,
     targetWordCount,
+    userReadingSpeed: userData.readingSpeed,
     userId: params.userId,
-    userEmail,
+    userEmail: userData.email,
     storyPrompt,
     imageGenerationPrompt: prompts.image_generation_prompt || null,
     videoGenerationPrompt: params.generateVideo ? (prompts.video_generation_prompt || null) : null,

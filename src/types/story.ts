@@ -102,9 +102,9 @@ export interface StoryAnalysis {
 }
 
 // --- Story duration types & helpers ---
-export type StoryDurationMinutes = 5 | 10 | 15;
+export type StoryDurationMinutes = 3 | 5 | 10 | 15;
 
-export const STORY_DURATION_OPTIONS: readonly StoryDurationMinutes[] = [5, 10, 15] as const;
+export const STORY_DURATION_OPTIONS: readonly StoryDurationMinutes[] = [3, 5, 10, 15] as const;
 
 export interface StoryDurationOption {
   minutes: StoryDurationMinutes;
@@ -116,12 +116,20 @@ export interface StoryDurationOption {
 }
 
 export const STORY_DURATION_CONFIG: Record<StoryDurationMinutes, StoryDurationOption> = {
+  3: {
+    minutes: 3,
+    label: 'Express',
+    sublabel: '~3 min',
+    badge: 'Express (~3 min)',
+    shortDescription: 'Moment calme express',
+    description: 'Une micro-aventure rapide et apaisante (~3 min)',
+  },
   5: {
     minutes: 5,
     label: 'Courte',
     sublabel: '~5 min',
     badge: 'Courte (~5 min)',
-    shortDescription: 'Moment calme express',
+    shortDescription: 'Histoire courte et douce',
     description: 'Une histoire courte et douce (~5 min)',
   },
   10: {
@@ -143,7 +151,7 @@ export const STORY_DURATION_CONFIG: Record<StoryDurationMinutes, StoryDurationOp
 };
 
 export const getStoryDurationConfig = (minutes?: number | null): StoryDurationOption => {
-  if (minutes === 5 || minutes === 10 || minutes === 15) {
+  if (minutes === 3 || minutes === 5 || minutes === 10 || minutes === 15) {
     return STORY_DURATION_CONFIG[minutes];
   }
   return STORY_DURATION_CONFIG[10];
@@ -155,10 +163,11 @@ import { READING_SPEED_WPM } from '@/utils/readingTime';
 
 export const AVERAGE_WPM = READING_SPEED_WPM;
 
-export const estimateWordCountForDuration = (minutes: number): number => {
-  const words = Math.round(minutes * AVERAGE_WPM);
-  // Clamp to reasonable bounds
-  return Math.min(Math.max(words, 400), 3000);
+export const estimateWordCountForDuration = (minutes: number, customWpm?: number): number => {
+  const wpm = customWpm && customWpm >= 50 && customWpm <= 300 ? customWpm : AVERAGE_WPM;
+  const words = Math.round(minutes * wpm);
+  // Clamp to reasonable bounds (min 200 mots pour 3 min, max 3500)
+  return Math.min(Math.max(words, 200), 3500);
 };
 
 // --- Story Series types ---

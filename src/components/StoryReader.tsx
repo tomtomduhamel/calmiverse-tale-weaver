@@ -2,6 +2,7 @@
 import React from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
+import { useReadingSpeed } from "@/contexts/ReadingSpeedContext";
 import { EmptyStoryView } from "./story/reader/EmptyStoryView";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
 import { StoryReaderLayout } from "./story/reader/StoryReaderLayout";
@@ -68,7 +69,8 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     return <EmptyStoryView onBack={handleBack} />;
   }
 
-  const readingTimeString = calculateReadingTime(story.content);
+  const { readingSpeed } = useReadingSpeed();
+  const readingTimeString = calculateReadingTime(story.content, readingSpeed);
 
   return (
     <StoryReaderLayout scrollAreaRef={scrollAreaRef}>

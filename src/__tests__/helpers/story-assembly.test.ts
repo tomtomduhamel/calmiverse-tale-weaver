@@ -127,15 +127,19 @@ describe("Règles Linguistiques & Vocabulaire par Âge", () => {
 
   it("interdit formellement le vocabulaire abstrait ou littéraire pour les tout-petits (0-3 ans)", () => {
     const vocab = getVocabularyInstructions(2);
-    expect(vocab).toContain("Phrases très courtes");
-    expect(vocab).toContain("Mots simples et concrets du quotidien direct");
-    expect(vocab).toContain("Interdiction totale du vocabulaire abstrait ou littéraire");
+    expect(vocab).toContain("SYNTAXE TRÈS COURTE");
+    expect(vocab).toContain("5 à 8 mots par phrase MAXIMUM");
+    expect(vocab).toContain("STRUCTURE DIRECTE OBLIGATOIRE");
+    expect(vocab).toContain("INTERDICTION ABSOLUE");
+    expect(vocab).toContain("MOTS DU QUOTIDIEN CONCRET");
   });
 
   it("impose un vocabulaire simple et des verbes d'action pour la maternelle (4-6 ans)", () => {
     const vocab = getVocabularyInstructions(5);
-    expect(vocab).toContain("Vocabulaire simple, vivant, concret et chaleureux");
-    expect(vocab).toContain("Verbes d'action directs");
+    expect(vocab).toContain("SYNTAXE COURTE ET VIVANTE");
+    expect(vocab).toContain("8 à 12 mots par phrase MAXIMUM");
+    expect(vocab).toContain("STRUCTURE DIRECTE");
+    expect(vocab).toContain("Verbes d'action concrets");
   });
 
   it("limite les mots complexes à 2-3 contextualisés pour le primaire (7-8 ans)", () => {
