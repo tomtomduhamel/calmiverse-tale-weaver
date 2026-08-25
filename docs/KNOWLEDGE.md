@@ -629,10 +629,13 @@ docs/
 
 ### Implémenté ✅
 - Système abonnements 4 tiers complet
-- PWA avec cache avancé (désactivée dev)
+- PWA avec cache avancé et détection de version directe (`/version.json?_t=...`) + forçage de rechargement
+- Directives UX/UI Mobile Calme : Zéro troncature (`...`), affichage 2 lignes pour titres d'histoires, filtres défilants complets
+- Zéro scroll superflu : 3 cartes accueil calibrées sur la hauteur d'écran, footer masqué sur mobile, barres de stats compactes 1 ligne
+- Politique stricte zéro pop-up/toast : interactions silencieuses pour réglages, sélection de voix, ouvertures de livre, pull-to-refresh et self-healing
 - Génération histoires IA optimisée
 - Standards narratifs V3.4 (Modèle 2 temps, Cause à effet, Zéro métaphore superflue, Vocabulaire calibré, Max 3 onomatopées)
-- Audio ElevenLabs asynchrone
+- Audio ElevenLabs asynchrone & Studio vocal familial (clonage de voix)
 - Bibliothèque filtres + swipe-to-delete
 - Profils enfants détaillés
 - Sécurité RLS + rate limiting
@@ -658,12 +661,32 @@ docs/
 - Background music integration complète
 - Notifications push PWA
 - Multilingue (i18n)
-- Amélioration UX mobile
 - A/B testing génération histoires
 
 ---
 
-**Dernière mise à jour** : 2026-08-08  
-**Version** : 3.4 (Standards Narratifs v3.4 : Trame Cause à Effet, Zéro Métaphore Superflue, Vocabulaire Concret, Max 3 Onomatopées)  
-**Statut** : Production ready avec PWA désactivée dev
+## 10. Directives UX/UI Mobile Calme & Politique des Toasts (Standard de Production)
+
+### 10.1 Zéro Troncature (`...`)
+- Les titres d'histoires utilisent `line-clamp-2 leading-snug font-display` pour ne pas couper le texte.
+- Les puces de filtres horizontaux défilent librement avec `overflow-x-auto whitespace-nowrap scrollbar-none`.
+- Les badges ne doivent pas comprimer les champs de saisie (positionnement au-dessus du champ sur la ligne de label).
+
+### 10.2 Zéro Scroll Superflu
+- Les 3 cartes du menu principal de l'accueil doivent tenir dans la hauteur de l'écran mobile sans forcer le scroll.
+- Le `<Footer />` desktop de 300px est conditionné à `!isMobile`.
+- Les métriques secondaires (séries, profils) sont regroupées en grilles 2 colonnes ou barres horizontales d'une seule ligne.
+- Le bouton flottant de feedback est compact (`w-9 h-9` rond avec icône) pour ne jamais gêner la navigation.
+
+### 10.3 Politique Zéro Pop-Up Intempestif
+- **Calme & Sérénité** : Les interactions de routine doivent être silencieuses.
+- **Interdictions** : Aucun toast lors du changement de voix/paramètres, lors de l'ouverture du lecteur, lors du rafraîchissement d'une page ou lors de la récupération automatique d'une histoire.
+- **Autorisations** : Uniquement les erreurs réelles bloquantes pour l'utilisateur (connexion, quota, échec) et les confirmations d'actions destructives (suppression).
+
+---
+
+**Dernière mise à jour** : 2026-08-25  
+**Version** : 3.5 (Refonte UX/UI Mobile Calme, Zéro Troncature, Politique Zéro Toast Intempestif & Détection PWA)  
+**Statut** : Production ready
+
 
