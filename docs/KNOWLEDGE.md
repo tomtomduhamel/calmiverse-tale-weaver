@@ -685,8 +685,32 @@ docs/
 
 ---
 
+## 15. Boucle d'Auto-Amélioration Continue des Prompts (Flywheel n8n + gpt-5.6-terra)
+
+### 15.1 Architecture & Double Source de Vérité
+Le système d'amélioration continue relie les retours réels des utilisateurs et l'analyse technique IA pour affiner automatiquement les templates de prompts par objectif (`story_prompt_sleep`, `story_prompt_focus`, `story_prompt_relax`, `story_prompt_fun`).
+1. **Source Terrain (Humain)** : Notes de fin de lecture (1 à 5 étoiles) et commentaires textuels des parents dans la table `stories` (`rating`, `rating_comment`).
+2. **Source Technique (IA)** : Rapports qualité de la table `story_critiques` (scores détaillés, faiblesses, points forts, alertes onomatopées/moralisation, recommandations d'action).
+3. **Agrégation SQL** : Vue `v_story_learning_batch` regroupant les 20 dernières histoires avec notes, commentaires et scores critiques par objectif.
+
+### 15.2 Moteur d'Optimisation n8n (`gpt-5.6-terra`)
+- **Workflow n8n actif** : `Calmi - Auto-Optimisation Continue des Prompts (gpt-5.6-terra)` (ID: `UJZF0KKtUy9zLDtn`) sur `https://n8n.srv856374.hstgr.cloud/`.
+- **Déclencheurs** : 
+  - Webhook POST `/webhook/auto-optimize-prompts` (lot de 20 histoires ou bouton admin).
+  - Schedule Trigger hebdomadaire.
+- **Modèle IA** : `gpt-5.6-terra` d'OpenAI (consigne stricte : préserver les variables `{children_names}`, `{target_age}`, etc., renforcer *Show Don't Tell* et le calibrage de l'âge, éliminer les défauts récurrents cités par les parents).
+- **Règle technique modèle** : `gpt-5.6-terra` utilise `temperature: 1` (par défaut) et le format de réponse `json_object`.
+
+### 15.3 Stratégie de Versioning & Sécurité (Option B)
+- **Conservation intégrale de l'historique** : n8n n'écrase jamais directement la version en production (`active_version_id`).
+- **Insertion atomique RPC** : Fonction `insert_auto_optimized_prompt_version(p_template_key, p_new_content, p_changelog)` créant automatiquement la version `vN+1` dans `prompt_template_versions` avec changelog explicatif et `created_by` sécurisé.
+- **Contrôle Humain en 1 Clic** : Dans l'interface `/admin/prompts` (`PromptAdmin.tsx`), chaque version générée par IA est marquée d'un badge violet `🤖 gpt-5.6-terra`. L'administrateur peut relire le prompt et l'activer en un clic.
+
+---
+
 **Dernière mise à jour** : 2026-08-25  
-**Version** : 3.5 (Refonte UX/UI Mobile Calme, Zéro Troncature, Politique Zéro Toast Intempestif & Détection PWA)  
+**Version** : 3.6 (Boucle d'Auto-Amélioration Continue n8n gpt-5.6-terra, Refonte UX/UI Mobile Calme & PWA)  
 **Statut** : Production ready
+
 
 
