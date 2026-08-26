@@ -721,14 +721,22 @@ Le système d'amélioration continue relie les retours réels des utilisateurs e
   - `pendingRatings` : File d'attente locale pour enregistrer les notes et commentaires des parents même sans connexion réseau (ou en mode avion lors du coucher).
 - **Synchronisation Automatique (`useOfflineBedtimeSync.ts`)** :
   - Détecte le passage en ligne/hors-ligne et vide automatiquement la file d'attente des notes vers Supabase dès le retour d'Internet.
-- **Résilience du Lecteur (`StoryReaderPage.tsx`)** :
-  - Si un parent ouvre une histoire sans réseau, le lecteur bascule instantanément et silencieusement sur la version locale IndexedDB.
+### 16.4 Idempotence & Verrous Anti-Doublons (Priorité 4)
+- **Gestionnaire d'Idempotence (`src/utils/idempotency/idempotencyGuard.ts`)** :
+  - Clés déterministes par intention : `story_gen:{userId}:{childrenIds}:{promptKey/title}` et `audio_gen:{storyId}:{voiceId}`.
+  - Verrou en mémoire avec TTL (15-20s) et absorption des micro-rebonds (2s grace period).
+  - Si une requête identique est déclenchée pendant qu'une génération est en cours (ex: double-clic ou retry prématuré), la promesse en vol est partagée sans déclencher de second appel backend.
+- **Intégrations Protégées** :
+  - `useN8nStoryFromTitle.tsx` (Création guidée par titre).
+  - `useN8nFastStory.ts` (Création rapide par thème).
+  - `useN8nAudioGeneration.ts` (Synthèse audio / clonage vocal).
 
 ---
 
 **Dernière mise à jour** : 2026-08-26  
-**Version** : 3.8 (Robustesse P1, P2 & P3 : Mode Hors-Ligne Dexie, Auto-Cache Bibliothèque & File d'Attente Avis)  
+**Version** : 3.9 (Robustesse P1, P2, P3 & P4 : Idempotence & Mutex Quotas, Dexie Offline, Runtime Zod & Self-Healing)  
 **Statut** : Production ready
+
 
 
 

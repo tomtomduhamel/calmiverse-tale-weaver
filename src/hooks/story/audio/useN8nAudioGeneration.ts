@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { idempotencyGuard } from '@/utils/idempotency/idempotencyGuard';
 
 interface AudioFile {
   id: string;
@@ -161,16 +162,19 @@ export const useN8nAudioGeneration = () => {
       return null;
     }
 
-    // Nettoyer et récupérer les fichiers d'abord
-    await cleanupStuckFiles(storyId);
-    await recoverErrorFiles(storyId);
+    const audioLockKey = idempotencyGuard.generateAudioKey(storyId, voiceId);
 
-    setIsGenerating(true);
-    const requestId = crypto.randomUUID();
-    let timeoutId: NodeJS.Timeout;
-    let checkInterval: NodeJS.Timeout;
+    return idempotencyGuard.runWithLock(audioLockKey, async () => {
+      // Nettoyer et récupérer les fichiers d'abord
+      await cleanupStuckFiles(storyId);
+      await recoverErrorFiles(storyId);
 
-    try {
+      setIsGenerating(true);
+      const requestId = crypto.randomUUID();
+      let timeoutId: NodeJS.Timeout;
+      let checkInterval: NodeJS.Timeout;
+
+      try {
       // Récupérer la configuration TTS dynamique (ElevenLabs ou Speechify)
       const { data: ttsConfig, error: configError } = await supabase.functions.invoke('get-tts-config');
       
@@ -425,8 +429,9 @@ export const useN8nAudioGeneration = () => {
         description: error?.message || "Impossible de générer l'audio",
         variant: "destructive"
       });
-      return null;
-    }
+        return null;
+      }
+    }, 20000);
   }, [cleanupStuckFiles, recoverErrorFiles, fetchAudioFiles, toast]);
 
   // Souscrire aux changements Realtime et aux événements de visibilité/focus du navigateur
