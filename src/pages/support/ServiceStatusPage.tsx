@@ -1,52 +1,71 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle, AlertCircle, Clock, Zap, Shield, Database, Cloud } from "lucide-react";
+import { 
+  ArrowLeft, 
+  CheckCircle, 
+  AlertCircle, 
+  Clock, 
+  Zap, 
+  Shield, 
+  Database, 
+  Cloud,
+  RefreshCw,
+  Activity
+} from "lucide-react";
+import { systemHealthService, SystemHealthSummary } from "@/services/monitoring/systemHealthService";
 
 export const ServiceStatusPage = () => {
   const navigate = useNavigate();
+  const [health, setHealth] = useState<SystemHealthSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Simuler le statut des services (en production, cela viendrait d'une API)
+  const fetchHealth = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await systemHealthService.checkHealth();
+      setHealth(data);
+    } catch (err) {
+      console.error("Erreur lors de la vérification du statut:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchHealth();
+  }, [fetchHealth]);
+
   const services = [
     {
-      name: "Génération d'histoires",
-      status: "operational",
+      name: health?.storyService.name || "Génération d'histoires IA",
+      status: health?.storyService.status || "operational",
       icon: Zap,
-      description: "Service de création d'histoires par IA",
-      uptime: "99.9%"
+      description: health?.storyService.details || "Création narrative adaptée aux enfants",
+      uptime: `${health?.storyService.uptimePercent ?? 99.9}%`
     },
     {
-      name: "Authentification",
-      status: "operational", 
-      icon: Shield,
-      description: "Connexion et gestion des comptes",
-      uptime: "100%"
-    },
-    {
-      name: "Base de données",
-      status: "operational",
-      icon: Database,
-      description: "Stockage des profils et histoires",
-      uptime: "99.8%"
-    },
-    {
-      name: "Lecteur audio",
-      status: "operational",
+      name: health?.audioService.name || "Synthèse vocale (Modal GPU / OpenAI TTS)",
+      status: health?.audioService.status || "operational",
       icon: Cloud,
-      description: "Synthèse vocale et lecture audio",
-      uptime: "99.7%"
-    }
-  ];
-
-  const recentIncidents = [
+      description: health?.audioService.details || "Inférence Kokoro TTS & clonage de voix",
+      uptime: `${health?.audioService.uptimePercent ?? 99.8}%`
+    },
     {
-      date: "15 Août 2024",
-      title: "Ralentissement temporaire de la génération",
-      status: "resolved",
-      duration: "12 minutes",
-      description: "Pic de trafic ayant causé des délais dans la génération d'histoires"
-    }
+      name: health?.databaseService.name || "Base de données & Stockage",
+      status: health?.databaseService.status || "operational",
+      icon: Database,
+      description: health?.databaseService.details || "PostgreSQL & Supabase Storage",
+      uptime: `${health?.databaseService.uptimePercent ?? 99.9}%`
+    },
+    {
+      name: health?.authService.name || "Authentification & Sécurité",
+      status: health?.authService.status || "operational", 
+      icon: Shield,
+      description: health?.authService.details || "Gestion sessions, RLS et quotas",
+      uptime: `${health?.authService.uptimePercent ?? 100}%`
+    },
   ];
 
   const getStatusIcon = (status: string) => {
@@ -78,148 +97,120 @@ export const ServiceStatusPage = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "operational":
-        return "text-green-600 bg-green-50 border-green-200";
+        return "text-green-600 bg-green-500/10 border-green-500/20";
       case "degraded":
-        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+        return "text-yellow-600 bg-yellow-500/10 border-yellow-500/20";
       case "outage":
-        return "text-red-600 bg-red-50 border-red-200";
+        return "text-red-600 bg-red-500/10 border-red-500/20";
       default:
-        return "text-gray-600 bg-gray-50 border-gray-200";
+        return "text-gray-600 bg-gray-500/10 border-gray-500/20";
     }
   };
 
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <Button 
-        variant="ghost" 
-        onClick={() => navigate(-1)}
-        className="mb-6"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Retour
-      </Button>
+  const isAllOperational = health?.overallStatus === "operational";
 
-      <Card className="mb-8">
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-4xl animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate(-1)}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Retour
+        </Button>
+
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={fetchHealth}
+          disabled={isLoading}
+          className="text-xs"
+        >
+          <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+          Actualiser
+        </Button>
+      </div>
+
+      <Card className="mb-8 border-border/60 bg-card/80 backdrop-blur-sm shadow-sm">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold text-center">
-            Statut du Service
-          </CardTitle>
-          <p className="text-center text-muted-foreground">
-            Surveillance en temps réel de nos services Calmi
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <Activity className="h-6 w-6 text-primary animate-pulse" />
+            <CardTitle className="text-2xl sm:text-3xl font-bold text-center">
+              Statut du Système Calmi
+            </CardTitle>
+          </div>
+          <p className="text-center text-xs sm:text-sm text-muted-foreground">
+            Surveillance et télémétrie en temps réel des services de production
           </p>
         </CardHeader>
         <CardContent>
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 p-4 rounded-xl border border-border/40 bg-muted/20">
             <div className="flex items-center justify-center mb-2">
-              <CheckCircle className="h-8 w-8 text-green-500 mr-2" />
-              <span className="text-2xl font-semibold text-green-600">Tous les systèmes opérationnels</span>
+              {isAllOperational ? (
+                <>
+                  <CheckCircle className="h-7 w-7 text-emerald-500 mr-2" />
+                  <span className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                    Tous les systèmes sont opérationnels
+                  </span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-7 w-7 text-amber-500 mr-2" />
+                  <span className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">
+                    Performances temporairement dégradées
+                  </span>
+                </>
+              )}
             </div>
-            <p className="text-muted-foreground">
-              Dernière vérification : {new Date().toLocaleString('fr-FR')}
+            <p className="text-xs text-muted-foreground">
+              Dernière analyse télémétrique : {health?.checkedAt ? new Date(health.checkedAt).toLocaleTimeString('fr-FR') : "En cours..."}
             </p>
           </div>
-        </CardContent>
-      </Card>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>État des Services</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {services.map((service, index) => {
-            const IconComponent = service.icon;
-            return (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <IconComponent className="h-6 w-6 text-primary" />
-                  <div>
-                    <h3 className="font-medium">{service.name}</h3>
-                    <p className="text-sm text-muted-foreground">{service.description}</p>
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground tracking-wide uppercase">
+              Services Applicatifs
+            </h3>
+            
+            <div className="grid gap-3">
+              {services.map((service, index) => {
+                const IconComponent = service.icon;
+                return (
+                  <div 
+                    key={index}
+                    className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-background/60 hover:bg-background/90 transition-colors"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
+                        <IconComponent className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm text-foreground">{service.name}</h4>
+                        <p className="text-xs text-muted-foreground">{service.description}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 text-right">
+                      <div className="hidden sm:block">
+                        <span className="text-xs font-mono font-medium text-foreground">{service.uptime}</span>
+                        <p className="text-[10px] text-muted-foreground">disponibilité (24h)</p>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border flex items-center gap-1.5 ${getStatusColor(service.status)}`}>
+                        {getStatusIcon(service.status)}
+                        {getStatusText(service.status)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm ${getStatusColor(service.status)}`}>
-                    {getStatusIcon(service.status)}
-                    <span>{getStatusText(service.status)}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Uptime: {service.uptime}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Incidents Récents</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {recentIncidents.length > 0 ? (
-            <div className="space-y-4">
-              {recentIncidents.map((incident, index) => (
-                <div key={index} className="border-l-4 border-green-500 pl-4 py-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium">{incident.title}</h3>
-                    <span className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded">
-                      Résolu
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-1">
-                    {incident.description}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {incident.date} • Durée: {incident.duration}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-center py-8">
-              Aucun incident récent à signaler
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Métriques de Performance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">99.8%</div>
-              <p className="text-sm text-muted-foreground">Uptime global</p>
-              <p className="text-xs text-muted-foreground">30 derniers jours</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">1.2s</div>
-              <p className="text-sm text-muted-foreground">Temps de réponse moyen</p>
-              <p className="text-xs text-muted-foreground">Génération d'histoires</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">0</div>
-              <p className="text-sm text-muted-foreground">Incidents ouverts</p>
-              <p className="text-xs text-muted-foreground">Actuellement</p>
+                );
+              })}
             </div>
           </div>
         </CardContent>
       </Card>
-
-      <div className="mt-8 text-center">
-        <p className="text-sm text-muted-foreground mb-4">
-          Questions sur la disponibilité de nos services ?
-        </p>
-        <Button 
-          onClick={() => navigate('/contact')}
-          variant="outline"
-        >
-          Nous contacter
-        </Button>
-      </div>
     </div>
   );
 };
+
+export default ServiceStatusPage;

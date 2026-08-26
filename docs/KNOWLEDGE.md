@@ -729,13 +729,20 @@ Le système d'amélioration continue relie les retours réels des utilisateurs e
 - **Intégrations Protégées** :
   - `useN8nStoryFromTitle.tsx` (Création guidée par titre).
   - `useN8nFastStory.ts` (Création rapide par thème).
-  - `useN8nAudioGeneration.ts` (Synthèse audio / clonage vocal).
+### 16.5 Observabilité & Télémétrie de Santé en Temps Réel (Priorité 5)
+- **Service de Télémétrie (`src/services/monitoring/systemHealthService.ts`)** :
+  - Analyse dynamique sur 24 heures glissantes des taux de succès et de panne des générateurs d'histoires (`stories`), des synthèses vocales (`audio_files`), de la connectivité et de la latence base de données/authentification.
+  - Détection proactive des dégradations de service dès que le taux d'échec dépasse 5%.
+- **Tableau de Bord Live (`src/pages/support/ServiceStatusPage.tsx`)** :
+  - Affichage en temps réel de l'état opérationnel et du pourcentage de disponibilité par service.
+  - Bouton d'actualisation instantanée sans rechargement de page.
 
 ---
 
 **Dernière mise à jour** : 2026-08-26  
-**Version** : 3.9 (Robustesse P1, P2, P3 & P4 : Idempotence & Mutex Quotas, Dexie Offline, Runtime Zod & Self-Healing)  
+**Version** : 4.0 (Robustesse Complète P1 à P5 : Télémétrie Live, Idempotence Quotas, Mode Hors-Ligne Dexie, Zod Runtime & Self-Healing)  
 **Statut** : Production ready
+
 
 
 
