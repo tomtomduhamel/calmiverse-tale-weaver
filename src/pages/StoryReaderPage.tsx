@@ -18,6 +18,7 @@ import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatStoryFromSupabase } from "@/hooks/stories/storyFormatters";
 import { usePWA } from "@/hooks/usePWA";
+import { offlineStorageService } from "@/services/offline/offlineStorageService";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -112,7 +113,27 @@ const StoryReaderPage: React.FC = () => {
           .maybeSingle();
 
         if (fetchError) {
-          console.error("[StoryReaderPage] Erreur fetch direct:", fetchError);
+          console.warn("[StoryReaderPage] Erreur fetch Supabase, tentative lecture hors-ligne IndexedDB:", fetchError);
+          
+          const offlineStory = await offlineStorageService.getOfflineStory(id);
+          if (offlineStory) {
+            console.log("📴 [StoryReaderPage] Histoire chargée depuis le cache IndexedDB hors-ligne:", id);
+            const formatted: Story = {
+              id: offlineStory.id,
+              title: offlineStory.title,
+              content: offlineStory.content,
+              preview: offlineStory.preview,
+              childrenIds: offlineStory.childrenids || [],
+              createdAt: new Date(offlineStory.createdat),
+              status: offlineStory.status as any,
+              objective: offlineStory.objective || 'sleep',
+            };
+            setCurrentStory(formatted);
+            setError(null);
+            setIsLoading(false);
+            return;
+          }
+
           if (attempts + 1 < MAX_RETRIES) {
             // Planifier un retry via retryTick (déclenche le useEffect)
             setTimeout(() => setRetryTick(t => t + 1), RETRY_DELAY_MS);

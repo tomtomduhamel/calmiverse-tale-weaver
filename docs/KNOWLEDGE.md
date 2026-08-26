@@ -714,14 +714,22 @@ Le système d'amélioration continue relie les retours réels des utilisateurs e
 - **Schémas de Validation Zod (`src/utils/schemas/runtimeSchemas.ts`)** :
   - Validation et assainissement avec valeurs par défaut de toutes les structures JSON complexes (`story_critiques`, `detailed_scores`, `calmi_pitfalls`, `ttsConfig`).
   - Prévient tout plantage en cas de structure JSON incomplète retournée par un modèle IA ou un webhook n8n.
-- **Composant `SafeErrorBoundary.tsx`** :
-  - Error Boundary granulaire encapsulant les zones critiques (Feeds d'histoires, Modales d'analyse de qualité, Lecteur) pour empêcher tout écran blanc global sur la SPA en cas d'erreur de rendu locale.
+### 16.3 Mode Hors-Ligne & Cache Dexie pour le Coucher (Priorité 3)
+- **Base IndexedDB Dexie (`calmi_bedtime_offline_db`)** via `offlineStorageService.ts` :
+  - `stories` : Stockage local automatique de la bibliothèque d'histoires dès l'affichage du flux `LibraryFeed.tsx`.
+  - `audioCache` : Mise en cache locale des fichiers audio Blob pour une écoute fluide hors-ligne.
+  - `pendingRatings` : File d'attente locale pour enregistrer les notes et commentaires des parents même sans connexion réseau (ou en mode avion lors du coucher).
+- **Synchronisation Automatique (`useOfflineBedtimeSync.ts`)** :
+  - Détecte le passage en ligne/hors-ligne et vide automatiquement la file d'attente des notes vers Supabase dès le retour d'Internet.
+- **Résilience du Lecteur (`StoryReaderPage.tsx`)** :
+  - Si un parent ouvre une histoire sans réseau, le lecteur bascule instantanément et silencieusement sur la version locale IndexedDB.
 
 ---
 
 **Dernière mise à jour** : 2026-08-26  
-**Version** : 3.7 (Robustesse P1 & P2 : Écoute Hybride, Self-Healing Pending, Blindage Runtime Zod & SafeErrorBoundary)  
+**Version** : 3.8 (Robustesse P1, P2 & P3 : Mode Hors-Ligne Dexie, Auto-Cache Bibliothèque & File d'Attente Avis)  
 **Statut** : Production ready
+
 
 
 

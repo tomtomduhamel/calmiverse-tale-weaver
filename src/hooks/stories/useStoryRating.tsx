@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { offlineStorageService } from '@/services/offline/offlineStorageService';
 
 interface UseStoryRatingReturn {
     submitRating: (storyId: string, rating: number, comment?: string) => Promise<boolean>;
@@ -16,8 +17,16 @@ export const useStoryRating = (): UseStoryRatingReturn => {
         try {
             console.log(`[useStoryRating] Soumission de la note pour l'histoire ${storyId}: ${rating} étoiles`, comment ? `Commentaire: ${comment}` : 'Sans commentaire');
 
-            // Préparation de l'objet de mise à jour
-            // Préparation de l'objet de mise à jour
+            // Si l'appareil est hors-ligne, enfiler la note directement
+            if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                await offlineStorageService.queueOfflineRating(storyId, 'offline-user', rating, comment);
+                toast({
+                    title: "Avis enregistré hors-ligne",
+                    description: "Votre note a été sauvegardée et sera synchronisée dès le retour de la connexion.",
+                });
+                return true;
+            }
+
             const updates = {
                 rating: rating,
                 rating_comment: comment || null,
@@ -30,8 +39,13 @@ export const useStoryRating = (): UseStoryRatingReturn => {
                 .eq('id', storyId);
 
             if (error) {
-                console.error('[useStoryRating] Erreur Supabase:', error);
-                throw error;
+                console.warn('[useStoryRating] Échec envoi direct, mise en file d\'attente locale:', error);
+                await offlineStorageService.queueOfflineRating(storyId, 'offline-user', rating, comment);
+                toast({
+                    title: "Avis sauvegardé en local",
+                    description: "Votre note sera synchronisée automatiquement sous peu.",
+                });
+                return true;
             }
 
             toast({
@@ -42,12 +56,22 @@ export const useStoryRating = (): UseStoryRatingReturn => {
             return true;
         } catch (error: any) {
             console.error('[useStoryRating] Erreur lors de la soumission de la note:', error);
-            toast({
-                title: "Erreur",
-                description: `Impossible d'enregistrer votre note: ${error.message || "Erreur inconnue"}`,
-                variant: "destructive"
-            });
-            return false;
+            // Fallback en file d'attente
+            try {
+                await offlineStorageService.queueOfflineRating(storyId, 'offline-user', rating, comment);
+                toast({
+                    title: "Avis mis en attente",
+                    description: "Votre note sera transmise dès que possible.",
+                });
+                return true;
+            } catch {
+                toast({
+                    title: "Erreur",
+                    description: `Impossible d'enregistrer votre note: ${error.message || "Erreur inconnue"}`,
+                    variant: "destructive"
+                });
+                return false;
+            }
         } finally {
             setIsSubmitting(false);
         }

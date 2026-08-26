@@ -17,6 +17,7 @@ import { FeedContainer, PillFilters, FocusSidebar } from "./feed";
 import { StoriesInProgressSection } from "./sections/StoriesInProgressSection";
 import { SeriesStoriesModal } from "./series/SeriesStoriesModal";
 import { SafeErrorBoundary } from "@/components/ui/SafeErrorBoundary";
+import { offlineStorageService } from "@/services/offline/offlineStorageService";
 import type { Story } from "@/types/story";
 
 interface LibraryFeedProps {
@@ -65,6 +66,13 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
     objectiveFilter: selectedObjective,
     searchTerm: debouncedSearchTerm || undefined,
   });
+
+  // Sauvegarde automatique des histoires dans la base IndexedDB pour le mode hors-ligne
+  useEffect(() => {
+    if (stories && stories.length > 0) {
+      void offlineStorageService.cacheStories(stories);
+    }
+  }, [stories]);
 
   // Listen for library refresh event (from pull-to-refresh)
   useEffect(() => {
