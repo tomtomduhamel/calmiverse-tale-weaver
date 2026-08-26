@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StoryCritique } from "@/types/critique";
+import { SafeErrorBoundary } from "@/components/ui/SafeErrorBoundary";
 import { 
   Sparkles, 
   CheckCircle2, 
@@ -92,26 +93,28 @@ export const CritiqueDetailModal: React.FC<CritiqueDetailModalProps> = ({
           </Button>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 p-6 space-y-6">
-          {/* Note Globale & Verdict Banner */}
-          <div className="rounded-xl p-5 bg-gradient-to-br from-primary/10 via-background to-secondary/20 border border-primary/20 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Verdict du Critique Littéraire
-                </span>
-                <p className="text-base font-medium italic mt-1 text-foreground">
-                  « {critique.verdict} »
-                </p>
-              </div>
-              <div className="text-right pl-4">
-                <div className={`text-4xl font-extrabold tracking-tight ${getScoreColor(score)}`}>
-                  {score.toFixed(1)}
-                  <span className="text-sm font-normal text-muted-foreground">/10</span>
+        <ScrollArea className="flex-1 p-6 overflow-y-auto">
+          <SafeErrorBoundary fallbackTitle="Une section du rapport d'évaluation est temporairement indisponible.">
+            <div className="space-y-6">
+              {/* Note Globale & Verdict Banner */}
+              <div className="rounded-xl p-5 bg-gradient-to-br from-primary/10 via-background to-secondary/20 border border-primary/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Verdict du Critique Littéraire
+                    </span>
+                    <p className="text-base font-medium italic mt-1 text-foreground">
+                      « {critique.verdict} »
+                    </p>
+                  </div>
+                  <div className="text-right pl-4">
+                    <div className={`text-4xl font-extrabold tracking-tight ${getScoreColor(score)}`}>
+                      {score.toFixed(1)}
+                      <span className="text-sm font-normal text-muted-foreground">/10</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
           {/* Grille des 6 critères */}
           <div className="space-y-3">
@@ -321,7 +324,7 @@ export const CritiqueDetailModal: React.FC<CritiqueDetailModalProps> = ({
                 </strong>
               </div>
             </div>
-          </div>
+          </SafeErrorBoundary>
         </ScrollArea>
       </DialogContent>
     </Dialog>

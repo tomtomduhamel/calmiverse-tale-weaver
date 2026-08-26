@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { FeedContainer, PillFilters, FocusSidebar } from "./feed";
 import { StoriesInProgressSection } from "./sections/StoriesInProgressSection";
 import { SeriesStoriesModal } from "./series/SeriesStoriesModal";
+import { SafeErrorBoundary } from "@/components/ui/SafeErrorBoundary";
 import type { Story } from "@/types/story";
 
 interface LibraryFeedProps {
@@ -179,17 +180,19 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
 
           {/* Feed */}
           <div className="mt-4">
-            <FeedContainer
-              stories={displayedStories}
-              isLoading={isLoading}
-              isLoadingMore={isLoadingMore}
-              hasMore={hasMore}
-              onLoadMore={fetchNextPage}
-              onToggleFavorite={toggleFavorite}
-              onShare={onShare}
-              onCreateSequel={handleCreateSequel}
-              onSeriesClick={handleSeriesClick}
-            />
+            <SafeErrorBoundary fallbackTitle="Une erreur est survenue lors du chargement des histoires.">
+              <FeedContainer
+                stories={displayedStories}
+                isLoading={isLoading}
+                isLoadingMore={isLoadingMore}
+                hasMore={hasMore}
+                onLoadMore={fetchNextPage}
+                onToggleFavorite={toggleFavorite}
+                onShare={onShare}
+                onCreateSequel={handleCreateSequel}
+                onSeriesClick={handleSeriesClick}
+              />
+            </SafeErrorBoundary>
           </div>
         </div>
 

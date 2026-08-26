@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { StoryCritique, QualityKPIs, DetailedScores, SeverityLevel } from "@/types/critique";
+import { sanitizeStoryCritique } from "@/utils/schemas/runtimeSchemas";
 
 const N8N_CRITIQUE_WEBHOOK = "https://n8n.srv856374.hstgr.cloud/webhook/critique-histoire";
 
@@ -129,7 +130,7 @@ export const storyCritiqueService = {
       return [];
     }
 
-    let results = (data || []) as unknown as StoryCritique[];
+    let results = ((data || []) as unknown as any[]).map(sanitizeStoryCritique);
 
     if (filters?.search && filters.search.trim()) {
       const s = filters.search.toLowerCase();

@@ -700,9 +700,29 @@ Le système d'amélioration continue relie les retours réels des utilisateurs e
 
 ---
 
-**Dernière mise à jour** : 2026-08-25  
-**Version** : 3.6 (Boucle d'Auto-Amélioration Continue n8n gpt-5.6-terra, Refonte UX/UI Mobile Calme & PWA)  
+## 16. Robustesse & Résilience Applicative
+
+### 16.1 Reprise Résiliente des Webhooks & Self-Healing (Priorité 1)
+- **Écoute Hybride Temps Réel** : `useRealtimeStoryMonitor.tsx` combine désormais le canal WebSocket Supabase Realtime et un polling de secours actif (toutes les 4 secondes) pour pallier les micro-coupures réseau et la mise en veille des téléphones.
+- **Reprise au Premier Plan** : Détection via `visibilitychange` et `window.focus` pour interroger immédiatement la BDD dès que le parent réaffiche l'application.
+- **Hook de Self-Healing Silencieux (`usePendingStoriesRecovery.ts`)** :
+  - Intégré dans `Library.tsx` et `Dashboard.tsx`.
+  - Si une histoire a son texte généré mais que le statut est resté à `'pending'`, elle est réparée automatiquement en `'completed'`.
+  - Si une histoire dépasse 10 minutes sans contenu, elle bascule en `'error'` propre pour permettre une relance en 1 clic.
+
+### 16.2 Blindage Runtime Zod & Error Boundaries Granulaires (Priorité 2)
+- **Schémas de Validation Zod (`src/utils/schemas/runtimeSchemas.ts`)** :
+  - Validation et assainissement avec valeurs par défaut de toutes les structures JSON complexes (`story_critiques`, `detailed_scores`, `calmi_pitfalls`, `ttsConfig`).
+  - Prévient tout plantage en cas de structure JSON incomplète retournée par un modèle IA ou un webhook n8n.
+- **Composant `SafeErrorBoundary.tsx`** :
+  - Error Boundary granulaire encapsulant les zones critiques (Feeds d'histoires, Modales d'analyse de qualité, Lecteur) pour empêcher tout écran blanc global sur la SPA en cas d'erreur de rendu locale.
+
+---
+
+**Dernière mise à jour** : 2026-08-26  
+**Version** : 3.7 (Robustesse P1 & P2 : Écoute Hybride, Self-Healing Pending, Blindage Runtime Zod & SafeErrorBoundary)  
 **Statut** : Production ready
+
 
 
 
