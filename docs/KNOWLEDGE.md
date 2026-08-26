@@ -2,7 +2,7 @@
 # Base de Connaissances Technique Complète - Calmiverse
 
 ## 1. Vue d'ensemble du projet
-Calmiverse est une Progressive Web App (PWA) de génération d'histoires personnalisées pour enfants utilisant l'intelligence artificielle. L'application permet aux parents de créer des profils détaillés pour leurs enfants, puis de générer des histoires adaptées avec objectifs pédagogiques, génération audio (ElevenLabs), et système d'abonnements premium.
+Calmiverse est une Progressive Web App (PWA) de génération d'histoires personnalisées pour enfants utilisant l'intelligence artificielle. L'application permet aux parents de créer des profils détaillés pour leurs enfants, puis de générer des histoires adaptées avec objectifs pédagogiques, génération audio multi-voix (Modal GPU / VPS n8n + secours OpenAI TTS), et système d'abonnements premium.
 
 ## 2. Personas utilisateurs
 - **Parents modernes (30-45 ans)** : Cherchent des contenus éducatifs et personnalisés pour leurs enfants.
@@ -37,7 +37,8 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 ### Studio Vocal Familial & Clonage de Voix 🎙️
 - Route `/app/voices` accessible à tous les abonnés ayant des quotas de clonage (`max_voice_clones > 0` : Calmidium, Calmix, Calmixxl)
 - Enregistrement direct in-app ou invitation à distance pour les proches (Maman, Papa, Grands-parents)
-- Découpage multi-voix et attribution intelligente des personnages (narrateur, maman, papa, animaux, créatures)
+- Stockage des extraits dans le bucket Supabase `voice-clones`
+- Découpage multi-voix et attribution intelligente des personnages (narrateur, maman, papa, animaux, créatures) via Modal GPU
 
 ### Bibliothèque d'histoires
 - Filtrage avancé : enfants, objectifs, favoris, statuts
@@ -48,7 +49,7 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 
 ### Lecteur d'histoires (StoryReader + ReaderControls)
 - **Interface immersive** avec mode plein écran
-- **Audio ElevenLabs** intégré avec contrôles (génération via N8nAudioPlayer)
+- **Audio TTS & Voice Cloning** intégré avec contrôles (génération via N8nAudioPlayer / Modal GPU / secours OpenAI TTS)
 - **Musique de fond** par objectif (optionnel, désactivable)
 - **Temps de lecture dynamique** : calculé avec la vitesse personnalisée du parent (`ReadingSpeedContext`)
 - **Auto-scroll intelligent** avec détection vitesse de lecture (120 mots/min par défaut)
@@ -107,13 +108,13 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 
 ### Backend & Services
 - **BaaS** : Supabase (Auth, Database PostgreSQL, Storage, Edge Functions, Realtime)
-- **AI** : Lovable AI (GPT-4o-mini) via gateway
-- **TTS** : ElevenLabs Text-to-Speech + @11labs/react
-- **Automation** : n8n webhooks pour workflows audio
-- **Storage** : 6 buckets Supabase (audio, EPUB, images, teddy photos, sounds)
+- **AI** : Lovable AI (GPT-4o-mini) via gateway & gpt-5.6-terra pour l'optimisation
+- **TTS & Voice Cloning** : Modal GPU (Kokoro TTS + Voice Cloning) / VPS Hostinger n8n + secours OpenAI TTS (`generate-openai-tts`)
+- **Automation** : n8n webhooks pour workflows d'histoires, critiques et optimisations
+- **Storage** : Buckets Supabase (audio-files, voice-clones, epub-files, storyimages, storyvideos, story_sounds, teddy-photos)
 
 ### PWA & Performance
-- **PWA** : vite-plugin-pwa 1.0.3 avec Workbox
+- **PWA** : vite-plugin-pwa avec Workbox
 - **Service Worker** : Cache stratégique par ressource
 - **Offline** : Support offline avec fallback pages
 - **Gestures** : PWAGestures custom pour swipe/scroll mobile
@@ -124,7 +125,7 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - **Rate Limiting** : Système avancé par user/IP/endpoint
 - **Audit** : security_audit_logs pour actions sensibles
 - **Validation** : Zod schemas côté client et serveur
-- **Secrets** : Stockage sécurisé Supabase (8 secrets)
+- **Secrets** : Stockage sécurisé Supabase
 
 ## 5. API et Intégrations
 
@@ -135,7 +136,7 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - **Fichiers** : `/supabase/functions/_shared/ai-operations.ts`
 - **Config** : temperature: 0.7, max_tokens: 3500
 
-### Supabase Edge Functions (13 fonctions)
+### Supabase Edge Functions
 **Génération histoires :**
 - `generateStory` - Création histoire complète
 - `regenerateStory` - Régénération avec settings custom
@@ -143,8 +144,8 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - `create-story-sequel` - Suite histoire série
 
 **Audio/TTS :**
-- `tts-elevenlabs` - Génération audio ElevenLabs
-- `get-tts-config` - Configuration dynamique provider TTS (ElevenLabs/Speechify)
+- `get-tts-config` - Configuration dynamique provider TTS (Modal GPU / VPS Hostinger)
+- `generate-openai-tts` - Fallback de secours ultra-rapide si Modal/n8n est indisponible
 - `n8n-audio-callback` - Callback audio n8n
 - `upload-audio-from-n8n` - Upload audio depuis n8n
 
@@ -159,22 +160,14 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - `delete-user` - Suppression compte
 - `upload-epub` - Export EPUB histoires
 
-### Système TTS Multi-Provider (ElevenLabs / Speechify)
-- **Providers supportés** : ElevenLabs (défaut) et Speechify
-- **Switch dynamique** : Via secret Supabase `TTS_PROVIDER` ('elevenlabs' ou 'speechify')
-- **Edge Function** : `get-tts-config` retourne configuration active (webhookUrl, provider, voiceId)
-- **Voice ID** : '9BWtsMINqrJLrRacOk9x' (défaut ElevenLabs)
-- **React Hook** : @11labs/react pour conversations AI
-- **Workflow** : Génération asynchrone via n8n webhooks (URL dynamique selon provider)
-- **Stockage** : Bucket Supabase `audio-files`
-- **Hook frontend** : `useN8nAudioGeneration` avec appel automatique `get-tts-config`
-
-#### Configuration Provider
-1. **Secret `TTS_PROVIDER`** : Définir 'elevenlabs' ou 'speechify' dans Supabase Dashboard
-2. **Secret `N8N_ELEVENLABS_WEBHOOK_URL`** : URL webhook n8n pour ElevenLabs
-3. **Secret `N8N_SPEECHIFY_WEBHOOK_URL`** : URL webhook n8n pour Speechify
-4. **Sélection automatique** : L'Edge Function `get-tts-config` lit `TTS_PROVIDER` et retourne la bonne config
-5. **Fallback** : Si `TTS_PROVIDER` non défini, utilise ElevenLabs par défaut
+### Système TTS & Clonage Vocal Multi-Voix (Modal GPU + OpenAI TTS Fallback)
+- **Provider Principal** : **Modal GPU** (`modal-gpu`) pour la synthèse vocale avancée et le clonage de voix familial
+- **Secours Automatique** : **OpenAI TTS** (`generate-openai-tts`) en cas d'indisponibilité ou timeout de Modal GPU
+- **Edge Function** : `get-tts-config` retourne la configuration active (`modalWebhookUrl`, `webhookUrl`, `provider`, `voiceId`)
+- **Voice Clones** : Fichiers audios familiaux stockés dans le bucket Supabase `voice-clones`, transmis via URLs signées à Modal GPU
+- **Workflow Asynchrone** : Traitement avec écoute Realtime Supabase sur la table `audio_files`
+- **Stockage Audio Final** : Bucket Supabase `audio-files`
+- **Hook Frontend** : `useN8nAudioGeneration` avec bascule automatique de secours
 
 ### Chatbot Interactif n8n (Création Guidée)
 - **Webhook** : `https://n8n.srv856374.hstgr.cloud/webhook/[id]`
@@ -249,7 +242,7 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 - `has_story_series`, `has_background_music`, `has_priority_access`, `has_community_access`
 - `monthly_price_usd`, `annual_price_usd`
 
-**audio_files** - Audio ElevenLabs
+**audio_files** - Fichiers audio générés (Modal GPU / OpenAI TTS)
 - `id` (uuid, PK), `story_id` (FK stories.id)
 - `text_content`, `audio_url`, `status`
 - `voice_id`, `webhook_id`, `file_size`, `duration`
@@ -316,8 +309,8 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 ### Prérequis
 - Node.js 20+, npm 9+
 - Compte Supabase (BaaS)
-- Clé Lovable AI
-- Clé ElevenLabs (TTS)
+- Clé Lovable AI / OpenAI
+- Instance Modal GPU / n8n VPS
 
 ### Variables d'environnement
 ```bash
@@ -330,15 +323,13 @@ VITE_EMAIL_WEBHOOK_URL=[n8n webhook email]
 VITE_KINDLE_WEBHOOK_URL=[n8n webhook kindle]
 ```
 
-### Secrets Supabase (11 secrets)
+### Secrets Supabase
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 - `LOVABLE_API_KEY` - Clé Lovable AI
-- `ELEVENLABS_API_KEY` - Text-to-Speech ElevenLabs
+- `OPENAI_API_KEY` - Clé OpenAI (TTS secours et gpt-5.6-terra)
+- `MODAL_TTS_WEBHOOK_URL` - Webhook Modal GPU pour la synthèse Kokoro et Voice Cloning
+- `TTS_PROVIDER` - Provider TTS actif ('modal-gpu', 'vps-hostinger', 'speechify')
 - `N8N_SEQUEL_WEBHOOK_URL` - Webhooks n8n séries
-- `TTS_PROVIDER` - Provider TTS actif ('elevenlabs' ou 'speechify')
-- `N8N_ELEVENLABS_WEBHOOK_URL` - Webhook n8n ElevenLabs
-- `N8N_SPEECHIFY_WEBHOOK_URL` - Webhook n8n Speechify
-- `OPENAI_API_KEY` - Legacy (non utilisé, garder pour compatibilité)
 
 ### Développement local
 ```bash
@@ -371,7 +362,7 @@ src/
 └── utils/             # Helpers, config, constants
 
 supabase/
-├── functions/         # 13 Edge Functions Deno
+├── functions/         # Edge Functions Deno
 │   └── _shared/       # ai-operations, clients, database-ops
 └── migrations/        # Migrations SQL (RLS, triggers, functions)
 
@@ -425,14 +416,14 @@ docs/
 - **Utilisation** : Auto-scroll, estimations temps lecture, ReadingSpeedSelector
 - **Provider** : Wrappé dans `<ReadingSpeedProvider>` au niveau racine
 
-### Génération Audio Multi-Provider (ElevenLabs / Speechify)
-- **Providers** : ElevenLabs (défaut) et Speechify
+### Génération Audio & Studio Vocal Familial (Modal GPU / OpenAI TTS Fallback)
+- **Providers** : Modal GPU (défaut haute qualité / clonage) et Secours OpenAI TTS
 - **Switch** : Via secret `TTS_PROVIDER` dans Supabase Dashboard
-- **Voice** : ID '9BWtsMINqrJLrRacOk9x' (ElevenLabs par défaut)
-- **Workflow** : Asynchrone via n8n webhooks (URL dynamique selon provider)
+- **Voice** : ID '9BWtsMINqrJLrRacOk9x' (voix par défaut) ou ID personnalisé `user_voices`
+- **Workflow** : Asynchrone via Modal GPU / n8n avec bascule automatique de secours
 - **Edge Function** : `get-tts-config` retourne configuration active
 - **Status** : pending → completed/error
-- **Stockage** : Bucket Supabase `audio-files`
+- **Stockage** : Bucket Supabase `audio-files` (audio final) et `voice-clones` (échantillons)
 - **Player / Pupitre Audio (`IntegratedAudioDeck.tsx`)** : Implémente une architecture responsive Mobile-First (`max-h-[85vh]`, `flex flex-col` avec zone de contenu `overflow-y-auto` et panneau de contrôle fixe en bas) pour garantir zéro troncature de boutons sur tous types d'écrans (mobile et desktop).
 - **Hook** : `useN8nAudioGeneration` appelle automatiquement `get-tts-config`
 - **Métriques** : Temps de génération, taille fichier, taux de succès automatiquement trackés
@@ -575,7 +566,7 @@ docs/
 - Direction détectée via `detectedDirection` ref
 
 **Audio ne se génère pas**
-- Vérifier quota ElevenLabs restant
+- Vérifier logs Modal GPU et Edge Function generate-openai-tts
 - Logs n8n webhook callback
 - Status `audio_files` table (pending/completed/error)
 
@@ -635,7 +626,7 @@ docs/
 - Politique stricte zéro pop-up/toast : interactions silencieuses pour réglages, sélection de voix, ouvertures de livre, pull-to-refresh et self-healing
 - Génération histoires IA optimisée
 - Standards narratifs V3.4 (Modèle 2 temps, Cause à effet, Zéro métaphore superflue, Vocabulaire calibré, Max 3 onomatopées)
-- Audio ElevenLabs asynchrone & Studio vocal familial (clonage de voix)
+- Audio Modal GPU asynchrone, Voice Cloning & Fallback OpenAI TTS
 - Bibliothèque filtres + swipe-to-delete
 - Profils enfants détaillés
 - Sécurité RLS + rate limiting
@@ -648,6 +639,7 @@ docs/
 - **Interface réactive** avec séparateurs visuels et spacing optimisé
 - **Chatbot interactif n8n** avec boutons de choix dynamiques (single/multiple)
 - **Gestion erreurs AbortController** silencieuse avec retry automatique
+
 
 ### En cours 🚧
 - Tests E2E complets
