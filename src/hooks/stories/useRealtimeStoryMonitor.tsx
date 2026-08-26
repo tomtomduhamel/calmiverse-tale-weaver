@@ -178,13 +178,97 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
         }
       });
 
-    // Gérer le timeout
+    // Nettoyage centralisé
+    let isCleanedUp = false;
+    let pollingIntervalId: NodeJS.Timeout | null = null;
+
+    const completeStoryDetection = (formattedStory: Story) => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
+
+      setLastDetectedStory(formattedStory);
+      setIsMonitoring(false);
+      setMonitoringStartTime(null);
+
+      // Notification native
+      notifyStoryReady(formattedStory.title, formattedStory.id)
+        .then(() => console.log('[RealtimeStoryMonitor] ✅ Notification native envoyée'))
+        .catch(error => console.warn('[RealtimeStoryMonitor] ⚠️ Erreur notification:', error));
+
+      if (onStoryCreated) {
+        onStoryCreated(formattedStory);
+      }
+
+      // Nettoyer
+      if (pollingIntervalId) clearInterval(pollingIntervalId);
+      supabase.removeChannel(channel);
+      if (cleanupN8n) cleanupN8n();
+    };
+
+    // Polling de secours actif (toutes les 4 secondes) pour pallier les micro-coupures Realtime / mise en veille
+    const checkDbForCompletedStory = async () => {
+      if (isCleanedUp || !user) return;
+      try {
+        const { data: recentStories } = await supabase
+          .from('stories')
+          .select('*')
+          .eq('authorid', user.id)
+          .order('createdat', { ascending: false })
+          .limit(3);
+
+        if (recentStories && recentStories.length > 0) {
+          for (const s of recentStories) {
+            const createdAtTime = new Date(s.createdat).getTime();
+            const hasValidContent = typeof s.content === 'string' && s.content.trim().length > 50;
+
+            // Détection si l'histoire a été créée après le début du monitoring ET est complétée (ou avec contenu)
+            if (monitoringStartTime && createdAtTime >= (monitoringStartTime - 10000)) {
+              if (s.status === 'completed' || hasValidContent) {
+                console.log('🔄 [RealtimeStoryMonitor] Histoire détectée via Polling de secours:', s.id);
+                const formattedStory: Story = {
+                  id: s.id,
+                  title: s.title || 'Histoire générée',
+                  content: s.content || '',
+                  preview: s.preview || s.summary || '',
+                  childrenIds: s.childrenids || [],
+                  createdAt: new Date(s.createdat),
+                  status: 'completed',
+                  story_summary: s.summary || '',
+                  objective: s.objective || ''
+                };
+                completeStoryDetection(formattedStory);
+                return;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[RealtimeStoryMonitor] Erreur lors du polling de secours (non-bloquant):', err);
+      }
+    };
+
+    pollingIntervalId = setInterval(checkDbForCompletedStory, 4000);
+
+    // Écouteurs de reprise au premier plan
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('👁️ [RealtimeStoryMonitor] Retour au premier plan, vérification immédiate...');
+        void checkDbForCompletedStory();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
+
+    // Gérer le timeout global
     const timeoutId = setTimeout(() => {
-      if (isMonitoring && monitoringStartTime) {
+      if (isMonitoring && monitoringStartTime && !isCleanedUp) {
         console.warn('[RealtimeStoryMonitor] TIMEOUT: Temps limite dépassé');
+        isCleanedUp = true;
         setIsMonitoring(false);
         setMonitoringStartTime(null);
 
+        if (pollingIntervalId) clearInterval(pollingIntervalId);
         supabase.removeChannel(channel);
         if (cleanupN8n) cleanupN8n();
 
@@ -202,7 +286,11 @@ export const useRealtimeStoryMonitor = (options: RealtimeStoryMonitorOptions = {
 
     // Fonction de nettoyage
     return () => {
+      isCleanedUp = true;
       clearTimeout(timeoutId);
+      if (pollingIntervalId) clearInterval(pollingIntervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
       supabase.removeChannel(channel);
       if (cleanupN8n) cleanupN8n();
       setIsMonitoring(false);

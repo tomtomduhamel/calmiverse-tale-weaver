@@ -5,12 +5,14 @@ import { ConstellationWidget } from '@/components/dashboard/ConstellationWidget'
 import { StarLogbook } from '@/components/dashboard/StarLogbook';
 
 import { useReadingStats } from '@/hooks/dashboard/useReadingStats';
+import { usePendingStoriesRecovery } from '@/hooks/stories/usePendingStoriesRecovery';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { data: stats, isLoading, error } = useReadingStats();
+  usePendingStoriesRecovery();
   const navigate = useNavigate();
 
   if (error) {

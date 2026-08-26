@@ -7,6 +7,7 @@ import { PWAGestures } from "@/components/PWAGestures";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PendingSharesList from "@/components/story/share/PendingSharesList";
 import { usePendingShares } from "@/hooks/stories/useStorySharing";
+import { usePendingStoriesRecovery } from "@/hooks/stories/usePendingStoriesRecovery";
 import { Badge } from "@/components/ui/badge";
 import LibraryFeed from "@/components/library/LibraryFeed";
 
@@ -16,6 +17,7 @@ const Library: React.FC = () => {
 
   const { user, loading: authLoading } = useSupabaseAuth();
   const { pendingCount, refetch: refetchPendingShares } = usePendingShares();
+  usePendingStoriesRecovery();
   const { toast } = useToast();
   const navigate = useNavigate();
 
