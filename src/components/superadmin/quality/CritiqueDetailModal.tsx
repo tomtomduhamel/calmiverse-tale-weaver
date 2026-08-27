@@ -324,9 +324,11 @@ export const CritiqueDetailModal: React.FC<CritiqueDetailModalProps> = ({
                 </strong>
               </div>
             </div>
-          </SafeErrorBoundary>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+          </div>
+        </div>
+      </SafeErrorBoundary>
+    </ScrollArea>
+  </DialogContent>
+</Dialog>
   );
 };

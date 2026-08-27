@@ -2,9 +2,10 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Headphones, Globe, Sparkles, Lock, CheckCircle2 } from 'lucide-react';
+import { Headphones, Globe, Sparkles, Lock, CheckCircle2, Moon } from 'lucide-react';
 import { UserSettings } from '@/types/user-settings';
 import { useSubscription } from '@/hooks/subscription/useSubscription';
 import { cn } from '@/lib/utils';
@@ -33,6 +34,16 @@ export const AudioSection: React.FC<AudioSectionProps> = ({
       readingPreferences: {
         ...userSettings.readingPreferences,
         audioMode: mode,
+      },
+    });
+  };
+
+  const handleDimScreenChange = async (checked: boolean) => {
+    if (isLoading) return;
+    await onUpdateSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        dimScreenOnAudioPlay: checked,
       },
     });
   };
@@ -165,6 +176,27 @@ export const AudioSection: React.FC<AudioSectionProps> = ({
             return card;
           })}
         </TooltipProvider>
+
+        {/* Option Assombrir l'écran pendant l'audio */}
+        <div className="pt-4 border-t border-border flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Moon className="h-4 w-4 text-primary" />
+              <Label htmlFor="audio-dim-screen" className="text-sm font-medium cursor-pointer">
+                Assombrir l'écran pendant l'audio
+              </Label>
+            </div>
+            <Switch
+              id="audio-dim-screen"
+              checked={userSettings.readingPreferences?.dimScreenOnAudioPlay || false}
+              onCheckedChange={handleDimScreenChange}
+              disabled={isLoading}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Tamise doucement l'écran dès le lancement de la narration audio pour favoriser l'endormissement.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

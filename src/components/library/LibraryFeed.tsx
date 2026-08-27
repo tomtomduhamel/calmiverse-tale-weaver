@@ -226,6 +226,7 @@ const LibraryFeed: React.FC<LibraryFeedProps> = ({
           seriesGroup={seriesGroup}
           onSelectStory={handleSelectSeriesStory}
           onToggleFavorite={toggleFavorite}
+          onSequelCreated={onCreateSequel}
         />
       )}
     </div>

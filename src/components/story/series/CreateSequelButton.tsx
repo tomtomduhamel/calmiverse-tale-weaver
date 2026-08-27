@@ -131,13 +131,16 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
     const newStoryId = await createSequel(sequelData);
     if (newStoryId) {
       setCreatedStoryId(newStoryId);
-      onSequelCreated?.(newStoryId);
     }
   };
 
   const handleProgressComplete = () => {
+    const finishedId = createdStoryId;
     setCreatedStoryId(null);
     setIsOpen(false);
+    if (finishedId) {
+      onSequelCreated?.(finishedId);
+    }
   };
 
   const handleProgressError = (error: string) => {

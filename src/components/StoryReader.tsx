@@ -1,8 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { useReadingSpeed } from "@/contexts/ReadingSpeedContext";
+import { useUserSettings } from "@/hooks/settings/useUserSettings";
+import { cn } from "@/lib/utils";
 import { EmptyStoryView } from "./story/reader/EmptyStoryView";
 import { StorySummaryDialog } from "./story/reader/StorySummaryDialog";
 import { StoryReaderLayout } from "./story/reader/StoryReaderLayout";
@@ -28,6 +30,8 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   onMarkAsRead,
   childName 
 }) => {
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const { userSettings } = useUserSettings();
   const {
     // State
     story,
@@ -106,6 +110,17 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         isManuallyPaused={isManuallyPaused}
       />
 
+      {/* 🌙 Voile d'assombrissement tamisé automatique (Mode Veilleuse Audio) */}
+      <div 
+        aria-hidden="true"
+        className={cn(
+          "fixed inset-0 z-35 bg-black/80 backdrop-blur-[0.5px] pointer-events-none transition-opacity duration-1000 ease-in-out",
+          userSettings.readingPreferences?.dimScreenOnAudioPlay && isAudioPlaying
+            ? "opacity-100"
+            : "opacity-0"
+        )}
+      />
+
       {/* Contrôles du lecteur & Capsule Audio Zen */}
       <ReaderControls
         fontSize={fontSize}
@@ -118,6 +133,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         onMarkAsRead={handleMarkAsRead}
         isRead={story.status === 'read'}
         isUpdatingReadStatus={isUpdatingReadStatus}
+        onAudioPlayStateChange={setIsAudioPlaying}
       />
 
       <StorySummaryDialog 

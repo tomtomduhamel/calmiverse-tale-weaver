@@ -29,7 +29,11 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
   - **7-9 ans (Primaire)** : 10 à 15 mots par phrase, 2-3 mots de vocabulaire contextualisés, esprit de déduction.
   - **10-12 ans & 13+** : Intrigues rythmées, dialogues spontanés, autodérision et maturité.
 - Génération titre + résumé automatique
-- Système de séries avec tomes numérotés
+- **Système de séries et suites (Tomes)** :
+  - Transformation d'une histoire en série via la table `story_series` et chaînage relationnel (`series_id`, `tome_number`, `previous_story_id`, `next_story_id`).
+  - Déclenchement via `CreateSequelButton` avec configuration de durée (5 à 30 min) et 4 options de continuité narrative : cohérence des personnages, références aux événements précédents, évolution des protagonistes, nouveaux défis.
+  - Edge Function `create-story-sequel` : interpolation automatique du prompt DB `sequel_prompt_template` avec `formatSequelInstructions()`, `vocabulary_level`, `objective_description`, et fallback de personnages sur `children_names`.
+  - Suivi d'avancement par `useSequelProgress` (polling 2s) et notification globale temps réel via `useRealtimeSequelStatus` dans `Shell`.
 - Déduplication automatique (évite doublons et redondances de décors/acolytes)
 - Quotas mensuels selon abonnement
 - **Mode chatbot interactif** : Création guidée via conversation n8n avec boutons de choix

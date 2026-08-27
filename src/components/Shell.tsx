@@ -7,6 +7,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import MobileMenu from './MobileMenu';
 import { Footer } from './Footer';
 import { useBackgroundStoryMonitor } from '@/hooks/stories/useBackgroundStoryMonitor';
+import { useRealtimeSequelStatus } from '@/hooks/stories/monitoring/useRealtimeSequelStatus';
 import { logger } from '@/utils/logger';
 import { OfflineSyncIndicator } from './OfflineSyncIndicator';
 import { OfflineIndicator } from './OfflineIndicator';
@@ -36,6 +37,11 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
   // 🚨 MONITORING ARRIÈRE-PLAN : Surveillance des nouvelles histoires créées
   // Ce hook fonctionne en permanence tant que l'utilisateur est authentifié
   const { isMonitoring } = useBackgroundStoryMonitor();
+
+  // 🔔 MONITORING TEMPS RÉEL : Notifications toast dès qu'une suite/tome est prête
+  useRealtimeSequelStatus({
+    enabled: !!user && !previewMode
+  });
   
   // Déterminer si le menu mobile doit être affiché
   // Ne pas l'afficher si nous sommes sur la route du lecteur d'histoire

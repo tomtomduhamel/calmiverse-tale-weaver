@@ -56,6 +56,43 @@ function replacePromptVariables(
   return result;
 }
 
+/**
+ * Formate les instructions booléennes pour le prompt textuel
+ */
+function formatSequelInstructions(instructions?: {
+  maintainCharacterConsistency?: boolean;
+  referenceToEvents?: boolean;
+  evolutionOfCharacters?: boolean;
+  newChallengesIntroduced?: boolean;
+}): string {
+  if (!instructions) {
+    return "- Maintenir la cohérence des personnages et poursuivre l'aventure.";
+  }
+
+  const lines: string[] = [];
+  if (instructions.maintainCharacterConsistency !== false) {
+    lines.push("- COHÉRENCE DES PERSONNAGES : Conserver fidèlement la personnalité, les traits caractéristiques et les rôles des personnages déjà établis.");
+  }
+  if (instructions.referenceToEvents !== false) {
+    lines.push("- CONTINUITÉ NARRATIVE : Faire des allusions et références naturelles aux événements marquants et réussites du tome précédent.");
+  }
+  if (instructions.evolutionOfCharacters !== false) {
+    lines.push("- ÉVOLUTION : Montrer que les protagonistes grandissent, gagnent en maturité ou développent une complicité renforcée.");
+  }
+  if (instructions.newChallengesIntroduced !== false) {
+    lines.push("- NOUVEAUX DÉFIS : Introduire une péripétie ou un défi inédit stimulant avec un dénouement valorisant.");
+  }
+
+  return lines.length > 0 ? lines.join("\n") : "- Poursuivre l'histoire avec cohérence.";
+}
+
+const OBJECTIVE_DESCRIPTIONS: Record<string, string> = {
+  sleep: "Aider à s'endormir de manière apaisante et régénératrice",
+  focus: "Améliorer la concentration, la curiosité et l'esprit de déduction",
+  relax: "Favoriser la détente, la sérénité et le lâcher-prise",
+  fun: "S'amuser, rire et passer un moment plein d'énergie joyeuse",
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -138,25 +175,39 @@ serve(async (req) => {
     const promptSource = sequelPromptTemplate ? 'database' : 'fallback';
     console.log(`📝 Source du template: ${promptSource}`);
 
-    // 4. Si template disponible, générer le prompt avec les variables
+    // 4. Si template disponible, générer le prompt avec toutes les variables attendues
     let generatedSequelPrompt: string | null = null;
     if (sequelPromptTemplate) {
+      const activeObjective = previousStory.objective || objective || 'fun';
+      const objectiveDesc = OBJECTIVE_DESCRIPTIONS[activeObjective] || activeObjective;
+      const wordCount = duration ? Math.round(duration * 140) : 1400;
+      const formattedInstructionsText = formatSequelInstructions(sequelInstructions);
+
+      const rawCharacters = characters || previousStory.story_analysis?.characters;
+      const charactersText = rawCharacters && Object.keys(rawCharacters).length > 0
+        ? JSON.stringify(rawCharacters)
+        : (previousStory.childrennames || childrenNames || []).join(', ') || 'Héros du tome précédent';
+
       const promptVariables = {
         previous_story_title: previousStory.title,
         previous_story_summary: previousStory.summary || previousStorySummary || '',
         previous_story_content: previousStory.content?.substring(0, 2000) || previousStoryContent?.substring(0, 2000) || '',
-        characters: JSON.stringify(characters || previousStory.story_analysis?.characters || {}),
+        characters: charactersText,
         tome_number: tomeNumber,
         children_names: (previousStory.childrennames || childrenNames || []).join(', '),
-        objective: previousStory.objective || objective || 'fun',
+        objective: activeObjective,
+        objective_description: objectiveDesc,
+        sequel_instructions: formattedInstructionsText,
+        vocabulary_level: "Adapté aux enfants, vivant, direct et accessible sans termes abstraits",
         writing_style: writingStyle || '',
         recurring_phrases: Array.isArray(recurringPhrases) ? recurringPhrases.join(', ') : '',
         duration: duration || 10,
-        estimated_word_count: duration ? Math.round(duration * 140) : 1400,
+        target_word_count: wordCount,
+        estimated_word_count: wordCount,
       };
 
       generatedSequelPrompt = replacePromptVariables(sequelPromptTemplate, promptVariables);
-      console.log('✅ Prompt de suite généré depuis template DB');
+      console.log('✅ Prompt de suite généré depuis template DB avec instructions:', formattedInstructionsText);
     }
 
     // 5. Préparer le payload enrichi pour n8n

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useIndexPage } from "@/hooks/useIndexPage";
-import { useRealtimeSequelStatus, useAutomaticStoryRecovery } from "@/hooks/stories/monitoring";
+import { useAutomaticStoryRecovery } from "@/hooks/stories/monitoring";
 import ContentView from "@/components/layout/ContentView";
 import LoadingErrorHandler from "@/components/layout/LoadingErrorHandler";
 
@@ -19,16 +19,6 @@ const Index = () => {
     isMobile,
     children
   } = indexPageProps;
-
-  // ✅ PHASE 5: Activer les notifications temps réel pour les suites
-  useRealtimeSequelStatus({
-    onStoryCompleted: (story) => {
-      console.log('[Index] Suite terminée reçue via Realtime:', story.title);
-      // La notification toast est déjà affichée par le hook
-      // On pourrait ajouter une logique supplémentaire ici si nécessaire
-    },
-    enabled: !!user // Activer seulement si l'utilisateur est connecté
-  });
 
   // ✅ PHASE 6: Récupération automatique des histoires bloquées
   useAutomaticStoryRecovery(stories.stories || [], {

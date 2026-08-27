@@ -53,11 +53,11 @@ const Library: React.FC = () => {
   };
 
   const handleCreateSequel = useCallback((newStoryId: string) => {
-    // La suite a été créée via la modale, on redirige vers la nouvelle histoire (qui sera en cours de génération)
+    // La suite a été créée via la modale, on redirige vers le lecteur
     navigate(`/app/reader/${newStoryId}`);
     toast({
       title: "Suite créée !",
-      description: "Votre nouvelle histoire est en cours de création."
+      description: "Votre nouvelle histoire est prête à être lue."
     });
   }, [navigate, toast]);
 

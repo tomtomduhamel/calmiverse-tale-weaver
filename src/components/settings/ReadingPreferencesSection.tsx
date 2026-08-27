@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserSettings } from "@/types/user-settings";
-import { Snail, Turtle, Rabbit, RotateCcw, Lock, Wand2 } from "lucide-react";
+import { Snail, Turtle, Rabbit, RotateCcw, Lock, Wand2, Moon } from "lucide-react";
 import { useSubscription } from "@/hooks/subscription/useSubscription";
 
 // Valeurs par défaut des vitesses
@@ -58,6 +58,16 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
       readingPreferences: {
         ...userSettings.readingPreferences,
         backgroundMusicEnabled: checked
+      }
+    });
+  };
+
+  // Gérer le changement de l'assombrissement d'écran pendant l'audio
+  const handleDimScreenOnAudioChange = async (checked: boolean) => {
+    await onUpdateSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        dimScreenOnAudioPlay: checked
       }
     });
   };
@@ -223,6 +233,27 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
           </div>
           <div className="text-sm text-muted-foreground">
             Activer la musique de fond lors de la lecture des histoires
+          </div>
+        </div>
+
+        {/* Option Assombrir l'écran pendant l'audio */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Moon className="h-5 w-5 text-primary" />
+              <Label htmlFor="dim-screen-audio" className="text-base font-medium">
+                Assombrir l'écran pendant l'audio
+              </Label>
+            </div>
+            <Switch
+              id="dim-screen-audio"
+              checked={userSettings.readingPreferences?.dimScreenOnAudioPlay || false}
+              onCheckedChange={handleDimScreenOnAudioChange}
+              disabled={isLoading}
+            />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Tamise doucement l'écran dès le lancement de la narration audio pour favoriser l'endormissement de l'enfant
           </div>
         </div>
 

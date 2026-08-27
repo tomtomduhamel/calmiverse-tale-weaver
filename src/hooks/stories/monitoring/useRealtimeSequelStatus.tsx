@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ export const useRealtimeSequelStatus = ({
   enabled = true
 }: UseRealtimeSequelStatusProps = {}) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!enabled) return;
@@ -48,7 +50,7 @@ export const useRealtimeSequelStatus = ({
           if (wasGenerating && isNowReady) {
             console.log('[useRealtimeSequelStatus] Suite terminée détectée:', newStory.title);
             
-            // Afficher une notification toast
+            // Afficher une notification toast avec bouton de lecture directe
             toast({
               title: "🎉 Suite prête !",
               description: (
@@ -59,21 +61,21 @@ export const useRealtimeSequelStatus = ({
                   </p>
                 </div>
               ),
-              action: onStoryCompleted ? (
+              action: (
                 <Button
                   size="sm"
                   onClick={() => {
                     console.log('[useRealtimeSequelStatus] Navigation vers l\'histoire:', newStory.id);
-                    onStoryCompleted(newStory as Story);
+                    navigate(`/app/reader/${newStory.id}`);
                   }}
                 >
                   Lire maintenant
                 </Button>
-              ) : undefined,
+              ),
               duration: 10000, // 10 secondes pour laisser le temps de cliquer
             });
 
-            // Callback optionnel
+            // Callback optionnel (ex: rafraîchissement cache)
             if (onStoryCompleted) {
               onStoryCompleted(newStory as Story);
             }

@@ -24,6 +24,7 @@ interface IntegratedAudioDeckProps {
   soundId?: string | null;
   objective?: string | null;
   isDarkMode?: boolean;
+  onPlayStateChange?: (isPlaying: boolean) => void;
 }
 
 interface CustomVoice {
@@ -41,7 +42,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   text,
   soundId,
   objective,
-  isDarkMode = false
+  isDarkMode = false,
+  onPlayStateChange
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -58,6 +60,18 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   // Browser SpeechSynthesis state
   const [isBrowserSpeaking, setIsBrowserSpeaking] = useState(false);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+
+  // Synchroniser l'état actif audio avec le parent (assombrissement d'écran / veilleuse)
+  useEffect(() => {
+    const active = isPlaying || isBrowserSpeaking;
+    onPlayStateChange?.(active);
+  }, [isPlaying, isBrowserSpeaking, onPlayStateChange]);
+
+  useEffect(() => {
+    return () => {
+      onPlayStateChange?.(false);
+    };
+  }, [onPlayStateChange]);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);

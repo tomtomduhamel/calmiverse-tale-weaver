@@ -21,6 +21,7 @@ export interface UserSettings {
     customSpeedFast: number; // vitesse personnalisée Lapin (50-200)
     immersiveReadingMode: 'none' | 'pulse' | 'karaoke' | 'brush'; // Mode de lecture immersive
     audioMode: 'browser' | 'premium'; // Mode audio : navigateur (gratuit) ou premium (généré par IA)
+    dimScreenOnAudioPlay?: boolean; // Assombrir automatiquement l'écran pendant la lecture audio
   };
 }
 

@@ -15,6 +15,7 @@ import type { SeriesGroup, Story } from '@/types/story';
 import { SeriesStoryCard } from './SeriesStoryCard';
 import { SeriesTimeline } from './SeriesTimeline';
 import { MobileSeriesStoryCard } from './MobileSeriesStoryCard';
+import { CreateSequelButton } from '@/components/story/series/CreateSequelButton';
 
 interface SeriesStoriesModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ interface SeriesStoriesModalProps {
   onToggleFavorite?: (storyId: string, currentFavoriteStatus: boolean) => void;
   onDeleteStory?: (storyId: string) => void;
   onRetryStory?: (storyId: string) => void;
+  onSequelCreated?: (storyId: string) => void;
   isUpdatingFavorite?: boolean;
   isDeletingId?: string | null;
   isRetrying?: boolean;
@@ -38,6 +40,7 @@ export const SeriesStoriesModal: React.FC<SeriesStoriesModalProps> = ({
   onToggleFavorite,
   onDeleteStory,
   onRetryStory,
+  onSequelCreated,
   isUpdatingFavorite,
   isDeletingId,
   isRetrying,
@@ -56,6 +59,11 @@ export const SeriesStoriesModal: React.FC<SeriesStoriesModalProps> = ({
     readStories
   } = seriesGroup;
 
+  const sortedStories = React.useMemo(() => {
+    return [...stories].sort((a, b) => (a.tome_number || 0) - (b.tome_number || 0));
+  }, [stories]);
+
+  const latestStory = sortedStories[sortedStories.length - 1];
   const progressPercentage = totalStories > 0 ? readStories / totalStories * 100 : 0;
 
   const handleStorySelect = (story: Story) => {
@@ -113,15 +121,27 @@ export const SeriesStoriesModal: React.FC<SeriesStoriesModalProps> = ({
             </div>
           </DialogHeader>
 
-          {/* Section tomes - header compact */}
+          {/* Section tomes - header compact avec bouton de suite fonctionnel */}
           <div className="px-3 py-2 border-b border-border/20 flex items-center justify-between bg-muted/20 flex-shrink-0">
             <h3 className="text-sm font-semibold text-foreground">
               Tomes de la série
             </h3>
-            <Button variant="outline" size="sm" className="gap-1 h-7 px-2 text-xs">
-              <Plus className="w-3 h-3" />
-              Suite
-            </Button>
+            {latestStory && (
+              <CreateSequelButton
+                story={latestStory}
+                seriesStories={stories}
+                onSequelCreated={(newId) => {
+                  onClose();
+                  if (onSequelCreated) {
+                    onSequelCreated(newId);
+                  } else {
+                    onSelectStory({ id: newId } as Story);
+                  }
+                }}
+                variant="outline"
+                size="sm"
+              />
+            )}
           </div>
 
           {/* Contenu des tomes - optimisé pour mobile */}
@@ -149,7 +169,7 @@ export const SeriesStoriesModal: React.FC<SeriesStoriesModalProps> = ({
     );
   }
 
-  // Version desktop (inchangée)
+  // Version desktop
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[95vh] p-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -209,10 +229,22 @@ export const SeriesStoriesModal: React.FC<SeriesStoriesModalProps> = ({
               <h3 className="text-lg font-semibold text-foreground">
                 Tomes de la série
               </h3>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Plus className="w-4 h-4" />
-                Créer une suite
-              </Button>
+              {latestStory && (
+                <CreateSequelButton
+                  story={latestStory}
+                  seriesStories={stories}
+                  onSequelCreated={(newId) => {
+                    onClose();
+                    if (onSequelCreated) {
+                      onSequelCreated(newId);
+                    } else {
+                      onSelectStory({ id: newId } as Story);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                />
+              )}
             </div>
             
             {/* Timeline visuelle pour la progression dans la série */}

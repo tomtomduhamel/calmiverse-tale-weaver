@@ -14,6 +14,7 @@ interface ReaderControlsProps {
   onMarkAsRead?: (storyId: string) => Promise<boolean>;
   isRead: boolean;
   isUpdatingReadStatus: boolean;
+  onAudioPlayStateChange?: (isPlaying: boolean) => void;
 }
 
 const ReaderControls: React.FC<ReaderControlsProps> = ({
@@ -26,7 +27,8 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
   story,
   onMarkAsRead,
   isRead,
-  isUpdatingReadStatus
+  isUpdatingReadStatus,
+  onAudioPlayStateChange
 }) => {
   const {
     showShareDialog,
@@ -43,6 +45,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
         soundId={story.sound_id}
         objective={story.objective}
         isDarkMode={isDarkMode}
+        onPlayStateChange={onAudioPlayStateChange}
       />
 
       {/* Dialog de partage */}
