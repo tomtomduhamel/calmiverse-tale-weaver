@@ -21,7 +21,6 @@ import {
   Focus, 
   Coffee, 
   Compass, 
-  Wand2,
   Clock
 } from 'lucide-react';
 import type { Child } from '@/types/child';
@@ -167,23 +166,9 @@ const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, pre
   return (
     <div className="max-w-3xl mx-auto flex flex-col items-center justify-center px-3 sm:px-6 py-4 sm:py-8 space-y-6">
 
-      {/* ── LE GRIMOIRE POÉTIQUE (Carte principale) ───────────────────────── */}
-      <div className="relative w-full overflow-hidden bg-card/95 dark:bg-card/85 backdrop-blur-md rounded-3xl p-6 sm:p-10 md:p-14 shadow-floating border border-primary/20 transition-all duration-500">
+      {/* ── CARTE PRINCIPALE NARRATIVE ───────────────────────── */}
+      <div className="relative w-full overflow-hidden bg-card/95 dark:bg-card/85 backdrop-blur-md rounded-3xl p-6 sm:p-10 md:p-12 shadow-floating border border-primary/20 transition-all duration-500">
         
-        {/* Décorations d'ambiance douces */}
-        <div className="pointer-events-none absolute -top-12 -right-12 w-40 h-40 bg-primary-soft/20 rounded-full blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-12 -left-12 w-40 h-40 bg-accent/25 rounded-full blur-2xl" />
-        <Sparkles className="pointer-events-none absolute top-4 right-5 w-5 h-5 text-primary/30" />
-        <Moon className="pointer-events-none absolute bottom-4 left-5 w-4 h-4 text-primary/25" />
-
-        {/* Badge supérieur */}
-        <div className="flex justify-center mb-6 sm:mb-8">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide uppercase bg-primary/10 text-primary border border-primary/20">
-            <Wand2 className="w-3.5 h-3.5" />
-            Le Grimoire Magique
-          </span>
-        </div>
-
         {/* Phrase narrative en typographie éditoriale */}
         <div className="text-center font-display text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] text-foreground/90 leading-[1.8] sm:leading-[1.8] md:leading-[1.85]">
           <span>Ce soir, Calmi imagine une douce histoire avec </span>
@@ -236,7 +221,7 @@ const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, pre
         </div>
 
         {/* Bouton de validation d'action */}
-        <div className="mt-10 sm:mt-12 flex flex-col items-center justify-center gap-3">
+        <div className="mt-8 sm:mt-10 flex flex-col items-center justify-center">
           <Button
             size="lg"
             variant={isReady ? "glow" : "outline"}
@@ -266,13 +251,6 @@ const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, pre
               </>
             )}
           </Button>
-
-          {!isReady && (
-            <p className="text-xs text-muted-foreground animate-fade-in flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary/60" />
-              Touchez les bulles en pointillés pour personnaliser l'histoire
-            </p>
-          )}
         </div>
       </div>
 
