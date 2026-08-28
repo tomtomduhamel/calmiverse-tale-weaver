@@ -275,6 +275,9 @@ const TitleBasedStoryCreator: React.FC<TitleBasedStoryCreatorProps> = ({
       });
 
       await incrementUsage('story');
+      if (generateVideo) {
+        await incrementUsage('video_intro');
+      }
 
       toast({
         title: "✨ Création lancée !",

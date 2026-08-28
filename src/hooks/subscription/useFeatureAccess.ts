@@ -2,7 +2,17 @@ import { useState, useEffect } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-export type Feature = 'story_series' | 'background_music' | 'priority_access' | 'community_access' | 'audio_generation' | 'multivoice_audio';
+export type Feature = 
+  | 'story_series' 
+  | 'background_music' 
+  | 'priority_access' 
+  | 'community_access' 
+  | 'audio_generation' 
+  | 'multivoice_audio'
+  | 'auto_creation'
+  | 'kindle_export'
+  | 'family_sharing'
+  | 'voice_cloning';
 
 export const useFeatureAccess = () => {
   const { user } = useSupabaseAuth();
@@ -12,7 +22,11 @@ export const useFeatureAccess = () => {
     priority_access: false,
     community_access: false,
     audio_generation: false,
-    multivoice_audio: false
+    multivoice_audio: false,
+    auto_creation: false,
+    kindle_export: false,
+    family_sharing: false,
+    voice_cloning: false
   });
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +53,18 @@ export const useFeatureAccess = () => {
 
     setLoading(true);
     
-    const features: Feature[] = ['story_series', 'background_music', 'priority_access', 'community_access', 'audio_generation', 'multivoice_audio'];
+    const features: Feature[] = [
+      'story_series', 
+      'background_music', 
+      'priority_access', 
+      'community_access', 
+      'audio_generation', 
+      'multivoice_audio',
+      'auto_creation',
+      'kindle_export',
+      'family_sharing',
+      'voice_cloning'
+    ];
     const results: Record<Feature, boolean> = {} as Record<Feature, boolean>;
 
     for (const feature of features) {

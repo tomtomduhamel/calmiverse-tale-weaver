@@ -165,6 +165,26 @@ export const useN8nAudioGeneration = () => {
     const audioLockKey = idempotencyGuard.generateAudioKey(storyId, voiceId);
 
     return idempotencyGuard.runWithLock(audioLockKey, async () => {
+      // 0. Vérification du quota audio utilisateur
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: quotaRes, error: quotaErr } = await supabase.rpc('check_user_quota', {
+          p_user_id: session.user.id,
+          p_quota_type: 'audio'
+        });
+
+        if (!quotaErr && quotaRes && typeof quotaRes === 'object' && (quotaRes as any).allowed === false) {
+          const used = (quotaRes as any).used;
+          const limit = (quotaRes as any).limit;
+          toast({
+            title: "Quota audio atteint",
+            description: `Vous avez atteint votre limite mensuelle de générations audio (${used}/${limit}). Passez à un forfait supérieur pour continuer.`,
+            variant: "destructive"
+          });
+          return null;
+        }
+      }
+
       // Nettoyer et récupérer les fichiers d'abord
       await cleanupStuckFiles(storyId);
       await recoverErrorFiles(storyId);
@@ -220,10 +240,17 @@ export const useN8nAudioGeneration = () => {
 
         if (!fetchError && updatedFile) {
           if (updatedFile.status === 'ready' && updatedFile.audio_url) {
-            // Succès ! Nettoyer et arrêter
+            // Succès ! Nettoyer et incrémenter le quota
             clearTimeout(timeoutId);
             clearInterval(checkInterval);
             setIsGenerating(false);
+
+            if (session?.user) {
+              await supabase.rpc('increment_usage', {
+                p_user_id: session.user.id,
+                p_usage_type: 'audio'
+              });
+            }
             
             // Métriques : Temps total et infos
             const generationTime = Math.round((Date.now() - startTime) / 1000);

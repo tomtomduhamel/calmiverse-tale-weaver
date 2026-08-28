@@ -180,24 +180,30 @@ const Subscription: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
-                  {limits.max_children ? `${limits.max_children} enfants maximum` : 'Enfants illimités'}
+                  {limits.max_children ? `${limits.max_children} enfant${limits.max_children > 1 ? 's' : ''} maximum` : 'Enfants illimités'}
                 </div>
+                {subscription.tier !== 'calmini' && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
+                      Partage Tribu / Famille
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
+                      Envoi sur liseuse Kindle
+                    </div>
+                  </>
+                )}
                 {limits.has_story_series && (
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
-                    Suites d'histoires
+                    Suites d'histoires (Séries)
                   </div>
                 )}
                 {limits.has_background_music && (
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
-                    Musique de fond
-                  </div>
-                )}
-                {limits.max_video_intros_per_period > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
-                    {limits.max_video_intros_per_period} vidéos d'introduction/mois
+                    Musique & Ambiances
                   </div>
                 )}
                 {limits.audio_generations_per_month > 0 && (
@@ -209,7 +215,25 @@ const Subscription: React.FC = () => {
                 {limits.max_voice_clones > 0 && (
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
-                    {limits.max_voice_clones} clonage{limits.max_voice_clones > 1 ? 's' : ''} vocal{limits.max_voice_clones > 1 ? 'aux' : ''}
+                    {limits.max_voice_clones} voix studio ({limits.max_voice_clones > 1 ? 'famille & proches' : 'parentale'})
+                  </div>
+                )}
+                {limits.has_multivoice_audio && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
+                    Multi-Voix Théâtre IA
+                  </div>
+                )}
+                {limits.has_auto_creation && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
+                    Routines d'histoires (19h30)
+                  </div>
+                )}
+                {limits.max_video_intros_per_period > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="w-2 h-2 p-0 rounded-full bg-primary" />
+                    {limits.max_video_intros_per_period} vidéo{limits.max_video_intros_per_period > 1 ? 's' : ''} magique{limits.max_video_intros_per_period > 1 ? 's' : ''} d'intro/mois
                   </div>
                 )}
                 {limits.has_priority_access && (

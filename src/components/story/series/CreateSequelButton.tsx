@@ -8,6 +8,9 @@ import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Plus, BookOpen, Clock } from 'lucide-react';
 import { useStorySeries } from '@/hooks/stories/useStorySeries';
+import { useSubscription } from '@/hooks/subscription/useSubscription';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import { SequelCreationProgress } from './SequelCreationProgress';
 import {
   Tooltip,
@@ -147,7 +150,23 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
     console.error('[CreateSequelButton] Erreur génération:', error);
     setCreatedStoryId(null);
   };
-  return <Dialog open={isOpen} onOpenChange={setIsOpen}>
+  const { limits } = useSubscription();
+  const navigate = useNavigate();
+
+  const handleOpenChange = (open: boolean) => {
+    if (open && limits && !limits.has_story_series) {
+      toast({
+        title: "Fonctionnalité réservée",
+        description: "La création de suites d'histoires (Tome 2, 3...) est accessible à partir du forfait Calmidium (5$/mois).",
+        variant: "destructive"
+      });
+      navigate('/pricing');
+      return;
+    }
+    setIsOpen(open);
+  };
+
+  return <Dialog open={isOpen} onOpenChange={handleOpenChange}>
     <TooltipProvider>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>

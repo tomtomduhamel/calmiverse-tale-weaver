@@ -90,8 +90,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     subscribeToAudioFiles
   } = useN8nAudioGeneration();
 
-  const canUsePremiumAudio = limits?.has_multivoice_audio ?? false;
-  const preferredAudioMode = userSettings.readingPreferences?.audioMode ?? 'browser';
+  const canUsePremiumAudio = (limits?.audio_generations_per_month ?? 0) > 0 || (limits?.has_multivoice_audio ?? false);
+  const defaultMode = (limits?.has_multivoice_audio) ? 'premium' : 'browser';
+  const preferredAudioMode = userSettings.readingPreferences?.audioMode ?? defaultMode;
 
   // Audio file checks
   const readyStoryAudioFile = audioFiles.find(
@@ -100,7 +101,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const currentPendingAudioFile = audioFiles.find(
     file => (file.status === 'pending' || file.status === 'processing') && file.story_id === storyId
   );
-  const isPremiumMode = (preferredAudioMode === 'premium' && canUsePremiumAudio && selectedVoiceId !== 'local') || !!readyStoryAudioFile;
+  const isPremiumMode = (canUsePremiumAudio && (preferredAudioMode === 'premium' || limits?.has_multivoice_audio) && selectedVoiceId !== 'local') || !!readyStoryAudioFile;
 
   // Background Sound Hook
   const backgroundSound = useBackgroundSound({

@@ -7,15 +7,29 @@ import { useFamily } from '@/hooks/settings/useFamily';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+import { useFeatureAccess } from '@/hooks/subscription/useFeatureAccess';
+import { useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
+
 export const FamilySection: React.FC = () => {
   const { families, members, inviteToken, isLoading, generateInvite, joinFamily } = useFamily();
+  const { featureAccess, loading: featureLoading } = useFeatureAccess();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleGenerateCode = async () => {
+    if (!featureAccess.family_sharing) {
+      toast({
+        title: "Fonctionnalité réservée",
+        description: "Le partage Tribu / Famille est accessible à partir du forfait Calmidium (5$/mois).",
+        variant: "destructive"
+      });
+      return;
+    }
     setIsGenerating(true);
     try {
       const token = await generateInvite();
@@ -76,8 +90,38 @@ export const FamilySection: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || featureLoading) {
     return <Card className="animate-pulse"><CardContent className="h-40" /></Card>;
+  }
+
+  const hasFamilyAccess = featureAccess.family_sharing;
+
+  if (!hasFamilyAccess) {
+    return (
+      <Card className="border-2 overflow-hidden bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <CardTitle>Ma Tribu (Partage de personnages)</CardTitle>
+            </div>
+            <Button size="sm" onClick={() => navigate('/pricing')} className="gap-1.5 text-xs">
+              <Sparkles className="w-3.5 h-3.5" /> Débloquer dès Calmidium
+            </Button>
+          </div>
+          <CardDescription>
+            Créez ensemble ! Invitez un parent ou un membre de votre famille pour synchroniser et partager vos fiches d'enfants et histoires.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>
+            La création d'une <strong>Tribu familiale</strong> avec partage de profils d'enfants et synchronisation d'histoires est disponible à partir du forfait <strong>Calmidium (5$/mois)</strong>.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

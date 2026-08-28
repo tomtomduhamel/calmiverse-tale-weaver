@@ -239,6 +239,27 @@ export const VoiceStudio: React.FC = () => {
 
   // Open recording modal with preselected category
   const openRecordingForCategory = (categorySlug: string) => {
+    const maxClones = limits?.max_voice_clones ?? 0;
+    if (maxClones <= 0) {
+      toast({
+        title: "Fonctionnalité réservée",
+        description: "Le Studio de voix est accessible à partir du forfait Calmidium (1 voix) ou Calmix (3 voix).",
+        variant: "destructive"
+      });
+      navigate('/pricing');
+      return;
+    }
+
+    if (voices.length >= maxClones) {
+      toast({
+        title: "Limite de voix atteinte",
+        description: `Votre forfait actuel vous permet d'enregistrer ${maxClones} voix (${voices.length}/${maxClones}). Passez au forfait supérieur pour débloquer plus de voix.`,
+        variant: "destructive"
+      });
+      navigate('/pricing');
+      return;
+    }
+
     setTargetCategorySlug(categorySlug);
     setRelationName('');
     setRecordingStep('info');
@@ -247,6 +268,27 @@ export const VoiceStudio: React.FC = () => {
 
   // Open invitation modal with preselected category
   const openInviteForCategory = (categorySlug: string) => {
+    const maxClones = limits?.max_voice_clones ?? 0;
+    if (maxClones <= 0) {
+      toast({
+        title: "Fonctionnalité réservée",
+        description: "Le Studio de voix est accessible à partir du forfait Calmidium (1 voix) ou Calmix (3 voix).",
+        variant: "destructive"
+      });
+      navigate('/pricing');
+      return;
+    }
+
+    if (voices.length >= maxClones) {
+      toast({
+        title: "Limite de voix atteinte",
+        description: `Votre forfait actuel vous permet d'enregistrer ${maxClones} voix (${voices.length}/${maxClones}). Passez au forfait supérieur pour débloquer plus de voix.`,
+        variant: "destructive"
+      });
+      navigate('/pricing');
+      return;
+    }
+
     setInviteCategorySlug(categorySlug);
     setInviteRelation('');
     setGeneratedInviteLink('');
@@ -780,7 +822,7 @@ export const VoiceStudio: React.FC = () => {
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs bg-primary-soft/10 text-primary border-primary/20 py-1.5 px-3">
             <Sparkles className="w-3.5 h-3.5 text-[#E9C46A] mr-1.5" />
-            Total voix actives : {voices.length}
+            Voix actives : {voices.length} / {limits?.max_voice_clones ?? 0}
           </Badge>
         </div>
       </div>

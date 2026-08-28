@@ -78,22 +78,22 @@ export const APP_CONFIG = {
     CALMINI: {
       name: 'Calmini',
       monthlyPrice: 2.00,
-      features: ['10 histoires/mois', '5 enfants max', 'Support standard']
+      features: ['10 histoires/mois', '1 enfant max', 'Support standard']
     },
     CALMIDIUM: {
       name: 'Calmidium', 
       monthlyPrice: 5.00,
-      features: ['30 histoires/mois', '10 enfants max', 'Suites d\'histoires', '10 générations audio/mois', '1 clonage vocal', 'Support prioritaire']
+      features: ['30 histoires/mois', '2 enfants max', 'Partage Tribu/Famille', 'Envoi sur liseuse Kindle', 'Suites d\'histoires', '10 générations audio/mois', '1 clonage vocal']
     },
     CALMIX: {
       name: 'Calmix',
       monthlyPrice: 10.00,
-      features: ['50 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', 'Vidéos d\'introduction (3/mois)', '20 générations audio/mois', '2 clonages vocaux', 'Accès priorité']
+      features: ['50 histoires/mois', 'Enfants illimités', 'Partage Tribu/Famille', 'Envoi Kindle', 'Routines d\'histoires (19h30)', 'Multi-Voix Théâtre IA', '3 vidéos d\'intro/mois', '20 générations audio/mois', '3 clonages vocaux']
     },
     CALMIXXL: {
       name: 'Calmixxl',
       monthlyPrice: 20.00,
-      features: ['100 histoires/mois', 'Enfants illimités', 'Suites d\'histoires', 'Musique de fond', 'Vidéos d\'introduction (10/mois)', '50 générations audio/mois', '5 clonages vocaux', 'Accès priorité']
+      features: ['100 histoires/mois', 'Enfants illimités', 'Partage Tribu/Famille', 'Envoi Kindle', 'Routines d\'histoires illimitées', 'Multi-Voix Théâtre IA', '10 vidéos d\'intro/mois', '40 générations audio/mois', '10 clonages vocaux']
     }
   },
 

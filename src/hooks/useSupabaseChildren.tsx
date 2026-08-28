@@ -212,6 +212,24 @@ export const useSupabaseChildren = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error("Utilisateur non connecté");
 
+    // Vérification des quotas d'enfants
+    const { data: quotaRes, error: quotaErr } = await supabase.rpc('check_user_quota', {
+      p_user_id: session.user.id,
+      p_quota_type: 'children'
+    });
+
+    if (!quotaErr && quotaRes && typeof quotaRes === 'object' && (quotaRes as any).allowed === false) {
+      const limit = (quotaRes as any).limit;
+      const used = (quotaRes as any).used;
+      const message = `Vous avez atteint votre limite d'enfants (${used}/${limit}). Passez à un forfait supérieur pour ajouter d'autres profils.`;
+      toast({
+        title: "Limite d'enfants atteinte",
+        description: message,
+        variant: "destructive"
+      });
+      throw new Error(message);
+    }
+
     const { data, error } = await supabase
       .from('children')
       .insert({

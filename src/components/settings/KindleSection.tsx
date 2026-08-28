@@ -12,11 +12,17 @@ import { Mail, Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useKindleSettings } from '@/hooks/kindle/useKindleSettings';
 
+import { useFeatureAccess } from '@/hooks/subscription/useFeatureAccess';
+import { useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
+
 export const KindleSection = () => {
   const [email, setEmail] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const { settings, updateSettings, isLoading } = useKindleSettings();
+  const { featureAccess, loading: featureLoading } = useFeatureAccess();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   // Mettre à jour l'email local lorsque les settings changent
   useEffect(() => {
@@ -67,7 +73,7 @@ export const KindleSection = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || featureLoading) {
     return (
       <Card>
         <CardHeader>
@@ -81,6 +87,34 @@ export const KindleSection = () => {
             <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
             <div className="h-10 bg-gray-200 rounded"></div>
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const hasKindleAccess = featureAccess.kindle_export;
+
+  if (!hasKindleAccess) {
+    return (
+      <Card className="border-primary/20 bg-muted/40">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" />
+              Paramètres Kindle
+            </div>
+            <Button size="sm" variant="default" onClick={() => navigate('/pricing')} className="gap-1.5 text-xs">
+              <Sparkles className="w-3.5 h-3.5" /> Débloquer dès Calmidium
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>
+            L'envoi automatique d'histoires au format EPUB vers votre liseuse <strong>Kindle</strong> est accessible à partir du forfait <strong>Calmidium (5$/mois)</strong>.
+          </p>
+          <p className="text-xs">
+            Idéal pour lire les contes le soir sans écran émettant de la lumière bleue.
+          </p>
         </CardContent>
       </Card>
     );

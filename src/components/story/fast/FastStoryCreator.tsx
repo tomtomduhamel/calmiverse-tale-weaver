@@ -154,6 +154,9 @@ const FastStoryCreator: React.FC = () => {
       });
 
       await incrementUsage('story');
+      if (useVideo) {
+        await incrementUsage('video_intro');
+      }
 
       handleCloseDrawer();
       navigate('/library');

@@ -5,6 +5,8 @@ import EmailShareForm from './share/EmailShareForm';
 import KindleShareButton from './share/KindleShareButton';
 import { RobustKindleProgressDialog } from '../kindle/RobustKindleProgressDialog';
 import { useShareStory } from './share/useShareStory';
+import { useFeatureAccess } from '@/hooks/subscription/useFeatureAccess';
+import { useToast } from '@/hooks/use-toast';
 
 interface ShareStoryDialogProps {
   storyId: string;
@@ -26,7 +28,18 @@ export const ShareStoryDialog = ({ storyId, isOpen, onClose }: ShareStoryDialogP
     resetProgress
   } = useShareStory(storyId, onClose);
 
+  const { featureAccess } = useFeatureAccess();
+  const { toast } = useToast();
+
   const handleKindleClick = async () => {
+    if (!featureAccess.kindle_export) {
+      toast({
+        title: "Fonctionnalité réservée",
+        description: "L'envoi vers liseuse Kindle est accessible à partir du forfait Calmidium (5$/mois).",
+        variant: "destructive"
+      });
+      return;
+    }
     setShowProgressDialog(true);
     await handleKindleShare();
   };

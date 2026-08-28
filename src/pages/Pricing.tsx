@@ -72,24 +72,41 @@ const Pricing: React.FC = () => {
   };
 
   const getFeatureList = (tierLimits: any) => {
+    const isPayingTier = tierLimits.tier !== 'calmini';
     const features = [
       `${tierLimits.stories_per_month} histoires par mois`,
-      tierLimits.max_children ? `${tierLimits.max_children} enfants maximum` : 'Enfants illimités',
+      tierLimits.max_children ? `${tierLimits.max_children} enfant${tierLimits.max_children > 1 ? 's' : ''} maximum` : 'Enfants illimités',
     ];
 
-    if (tierLimits.has_story_series) features.push('Suites d\'histoires');
-    if (tierLimits.has_background_music) features.push('Musique de fond');
+    if (isPayingTier) {
+      features.push('Partage Tribu / Famille');
+      features.push('Envoi sur liseuse Kindle');
+    }
+
+    if (tierLimits.has_story_series) features.push('Suites d\'histoires (Séries)');
+    if (tierLimits.has_background_music) features.push('Musique & Ambiances douces');
+
     if (tierLimits.audio_generations_per_month > 0) {
       features.push(`${tierLimits.audio_generations_per_month} génération${tierLimits.audio_generations_per_month > 1 ? 's' : ''} audio/mois`);
     }
+
     if (tierLimits.max_voice_clones > 0) {
-      features.push(`${tierLimits.max_voice_clones} clonage${tierLimits.max_voice_clones > 1 ? 's' : ''} vocal${tierLimits.max_voice_clones > 1 ? 'aux' : ''}`);
+      features.push(`${tierLimits.max_voice_clones} voix studio (${tierLimits.max_voice_clones > 1 ? 'famille & proches' : 'parentale'})`);
     }
-    if (tierLimits.has_priority_access) features.push('Accès prioritaire');
+
+    if (tierLimits.has_multivoice_audio) {
+      features.push('Multi-Voix Théâtre IA (par défaut)');
+    }
+
+    if (tierLimits.has_auto_creation) {
+      features.push('Routines d\'histoires (19h30)');
+    }
     
     if (tierLimits.max_video_intros_per_period > 0) {
-      features.push(`${tierLimits.max_video_intros_per_period} vidéos d'introduction par mois`);
+      features.push(`${tierLimits.max_video_intros_per_period} vidéo${tierLimits.max_video_intros_per_period > 1 ? 's' : ''} magique${tierLimits.max_video_intros_per_period > 1 ? 's' : ''} d'intro/mois`);
     }
+
+    if (tierLimits.has_priority_access) features.push('Accès prioritaire');
 
     return features;
   };
