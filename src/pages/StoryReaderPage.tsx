@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatStoryFromSupabase } from "@/hooks/stories/storyFormatters";
 import { usePWA } from "@/hooks/usePWA";
 import { offlineStorageService } from "@/services/offline/offlineStorageService";
+import { useStoryVideoGeneration } from "@/hooks/stories/useStoryVideoGeneration";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -307,10 +308,22 @@ const StoryReaderPage: React.FC = () => {
   // La lecture d'une vidéo déjà générée ne dépend pas du quota : le quota gouverne
   // uniquement la génération. Une vidéo dont le video_path existe est toujours lisible.
   const videoUrl = currentStory.video_path ? getStoryVideoUrl(currentStory.video_path) : null;
+  const { generateVideoForStory, isGeneratingVideo } = useStoryVideoGeneration();
+  const isGeneratingThisVideo = currentStory ? isGeneratingVideo(currentStory.id) : false;
 
   const showVideoIntro =
     videoUrl &&
     ((userSettings.readingPreferences?.playVideoIntro !== false && !introPlayedRef.current) || forcePlayVideo);
+
+  const handlePlayVideo = () => {
+    setForcePlayVideo(true);
+  };
+
+  const handleGenerateVideo = async () => {
+    if (currentStory) {
+      await generateVideoForStory(currentStory);
+    }
+  };
 
   return (
     <ReadingSpeedProvider>
@@ -334,6 +347,9 @@ const StoryReaderPage: React.FC = () => {
         onToggleFavorite={handleToggleFavorite}
         onMarkAsRead={handleMarkAsRead}
         childName={getChildName(currentStory.childrenIds)}
+        onPlayVideo={handlePlayVideo}
+        onGenerateVideo={handleGenerateVideo}
+        isGeneratingVideo={isGeneratingThisVideo}
       />
     </ReadingSpeedProvider>
   );

@@ -5,8 +5,9 @@ import { CreateSequelButton } from "../story/series/CreateSequelButton";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Story } from "@/types/story";
-import { Loader2, BookCheck, Sparkles, Trash2 } from "lucide-react";
+import { Loader2, BookCheck, Sparkles, Trash2, Video } from "lucide-react";
 import { getStoryImageUrl } from "@/utils/supabaseImageUtils";
+import { useStoryVideoGeneration } from "@/hooks/stories/useStoryVideoGeneration";
 
 interface MobileStoryCardProps {
   story: Story;
@@ -36,6 +37,9 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
   const detectedDirection = useRef<'none' | 'vertical' | 'horizontal'>('none');
   const cardRef = useRef<HTMLDivElement>(null);
   
+  const { generateVideoForStory, isGeneratingVideo } = useStoryVideoGeneration();
+  const isGeneratingThisVideo = isGeneratingVideo(story.id);
+
   const DETECTION_THRESHOLD = 5; // Seuil minimum pour détecter un mouvement
   const isRecentStory = (): boolean => {
     const now = new Date();
@@ -64,10 +68,20 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
     if ((e.target as HTMLElement).closest('[data-sequel-button]')) {
       return;
     }
+
+    // Empêcher l'ouverture si on clique sur le bouton vidéo
+    if ((e.target as HTMLElement).closest('[data-video-button]')) {
+      return;
+    }
     
     if (onClick) {
       onClick();
     }
+  };
+
+  const handleGenerateVideo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    generateVideoForStory(story);
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
@@ -221,15 +235,33 @@ const MobileStoryCard: React.FC<MobileStoryCardProps> = ({
                 {story.title}
               </h3>
               
-              {/* Bouton favoris compact */}
-              <div data-favorite-button className="flex-shrink-0">
-                <FavoriteButton
-                  isFavorite={story.isFavorite || false}
-                  onToggle={handleFavoriteToggle}
-                  isLoading={isUpdatingFavorite}
-                  size="sm"
-                  variant="ghost"
-                />
+              {/* Bouton favoris et vidéo compacts */}
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                {!story.video_path && (story.status === "ready" || story.status === "read" || story.status === "completed") && (
+                  <button
+                    data-video-button
+                    onClick={handleGenerateVideo}
+                    disabled={isDeleting || isGeneratingThisVideo}
+                    className="p-1 rounded-full text-primary hover:bg-primary/10 transition-colors"
+                    aria-label="Créer la vidéo magique"
+                    type="button"
+                  >
+                    {isGeneratingThisVideo ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                    ) : (
+                      <Video className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                )}
+                <div data-favorite-button>
+                  <FavoriteButton
+                    isFavorite={story.isFavorite || false}
+                    onToggle={handleFavoriteToggle}
+                    isLoading={isUpdatingFavorite}
+                    size="sm"
+                    variant="ghost"
+                  />
+                </div>
               </div>
             </div>
             

@@ -20,6 +20,9 @@ interface StoryReaderProps {
   onToggleFavorite?: (storyId: string) => void;
   onMarkAsRead?: (storyId: string) => Promise<boolean>;
   childName?: string;
+  onPlayVideo?: () => void;
+  onGenerateVideo?: () => void;
+  isGeneratingVideo?: boolean;
 }
 
 const StoryReader: React.FC<StoryReaderProps> = ({ 
@@ -28,7 +31,10 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   onBack, 
   onToggleFavorite, 
   onMarkAsRead,
-  childName 
+  childName,
+  onPlayVideo,
+  onGenerateVideo,
+  isGeneratingVideo = false
 }) => {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const { userSettings } = useUserSettings();
@@ -92,6 +98,9 @@ const StoryReader: React.FC<StoryReaderProps> = ({
           setShowSummary={setShowSummary}
           onDelete={handleDelete}
           isDeleting={isDeleting}
+          onPlayVideo={onPlayVideo}
+          onGenerateVideo={onGenerateVideo}
+          isGeneratingVideo={isGeneratingVideo}
         />
 
       <StoryReaderContent

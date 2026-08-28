@@ -47,9 +47,9 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({
   limits,
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const [generateVideo, setGenerateVideo] = React.useState(true);
+  const [generateVideo, setGenerateVideo] = React.useState(false);
 
-  // Désactiver la vidéo par défaut si pas de quota
+  // Désactiver la vidéo si pas de quota
   React.useEffect(() => {
     if (limits && limits.max_video_intros_per_period === 0) {
       setGenerateVideo(false);

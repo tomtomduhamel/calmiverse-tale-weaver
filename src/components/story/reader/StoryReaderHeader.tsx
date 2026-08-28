@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Pause, ScrollText, Info, Moon, Sun, Trash2 } from "lucide-react";
+import { ArrowLeft, Play, Pause, ScrollText, Info, Moon, Sun, Trash2, Video, Loader2 } from "lucide-react";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { useReadingSpeed } from "@/contexts/ReadingSpeedContext";
 import { FavoriteReaderButton } from "./FavoriteReaderButton";
@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Story } from "@/types/story";
+
 interface StoryReaderHeaderProps {
   story: Story;
   onClose: () => void;
@@ -33,6 +34,10 @@ interface StoryReaderHeaderProps {
   setShowSummary?: (show: boolean) => void;
   onDelete?: () => void;
   isDeleting?: boolean;
+  // Video props
+  onPlayVideo?: () => void;
+  onGenerateVideo?: () => void;
+  isGeneratingVideo?: boolean;
 }
 export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
   story,
@@ -47,7 +52,10 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
   onToggleAutoScroll,
   setShowSummary,
   onDelete,
-  isDeleting = false
+  isDeleting = false,
+  onPlayVideo,
+  onGenerateVideo,
+  isGeneratingVideo = false,
 }) => {
   const { readingSpeed } = useReadingSpeed();
   const readingTime = calculateReadingTime(story.content, readingSpeed);
@@ -70,13 +78,63 @@ export const StoryReaderHeader: React.FC<StoryReaderHeaderProps> = ({
 
         {/* Titre et temps de lecture */}
         <div className="flex-1 text-center">
-          
-          
-          
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {/* Bouton Rejouer Vidéo si présente */}
+          {story.video_path && onPlayVideo && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onPlayVideo}
+                    className="text-primary hover:text-primary hover:bg-primary/10 flex items-center gap-1 text-xs px-2.5"
+                    aria-label="Revoir la vidéo magique"
+                  >
+                    <Video className="h-4 w-4" />
+                    <span className="hidden sm:inline font-medium">Vidéo</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Revoir la vidéo magique</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          {/* Bouton Créer Vidéo si absente */}
+          {!story.video_path && onGenerateVideo && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onGenerateVideo}
+                    disabled={isGeneratingVideo}
+                    className="text-primary hover:text-primary hover:bg-primary/10 flex items-center gap-1 text-xs px-2.5"
+                    aria-label="Créer la vidéo magique"
+                  >
+                    {isGeneratingVideo ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Video className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline font-medium">
+                      {isGeneratingVideo ? "Création..." : "+ Vidéo"}
+                    </span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{isGeneratingVideo ? "Génération de la vidéo en cours..." : "Créer la vidéo d'introduction magique"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
           {/* Contrôle de défilement automatique */}
           {onToggleAutoScroll && <AutoScrollHeaderButton isAutoScrolling={isAutoScrolling} isPaused={isPaused} isManuallyPaused={isManuallyPaused} onToggleAutoScroll={onToggleAutoScroll} isDarkMode={isDarkMode} />}
           

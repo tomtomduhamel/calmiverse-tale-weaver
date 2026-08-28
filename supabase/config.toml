@@ -124,3 +124,6 @@ verify_jwt = false
 [functions.due-story-routines]
 verify_jwt = false
 
+[functions.generate-story-video]
+verify_jwt = true
+
