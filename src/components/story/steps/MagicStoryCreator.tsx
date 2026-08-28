@@ -8,7 +8,22 @@ import { MagicChildrenDrawer } from './MagicChildrenDrawer';
 import { MagicObjectiveDrawer } from './MagicObjectiveDrawer';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ChevronDown, CalendarClock, Lock, Loader2 } from 'lucide-react';
+import { 
+  Sparkles, 
+  ChevronDown, 
+  CalendarClock, 
+  Lock, 
+  Loader2, 
+  Moon, 
+  Users, 
+  User, 
+  Smile, 
+  Focus, 
+  Coffee, 
+  Compass, 
+  Wand2,
+  Clock
+} from 'lucide-react';
 import type { Child } from '@/types/child';
 
 interface MagicStoryCreatorProps {
@@ -25,6 +40,21 @@ const DAY_OPTIONS = [
   { label: 'S', value: 6 },
   { label: 'D', value: 7 },
 ];
+
+export const getObjectiveIcon = (id?: string) => {
+  switch (id) {
+    case 'sleep':
+      return <Moon className="w-4 h-4 md:w-5 md:h-5 text-indigo-500 dark:text-indigo-400 shrink-0" />;
+    case 'focus':
+      return <Focus className="w-4 h-4 md:w-5 md:h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />;
+    case 'relax':
+      return <Coffee className="w-4 h-4 md:w-5 md:h-5 text-amber-600 dark:text-amber-400 shrink-0" />;
+    case 'fun':
+      return <Smile className="w-4 h-4 md:w-5 md:h-5 text-rose-500 dark:text-rose-400 shrink-0" />;
+    default:
+      return <Compass className="w-4 h-4 md:w-5 md:h-5 text-primary/70 shrink-0" />;
+  }
+};
 
 const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, preSelectedChildId }) => {
   const {
@@ -60,25 +90,25 @@ const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, pre
   }, [preSelectedChildId, childrenList, hasPersistedSession, selectedChildrenIds, updateSelectedChildren]);
 
   const getSelectedChildrenText = () => {
-    if (selectedChildrenIds.length === 0) return 'Choisir les personnages';
+    if (selectedChildrenIds.length === 0) return 'choisir les héros';
     if (selectedChildrenIds.length === 1) {
       const child = childrenList.find(c => c.id === selectedChildrenIds[0]);
-      return child ? child.name : '1 personnage';
+      return child ? child.name : '1 héros';
     }
     if (selectedChildrenIds.length === 2) {
       const child1 = childrenList.find(c => c.id === selectedChildrenIds[0]);
       const child2 = childrenList.find(c => c.id === selectedChildrenIds[1]);
-      return `${child1?.name} et ${child2?.name}`;
+      return `${child1?.name} & ${child2?.name}`;
     }
     const firstChild = childrenList.find(c => c.id === selectedChildrenIds[0]);
     const remainingCount = selectedChildrenIds.length - 1;
-    return `${firstChild?.name} et ${remainingCount} autre${remainingCount > 1 ? 's' : ''}`;
+    return `${firstChild?.name} + ${remainingCount} héros`;
   };
 
   const getSelectedObjectiveText = () => {
-    if (!selectedObjective) return 'Choisir un objectif';
+    if (!selectedObjective) return "l'intention du soir";
     const obj = objectives.find(o => o.id === selectedObjective);
-    return obj ? obj.label.toLowerCase() : 'Choisir un objectif';
+    return obj ? obj.label.toLowerCase() : "l'intention du soir";
   };
 
   const toggleDay = (day: number) => {
@@ -96,7 +126,7 @@ const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, pre
   };
 
   const selectedChildrenCount = selectedChildrenIds.length;
-  const isReady = selectedChildrenCount > 0 && selectedObjective;
+  const isReady = selectedChildrenCount > 0 && !!selectedObjective;
 
   const handleContinue = async () => {
     if (!isReady) return;
@@ -135,109 +165,172 @@ const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, pre
   };
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col items-center justify-center min-vh-[70vh] px-4 py-8">
+    <div className="max-w-3xl mx-auto flex flex-col items-center justify-center px-3 sm:px-6 py-4 sm:py-8 space-y-6">
 
-      {/* Carte principale — phrase magique */}
-      <div className="w-full max-w-2xl bg-card rounded-3xl p-8 md:p-12 shadow-sm border border-border/50 backdrop-blur-sm transition-all duration-500 hover:shadow-md">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium leading-[1.4] md:leading-[1.4] text-center text-foreground/90">
-          Laissons Calmi préparer une histoire avec{' '}
+      {/* ── LE GRIMOIRE POÉTIQUE (Carte principale) ───────────────────────── */}
+      <div className="relative w-full overflow-hidden bg-card/95 dark:bg-card/85 backdrop-blur-md rounded-3xl p-6 sm:p-10 md:p-14 shadow-floating border border-primary/20 transition-all duration-500">
+        
+        {/* Décorations d'ambiance douces */}
+        <div className="pointer-events-none absolute -top-12 -right-12 w-40 h-40 bg-primary-soft/20 rounded-full blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-12 -left-12 w-40 h-40 bg-accent/25 rounded-full blur-2xl" />
+        <Sparkles className="pointer-events-none absolute top-4 right-5 w-5 h-5 text-primary/30" />
+        <Moon className="pointer-events-none absolute bottom-4 left-5 w-4 h-4 text-primary/25" />
 
+        {/* Badge supérieur */}
+        <div className="flex justify-center mb-6 sm:mb-8">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide uppercase bg-primary/10 text-primary border border-primary/20">
+            <Wand2 className="w-3.5 h-3.5" />
+            Le Grimoire Magique
+          </span>
+        </div>
+
+        {/* Phrase narrative en typographie éditoriale */}
+        <div className="text-center font-display text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] text-foreground/90 leading-[1.8] sm:leading-[1.8] md:leading-[1.85]">
+          <span>Ce soir, Calmi imagine une douce histoire avec </span>
+
+          {/* Capsule Héros */}
           <button
+            type="button"
             onClick={() => setIsChildrenDrawerOpen(true)}
+            aria-label="Choisir les héros"
             className={`
-              inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-2xl md:rounded-full
-              font-bold text-2xl md:text-4xl lg:text-5xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95
-              border-b-4 border-transparent
+              inline-flex items-center gap-2 align-baseline my-1 mx-1 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-2xl md:rounded-full
+              font-sans font-semibold text-lg sm:text-2xl md:text-3xl tracking-tight transition-all duration-300 transform hover:scale-[1.03] active:scale-95
+              shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40
               ${selectedChildrenCount > 0
-                ? 'text-primary bg-primary/10 hover:bg-primary/15'
-                : 'text-muted-foreground bg-muted hover:bg-muted/80 border-dashed border-b-muted-foreground/30'}
+                ? 'bg-gradient-to-r from-primary/15 via-primary-soft/20 to-primary/10 text-primary border border-primary/40 hover:border-primary/60 shadow-glow-primary/20'
+                : 'bg-muted/70 hover:bg-muted text-muted-foreground border-2 border-dashed border-primary/30 hover:border-primary/50'}
             `}
           >
-            {getSelectedChildrenText()}
-            <ChevronDown className={`w-5 h-5 md:w-8 md:h-8 ${selectedChildrenCount > 0 ? 'text-primary' : 'text-muted-foreground'}`} />
+            {selectedChildrenCount > 1 ? (
+              <Users className={`w-4 h-4 sm:w-5 sm:h-5 ${selectedChildrenCount > 0 ? 'text-primary' : 'text-muted-foreground'}`} />
+            ) : (
+              <User className={`w-4 h-4 sm:w-5 sm:h-5 ${selectedChildrenCount > 0 ? 'text-primary' : 'text-muted-foreground'}`} />
+            )}
+            <span className="truncate max-w-[200px] sm:max-w-none">{getSelectedChildrenText()}</span>
+            <ChevronDown className={`w-4 h-4 sm:w-5 sm:h-5 opacity-70 transition-transform ${isChildrenDrawerOpen ? 'rotate-180' : ''}`} />
           </button>
 
-          {' '}pour créer un beau moment et{' '}
+          <span> pour </span>
 
+          {/* Capsule Objectif */}
           <button
+            type="button"
             onClick={() => setIsObjectiveDrawerOpen(true)}
+            aria-label="Choisir un objectif"
             className={`
-              inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-2xl md:rounded-full
-              font-bold text-2xl md:text-4xl lg:text-5xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95
-              border-b-4 border-transparent
+              inline-flex items-center gap-2 align-baseline my-1 mx-1 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-2xl md:rounded-full
+              font-sans font-semibold text-lg sm:text-2xl md:text-3xl tracking-tight transition-all duration-300 transform hover:scale-[1.03] active:scale-95
+              shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40
               ${selectedObjective
-                ? 'text-primary bg-primary-soft/15 hover:bg-primary-soft/25'
-                : 'text-muted-foreground bg-muted hover:bg-muted/80 border-dashed border-b-muted-foreground/30'}
+                ? 'bg-gradient-to-r from-accent/25 via-primary-soft/25 to-accent/15 text-foreground border border-primary/40 hover:border-primary/60 shadow-glow-primary/20'
+                : 'bg-muted/70 hover:bg-muted text-muted-foreground border-2 border-dashed border-primary/30 hover:border-primary/50'}
             `}
           >
-            {getSelectedObjectiveText()}
-            <ChevronDown className={`w-5 h-5 md:w-8 md:h-8 ${selectedObjective ? 'text-primary' : 'text-muted-foreground'}`} />
+            {getObjectiveIcon(selectedObjective)}
+            <span className="truncate max-w-[200px] sm:max-w-none">{getSelectedObjectiveText()}</span>
+            <ChevronDown className={`w-4 h-4 sm:w-5 sm:h-5 opacity-70 transition-transform ${isObjectiveDrawerOpen ? 'rotate-180' : ''}`} />
           </button>
-          .
-        </h1>
 
-        {/* Bouton de validation */}
-        <div className={`mt-12 flex justify-center transition-all duration-700 ease-out transform ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
+          <span>.</span>
+        </div>
+
+        {/* Bouton de validation d'action */}
+        <div className="mt-10 sm:mt-12 flex flex-col items-center justify-center gap-3">
           <Button
             size="lg"
-            variant="glow"
-            onClick={handleContinue}
-            disabled={creatingRoutine}
-            className="rounded-full px-8 py-6 text-lg font-semibold hover:-translate-y-1 transition-all group"
+            variant={isReady ? "glow" : "outline"}
+            onClick={isReady ? handleContinue : undefined}
+            disabled={!isReady || creatingRoutine}
+            className={`
+              rounded-full px-8 sm:px-10 py-6 sm:py-7 text-base sm:text-lg font-semibold transition-all duration-400 group
+              ${isReady 
+                ? 'shadow-glow-primary hover:-translate-y-1 scale-100 opacity-100 cursor-pointer' 
+                : 'opacity-50 cursor-not-allowed border-dashed'}
+            `}
           >
             {creatingRoutine ? (
-              <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Création en cours…</>
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Préparation du conte…
+              </>
             ) : scheduleEnabled ? (
-              <><Sparkles className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />Créer + Planifier</>
+              <>
+                <Sparkles className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
+                Créer & Enregistrer le rituel
+              </>
             ) : (
-              <><Sparkles className="w-5 h-5 mr-2 text-primary-foreground/90 group-hover:rotate-12 transition-transform" />Création des 3 titres</>
+              <>
+                <Sparkles className="w-5 h-5 mr-2 text-primary-foreground group-hover:rotate-12 transition-transform" />
+                {isReady ? 'Découvrir les 3 titres magiques' : 'Complétez la phrase ci-dessus'}
+              </>
             )}
           </Button>
+
+          {!isReady && (
+            <p className="text-xs text-muted-foreground animate-fade-in flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-primary/60" />
+              Touchez les bulles en pointillés pour personnaliser l'histoire
+            </p>
+          )}
         </div>
       </div>
 
-      {/* ── Toggle "Répéter automatiquement" ───────────────────────────────── */}
-      <div className={`w-full max-w-2xl mt-4 transition-all duration-500 ${isReady ? 'opacity-100' : 'opacity-50'}`}>
-        <div className="bg-card rounded-2xl border border-border/50 px-6 py-4 space-y-4">
+      {/* ── RITUEL DU SOIR / RÉPÉTITION AUTOMATIQUE ────────────────────────── */}
+      <div className="w-full transition-all duration-400">
+        <div className="bg-card/90 rounded-2xl border border-border/60 p-4 sm:p-5 shadow-soft space-y-4">
 
-          {/* En-tête du toggle */}
+          {/* En-tête du rituel */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CalendarClock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Répéter automatiquement</span>
-              {!checkingAccess && hasAutoCreation === false && (
-                <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-                  <Lock className="h-3 w-3" />
-                  Calmix
-                </span>
-              )}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <CalendarClock className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground">Rituel du coucher</span>
+                  {!checkingAccess && hasAutoCreation === false && (
+                    <span className="inline-flex items-center gap-1 text-[11px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                      <Lock className="h-3 w-3" />
+                      Calmix
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">Créer automatiquement cette histoire chaque semaine</p>
+              </div>
             </div>
             <Switch
               checked={scheduleEnabled}
               onCheckedChange={handleScheduleToggle}
               disabled={checkingAccess}
-              aria-label="Activer la répétition automatique"
+              aria-label="Activer le rituel du coucher"
             />
           </div>
 
-          {/* Panneau de planification */}
+          {/* Panneau de configuration du rituel */}
           {scheduleEnabled && (
-            <div className="space-y-5 pt-3 border-t border-border/50 animate-fade-in">
-              {/* Jours */}
+            <div className="space-y-4 pt-3 border-t border-border/50 animate-fade-in">
               <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Jours de la semaine
-                </p>
-                <div className="flex gap-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Jours de l'histoire
+                  </span>
+                  {scheduleDays.length > 0 && (
+                    <span className="text-xs font-medium text-primary">
+                      {scheduleDays.length} jour{scheduleDays.length > 1 ? 's' : ''}/semaine
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-1.5 sm:gap-2">
                   {DAY_OPTIONS.map((day, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => toggleDay(day.value)}
-                      className={`w-9 h-9 rounded-full text-xs font-semibold transition-all duration-200 ${
+                      className={`flex-1 h-10 rounded-xl text-xs font-bold transition-all duration-200 ${
                         scheduleDays.includes(day.value)
                           ? 'bg-primary text-primary-foreground shadow-sm scale-105'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                          : 'bg-muted/60 text-muted-foreground hover:bg-muted'
                       }`}
                       aria-pressed={scheduleDays.includes(day.value)}
                     >
@@ -245,41 +338,37 @@ const MagicStoryCreator: React.FC<MagicStoryCreatorProps> = ({ childrenList, pre
                     </button>
                   ))}
                 </div>
-                {scheduleDays.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    ~{Math.ceil(scheduleDays.length * 4.33)} histoires/mois
-                  </p>
-                )}
               </div>
 
-              {/* Heure */}
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Heure
-                </p>
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <Clock className="w-4 h-4" />
+                  Heure du conte
+                </div>
                 <input
                   type="time"
                   value={scheduleTime}
                   onChange={(e) => setScheduleTime(e.target.value)}
-                  className="p-2 border border-border rounded-lg bg-background text-sm"
+                  className="px-3 py-1.5 border border-border rounded-xl bg-background text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
             </div>
           )}
         </div>
 
-        {/* Lien discret vers la gestion */}
+        {/* Lien discret */}
         <div className="text-center mt-3">
           <button
             type="button"
             onClick={() => navigate('/app/routines')}
-            className="text-xs text-muted-foreground hover:text-primary transition-colors hover:underline underline-offset-2"
+            className="text-xs text-muted-foreground hover:text-primary transition-colors hover:underline underline-offset-4"
           >
-            Gérer mes routines existantes
+            Gérer mes rituels et routines existantes
           </button>
         </div>
       </div>
 
+      {/* Drawers */}
       <MagicChildrenDrawer
         open={isChildrenDrawerOpen}
         onOpenChange={setIsChildrenDrawerOpen}
