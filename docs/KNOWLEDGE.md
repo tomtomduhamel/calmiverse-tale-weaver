@@ -737,14 +737,40 @@ Le système d'amélioration continue relie les retours réels des utilisateurs e
 - **Service de Télémétrie (`src/services/monitoring/systemHealthService.ts`)** :
   - Analyse dynamique sur 24 heures glissantes des taux de succès et de panne des générateurs d'histoires (`stories`), des synthèses vocales (`audio_files`), de la connectivité et de la latence base de données/authentification.
   - Détection proactive des dégradations de service dès que le taux d'échec dépasse 5%.
-- **Tableau de Bord Live (`src/pages/support/ServiceStatusPage.tsx`)** :
-  - Affichage en temps réel de l'état opérationnel et du pourcentage de disponibilité par service.
-  - Bouton d'actualisation instantanée sans rechargement de page.
+### 16.6 Résilience du Lecteur d'Histoires & Règles d'Or des Hooks React (Priorité 6)
+- **Ordre Inconditionnel des Hooks React** :
+  - Interdiction formelle d'appeler des hooks (`useReadingSpeed`, `useStoryVideoGeneration`, `useSubscription`, `useNavigate`, etc.) après des retours conditionnels (`if (isLoading) return ...`, `if (!story) return ...`).
+  - Tous les hooks doivent impérativement être déclarés au début du composant pour prévenir l'erreur fatale `Rendered more hooks than during previous render`.
+- **Tolérance aux Pannes des Médias Plein Écran (`StoryVideoIntro.tsx`)** :
+  - Tout lecteur média plein écran intègre un gestionnaire d'erreur `onError` avec repli immédiat (`triggerComplete()`) pour ne jamais bloquer l'utilisateur sur un écran noir si la vidéo échoue.
+- **Normalisation des Schémas BDD & Support Offline-First** :
+  - `formatStoryFromSupabase` gère de manière transparente les clés camelCase et snake_case (`createdat`/`created_at`, `childrenids`/`children_ids`, `story_summary`/`summary`).
+  - `StoryReaderPage` charge en priorité les histoires stockées dans IndexedDB (`offlineStorageService.getOfflineStory`) avant de solliciter le réseau.
 
 ---
 
-**Dernière mise à jour** : 2026-08-26  
-**Version** : 4.0 (Robustesse Complète P1 à P5 : Télémétrie Live, Idempotence Quotas, Mode Hors-Ligne Dexie, Zod Runtime & Self-Healing)  
+## 17. Chaîne de Tests Automatisés & Pipeline CI/CD
+
+### 17.1 Intégration Continue GitHub Actions (`.github/workflows/ci.yml`)
+- Déclenchement automatique sur chaque `push` et `pull_request` vers `main` et `dev`.
+- Pipeline d'assurance qualité en 4 étapes strictes :
+  1. `npm run type-check` (`tsc --noEmit`) : Vérification statique des types.
+  2. `npm run lint` : Analyse du code et conformité des règles ESLint / React Hooks.
+  3. `npm test` (`vitest run`) : Exécution de l'ensemble de la suite de tests unitaires et composants.
+  4. `npm run build` : Validation du bundling de production Vite/PWA.
+
+### 17.2 Couverture des Tests de Non-Régression
+- **Tests Unitaires & Composants (Vitest)** :
+  - `StoryReader.test.tsx` : Rendu du titre, contenu tokenisé, bascule favoris, marquage comme lu et vue de secours.
+  - `StoryReaderPage.test.tsx` : Résolution de route `/app/reader/:id`, chargement depuis cache et gestion d'erreurs d'identifiants.
+  - `SimpleChildSelector.test.tsx` : Sélection d'enfants avec calculs d'âge dynamiques pérennes.
+- **Tests End-to-End (Playwright - `tests/pages.spec.ts`)** :
+  - 12 pages et routes fondamentales testées sans écran blanc ni erreurs console, y compris la route `/app/reader/:id`.
+
+---
+
+**Dernière mise à jour** : 2026-08-31  
+**Version** : 4.1 (Résilience du Lecteur, Règle d'or des Hooks React, Intégration Vitest & Playwright dans la CI GitHub Actions)  
 **Statut** : Production ready
 
 
