@@ -54,7 +54,6 @@ if (isDemoMode) {
 }
 
 // 🛡️ PWA guard: unregister SW in iframe/preview to avoid stale cache during design iterations.
-// In production (installed PWA / standalone tab), reload automatically when a new SW takes control.
 (() => {
   if (!('serviceWorker' in navigator)) return;
   const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
@@ -68,15 +67,13 @@ if (isDemoMode) {
       regs.forEach((r) => r.unregister());
     }).catch(() => {});
   } else {
-    let refreshing = false;
+    // Only log controller changes; updates are managed via user prompt in usePWA / PWAUpdateNotification
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (refreshing) return;
-      refreshing = true;
-      console.log('[SW] New service worker activated — reloading for fresh assets');
-      window.location.reload();
+      console.log('[SW] Service worker controller changed');
     });
   }
 })();
+
 
 bootMonitor.log('main.tsx: React about to mount');
 

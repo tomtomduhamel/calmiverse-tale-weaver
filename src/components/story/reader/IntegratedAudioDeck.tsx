@@ -236,7 +236,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     const voices = synthRef.current.getVoices();
     const frVoice = voices.find(v => v.lang.startsWith('fr'));
     if (frVoice) utterance.voice = frVoice;
-    utterance.rate = 1.0;
+    utterance.rate = 0.88; // Rythme apaisant et posé pour le conte du soir
 
     utterance.onstart = () => {
       setIsPlaying(true);

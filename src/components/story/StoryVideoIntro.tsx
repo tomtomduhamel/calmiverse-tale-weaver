@@ -20,15 +20,15 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
     const fadeOutTimerRef = useRef<NodeJS.Timeout | null>(null);
     const feedbackTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Fonction de sortie fluide avec fondu
+    // Fonction de sortie fluide avec maintien sur la dernière frame puis fondu
     const triggerComplete = useCallback(() => {
         if (isFadingOut) return;
         setIsFadingOut(true);
 
-        // Laisser le temps à la transition CSS (600ms) de se jouer doucement
+        // Transition douce de 1000ms vers le texte du livre
         fadeOutTimerRef.current = setTimeout(() => {
             onComplete();
-        }, 650);
+        }, 1000);
     }, [isFadingOut, onComplete]);
 
     // Auto-play the video when the component mounts
@@ -101,19 +101,27 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
     };
 
     const handleVideoEnd = () => {
-        // En fin de vidéo, la dernière frame reste affichée pendant le fondu vers la lecture
+        // En fin de vidéo : figer la dernière image pendant 1.5s de contemplation avant d'initier le fondu
         setProgress(100);
-        triggerComplete();
+        if (videoRef.current) {
+            videoRef.current.pause();
+        }
+        if (ambientRef.current) {
+            ambientRef.current.pause();
+        }
+        setTimeout(() => {
+            triggerComplete();
+        }, 1200);
     };
 
     return (
         <div 
             onClick={togglePlay}
-            className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black overflow-hidden touch-none w-full h-[100dvh] cursor-pointer transition-opacity duration-700 ease-in-out ${
+            className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black overflow-hidden touch-none w-full h-[100dvh] cursor-pointer transition-opacity duration-1000 ease-in-out ${
                 isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`}
         >
-            {/* 1. Ambient Backdrop - Fond immersif flouté pour habiller les bandes latérales sans recadrer */}
+            {/* 1. Ambient Backdrop - Fond immersif flouté pour habiller les écrans extra-larges */}
             <video
                 ref={ambientRef}
                 src={videoUrl}
@@ -124,14 +132,14 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
                 onError={() => {
                     console.warn("[StoryVideoIntro] Erreur de fond ambiant vidéo");
                 }}
-                className="absolute inset-0 w-full h-full object-cover scale-125 blur-3xl opacity-35 brightness-50 pointer-events-none select-none"
+                className="absolute inset-0 w-full h-full object-cover scale-125 blur-3xl opacity-40 brightness-50 pointer-events-none select-none"
             />
 
-            {/* 2. Main Video - En 'object-contain' pour préserver 100% du champ de vision sans zoom artificiel */}
+            {/* 2. Main Video - Rendu portrait immersif (object-cover sur mobile, object-contain sur grand écran) */}
             <video
                 ref={videoRef}
                 src={videoUrl}
-                className="relative z-10 w-full h-full max-w-full max-h-full object-contain pointer-events-none select-none"
+                className="relative z-10 w-full h-full max-w-full max-h-full object-cover sm:object-contain pointer-events-none select-none"
                 playsInline
                 muted={isMuted}
                 onTimeUpdate={handleTimeUpdate}

@@ -102,7 +102,7 @@ serve(async (req) => {
           input: chunk,
           voice: selectedVoice,
           response_format: "mp3",
-          speed: 0.95 // Rythme apaisant pour le coucher
+          speed: 0.88 // Rythme apaisant et posé pour le conte du soir
         })
       });
 

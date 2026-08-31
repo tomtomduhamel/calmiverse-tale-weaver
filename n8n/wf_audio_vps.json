@@ -119,7 +119,7 @@
           },
           "outputFormat": "mp3_44100_128",
           "languageCode": "fr-ca",
-          "voiceSettings": "{\n  \"stability\": 1,\n  \"similarity_boost\": 1,\n  \"style\": 0,\n  \"use_speaker_boost\": true,\n  \"speed\": 0.9\n}"
+          "voiceSettings": "{\n  \"stability\": 1,\n  \"similarity_boost\": 1,\n  \"style\": 0,\n  \"use_speaker_boost\": true,\n  \"speed\": 0.85\n}"
         },
         "requestOptions": {}
       },
@@ -399,7 +399,7 @@
             },
             "outputFormat": "mp3_44100_128",
             "languageCode": "fr-ca",
-            "voiceSettings": "{\n  \"stability\": 1,\n  \"similarity_boost\": 1,\n  \"style\": 0,\n  \"use_speaker_boost\": true,\n  \"speed\": 0.9\n}"
+            "voiceSettings": "{\n  \"stability\": 1,\n  \"similarity_boost\": 1,\n  \"style\": 0,\n  \"use_speaker_boost\": true,\n  \"speed\": 0.85\n}"
           },
           "requestOptions": {}
         },

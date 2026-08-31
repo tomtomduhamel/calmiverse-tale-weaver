@@ -44,8 +44,8 @@ const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
     // Accès accordé (status=active, ou pas d'entrée = admin/legacy/erreur query)
   }, [user, betaInfo, isPending, isRejected, isExpired, authLoading, betaLoading, navigate]);
 
-  // Loader pendant vérification
-  if (authLoading || betaLoading) {
+  // Loader uniquement au premier chargement si l'état d'authentification initial n'est pas encore résolu
+  if (authLoading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <Card className="p-6 max-w-md w-full">
@@ -65,6 +65,7 @@ const BetaGuard: React.FC<BetaGuardProps> = ({ children }) => {
 
   // Accès accordé
   return <>{children}</>;
+
 };
 
 export default BetaGuard;
