@@ -54,6 +54,8 @@ export default defineConfig(({ mode }) => ({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/__tests__/setup.ts'],
+    include: ['src/__tests__/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['node_modules/**', '.claude/**', 'dist/**', 'tests/**'],
   },
   server: {
     host: "::",

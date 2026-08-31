@@ -53,6 +53,8 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
     createSequel,
     isCreating
   } = useStorySeries();
+  const { limits } = useSubscription();
+  const navigate = useNavigate();
 
   // Détecter les suites en cours
   const pendingStories = seriesStories.filter(s => s.status === 'pending');
@@ -150,8 +152,6 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
     console.error('[CreateSequelButton] Erreur génération:', error);
     setCreatedStoryId(null);
   };
-  const { limits } = useSubscription();
-  const navigate = useNavigate();
 
   const handleOpenChange = (open: boolean) => {
     if (open && limits && !limits.has_story_series) {

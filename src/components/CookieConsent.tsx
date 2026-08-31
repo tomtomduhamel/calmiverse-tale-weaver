@@ -19,12 +19,16 @@ export const CookieConsent = () => {
   }, []);
 
   const accept = () => {
-    try { localStorage.setItem(STORAGE_KEY, "accepted"); } catch {}
+    try { localStorage.setItem(STORAGE_KEY, "accepted"); } catch {
+      // Ignorer si localStorage n'est pas disponible
+    }
     setVisible(false);
   };
 
   const refuse = () => {
-    try { localStorage.setItem(STORAGE_KEY, "essential-only"); } catch {}
+    try { localStorage.setItem(STORAGE_KEY, "essential-only"); } catch {
+      // Ignorer si localStorage n'est pas disponible
+    }
     setVisible(false);
   };
 

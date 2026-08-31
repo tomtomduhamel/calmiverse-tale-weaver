@@ -60,8 +60,8 @@ export const StoryContent: React.FC<StoryContentProps> = ({
       
       const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
       const textNodes: Text[] = [];
-      let node;
-      while (node = walker.nextNode()) {
+      let node: Node | null;
+      while ((node = walker.nextNode()) !== null) {
         if (node.nodeValue?.trim()) {
           textNodes.push(node as Text);
         }

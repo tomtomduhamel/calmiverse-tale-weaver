@@ -9,8 +9,11 @@ import StoryReader from '@/components/StoryReader';
 import type { Story } from '@/types/story';
 import { useToast } from '@/hooks/use-toast';
 
+import { formatStoryFromSupabase } from '@/hooks/stories/storyFormatters';
+
 const PublicStory = () => {
-  const { token } = useParams<{ token: string }>();
+  const { id, token } = useParams<{ id?: string; token?: string }>();
+  const storyIdentifier = id || token;
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -21,18 +24,21 @@ const PublicStory = () => {
 
   useEffect(() => {
     const fetchPublicStory = async () => {
-      if (!token) {
-        setError('Token manquant');
+      if (!storyIdentifier) {
+        setError('Identifiant manquant');
         setIsLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
-          .from('stories')
-          .select('*')
-          .eq('sharing->publicAccess->token', token)
-          .single();
+        let query = supabase.from('stories').select('*');
+        if (id) {
+          query = query.eq('id', id);
+        } else {
+          query = query.eq('sharing->publicAccess->token', storyIdentifier);
+        }
+
+        const { data, error } = await query.maybeSingle();
 
         if (error || !data) {
           setError('Histoire introuvable ou lien expiré');
@@ -46,30 +52,13 @@ const PublicStory = () => {
             story_id: data.id,
             access_data: {
               type: 'public_access',
-              token,
+              token: storyIdentifier,
               timestamp: new Date().toISOString(),
               user_agent: navigator.userAgent,
             }
           });
 
-        // Formater l'histoire pour le type Story
-        const formattedStory: Story = {
-          id: data.id,
-          title: data.title,
-          preview: data.preview || '',
-          objective: data.objective || '',
-          childrenIds: data.childrenids || [],
-          childrenNames: data.childrennames || [],
-          createdAt: new Date(data.createdat),
-          status: data.status || 'ready',
-          content: data.content || '', // CORRECTION: utiliser 'content' au lieu de 'story_text'
-          story_summary: data.summary || '',
-          authorId: data.authorid,
-          error: data.error,
-          tags: [],
-          updatedAt: data.updatedat ? new Date(data.updatedat) : new Date(),
-        };
-
+        const formattedStory = formatStoryFromSupabase(data);
         setStory(formattedStory);
       } catch (err) {
         console.error('Erreur lors du chargement de l\'histoire publique:', err);
@@ -80,7 +69,7 @@ const PublicStory = () => {
     };
 
     fetchPublicStory();
-  }, [token]);
+  }, [id, token, storyIdentifier]);
 
   const handleShare = async () => {
     if (navigator.share) {

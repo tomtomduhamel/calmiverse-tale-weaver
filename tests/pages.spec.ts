@@ -116,8 +116,25 @@ async function mockAuthenticatedState(page: any) {
           { id: 'child-1', name: 'Alice', avatar_url: '', birthdate: '2020-01-01', interests: ['Dessin'], gender: 'female' },
           { id: 'child-2', name: 'Bob', avatar_url: '', birthdate: '2018-05-12', interests: ['Espace'], gender: 'male' }
         ];
-      } else if (url.includes('/stories?')) {
-        responseBody = [];
+      } else if (url.includes('/stories')) {
+        responseBody = [
+          {
+            id: 'mock-story-1234',
+            title: 'Le Royaume des Étoiles',
+            content: 'Il était une fois un royaume enchanté où les étoiles murmuraient de douces berceuses.',
+            preview: 'Une aventure magique au pays des étoiles.',
+            objective: 'sleep',
+            childrenids: ['child-1'],
+            childrennames: ['Alice'],
+            createdat: new Date().toISOString(),
+            status: 'ready',
+            summary: 'Un voyage au milieu des étoiles.',
+            authorid: 'mock-user-1234',
+            is_favorite: false,
+            video_path: null,
+            sound_id: null
+          }
+        ];
       } else if (url.includes('/routines?')) {
         responseBody = [];
       } else if (url.includes('/voices?')) {
@@ -238,5 +255,17 @@ test.describe('Vérification du chargement et du bon fonctionnement de toutes le
     await expect(root).not.toBeEmpty({ timeout: 10000 });
     await expect(page.locator('body')).toContainText(/Routine/i);
     await expect(page).toHaveURL(/\/app\/routines/);
+  });
+
+  test('Page Lecteur d\'histoire (/app/reader/:id) devrait se charger et afficher le contenu', async ({ page }) => {
+    await mockAuthenticatedState(page);
+    await page.goto('/app/reader/mock-story-1234');
+    const root = page.locator('#root');
+    await expect(root).not.toBeEmpty({ timeout: 15000 });
+    // Vérifier la présence du titre et du contenu de l'histoire
+    await expect(page.locator('body')).toContainText(/Le Royaume des Étoiles/i);
+    await expect(page.locator('body')).toContainText(/étoiles/i);
+    // Vérifier les boutons d'action du lecteur (Retour, Défilement, etc.)
+    await expect(page.locator('button', { hasText: /Retour/i })).toBeVisible();
   });
 });

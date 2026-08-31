@@ -46,20 +46,13 @@ const StoryReaderPage: React.FC = () => {
   const prevVideoPathRef = useRef<string | null | undefined>(undefined);
   const { toast } = useToast();
   const { reloadApp, isReloading } = usePWA();
+  const { generateVideoForStory, isGeneratingVideo } = useStoryVideoGeneration();
   const [retryTick, setRetryTick] = useState(0);
   const directFetchAttemptsRef = useRef<Record<string, number>>({});
 
   // Charger l'histoire depuis l'ID dans l'URL
   useEffect(() => {
-    if (!id) {
-      setError({ kind: "invalid_id" });
-      setIsLoading(false);
-      return;
-    }
-
-    // Valider le format UUID immédiatement
-    if (!UUID_REGEX.test(id)) {
-      console.error("[StoryReaderPage] ID invalide (pas un UUID):", id);
+    if (!id || typeof id !== 'string' || id.trim() === '') {
       setError({ kind: "invalid_id" });
       setIsLoading(false);
       return;
@@ -70,9 +63,7 @@ const StoryReaderPage: React.FC = () => {
       const story = stories.find((s) => s.id === id);
       if (story) {
         console.log("[StoryReaderPage] Histoire trouvée en cache:", story.id);
-
         prevVideoPathRef.current = story.video_path;
-
         setCurrentStory(story);
         setError(null);
         setIsLoading(false);
@@ -80,18 +71,11 @@ const StoryReaderPage: React.FC = () => {
       }
     }
 
-    // 2) Fallback : fetch direct par ID (cas où le cache global n'est pas hydraté)
-    if (!user) {
-      // Attendre que la session soit chargée
-      return;
-    }
-
     const MAX_RETRIES = 3;
-    const RETRY_DELAY_MS = 2000;
+    const RETRY_DELAY_MS = 1500;
     const attempts = directFetchAttemptsRef.current[id] || 0;
 
     if (attempts >= MAX_RETRIES) {
-      // Toutes les tentatives épuisées
       return;
     }
 
@@ -100,9 +84,31 @@ const StoryReaderPage: React.FC = () => {
 
     (async () => {
       try {
+        // Tentative préalable de lecture hors-ligne IndexedDB
+        const offlineStory = await offlineStorageService.getOfflineStory(id);
+        if (offlineStory) {
+          console.log("📴 [StoryReaderPage] Histoire chargée depuis le cache IndexedDB hors-ligne:", id);
+          const formatted = formatStoryFromSupabase(offlineStory);
+          setCurrentStory(formatted);
+          setError(null);
+          setIsLoading(false);
+          return;
+        }
+
+        // Si l'utilisateur n'est pas encore chargé et que ce n'est pas la dernière tentative,
+        // programmer une réévaluation
+        if (!user) {
+          if (attempts + 1 < MAX_RETRIES) {
+            setTimeout(() => setRetryTick(t => t + 1), RETRY_DELAY_MS);
+            return;
+          }
+          setError({ kind: "not_found" });
+          setIsLoading(false);
+          return;
+        }
+
         console.log(`[StoryReaderPage] Fallback fetch direct pour: ${id} (tentative ${attempts + 1}/${MAX_RETRIES})`);
 
-        // Petit délai avant les retries pour laisser la session se stabiliser
         if (attempts > 0) {
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
         }
@@ -114,29 +120,9 @@ const StoryReaderPage: React.FC = () => {
           .maybeSingle();
 
         if (fetchError) {
-          console.warn("[StoryReaderPage] Erreur fetch Supabase, tentative lecture hors-ligne IndexedDB:", fetchError);
+          console.warn("[StoryReaderPage] Erreur fetch Supabase:", fetchError);
           
-          const offlineStory = await offlineStorageService.getOfflineStory(id);
-          if (offlineStory) {
-            console.log("📴 [StoryReaderPage] Histoire chargée depuis le cache IndexedDB hors-ligne:", id);
-            const formatted: Story = {
-              id: offlineStory.id,
-              title: offlineStory.title,
-              content: offlineStory.content,
-              preview: offlineStory.preview,
-              childrenIds: offlineStory.childrenids || [],
-              createdAt: new Date(offlineStory.createdat),
-              status: offlineStory.status as any,
-              objective: offlineStory.objective || 'sleep',
-            };
-            setCurrentStory(formatted);
-            setError(null);
-            setIsLoading(false);
-            return;
-          }
-
           if (attempts + 1 < MAX_RETRIES) {
-            // Planifier un retry via retryTick (déclenche le useEffect)
             setTimeout(() => setRetryTick(t => t + 1), RETRY_DELAY_MS);
             return;
           }
@@ -148,7 +134,6 @@ const StoryReaderPage: React.FC = () => {
         if (!data) {
           console.warn(`[StoryReaderPage] Histoire introuvable en base: ${id} (tentative ${attempts + 1}/${MAX_RETRIES})`);
           if (attempts + 1 < MAX_RETRIES) {
-            // Pas encore trouvée, retenter (l'histoire est peut-être en cours de création)
             setTimeout(() => setRetryTick(t => t + 1), RETRY_DELAY_MS);
             return;
           }
@@ -176,7 +161,7 @@ const StoryReaderPage: React.FC = () => {
         setIsLoading(false);
       }
     })();
-  }, [id, stories, user, toast, fetchStories, retryTick]);
+  }, [id, stories, user, fetchStories, retryTick]);
 
   // Enregistrer la lecture dans l'historique de l'utilisateur (gamification)
   useEffect(() => {
@@ -308,7 +293,6 @@ const StoryReaderPage: React.FC = () => {
   // La lecture d'une vidéo déjà générée ne dépend pas du quota : le quota gouverne
   // uniquement la génération. Une vidéo dont le video_path existe est toujours lisible.
   const videoUrl = currentStory.video_path ? getStoryVideoUrl(currentStory.video_path) : null;
-  const { generateVideoForStory, isGeneratingVideo } = useStoryVideoGeneration();
   const isGeneratingThisVideo = currentStory ? isGeneratingVideo(currentStory.id) : false;
 
   const showVideoIntro =

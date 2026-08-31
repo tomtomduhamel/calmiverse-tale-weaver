@@ -38,6 +38,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
 }) => {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const { userSettings } = useUserSettings();
+  const { readingSpeed } = useReadingSpeed();
   const {
     // State
     story,
@@ -79,7 +80,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
     return <EmptyStoryView onBack={handleBack} />;
   }
 
-  const { readingSpeed } = useReadingSpeed();
   const readingTimeString = calculateReadingTime(story.content, readingSpeed);
 
   return (

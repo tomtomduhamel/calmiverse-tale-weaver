@@ -4,18 +4,20 @@ import { render, screen, fireEvent } from '@/__tests__/helpers/test-utils';
 import SimpleChildSelector from '@/components/story/form/SimpleChildSelector';
 import type { Child } from '@/types/child';
 
+// Calculer des dates de naissance pour avoir toujours exactement 6 ans et 5 ans
+const currentYear = new Date().getFullYear();
 const mockChildren: Child[] = [
   {
     id: 'child-1',
     name: 'Emma',
-    birthDate: new Date('2018-01-01'),
+    birthDate: new Date(`${currentYear - 6}-01-01`),
     authorId: 'author-1',
     gender: 'girl',
   },
   {
     id: 'child-2',
     name: 'Noah',
-    birthDate: new Date('2019-01-01'),
+    birthDate: new Date(`${currentYear - 5}-01-01`),
     authorId: 'author-1',
     gender: 'boy',
   }

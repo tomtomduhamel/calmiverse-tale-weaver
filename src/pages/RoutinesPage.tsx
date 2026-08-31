@@ -28,6 +28,8 @@ import { useStoryRoutines, describeSchedule, StoryRoutine, QuotaCheck } from '@/
 import { FAST_STORIES_REGULATION, FAST_STORIES_RENFORCEMENT, FAST_STORIES_SITUATIONS } from '@/config/fastStoryConfig';
 import { getStoryDurationConfig } from '@/types/story';
 import { useN8nFastStory } from '@/hooks/stories/useN8nFastStory';
+import { useSupabaseChildren } from '@/hooks/useSupabaseChildren';
+import { useSupabaseStories } from '@/hooks/stories/useSupabaseStories';
 import { useN8nTitleGeneration } from '@/hooks/stories/useN8nTitleGeneration';
 import { useN8nStoryFromTitle } from '@/hooks/stories/useN8nStoryFromTitle';
 import {

@@ -121,6 +121,9 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
                 playsInline
                 loop
                 aria-hidden="true"
+                onError={() => {
+                    console.warn("[StoryVideoIntro] Erreur de fond ambiant vidéo");
+                }}
                 className="absolute inset-0 w-full h-full object-cover scale-125 blur-3xl opacity-35 brightness-50 pointer-events-none select-none"
             />
 
@@ -133,6 +136,10 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
                 muted={isMuted}
                 onTimeUpdate={handleTimeUpdate}
                 onEnded={handleVideoEnd}
+                onError={() => {
+                    console.warn("[StoryVideoIntro] Erreur de lecture vidéo principale, passage au lecteur d'histoire");
+                    triggerComplete();
+                }}
             />
 
             {/* Top Gradient for UI readability */}
