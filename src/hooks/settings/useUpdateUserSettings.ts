@@ -77,6 +77,8 @@ export const useUpdateUserSettings = (
         supabaseData.audio_mode = newSettings.readingPreferences.audioMode;
       if (newSettings.readingPreferences?.dimScreenOnAudioPlay !== undefined)
         supabaseData.dim_screen_on_audio = newSettings.readingPreferences.dimScreenOnAudioPlay;
+      if (newSettings.readingPreferences?.videoOrientation !== undefined)
+        supabaseData.video_orientation = newSettings.readingPreferences.videoOrientation;
 
       // Vérifier si l'utilisateur existe déjà dans la table
       const { data: existingUser, error: checkError } = await supabase

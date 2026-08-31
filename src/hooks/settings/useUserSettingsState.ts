@@ -30,6 +30,7 @@ export const useUserSettingsState = () => {
       immersiveReadingMode: 'pulse',
       audioMode: 'browser',
       dimScreenOnAudioPlay: false,
+      videoOrientation: 'portrait',
     }
   });
 
@@ -85,6 +86,7 @@ export const useUserSettingsState = () => {
               immersiveReadingMode: data.immersive_reading_mode ?? 'pulse',
               audioMode: (data.audio_mode as 'browser' | 'premium') ?? 'browser',
               dimScreenOnAudioPlay: data.dim_screen_on_audio ?? false,
+              videoOrientation: (data.video_orientation as 'portrait' | 'landscape') ?? 'portrait',
             }
           });
         } else {

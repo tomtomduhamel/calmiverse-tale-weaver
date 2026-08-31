@@ -1,4 +1,4 @@
-﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -88,7 +88,17 @@ serve(async (req) => {
       );
     }
 
-    // 2. Déclencher n8n pour la génération vidéo
+    // 2. Récupérer les préférences de l'utilisateur
+    const { data: userProfile } = await supabase
+      .from("users")
+      .select("video_orientation")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const videoOrientation = userProfile?.video_orientation || "portrait";
+    const videoAspectRatio = videoOrientation === "landscape" ? "16:9" : "9:16";
+
+    // 3. Déclencher n8n pour la génération vidéo
     const webhookUrl = "https://n8n.srv856374.hstgr.cloud/webhook/816f3f78-bbdc-4b51-88b6-13232fcf3c78";
 
     if (n8nSecret) {
@@ -102,6 +112,8 @@ serve(async (req) => {
           body: JSON.stringify({
             action: "generate_video_only",
             generateVideo: true,
+            videoOrientation,
+            videoAspectRatio,
             storyId: story.id,
             selectedTitle: story.title,
             summary: story.summary || story.title,

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserSettings } from "@/types/user-settings";
-import { Snail, Turtle, Rabbit, RotateCcw, Lock, Wand2, Moon } from "lucide-react";
+import { Snail, Turtle, Rabbit, RotateCcw, Lock, Wand2, Moon, Smartphone, Tv } from "lucide-react";
 import { useSubscription } from "@/hooks/subscription/useSubscription";
 
 // Valeurs par défaut des vitesses
@@ -88,6 +88,16 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
       readingPreferences: {
         ...userSettings.readingPreferences,
         playVideoIntro: checked
+      }
+    });
+  };
+
+  // Gérer le changement d'orientation de la vidéo
+  const handleVideoOrientationChange = async (orientation: 'portrait' | 'landscape') => {
+    await onUpdateSettings({
+      readingPreferences: {
+        ...userSettings.readingPreferences,
+        videoOrientation: orientation
       }
     });
   };
@@ -301,6 +311,41 @@ export const ReadingPreferencesSection: React.FC<ReadingPreferencesSectionProps>
               </span>
             )}
           </div>
+
+          {/* Format d'orientation de la vidéo (Portrait vs Paysage) */}
+          {canPlayVideoIntro && (userSettings.readingPreferences?.playVideoIntro ?? true) && (
+            <div className="mt-1 pl-3.5 border-l-2 border-primary/25 space-y-2.5 animate-in fade-in-50 duration-200">
+              <Label className="text-xs font-medium text-foreground/90">
+                Format d'affichage & création de la vidéo
+              </Label>
+              <div className="grid grid-cols-2 gap-2.5 max-w-sm">
+                <Button
+                  type="button"
+                  variant={(userSettings.readingPreferences?.videoOrientation ?? 'portrait') === 'portrait' ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-auto py-2 px-3 flex flex-col items-center gap-1 text-xs justify-center"
+                  onClick={() => handleVideoOrientationChange('portrait')}
+                  disabled={isLoading}
+                >
+                  <Smartphone className="h-4 w-4" />
+                  <span className="font-semibold">Portrait (9:16)</span>
+                  <span className="text-[10px] opacity-80">Recommandé Mobile</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant={userSettings.readingPreferences?.videoOrientation === 'landscape' ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-auto py-2 px-3 flex flex-col items-center gap-1 text-xs justify-center"
+                  onClick={() => handleVideoOrientationChange('landscape')}
+                  disabled={isLoading}
+                >
+                  <Tv className="h-4 w-4" />
+                  <span className="font-semibold">Paysage (16:9)</span>
+                  <span className="text-[10px] opacity-80">Tablettes & PC</span>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Option Lecture Immersive */}

@@ -22,6 +22,7 @@ export interface UserSettings {
     immersiveReadingMode: 'none' | 'pulse' | 'karaoke' | 'brush'; // Mode de lecture immersive
     audioMode: 'browser' | 'premium'; // Mode audio : navigateur (gratuit) ou premium (généré par IA)
     dimScreenOnAudioPlay?: boolean; // Assombrir automatiquement l'écran pendant la lecture audio
+    videoOrientation?: 'portrait' | 'landscape'; // Orientation de création et affichage vidéo (portrait 9:16 ou paysage 16:9)
   };
 }
 

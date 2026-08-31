@@ -16,9 +16,22 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
     const [progress, setProgress] = useState(0);
     const [isFadingOut, setIsFadingOut] = useState(false);
     const [showPlayStateFeedback, setShowPlayStateFeedback] = useState(false);
+    const [isVideoPortrait, setIsVideoPortrait] = useState<boolean | null>(null);
     
     const fadeOutTimerRef = useRef<NodeJS.Timeout | null>(null);
     const feedbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Détection automatique des dimensions de la vidéo pour adapter l'affichage sans crop
+    const handleLoadedMetadata = () => {
+        if (videoRef.current) {
+            const { videoWidth, videoHeight } = videoRef.current;
+            if (videoWidth && videoHeight) {
+                const isPortrait = videoHeight >= videoWidth;
+                setIsVideoPortrait(isPortrait);
+                console.log(`[StoryVideoIntro] Format vidéo détecté: ${videoWidth}x${videoHeight} (${isPortrait ? 'Portrait 9:16' : 'Paysage 16:9'})`);
+            }
+        }
+    };
 
     // Fonction de sortie fluide avec maintien sur la dernière frame puis fondu
     const triggerComplete = useCallback(() => {
@@ -121,7 +134,7 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
                 isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`}
         >
-            {/* 1. Ambient Backdrop - Fond immersif flouté pour habiller les écrans extra-larges */}
+            {/* 1. Ambient Backdrop - Fond immersif flouté pour habiller les zones libres sans recadrer */}
             <video
                 ref={ambientRef}
                 src={videoUrl}
@@ -135,13 +148,18 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
                 className="absolute inset-0 w-full h-full object-cover scale-125 blur-3xl opacity-40 brightness-50 pointer-events-none select-none"
             />
 
-            {/* 2. Main Video - Rendu portrait immersif (object-cover sur mobile, object-contain sur grand écran) */}
+            {/* 2. Main Video - Rendu intelligent zéro-crop adapté à l'orientation réelle de la vidéo */}
             <video
                 ref={videoRef}
                 src={videoUrl}
-                className="relative z-10 w-full h-full max-w-full max-h-full object-cover sm:object-contain pointer-events-none select-none"
+                className={`relative z-10 max-w-full max-h-full object-contain pointer-events-none select-none ${
+                    isVideoPortrait === false
+                        ? 'w-full aspect-video shadow-2xl'
+                        : 'w-full h-full'
+                }`}
                 playsInline
                 muted={isMuted}
+                onLoadedMetadata={handleLoadedMetadata}
                 onTimeUpdate={handleTimeUpdate}
                 onEnded={handleVideoEnd}
                 onError={() => {

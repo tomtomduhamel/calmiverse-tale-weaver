@@ -382,16 +382,19 @@ export async function fetchActivePrompts(supabase: any): Promise<Record<string, 
 export interface UserData {
   email: string | null;
   readingSpeed: number;
+  videoOrientation: 'portrait' | 'landscape';
 }
 
 async function fetchUserData(supabase: any, userId: string): Promise<UserData> {
-  const { data } = await supabase.from("users").select("email, reading_speed").eq("id", userId).maybeSingle();
+  const { data } = await supabase.from("users").select("email, reading_speed, video_orientation").eq("id", userId).maybeSingle();
   const readingSpeed = data?.reading_speed && data.reading_speed >= 50 && data.reading_speed <= 300
     ? data.reading_speed
     : READING_SPEED_WPM;
+  const videoOrientation = (data?.video_orientation as 'portrait' | 'landscape') || 'portrait';
   return {
     email: data?.email ?? null,
     readingSpeed,
+    videoOrientation,
   };
 }
 
@@ -570,6 +573,8 @@ ${historyList}`;
     },
     titleGenerationCost: params.titleGenerationCost || null,
     generateVideo: params.generateVideo ?? false,
+    videoOrientation: userData.videoOrientation,
+    videoAspectRatio: userData.videoOrientation === "landscape" ? "16:9" : "9:16",
     timestamp: new Date().toISOString(),
     requestId: `story-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
   };
@@ -674,6 +679,8 @@ ${historyList}`;
     imageGenerationPrompt: prompts.image_generation_prompt || null,
     videoGenerationPrompt: params.generateVideo ? (prompts.video_generation_prompt || null) : null,
     generateVideo: params.generateVideo ?? false,
+    videoOrientation: userData.videoOrientation,
+    videoAspectRatio: userData.videoOrientation === "landscape" ? "16:9" : "9:16",
     narrativeVariation: {
       schema: variation.narrativeSchema?.type || null,
       vakog: variation.vakogFocus?.sensory_type || null,
