@@ -175,11 +175,10 @@ serve(async (req) => {
         text: text.substring(0, 2500), // Limit text length
         model_id: modelId,
         voice_settings: {
-          stability: 0.65,
-          similarity_boost: 0.80,
+          stability: 0.5,
+          similarity_boost: 0.75,
           style: 0.0,
-          use_speaker_boost: true,
-          speed: 0.85
+          use_speaker_boost: true
         }
       })
     });
