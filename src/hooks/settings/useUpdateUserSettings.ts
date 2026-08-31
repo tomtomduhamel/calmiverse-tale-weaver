@@ -6,8 +6,7 @@ import { UserSettings } from '@/types/user-settings';
 import { errorManager } from '@/utils/errorHandling/errorNotificationManager';
 
 export const useUpdateUserSettings = (
-  setUserSettings: React.Dispatch<React.SetStateAction<UserSettings>>,
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
+  setUserSettings: React.Dispatch<React.SetStateAction<UserSettings>>
 ) => {
   const { toast } = useToast();
   const { user } = useSupabaseAuth();
@@ -24,8 +23,9 @@ export const useUpdateUserSettings = (
       throw error;
     }
 
+    let previousSettings: UserSettings | null = null;
+
     try {
-      setIsLoading(true);
       console.log('Mise à jour des paramètres pour:', user.id);
       console.log('Nouvelles valeurs:', newSettings);
 
@@ -37,6 +37,23 @@ export const useUpdateUserSettings = (
       if (newSettings.lastName !== undefined && !newSettings.lastName.trim()) {
         throw new Error('Le nom ne peut pas être vide');
       }
+
+      // Mise à jour optimiste de l'état local
+      setUserSettings(prev => {
+        previousSettings = prev;
+        return {
+          ...prev,
+          ...newSettings,
+          notifications: {
+            ...prev.notifications,
+            ...(newSettings.notifications || {})
+          },
+          readingPreferences: {
+            ...prev.readingPreferences,
+            ...(newSettings.readingPreferences || {})
+          }
+        };
+      });
 
       // Mappage des propriétés UserSettings vers la structure de la table Supabase
       const supabaseData: Record<string, any> = {};
@@ -123,10 +140,11 @@ export const useUpdateUserSettings = (
         throw new Error('Erreur lors de la sauvegarde des données: ' + error.message);
       }
 
-      // Mettre à jour l'état local avec les nouvelles valeurs
-      setUserSettings(prev => ({ ...prev, ...newSettings }));
       console.log('Paramètres mis à jour avec succès');
     } catch (error) {
+      if (previousSettings) {
+        setUserSettings(previousSettings);
+      }
       console.error('Erreur détaillée lors de la mise à jour:', error);
 
       // Utiliser le gestionnaire d'erreur centralisé
@@ -141,8 +159,6 @@ export const useUpdateUserSettings = (
       });
 
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 

@@ -4,15 +4,11 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SecuritySettings } from '@/types/user-settings';
 
-export const useUpdateUserPassword = (
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
-) => {
+export const useUpdateUserPassword = () => {
   const { toast } = useToast();
 
   const updateUserPassword = async ({ currentPassword, newPassword, confirmPassword }: SecuritySettings): Promise<void> => {
     try {
-      setIsLoading(true);
-      
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
@@ -30,8 +26,7 @@ export const useUpdateUserPassword = (
         description: "Impossible de mettre à jour votre mot de passe",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+      throw error;
     }
   };
 

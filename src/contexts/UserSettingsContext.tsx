@@ -8,9 +8,9 @@ import type { UseUserSettingsReturn } from '@/hooks/settings/types';
 const UserSettingsContext = createContext<UseUserSettingsReturn | undefined>(undefined);
 
 export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { userSettings, setUserSettings, isLoading, setIsLoading } = useUserSettingsState();
-  const { updateUserSettings } = useUpdateUserSettings(setUserSettings, setIsLoading);
-  const { updateUserPassword } = useUpdateUserPassword(setIsLoading);
+  const { userSettings, setUserSettings, isLoading } = useUserSettingsState();
+  const { updateUserSettings } = useUpdateUserSettings(setUserSettings);
+  const { updateUserPassword } = useUpdateUserPassword();
 
   const value: UseUserSettingsReturn = {
     userSettings,
