@@ -5,7 +5,8 @@ export const N8N_AUTO_OPTIMIZE_PROMPT_WEBHOOK =
   "https://n8n.srv856374.hstgr.cloud/webhook/auto-optimize-prompts";
 
 export interface AutoOptimizeOptions {
-  objective?: 'sleep' | 'focus' | 'relax' | 'fun' | 'all';
+  objective?: string;
+  templateKey?: string;
   batchSize?: number;
 }
 
@@ -37,7 +38,8 @@ export const autoPromptOptimizerService = {
    */
   async triggerOptimization(options: AutoOptimizeOptions = {}): Promise<AutoOptimizeResponse> {
     const payload = {
-      objective: options.objective || "all",
+      objective: options.objective || options.templateKey || "all",
+      templateKey: options.templateKey || options.objective,
       batchSize: options.batchSize || 20,
     };
 

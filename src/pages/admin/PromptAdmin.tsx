@@ -215,19 +215,23 @@ const PromptAdmin: React.FC = () => {
     if (!selected) return;
     setOptimizing(true);
     try {
-      let objective = "all";
+      let objective = selected.key;
       if (selected.key.startsWith("story_prompt_")) {
         objective = selected.key.replace("story_prompt_", "");
       }
       
+      const isTitle = selected.key === "title_generation_prompt";
       toast({
         title: "Auto-optimisation lancée 🚀",
-        description: `Analyse des 20 dernières histoires avec gpt-5.6-terra pour ${selected.title}...`,
+        description: isTitle
+          ? `Analyse de la diversité des titres avec gpt-5.6-terra...`
+          : `Analyse des histoires avec gpt-5.6-terra pour ${selected.title}...`,
       });
 
       const res = await autoPromptOptimizerService.triggerOptimization({
-        objective: objective as any,
-        batchSize: 20
+        objective,
+        templateKey: selected.key,
+        batchSize: isTitle ? 30 : 20
       });
 
       if (res.success) {
@@ -806,8 +810,8 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
           {/* ─ Tab: Versions ─ */}
           <TabsContent value="versions" className="flex-1 overflow-y-auto px-4 pb-4 mt-0">
             <div className="space-y-3 pt-3">
-              {/* Carte d'action d'auto-optimisation IA pour les prompts d'histoire */}
-              {selected.key.startsWith('story_prompt_') && (
+              {/* Carte d'action d'auto-optimisation IA pour les prompts d'histoire et de titres */}
+              {(selected.key.startsWith('story_prompt_') || selected.key.startsWith('fast_story_') || selected.key === 'title_generation_prompt') && (
                 <Card className="p-3 bg-gradient-to-br from-purple-500/10 via-primary/5 to-background border-purple-500/30">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-start gap-2.5">
@@ -824,7 +828,9 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
                           </Badge>
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Analyse les 20 dernières histoires, notes parents et critiques IA pour proposer une nouvelle version affinée.
+                          {selected.key === 'title_generation_prompt'
+                            ? "Analyse la diversité des 30 derniers titres créés, les retours qualité et l'originalité poétique pour proposer une version affinée."
+                            : "Analyse les 20 dernières histoires, notes parents et critiques IA pour proposer une nouvelle version affinée."}
                         </p>
                       </div>
                     </div>
