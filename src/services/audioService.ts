@@ -23,15 +23,19 @@ class AudioService {
   /**
    * Valide une URL audio avec des vérifications approfondies
    */
-  async validateAudioUrl(filePath: string): Promise<AudioValidationResult> {
+  async validateAudioUrl(filePath: string, bucket: string = 'story_sounds'): Promise<AudioValidationResult> {
     const startTime = Date.now();
     
     try {
-      console.log(`🎵 [AudioService] Validation de l'URL pour: ${filePath}`);
+      console.log(`🎵 [AudioService] Validation de l'URL pour: ${filePath} (bucket: ${bucket})`);
       
-      // Construire l'URL publique via Supabase
-      const { data } = supabase.storage.from('audio-files').getPublicUrl(filePath);
-      const url = data.publicUrl;
+      // Construire l'URL publique via Supabase ou utiliser l'URL directe
+      let url = filePath;
+      if (!filePath.startsWith('http://') && !filePath.startsWith('https://')) {
+        const cleanPath = filePath.replace(/^\/+/, '').replace(new RegExp(`^${bucket}/`), '');
+        const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
+        url = data.publicUrl;
+      }
       
       if (!url) {
         throw new Error('Impossible de construire l\'URL publique');
@@ -58,7 +62,7 @@ class AudioService {
         if (response.ok) {
           // Vérifier le content-type si disponible
           const contentType = response.headers.get('content-type');
-          if (contentType && !contentType.startsWith('audio/')) {
+          if (contentType && !contentType.startsWith('audio/') && !contentType.startsWith('video/') && !contentType.includes('octet-stream')) {
             console.warn(`🎵 [AudioService] Content-Type suspect: ${contentType}`);
           }
           
@@ -114,9 +118,10 @@ class AudioService {
   /**
    * Obtient une URL audio validée avec cache
    */
-  async getValidatedAudioUrl(filePath: string): Promise<string | null> {
+  async getValidatedAudioUrl(filePath: string, bucket: string = 'story_sounds'): Promise<string | null> {
+    const cacheKey = `${bucket}:${filePath}`;
     // Vérifier le cache d'abord
-    const cached = this.urlCache.get(filePath);
+    const cached = this.urlCache.get(cacheKey);
     const now = Date.now();
     
     if (cached && (now - cached.validatedAt) < this.CACHE_DURATION && cached.isValid) {
@@ -125,10 +130,10 @@ class AudioService {
     }
     
     // Valider l'URL
-    const validation = await this.validateAudioUrl(filePath);
+    const validation = await this.validateAudioUrl(filePath, bucket);
     
     // Mettre en cache le résultat
-    this.urlCache.set(filePath, {
+    this.urlCache.set(cacheKey, {
       url: validation.url,
       validatedAt: now,
       isValid: validation.isValid
@@ -154,7 +159,7 @@ class AudioService {
   /**
    * Diagnostic simplifié du système audio
    */
-  async runDiagnostic(filePath?: string): Promise<{
+  async runDiagnostic(filePath?: string, bucket: string = 'story_sounds'): Promise<{
     supabaseOk: boolean;
     audioUrl?: AudioValidationResult;
     cacheStats: {
@@ -168,7 +173,7 @@ class AudioService {
     
     let audioUrl;
     if (filePath) {
-      audioUrl = await this.validateAudioUrl(filePath);
+      audioUrl = await this.validateAudioUrl(filePath, bucket);
     }
     
     const now = Date.now();

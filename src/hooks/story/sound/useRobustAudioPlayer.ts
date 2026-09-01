@@ -74,14 +74,14 @@ export const useRobustAudioPlayer = ({
 
       console.log(`🎵 [RobustAudioPlayer] Initialisation pour: ${soundDetails.title}`);
       
-      const diagnostic = await audioService.runDiagnostic(soundDetails.file_path);
+      const diagnostic = await audioService.runDiagnostic(soundDetails.file_path, 'story_sounds');
       updateState({ diagnosticInfo: diagnostic });
 
       if (!diagnostic.supabaseOk) {
         throw new Error('Connexion Supabase échouée');
       }
 
-      const validatedUrl = await audioService.getValidatedAudioUrl(soundDetails.file_path);
+      const validatedUrl = await audioService.getValidatedAudioUrl(soundDetails.file_path, 'story_sounds');
       
       if (!validatedUrl) {
         const errorReason = diagnostic.audioUrl?.error || `Impossible de valider l'URL pour ${soundDetails.title}`;

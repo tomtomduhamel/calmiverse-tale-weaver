@@ -29,7 +29,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Plus, Save, CheckCircle2, Zap, BookOpen, Sparkles, Archive,
   HelpCircle, Copy, Check, ChevronLeft, MoreVertical, AlertTriangle,
-  FileText, History, Settings, Bot, RefreshCw,
+  FileText, History, Settings, Bot, RefreshCw, Volume2,
 } from "lucide-react";
 import { FAST_STORY_PROMPT_CONFIG, FAST_STORY_PROMPT_KEYS } from "@/config/fastStoryConfig";
 import { autoPromptOptimizerService } from "@/services/prompts/autoPromptOptimizerService";
@@ -113,6 +113,12 @@ const ACTIVE_PROMPTS_CONFIG: Record<string, {
     description: 'Prompt spécifique pour l\'objectif Amusement',
     category: 'generation',
     icon: Sparkles,
+  },
+  'audio_script_formatter_prompt': {
+    label: '🎙️ Formateur Prosodie Audio',
+    description: 'Optimisation de l\'oralité, des respirations et de la phonétique pré-TTS',
+    category: 'generation',
+    icon: Volume2,
   },
   // ─── Histoires rapides ────────────────────────────────────────────────────
   ...Object.fromEntries(
@@ -221,17 +227,21 @@ const PromptAdmin: React.FC = () => {
       }
       
       const isTitle = selected.key === "title_generation_prompt";
+      const isAudio = selected.key === "audio_script_formatter_prompt";
+      
       toast({
         title: "Auto-optimisation lancée 🚀",
         description: isTitle
           ? `Analyse de la diversité des titres avec gpt-5.6-terra...`
+          : isAudio
+          ? `Analyse des retours d'écoute et de la prosodie audio avec gpt-5.6-terra...`
           : `Analyse des histoires avec gpt-5.6-terra pour ${selected.title}...`,
       });
 
       const res = await autoPromptOptimizerService.triggerOptimization({
         objective,
         templateKey: selected.key,
-        batchSize: isTitle ? 30 : 20
+        batchSize: isTitle || isAudio ? 30 : 20
       });
 
       if (res.success) {
@@ -810,8 +820,11 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
           {/* ─ Tab: Versions ─ */}
           <TabsContent value="versions" className="flex-1 overflow-y-auto px-4 pb-4 mt-0">
             <div className="space-y-3 pt-3">
-              {/* Carte d'action d'auto-optimisation IA pour les prompts d'histoire et de titres */}
-              {(selected.key.startsWith('story_prompt_') || selected.key.startsWith('fast_story_') || selected.key === 'title_generation_prompt') && (
+              {/* Carte d'action d'auto-optimisation IA pour les prompts d'histoire, de titres et de prosodie audio */}
+              {(selected.key.startsWith('story_prompt_') || 
+                selected.key.startsWith('fast_story_') || 
+                selected.key === 'title_generation_prompt' || 
+                selected.key === 'audio_script_formatter_prompt') && (
                 <Card className="p-3 bg-gradient-to-br from-purple-500/10 via-primary/5 to-background border-purple-500/30">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-start gap-2.5">
@@ -830,6 +843,8 @@ Le résultat doit être directement utilisable par l'IA vidéo sans aucun texte 
                         <p className="text-[11px] text-muted-foreground mt-0.5">
                           {selected.key === 'title_generation_prompt'
                             ? "Analyse la diversité des 30 derniers titres créés, les retours qualité et l'originalité poétique pour proposer une version affinée."
+                            : selected.key === 'audio_script_formatter_prompt'
+                            ? "Analyse les retours parents sur l'écoute vocale, le rythme d'endormissement et les pauses respiratoires pour affiner la prosodie pré-TTS."
                             : "Analyse les 20 dernières histoires, notes parents et critiques IA pour proposer une nouvelle version affinée."}
                         </p>
                       </div>
