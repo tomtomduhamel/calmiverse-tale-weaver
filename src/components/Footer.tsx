@@ -50,46 +50,57 @@ export const Footer: React.FC = () => {
           <div className="space-y-4">
             <h4 className="font-medium text-foreground">Support</h4>
             <nav className="flex flex-col space-y-2">
-              <a 
-                href={`mailto:${APP_CONFIG.COMPANY.EMAIL}`}
+              <Link 
+                to="/contact" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Contactez-nous
-              </a>
+              </Link>
               <Link
                 to="/documentation"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Documentation
               </Link>
-              <a 
-                href={APP_CONFIG.SUPPORT.STATUS}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              <Link 
+                to="/status" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
               >
-                Statut du service
-              </a>
+                <span>Statut du service</span>
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              </Link>
             </nav>
           </div>
 
           {/* Social & compliance */}
           <div className="space-y-4">
             <h4 className="font-medium text-foreground">Conformité</h4>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse"></div>
-                <span className="text-xs text-muted-foreground">RGPD Conforme</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse"></div>
-                <span className="text-xs text-muted-foreground">Protection enfants</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse"></div>
-                <span className="text-xs text-muted-foreground">Données sécurisées</span>
-              </div>
-            </div>
+            <nav className="flex flex-col space-y-2">
+              <Link 
+                to="/privacy-policy"
+                title="Consulter nos engagements RGPD"
+                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group"
+              >
+                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse group-hover:scale-125 transition-transform"></div>
+                <span>RGPD Conforme</span>
+              </Link>
+              <Link 
+                to="/privacy-policy"
+                title="Protection et sécurité renforcée des mineurs"
+                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group"
+              >
+                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse group-hover:scale-125 transition-transform"></div>
+                <span>Protection enfants</span>
+              </Link>
+              <Link 
+                to="/privacy-policy"
+                title="Chiffrement et isolation des données familiales"
+                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group"
+              >
+                <div className="w-2 h-2 bg-accent rounded-full animate-glow-pulse group-hover:scale-125 transition-transform"></div>
+                <span>Données sécurisées</span>
+              </Link>
+            </nav>
           </div>
         </div>
 

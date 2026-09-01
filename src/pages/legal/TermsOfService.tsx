@@ -9,7 +9,7 @@ export const TermsOfService = () => {
             Conditions Générales d'Utilisation
           </CardTitle>
           <p className="text-center text-muted-foreground">
-            Dernière mise à jour : {new Date().toLocaleDateString('fr-FR')}
+            Dernière mise à jour : 1er mars 2025
           </p>
         </CardHeader>
         <CardContent className="prose prose-sm max-w-none">
@@ -37,10 +37,12 @@ export const TermsOfService = () => {
               des histoires personnalisées adaptées à chaque enfant. Le service inclut :
             </p>
             <ul className="list-disc pl-6 mt-2">
-              <li>Création et gestion de profils enfants</li>
-              <li>Génération d'histoires personnalisées par IA</li>
-              <li>Bibliothèque d'histoires avec fonctions de lecture</li>
-              <li>Partage d'histoires par email ou envoi sur Kindle</li>
+              <li>Création et gestion de profils enfants sécurisés</li>
+              <li>Génération d'histoires personnalisées par IA et suites narratives</li>
+              <li>Synthèse vocale immersive (Multi-Voix Théâtre IA et clonage vocal parental)</li>
+              <li>Automatisation des rituels du coucher (Routines programmées)</li>
+              <li>Bibliothèque d'histoires avec fonctions de lecture hors ligne</li>
+              <li>Partage d'histoires en tribu familiale et envoi sur liseuse Kindle</li>
             </ul>
           </section>
 

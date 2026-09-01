@@ -16,10 +16,21 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
     const [progress, setProgress] = useState(0);
     const [isFadingOut, setIsFadingOut] = useState(false);
     const [showPlayStateFeedback, setShowPlayStateFeedback] = useState(false);
+    const [controlsVisible, setControlsVisible] = useState(true);
     const [isVideoPortrait, setIsVideoPortrait] = useState<boolean | null>(null);
     
     const fadeOutTimerRef = useRef<NodeJS.Timeout | null>(null);
     const feedbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const controlsHideTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Auto-masquage des contrôles après 2.5s d'inactivité
+    const resetControlsTimer = useCallback(() => {
+        setControlsVisible(true);
+        if (controlsHideTimerRef.current) clearTimeout(controlsHideTimerRef.current);
+        controlsHideTimerRef.current = setTimeout(() => {
+            setControlsVisible(false);
+        }, 2500);
+    }, []);
 
     // Détection automatique des dimensions de la vidéo pour adapter l'affichage sans crop
     const handleLoadedMetadata = () => {
@@ -28,7 +39,6 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
             if (videoWidth && videoHeight) {
                 const isPortrait = videoHeight >= videoWidth;
                 setIsVideoPortrait(isPortrait);
-                console.log(`[StoryVideoIntro] Format vidéo détecté: ${videoWidth}x${videoHeight} (${isPortrait ? 'Portrait 9:16' : 'Paysage 16:9'})`);
             }
         }
     };
@@ -58,11 +68,14 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
             });
         }
 
+        resetControlsTimer();
+
         return () => {
             if (fadeOutTimerRef.current) clearTimeout(fadeOutTimerRef.current);
             if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+            if (controlsHideTimerRef.current) clearTimeout(controlsHideTimerRef.current);
         };
-    }, []);
+    }, [resetControlsTimer]);
 
     const handleSkip = (e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
@@ -76,10 +89,14 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
         if (e) e.stopPropagation();
         if (!videoRef.current) return;
 
+        resetControlsTimer();
+
         if (isPlaying) {
             videoRef.current.pause();
             if (ambientRef.current) ambientRef.current.pause();
             setIsPlaying(false);
+            setControlsVisible(true);
+            if (controlsHideTimerRef.current) clearTimeout(controlsHideTimerRef.current);
         } else {
             videoRef.current.play();
             if (ambientRef.current) ambientRef.current.play().catch(() => {});
@@ -91,11 +108,12 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
         if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
         feedbackTimerRef.current = setTimeout(() => {
             setShowPlayStateFeedback(false);
-        }, 800);
+        }, 600);
     };
 
     const toggleMute = (e: React.MouseEvent) => {
         e.stopPropagation();
+        resetControlsTimer();
         if (videoRef.current) {
             const nextMuted = !isMuted;
             videoRef.current.muted = nextMuted;
@@ -114,7 +132,7 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
     };
 
     const handleVideoEnd = () => {
-        // En fin de vidéo : figer la dernière image pendant 1.5s de contemplation avant d'initier le fondu
+        // En fin de vidéo : figer la dernière image pendant 1.2s de contemplation avant d'initier le fondu
         setProgress(100);
         if (videoRef.current) {
             videoRef.current.pause();
@@ -130,7 +148,9 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
     return (
         <div 
             onClick={togglePlay}
-            className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black overflow-hidden touch-none w-full h-[100dvh] cursor-pointer transition-opacity duration-1000 ease-in-out ${
+            onMouseMove={resetControlsTimer}
+            onTouchStart={resetControlsTimer}
+            className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black overflow-hidden touch-none w-full h-[100dvh] cursor-pointer transition-opacity duration-1000 ease-in-out select-none ${
                 isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`}
         >
@@ -168,64 +188,59 @@ export const StoryVideoIntro: React.FC<StoryVideoIntroProps> = ({ videoUrl, onCo
                 }}
             />
 
-            {/* Top Gradient for UI readability */}
-            <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/70 via-black/30 to-transparent pointer-events-none z-20" />
+            {/* 3. Voile dégradé très doux en haut pour la lisibilité des contrôles */}
+            <div 
+                className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/50 via-black/20 to-transparent pointer-events-none z-20 transition-opacity duration-500 ${
+                    controlsVisible ? 'opacity-100' : 'opacity-0'
+                }`} 
+            />
 
-            {/* Barre de progression style Story en haut */}
-            <div className="absolute top-safe left-4 right-4 z-30 pt-3 pointer-events-none">
-                <div className="w-full h-1 bg-white/25 rounded-full overflow-hidden backdrop-blur-sm shadow-sm">
+            {/* 4. Barre de progression ultra-fine tout en haut */}
+            <div className="absolute top-0 left-0 right-0 z-30 pt-[max(env(safe-area-inset-top),10px)] px-3 pointer-events-none">
+                <div className="w-full h-[2.5px] bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
                     <div 
-                        className="h-full bg-white/90 rounded-full transition-all duration-100 ease-linear shadow-[0_0_8px_rgba(255,255,255,0.7)]"
+                        className="h-full bg-white/85 rounded-full transition-all duration-100 ease-linear shadow-[0_0_6px_rgba(255,255,255,0.7)]"
                         style={{ width: `${progress}%` }}
                     />
                 </div>
             </div>
 
-            {/* Top Bar Controls : Bouton Mute & Bouton Passer */}
-            <div className="absolute top-safe left-4 right-4 z-30 pt-7 flex items-center justify-between pointer-events-none">
-                {/* Mute/Unmute */}
+            {/* 5. Contrôles discrets et élégants ancrés en haut */}
+            <div 
+                className={`absolute top-0 left-0 right-0 z-30 pt-[max(calc(env(safe-area-inset-top)+14px),22px)] px-3.5 flex items-center justify-between pointer-events-none transition-opacity duration-400 ease-out ${
+                    controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+            >
+                {/* Bouton Muet discret */}
                 <Button
                     variant="ghost"
                     size="icon"
                     onClick={toggleMute}
-                    className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 text-white/90 border border-white/10 backdrop-blur-md transition-all shadow-md pointer-events-auto"
+                    className="h-7 w-7 rounded-full bg-black/30 hover:bg-black/50 text-white/80 hover:text-white border border-white/10 backdrop-blur-md transition-all shadow-sm pointer-events-auto p-0 flex items-center justify-center"
                     aria-label={isMuted ? "Activer le son" : "Couper le son"}
                 >
-                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                    {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
                 </Button>
 
-                {/* Passer */}
+                {/* Bouton Passer compact et élégant */}
                 <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
                     onClick={handleSkip}
-                    className="bg-black/40 hover:bg-black/60 text-white/90 border border-white/15 backdrop-blur-md rounded-full px-3.5 h-8 text-xs font-medium transition-all shadow-md pointer-events-auto"
+                    className="h-7 px-3 rounded-full bg-black/30 hover:bg-black/50 text-white/80 hover:text-white border border-white/10 backdrop-blur-md text-[11px] font-medium transition-all shadow-sm pointer-events-auto"
                 >
                     Passer
                 </Button>
             </div>
 
-            {/* Indicateur Feedback Play/Pause au centre au clic */}
+            {/* 6. Indicateur Feedback Play/Pause éphémère au centre lors du tap */}
             {showPlayStateFeedback && (
-                <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none animate-in fade-in zoom-in-75 duration-200">
-                    <div className="p-4 rounded-full bg-black/60 backdrop-blur-md text-white/90 border border-white/15 shadow-2xl">
-                        {isPlaying ? <Play className="h-8 w-8 fill-white/80" /> : <Pause className="h-8 w-8 fill-white/80" />}
+                <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none animate-in fade-in zoom-in-90 duration-150">
+                    <div className="p-3.5 rounded-full bg-black/40 backdrop-blur-md text-white/90 border border-white/10 shadow-xl">
+                        {isPlaying ? <Play className="h-6 w-6 fill-white/80" /> : <Pause className="h-6 w-6 fill-white/80" />}
                     </div>
                 </div>
             )}
-
-            {/* Bottom Play/Pause Helper Discreet */}
-            <div className="absolute bottom-safe left-0 right-0 p-6 flex justify-center pb-8 z-20 pointer-events-none">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={togglePlay}
-                    className="h-10 w-10 rounded-full bg-black/30 hover:bg-black/50 text-white/80 hover:text-white border border-white/10 backdrop-blur-sm pointer-events-auto transition-opacity duration-300 shadow-md"
-                    aria-label={isPlaying ? "Mettre en pause" : "Lire la vidéo"}
-                >
-                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                </Button>
-            </div>
         </div>
     );
 };

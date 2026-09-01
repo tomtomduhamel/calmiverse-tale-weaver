@@ -47,7 +47,7 @@ export const APP_CONFIG = {
   APP_BUILD_NUMBER: buildNumber,
   APP_BUILD_TIMESTAMP: buildTimestamp,
   APP_BUILD_DATE: formatBuildDate(buildTimestamp, buildId),
-  APP_DESCRIPTION: 'Génération d\'histoires personnalisées pour enfants par IA',
+  APP_DESCRIPTION: 'Histoires personnalisées, rituels du coucher & audio immersif pour enfants',
   
   // Company info (required for legal pages)
   COMPANY: {
@@ -123,8 +123,8 @@ export const APP_CONFIG = {
   // Support URLs
   SUPPORT: {
     DOCUMENTATION: '/documentation',
-    CONTACT: 'https://calmiverse.com/contact',
-    STATUS: 'https://status.calmiverse.com'
+    CONTACT: '/contact',
+    STATUS: '/status'
   }
 } as const;
 

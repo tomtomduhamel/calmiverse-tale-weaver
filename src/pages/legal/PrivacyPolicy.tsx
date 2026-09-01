@@ -9,7 +9,7 @@ export const PrivacyPolicy = () => {
             Politique de Confidentialité
           </CardTitle>
           <p className="text-center text-muted-foreground">
-            Dernière mise à jour : {new Date().toLocaleDateString('fr-FR')}
+            Dernière mise à jour : 1er mars 2025
           </p>
         </CardHeader>
         <CardContent className="prose prose-sm max-w-none">
