@@ -13,8 +13,8 @@
           "conditions": [
             {
               "id": "30951a5c-a7e5-4a4b-9d79-d06773a33be0",
-              "leftValue": "={{ $('Compte les mots').item.json.histoire_finale_word_count }}",
-              "rightValue": "={{ $('extraction_validation1').item.json.nb_mots * 0.8 }}",
+              "leftValue": "={{ $('Compte les mots1').item.json.histoire_finale_word_count }}",
+              "rightValue": "={{ $('extraction_validation4').item.json.nb_mots * 0.8 }}",
               "operator": {
                 "type": "number",
                 "operation": "gt"
@@ -29,11 +29,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        848,
-        -1408
+        1984,
+        112
       ],
-      "id": "55e513a8-bb03-4c4a-8e2c-2a1eb44a382f",
-      "name": "If",
+      "id": "2fe23fc1-ad60-4ef1-b8f9-783e53e0afaf",
+      "name": "If2",
       "onError": "continueRegularOutput"
     },
     {
@@ -47,7 +47,7 @@
         "messages": {
           "values": [
             {
-              "content": "=Analyse le texte de cette histoire pour enfant en profondeur : {{ $('Vérif création histoire').item.json.choices[0].message.content.histoire }}\n\nJe souhaite la rendre plus longue. C'est à dire qu'elle fasse {{ $('extraction_validation1').item.json.nb_mots }} mots à plus ou moins 15%.\n\nBase toi sur ce prompt qui a servi à créer l'histoire pour ajouter des paragraphes jusqu'à atteindre au minimum {{ $('extraction_validation1').item.json.nb_mots * 0.80 }} mots : \n{{ $('Webhook').item.json.body.storyPrompt }} \n\nATTENTION : je ne veux pas que le titre soit répété au début du texte. À la fin de l'histoire, je ne veux pas de mot \"fin\" ou autre chose. Je veux que le texte se finisse simplement par les derniers mots de l'histoire.",
+              "content": "=Analyse le texte de cette histoire pour enfant en profondeur : {{ $('Vérif création histoire2').item.json.choices[0].message.content.histoire }}\n\nJe souhaite la rendre plus longue. C'est à dire qu'elle fasse {{ $('extraction_validation4').item.json.nb_mots }} mots à plus ou moins 15%.\n\nBase toi sur ce prompt qui a servi à créer l'histoire pour ajouter des paragraphes jusqu'à atteindre au minimum {{ $('extraction_validation4').item.json.nb_mots * 0.80 }} mots : \n{{ $('Webhook1').item.json.body.storyPrompt }} \n\nATTENTION : je ne veux pas que le titre soit répété au début du texte. À la fin de l'histoire, je ne veux pas de mot \"fin\" ou autre chose. Je veux que le texte se finisse simplement par les derniers mots de l'histoire.\n\nIMPORTANT : Respecte scrupuleusement l'objectif de l'histoire. Si l'objectif est \"fun\", n'ajoute que des péripéties comiques et rythmées, et n'ajoute JAMAIS de scène d'endormissement ou d'apaisement pour le coucher.",
               "role": "system"
             }
           ]
@@ -58,11 +58,11 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        -1200,
-        -960
+        -80,
+        560
       ],
-      "id": "b4727a88-43c8-4023-ba87-71ce01da12b5",
-      "name": "Allonge l'histoire",
+      "id": "dec473c0-5eba-42f2-8d73-6fcf765bd942",
+      "name": "Allonge l'histoire1",
       "credentials": {
         "openAiApi": {
           "id": "MSayxruZLmsTpuw2",
@@ -73,7 +73,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyimages/{{ $('Création histoire dans supabase').item.json.id }}.jpeg",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyimages/{{ $('Création histoire dans supabase1').item.json.id }}.jpeg",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
@@ -93,11 +93,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1856,
-        -960
+        2992,
+        560
       ],
-      "id": "95502360-84a5-4bcc-acfc-86646e28db7a",
-      "name": "Post image dans supabase",
+      "id": "2bfba606-fcf0-474c-8100-771aba5c9a2a",
+      "name": "Post image dans supabase2",
       "credentials": {
         "supabaseApi": {
           "id": "wigd9LqEY8DlWzkn",
@@ -108,18 +108,18 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=ATTENTION : Tu dois ABSOLUMENT générer une histoire autour de  {{ $json.body.targetWordCount }} mots. Attends d’avoir atteint ce nombre pour t’arrêter. Si ce n’est pas le cas, continue à écrire automatiquement jusqu’au nombre indiqué.\n---\nTu es un agent qui est chargé de créer une histoire pour enfants (dans la variable content) à partir de ce titre d'histoire sélectionné par l'utilisateur : {{ $json.body.selectedTitle }} et selon ce prompt : {{ $json.body.storyPrompt }}.\n---\nSi le titre est vide (histoire rapide : la variable is_fast_story est égale à true), invente un titre adapté au prompt ({{ $json.body.storyPrompt }}).\n---\nRègles pour la création du titre si la variable is_fast_story est égale à true :\n1. Longueur : Maximum 10 mots (privilégier 3 à 5 mots).\nInterdits : \n- AUCUN adjectif laudatif (magique, merveilleux, génial, incroyable, etc.).\n- AUCUN titre de type \"L'objet qui fait une action\" (ex: \"Le chat qui danse\").\n- AUCUN nom d'enfant dans le titre.\n2. Style : Inspire-toi de la sobriété de l'école des loisirs ou de Gallimard Jeunesse. Utilise des noms concrets.\n3. RÈGLES LINGUISTIQUES (FRANÇAIS)\nRespecte strictement la casse française :\n- CORRECT : \"Le secret du petit bois\"\n- INCORRECT : \"Le Secret Du Petit Bois\" (pas de majuscule à chaque mot).\nMajuscule uniquement à la première lettre du titre et aux noms propres si nécessaire.\n---\nSi la variable {{ $json.body.is_fast_story }} est égale à true :\n- Il s'agit d'une \"Histoire rapide\". Le prompt de l'histoire est déjà contenu dans {{ $json.body.storyPrompt }}, utilise-le normalement.\n- Il n'y a PAS de titre sélectionné ({{ $json.body.selectedTitle }} sera vide). Tu dois INVENTER un titre court et original pour l'histoire (max 10 mots).\n- Il n'y a PAS d'enfants spécifiques. Tu dois INVENTER un protagoniste adapté au thème de l'histoire : un enfant (garçon ou fille, avec un prénom), un animal, ou un personnage imaginaire.\n- Retourne des tableaux vides pour \"childrenNames\" et \"childrenIds\" dans le JSON de sortie.\n- Pour le champ \"objective\" dans le JSON de sortie, utilise la valeur de {{ $json.body.fast_story_prompt_key }}.\n---\nUtilise la Postgres Memory pour éviter les répétitions dans la création d'histoires. Analyse les valeurs des \"story_analysis\" et \"summary\" pour les 5 dernières histoires créées par l'utilisateur. Ces valeurs constituent le titre, le résumé, le style, les personnages secondaires, l'ambiance des 5 dernières histoires créées par l'utilisateur. Lors de la création de la nouvelle histoire, tu dois t'assurer de créer une histoire qui n'est pas redondante avec les 5 dernières histoires. Tu dois donc te servir des 10 dernières valeurs des colonnes \"summary\" et \"story_analysis\" pour créer une histoire originale, sans redondance, qui va emmener le lecteur dans quelque chose de nouveau.\n---\nAssure-toi bien que l'histoire créée (content) respecte le nombre de mots demandés dans le prompt ({{ $json.body.targetWordCount }} mots). Pour se faire, compte le nombre de mots de l'histoire générée (content) et s’il est inférieur à {{ $json.body.targetWordCount * 0.80 }} mots, continu l'histoire selon le contexte demandé dans le prompt ({{ $json.body.storyPrompt }}) jusqu'à ce que l'histoire (content) contienne un minimum de {{ $json.body.targetWordCount * 0.80}} mots.\n---\nJe veux que tu retournes un format json. Dans le fichier json, en plus des données précédentes (content, title), pour le champ nb_mots du JSON, tu dois TOUJOURS renvoyer exactement la valeur fixe {{ $json.body.targetWordCount }}, même si l'histoire fait une autre taille. Ne recompte pas les mots pour remplir cette variable, l'objectif de l'histoire ({{ $json.body.objective }}), le nom de l'enfant ou des enfants à qui s'adresse l'histoire ({{ $json.body.childrenNames }}),l'id de l'enfant ou des enfants à qui s'adresse l'histoire ({{ $json.body.childrenIds }}), l'id de l'utilisateur demandant l'histoire ({{ $json.body.userId }}). Retourne également le \"status\" de l'histoire avec la valeur \"completed\".\n---\nSi is_fast_story est true, childrenNames et childrenIds seront des tableaux vides []. Tu dois inventer un protagoniste adapté au thème : un enfant, un animal ou un personnage imaginaire.\n---\nRenvoie le nombre de tokens iuput, le nombre de tokens output et le modèle llm utilisé dans les variable \"input_tokens\", \"output_tokens\" et \"model_llm\" du json en sortie.\n---\nConclusion : le format json final devra avoir la structure suivante :\n{\n  \"content\": string,\n  \"nb_mots\": string,\n  \"title\": string,\n  \"objective\": string,\n  \"childrenNames\": string[],   // tableau de prénoms d'enfants\n  \"childrenIds\": string[],     // tableau d'UUID d'enfants\n  \"userId\": string,\n  \"status\": \"completed\",\n  \"sound_id\": string,\n  \"input_tokens\": string,\n  \"output_tokens\": string,\n  \"model_llm\": string\n}\n---\nRetourne UNIQUEMENT le JSON demandé, sans explications ni texte autour. Les champs \"childrenNames\" et \"childrenIds\" doivent absolument être de type array.\n\n---\nCONSIGNES D'ÉMOTIONS AUDIO :\nPour donner du relief au livre audio, insère une des balises suivantes au tout début des paragraphes clés (une balise par changement d'ambiance) :\n- [warm] : pour les moments doux, l'intro et la fin câline\n- [whisper] : pour la nuit, les secrets et les chuchotements\n- [excited] : pour les découvertes joyeuses et petits moments d'enthousiasme\n- [mysterious] : pour l'exploration douce et les mystères\n- [sleepy] : pour les 2 derniers paragraphes afin d'amener le sommeil\n(Si le ton ne change pas, ne mets pas de balise).\n",
+        "text": "=ATTENTION : Tu dois ABSOLUMENT générer une histoire autour de  {{ $json.body.targetWordCount }} mots. Attends d’avoir atteint ce nombre pour t’arrêter. Si ce n’est pas le cas, continue à écrire automatiquement jusqu’au nombre indiqué.\n---\nTu es un agent qui est chargé de créer une histoire pour enfants (dans la variable content) à partir de ce titre d'histoire sélectionné par l'utilisateur : {{ $json.body.selectedTitle }} et selon ce prompt : {{ $json.body.storyPrompt }}.\n---\nSi le titre est vide (histoire rapide : la variable is_fast_story est égale à true), invente un titre adapté au prompt ({{ $json.body.storyPrompt }}).\n---\nRègles pour la création du titre si la variable is_fast_story est égale à true :\n1. Longueur : Maximum 10 mots (privilégier 3 à 5 mots).\nInterdits : \n- AUCUN adjectif laudatif (magique, merveilleux, génial, incroyable, etc.).\n- AUCUN titre de type \"L'objet qui fait une action\" (ex: \"Le chat qui danse\").\n- AUCUN nom d'enfant dans le titre.\n2. Style : Inspire-toi de la sobriété de l'école des loisirs ou de Gallimard Jeunesse. Utilise des noms concrets.\n3. RÈGLES LINGUISTIQUES (FRANÇAIS)\nRespecte strictement la casse française :\n- CORRECT : \"Le secret du petit bois\"\n- INCORRECT : \"Le Secret Du Petit Bois\" (pas de majuscule à chaque mot).\nMajuscule uniquement à la première lettre du titre et aux noms propres si nécessaire.\n---\nSi la variable {{ $json.body.is_fast_story }} est égale à true :\n- Il s'agit d'une \"Histoire rapide\". Le prompt de l'histoire est déjà contenu dans {{ $json.body.storyPrompt }}, utilise-le normalement.\n- Il n'y a PAS de titre sélectionné ({{ $json.body.selectedTitle }} sera vide). Tu dois INVENTER un titre court et original pour l'histoire (max 10 mots).\n- Il n'y a PAS d'enfants spécifiques. Tu dois INVENTER un protagoniste adapté au thème de l'histoire : un enfant (garçon ou fille, avec un prénom), un animal, ou un personnage imaginaire.\n- Retourne des tableaux vides pour \"childrenNames\" et \"childrenIds\" dans le JSON de sortie.\n- Pour le champ \"objective\" dans le JSON de sortie, utilise la valeur de {{ $json.body.fast_story_prompt_key }}.\n---\nUtilise la Postgres Memory pour éviter les répétitions dans la création d'histoires. Analyse les valeurs des \"story_analysis\" et \"summary\" pour les 5 dernières histoires créées par l'utilisateur. Ces valeurs constituent le titre, le résumé, le style, les personnages secondaires, l'ambiance des 5 dernières histoires créées par l'utilisateur. Lors de la création de la nouvelle histoire, tu dois t'assurer de créer une histoire qui n'est pas redondante avec les 5 dernières histoires. Tu dois donc te servir des 10 dernières valeurs des colonnes \"summary\" et \"story_analysis\" pour créer une histoire originale, sans redondance, qui va emmener le lecteur dans quelque chose de nouveau.\n---\nAssure-toi bien que l'histoire créée (content) respecte le nombre de mots demandés dans le prompt ({{ $json.body.targetWordCount }} mots). Pour se faire, compte le nombre de mots de l'histoire générée (content) et s’il est inférieur à {{ $json.body.targetWordCount * 0.80 }} mots, continu l'histoire selon le contexte demandé dans le prompt ({{ $json.body.storyPrompt }}) jusqu'à ce que l'histoire (content) contienne un minimum de {{ $json.body.targetWordCount * 0.80}} mots.\n---\nJe veux que tu retournes un format json. Dans le fichier json, en plus des données précédentes (content, title), pour le champ nb_mots du JSON, tu dois TOUJOURS renvoyer exactement la valeur fixe {{ $json.body.targetWordCount }}, même si l'histoire fait une autre taille. Ne recompte pas les mots pour remplir cette variable, l'objectif de l'histoire ({{ $json.body.objective }}), le nom de l'enfant ou des enfants à qui s'adresse l'histoire ({{ $json.body.childrenNames }}),l'id de l'enfant ou des enfants à qui s'adresse l'histoire ({{ $json.body.childrenIds }}), l'id de l'utilisateur demandant l'histoire ({{ $json.body.userId }}). Retourne également le \"status\" de l'histoire avec la valeur \"completed\".\n---\nSi is_fast_story est true, childrenNames et childrenIds seront des tableaux vides []. Tu dois inventer un protagoniste adapté au thème : un enfant, un animal ou un personnage imaginaire.\n---\nRenvoie le nombre de tokens iuput, le nombre de tokens output et le modèle llm utilisé dans les variable \"input_tokens\", \"output_tokens\" et \"model_llm\" du json en sortie.\n---\nConclusion : le format json final devra avoir la structure suivante :\n{\n  \"content\": string,\n  \"nb_mots\": string,\n  \"title\": string,\n  \"objective\": string,\n  \"childrenNames\": string[],   // tableau de prénoms d'enfants\n  \"childrenIds\": string[],     // tableau d'UUID d'enfants\n  \"userId\": string,\n  \"status\": \"completed\",\n  \"sound_id\": string,\n  \"input_tokens\": string,\n  \"output_tokens\": string,\n  \"model_llm\": string\n}\n---\nRetourne UNIQUEMENT le JSON demandé, sans explications ni texte autour. Les champs \"childrenNames\" et \"childrenIds\" doivent absolument être de type array.\n\n---\nCONSIGNES D'ÉMOTIONS AUDIO :\nPour donner du relief au livre audio, insère une des balises suivantes au tout début des paragraphes clés (une balise par changement d'ambiance) :\n- [warm] : ton chaleureux, rassurant et bienveillant (accueil, moments doux, fin câline)\n- [excited] : rire, action vive, enthousiasme, fête (fortement recommandé pour dynamiser et conclure les histoires 'fun')\n- [mysterious] : suspense léger, énigmes, curiosité (recommandé pour 'focus')\n- [whisper] : confidences, secrets, chuchotements complices\n- [calm] : détente, contemplation douce, bien-être en journée (recommandé pour 'relax')\n- [sleepy] : voix très douce, lente et berçante — ATTENTION : la balise [sleepy] est EXCLUSIVEMENT RÉSERVÉE à l'objectif \"sleep\" (sommeil). INTERDICTION FORMELLE d'utiliser [sleepy] pour les objectifs \"fun\", \"focus\" ou \"relax\".\n(Si le ton ne change pas, ne mets pas de balise).\n\n\n---\nCADRAGE STRICT SELON L'OBJECTIF :\n1. Si l'objectif est \"fun\" (s'amuser) :\n- ÉNERGIE HAUTE, RIRE ET COMÉDIE : L'histoire doit faire rire, donner le sourire et de l'énergie. Privilégie le comique de situation, les quiproquos, bêtises innocentes et rebondissements loufoques.\n- POSTURE D'ACTION : Les personnages doivent impérativement commencer DEBOUT ou en PLEINE ACTIVITÉ (jamais allongés sur le carrelage, l'herbe ou le lit à respirer lentement).\n- INTERDICTION ABSOLUE D'ENDORMISSEMENT : Ne jamais mentionner de lit, de sommeil, de paupières lourdes, de respiration au ventre ou d'apaisement pour la nuit. L'histoire doit s'achever sur un grand éclat de rire, une cabriole ou un moment de fête partagée.\n2. Si l'objectif est \"focus\" (concentration) :\n- Mystère captivant, énigme claire à résoudre, indices à observer, esprit de déduction actif. Dénouement valorisant la vivacité d'esprit (sans sommeil).\n3. Si l'objectif est \"relax\" (détente) :\n- Sérénité et bien-être éveillé en journée, contemplation douce SANS invitation à dormir.\n4. Si l'objectif est \"sleep\" (sommeil) :\n- Seul et unique objectif où la descente hypnotique et l'accompagnement vers le sommeil sont autorisés et recherchés.",
         "hasOutputParser": true,
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.9,
       "position": [
-        -992,
-        -1408
+        144,
+        112
       ],
-      "id": "34802c82-8c7a-4a94-b68f-ad12a342ae98",
-      "name": "Création histoire",
+      "id": "9e02f5cc-77cf-4069-9899-32c94ffe8c9f",
+      "name": "Création histoire1",
       "retryOnFail": true,
       "maxTries": 2
     },
@@ -130,7 +130,7 @@
           "fieldValues": [
             {
               "fieldId": "title",
-              "fieldValue": "={{ $('extraction_validation1').item.json.title }}"
+              "fieldValue": "={{ $('extraction_validation4').item.json.title }}"
             },
             {
               "fieldId": "content",
@@ -138,47 +138,48 @@
             },
             {
               "fieldId": "summary",
-              "fieldValue": "={{ $('Contexte autour histoire1').item.json.output.summary }}"
+              "fieldValue": "={{ $('Contexte autour histoire2').item.json.output.summary }}"
             },
             {
               "fieldId": "childrennames",
-              "fieldValue": "={{ $('Webhook').item.json.body.childrenNames }}"
+              "fieldValue": "={{ $('Webhook1').item.json.body.childrenNames }}"
             },
             {
               "fieldId": "objective",
-              "fieldValue": "={{ $('Webhook').item.json.body.objective }}"
+              "fieldValue": "={{ $('Webhook1').item.json.body.objective }}"
             },
             {
               "fieldId": "authorid",
-              "fieldValue": "={{ $('Webhook').item.json.body.userId }}"
+              "fieldValue": "={{ $('Webhook1').item.json.body.userId }}"
             },
             {
               "fieldId": "status",
-              "fieldValue": "={{ $('Création histoire').item.json.output.status }}"
+              "fieldValue": "={{ $('Création histoire1').item.json.output.status }}"
             },
             {
               "fieldId": "sound_id",
-              "fieldValue": "={{ $('random_music').item.json[\"sound_id\"] }}"
+              "fieldValue": "={{ $('random_music1').item.json[\"sound_id\"] }}"
             },
             {
               "fieldId": "childrenids",
-              "fieldValue": "={{ $('Webhook').item.json.body.childrenIds }}"
+              "fieldValue": "={{ $('Webhook1').item.json.body.childrenIds }}"
             },
             {
               "fieldId": "story_analysis",
-              "fieldValue": "={{ $('Contexte autour histoire1').item.json.output.story_analysis }}"
+              "fieldValue": "={{ $('Contexte autour histoire2').item.json.output.story_analysis }}"
             }
           ]
-        }
+        },
+        "text": "\n\n---\nCONSIGNES D'ÉMOTIONS AUDIO :\nPour donner du relief au livre audio, insère une des balises suivantes au tout début des paragraphes clés (une balise par changement d'ambiance) :\n- [warm] : ton chaleureux, rassurant et bienveillant (accueil, moments doux, fin câline)\n- [excited] : rire, action vive, enthousiasme, fête (fortement recommandé pour dynamiser et conclure les histoires 'fun')\n- [mysterious] : suspense léger, énigmes, curiosité (recommandé pour 'focus')\n- [whisper] : confidences, secrets, chuchotements complices\n- [calm] : détente, contemplation douce, bien-être en journée (recommandé pour 'relax')\n- [sleepy] : voix très douce, lente et berçante — ATTENTION : la balise [sleepy] est EXCLUSIVEMENT RÉSERVÉE à l'objectif \"sleep\" (sommeil). INTERDICTION FORMELLE d'utiliser [sleepy] pour les objectifs \"fun\", \"focus\" ou \"relax\".\n(Si le ton ne change pas, ne mets pas de balise).\n\n---\nCADRAGE STRICT SELON L'OBJECTIF :\n1. Si l'objectif est \"fun\" (s'amuser) :\n- ÉNERGIE HAUTE, RIRE ET COMÉDIE : L'histoire doit faire rire, donner le sourire et de l'énergie. Privilégie le comique de situation, les quiproquos, bêtises innocentes et rebondissements loufoques.\n- POSTURE D'ACTION : Les personnages doivent impérativement commencer DEBOUT ou en PLEINE ACTIVITÉ (jamais allongés sur le carrelage, l'herbe ou le lit à respirer lentement).\n- INTERDICTION ABSOLUE D'ENDORMISSEMENT : Ne jamais mentionner de lit, de sommeil, de paupières lourdes, de respiration au ventre ou d'apaisement pour la nuit. L'histoire doit s'achever sur un grand éclat de rire, une cabriole ou un moment de fête partagée.\n2. Si l'objectif est \"focus\" (concentration) :\n- Mystère captivant, énigme claire à résoudre, indices à observer, esprit de déduction actif. Dénouement valorisant la vivacité d'esprit (sans sommeil).\n3. Si l'objectif est \"relax\" (détente) :\n- Sérénité et bien-être éveillé en journée, contemplation douce SANS invitation à dormir.\n4. Si l'objectif est \"sleep\" (sommeil) :\n- Seul et unique objectif où la descente hypnotique et l'accompagnement vers le sommeil sont autorisés et recherchés."
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1040,
-        -960
+        2176,
+        560
       ],
-      "id": "4808b68c-c162-4bd3-b47d-04c0bacd1924",
-      "name": "Création histoire dans supabase",
+      "id": "ec083b55-9cf8-4eff-b879-31af03a8d41a",
+      "name": "Création histoire dans supabase1",
       "executeOnce": false,
       "credentials": {
         "supabaseApi": {
@@ -194,7 +195,7 @@
             {
               "id": "005b8d62-ab8a-4385-bf8f-aacf4aebda91",
               "name": "histoire_finale",
-              "value": "={{ $('Vérif création histoire1').item.json.choices[0].message.content.histoire.replace(/\\[.*?\\]/g, '').replace(/\\\\n/g, '\\n').replace(/<br\\s*\\/?>/gi, '\\n').replace(/\\\\\\\"/g, '\"') }}",
+              "value": "={{ $('Vérif création histoire3').item.json.choices[0].message.content.histoire.replace(/\\[.*?\\]/g, '').replace(/\\\\n/g, '\\n').replace(/<br\\s*\\/?>/gi, '\\n').replace(/\\\\\\\"/g, '\"') }}",
               "type": "string"
             }
           ]
@@ -204,16 +205,16 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        832,
-        -960
+        1968,
+        560
       ],
-      "id": "c89a5a8b-a889-4bc6-ae63-1608bce67e1c",
-      "name": "Edit Field histoire finale 2"
+      "id": "dc801694-cf4f-480c-93e7-61cdfb3f8bc7",
+      "name": "Edit Field histoire finale "
     },
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Création histoire dans supabase').item.json.id }}",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Création histoire dans supabase1').item.json.id }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
@@ -230,7 +231,7 @@
           "parameters": [
             {
               "name": "image_path",
-              "value": "={{ $('Création histoire dans supabase').item.json.id }}.jpeg"
+              "value": "={{ $('Création histoire dans supabase1').item.json.id }}.jpeg"
             }
           ]
         },
@@ -239,11 +240,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2304,
-        -960
+        3440,
+        560
       ],
-      "id": "263ee402-3557-485f-96d8-3fbd55f47070",
-      "name": "Mise à jour de l'histoire avec lien image",
+      "id": "7757aca5-3c20-403d-b3d5-e275e47bebaa",
+      "name": "Mise à jour de l'histoire avec lien image2",
       "credentials": {
         "supabaseApi": {
           "id": "wigd9LqEY8DlWzkn",
@@ -254,7 +255,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyimages/{{ $('Creation_histoire_dans_supabase1').item.json.id }}.png",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyimages/{{ $('Creation_histoire_dans_supabase').item.json.id }}.png",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
@@ -274,11 +275,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2560,
-        -1488
+        3696,
+        32
       ],
-      "id": "3ef22154-360d-4cbf-9b81-daa338a5f8c2",
-      "name": "Post image dans supabase1",
+      "id": "2490b10f-15fd-4726-a044-9ed410624ceb",
+      "name": "Post image dans supabase3",
       "credentials": {
         "supabaseApi": {
           "id": "wigd9LqEY8DlWzkn",
@@ -289,7 +290,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Creation_histoire_dans_supabase1').item.json.id }}",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Creation_histoire_dans_supabase').item.json.id }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
@@ -306,7 +307,7 @@
           "parameters": [
             {
               "name": "image_path",
-              "value": "={{ $('Creation_histoire_dans_supabase1').item.json.id }}.png"
+              "value": "={{ $('Creation_histoire_dans_supabase').item.json.id }}.png"
             }
           ]
         },
@@ -315,11 +316,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2752,
-        -1488
+        3888,
+        32
       ],
-      "id": "b32095bb-18fa-497e-b8dc-f00fb2068945",
-      "name": "Mise à jour de l'histoire avec lien image1",
+      "id": "11f5a38c-99d8-4efa-9655-93d8c2bc63df",
+      "name": "Mise à jour de l'histoire avec lien image3",
       "credentials": {
         "supabaseApi": {
           "id": "wigd9LqEY8DlWzkn",
@@ -345,11 +346,11 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1184,
-        -1408
+        -64,
+        112
       ],
-      "id": "d5d543aa-c9da-410c-b4e0-8beab140dec2",
-      "name": "Webhook",
+      "id": "685995da-e8d9-4fb0-8c60-ce9a4beb506b",
+      "name": "Webhook1",
       "webhookId": "816f3f78-bbdc-4b51-88b6-13232fcf3c78"
     },
     {
@@ -363,22 +364,23 @@
         "messages": {
           "values": [
             {
-              "content": "=Tu es un expert en haute rédaction littéraire pour enfants et un praticien certifié en hypnose ericksonienne pédiatrique. Ton rôle est de réécrire et sublimer l'histoire brute reçue pour en faire un conte hypnotique d'une grande beauté stylistique et d'une efficacité apaisante remarquable.\\n\\nVoici les détails de l'histoire brute à transformer :\\n- Titre : {{ $json.title }}\\n- Contenu : {{ $json.content }}\\n- Objectif recherché : {{ $('Webhook').item.json.body.objective }}\\n- Prénom(s) de(s) enfant(s) : {{ $('Webhook').item.json.body.childrenNames }}\\n\\nApplique strictement les consignes de rédaction et d'hypnose suivantes :\\n\\n1. DIRECTIVES DE \\\"BELLE RÉDACTION\\\" LITTÉRAIRE\\n- Style fluide, musical et poétique : Utilise des phrases au rythme harmonieux. Varie la longueur des phrases pour créer un rythme respiratoire apaisant.\\n- Vocabulaire riche et évocateur : Remplace les verbes ternes (faire, dire, voir, aller) par des verbes d'action et d'état précis, évocateurs de calme (s'éveiller, murmurer, contempler, s'apaiser, diffuser, infuser, glisser).\\n- Sobriété élégante : Évite les adjectifs laudatifs artificiels ou clichés (comme \\\"magique\\\", \\\"merveilleux\\\", \\\"incroyable\\\"). Préfère décrire des scènes qui suggèrent le merveilleux par des détails concrets et poétiques.\\n- Correction grammaticale et syntaxique absolue : Corrige toutes les fautes d'orthographe, de grammaire, de ponctuation ou de répétitions involontaires.\\n\\n2. ACCOMPAGNEMENT ET INVITATION À LA DÉTENTE (HYPNOSE ERICKSONIENNE)\\n- Richesse sensorielle (VAKOG) : Tisse de riches descriptions sensorielles apaisantes :\\n  * Visuel : lumières douces, reflets dorés ou argentés, ombres paisibles, couleurs irisées.\\n  * Auditif : chuchotements du vent, mélodies lointaines, silences confortables, murmures.\\n  * Kinesthésique : chaleur douce et enveloppante, légèreté comme si l'on flottait sur un nuage, ou lourdeur agréable et rassurante.\\n  * Olfactif/Gustatif : parfum rassurant de lavande, de forêt après la pluie, de vanille, ou tisane tiède.\\n- Rythme respiratoire : Intègre des métaphores liées à la respiration lente et calme (ex: le vent qui inspire et expire doucement dans les arbres, le personnage qui soupire d'aise et libère ses soucis).\\n- Langage permissive et suggestions indirectes : Utilise des formules douces et non directives : \\\"tu peux commencer à sentir...\\\", \\\"peut-être que...\\\", \\\"à ton rythme...\\\", \\\"pendant que ton esprit voyage, ton corps sait comment se reposer...\\\".\\n- Double liens et présuppositions : Guide gentiment vers le calme (ex: \\\"pendant que tes yeux se ferment doucement, ou peut-être qu'ils préfèrent encore regarder la lune...\\\", \\\"alors que tu t'installes plus confortablement...\\\").\\n- Métaphores d'intégration : Utilise des outils d'apaisement adaptés aux enfants (ex: ranger les soucis dans un coffre, souffler sur un nuage pour l'éloigner, activer une bulle de douceur et de protection).\\n\\n3. CONTRAINTES DE FORMAT ET DE STRUCTURE (CRITIQUES)\\n- Retourne UNIQUEMENT un objet JSON contenant la clé \\\"histoire\\\" (ex: { \\\"histoire\\\": \\\"Le texte réécrit...\\\" }).\\n- Ne mets aucune introduction, aucune conclusion, aucun commentaire en dehors de ce JSON.\\n- N'écris pas le titre au début du texte.\\n- Ne mets pas de mot \\\"Fin\\\" ou de noms de sections (début/développement/fin) dans le texte.\\n- Le texte doit se terminer naturellement par les derniers mots de l'histoire.\\n- ATTENTION : La variable de sortie dans le JSON doit s'appeler \\\"histoire\\\" et SURTOUT PAS \\\"story\\\"."
+              "content": "=Tu es un expert en haute rédaction littéraire pour enfants. Ton rôle est de réécrire, corriger et sublimer l'histoire brute reçue pour en maximiser la qualité stylistique, l'immersion et le respect PARFAIT de l'objectif recherché par l'enfant.\n\nVoici les détails de l'histoire brute à transformer :\n- Titre : {{ $json.title }}\n- Contenu : {{ $json.content }}\n- Objectif recherché : {{ $('Webhook1').item.json.body.objective }}\n- Prénom(s) de(s) enfant(s) : {{ $('Webhook1').item.json.body.childrenNames }}\n\nApplique strictement les consignes de rédaction et de cadrage suivantes :\n\n1. DIRECTIVES DE \"BELLE RÉDACTION\" LITTÉRAIRE\n- Style fluide, musical et vivant : Phrases au rythme harmonieux adapté à la lecture à voix haute.\n- Vocabulaire riche et évocateur : Remplace les verbes ternes (faire, dire, voir, aller) par des verbes d'action précis.\n- Sobriété élégante : Évite les adjectifs laudatifs artificiels ou clichés (comme \"magique\", \"merveilleux\", \"incroyable\").\n- Correction grammaticale et syntaxique absolue : Corrige toutes les fautes d'orthographe, de grammaire, de ponctuation ou de répétitions involontaires.\n\n2. CADRAGE STRICT SELON L'OBJECTIF RECHERCHÉ (CRITIQUE) :\n- SI L'OBJECTIF EST \"fun\" (S'AMUSER) :\n  * Rôle : Auteur de comédie jeunesse et d'aventures hilarantes.\n  * Ambiance : Énergie haute, quiproquos loufoques, situations comiques, rebondissements dynamiques.\n  * INTERDICTION FORMELLE ET ABSOLUE de toute technique d'endormissement, d'hypnose, de paupières lourdes, de lit, de bâillement, de respiration guidée sur le ventre ou d'apaisement lénifiant.\n  * Les personnages ne doivent JAMAIS être allongés passivement. Ils sont debout, actifs et moteurs.\n  * Dénouement : L'histoire doit se terminer impérativement par un éclat de rire communicatif, une réussite joyeuse ou une célébration dynamique.\n- SI L'OBJECTIF EST \"focus\" (CONCENTRATION) :\n  * Rôle : Conteur d'énigmes et de mystères palpitants.\n  * Ambiance : Clarté d'esprit, sens de l'observation, indices à repérer, suspense bienveillant. Dénouement valorisant la réflexion (sans sommeil).\n- SI L'OBJECTIF EST \"relax\" (DÉTENTE) :\n  * Rôle : Conteur de sérénité et de bien-être en journée.\n  * Ambiance : Contemplation douce, paysages chaleureux et respiration naturelle SANS obligation de s'endormir.\n- SI L'OBJECTIF EST \"sleep\" (SOMMEIL) :\n  * Rôle : Praticien en accompagnement doux du sommeil et hypnose ericksonienne pédiatrique.\n  * Ambiance : Ralentissement progressif du rythme, métaphores de cocon moelleux, respiration lente et endormissement paisible.\n\n3. CONTRAINTES DE FORMAT ET DE STRUCTURE (CRITIQUES)\n- Retourne UNIQUEMENT un objet JSON contenant la clé \"histoire\" (ex: { \"histoire\": \"Le texte réécrit...\" }).\n- Ne mets aucune introduction, aucune conclusion, aucun commentaire en dehors de ce JSON.\n- N'écris pas le titre au début du texte.\n- Ne mets pas de mot \"Fin\" ou de noms de sections (début/développement/fin) dans le texte.\n- Le texte doit se terminer naturellement par les derniers mots de l'histoire.\n- ATTENTION : La variable de sortie dans le JSON doit s'appeler \"histoire\" et SURTOUT PAS \"story\"."
             }
           ]
         },
         "simplify": false,
         "jsonOutput": true,
-        "options": {}
+        "options": {},
+        "text": "\n\n---\nCONSIGNES D'ÉMOTIONS AUDIO :\nPour donner du relief au livre audio, insère une des balises suivantes au tout début des paragraphes clés (une balise par changement d'ambiance) :\n- [warm] : ton chaleureux, rassurant et bienveillant (accueil, moments doux, fin câline)\n- [excited] : rire, action vive, enthousiasme, fête (fortement recommandé pour dynamiser et conclure les histoires 'fun')\n- [mysterious] : suspense léger, énigmes, curiosité (recommandé pour 'focus')\n- [whisper] : confidences, secrets, chuchotements complices\n- [calm] : détente, contemplation douce, bien-être en journée (recommandé pour 'relax')\n- [sleepy] : voix très douce, lente et berçante — ATTENTION : la balise [sleepy] est EXCLUSIVEMENT RÉSERVÉE à l'objectif \"sleep\" (sommeil). INTERDICTION FORMELLE d'utiliser [sleepy] pour les objectifs \"fun\", \"focus\" ou \"relax\".\n(Si le ton ne change pas, ne mets pas de balise).\n\n---\nCADRAGE STRICT SELON L'OBJECTIF :\n1. Si l'objectif est \"fun\" (s'amuser) :\n- ÉNERGIE HAUTE, RIRE ET COMÉDIE : L'histoire doit faire rire, donner le sourire et de l'énergie. Privilégie le comique de situation, les quiproquos, bêtises innocentes et rebondissements loufoques.\n- POSTURE D'ACTION : Les personnages doivent impérativement commencer DEBOUT ou en PLEINE ACTIVITÉ (jamais allongés sur le carrelage, l'herbe ou le lit à respirer lentement).\n- INTERDICTION ABSOLUE D'ENDORMISSEMENT : Ne jamais mentionner de lit, de sommeil, de paupières lourdes, de respiration au ventre ou d'apaisement pour la nuit. L'histoire doit s'achever sur un grand éclat de rire, une cabriole ou un moment de fête partagée.\n2. Si l'objectif est \"focus\" (concentration) :\n- Mystère captivant, énigme claire à résoudre, indices à observer, esprit de déduction actif. Dénouement valorisant la vivacité d'esprit (sans sommeil).\n3. Si l'objectif est \"relax\" (détente) :\n- Sérénité et bien-être éveillé en journée, contemplation douce SANS invitation à dormir.\n4. Si l'objectif est \"sleep\" (sommeil) :\n- Seul et unique objectif où la descente hypnotique et l'accompagnement vers le sommeil sont autorisés et recherchés."
       },
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        -384,
-        -1408
+        752,
+        112
       ],
-      "id": "9208eff5-0424-44b3-a856-6ad127862b0a",
-      "name": "Vérif création histoire",
+      "id": "2db1d694-3ec3-4283-8f05-6a2e1e444240",
+      "name": "Vérif création histoire2",
       "credentials": {
         "openAiApi": {
           "id": "MSayxruZLmsTpuw2",
@@ -397,22 +399,23 @@
         "messages": {
           "values": [
             {
-              "content": "=Tu es un expert en haute rédaction littéraire pour enfants et un praticien certifié en hypnose ericksonienne pédiatrique. Ton rôle est de réécrire et sublimer l'histoire brute (qui a été allongée) reçue pour en faire un conte hypnotique d'une grande beauté stylistique et d'une efficacité apaisante remarquable.\\n\\nVoici les détails de l'histoire brute à transformer :\\n- Titre : {{ $('extraction_validation1').item.json.title }}\\n- Contenu : {{ $json.choices[0].message.content }}\\n- Objectif recherché : {{ $('Webhook').item.json.body.objective }}\\n- Prénom(s) de(s) enfant(s) : {{ $('Webhook').item.json.body.childrenNames }}\\n\\nApplique strictement les consignes de rédaction et d'hypnose suivantes :\\n\\n1. DIRECTIVES DE \\\"BELLE RÉDACTION\\\" LITTÉRAIRE\\n- Style fluide, musical et poétique : Utilise des phrases au rythme harmonieux. Varie la longueur des phrases pour créer un rythme respiratoire apaisant.\\n- Vocabulaire riche et évocateur : Remplace les verbes ternes (faire, dire, voir, aller) par des verbes d'action et d'état précis, évocateurs de calme (s'éveiller, murmurer, contempler, s'apaiser, diffuser, infuser, glisser).\\n- Sobriété élégante : Évite les adjectifs laudatifs artificiels ou clichés (comme \\\"magique\\\", \\\"merveilleux\\\", \\\"incroyable\\\"). Préfère décrire des scènes qui suggèrent le merveilleux par des détails concrets et poétiques.\\n- Correction grammaticale et syntaxique absolue : Corrige toutes les fautes d'orthographe, de grammaire, de ponctuation ou de répétitions involontaires.\\n\\n2. ACCOMPAGNEMENT ET INVITATION À LA DÉTENTE (HYPNOSE ERICKSONIENNE)\\n- Richesse sensorielle (VAKOG) : Tisse de riches descriptions sensorielles apaisantes :\\n  * Visuel : lumières douces, reflets dorés ou argentés, ombres paisibles, couleurs irisées.\\n  * Auditif : chuchotements du vent, mélodies lointaines, silences confortables, murmures.\\n  * Kinesthésique : chaleur douce et enveloppante, légèreté comme si l'on flottait sur un nuage, ou lourdeur agréable et rassurante.\\n  * Olfactif/Gustatif : parfum rassurant de lavande, de forêt après la pluie, de vanille, ou tisane tiède.\\n- Rythme respiratoire : Intègre des métaphores liées à la respiration lente et calme (ex: le vent qui inspire et expire doucement dans les arbres, le personnage qui soupire d'aise et libère ses soucis).\\n- Langage permissive et suggestions indirectes : Utilise des formules douces et non directives : \\\"tu peux commencer à sentir...\\\", \\\"peut-être que...\\\", \\\"à ton rythme...\\\", \\\"pendant que ton esprit voyage, ton corps sait comment se reposer...\\\".\\n- Double liens et présuppositions : Guide gentiment vers le calme (ex: \\\"pendant que tes yeux se ferment doucement, ou peut-être qu'ils préfèrent encore regarder la lune...\\\", \\\"alors que tu t'installes plus confortablement...\\\").\\n- Métaphores d'intégration : Utilise des outils d'apaisement adaptés aux enfants (ex: ranger les soucis dans un coffre, souffler sur un nuage pour l'éloigner, activer une bulle de douceur et de protection).\\n\\n3. CONTRAINTES DE FORMAT ET DE STRUCTURE (CRITIQUES)\\n- Retourne UNIQUEMENT un objet JSON contenant la clé \\\"histoire\\\" (ex: { \\\"histoire\\\": \\\"Le texte réécrit...\\\" }).\\n- Ne mets aucune introduction, aucune conclusion, aucun commentaire en dehors de ce JSON.\\n- N'écris pas le titre au début du texte.\\n- Ne mets pas de mot \\\"Fin\\\" ou de noms de sections (début/développement/fin) dans le texte.\\n- Le texte doit se terminer naturellement par les derniers mots de l'histoire.\\n- ATTENTION : La variable de sortie dans le JSON doit s'appeler \\\"histoire\\\" et SURTOUT PAS \\\"story\\\"."
+              "content": "=Tu es un expert en haute rédaction littéraire pour enfants. Ton rôle est de réécrire, corriger et sublimer l'histoire brute reçue pour en maximiser la qualité stylistique, l'immersion et le respect PARFAIT de l'objectif recherché par l'enfant.\n\nVoici les détails de l'histoire brute à transformer :\n- Titre : {{ $('extraction_validation4').item.json.title }}\n- Contenu : {{ $json.choices[0].message.content }}\n- Objectif recherché : {{ $('Webhook1').item.json.body.objective }}\n- Prénom(s) de(s) enfant(s) : {{ $('Webhook1').item.json.body.childrenNames }}\n\nApplique strictement les consignes de rédaction et de cadrage suivantes :\n\n1. DIRECTIVES DE \"BELLE RÉDACTION\" LITTÉRAIRE\n- Style fluide, musical et vivant : Phrases au rythme harmonieux adapté à la lecture à voix haute.\n- Vocabulaire riche et évocateur : Remplace les verbes ternes (faire, dire, voir, aller) par des verbes d'action précis.\n- Sobriété élégante : Évite les adjectifs laudatifs artificiels ou clichés (comme \"magique\", \"merveilleux\", \"incroyable\").\n- Correction grammaticale et syntaxique absolue : Corrige toutes les fautes d'orthographe, de grammaire, de ponctuation ou de répétitions involontaires.\n\n2. CADRAGE STRICT SELON L'OBJECTIF RECHERCHÉ (CRITIQUE) :\n- SI L'OBJECTIF EST \"fun\" (S'AMUSER) :\n  * Rôle : Auteur de comédie jeunesse et d'aventures hilarantes.\n  * Ambiance : Énergie haute, quiproquos loufoques, situations comiques, rebondissements dynamiques.\n  * INTERDICTION FORMELLE ET ABSOLUE de toute technique d'endormissement, d'hypnose, de paupières lourdes, de lit, de bâillement, de respiration guidée sur le ventre ou d'apaisement lénifiant.\n  * Les personnages ne doivent JAMAIS être allongés passivement. Ils sont debout, actifs et moteurs.\n  * Dénouement : L'histoire doit se terminer impérativement par un éclat de rire communicatif, une réussite joyeuse ou une célébration dynamique.\n- SI L'OBJECTIF EST \"focus\" (CONCENTRATION) :\n  * Rôle : Conteur d'énigmes et de mystères palpitants.\n  * Ambiance : Clarté d'esprit, sens de l'observation, indices à repérer, suspense bienveillant. Dénouement valorisant la réflexion (sans sommeil).\n- SI L'OBJECTIF EST \"relax\" (DÉTENTE) :\n  * Rôle : Conteur de sérénité et de bien-être en journée.\n  * Ambiance : Contemplation douce, paysages chaleureux et respiration naturelle SANS obligation de s'endormir.\n- SI L'OBJECTIF EST \"sleep\" (SOMMEIL) :\n  * Rôle : Praticien en accompagnement doux du sommeil et hypnose ericksonienne pédiatrique.\n  * Ambiance : Ralentissement progressif du rythme, métaphores de cocon moelleux, respiration lente et endormissement paisible.\n\n3. CONTRAINTES DE FORMAT ET DE STRUCTURE (CRITIQUES)\n- Retourne UNIQUEMENT un objet JSON contenant la clé \"histoire\" (ex: { \"histoire\": \"Le texte réécrit...\" }).\n- Ne mets aucune introduction, aucune conclusion, aucun commentaire en dehors de ce JSON.\n- N'écris pas le titre au début du texte.\n- Ne mets pas de mot \"Fin\" ou de noms de sections (début/développement/fin) dans le texte.\n- Le texte doit se terminer naturellement par les derniers mots de l'histoire.\n- ATTENTION : La variable de sortie dans le JSON doit s'appeler \"histoire\" et SURTOUT PAS \"story\"."
             }
           ]
         },
         "simplify": false,
         "jsonOutput": true,
-        "options": {}
+        "options": {},
+        "text": "\n\n---\nCONSIGNES D'ÉMOTIONS AUDIO :\nPour donner du relief au livre audio, insère une des balises suivantes au tout début des paragraphes clés (une balise par changement d'ambiance) :\n- [warm] : ton chaleureux, rassurant et bienveillant (accueil, moments doux, fin câline)\n- [excited] : rire, action vive, enthousiasme, fête (fortement recommandé pour dynamiser et conclure les histoires 'fun')\n- [mysterious] : suspense léger, énigmes, curiosité (recommandé pour 'focus')\n- [whisper] : confidences, secrets, chuchotements complices\n- [calm] : détente, contemplation douce, bien-être en journée (recommandé pour 'relax')\n- [sleepy] : voix très douce, lente et berçante — ATTENTION : la balise [sleepy] est EXCLUSIVEMENT RÉSERVÉE à l'objectif \"sleep\" (sommeil). INTERDICTION FORMELLE d'utiliser [sleepy] pour les objectifs \"fun\", \"focus\" ou \"relax\".\n(Si le ton ne change pas, ne mets pas de balise).\n\n---\nCADRAGE STRICT SELON L'OBJECTIF :\n1. Si l'objectif est \"fun\" (s'amuser) :\n- ÉNERGIE HAUTE, RIRE ET COMÉDIE : L'histoire doit faire rire, donner le sourire et de l'énergie. Privilégie le comique de situation, les quiproquos, bêtises innocentes et rebondissements loufoques.\n- POSTURE D'ACTION : Les personnages doivent impérativement commencer DEBOUT ou en PLEINE ACTIVITÉ (jamais allongés sur le carrelage, l'herbe ou le lit à respirer lentement).\n- INTERDICTION ABSOLUE D'ENDORMISSEMENT : Ne jamais mentionner de lit, de sommeil, de paupières lourdes, de respiration au ventre ou d'apaisement pour la nuit. L'histoire doit s'achever sur un grand éclat de rire, une cabriole ou un moment de fête partagée.\n2. Si l'objectif est \"focus\" (concentration) :\n- Mystère captivant, énigme claire à résoudre, indices à observer, esprit de déduction actif. Dénouement valorisant la vivacité d'esprit (sans sommeil).\n3. Si l'objectif est \"relax\" (détente) :\n- Sérénité et bien-être éveillé en journée, contemplation douce SANS invitation à dormir.\n4. Si l'objectif est \"sleep\" (sommeil) :\n- Seul et unique objectif où la descente hypnotique et l'accompagnement vers le sommeil sont autorisés et recherchés."
       },
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        -256,
-        -960
+        880,
+        560
       ],
-      "id": "6ec420c2-d995-4d3d-9512-be58a90dcf34",
-      "name": "Vérif création histoire1",
+      "id": "62acc1e8-d38f-4f90-8e6f-4e3daa1bf2f7",
+      "name": "Vérif création histoire3",
       "credentials": {
         "openAiApi": {
           "id": "MSayxruZLmsTpuw2",
@@ -427,11 +430,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        640,
-        -1408
+        1776,
+        112
       ],
-      "id": "052d9eb1-7490-4295-9488-2600a4101e70",
-      "name": "Compte les mots"
+      "id": "ab56c773-e688-478a-ab47-390c938e95f8",
+      "name": "Compte les mots1"
     },
     {
       "parameters": {
@@ -440,7 +443,7 @@
             {
               "id": "55004ad4-ee55-4f3b-88df-9573595870cb",
               "name": "histoire_finale",
-              "value": "={{ $node[\"Vérif création histoire\"].json[\"choices\"][0][\"message\"][\"content\"][\"histoire\"].replace(/\\[.*?\\]/g, '')\n   .replace(/\\\\n/g, '<br>')\n   .replace(/\\\\\"/g, '') }}",
+              "value": "={{ $node[\"Vérif création histoire2\"].json[\"choices\"][0][\"message\"][\"content\"][\"histoire\"].replace(/\\[.*?\\]/g, '')\n   .replace(/\\\\n/g, '<br>')\n   .replace(/\\\\\"/g, '') }}",
               "type": "string"
             }
           ]
@@ -450,11 +453,11 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        416,
-        -1408
+        1552,
+        112
       ],
-      "id": "401ae7cd-66d6-4dbf-99d5-1fb4d2eb67cb",
-      "name": "histoire finale"
+      "id": "e3ea51cc-a77d-490b-aa7c-84f0c9f5977f",
+      "name": "histoire finale1"
     },
     {
       "parameters": {
@@ -463,22 +466,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1328,
-        -1424
+        2464,
+        96
       ],
-      "id": "714c0f21-e1da-4c9e-9a46-793ab19c1f18",
-      "name": "extraction_validation"
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        -1392,
-        -1648
-      ],
-      "id": "0b9c5c88-d62b-4259-8256-63a0cb5bd619",
-      "name": "When clicking ‘Execute workflow’"
+      "id": "6c1bac72-4b38-4637-873a-d2423be6036c",
+      "name": "extraction_validation3"
     },
     {
       "parameters": {
@@ -489,11 +481,11 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1184,
-        -1648
+        -64,
+        -128
       ],
-      "id": "afd126eb-5705-4fd4-9028-33076ed970f9",
-      "name": "Edit Fields"
+      "id": "d70a9ef8-b0a0-4bd5-a705-0bd244d95f23",
+      "name": "Edit Fields1"
     },
     {
       "parameters": {
@@ -502,11 +494,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -672,
-        -1408
+        464,
+        112
       ],
-      "id": "bba17a49-39e4-49f7-99e5-3de8112f67ae",
-      "name": "extraction_validation1"
+      "id": "5cd074ad-6636-4868-9c82-f40e801c8202",
+      "name": "extraction_validation4"
     },
     {
       "parameters": {
@@ -515,11 +507,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        496,
-        -960
+        1632,
+        560
       ],
-      "id": "98ba621d-1514-442f-8006-61b0d95a7370",
-      "name": "extraction_validation2"
+      "id": "7b14945b-aab2-41ff-a53e-cc71cf8820f1",
+      "name": "extraction_validation5"
     },
     {
       "parameters": {
@@ -543,11 +535,11 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.1,
       "position": [
-        128,
-        -960
+        1264,
+        560
       ],
-      "id": "1c47fa48-8a45-43d3-9660-88c7bf981508",
-      "name": "Contexte autour histoire1",
+      "id": "d009eebe-afc4-4604-a967-89e823527c93",
+      "name": "Contexte autour histoire2",
       "credentials": {
         "openAiApi": {
           "id": "MSayxruZLmsTpuw2",
@@ -566,7 +558,7 @@
         "responses": {
           "values": [
             {
-              "content": "=À partir de l'histoire créée ({{ $('histoire finale').item.json.histoire_finale }}) qui est la variable \"content\", créer :\n1. Un résumé adapté à des enfants d'environ 150 mots (summary)\n2. Une analyse complète incluant :\n   - Le style de rédaction\n   - Les mots-clés récurrents\n   - La structure narrative (début/milieu/fin)\n   - Les personnages principaux et secondaires\n   - Les thèmes abordés\n---\nRenvoie le nombre de tokens iuput, le nombre de tokens output et le modèle llm utilisé dans les variable \"input_tokens\", \"output_tokens\" et \"model_llm\" du json en sortie.\n---\nConclusion : le format json final devra avoir la structure suivante :\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"output\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"summary\": {\n          \"type\": \"string\"\n        },\n        \"story_analysis\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"style\": {\n              \"type\": \"string\"\n            },\n            \"keywords\": {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n              }\n            },\n            \"structure\": {\n              \"type\": \"object\",\n              \"properties\": {\n                \"beginning\": {\n                  \"type\": \"string\"\n                },\n                \"middle\": {\n                  \"type\": \"string\"\n                },\n                \"end\": {\n                  \"type\": \"string\"\n                }\n              },\n              \"required\": [\"beginning\", \"middle\", \"end\"]\n            },\n            \"main_characters\": {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n              }\n            },\n            \"secondary_characters\": {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n              }\n            },\n            \"themes\": {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n              }\n            }\n          },\n          \"required\": [\"style\", \"keywords\", \"structure\", \"main_characters\", \"themes\"]\n        }\n      },\n      \"required\": [\"summary\", \"story_analysis\"]\n    }\n  },\n  \"required\": [\"output\"]\n}\n---\nRetournez UNIQUEMENT un JSON valide, sans code block."
+              "content": "=À partir de l'histoire créée ({{ $('histoire finale1').item.json.histoire_finale }}) qui est la variable \"content\", créer :\n1. Un résumé adapté à des enfants d'environ 150 mots (summary)\n2. Une analyse complète incluant :\n   - Le style de rédaction\n   - Les mots-clés récurrents\n   - La structure narrative (début/milieu/fin)\n   - Les personnages principaux et secondaires\n   - Les thèmes abordés\n---\nRenvoie le nombre de tokens iuput, le nombre de tokens output et le modèle llm utilisé dans les variable \"input_tokens\", \"output_tokens\" et \"model_llm\" du json en sortie.\n---\nConclusion : le format json final devra avoir la structure suivante :\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"output\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"summary\": {\n          \"type\": \"string\"\n        },\n        \"story_analysis\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"style\": {\n              \"type\": \"string\"\n            },\n            \"keywords\": {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n              }\n            },\n            \"structure\": {\n              \"type\": \"object\",\n              \"properties\": {\n                \"beginning\": {\n                  \"type\": \"string\"\n                },\n                \"middle\": {\n                  \"type\": \"string\"\n                },\n                \"end\": {\n                  \"type\": \"string\"\n                }\n              },\n              \"required\": [\"beginning\", \"middle\", \"end\"]\n            },\n            \"main_characters\": {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n              }\n            },\n            \"secondary_characters\": {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n              }\n            },\n            \"themes\": {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n              }\n            }\n          },\n          \"required\": [\"style\", \"keywords\", \"structure\", \"main_characters\", \"themes\"]\n        }\n      },\n      \"required\": [\"summary\", \"story_analysis\"]\n    }\n  },\n  \"required\": [\"output\"]\n}\n---\nRetournez UNIQUEMENT un JSON valide, sans code block."
             }
           ]
         },
@@ -577,11 +569,11 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.1,
       "position": [
-        1024,
-        -1424
+        2160,
+        96
       ],
-      "id": "97169083-6fbd-4888-9887-8b2b61c76d8f",
-      "name": "Contexte autour histoire",
+      "id": "11365de2-c17e-4b9e-b4ce-e697384e4ff4",
+      "name": "Contexte autour histoire3",
       "credentials": {
         "openAiApi": {
           "id": "MSayxruZLmsTpuw2",
@@ -596,47 +588,47 @@
           "fieldValues": [
             {
               "fieldId": "title",
-              "fieldValue": "={{ $('extraction_validation1').item.json.title }}"
+              "fieldValue": "={{ $('extraction_validation4').item.json.title }}"
             },
             {
               "fieldId": "content",
-              "fieldValue": "={{ $('histoire finale').item.json.histoire_finale }}"
+              "fieldValue": "={{ $('histoire finale1').item.json.histoire_finale }}"
             },
             {
               "fieldId": "summary",
-              "fieldValue": "={{ $('extraction_validation').item.json.summary }}"
+              "fieldValue": "={{ $('extraction_validation3').item.json.summary }}"
             },
             {
               "fieldId": "childrennames",
-              "fieldValue": "={{ $('extraction_validation1').item.json.childrenNames }}"
+              "fieldValue": "={{ $('extraction_validation4').item.json.childrenNames }}"
             },
             {
               "fieldId": "objective",
-              "fieldValue": "={{ $('extraction_validation1').item.json.objective }}"
+              "fieldValue": "={{ $('extraction_validation4').item.json.objective }}"
             },
             {
               "fieldId": "authorid",
-              "fieldValue": "={{ $('extraction_validation1').item.json.userId }}"
+              "fieldValue": "={{ $('extraction_validation4').item.json.userId }}"
             },
             {
               "fieldId": "status",
-              "fieldValue": "={{ $('extraction_validation1').item.json.status }}"
+              "fieldValue": "={{ $('extraction_validation4').item.json.status }}"
             },
             {
               "fieldId": "sound_id",
-              "fieldValue": "={{ $('random_music').item.json[\"sound_id\"] }}"
+              "fieldValue": "={{ $('random_music1').item.json[\"sound_id\"] }}"
             },
             {
               "fieldId": "childrenids",
-              "fieldValue": "={{ $('extraction_validation1').item.json.childrenIds }}"
+              "fieldValue": "={{ $('extraction_validation4').item.json.childrenIds }}"
             },
             {
               "fieldId": "story_analysis",
-              "fieldValue": "={{ $('extraction_validation').item.json.story_analysis }}"
+              "fieldValue": "={{ $('extraction_validation3').item.json.story_analysis }}"
             },
             {
               "fieldId": "deduplication_key",
-              "fieldValue": "={{ $node[\"Webhook\"].json.body.userId + \"-\" + new Date().toISOString() }}"
+              "fieldValue": "={{ $node[\"Webhook1\"].json.body.userId + \"-\" + new Date().toISOString() }}"
             }
           ]
         }
@@ -644,11 +636,11 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1504,
-        -1424
+        2640,
+        96
       ],
-      "id": "883a4919-b343-4ed3-ae20-4cf527628b54",
-      "name": "Creation_histoire_dans_supabase1",
+      "id": "61ac1686-8b35-4b37-8e7f-fd6322152921",
+      "name": "Creation_histoire_dans_supabase",
       "executeOnce": false,
       "credentials": {
         "supabaseApi": {
@@ -667,11 +659,11 @@
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
       "position": [
-        -944,
-        -1152
+        192,
+        368
       ],
-      "id": "df1416b0-e5cb-4fa3-884d-b525e4e03ef6",
-      "name": "Postgres Memory",
+      "id": "e009d374-8d41-4f3f-9f3e-564433fa86c3",
+      "name": "Postgres Memory1",
       "credentials": {
         "postgres": {
           "id": "YUDuQDrtHG40JsYt",
@@ -684,11 +676,11 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -624,
-        -1168
+        512,
+        352
       ],
-      "id": "c9594af2-3588-41b2-af55-51f63ef12d78",
-      "name": "Wait",
+      "id": "636cb84f-f766-4d63-a2af-c655b876a6c4",
+      "name": "Wait1",
       "webhookId": "86b1dd5d-fa9b-4011-aa28-583cb2077450"
     },
     {
@@ -700,11 +692,11 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -416,
-        -1168
+        720,
+        352
       ],
-      "id": "39559391-484c-4e89-a561-3243384236ac",
-      "name": "Execute a SQL query",
+      "id": "a66f3c54-7ac9-4be4-bd2b-615e92c3c59c",
+      "name": "Execute a SQL query1",
       "credentials": {
         "postgres": {
           "id": "YUDuQDrtHG40JsYt",
@@ -721,7 +713,7 @@
             {
               "keyName": "objective",
               "condition": "eq",
-              "keyValue": "={{ $('Webhook').item.json[\"body\"][\"objective\"] }}"
+              "keyValue": "={{ $('Webhook1').item.json[\"body\"][\"objective\"] }}"
             }
           ]
         }
@@ -729,11 +721,11 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -32,
-        -1408
+        1104,
+        112
       ],
-      "id": "7534a317-0b20-47ff-804f-0e4fe3a77a65",
-      "name": "recuperation_musique",
+      "id": "66407d24-53e4-4807-be8f-d79bbe85f37f",
+      "name": "recuperation_musique1",
       "credentials": {
         "supabaseApi": {
           "id": "wigd9LqEY8DlWzkn",
@@ -748,11 +740,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        192,
-        -1408
+        1328,
+        112
       ],
-      "id": "1a0fcd94-1c67-4356-9270-5dd22cfba7c2",
-      "name": "random_music"
+      "id": "ba5971a4-37e1-4084-a049-e3d85c5e169c",
+      "name": "random_music1"
     },
     {
       "parameters": {
@@ -762,11 +754,11 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        -1408,
-        -1328
+        -288,
+        192
       ],
-      "id": "51ede653-5553-4dce-8a37-a61c8c3389fa",
-      "name": "Google Gemini Chat Model",
+      "id": "a275d891-ac5a-4b25-b909-5c169f7d37e7",
+      "name": "Google Gemini Chat Model1",
       "credentials": {
         "googlePalmApi": {
           "id": "WEPi8fFtLpk1vZ6u",
@@ -784,17 +776,17 @@
           "cachedResultName": "models/gemini-2.5-flash-image (Nano Banana)",
           "cachedResultUrl": ""
         },
-        "prompt": "=Agis comme un illustrateur expert de livres jeunesse. \nCrée une image de couverture captivante pour l'histoire suivante : \ntitre : {{ $('extraction_validation1').item.json.title }}\nrésumé : {{ $json.summary }}\n\nConsignes complémentaires :\n{{ $('Webhook').item.json.body.imageGenerationPrompt }}\n\nIMPORTANT : Assure toi que le titre de l'histoire affiché sur l'image est écrit sans faute d'orthographe / grammaire et correspond exactement à ce titre d'histoire lettre par lettre : {{ $('extraction_validation1').item.json.title }}",
+        "prompt": "=Agis comme un illustrateur expert de livres jeunesse. \nCrée une image de couverture captivante pour l'histoire suivante : \ntitre : {{ $('extraction_validation4').item.json.title }}\nrésumé : {{ $json.summary }}\n\nConsignes complémentaires :\n{{ $('Webhook1').item.json.body.imageGenerationPrompt }}\n\nIMPORTANT : Assure toi que le titre de l'histoire affiché sur l'image est écrit sans faute d'orthographe / grammaire et correspond exactement à ce titre d'histoire lettre par lettre : {{ $('extraction_validation4').item.json.title }}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1.1,
       "position": [
-        1680,
-        -1424
+        2816,
+        96
       ],
-      "id": "27100439-fd7b-4cec-a0ce-a9d1e2e7452f",
-      "name": "Création image1",
+      "id": "3d25e7e9-7d08-4b25-ac43-ce99222e0a73",
+      "name": "Création image",
       "credentials": {
         "googlePalmApi": {
           "id": "WEPi8fFtLpk1vZ6u",
@@ -812,20 +804,20 @@
           "mode": "list",
           "cachedResultName": "models/veo-3.1-lite-generate-preview"
         },
-        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook').first().json?.body?.videoOrientation === 'landscape' || $('Webhook').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 4-second cinematic {{ ($('Webhook').first().json?.body?.videoOrientation === 'landscape' || $('Webhook').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Creation_histoire_dans_supabase1').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase1').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image').isExecuted ? ($('Analyze image').first().json[0]?.content?.[0]?.text || $('Analyze image').first().json?.text || '') : ($('Analyze_image').isExecuted ? ($('Analyze_image').first().json?.content?.parts?.[0]?.text || '') : '') }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT, TIMING & AUDIO SPECIFICATIONS (CRITICAL - 4 SECONDS TOTAL):\n1. STRICT {{ ($('Webhook').first().json?.body?.videoOrientation === 'landscape' || $('Webhook').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION CUTOFF (CRITICAL): Any soothing voice-over, spoken word, or sound in this video must be very slow, calm, and MUST BE COMPLETELY FINISHED AND SILENT BEFORE SECOND 2.5. Absolutely zero speech or sound after second 2.5.\n4. SMOOTH DECELERATION: Between second 2.5 and second 3.0, any subtle motion smoothly slows down to a complete, peaceful halt.\n5. MOTIONLESS RESTING TABLEAU (FINAL FULL SECOND): From second 3.0 to second 4.0, the scene completely settles into an absolute motionless, serene resting tableau with zero movement so there is zero abrupt stop or cut.\n6. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must conclude in absolute stillness, peace, and reassurance.",
+        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 5-second cinematic {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Creation_histoire_dans_supabase').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image1').isExecuted ? ($('Analyze image1').first().json[0]?.content?.[0]?.text || $('Analyze image1').first().json?.text || '') : ($('Analyze_image1').isExecuted ? ($('Analyze_image1').first().json?.content?.parts?.[0]?.text || '') : '') }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT & AUDIO SPECIFICATIONS:\n1. STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION SPEED: Any voice-over, spoken word, or narration in this video must be very slow, soft, soothing, and unhurried (calm bedtime tempo). Do NOT speak fast or rush words.\n4. ENDING DECELERATION (CRITICAL): By second 3.5, the motion smoothly slows down and completely settles into a motionless, serene resting tableau for the remainder of the video so there is no abrupt stop.\n5. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must end in absolute stillness, peace, and reassurance.",
         "options": {
-          "durationSeconds": 4,
-          "aspectRatio": "={{ ($('Webhook').first().json?.body?.videoOrientation === 'landscape' || $('Webhook').first().json?.body?.videoAspectRatio === '16:9') ? '16:9' : '9:16' }}"
+          "durationSeconds": 5,
+          "aspectRatio": "={{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? '16:9' : '9:16' }}"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1.1,
       "position": [
-        2928,
-        -1248
+        4064,
+        272
       ],
-      "id": "478f0710-4716-4031-bb4b-b6767d275f1d",
-      "name": "video_story",
+      "id": "263f2b8b-ee7f-49ef-b03e-73b29b41362d",
+      "name": "video_story1",
       "credentials": {
         "googlePalmApi": {
           "id": "WEPi8fFtLpk1vZ6u",
@@ -843,18 +835,18 @@
           "mode": "list",
           "cachedResultName": "models/gemini-3.6-flash"
         },
-        "text": "Analyse cette image de couverture de conte hypnotique pour enfants. Rédige une description technique détaillée destinée à un générateur de vidéo (Veo). Ta réponse doit se concentrer sur :\n\nLa Palette : Couleurs dominantes et secondaires (ex: pastel, bleu nuit, doré).\n\nLa Lumière : Source et intensité (ex: lumière diffuse, rayons de lune, aquarelle douce).\n\nLe Style : Texture et médium (ex: peinture à l'huile, illustration 2D éthérée, textures de papier).\n\nL'Ambiance : (ex: onirique, sécurisante, calme).\n\nLes personnages : leur âge, leurs apparence visuel et vestimentaire, leurs émotions faciales et gestuelles, etc.",
+        "text": "Analyse cette image de couverture de histoire pour enfants. Rédige une description technique détaillée destinée à un générateur de vidéo (Veo). Ta réponse doit se concentrer sur :\n\nLa Palette : Couleurs dominantes et secondaires (ex: pastel, bleu nuit, doré).\n\nLa Lumière : Source et intensité (ex: lumière diffuse, rayons de lune, aquarelle douce).\n\nLe Style : Texture et médium (ex: peinture à l'huile, illustration 2D éthérée, textures de papier).\n\nL'Ambiance : (ex: onirique, sécurisante, calme).\n\nLes personnages : leur âge, leurs apparence visuel et vestimentaire, leurs émotions faciales et gestuelles, etc.",
         "inputType": "binary",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1.1,
       "position": [
-        2528,
-        -1232
+        3664,
+        288
       ],
-      "id": "491fa5a7-8567-4f7d-a08f-cc28aa831cf7",
-      "name": "Analyze_image",
+      "id": "6b34a8eb-b9d5-43ee-98c3-65baf3ecedb8",
+      "name": "Analyze_image1",
       "credentials": {
         "googlePalmApi": {
           "id": "WEPi8fFtLpk1vZ6u",
@@ -866,7 +858,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyvideos/{{ $('Creation_histoire_dans_supabase1').item.json.id }}.mp4",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyvideos/{{ $('Creation_histoire_dans_supabase').item.json.id }}.mp4",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
@@ -886,11 +878,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3424,
-        -1264
+        4560,
+        256
       ],
-      "id": "efcd1efd-99ce-40d9-b488-ea6f959c3738",
-      "name": "Post_video_supabase",
+      "id": "a7e41a89-df2a-46d8-829c-f3cbd0cd118f",
+      "name": "Post_video_supabase1",
       "credentials": {
         "supabaseApi": {
           "id": "wigd9LqEY8DlWzkn",
@@ -901,7 +893,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Creation_histoire_dans_supabase1').item.json.id }}",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Creation_histoire_dans_supabase').item.json.id }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
@@ -918,7 +910,7 @@
           "parameters": [
             {
               "name": "video_path",
-              "value": "={{ $('Creation_histoire_dans_supabase1').item.json.id }}.mp4"
+              "value": "={{ $('Creation_histoire_dans_supabase').item.json.id }}.mp4"
             }
           ]
         },
@@ -927,11 +919,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3632,
-        -1264
+        4768,
+        256
       ],
-      "id": "8f9bd3cc-d01c-4a2f-99a8-c74bce1d814e",
-      "name": "Maj_histoire_lien_video",
+      "id": "9a106263-19f8-4af0-8b7b-04011a7bcd34",
+      "name": "Maj_histoire_lien_video1",
       "credentials": {
         "supabaseApi": {
           "id": "wigd9LqEY8DlWzkn",
@@ -951,7 +943,7 @@
           "conditions": [
             {
               "id": "5b4187a2-9e26-46f5-bf48-4fc2dcde823d",
-              "leftValue": "={{ $('Webhook').item.json.body.generateVideo }}",
+              "leftValue": "={{ $('Webhook1').item.json.body.generateVideo }}",
               "rightValue": "true",
               "operator": {
                 "type": "boolean",
@@ -967,11 +959,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2288,
-        -1216
+        3424,
+        304
       ],
-      "id": "abecff8f-e430-4103-95e2-34ed6efc41c2",
-      "name": "If1"
+      "id": "77f31f48-d9b2-456e-ba2b-4dbd26e5537a",
+      "name": "If3"
     },
     {
       "parameters": {
@@ -983,17 +975,17 @@
           "cachedResultName": "models/gemini-3.1-flash-image (Nano Banana 2)",
           "cachedResultUrl": ""
         },
-        "prompt": "=Agis comme un illustrateur expert de livres jeunesse. \nCrée une image de couverture captivante pour l'histoire suivante : \ntitre : {{ $('extraction_validation1').item.json.title }}\nrésumé : {{ $json.summary }}\n\nConsignes complémentaires :\n{{ $('Webhook').item.json.body.imageGenerationPrompt }}\n\nAttention : Assure toi que le titre de l'histoire affiché sur l'image est écrit sans faute d'orthographe / grammaire et correspond exactement à ce titre d'histoire : {{ $('Webhook').item.json.body.selectedTitle }}",
+        "prompt": "=Agis comme un illustrateur expert de livres jeunesse. \nCrée une image de couverture captivante pour l'histoire suivante : \ntitre : {{ $('extraction_validation4').item.json.title }}\nrésumé : {{ $json.summary }}\n\nConsignes complémentaires :\n{{ $('Webhook1').item.json.body.imageGenerationPrompt }}\n\nAttention : Assure toi que le titre de l'histoire affiché sur l'image est écrit sans faute d'orthographe / grammaire et correspond exactement à ce titre d'histoire : {{ $('Webhook1').item.json.body.selectedTitle }}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1.1,
       "position": [
-        1296,
-        -960
+        2432,
+        560
       ],
-      "id": "aaf3b268-9b43-4e9b-89b6-b447a9bf2c87",
-      "name": "Création image2",
+      "id": "726cdd8c-f391-4889-b922-1fa8c48d0ba9",
+      "name": "Création image3",
       "credentials": {
         "googlePalmApi": {
           "id": "gtGlYNTan1QYa2Ao",
@@ -1009,17 +1001,17 @@
           "mode": "list",
           "value": "gpt-image-1-mini"
         },
-        "prompt": "=Agis comme un illustrateur expert de livres jeunesse. \nCrée une image de couverture captivante pour l'histoire suivante : \ntitre : {{ $('extraction_validation1').item.json.title }}\nrésumé : {{ $json.summary }}\n\nConsignes complémentaires :\n{{ $('Webhook').item.json.body.imageGenerationPrompt }}\n\nIMPORTANT : Assure toi que le titre de l'histoire affiché sur l'image est écrit sans faute d'orthographe / grammaire et correspond exactement à ce titre d'histoire lettre par lettre : {{ $('extraction_validation1').item.json.title }}",
+        "prompt": "=Agis comme un illustrateur expert de livres jeunesse. \nCrée une image de couverture captivante pour l'histoire suivante : \ntitre : {{ $('extraction_validation4').item.json.title }}\nrésumé : {{ $json.summary }}\n\nConsignes complémentaires :\n{{ $('Webhook1').item.json.body.imageGenerationPrompt }}\n\nIMPORTANT : Assure toi que le titre de l'histoire affiché sur l'image est écrit sans faute d'orthographe / grammaire et correspond exactement à ce titre d'histoire lettre par lettre : {{ $('extraction_validation4').item.json.title }}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        2096,
-        -1408
+        3232,
+        112
       ],
-      "id": "7e4cd068-cf45-48a4-9b9a-c2822f99ad8b",
-      "name": "Generate an image",
+      "id": "546c5718-a692-4884-ab75-610f8c596e5a",
+      "name": "Generate an image1",
       "credentials": {
         "openAiApi": {
           "id": "MSayxruZLmsTpuw2",
@@ -1041,11 +1033,11 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -1104,
-        -1184
+        32,
+        336
       ],
-      "id": "f3af0b22-a772-4f2d-af25-e02c0cd1f54b",
-      "name": "OpenAI Chat Model",
+      "id": "b28436ae-ea7d-4bc3-8348-8320c9058511",
+      "name": "OpenAI Chat Model1",
       "credentials": {
         "openAiApi": {
           "id": "MSayxruZLmsTpuw2",
@@ -1063,18 +1055,18 @@
           "mode": "list",
           "cachedResultName": "GPT-5.4-MINI"
         },
-        "text": "=Analyse cette image de couverture de conte hypnotique pour enfants. Rédige une description technique détaillée destinée à un générateur de vidéo (Veo). Ta réponse doit se concentrer sur :\n\nLa Palette : Couleurs dominantes et secondaires (ex: pastel, bleu nuit, doré).\n\nLa Lumière : Source et intensité (ex: lumière diffuse, rayons de lune, aquarelle douce).\n\nLe Style : Texture et médium (ex: peinture à l'huile, illustration 2D éthérée, textures de papier).\n\nL'Ambiance : (ex: onirique, sécurisante, calme).\n\nLes personnages : leur âge, leurs apparence visuel et vestimentaire, leurs émotions faciales et gestuelles, etc.",
+        "text": "=Analyse cette image de couverture de histoire pour enfants. Rédige une description technique détaillée destinée à un générateur de vidéo (Veo). Ta réponse doit se concentrer sur :\n\nLa Palette : Couleurs dominantes et secondaires (ex: pastel, bleu nuit, doré).\n\nLa Lumière : Source et intensité (ex: lumière diffuse, rayons de lune, aquarelle douce).\n\nLe Style : Texture et médium (ex: peinture à l'huile, illustration 2D éthérée, textures de papier).\n\nL'Ambiance : (ex: onirique, sécurisante, calme).\n\nLes personnages : leur âge, leurs apparence visuel et vestimentaire, leurs émotions faciales et gestuelles, etc.",
         "inputType": "base64",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        2800,
-        -1136
+        3936,
+        384
       ],
-      "id": "67996596-3e6a-4a6d-af9f-a54083003727",
-      "name": "Analyze image",
+      "id": "67ed67e6-cec3-4645-b525-b104667ed473",
+      "name": "Analyze image1",
       "credentials": {
         "openAiApi": {
           "id": "MSayxruZLmsTpuw2",
@@ -1091,21 +1083,17 @@
           "mode": "list",
           "cachedResultName": "SORA-2"
         },
-        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook').first().json?.body?.videoOrientation === 'landscape' || $('Webhook').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 4-second cinematic {{ ($('Webhook').first().json?.body?.videoOrientation === 'landscape' || $('Webhook').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Creation_histoire_dans_supabase1').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase1').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image').isExecuted ? ($('Analyze image').first().json[0]?.content?.[0]?.text || $('Analyze image').first().json?.text || '') : ($('Analyze_image').isExecuted ? ($('Analyze_image').first().json?.content?.parts?.[0]?.text || '') : '') }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT, TIMING & AUDIO SPECIFICATIONS (CRITICAL - 4 SECONDS TOTAL):\n1. STRICT {{ ($('Webhook').first().json?.body?.videoOrientation === 'landscape' || $('Webhook').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION CUTOFF (CRITICAL): Any soothing voice-over, spoken word, or sound in this video must be very slow, calm, and MUST BE COMPLETELY FINISHED AND SILENT BEFORE SECOND 2.5. Absolutely zero speech or sound after second 2.5.\n4. SMOOTH DECELERATION: Between second 2.5 and second 3.0, any subtle motion smoothly slows down to a complete, peaceful halt.\n5. MOTIONLESS RESTING TABLEAU (FINAL FULL SECOND): From second 3.0 to second 4.0, the scene completely settles into an absolute motionless, serene resting tableau with zero movement so there is zero abrupt stop or cut.\n6. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must conclude in absolute stillness, peace, and reassurance.",
-        "options": {
-          "durationSeconds": 4,
-          "aspectRatio": "={{ ($('Webhook').first().json?.body?.videoOrientation === 'landscape' || $('Webhook').first().json?.body?.videoAspectRatio === '16:9') ? '16:9' : '9:16' }}",
-          "size": "={{ ($('Webhook').first().json?.body?.videoOrientation === 'landscape' || $('Webhook').first().json?.body?.videoAspectRatio === '16:9') ? '1280x720' : '720x1280' }}"
-        }
+        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 5-second cinematic {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Creation_histoire_dans_supabase').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image1').isExecuted ? ($('Analyze image1').first().json[0]?.content?.[0]?.text || $('Analyze image1').first().json?.text || '') : ($('Analyze_image1').isExecuted ? ($('Analyze_image1').first().json?.content?.parts?.[0]?.text || '') : '') }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT & AUDIO SPECIFICATIONS:\n1. STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION SPEED: Any voice-over, spoken word, or narration in this video must be very slow, soft, soothing, and unhurried (calm bedtime tempo). Do NOT speak fast or rush words.\n4. ENDING DECELERATION: By second 3.5, the motion smoothly slows down and completely settles into a motionless, serene resting tableau for the remainder of the video.\n5. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must end in absolute stillness, peace, and reassurance.",
+        "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        3184,
-        -1136
+        4320,
+        384
       ],
-      "id": "bbcaa4fb-d0ef-49e5-bc72-9f6a7bf15b39",
-      "name": "Generate a video",
+      "id": "ab3c947d-5b80-4641-9c4d-8941faa564f1",
+      "name": "Generate a video1",
       "credentials": {
         "openAiApi": {
           "id": "MSayxruZLmsTpuw2",
@@ -1115,29 +1103,29 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{\n  json: {\n    title: $('Creation_histoire_dans_supabase1').item.json.title,\n    summary: $('Creation_histoire_dans_supabase1').item.json.summary\n  },\n  binary: $('If1').item.binary\n}];"
+        "jsCode": "return [{\n  json: {\n    title: $('Creation_histoire_dans_supabase').item.json.title,\n    summary: $('Creation_histoire_dans_supabase').item.json.summary\n  },\n  binary: $('If3').item.binary\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2688,
-        -1136
+        3824,
+        384
       ],
-      "id": "6a85d6ce-5631-4207-86e5-de2c18740503",
-      "name": "Code in JavaScript"
+      "id": "3d43c925-426e-472c-9f86-e1d4b9f263b0",
+      "name": "Code in JavaScript1"
     },
     {
       "parameters": {
-        "jsCode": "// Calculateur Intelligent et Résilient du Coût de Production IA\n\n// Grille tarifaire (USD par 1M tokens)\nconst pricing = {\n  \"gpt-5\": { input: 1.25, output: 5.0 },\n  \"gpt-5.6-terra\": { input: 1.25, output: 5.0 },\n  \"gpt-5-mini\": { input: 0.125, output: 1.0 },\n  \"gpt-5.4-mini\": { input: 0.125, output: 1.0 },\n  \"gpt-4o\": { input: 2.50, output: 10.0 },\n  \"gpt-4o-mini\": { input: 0.15, output: 0.60 },\n  \"gemini-3.6-flash\": { input: 0.30, output: 2.50 },\n  \"gemini-3-pro\": { input: 2.00, output: 12.00 },\n  \"gemini-2.5-flash\": { input: 0.30, output: 2.50 },\n  \"gemini-2.5-pro\": { input: 1.25, output: 10.00 }\n};\n\n// Coûts unitaires par génération\nconst unitPricing = {\n  \"models/gemini-2.5-flash-image\": 0.030,\n  \"models/gemini-3.1-flash-image\": 0.030,\n  \"gpt-image-1-mini\": 0.040,\n  \"gpt-image-1\": 0.040,\n  \"default_image\": 0.030,\n  \"models/veo-3.1-lite-generate-preview\": 0.150,\n  \"sora-2\": 0.200,\n  \"default_video\": 0.150\n};\n\nfunction findPrice(modelName) {\n  if (!modelName) return pricing[\"gpt-5-mini\"];\n  const cleanName = modelName.toLowerCase();\n  if (pricing[cleanName]) return pricing[cleanName];\n  const keys = Object.keys(pricing).sort((a, b) => b.length - a.length);\n  for (const key of keys) {\n    if (cleanName.includes(key)) {\n      return pricing[key];\n    }\n  }\n  return pricing[\"gpt-5-mini\"];\n}\n\n// 1. Récupération Story ID\nlet storyId = null;\nif ($('Creation_histoire_dans_supabase1').isExecuted) {\n  storyId = $('Creation_histoire_dans_supabase1').first().json?.id;\n} else if ($('Création histoire dans supabase').isExecuted) {\n  storyId = $('Création histoire dans supabase').first().json?.id;\n}\n\n// 2. Coût des titres transmis via Webhook\nlet titleCostUsd = 0;\nlet titleInputTokens = 0;\nlet titleOutputTokens = 0;\nif ($('Webhook').isExecuted) {\n  const webhookBody = $('Webhook').first().json?.body || {};\n  const titleCostObj = webhookBody.titleGenerationCost || {};\n  titleCostUsd = Number(titleCostObj.total_cost_usd || 0);\n  titleInputTokens = Number(titleCostObj.total_input_tokens || 0);\n  titleOutputTokens = Number(titleCostObj.total_output_tokens || 0);\n}\n\n// 3. Modèles Textuels LLM\nconst textNodesToInspect = [\n  { name: \"Création histoire\", fallbackModel: \"gpt-5.6-terra\", isAgent: true },\n  { name: \"Vérif création histoire\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Contexte autour histoire\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Allonge l'histoire\", fallbackModel: \"gpt-5\" },\n  { name: \"Vérif création histoire1\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Contexte autour histoire1\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Analyze_image\", fallbackModel: \"gemini-3.6-flash\" },\n  { name: \"Analyze image\", fallbackModel: \"gpt-5.4-mini\" }\n];\n\nlet totalInputTokens = titleInputTokens;\nlet totalOutputTokens = titleOutputTokens;\nlet totalCostFromLLM = 0;\nconst breakdown = [];\n\nif (titleCostUsd > 0 || titleInputTokens > 0) {\n  breakdown.push({\n    node: \"Generation_titres (Webhook)\",\n    type: \"llm_text\",\n    model: \"gpt-5-mini\",\n    input_tokens: titleInputTokens,\n    output_tokens: titleOutputTokens,\n    cost_usd: Number(titleCostUsd.toFixed(6))\n  });\n}\n\nfor (const item of textNodesToInspect) {\n  const nodeName = item.name;\n  if (!$(nodeName).isExecuted) continue;\n  \n  let nodeJson = {};\n  try {\n    nodeJson = $(nodeName).first().json || {};\n  } catch (e) {\n    continue;\n  }\n  \n  let modelName = nodeJson.model || nodeJson.modelName || item.fallbackModel;\n  let inTokens = 0;\n  let outTokens = 0;\n  \n  if (item.isAgent) {\n    const outText = nodeJson.output || \"\";\n    outTokens = Math.ceil(outText.length / 3.8);\n    inTokens = 1800;\n  } else {\n    if (nodeJson.usage) {\n      inTokens = Number(nodeJson.usage.prompt_tokens || nodeJson.usage.input_tokens || 0);\n      outTokens = Number(nodeJson.usage.completion_tokens || nodeJson.usage.output_tokens || 0);\n    } else if (nodeJson.usageMetadata) {\n      inTokens = Number(nodeJson.usageMetadata.promptTokenCount || 0);\n      outTokens = Number(nodeJson.usageMetadata.candidatesTokenCount || 0);\n    } else {\n      const text = typeof nodeJson === 'string' ? nodeJson : JSON.stringify(nodeJson);\n      outTokens = Math.ceil(text.length / 4);\n      inTokens = 1200;\n    }\n  }\n  \n  const modelRate = findPrice(modelName);\n  const costIn = (inTokens / 1000000) * modelRate.input;\n  const costOut = (outTokens / 1000000) * modelRate.output;\n  const costTotal = Number((costIn + costOut).toFixed(6));\n  \n  totalInputTokens += inTokens;\n  totalOutputTokens += outTokens;\n  totalCostFromLLM += costTotal;\n  \n  breakdown.push({\n    node: nodeName,\n    type: \"llm_text\",\n    model: modelName,\n    input_tokens: inTokens,\n    output_tokens: outTokens,\n    cost_usd: costTotal\n  });\n}\n\n// 4. Modèles Image\nlet totalImageCost = 0;\nconst imageNodes = [\"Création image1\", \"Création image2\", \"Generate an image\"];\nfor (const imgNode of imageNodes) {\n  if ($(imgNode).isExecuted) {\n    let imgCost = unitPricing[\"default_image\"];\n    if (imgNode.includes(\"image2\")) imgCost = unitPricing[\"models/gemini-3.1-flash-image\"];\n    else if (imgNode.includes(\"Generate an image\")) imgCost = unitPricing[\"gpt-image-1-mini\"];\n    else imgCost = unitPricing[\"models/gemini-2.5-flash-image\"];\n    \n    totalImageCost += imgCost;\n    breakdown.push({\n      node: imgNode,\n      type: \"image_generation\",\n      cost_usd: imgCost\n    });\n  }\n}\n\n// 5. Modèles Vidéo\nlet totalVideoCost = 0;\nconst videoNodes = [\"video_story\", \"Generate a video\"];\nfor (const vidNode of videoNodes) {\n  if ($(vidNode).isExecuted) {\n    let vidCost = unitPricing[\"default_video\"];\n    if (vidNode === \"Generate a video\") vidCost = unitPricing[\"sora-2\"];\n    else vidCost = unitPricing[\"models/veo-3.1-lite-generate-preview\"];\n    \n    totalVideoCost += vidCost;\n    breakdown.push({\n      node: vidNode,\n      type: \"video_generation\",\n      cost_usd: vidCost\n    });\n  }\n}\n\nconst finalTotalCostUsd = Number((titleCostUsd + totalCostFromLLM + totalImageCost + totalVideoCost).toFixed(6));\n\nreturn [{\n  json: {\n    story_id: storyId,\n    total_cost_usd: finalTotalCostUsd,\n    total_input_tokens: totalInputTokens,\n    total_output_tokens: totalOutputTokens,\n    breakdown: breakdown,\n    timestamp: new Date().toISOString()\n  }\n}];\n"
+        "jsCode": "// Calculateur Intelligent et Résilient du Coût de Production IA\n\n// Grille tarifaire (USD par 1M tokens)\nconst pricing = {\n  \"gpt-5\": { input: 1.25, output: 5.0 },\n  \"gpt-5.6-terra\": { input: 1.25, output: 5.0 },\n  \"gpt-5-mini\": { input: 0.125, output: 1.0 },\n  \"gpt-5.4-mini\": { input: 0.125, output: 1.0 },\n  \"gpt-4o\": { input: 2.50, output: 10.0 },\n  \"gpt-4o-mini\": { input: 0.15, output: 0.60 },\n  \"gemini-3.6-flash\": { input: 0.30, output: 2.50 },\n  \"gemini-3-pro\": { input: 2.00, output: 12.00 },\n  \"gemini-2.5-flash\": { input: 0.30, output: 2.50 },\n  \"gemini-2.5-pro\": { input: 1.25, output: 10.00 }\n};\n\n// Coûts unitaires par génération\nconst unitPricing = {\n  \"models/gemini-2.5-flash-image\": 0.030,\n  \"models/gemini-3.1-flash-image\": 0.030,\n  \"gpt-image-1-mini\": 0.040,\n  \"gpt-image-1\": 0.040,\n  \"default_image\": 0.030,\n  \"models/veo-3.1-lite-generate-preview\": 0.150,\n  \"sora-2\": 0.200,\n  \"default_video\": 0.150\n};\n\nfunction findPrice(modelName) {\n  if (!modelName) return pricing[\"gpt-5-mini\"];\n  const cleanName = modelName.toLowerCase();\n  if (pricing[cleanName]) return pricing[cleanName];\n  const keys = Object.keys(pricing).sort((a, b) => b.length - a.length);\n  for (const key of keys) {\n    if (cleanName.includes(key)) {\n      return pricing[key];\n    }\n  }\n  return pricing[\"gpt-5-mini\"];\n}\n\n// 1. Récupération Story ID\nlet storyId = null;\nif ($('Creation_histoire_dans_supabase').isExecuted) {\n  storyId = $('Creation_histoire_dans_supabase').first().json?.id;\n} else if ($('Création histoire dans supabase1').isExecuted) {\n  storyId = $('Création histoire dans supabase1').first().json?.id;\n}\n\n// 2. Coût des titres transmis via Webhook\nlet titleCostUsd = 0;\nlet titleInputTokens = 0;\nlet titleOutputTokens = 0;\nif ($('Webhook1').isExecuted) {\n  const webhookBody = $('Webhook1').first().json?.body || {};\n  const titleCostObj = webhookBody.titleGenerationCost || {};\n  titleCostUsd = Number(titleCostObj.total_cost_usd || 0);\n  titleInputTokens = Number(titleCostObj.total_input_tokens || 0);\n  titleOutputTokens = Number(titleCostObj.total_output_tokens || 0);\n}\n\n// 3. Modèles Textuels LLM\nconst textNodesToInspect = [\n  { name: \"Création histoire\", fallbackModel: \"gpt-5.6-terra\", isAgent: true },\n  { name: \"Vérif création histoire\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Contexte autour histoire\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Allonge l'histoire\", fallbackModel: \"gpt-5\" },\n  { name: \"Vérif création histoire1\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Contexte autour histoire1\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Analyze_image\", fallbackModel: \"gemini-3.6-flash\" },\n  { name: \"Analyze image\", fallbackModel: \"gpt-5.4-mini\" }\n];\n\nlet totalInputTokens = titleInputTokens;\nlet totalOutputTokens = titleOutputTokens;\nlet totalCostFromLLM = 0;\nconst breakdown = [];\n\nif (titleCostUsd > 0 || titleInputTokens > 0) {\n  breakdown.push({\n    node: \"Generation_titres (Webhook)\",\n    type: \"llm_text\",\n    model: \"gpt-5-mini\",\n    input_tokens: titleInputTokens,\n    output_tokens: titleOutputTokens,\n    cost_usd: Number(titleCostUsd.toFixed(6))\n  });\n}\n\nfor (const item of textNodesToInspect) {\n  const nodeName = item.name;\n  if (!$(nodeName).isExecuted) continue;\n  \n  let nodeJson = {};\n  try {\n    nodeJson = $(nodeName).first().json || {};\n  } catch (e) {\n    continue;\n  }\n  \n  let modelName = nodeJson.model || nodeJson.modelName || item.fallbackModel;\n  let inTokens = 0;\n  let outTokens = 0;\n  \n  if (item.isAgent) {\n    const outText = nodeJson.output || \"\";\n    outTokens = Math.ceil(outText.length / 3.8);\n    inTokens = 1800;\n  } else {\n    if (nodeJson.usage) {\n      inTokens = Number(nodeJson.usage.prompt_tokens || nodeJson.usage.input_tokens || 0);\n      outTokens = Number(nodeJson.usage.completion_tokens || nodeJson.usage.output_tokens || 0);\n    } else if (nodeJson.usageMetadata) {\n      inTokens = Number(nodeJson.usageMetadata.promptTokenCount || 0);\n      outTokens = Number(nodeJson.usageMetadata.candidatesTokenCount || 0);\n    } else {\n      const text = typeof nodeJson === 'string' ? nodeJson : JSON.stringify(nodeJson);\n      outTokens = Math.ceil(text.length / 4);\n      inTokens = 1200;\n    }\n  }\n  \n  const modelRate = findPrice(modelName);\n  const costIn = (inTokens / 1000000) * modelRate.input;\n  const costOut = (outTokens / 1000000) * modelRate.output;\n  const costTotal = Number((costIn + costOut).toFixed(6));\n  \n  totalInputTokens += inTokens;\n  totalOutputTokens += outTokens;\n  totalCostFromLLM += costTotal;\n  \n  breakdown.push({\n    node: nodeName,\n    type: \"llm_text\",\n    model: modelName,\n    input_tokens: inTokens,\n    output_tokens: outTokens,\n    cost_usd: costTotal\n  });\n}\n\n// 4. Modèles Image\nlet totalImageCost = 0;\nconst imageNodes = [\"Création image1\", \"Création image2\", \"Generate an image\"];\nfor (const imgNode of imageNodes) {\n  if ($(imgNode).isExecuted) {\n    let imgCost = unitPricing[\"default_image\"];\n    if (imgNode.includes(\"image2\")) imgCost = unitPricing[\"models/gemini-3.1-flash-image\"];\n    else if (imgNode.includes(\"Generate an image\")) imgCost = unitPricing[\"gpt-image-1-mini\"];\n    else imgCost = unitPricing[\"models/gemini-2.5-flash-image\"];\n    \n    totalImageCost += imgCost;\n    breakdown.push({\n      node: imgNode,\n      type: \"image_generation\",\n      cost_usd: imgCost\n    });\n  }\n}\n\n// 5. Modèles Vidéo\nlet totalVideoCost = 0;\nconst videoNodes = [\"video_story\", \"Generate a video\"];\nfor (const vidNode of videoNodes) {\n  if ($(vidNode).isExecuted) {\n    let vidCost = unitPricing[\"default_video\"];\n    if (vidNode === \"Generate a video\") vidCost = unitPricing[\"sora-2\"];\n    else vidCost = unitPricing[\"models/veo-3.1-lite-generate-preview\"];\n    \n    totalVideoCost += vidCost;\n    breakdown.push({\n      node: vidNode,\n      type: \"video_generation\",\n      cost_usd: vidCost\n    });\n  }\n}\n\nconst finalTotalCostUsd = Number((titleCostUsd + totalCostFromLLM + totalImageCost + totalVideoCost).toFixed(6));\n\nreturn [{\n  json: {\n    story_id: storyId,\n    total_cost_usd: finalTotalCostUsd,\n    total_input_tokens: totalInputTokens,\n    total_output_tokens: totalOutputTokens,\n    breakdown: breakdown,\n    timestamp: new Date().toISOString()\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3840,
-        -1450
+        4976,
+        80
       ],
-      "id": "c1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
-      "name": "Calcul_cout_IA"
+      "id": "5f7ec86d-5ab8-40b7-be8b-dcc0a19a41fc",
+      "name": "Calcul_cout_IA1"
     },
     {
       "parameters": {
@@ -1168,11 +1156,201 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4080,
-        -1450
+        5216,
+        80
       ],
-      "id": "e2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6b",
-      "name": "Enregistrement_cout_supabase",
+      "id": "79f75f01-f69c-4c11-9067-70934177ebe0",
+      "name": "Enregistrement_cout_supabase1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "wigd9LqEY8DlWzkn",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8e24b9ec-889b-4401-bf6b-539d810428ec",
+              "leftValue": "={{ $('Webhook1').item.json.body.action }}",
+              "rightValue": "generate_video_only",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        160,
+        112
+      ],
+      "id": "7989b077-4b16-46fb-8c52-a6f6badc4f6f",
+      "name": "Router_action"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/public/storyimages/{{ $('Webhook1').item.json.body.imagePath }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        450,
+        -250
+      ],
+      "id": "7cf5a982-3eae-4936-abcf-618e6384a03e",
+      "name": "Download_existing_image"
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.6-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.6-flash"
+        },
+        "text": "Analyse cette image de couverture d'histoire pour enfants. Rédige une description technique détaillée destinée à un générateur de vidéo (Veo). Ta réponse doit se concentrer sur :\n\nLa Palette : Couleurs dominantes et secondaires (ex: pastel, bleu nuit, doré).\n\nLa Lumière : Source et intensité (ex: lumière diffuse, rayons de lune, aquarelle douce).\n\nLe Style : Texture et médium (ex: peinture à l'huile, illustration 2D éthérée, textures de papier).\n\nL'Ambiance : (ex: onirique, sécurisante, calme).\n\nLes personnages : leur âge, leur apparence visuelle et vestimentaire, leurs émotions faciales et gestuelles.",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        -250
+      ],
+      "id": "baf6e706-e540-48ca-a869-d12fa95e78f9",
+      "name": "Analyze_image_standalone",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "WEPi8fFtLpk1vZ6u",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "modelId": {
+          "__rl": true,
+          "value": "models/veo-3.1-lite-generate-preview",
+          "mode": "list",
+          "cachedResultName": "models/veo-3.1-lite-generate-preview"
+        },
+        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 5-second cinematic {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Webhook1').first().json?.body?.selectedTitle }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Webhook1').first().json?.body?.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze_image_standalone').first().json?.content?.parts?.[0]?.text || $('Analyze_image_standalone').first().json?.text || '' }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT & AUDIO SPECIFICATIONS:\n1. STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION SPEED: Any voice-over, spoken word, or narration in this video must be very slow, soft, soothing, and unhurried (calm bedtime tempo). Do NOT speak fast or rush words.\n4. ENDING DECELERATION (CRITICAL): By second 3.5, the motion smoothly slows down and completely settles into a motionless, serene resting tableau for the remainder of the video so there is no abrupt stop.\n5. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must end in absolute stillness, peace, and reassurance.",
+        "options": {
+          "durationSeconds": 5,
+          "aspectRatio": "={{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? '16:9' : '9:16' }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1150,
+        -250
+      ],
+      "id": "4516df9b-b8ef-44ad-a20f-2bf277a07def",
+      "name": "video_story_standalone",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "WEPi8fFtLpk1vZ6u",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyvideos/{{ $('Webhook1').item.json.body.storyId }}.mp4",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "video/mp4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        -250
+      ],
+      "id": "de736749-123f-4b90-8a33-3ca9ba8a8544",
+      "name": "Post_standalone_video_supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "wigd9LqEY8DlWzkn",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Webhook1').item.json.body.storyId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "video_path",
+              "value": "={{ $('Webhook1').item.json.body.storyId }}.mp4"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1850,
+        -250
+      ],
+      "id": "e0d4e825-f960-4ea2-b85c-dd5eb638f856",
+      "name": "Maj_standalone_story_video",
       "credentials": {
         "supabaseApi": {
           "id": "wigd9LqEY8DlWzkn",
@@ -1182,482 +1360,528 @@
     }
   ],
   "connections": {
-    "If": {
+    "If2": {
       "main": [
         [
           {
-            "node": "Contexte autour histoire",
+            "node": "Contexte autour histoire3",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Allonge l'histoire",
+            "node": "Allonge l'histoire1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Allonge l'histoire": {
+    "Allonge l'histoire1": {
       "main": [
         [
           {
-            "node": "Vérif création histoire1",
+            "node": "Vérif création histoire3",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Création histoire": {
+    "Post image dans supabase2": {
       "main": [
         [
           {
-            "node": "Wait",
+            "node": "Mise à jour de l'histoire avec lien image2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Création histoire1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
             "type": "main",
             "index": 0
           },
           {
-            "node": "extraction_validation1",
+            "node": "extraction_validation4",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Création histoire dans supabase": {
+    "Création histoire dans supabase1": {
       "main": [
         [
           {
-            "node": "Création image2",
+            "node": "Création image3",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Edit Field histoire finale 2": {
+    "Edit Field histoire finale ": {
       "main": [
         [
           {
-            "node": "Création histoire dans supabase",
+            "node": "Création histoire dans supabase1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Post image dans supabase": {
+    "Mise à jour de l'histoire avec lien image2": {
       "main": [
         [
           {
-            "node": "Mise à jour de l'histoire avec lien image",
+            "node": "Calcul_cout_IA1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Mise à jour de l'histoire avec lien image": {
+    "Post image dans supabase3": {
       "main": [
         [
           {
-            "node": "Calcul_cout_IA",
+            "node": "Mise à jour de l'histoire avec lien image3",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Post image dans supabase1": {
+    "Mise à jour de l'histoire avec lien image3": {
       "main": [
         [
           {
-            "node": "Mise à jour de l'histoire avec lien image1",
+            "node": "Calcul_cout_IA1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Mise à jour de l'histoire avec lien image1": {
+    "Webhook1": {
       "main": [
         [
           {
-            "node": "Calcul_cout_IA",
+            "node": "Router_action",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Webhook": {
+    "Vérif création histoire2": {
       "main": [
         [
           {
-            "node": "Création histoire",
+            "node": "recuperation_musique1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Vérif création histoire": {
+    "Vérif création histoire3": {
       "main": [
         [
           {
-            "node": "recuperation_musique",
+            "node": "Contexte autour histoire2",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Vérif création histoire1": {
+    "Compte les mots1": {
       "main": [
         [
           {
-            "node": "Contexte autour histoire1",
+            "node": "If2",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Compte les mots": {
+    "histoire finale1": {
       "main": [
         [
           {
-            "node": "If",
+            "node": "Compte les mots1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "histoire finale": {
+    "extraction_validation3": {
       "main": [
         [
           {
-            "node": "Compte les mots",
+            "node": "Creation_histoire_dans_supabase",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "extraction_validation": {
+    "Edit Fields1": {
       "main": [
         [
           {
-            "node": "Creation_histoire_dans_supabase1",
+            "node": "Création histoire1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "When clicking ‘Execute workflow’": {
+    "extraction_validation4": {
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "Vérif création histoire2",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Edit Fields": {
+    "extraction_validation5": {
       "main": [
         [
           {
-            "node": "Création histoire",
+            "node": "Edit Field histoire finale ",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "extraction_validation1": {
+    "Contexte autour histoire2": {
       "main": [
         [
           {
-            "node": "Vérif création histoire",
+            "node": "extraction_validation5",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "extraction_validation2": {
+    "Contexte autour histoire3": {
       "main": [
         [
           {
-            "node": "Edit Field histoire finale 2",
+            "node": "extraction_validation3",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Contexte autour histoire1": {
+    "Creation_histoire_dans_supabase": {
       "main": [
         [
           {
-            "node": "extraction_validation2",
+            "node": "Création image",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Contexte autour histoire": {
-      "main": [
-        [
-          {
-            "node": "extraction_validation",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Creation_histoire_dans_supabase1": {
-      "main": [
-        [
-          {
-            "node": "Création image1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Postgres Memory": {
+    "Postgres Memory1": {
       "ai_memory": [
         [
           {
-            "node": "Création histoire",
+            "node": "Création histoire1",
             "type": "ai_memory",
             "index": 0
           }
         ]
       ]
     },
-    "Wait": {
+    "Wait1": {
       "main": [
         [
           {
-            "node": "Execute a SQL query",
+            "node": "Execute a SQL query1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "recuperation_musique": {
+    "recuperation_musique1": {
       "main": [
         [
           {
-            "node": "random_music",
+            "node": "random_music1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "random_music": {
+    "random_music1": {
       "main": [
         [
           {
-            "node": "histoire finale",
+            "node": "histoire finale1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Google Gemini Chat Model": {
+    "Création image": {
+      "main": [
+        [
+          {
+            "node": "Post image dans supabase3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate an image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "video_story1": {
+      "main": [
+        [
+          {
+            "node": "Post_video_supabase1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate a video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze_image1": {
+      "main": [
+        [
+          {
+            "node": "video_story1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post_video_supabase1": {
+      "main": [
+        [
+          {
+            "node": "Maj_histoire_lien_video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Maj_histoire_lien_video1": {
+      "main": [
+        [
+          {
+            "node": "Calcul_cout_IA1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Analyze_image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Création image3": {
+      "main": [
+        [
+          {
+            "node": "Post image dans supabase2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image1": {
+      "main": [
+        [
+          {
+            "node": "Post image dans supabase3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "video_story1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
       "ai_languageModel": [
-        []
-      ]
-    },
-    "Création image1": {
-      "main": [
         [
           {
-            "node": "Post image dans supabase1",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "If1",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Generate an image",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "video_story": {
-      "main": [
-        [
-          {
-            "node": "Post_video_supabase",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Generate a video",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Analyze_image": {
-      "main": [
-        [
-          {
-            "node": "video_story",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Post_video_supabase": {
-      "main": [
-        [
-          {
-            "node": "Maj_histoire_lien_video",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If1": {
-      "main": [
-        [
-          {
-            "node": "Analyze_image",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Création image2": {
-      "main": [
-        [
-          {
-            "node": "Post image dans supabase",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Generate an image": {
-      "main": [
-        [
-          {
-            "node": "Post image dans supabase1",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "If1",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "video_story",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenAI Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Création histoire",
+            "node": "Création histoire1",
             "type": "ai_languageModel",
             "index": 0
           }
         ]
       ]
     },
-    "Analyze image": {
+    "Analyze image1": {
       "main": [
         [
           {
-            "node": "video_story",
+            "node": "video_story1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Generate a video": {
+    "Generate a video1": {
       "main": [
         [
           {
-            "node": "Post_video_supabase",
+            "node": "Post_video_supabase1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Code in JavaScript": {
+    "Code in JavaScript1": {
       "main": [
         [
           {
-            "node": "Analyze image",
+            "node": "Analyze image1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Maj_histoire_lien_video": {
+    "Calcul_cout_IA1": {
       "main": [
         [
           {
-            "node": "Calcul_cout_IA",
+            "node": "Enregistrement_cout_supabase1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Calcul_cout_IA": {
+    "Router_action": {
       "main": [
         [
           {
-            "node": "Enregistrement_cout_supabase",
+            "node": "Download_existing_image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Création histoire1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download_existing_image": {
+      "main": [
+        [
+          {
+            "node": "Analyze_image_standalone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze_image_standalone": {
+      "main": [
+        [
+          {
+            "node": "video_story_standalone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "video_story_standalone": {
+      "main": [
+        [
+          {
+            "node": "Post_standalone_video_supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post_standalone_video_supabase": {
+      "main": [
+        [
+          {
+            "node": "Maj_standalone_story_video",
             "type": "main",
             "index": 0
           }
@@ -1668,6 +1892,8 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "executionTimeout": 900
+    "executionTimeout": 900,
+    "availableInMCP": true,
+    "binaryMode": "separate"
   }
 }

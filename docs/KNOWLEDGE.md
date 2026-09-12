@@ -747,6 +747,15 @@ Le système d'amélioration continue relie les retours réels des utilisateurs e
   - `formatStoryFromSupabase` gère de manière transparente les clés camelCase et snake_case (`createdat`/`created_at`, `childrenids`/`children_ids`, `story_summary`/`summary`).
   - `StoryReaderPage` charge en priorité les histoires stockées dans IndexedDB (`offlineStorageService.getOfflineStory`) avant de solliciter le réseau.
 
+### 16.7 Anti-Patterns de Rendu React & Bonnes Pratiques de Mocking Vitest
+- **Stabilité des Références & Dépendances Primitives dans les Hooks** :
+  - Interdiction de passer des objets instables retournés par des hooks (ex: `user` issu de `useSupabaseAuth()`) dans les dépendances de `useEffect`.
+  - **Règle** : Toujours cibler l'identifiant primitif (`user?.id`), sous peine de déclencher des boucles infinies de re-render (`useEffect` -> `setState` -> re-render -> nouvelle ref d'objet -> `useEffect`).
+- **Mocks Vitest Sécurisés & Interdiction des Proxies Récursifs** :
+  - Ne jamais utiliser de `Proxy` JS qui retourne récursivement `vi.fn(() => proxy)` sans garde sur les symboles (`Symbol.iterator`, `Symbol.toStringTag`) et propriétés d'inspection (`toJSON`, `inspect`).
+  - En cas d'échec d'assertion, le sérialiseur/diff-printer de Vitest tente d'inspecter l'arborescence, entraînant une récursion infinie et un crash `FATAL ERROR: Reached heap limit Allocation failed (4 GB heap out of memory)`.
+  - Préférer des objets mocks explicites avec méthodes stables retournant `this` ou des Promises déterministes.
+
 ---
 
 ## 17. Chaîne de Tests Automatisés & Pipeline CI/CD
@@ -762,15 +771,47 @@ Le système d'amélioration continue relie les retours réels des utilisateurs e
 ### 17.2 Couverture des Tests de Non-Régression
 - **Tests Unitaires & Composants (Vitest)** :
   - `StoryReader.test.tsx` : Rendu du titre, contenu tokenisé, bascule favoris, marquage comme lu et vue de secours.
-  - `StoryReaderPage.test.tsx` : Résolution de route `/app/reader/:id`, chargement depuis cache et gestion d'erreurs d'identifiants.
+  - `StoryReaderPage.test.tsx` : Résolution de route `/app/reader/:id`, chargement depuis cache, gestion d'erreurs d'identifiants et synchronisation vidéo.
   - `SimpleChildSelector.test.tsx` : Sélection d'enfants avec calculs d'âge dynamiques pérennes.
 - **Tests End-to-End (Playwright - `tests/pages.spec.ts`)** :
   - 12 pages et routes fondamentales testées sans écran blanc ni erreurs console, y compris la route `/app/reader/:id`.
 
 ---
 
-**Dernière mise à jour** : 2026-08-31  
-**Version** : 4.1 (Résilience du Lecteur, Règle d'or des Hooks React, Intégration Vitest & Playwright dans la CI GitHub Actions)  
+## 18. Pipeline de Génération Vidéo Magique (Google Veo 3.1 Lite & n8n)
+
+### 18.1 Architecture Bi-Mode de Génération Vidéo
+1. **Mode Synchrone / Création Initiale** :
+   - Déclenché si l'option vidéo est cochée lors de la création d'histoire (Step 2 ou Titres).
+   - n8n génère le texte, crée l'image, puis anime l'image via Veo et associe `video_path` avant la fin du workflow.
+2. **Mode Standalone / À Posteriori (Reader)** :
+   - Déclenché via le bouton `+ Vidéo` dans le lecteur (`StoryReaderHeader.tsx`).
+   - Requête POST vers Supabase Edge Function `generate-story-video` avec `{ storyId }`.
+   - L'Edge Function valide l'existence de `story.image_path` (erreur 400 si absente), vérifie le quota utilisateur, et appelle le webhook n8n avec `{ action: 'generate_video_only', storyId, prompt, title }`.
+
+### 18.2 Aiguillage et Branche Dédiée dans n8n (`ELHHH65cZrtgl89v`)
+- **Nœud d'Aiguillage (`Router_action`)** :
+  - Condition `{{ $json.body.action === 'generate_video_only' }}`.
+  - Branche `False` : Conserve le flux classique de création d'histoire intégrale.
+  - Branche `True` : Branche dédiée vidéo autonome :
+    1. `Download_existing_image` : Téléchargement du fichier image depuis Supabase Storage (`storyimages/`).
+    2. `Analyze_image_standalone` : Analyse de l'image par Gemini 3.6 Flash pour concevoir le prompt d'animation Veo.
+    3. `video_story_standalone` : Synthèse vidéo via l'API Google Veo 3.1 (`models/veo-3.1-lite-generate-preview`).
+    4. `Post_standalone_video_supabase` : Envoi du binaire vidéo vers le bucket `storyvideos/{storyId}.mp4`.
+    5. `Maj_standalone_story_video` : Requête PATCH Supabase mettant à jour le champ `stories.video_path`.
+
+### 18.3 Synchronisation Réactive & UX Frontend
+- **Maintien de l'état asynchrone (`useStoryVideoGeneration.ts`)** :
+  - `generatingStoryIds` n'est pas réinitialisé à la réponse de l'Edge Function mais persiste pendant le traitement n8n (~20-30s) avec un timeout de sécurité de 3 minutes.
+- **Double Écoute dans `StoryReaderPage.tsx`** :
+  - **Canal Supabase Realtime** : Écoute `postgres_changes` (événement `UPDATE` sur la table `stories` avec filtre `id=eq.${storyId}`).
+  - **Polling de Secours** : Requête toutes les 5 secondes pendant que `isGeneratingThisVideo === true` pour parer aux déconnexions réseau.
+  - **Transition Automatique** : Dès détection de `video_path`, toast de succès, mise à jour immédiate du state local, arrêt du spinner, et mutation visuelle du bouton `+ Vidéo` en bouton de lecture `Vidéo` sans rechargement.
+
+---
+
+**Dernière mise à jour** : 2026-09-12  
+**Version** : 4.2 (Génération Vidéo Magique à Posteriori Veo 3.1, Résilience n8n/Realtime, Règle Anti-Boucle des Dépendances Primitives)  
 **Statut** : Production ready
 
 

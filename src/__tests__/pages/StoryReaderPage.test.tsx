@@ -26,6 +26,16 @@ const mockStoriesList: Story[] = [mockStory];
 const mockUpdateStoryStatus = vi.fn().mockResolvedValue(true);
 const mockFetchStories = vi.fn();
 
+vi.mock('@/components/StoryReader', () => ({
+  default: ({ story, onBack }: any) => (
+    <div data-testid="mock-story-reader">
+      <h1>{story.title}</h1>
+      <p>{story.content}</p>
+      <button onClick={onBack}>Retour</button>
+    </div>
+  ),
+}));
+
 vi.mock('@/hooks/stories/useSupabaseStories', () => ({
   useSupabaseStories: () => ({
     stories: mockStoriesList,
@@ -35,17 +45,41 @@ vi.mock('@/hooks/stories/useSupabaseStories', () => ({
   }),
 }));
 
+const mockChildrenList = [{ id: 'child-1', name: 'Leo' }];
 vi.mock('@/hooks/useSupabaseChildren', () => ({
   useSupabaseChildren: () => ({
-    children: [{ id: 'child-1', name: 'Leo' }],
+    children: mockChildrenList,
     isLoading: false,
   }),
 }));
 
+const { mockStopGenerating, mockGenerateVideoForStory, mockIsGeneratingVideo, mockToast } = vi.hoisted(() => ({
+  mockStopGenerating: vi.fn(),
+  mockGenerateVideoForStory: vi.fn(),
+  mockIsGeneratingVideo: vi.fn(() => false),
+  mockToast: vi.fn(),
+}));
+
 vi.mock('@/hooks/stories/useStoryVideoGeneration', () => ({
   useStoryVideoGeneration: () => ({
-    generateVideoForStory: vi.fn(),
-    isGeneratingVideo: () => false,
+    generateVideoForStory: mockGenerateVideoForStory,
+    isGeneratingVideo: mockIsGeneratingVideo,
+    stopGenerating: mockStopGenerating,
+  }),
+}));
+
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({
+    toast: mockToast,
+  }),
+  toast: mockToast,
+}));
+
+vi.mock('@/hooks/usePWA', () => ({
+  usePWA: () => ({
+    reloadApp: vi.fn(),
+    isReloading: false,
+    updateAvailable: false,
   }),
 }));
 
@@ -56,20 +90,24 @@ vi.mock('@/hooks/stories/useStoryFavorites', () => ({
   }),
 }));
 
+const mockUserSettingsObj = {
+  readingPreferences: {
+    playVideoIntro: false,
+  },
+};
+
 vi.mock('@/hooks/settings/useUserSettings', () => ({
   useUserSettings: () => ({
-    userSettings: {
-      readingPreferences: {
-        playVideoIntro: false,
-      },
-    },
+    userSettings: mockUserSettingsObj,
     updateUserSettings: vi.fn(),
   }),
 }));
 
+const mockUserObj = { id: 'user-123', email: 'test@example.com' };
+
 vi.mock('@/contexts/SupabaseAuthContext', () => ({
   useSupabaseAuth: () => ({
-    user: { id: 'user-123', email: 'test@example.com' },
+    user: mockUserObj,
     session: {},
     loading: false,
   }),
@@ -93,13 +131,18 @@ vi.mock('@/services/offline/offlineStorageService', () => ({
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-      insert: vi.fn().mockReturnValue(Promise.resolve({ error: null })),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
+    channel: vi.fn(() => ({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn(),
+    })),
+    removeChannel: vi.fn(),
   },
 }));
 
@@ -119,7 +162,7 @@ describe('StoryReaderPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Le Voyage dans les Nuages')).toBeInTheDocument();
-      expect(screen.getByText('oiseau')).toBeInTheDocument();
+      expect(screen.getByText(/oiseau/i)).toBeInTheDocument();
     });
   });
 

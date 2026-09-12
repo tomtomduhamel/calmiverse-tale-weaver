@@ -46,7 +46,7 @@ const StoryReaderPage: React.FC = () => {
   const prevVideoPathRef = useRef<string | null | undefined>(undefined);
   const { toast } = useToast();
   const { reloadApp, isReloading } = usePWA();
-  const { generateVideoForStory, isGeneratingVideo } = useStoryVideoGeneration();
+  const { generateVideoForStory, isGeneratingVideo, stopGenerating } = useStoryVideoGeneration();
   const [retryTick, setRetryTick] = useState(0);
   const directFetchAttemptsRef = useRef<Record<string, number>>({});
 
@@ -161,7 +161,7 @@ const StoryReaderPage: React.FC = () => {
         setIsLoading(false);
       }
     })();
-  }, [id, stories, user, fetchStories, retryTick]);
+  }, [id, stories, user?.id, fetchStories, retryTick]);
 
   // Enregistrer la lecture dans l'historique de l'utilisateur (gamification)
   useEffect(() => {
@@ -178,7 +178,76 @@ const StoryReaderPage: React.FC = () => {
         }
       });
     }
-  }, [currentStory, user]);
+  }, [currentStory, user?.id]);
+
+  const isGeneratingThisVideo = currentStory ? isGeneratingVideo(currentStory.id) : false;
+
+  // Écoute temps réel des mises à jour sur l'histoire (notamment l'arrivée de video_path)
+  useEffect(() => {
+    if (!currentStory?.id || typeof supabase?.channel !== 'function') return;
+
+    const storyId = currentStory.id;
+    const channel = supabase
+      .channel(`story_video_update_${storyId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'stories',
+          filter: `id=eq.${storyId}`,
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          if (updated && updated.video_path && updated.video_path !== prevVideoPathRef.current) {
+            console.log("[StoryReaderPage] ✨ Nouvelle vidéo magique détectée via Realtime:", updated.video_path);
+            prevVideoPathRef.current = updated.video_path;
+            setCurrentStory((prev) => (prev ? { ...prev, video_path: updated.video_path } : null));
+            stopGenerating?.(storyId);
+            toast({
+              title: "🎉 Vidéo magique prête !",
+              description: "Votre vidéo d'introduction magique a été créée avec succès.",
+            });
+            fetchStories();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (typeof supabase?.removeChannel === 'function') {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [currentStory?.id, fetchStories, toast, stopGenerating]);
+
+  // Polling de secours pendant la génération de la vidéo (résilience aux déconnexions WebSockets)
+  useEffect(() => {
+    if (!isGeneratingThisVideo || !currentStory?.id) return;
+
+    const storyId = currentStory.id;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from('stories')
+        .select('video_path')
+        .eq('id', storyId)
+        .maybeSingle();
+
+      if (data?.video_path && data.video_path !== prevVideoPathRef.current) {
+        console.log("[StoryReaderPage] ✨ Nouvelle vidéo magique détectée via Polling:", data.video_path);
+        prevVideoPathRef.current = data.video_path;
+        setCurrentStory((prev) => (prev ? { ...prev, video_path: data.video_path } : null));
+        stopGenerating(storyId);
+        toast({
+          title: "🎉 Vidéo magique prête !",
+          description: "Votre vidéo d'introduction magique a été créée avec succès.",
+        });
+        fetchStories();
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isGeneratingThisVideo, currentStory?.id, fetchStories, toast, stopGenerating]);
 
   // Gestionnaire pour marquer comme lu/non lu (toggle)
   const handleMarkAsRead = async (storyId: string): Promise<boolean> => {
@@ -293,7 +362,6 @@ const StoryReaderPage: React.FC = () => {
   // La lecture d'une vidéo déjà générée ne dépend pas du quota : le quota gouverne
   // uniquement la génération. Une vidéo dont le video_path existe est toujours lisible.
   const videoUrl = currentStory.video_path ? getStoryVideoUrl(currentStory.video_path) : null;
-  const isGeneratingThisVideo = currentStory ? isGeneratingVideo(currentStory.id) : false;
 
   const showVideoIntro =
     videoUrl &&

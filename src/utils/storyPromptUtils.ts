@@ -195,6 +195,7 @@ TRAME NARRATIVE DE CAUSE À EFFET CONTINUE (INDISPENSABLE POUR LA CAPTATION) :
 - 2. ENFANTS ACTEURS & DÉCIDEURS : ${namesText} prennent les initiatives, élaborent les ruses et résolvent le problème. Ils ne sont jamais spectateurs passifs.
 - 3. RÈGLE DU "ET DONC... / MAIS ALORS..." : Chaque action des enfants doit provoquer un rebondissement ou une surprise qui mène à la scène suivante. Pas de déambulation descriptive statique.
 - 4. DIALOGUES VIVANTS : Insérer de vraies répliques spontanées d'enfants.
+- 5. POSTURE DE DÉPART : Si l'objectif est "fun" ou "focus", les protagonistes commencent DEBOUT ou en ACTION (ne jamais les faire démarrer allongés sur le sol ou le lit).
 
 CALIBRAGE DU VOCABULAIRE & RÈGLE DU CONCRET :
 ${vocabularyInstructions}
@@ -204,7 +205,7 @@ ${vocabularyInstructions}
 STRUCTURE NARRATIVE (~${targetWords} mots) :
 - Début (~${startWords} mots) : Accroche immédiate et découverte du défi/problème.
 - Péripéties (~${middleWords} mots) : Actions rythmées de cause à effet, dialogues vivants et progression de l'objectif.
-- Dénouement (~${endWords} mots) : Résolution satisfaisante par les enfants (rire et énergie pour fun, énigme résolue pour focus, élan d'action/fierté pour les émotions de jour, sommeil paisible uniquement pour sleep).
+- Dénouement (~${endWords} mots) : Résolution satisfaisante par les enfants (rire et énergie pour fun sans sommeil, énigme résolue pour focus, élan d'action/fierté pour les émotions de jour, sommeil paisible uniquement pour sleep).
 - Structure avec des sauts de lignes pour faciliter la lecture à voix haute.
 - Interdire tout contenu effrayant ou angoissant.
 ${durationNote}

@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQuotaChecker } from '@/hooks/subscription/useQuotaChecker';
@@ -10,6 +10,15 @@ export const useStoryVideoGeneration = () => {
   const { validateAction, incrementUsage } = useQuotaChecker();
   const queryClient = useQueryClient();
   const [generatingStoryIds, setGeneratingStoryIds] = useState<Record<string, boolean>>({});
+  const timeoutRefs = useRef<Record<string, NodeJS.Timeout>>({});
+
+  const stopGenerating = useCallback((storyId: string) => {
+    if (timeoutRefs.current[storyId]) {
+      clearTimeout(timeoutRefs.current[storyId]);
+      delete timeoutRefs.current[storyId];
+    }
+    setGeneratingStoryIds(prev => ({ ...prev, [storyId]: false }));
+  }, []);
 
   const generateVideoForStory = useCallback(async (story: Story) => {
     if (!story || generatingStoryIds[story.id]) return false;
@@ -21,6 +30,15 @@ export const useStoryVideoGeneration = () => {
         description: "Cette histoire dispose déjà d'une vidéo magique.",
       });
       return true;
+    }
+
+    if (!story.image_path) {
+      toast({
+        title: "Illustration requise",
+        description: "Une illustration de couverture est nécessaire pour créer la vidéo magique.",
+        variant: "destructive",
+      });
+      return false;
     }
 
     try {
@@ -37,9 +55,17 @@ export const useStoryVideoGeneration = () => {
 
       setGeneratingStoryIds(prev => ({ ...prev, [story.id]: true }));
 
+      // Timeout de sécurité : si après 3 minutes rien n'est reçu, réinitialiser l'état
+      if (timeoutRefs.current[story.id]) {
+        clearTimeout(timeoutRefs.current[story.id]);
+      }
+      timeoutRefs.current[story.id] = setTimeout(() => {
+        setGeneratingStoryIds(prev => ({ ...prev, [story.id]: false }));
+      }, 180000);
+
       toast({
         title: "✨ Vidéo magique en préparation !",
-        description: "La création de la vidéo a été lancée. Elle sera prête d'ici quelques instants.",
+        description: "La création de la vidéo a été lancée. Elle sera prête d'ici une trentaine de secondes.",
       });
 
       // 3. Appel de la fonction Supabase Edge
@@ -66,19 +92,19 @@ export const useStoryVideoGeneration = () => {
       return true;
     } catch (err: any) {
       console.error("[useStoryVideoGeneration] Erreur:", err);
+      stopGenerating(story.id);
       toast({
         title: "Erreur de génération",
         description: err.message || "Impossible de générer la vidéo magique pour le moment.",
         variant: "destructive",
       });
       return false;
-    } finally {
-      setGeneratingStoryIds(prev => ({ ...prev, [story.id]: false }));
     }
-  }, [generatingStoryIds, validateAction, incrementUsage, toast, queryClient]);
+  }, [generatingStoryIds, validateAction, incrementUsage, toast, queryClient, stopGenerating]);
 
   return {
     generateVideoForStory,
     isGeneratingVideo: (storyId: string) => !!generatingStoryIds[storyId],
+    stopGenerating,
   };
 };

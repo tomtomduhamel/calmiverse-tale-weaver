@@ -88,6 +88,13 @@ serve(async (req) => {
       );
     }
 
+    if (!story.image_path) {
+      return new Response(
+        JSON.stringify({ error: "Une illustration de couverture est nécessaire pour générer la vidéo magique." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // 2. Récupérer les préférences de l'utilisateur
     const { data: userProfile } = await supabase
       .from("users")
@@ -101,30 +108,41 @@ serve(async (req) => {
     // 3. Déclencher n8n pour la génération vidéo
     const webhookUrl = "https://n8n.srv856374.hstgr.cloud/webhook/816f3f78-bbdc-4b51-88b6-13232fcf3c78";
 
-    if (n8nSecret) {
-      try {
-        await fetch(webhookUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Calmi-Webhook-Secret": n8nSecret,
-          },
-          body: JSON.stringify({
-            action: "generate_video_only",
-            generateVideo: true,
-            videoOrientation,
-            videoAspectRatio,
-            storyId: story.id,
-            selectedTitle: story.title,
-            summary: story.summary || story.title,
-            imagePath: story.image_path,
-            userId: user.id,
-            timestamp: new Date().toISOString(),
-          }),
-        });
-      } catch (webhookErr) {
-        console.warn("[generate-story-video] Erreur appel webhook n8n:", webhookErr);
-      }
+    if (!n8nSecret) {
+      console.error("[generate-story-video] SERVER ERROR: N8N_WEBHOOK_SECRET non configuré");
+      return new Response(
+        JSON.stringify({ error: "Configuration serveur manquante (N8N_WEBHOOK_SECRET)" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const n8nResponse = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Calmi-Webhook-Secret": n8nSecret,
+      },
+      body: JSON.stringify({
+        action: "generate_video_only",
+        generateVideo: true,
+        videoOrientation,
+        videoAspectRatio,
+        storyId: story.id,
+        selectedTitle: story.title,
+        summary: story.summary || story.title,
+        imagePath: story.image_path,
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    if (!n8nResponse.ok) {
+      const errorText = await n8nResponse.text();
+      console.error("[generate-story-video] Erreur n8n:", n8nResponse.status, errorText);
+      return new Response(
+        JSON.stringify({ error: `Erreur lors de l'appel au service vidéo (statut ${n8nResponse.status})` }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     return new Response(
