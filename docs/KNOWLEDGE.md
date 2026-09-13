@@ -808,10 +808,37 @@ Le système d'amélioration continue relie les retours réels des utilisateurs e
   - **Polling de Secours** : Requête toutes les 5 secondes pendant que `isGeneratingThisVideo === true` pour parer aux déconnexions réseau.
   - **Transition Automatique** : Dès détection de `video_path`, toast de succès, mise à jour immédiate du state local, arrêt du spinner, et mutation visuelle du bouton `+ Vidéo` en bouton de lecture `Vidéo` sans rechargement.
 
+### 18.4 Résilience Critique des Workflows n8n & Isolation des Erreurs de Tâches de Fond
+- **Règle d'Or n8n : Sécurisation absolue des Code Nodes (`Calcul_cout_IA`)** :
+  - En n8n, évaluer `$('NodeName')` sur un nœud absent ou renommé ne retourne pas `undefined` mais lève une exception fatale non interceptée : `ExpressionError: Referenced node doesn't exist`.
+  - Lorsqu'un nœud plante avec cette erreur, le moteur d'exécution n8n annule et tue **immédiatement** toutes les branches asynchrones en arrière-plan (ex: génération vidéo Sora-2 / Veo qui prend 75 secondes alors que l'upload d'image prend 1,5 seconde).
+  - **Pattern obligatoire pour tout Code Node d'inspection** :
+    ```javascript
+    function isNodeExecuted(nodeName) {
+      try { return !!($(nodeName).isExecuted); } catch (e) { return false; }
+    }
+    function getNodeData(nodeName) {
+      try { return $(nodeName).first().json || {}; } catch (e) { return {}; }
+    }
+    ```
+  - Ne jamais laisser d'évaluation `$(nodeName)` sans wrapper `try / catch` dans les boucles d'inspection.
+
+### 18.5 Stratégie Multi-Modèles Vidéo : Google Veo 3.1 & Fallback Automatique OpenAI Sora-2
+- L'API Google Gemini pour Veo (`models/veo-3.1-lite-generate-preview`) est soumise à des restrictions d'accès ou quotas variables (`Forbidden` / `Bad request`).
+- **Architecture de Tolérance aux Pannes** :
+  - Les deux branches (Création et Standalone) possèdent un nœud Veo configuré avec `onError: "continueErrorOutput"`.
+  - La sortie `main[1]` (erreur) de Veo est **impérativement reliée** à un nœud OpenAI Sora-2 (`sora-2`).
+  - La sortie `main[0]` (succès) de Veo et celle de Sora-2 convergent toutes les deux vers l'upload Supabase (`Post_video_supabase` / `Post_standalone_video_supabase`).
+  - Si Veo échoue en quelques millisecondes, Sora-2 prend immédiatement le relais (~75s) et produit la vidéo MP4 sans rupture de service pour l'utilisateur.
+
+### 18.6 Câblage Linéaire & Évitement des Courts-Circuits de Flux
+- Ne jamais relier un nœud générateur d'images directement au générateur vidéo en parallèle des conditions `If`.
+- Tout flux vidéo de création doit impérativement respecter la séquence stricte : `Création Image` -> `If (generateVideo === true)` -> `Analyse de style` -> `Générateur Vidéo (Veo + Sora fallback)` -> `Upload Storage` -> `Patch Supabase`.
+
 ---
 
-**Dernière mise à jour** : 2026-09-12  
-**Version** : 4.2 (Génération Vidéo Magique à Posteriori Veo 3.1, Résilience n8n/Realtime, Règle Anti-Boucle des Dépendances Primitives)  
+**Dernière mise à jour** : 2026-09-13  
+**Version** : 4.3 (Résilience n8n Anti-Crash ExpressionError, Fallback Automatique OpenAI Sora-2 Vidéo, Câblage Linéaire Sécurisé)  
 **Statut** : Production ready
 
 
