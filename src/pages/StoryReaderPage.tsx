@@ -372,6 +372,7 @@ const StoryReaderPage: React.FC = () => {
   };
 
   const handleGenerateVideo = async () => {
+    console.log("[StoryReaderPage] 📹 Clic utilisateur sur '+ Vidéo' pour l'histoire:", currentStory?.id);
     if (currentStory) {
       await generateVideoForStory(currentStory);
     }

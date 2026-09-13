@@ -4,6 +4,7 @@ import StoryReader from "@/components/StoryReader";
 import type { Story } from "@/types/story";
 import { useAppNavigation } from "@/hooks/navigation/useAppNavigation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useStoryVideoGeneration } from "@/hooks/stories/useStoryVideoGeneration";
 
 interface ReaderViewProps {
   story: Story;
@@ -19,6 +20,8 @@ export const ReaderView: React.FC<ReaderViewProps> = ({ story: initialStory, onC
   const { navigateToLibrary } = useAppNavigation();
   const isMobile = useIsMobile();
   const [story, setStory] = useState<Story>(initialStory);
+  const { generateVideoForStory, isGeneratingVideo } = useStoryVideoGeneration();
+  const isGeneratingThisVideo = isGeneratingVideo(story.id);
 
   // Force le retour à la vue de la bibliothèque lors de la fermeture
   const handleClose = () => {
@@ -71,6 +74,8 @@ export const ReaderView: React.FC<ReaderViewProps> = ({ story: initialStory, onC
         story={story} 
         onClose={handleClose} 
         onMarkAsRead={handleMarkAsRead}
+        onGenerateVideo={() => generateVideoForStory(story)}
+        isGeneratingVideo={isGeneratingThisVideo}
       />
     </div>
   );

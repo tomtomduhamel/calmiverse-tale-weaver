@@ -21,7 +21,11 @@ export const useStoryVideoGeneration = () => {
   }, []);
 
   const generateVideoForStory = useCallback(async (story: Story) => {
-    if (!story || generatingStoryIds[story.id]) return false;
+    console.log("[useStoryVideoGeneration] 🎬 Demande de génération vidéo pour l'histoire:", story?.id, story?.title);
+    if (!story || generatingStoryIds[story.id]) {
+      console.warn("[useStoryVideoGeneration] Action annulée: histoire invalide ou déjà en cours");
+      return false;
+    }
 
     // 1. Vérifier si la vidéo existe déjà
     if (story.video_path) {

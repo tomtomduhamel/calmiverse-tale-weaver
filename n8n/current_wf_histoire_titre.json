@@ -686,7 +686,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "DELETE FROM stories_memory \nWHERE (message->>'type' = 'human' OR message->>'content' LIKE '%Tu es un agent qui est chargé de créer 3 titres%')\nAND session_id = '{{ $('Webhook').item.json.body.userId }}';",
+        "query": "DELETE FROM stories_memory \nWHERE (message->>'type' = 'human' OR message->>'content' LIKE '%Tu es un agent qui est chargé de créer 3 titres%')\nAND session_id = '{{ $('Webhook1').first().json?.body?.userId }}';",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -702,7 +702,8 @@
           "id": "YUDuQDrtHG40JsYt",
           "name": "Postgres account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -804,9 +805,9 @@
           "mode": "list",
           "cachedResultName": "models/veo-3.1-lite-generate-preview"
         },
-        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 5-second cinematic {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Creation_histoire_dans_supabase').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image1').isExecuted ? ($('Analyze image1').first().json[0]?.content?.[0]?.text || $('Analyze image1').first().json?.text || '') : ($('Analyze_image1').isExecuted ? ($('Analyze_image1').first().json?.content?.parts?.[0]?.text || '') : '') }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT & AUDIO SPECIFICATIONS:\n1. STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION SPEED: Any voice-over, spoken word, or narration in this video must be very slow, soft, soothing, and unhurried (calm bedtime tempo). Do NOT speak fast or rush words.\n4. ENDING DECELERATION (CRITICAL): By second 3.5, the motion smoothly slows down and completely settles into a motionless, serene resting tableau for the remainder of the video so there is no abrupt stop.\n5. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must end in absolute stillness, peace, and reassurance.",
+        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 4-second cinematic {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Creation_histoire_dans_supabase').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image1').isExecuted ? ($('Analyze image1').first().json[0]?.content?.[0]?.text || $('Analyze image1').first().json?.text || '') : ($('Analyze_image1').isExecuted ? ($('Analyze_image1').first().json?.content?.parts?.[0]?.text || '') : '') }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT & AUDIO SPECIFICATIONS:\n1. STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION SPEED: Any voice-over, spoken word, or narration in this video must be very slow, soft, soothing, and unhurried (calm bedtime tempo). Do NOT speak fast or rush words.\n4. ENDING DECELERATION (CRITICAL): By second 2.5, the motion smoothly slows down and completely settles into a motionless, serene resting tableau for the remainder of the video so there is no abrupt stop.\n5. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must end in absolute stillness, peace, and reassurance.",
         "options": {
-          "durationSeconds": 5,
+          "durationSeconds": 4,
           "aspectRatio": "={{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? '16:9' : '9:16' }}"
         }
       },
@@ -858,7 +859,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyvideos/{{ $('Creation_histoire_dans_supabase').item.json.id }}.mp4",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyvideos/{{ $('Creation_histoire_dans_supabase').first().json?.id }}.mp4",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
@@ -893,7 +894,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Creation_histoire_dans_supabase').item.json.id }}",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Creation_histoire_dans_supabase').first().json?.id }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
@@ -910,7 +911,7 @@
           "parameters": [
             {
               "name": "video_path",
-              "value": "={{ $('Creation_histoire_dans_supabase').item.json.id }}.mp4"
+              "value": "={{ $('Creation_histoire_dans_supabase').first().json?.id }}.mp4"
             }
           ]
         },
@@ -943,7 +944,7 @@
           "conditions": [
             {
               "id": "5b4187a2-9e26-46f5-bf48-4fc2dcde823d",
-              "leftValue": "={{ $('Webhook1').item.json.body.generateVideo }}",
+              "leftValue": "={{ $('Webhook1').first().json?.body?.generateVideo }}",
               "rightValue": "true",
               "operator": {
                 "type": "boolean",
@@ -1083,7 +1084,7 @@
           "mode": "list",
           "cachedResultName": "SORA-2"
         },
-        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 5-second cinematic {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Creation_histoire_dans_supabase').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image1').isExecuted ? ($('Analyze image1').first().json[0]?.content?.[0]?.text || $('Analyze image1').first().json?.text || '') : ($('Analyze_image1').isExecuted ? ($('Analyze_image1').first().json?.content?.parts?.[0]?.text || '') : '') }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT & AUDIO SPECIFICATIONS:\n1. STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION SPEED: Any voice-over, spoken word, or narration in this video must be very slow, soft, soothing, and unhurried (calm bedtime tempo). Do NOT speak fast or rush words.\n4. ENDING DECELERATION: By second 3.5, the motion smoothly slows down and completely settles into a motionless, serene resting tableau for the remainder of the video.\n5. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must end in absolute stillness, peace, and reassurance.",
+        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 4-second cinematic {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Creation_histoire_dans_supabase').item.json.title }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Creation_histoire_dans_supabase').item.json.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze image1').isExecuted ? ($('Analyze image1').first().json[0]?.content?.[0]?.text || $('Analyze image1').first().json?.text || '') : ($('Analyze_image1').isExecuted ? ($('Analyze_image1').first().json?.content?.parts?.[0]?.text || '') : '') }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT & AUDIO SPECIFICATIONS:\n1. STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION SPEED: Any voice-over, spoken word, or narration in this video must be very slow, soft, soothing, and unhurried (calm bedtime tempo). Do NOT speak fast or rush words.\n4. ENDING DECELERATION: By second 2.5, the motion smoothly slows down and completely settles into a motionless, serene resting tableau for the remainder of the video.\n5. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must end in absolute stillness, peace, and reassurance.",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.openAi",
@@ -1116,7 +1117,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Calculateur Intelligent et Résilient du Coût de Production IA\n\n// Grille tarifaire (USD par 1M tokens)\nconst pricing = {\n  \"gpt-5\": { input: 1.25, output: 5.0 },\n  \"gpt-5.6-terra\": { input: 1.25, output: 5.0 },\n  \"gpt-5-mini\": { input: 0.125, output: 1.0 },\n  \"gpt-5.4-mini\": { input: 0.125, output: 1.0 },\n  \"gpt-4o\": { input: 2.50, output: 10.0 },\n  \"gpt-4o-mini\": { input: 0.15, output: 0.60 },\n  \"gemini-3.6-flash\": { input: 0.30, output: 2.50 },\n  \"gemini-3-pro\": { input: 2.00, output: 12.00 },\n  \"gemini-2.5-flash\": { input: 0.30, output: 2.50 },\n  \"gemini-2.5-pro\": { input: 1.25, output: 10.00 }\n};\n\n// Coûts unitaires par génération\nconst unitPricing = {\n  \"models/gemini-2.5-flash-image\": 0.030,\n  \"models/gemini-3.1-flash-image\": 0.030,\n  \"gpt-image-1-mini\": 0.040,\n  \"gpt-image-1\": 0.040,\n  \"default_image\": 0.030,\n  \"models/veo-3.1-lite-generate-preview\": 0.150,\n  \"sora-2\": 0.200,\n  \"default_video\": 0.150\n};\n\nfunction findPrice(modelName) {\n  if (!modelName) return pricing[\"gpt-5-mini\"];\n  const cleanName = modelName.toLowerCase();\n  if (pricing[cleanName]) return pricing[cleanName];\n  const keys = Object.keys(pricing).sort((a, b) => b.length - a.length);\n  for (const key of keys) {\n    if (cleanName.includes(key)) {\n      return pricing[key];\n    }\n  }\n  return pricing[\"gpt-5-mini\"];\n}\n\n// 1. Récupération Story ID\nlet storyId = null;\nif ($('Creation_histoire_dans_supabase').isExecuted) {\n  storyId = $('Creation_histoire_dans_supabase').first().json?.id;\n} else if ($('Création histoire dans supabase1').isExecuted) {\n  storyId = $('Création histoire dans supabase1').first().json?.id;\n}\n\n// 2. Coût des titres transmis via Webhook\nlet titleCostUsd = 0;\nlet titleInputTokens = 0;\nlet titleOutputTokens = 0;\nif ($('Webhook1').isExecuted) {\n  const webhookBody = $('Webhook1').first().json?.body || {};\n  const titleCostObj = webhookBody.titleGenerationCost || {};\n  titleCostUsd = Number(titleCostObj.total_cost_usd || 0);\n  titleInputTokens = Number(titleCostObj.total_input_tokens || 0);\n  titleOutputTokens = Number(titleCostObj.total_output_tokens || 0);\n}\n\n// 3. Modèles Textuels LLM\nconst textNodesToInspect = [\n  { name: \"Création histoire\", fallbackModel: \"gpt-5.6-terra\", isAgent: true },\n  { name: \"Vérif création histoire\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Contexte autour histoire\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Allonge l'histoire\", fallbackModel: \"gpt-5\" },\n  { name: \"Vérif création histoire1\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Contexte autour histoire1\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Analyze_image\", fallbackModel: \"gemini-3.6-flash\" },\n  { name: \"Analyze image\", fallbackModel: \"gpt-5.4-mini\" }\n];\n\nlet totalInputTokens = titleInputTokens;\nlet totalOutputTokens = titleOutputTokens;\nlet totalCostFromLLM = 0;\nconst breakdown = [];\n\nif (titleCostUsd > 0 || titleInputTokens > 0) {\n  breakdown.push({\n    node: \"Generation_titres (Webhook)\",\n    type: \"llm_text\",\n    model: \"gpt-5-mini\",\n    input_tokens: titleInputTokens,\n    output_tokens: titleOutputTokens,\n    cost_usd: Number(titleCostUsd.toFixed(6))\n  });\n}\n\nfor (const item of textNodesToInspect) {\n  const nodeName = item.name;\n  if (!$(nodeName).isExecuted) continue;\n  \n  let nodeJson = {};\n  try {\n    nodeJson = $(nodeName).first().json || {};\n  } catch (e) {\n    continue;\n  }\n  \n  let modelName = nodeJson.model || nodeJson.modelName || item.fallbackModel;\n  let inTokens = 0;\n  let outTokens = 0;\n  \n  if (item.isAgent) {\n    const outText = nodeJson.output || \"\";\n    outTokens = Math.ceil(outText.length / 3.8);\n    inTokens = 1800;\n  } else {\n    if (nodeJson.usage) {\n      inTokens = Number(nodeJson.usage.prompt_tokens || nodeJson.usage.input_tokens || 0);\n      outTokens = Number(nodeJson.usage.completion_tokens || nodeJson.usage.output_tokens || 0);\n    } else if (nodeJson.usageMetadata) {\n      inTokens = Number(nodeJson.usageMetadata.promptTokenCount || 0);\n      outTokens = Number(nodeJson.usageMetadata.candidatesTokenCount || 0);\n    } else {\n      const text = typeof nodeJson === 'string' ? nodeJson : JSON.stringify(nodeJson);\n      outTokens = Math.ceil(text.length / 4);\n      inTokens = 1200;\n    }\n  }\n  \n  const modelRate = findPrice(modelName);\n  const costIn = (inTokens / 1000000) * modelRate.input;\n  const costOut = (outTokens / 1000000) * modelRate.output;\n  const costTotal = Number((costIn + costOut).toFixed(6));\n  \n  totalInputTokens += inTokens;\n  totalOutputTokens += outTokens;\n  totalCostFromLLM += costTotal;\n  \n  breakdown.push({\n    node: nodeName,\n    type: \"llm_text\",\n    model: modelName,\n    input_tokens: inTokens,\n    output_tokens: outTokens,\n    cost_usd: costTotal\n  });\n}\n\n// 4. Modèles Image\nlet totalImageCost = 0;\nconst imageNodes = [\"Création image1\", \"Création image2\", \"Generate an image\"];\nfor (const imgNode of imageNodes) {\n  if ($(imgNode).isExecuted) {\n    let imgCost = unitPricing[\"default_image\"];\n    if (imgNode.includes(\"image2\")) imgCost = unitPricing[\"models/gemini-3.1-flash-image\"];\n    else if (imgNode.includes(\"Generate an image\")) imgCost = unitPricing[\"gpt-image-1-mini\"];\n    else imgCost = unitPricing[\"models/gemini-2.5-flash-image\"];\n    \n    totalImageCost += imgCost;\n    breakdown.push({\n      node: imgNode,\n      type: \"image_generation\",\n      cost_usd: imgCost\n    });\n  }\n}\n\n// 5. Modèles Vidéo\nlet totalVideoCost = 0;\nconst videoNodes = [\"video_story\", \"Generate a video\"];\nfor (const vidNode of videoNodes) {\n  if ($(vidNode).isExecuted) {\n    let vidCost = unitPricing[\"default_video\"];\n    if (vidNode === \"Generate a video\") vidCost = unitPricing[\"sora-2\"];\n    else vidCost = unitPricing[\"models/veo-3.1-lite-generate-preview\"];\n    \n    totalVideoCost += vidCost;\n    breakdown.push({\n      node: vidNode,\n      type: \"video_generation\",\n      cost_usd: vidCost\n    });\n  }\n}\n\nconst finalTotalCostUsd = Number((titleCostUsd + totalCostFromLLM + totalImageCost + totalVideoCost).toFixed(6));\n\nreturn [{\n  json: {\n    story_id: storyId,\n    total_cost_usd: finalTotalCostUsd,\n    total_input_tokens: totalInputTokens,\n    total_output_tokens: totalOutputTokens,\n    breakdown: breakdown,\n    timestamp: new Date().toISOString()\n  }\n}];\n"
+        "jsCode": "// Calculateur Intelligent et Résilient du Coût de Production IA\n\n// Grille tarifaire (USD par 1M tokens)\nconst pricing = {\n  \"gpt-5\": { input: 1.25, output: 5.0 },\n  \"gpt-5.6-terra\": { input: 1.25, output: 5.0 },\n  \"gpt-5-mini\": { input: 0.125, output: 1.0 },\n  \"gpt-5.4-mini\": { input: 0.125, output: 1.0 },\n  \"gpt-4o\": { input: 2.50, output: 10.0 },\n  \"gpt-4o-mini\": { input: 0.15, output: 0.60 },\n  \"gemini-3.6-flash\": { input: 0.30, output: 2.50 },\n  \"gemini-3-pro\": { input: 2.00, output: 12.00 },\n  \"gemini-2.5-flash\": { input: 0.30, output: 2.50 },\n  \"gemini-2.5-pro\": { input: 1.25, output: 10.00 }\n};\n\n// Coûts unitaires par génération\nconst unitPricing = {\n  \"models/gemini-2.5-flash-image\": 0.030,\n  \"models/gemini-3.1-flash-image\": 0.030,\n  \"gpt-image-1-mini\": 0.040,\n  \"gpt-image-1\": 0.040,\n  \"default_image\": 0.030,\n  \"models/veo-3.1-lite-generate-preview\": 0.150,\n  \"sora-2\": 0.200,\n  \"default_video\": 0.150\n};\n\nfunction isNodeExecuted(nodeName) {\n  try {\n    return !!($(nodeName).isExecuted);\n  } catch (e) {\n    return false;\n  }\n}\n\nfunction getNodeData(nodeName) {\n  try {\n    return $(nodeName).first().json || {};\n  } catch (e) {\n    return {};\n  }\n}\n\nfunction findPrice(modelName) {\n  if (!modelName) return pricing[\"gpt-5-mini\"];\n  const cleanName = String(modelName).toLowerCase();\n  if (pricing[cleanName]) return pricing[cleanName];\n  const keys = Object.keys(pricing).sort((a, b) => b.length - a.length);\n  for (const key of keys) {\n    if (cleanName.includes(key)) {\n      return pricing[key];\n    }\n  }\n  return pricing[\"gpt-5-mini\"];\n}\n\n// 1. Récupération Story ID\nlet storyId = null;\nif (isNodeExecuted('Creation_histoire_dans_supabase')) {\n  storyId = getNodeData('Creation_histoire_dans_supabase')?.id;\n} else if (isNodeExecuted('Création histoire dans supabase1')) {\n  storyId = getNodeData('Création histoire dans supabase1')?.id;\n} else if (isNodeExecuted('Webhook1')) {\n  storyId = getNodeData('Webhook1')?.body?.storyId;\n}\n\n// 2. Coût des titres transmis via Webhook\nlet titleCostUsd = 0;\nlet titleInputTokens = 0;\nlet titleOutputTokens = 0;\nif (isNodeExecuted('Webhook1')) {\n  const webhookBody = getNodeData('Webhook1')?.body || {};\n  const titleCostObj = webhookBody.titleGenerationCost || {};\n  titleCostUsd = Number(titleCostObj.total_cost_usd || 0);\n  titleInputTokens = Number(titleCostObj.total_input_tokens || 0);\n  titleOutputTokens = Number(titleCostObj.total_output_tokens || 0);\n}\n\n// 3. Modèles Textuels LLM\nconst textNodesToInspect = [\n  { name: \"Création histoire1\", fallbackModel: \"gpt-5.6-terra\", isAgent: true },\n  { name: \"Création histoire\", fallbackModel: \"gpt-5.6-terra\", isAgent: true },\n  { name: \"Vérif création histoire2\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Vérif création histoire3\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Vérif création histoire\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Contexte autour histoire2\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Contexte autour histoire3\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Contexte autour histoire\", fallbackModel: \"gpt-5-mini\" },\n  { name: \"Allonge l'histoire1\", fallbackModel: \"gpt-5\" },\n  { name: \"Allonge l'histoire\", fallbackModel: \"gpt-5\" },\n  { name: \"Analyze_image1\", fallbackModel: \"gemini-3.6-flash\" },\n  { name: \"Analyze_image\", fallbackModel: \"gemini-3.6-flash\" },\n  { name: \"Analyze image1\", fallbackModel: \"gpt-5.4-mini\" },\n  { name: \"Analyze image\", fallbackModel: \"gpt-5.4-mini\" },\n  { name: \"Analyze_image_standalone\", fallbackModel: \"gemini-3.6-flash\" }\n];\n\nlet totalInputTokens = titleInputTokens;\nlet totalOutputTokens = titleOutputTokens;\nlet totalCostFromLLM = 0;\nconst breakdown = [];\n\nif (titleCostUsd > 0 || titleInputTokens > 0) {\n  breakdown.push({\n    node: \"Generation_titres (Webhook)\",\n    type: \"llm_text\",\n    model: \"gpt-5-mini\",\n    input_tokens: titleInputTokens,\n    output_tokens: titleOutputTokens,\n    cost_usd: Number(titleCostUsd.toFixed(6))\n  });\n}\n\nfor (const item of textNodesToInspect) {\n  const nodeName = item.name;\n  if (!isNodeExecuted(nodeName)) continue;\n  \n  const nodeJson = getNodeData(nodeName);\n  \n  let modelName = nodeJson.model || nodeJson.modelName || item.fallbackModel;\n  let inTokens = 0;\n  let outTokens = 0;\n  \n  if (item.isAgent) {\n    const outText = nodeJson.output || \"\";\n    outTokens = Math.ceil(outText.length / 3.8);\n    inTokens = 1800;\n  } else {\n    if (nodeJson.usage) {\n      inTokens = Number(nodeJson.usage.prompt_tokens || nodeJson.usage.input_tokens || 0);\n      outTokens = Number(nodeJson.usage.completion_tokens || nodeJson.usage.output_tokens || 0);\n    } else if (nodeJson.usageMetadata) {\n      inTokens = Number(nodeJson.usageMetadata.promptTokenCount || 0);\n      outTokens = Number(nodeJson.usageMetadata.candidatesTokenCount || 0);\n    } else {\n      const text = typeof nodeJson === 'string' ? nodeJson : JSON.stringify(nodeJson);\n      outTokens = Math.ceil(text.length / 4);\n      inTokens = 1200;\n    }\n  }\n  \n  const modelRate = findPrice(modelName);\n  const costIn = (inTokens / 1000000) * modelRate.input;\n  const costOut = (outTokens / 1000000) * modelRate.output;\n  const costTotal = Number((costIn + costOut).toFixed(6));\n  \n  totalInputTokens += inTokens;\n  totalOutputTokens += outTokens;\n  totalCostFromLLM += costTotal;\n  \n  breakdown.push({\n    node: nodeName,\n    type: \"llm_text\",\n    model: modelName,\n    input_tokens: inTokens,\n    output_tokens: outTokens,\n    cost_usd: costTotal\n  });\n}\n\n// 4. Modèles Image\nlet totalImageCost = 0;\nconst imageNodes = [\"Création image\", \"Création image1\", \"Création image2\", \"Création image3\", \"Generate an image1\", \"Generate an image\"];\nfor (const imgNode of imageNodes) {\n  if (isNodeExecuted(imgNode)) {\n    let imgCost = unitPricing[\"default_image\"];\n    if (imgNode.includes(\"image2\") || imgNode.includes(\"image3\")) imgCost = unitPricing[\"models/gemini-3.1-flash-image\"];\n    else if (imgNode.includes(\"Generate an image\")) imgCost = unitPricing[\"gpt-image-1-mini\"];\n    else imgCost = unitPricing[\"models/gemini-2.5-flash-image\"];\n    \n    totalImageCost += imgCost;\n    breakdown.push({\n      node: imgNode,\n      type: \"image_generation\",\n      cost_usd: imgCost\n    });\n  }\n}\n\n// 5. Modèles Vidéo\nlet totalVideoCost = 0;\nconst videoNodes = [\"video_story1\", \"video_story\", \"Generate a video1\", \"Generate a video\", \"video_story_standalone\", \"Generate_video_standalone\"];\nfor (const vidNode of videoNodes) {\n  if (isNodeExecuted(vidNode)) {\n    let vidCost = unitPricing[\"default_video\"];\n    if (vidNode.includes(\"Generate a video\") || vidNode.includes(\"Generate_video\")) vidCost = unitPricing[\"sora-2\"];\n    else vidCost = unitPricing[\"models/veo-3.1-lite-generate-preview\"];\n    \n    totalVideoCost += vidCost;\n    breakdown.push({\n      node: vidNode,\n      type: \"video_generation\",\n      cost_usd: vidCost\n    });\n  }\n}\n\nconst finalTotalCostUsd = Number((titleCostUsd + totalCostFromLLM + totalImageCost + totalVideoCost).toFixed(6));\n\nreturn [{\n  json: {\n    story_id: storyId,\n    total_cost_usd: finalTotalCostUsd,\n    total_input_tokens: totalInputTokens,\n    total_output_tokens: totalOutputTokens,\n    breakdown: breakdown,\n    timestamp: new Date().toISOString()\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1180,7 +1181,7 @@
           "conditions": [
             {
               "id": "8e24b9ec-889b-4401-bf6b-539d810428ec",
-              "leftValue": "={{ $('Webhook1').item.json.body.action }}",
+              "leftValue": "={{ $('Webhook1').first().json?.body?.action }}",
               "rightValue": "generate_video_only",
               "operator": {
                 "type": "string",
@@ -1204,7 +1205,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/public/storyimages/{{ $('Webhook1').item.json.body.imagePath }}",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/public/storyimages/{{ ($('Webhook1').first().json?.body?.imagePath || '').replace(/^storyimages\\//, '') }}",
         "options": {
           "response": {
             "response": {
@@ -1260,9 +1261,9 @@
           "mode": "list",
           "cachedResultName": "models/veo-3.1-lite-generate-preview"
         },
-        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 5-second cinematic {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Webhook1').first().json?.body?.selectedTitle }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Webhook1').first().json?.body?.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze_image_standalone').first().json?.content?.parts?.[0]?.text || $('Analyze_image_standalone').first().json?.text || '' }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT & AUDIO SPECIFICATIONS:\n1. STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION SPEED: Any voice-over, spoken word, or narration in this video must be very slow, soft, soothing, and unhurried (calm bedtime tempo). Do NOT speak fast or rush words.\n4. ENDING DECELERATION (CRITICAL): By second 3.5, the motion smoothly slows down and completely settles into a motionless, serene resting tableau for the remainder of the video so there is no abrupt stop.\n5. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must end in absolute stillness, peace, and reassurance.",
+        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 4-second cinematic {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Webhook1').first().json?.body?.selectedTitle }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Webhook1').first().json?.body?.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze_image_standalone').first().json?.content?.parts?.[0]?.text || $('Analyze_image_standalone').first().json?.text || '' }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT & AUDIO SPECIFICATIONS:\n1. STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION SPEED: Any voice-over, spoken word, or narration in this video must be very slow, soft, soothing, and unhurried (calm bedtime tempo). Do NOT speak fast or rush words.\n4. ENDING DECELERATION (CRITICAL): By second 2.5, the motion smoothly slows down and completely settles into a motionless, serene resting tableau for the remainder of the video so there is no abrupt stop.\n5. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must end in absolute stillness, peace, and reassurance.",
         "options": {
-          "durationSeconds": 5,
+          "durationSeconds": 4,
           "aspectRatio": "={{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? '16:9' : '9:16' }}"
         }
       },
@@ -1285,7 +1286,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyvideos/{{ $('Webhook1').item.json.body.storyId }}.mp4",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/storage/v1/object/storyvideos/{{ $('Webhook1').first().json?.body?.storyId }}.mp4",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
@@ -1320,7 +1321,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Webhook1').item.json.body.storyId }}",
+        "url": "=https://ioeihnoxvtpxtqhxklpw.supabase.co/rest/v1/stories?id=eq.{{ $('Webhook1').first().json?.body?.storyId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
@@ -1337,7 +1338,7 @@
           "parameters": [
             {
               "name": "video_path",
-              "value": "={{ $('Webhook1').item.json.body.storyId }}.mp4"
+              "value": "={{ $('Webhook1').first().json?.body?.storyId }}.mp4"
             }
           ]
         },
@@ -1355,6 +1356,33 @@
         "supabaseApi": {
           "id": "wigd9LqEY8DlWzkn",
           "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "modelId": {
+          "__rl": true,
+          "value": "sora-2",
+          "mode": "list",
+          "cachedResultName": "SORA-2"
+        },
+        "prompt": "=MANDATORY FORMAT: STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'HORIZONTAL LANDSCAPE ORIENTATION ONLY (Aspect Ratio 16:9, 1920x1080). DO NOT GENERATE IN VERTICAL OR PORTRAIT FORMAT. The entire visual composition must be widescreen cinematic, designed for landscape screens.' : 'VERTICAL PORTRAIT ORIENTATION ONLY (Aspect Ratio 9:16, 1080x1920). DO NOT GENERATE IN HORIZONTAL OR LANDSCAPE FORMAT. The entire visual composition must be tall and vertical, designed for mobile smartphone screens.' }}\n\nGenerate a 4-second cinematic {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'horizontal landscape video (16:9 widescreen)' : 'vertical video (9:16 portrait)' }}, with zero text, illustrating the story: {{ $('Webhook1').first().json?.body?.selectedTitle }}\n\nTHERAPEUTIC CONTEXT:\nThis video illustrates a hypnotic tale for children (0-10 years old) to serve as a soothing visual introduction.\n\nSTORY SUMMARY:\n{{ $('Webhook1').first().json?.body?.summary }}\n\nVISUAL DIRECTIVES AND ATMOSPHERE (Based on the cover image):\n{{ $('Analyze_image_standalone').first().json?.content?.parts?.[0]?.text || $('Analyze_image_standalone').first().json?.text || '' }}\nEnsure the video matches the visual artistic style of the cover image perfectly.\n\nTECHNICAL MOVEMENT & AUDIO SPECIFICATIONS:\n1. STRICT {{ ($('Webhook1').first().json?.body?.videoOrientation === 'landscape' || $('Webhook1').first().json?.body?.videoAspectRatio === '16:9') ? 'LANDSCAPE 16:9: Frame the entire widescreen composition horizontally.' : 'VERTICAL 9:16: Frame the entire composition vertically for mobile screen display.' }} Keep the main character or object centered.\n2. PACE: Ultra slow, gentle breathing rhythm (~50 BPM). No sudden cuts, no shaking.\n3. AUDIO & NARRATION SPEED: Any voice-over, spoken word, or narration in this video must be very slow, soft, soothing, and unhurried (calm bedtime tempo). Do NOT speak fast or rush words.\n4. ENDING DECELERATION (CRITICAL): By second 2.5, the motion smoothly slows down and completely settles into a motionless, serene resting tableau for the remainder of the video so there is no abrupt stop.\n5. TEXTURES & ATMOSPHERE: Soft light, cozy glow, soothing watercolor/storybook textures, comforting atmosphere.\n\nThe video must end in absolute stillness, peace, and reassurance.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1350,
+        -120
+      ],
+      "id": "e8b610c3-3e0e-436f-a89e-27ffc6499891",
+      "name": "Generate_video_standalone",
+      "credentials": {
+        "openAiApi": {
+          "id": "MSayxruZLmsTpuw2",
+          "name": "OpenAi account"
         }
       }
     }
@@ -1762,11 +1790,6 @@
             "node": "If3",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "video_story1",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -1874,6 +1897,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Generate_video_standalone",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1882,6 +1912,17 @@
         [
           {
             "node": "Maj_standalone_story_video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate_video_standalone": {
+      "main": [
+        [
+          {
+            "node": "Post_standalone_video_supabase",
             "type": "main",
             "index": 0
           }

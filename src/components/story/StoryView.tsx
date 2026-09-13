@@ -9,6 +9,7 @@ import type { ViewType } from "@/types/views";
 import { useStories } from "@/hooks/useStories";
 import type { Child } from "@/types/child";
 import { useStoryUpdate } from "@/hooks/stories/useStoryUpdate";
+import { useStoryVideoGeneration } from "@/hooks/stories/useStoryVideoGeneration";
 
 export type ViewMode = "create" | "read" | "list";
 
@@ -22,6 +23,7 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const { toast } = useToast();
   const { updateStoryStatus } = useStoryUpdate();
+  const { generateVideoForStory, isGeneratingVideo } = useStoryVideoGeneration();
 
   const {
     stories,
@@ -164,6 +166,8 @@ const StoryView: React.FC<StoryViewProps> = ({ children = [], onCreateChild = as
             onBack={handleBackToLibrary}
             childName={getChildName(currentStory.childrenIds, children)}
             onMarkAsRead={handleMarkAsRead}
+            onGenerateVideo={() => generateVideoForStory(currentStory)}
+            isGeneratingVideo={isGeneratingVideo(currentStory.id)}
           />
         ) : (
           <div>Histoire non trouvée</div>
