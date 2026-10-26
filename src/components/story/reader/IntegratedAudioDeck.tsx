@@ -55,6 +55,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const [selectedVoiceId, setSelectedVoiceId] = useState('local');
   const [isVoicePopoverOpen, setIsVoicePopoverOpen] = useState(false);
   const [isSoundPopoverOpen, setIsSoundPopoverOpen] = useState(false);
+  const [autoPlayRequested, setAutoPlayRequested] = useState(false);
+  const currentPlayingUrlRef = useRef<string | null>(null);
   const navigate = useNavigate();
 
   // Browser SpeechSynthesis state
@@ -109,6 +111,18 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     storyObjective: extractObjectiveValue(objective) || undefined,
     autoPlay: false
   });
+
+  // 🎚️ Audio Ducking Intelligent : lance l'ambiance sonore en sourdine sous la voix dès le clic Play
+  useEffect(() => {
+    if (isPlaying || isBrowserSpeaking) {
+      backgroundSound.setVolume(0.16);
+      if (!backgroundSound.isPlaying && (soundId || objective)) {
+        backgroundSound.togglePlay();
+      }
+    } else {
+      backgroundSound.setVolume(0.40);
+    }
+  }, [isPlaying, isBrowserSpeaking, soundId, objective]);
 
   // 1. Souscription Realtime
   useEffect(() => {
@@ -215,6 +229,33 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       }
     }
   }, [readyStoryAudioFile]);
+
+  // Fast-Play Auto-Play : démarre l'écoute dès que le premier bloc (Fast-Play) arrive (< 4s)
+  useEffect(() => {
+    if (autoPlayRequested && readyStoryAudioFile?.audio_url && !isPlaying) {
+      console.log("⚡ [FastPlay] Déclenchement automatique de la lecture dès réception du premier chunk !");
+      setAutoPlayRequested(false);
+      handlePlayPause();
+    }
+  }, [readyStoryAudioFile?.audio_url, autoPlayRequested, isPlaying]);
+
+  // Fast-Play Transition Fluide : bascule transparente sur l'audio complet quand il est assemblé
+  useEffect(() => {
+    if (isPlaying && audioRef.current && readyStoryAudioFile?.audio_url) {
+      if (currentPlayingUrlRef.current && currentPlayingUrlRef.current !== readyStoryAudioFile.audio_url) {
+        getSignedAudioUrl(readyStoryAudioFile.audio_url).then((newSignedUrl) => {
+          if (newSignedUrl && audioRef.current && audioRef.current.src !== newSignedUrl) {
+            const preservedTime = audioRef.current.currentTime;
+            audioRef.current.src = newSignedUrl;
+            audioRef.current.currentTime = preservedTime;
+            audioRef.current.play().catch(() => {});
+            currentPlayingUrlRef.current = readyStoryAudioFile.audio_url;
+            console.log("🔄 [FastPlay] Transition fluide vers l'audio complet finalisée !");
+          }
+        });
+      }
+    }
+  }, [readyStoryAudioFile?.audio_url, isPlaying]);
 
   // Synthèse vocale du navigateur (Mode Gratuit)
   const playBrowserParagraph = (index: number) => {
@@ -331,6 +372,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         if (audio.src !== audioUrl) {
           audio.src = audioUrl;
         }
+        currentPlayingUrlRef.current = readyStoryAudioFile.audio_url;
         audioRef.current = audio;
         audio.playbackRate = 1.0;
 
@@ -339,12 +381,24 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           setCurrentTime(audio.currentTime);
           if (audio.duration) {
             setProgress((audio.currentTime / audio.duration) * 100);
+
+            // 🌙 Soft Fade-out Sommeil : fondu progressif imperceptible sur les 30 dernières secondes
+            const remaining = audio.duration - audio.currentTime;
+            if (remaining > 0 && remaining <= 30) {
+              const fadeRatio = Math.max(0, remaining / 30);
+              audio.volume = fadeRatio;
+              backgroundSound.setVolume(fadeRatio * 0.16);
+            } else if (remaining > 30) {
+              audio.volume = 1.0;
+            }
           }
         };
         audio.onended = () => {
           setIsPlaying(false);
           setProgress(0);
           setCurrentTime(0);
+          audio.volume = 1.0;
+          backgroundSound.setVolume(0.40);
         };
         audio.onerror = () => {
           toast({
@@ -389,7 +443,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       return;
     }
 
-    // 4. Si une voix personnalisée est choisie sans audio généré : lancement fluide en arrière-plan
+    // 4. Lancement de la génération avec Fast-Play auto-play dès que le premier bloc est prêt
+    setAutoPlayRequested(true);
     await generateAudio(storyId, text, selectedVoiceId);
   };
 
@@ -641,8 +696,46 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
             </Button>
           </div>
 
-          {/* DROITE : AMBIANCE SONORE (🌙) ÉPURÉE */}
-          <div className="flex items-center shrink-0">
+          {/* DROITE : HORS-LIGNE + AMBIANCE SONORE (🌙) ÉPURÉE */}
+          <div className="flex items-center gap-1 shrink-0">
+            {readyStoryAudioFile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={async () => {
+                  if (readyStoryAudioFile.audio_url) {
+                    try {
+                      const cacheKey = `story_${storyId}`;
+                      const signedUrl = await getSignedAudioUrl(readyStoryAudioFile.audio_url);
+                      if (signedUrl) {
+                        await audioCache.prefetchAndCache(cacheKey, signedUrl);
+                        setIsOfflineReady(true);
+                        toast({
+                          title: "Histoire enregistrée hors-ligne",
+                          description: "Prête pour écouter ce soir sans Wi-Fi ni réseau 🌙",
+                        });
+                      }
+                    } catch {
+                      toast({
+                        title: "Erreur sauvegarde",
+                        description: "Impossible d'enregistrer l'histoire hors-ligne",
+                        variant: "destructive"
+                      });
+                    }
+                  }
+                }}
+                className={cn(
+                  "h-8.5 w-8.5 rounded-full transition-all",
+                  isOfflineReady 
+                    ? "text-emerald-500 hover:text-emerald-600 bg-emerald-500/10" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+                title={isOfflineReady ? "Histoire disponible hors-ligne" : "Sauvegarder pour le coucher sans Wi-Fi"}
+              >
+                {isOfflineReady ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+              </Button>
+            )}
+
             {soundId ? (
               <Popover open={isSoundPopoverOpen} onOpenChange={setIsSoundPopoverOpen}>
                 <PopoverTrigger asChild>

@@ -134,7 +134,26 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 
     // === MODE PULSATION ===
     // Un seul mot surligné avec fond bien visible + légère mise en valeur
-    if (immersiveMode === 'pulse') {
+    if (immersiveMode === 'pulse' || immersiveMode === 'halo') {
+      allBlocks.forEach((blockElement) => {
+        const b = blockElement as HTMLElement;
+        const pIdx = b.getAttribute('data-paragraph-index');
+        const isCurrent = pIdx === currentParaIndex;
+        if (isCurrentlyPaused) {
+          b.style.opacity = '1';
+          b.style.background = 'transparent';
+        } else {
+          b.style.opacity = isCurrent ? '1' : '0.40';
+          b.style.transition = 'all 400ms ease-in-out';
+          if (isCurrent) {
+            b.style.background = 'hsl(var(--primary-soft) / 0.15)';
+            b.style.borderRadius = '14px';
+            b.style.padding = '4px 10px';
+          } else {
+            b.style.background = 'transparent';
+          }
+        }
+      });
       allWords.forEach((wordElement) => {
         const w = wordElement as HTMLElement;
         const wIdx = parseInt(w.getAttribute('data-word-index') || '0', 10);

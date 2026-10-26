@@ -160,12 +160,23 @@ torch.set_num_threads(2)
 torch.set_num_interop_threads(2)
 import urllib.request
 import soundfile as sf
-from fastapi import FastAPI, HTTPException, Security, Depends
+from fastapi import FastAPI, HTTPException, Security, Depends, BackgroundTasks
 from fastapi.security.api_key import APIKeyHeader
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List
-from qwen_tts import Qwen3TTSModel
+try:
+    from qwen_tts import Qwen3TTSModel
+except ImportError:
+    Qwen3TTSModel = None
+
+try:
+    from kokoro_engine import synthesizer as kokoro_synthesizer
+    KOKORO_AVAILABLE = True
+except Exception as e:
+    print(f"⚠️ [KokoroEngine] Module Kokoro non disponible immédiatement ({e})")
+    kokoro_synthesizer = None
+    KOKORO_AVAILABLE = False
 
 app = FastAPI(
     title="Calmi Private TTS Service",
@@ -258,8 +269,113 @@ def health_check():
         "device": "cpu",
         "model": MODEL_NAME,
         "framework": "qwen-tts",
+        "kokoro_available": KOKORO_AVAILABLE,
         "queue_locked": generation_lock.locked()
     }
+
+class StandardTTSRequest(BaseModel):
+    text: str
+    story_id: Optional[str] = None
+    storyId: Optional[str] = None
+    webhook_id: Optional[str] = None
+    requestId: Optional[str] = None
+    voice_id: Optional[str] = "standard-french-female"
+    voiceId: Optional[str] = None
+    enable_sleep_pacing: Optional[bool] = True
+    isMultiVoice: Optional[bool] = None
+    segments: Optional[list] = None
+
+def _run_kokoro_async_task(request_dict: dict, req_id: str):
+    """Tâche de fond exécutée pour la synthèse standard Kokoro et l'upload vers Supabase"""
+    if not kokoro_synthesizer:
+        print(f"❌ [{req_id}] Moteur Kokoro non initialisé !")
+        return
+
+    text = request_dict.get("text", "")
+    story_id = request_dict.get("story_id") or request_dict.get("storyId")
+    webhook_id = request_dict.get("webhook_id") or request_dict.get("requestId")
+    voice_id = request_dict.get("voiceId") or request_dict.get("voice_id") or "standard-french-female"
+    enable_sleep_pacing = request_dict.get("enable_sleep_pacing", True)
+    is_multi_voice = request_dict.get("isMultiVoice", False)
+    segments = request_dict.get("segments")
+
+    try:
+        if is_multi_voice and segments and len(segments) > 0:
+            print(f"🎭 [{req_id}] Théâtre multi-voix Kokoro Fast-Play (storyId={story_id}, {len(segments)} segments)...")
+            wav_bytes, sr, duration = kokoro_synthesizer.synthesize_multivoice_with_fast_play(
+                segments=segments,
+                story_id=story_id,
+                request_id=webhook_id,
+                req_id=req_id
+            )
+        else:
+            print(f"⚙️ [{req_id}] Début de la synthèse standard Kokoro Fast-Play (storyId={story_id})...")
+            wav_bytes, sr, duration = kokoro_synthesizer.synthesize_with_fast_play(
+                text=text,
+                story_id=story_id,
+                request_id=webhook_id,
+                voice_id=voice_id,
+                enable_sleep_pacing=enable_sleep_pacing,
+                req_id=req_id
+            )
+        print(f"🎉 [{req_id}] Histoire standard finalisée avec succès via Kokoro-82M (Fast-Play & Complet) !")
+    except Exception as e:
+        print(f"💥 [{req_id}] Erreur critique dans la tâche asynchrone Kokoro : {e}")
+
+@app.post("/synthesize-standard-async")
+async def synthesize_standard_async(request: StandardTTSRequest, background_tasks: BackgroundTasks):
+    """
+    Endpoint asynchrone pour les voix standards (Kokoro-82M).
+    Répond immédiatement en HTTP 202 Accepted et délègue la synthèse + upload en tâche de fond.
+    """
+    req_id = str(uuid.uuid4())[:8]
+    effective_webhook_id = request.webhook_id or request.requestId
+    effective_story_id = request.story_id or request.storyId
+
+    print(f"🚀 [{req_id}] Requête standard Kokoro reçue (Asynchrone). Webhook ID: {effective_webhook_id}, Story ID: {effective_story_id}")
+
+    if not effective_webhook_id:
+        return JSONResponse(status_code=400, content={"error": "webhook_id ou requestId est obligatoire"})
+    if not effective_story_id:
+        return JSONResponse(status_code=400, content={"error": "story_id ou storyId est obligatoire"})
+
+    req_dict = request.model_dump()
+    req_dict["webhook_id"] = effective_webhook_id
+    req_dict["story_id"] = effective_story_id
+
+    background_tasks.add_task(_run_kokoro_async_task, req_dict, req_id)
+
+    return JSONResponse(
+        status_code=202,
+        content={
+            "status": "accepted",
+            "message": "Génération audio standard Kokoro-82M lancée en tâche de fond sur VPS.",
+            "request_id": req_id,
+            "webhook_id": effective_webhook_id
+        }
+    )
+
+@app.post("/synthesize-standard")
+async def synthesize_standard(request: StandardTTSRequest):
+    """Endpoint synchrone pour tester ou obtenir directement le flux audio Kokoro"""
+    from fastapi.responses import Response
+    req_id = str(uuid.uuid4())[:8]
+    if not kokoro_synthesizer:
+        raise HTTPException(status_code=500, detail="Moteur Kokoro non disponible sur ce serveur")
+
+    voice_id = request.voiceId or request.voice_id or "standard-french-female"
+    wav_bytes, sr, duration = kokoro_synthesizer.synthesize(
+        text=request.text,
+        voice_id=voice_id,
+        enable_sleep_pacing=request.enable_sleep_pacing if request.enable_sleep_pacing is not None else True,
+        req_id=req_id
+    )
+
+    return Response(
+        content=wav_bytes,
+        media_type="audio/wav",
+        headers={"Content-Disposition": f"attachment; filename=calmi_kokoro_{req_id}.wav"}
+    )
 
 @app.post("/synthesize", dependencies=[Depends(get_api_key)])
 async def synthesize_speech(request: TTSRequest):

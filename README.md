@@ -24,7 +24,7 @@ Calmi est une plateforme complète qui permet aux parents de créer des histoire
 ### Backend & Services
 - Supabase (Auth, PostgreSQL, Storage, Edge Functions, Realtime)
 - Lovable AI (GPT-4o-mini) pour génération histoires
-- Système TTS multi-provider : ElevenLabs / Speechify (switch dynamique)
+- Système TTS hybride privé : Modal.com Serverless GPU (Qwen3-TTS 0.6B) pour clonage vocal familial & multi-voix, fallback rapide OpenAI TTS, et synthèse locale navigateur
 - n8n webhooks pour automation
 
 ### Features

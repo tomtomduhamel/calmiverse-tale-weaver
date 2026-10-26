@@ -200,7 +200,24 @@ export const resolveSmartVoice = (
     return { voiceId: categoryVoices[0].id, voiceRefUrl: categoryVoices[0].signedUrl || undefined };
   }
 
-  // 3. Fallback sur le narrateur principal
+  // 3. Attribution automatique d'une voix de synthèse typée selon le profil si aucun clone familial n'est disponible
+  const TYPED_CHARACTER_VOICES: Record<string, { voiceId: string; instruct?: string }> = {
+    magical_creatures: { voiceId: 'standard-french-male', instruct: "Deep, mysterious, gentle creature voice" },
+    animal_flying: { voiceId: 'standard-french-female-alt', instruct: "Light, airy, cheerful soaring voice" },
+    animal_aquatic: { voiceId: 'standard-french-female-alt', instruct: "Calm, fluid, peaceful ocean voice" },
+    animal_land: { voiceId: 'standard-french-male', instruct: "Warm, grounded, playful forest animal voice" },
+    children: { voiceId: 'standard-french-female', instruct: "Enthusiastic, bright, joyful child voice" }
+  };
+
+  const typed = TYPED_CHARACTER_VOICES[category];
+  if (typed) {
+    return {
+      voiceId: typed.voiceId,
+      voiceRefUrl: undefined
+    };
+  }
+
+  // 4. Fallback ultime sur le narrateur principal
   return {
     voiceId: fallbackNarratorVoice?.id,
     voiceRefUrl: fallbackNarratorVoice?.signedUrl || undefined

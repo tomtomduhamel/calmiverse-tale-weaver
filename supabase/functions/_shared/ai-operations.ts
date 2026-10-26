@@ -73,7 +73,16 @@ FORMAT DE L'HISTOIRE :
 - Longueur : Adapte scrupuleusement la longueur selon le nombre de mots demandé.
 - Structure narrative fluide avec des sauts de lignes pour la lecture à voix haute.
 - Pas de titre explicite au début, pas de mot "Fin" à la fin.
-- Termine toujours sur une note positive et stimulante selon l'objectif.`
+- Termine toujours sur une note positive et stimulante selon l'objectif.
+
+THÉÂTRE AUDIO MULTI-VOIX ET BALISAGE DES PERSONNAGES :
+- Afin de permettre au moteur audio d'attribuer les vraies voix de la famille (Papa, Maman, Enfants) et des voix de créatures, balise chaque réplique avec le nom du personnage entre crochets suivi de deux points et des guillemets :
+  * Exemples :
+    [Papa]: "Regarde là-bas, derrière le grand arbre !"
+    [Maman]: "N'oublie pas ton sac magique d'explorateur !"
+    [Dragon]: "Bienvenue dans ma caverne scintillante..."
+- Les passages narratifs sans dialogue sont interprétés par le Narrateur principal.
+- Favorise les dialogues naturels et vivants entre les personnages.`
           },
           {
             role: 'user',

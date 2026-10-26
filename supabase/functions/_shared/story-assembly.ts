@@ -291,6 +291,16 @@ DIRECTION AUDIO & BALISES ÉMOTIONNELLES :
   * [sleepy] : voix très douce, lente et berçante — EXCLUSIVEMENT RÉSERVÉ à l'objectif "sleep" (sommeil). INTERDIT pour "fun", "focus" ou "relax".
 - Insère ces balises naturellement (environ 1 balise en début de paragraphe ou devant une réplique expressive) pour donner du relief à la lecture vocale.
 
+THÉÂTRE AUDIO MULTI-VOIX & BALISAGE DES DIALOGUES :
+- Afin de permettre une interprétation théâtralisée du livre audio par plusieurs voix distinctes (Papa, Maman, Enfants, créatures magiques), balise systématiquement chaque réplique avec le nom du personnage entre crochets suivi de deux points et des guillemets :
+  * Exemples :
+    [Papa]: "Regarde là-bas, derrière le grand arbre !"
+    [Maman]: "Prends ton sac d'aventurier, nous partons !"
+    [Dragon]: "Qui ose troubler mon repos étincelant ?"
+    [Lutin]: "Par ici, suivez les étincelles d'or !"
+- La narration ordinaire (hors dialogues) reste interprétée par la voix du Narrateur principal.
+- Favorise les dialogues naturels, vifs et interactifs entre les personnages pour enrichir l'expérience sonore.
+
 STRUCTURE NARRATIVE (~${targetWords} mots) :
 - Début (~${startWords} mots) : Accroche immédiate et découverte du défi/problème.
 - Péripéties (~${middleWords} mots) : Actions rythmées de cause à effet, dialogues vivants et progression de l'objectif.
@@ -544,6 +554,30 @@ INTERDICTIONS STRICTES DE REDONDANCE :
 - Varier le moteur de l'intrigue et les ressorts comiques/d'aventure.
 Historique récent :
 ${historyList}`;
+  }
+
+  // Récupérer les voix familiales enregistrées pour la dramatisation théâtrale
+  try {
+    const { data: userVoices } = await supabase
+      .from("user_voices")
+      .select("name, relation, category, category_name")
+      .eq("user_id", params.userId);
+
+    if (userVoices && userVoices.length > 0) {
+      const voiceList = userVoices
+        .map((v: any) => `- [${v.name || v.relation}]: rôle ${v.relation || v.category_name || "famille"}`)
+        .join("\n");
+      storyPrompt += `\n\n🎭 VOIX FAMILIALES DISPONIBLES POUR LE THÉÂTRE AUDIO :
+L'utilisateur a configuré les voix personnalisées suivantes dans son Studio Vocal :
+${voiceList}
+INSTRUCTION OBLIGATOIRE DE BALISAGE DES RÉPLIQUES :
+- Fais intervenir ces membres de la famille dans l'histoire à travers des répliques chaleureuses.
+- Chaque réplique de ces personnages DOIT être rigoureusement préfixée avec leur balise entre crochets : [Nom]: "Texte du dialogue..."
+  Exemple : [Papa]: "Regarde derrière le grand saule !" ou [Maman]: "Prends ta boussole dorée !"
+- Le moteur TTS Calmi attribuera automatiquement le clone vocal correspondant à chaque réplique !`;
+    }
+  } catch (err) {
+    console.warn("[story-assembly] Erreur récupération voix familiales:", err);
   }
 
   const promptSource = storyPromptTemplate ? `database-${params.objective}` : "fallback";

@@ -1,8 +1,8 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { idempotencyGuard } from '@/utils/idempotency/idempotencyGuard';
+import { parseStoryToAudioSegments } from '@/utils/storyAudioParser';
 
 interface AudioFile {
   id: string;
@@ -151,7 +151,7 @@ export const useN8nAudioGeneration = () => {
   const generateAudio = useCallback(async (
     storyId: string, 
     text: string, 
-    voiceId: string = '9BWtsMINqrJLrRacOk9x'
+    voiceId: string = 'standard-french-female'
   ): Promise<string | null> => {
     if (!text || text.trim().length === 0) {
       toast({
@@ -195,7 +195,7 @@ export const useN8nAudioGeneration = () => {
       let checkInterval: NodeJS.Timeout;
 
       try {
-      // Récupérer la configuration TTS dynamique (ElevenLabs ou Speechify)
+      // Récupérer la configuration TTS dynamique (Modal GPU pour clones, VPS Kokoro pour voix standard)
       const { data: ttsConfig, error: configError } = await supabase.functions.invoke('get-tts-config');
       
       if (configError || !ttsConfig?.webhookUrl) {
@@ -203,8 +203,8 @@ export const useN8nAudioGeneration = () => {
       }
 
       const webhookUrl = ttsConfig.webhookUrl;
-      const provider = ttsConfig.provider || 'vps-hostinger';
-      const dynamicVoiceId = voiceId || ttsConfig.voiceId || '9BWtsMINqrJLrRacOk9x'; // Prioritize explicitly selected voiceId
+      const provider = ttsConfig.provider || 'modal-gpu';
+      const dynamicVoiceId = voiceId || ttsConfig.voiceId || 'standard-french-female';
 
       console.log(`🎙️ [N8nAudio] Génération audio via ${provider}:`, { 
         storyId, 
@@ -316,7 +316,7 @@ export const useN8nAudioGeneration = () => {
         await fetchAudioFiles(storyId);
       }, TIMEOUT_DURATION);
 
-      // 4. Envoyer la requête à n8n ou Modal GPU
+      // 4. Envoyer la requête à Modal GPU ou VPS Kokoro
       const payload: any = {
         text: text,
         storyId,
@@ -327,8 +327,7 @@ export const useN8nAudioGeneration = () => {
         provider: provider
       };
 
-      // Check if this is a custom user voice clone
-      // Fetch all custom user voice clones for automatic character assignment
+      // Check if this is a custom user voice clone or multi-voice theatre
       try {
         const { data: userVoices } = await supabase
           .from('user_voices')
@@ -371,17 +370,31 @@ export const useN8nAudioGeneration = () => {
               });
             }
           }
+
+          // Analyse théâtrale multi-voix automatique
+          if (payload.allUserVoices.length > 0) {
+            const parsedSegments = parseStoryToAudioSegments(text, payload.allUserVoices, dynamicVoiceId);
+            const distinctSpeakers = new Set(parsedSegments.map(s => s.voiceRefUrl || s.voiceId).filter(Boolean));
+            if (distinctSpeakers.size > 1) {
+              payload.isMultiVoice = true;
+              payload.segments = parsedSegments;
+              payload.isCustomVoice = true;
+              console.log(`🎭 [N8nAudio] Théâtre audio multi-voix activé avec ${parsedSegments.length} répliques et ${distinctSpeakers.size} voix distinctes !`);
+            }
+          }
         }
       } catch (err) {
         console.log("[N8nAudio] Standard voice detected or check skipped.", err);
       }
 
-      // Sélection de l'URL cible (Modal GPU pour les voice clones ou provider modal-gpu)
-      const targetWebhookUrl = (payload.isCustomVoice || provider === 'modal-gpu' || provider === 'modal') && ttsConfig.modalWebhookUrl
+      // Sélection de l'URL cible : Modal GPU pour clones familiaux & multi-voix, VPS Kokoro pour voix standard
+      const isClone = Boolean(payload.isCustomVoice);
+      const targetWebhookUrl = isClone && ttsConfig.modalWebhookUrl
         ? ttsConfig.modalWebhookUrl
-        : webhookUrl;
+        : (ttsConfig.standardWebhookUrl || webhookUrl);
+      const targetProviderName = isClone ? 'Modal GPU (Voice Cloning & Théâtre)' : 'VPS Kokoro-82M (Standard Voice)';
 
-      console.log(`📤 [N8nAudio] Envoi vers ${payload.isCustomVoice ? 'Modal GPU (Voice Cloning)' : provider}:`, {
+      console.log(`📤 [N8nAudio] Envoi vers ${targetProviderName}:`, {
         ...payload,
         voice_ref_url: payload.voice_ref_url ? "SIGNED_URL_PRESENT" : undefined,
         targetWebhookUrl: targetWebhookUrl.substring(0, 45) + '...'
@@ -400,13 +413,13 @@ export const useN8nAudioGeneration = () => {
         if (response.ok) {
           sendSuccess = true;
         } else {
-          console.warn(`⚠️ [N8nAudio] Échec Modal (${response.status}), bascule automatique vers le secours OpenAI TTS...`);
+          console.warn(`⚠️ [N8nAudio] Échec ${targetProviderName} (${response.status}), bascule automatique vers le secours OpenAI TTS...`);
         }
       } catch (fetchErr) {
-        console.warn(`⚠️ [N8nAudio] Erreur réseau Modal, bascule automatique vers le secours OpenAI TTS...`, fetchErr);
+        console.warn(`⚠️ [N8nAudio] Erreur réseau ${targetProviderName}, bascule automatique vers le secours OpenAI TTS...`, fetchErr);
       }
 
-      // Si Modal a échoué, bascule automatique vers le secours OpenAI TTS ultra-rapide
+      // Si le service cible a échoué, bascule automatique vers le secours OpenAI TTS ultra-rapide
       if (!sendSuccess) {
         console.log(`🛡️ [N8nAudio] Lancement du fallback OpenAI TTS de secours...`);
         const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('generate-openai-tts', {
@@ -419,7 +432,7 @@ export const useN8nAudioGeneration = () => {
         });
 
         if (fallbackError || !fallbackData?.success) {
-          throw new Error(fallbackError?.message || "Échec de la génération audio (Modal & Secours OpenAI)");
+          throw new Error(fallbackError?.message || "Échec de la génération audio (Modal/VPS & Secours OpenAI)");
         }
 
         console.log(`✅ [N8nAudio] Fallback OpenAI TTS terminé avec succès !`);

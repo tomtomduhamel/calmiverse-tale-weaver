@@ -5,6 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 interface TtsConfig {
   provider: string;
   webhookUrl: string;
+  modalWebhookUrl?: string;
+  standardWebhookUrl?: string;
   voiceId: string | null;
 }
 

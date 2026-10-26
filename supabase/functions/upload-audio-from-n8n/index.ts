@@ -105,7 +105,7 @@ serve(async (req) => {
     const webhookId = formData.get('requestId') as string;
     const storyId = formData.get('storyId') as string;
     const audioFile = formData.get('audioFile') as File;
-    const voiceId = formData.get('voiceId') as string || '9BWtsMINqrJLrRacOk9x';
+    const voiceId = formData.get('voiceId') as string || 'standard-french-female';
     const durationStr = formData.get('duration') as string;
     const duration = durationStr ? parseInt(durationStr) : null;
 
