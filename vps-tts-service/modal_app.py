@@ -20,14 +20,11 @@ image = (
     .pip_install(
         "torch>=2.1.0",
         "torchaudio",
-        "transformers>=4.38.0",
-        "accelerate",
+        "cosyvoice2-eu",
         "soundfile",
         "pydantic",
         "fastapi",
-        "requests",
-        "cosyvoice2-eu",
-        "qwen-tts"
+        "requests"
     )
     .add_local_file(
         "vps-tts-service/default_ref.wav",
@@ -48,19 +45,6 @@ def download_model_weights():
         print("✅ Poids CosyVoice2-EU pré-téléchargés et mis en cache dans le Volume Modal !")
     except Exception as e:
         print(f"⚠️ Échec pré-téléchargement CosyVoice2-EU ({e})")
-
-    # Pré-téléchargement de secours pour Qwen3-TTS
-    try:
-        import torch
-        from qwen_tts import Qwen3TTSModel
-        Qwen3TTSModel.from_pretrained(
-            "Qwen/Qwen3-TTS-12Hz-0.6B-Base",
-            device_map="cpu",
-            dtype=torch.float32
-        )
-        print("✅ Poids Qwen3-TTS de secours pré-téléchargés !")
-    except Exception as e:
-        print(f"⚠️ Échec pré-téléchargement Qwen3-TTS ({e})")
 
 image = image.run_function(
     download_model_weights,
@@ -265,24 +249,13 @@ class CalmiTTSGPU:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.engine = "cosyvoice2"
 
-        # 1. Tentative de chargement du moteur principal : CosyVoice 2 EU
+        # Initialisation du moteur principal : CosyVoice 2 EU
         print("⚡ [CalmiTTSGPU] Initialisation du moteur CosyVoice 2 (Hi! PARIS EU)...")
         start = time.time()
-        try:
-            from cosyvoice2_eu import load
-            self.cosy_model = load()
-            self.engine = "cosyvoice2"
-            print(f"✅ [CalmiTTSGPU] CosyVoice 2 EU prêt sur {self.device.upper()} en {time.time() - start:.2f}s !")
-        except Exception as e:
-            print(f"⚠️ [CalmiTTSGPU] Impossible de charger CosyVoice 2 ({e}), bascule sur Qwen3-TTS...")
-            from qwen_tts import Qwen3TTSModel
-            self.qwen_model = Qwen3TTSModel.from_pretrained(
-                "Qwen/Qwen3-TTS-12Hz-0.6B-Base",
-                device_map=self.device,
-                dtype=torch.float32
-            )
-            self.engine = "qwen3"
-            print(f"✅ [CalmiTTSGPU] Qwen3-TTS de secours prêt en {time.time() - start:.2f}s !")
+        from cosyvoice2_eu import load
+        self.cosy_model = load()
+        self.engine = "cosyvoice2"
+        print(f"✅ [CalmiTTSGPU] CosyVoice 2 EU prêt sur {self.device.upper()} en {time.time() - start:.2f}s !")
 
     def _upload_to_supabase(self, wav_bytes: bytes, story_id: str, webhook_id: str, voice_id: str, req_id: str):
         import requests
@@ -378,30 +351,18 @@ class CalmiTTSGPU:
 
                     previous_speaker = seg_speaker_key
 
-                    if self.engine == "cosyvoice2":
-                        prompt_target = seg_ref_path if (seg_ref_path and os.path.exists(seg_ref_path)) else DEFAULT_LOCAL_REF
-                        wav, current_sr = self.cosy_model.tts(
-                            text=seg_text,
-                            prompt=prompt_target
-                        )
-                        sr = current_sr
-                        if hasattr(wav, 'cpu'):
-                            wav_np = wav.cpu().numpy()
-                        else:
-                            wav_np = np.array(wav, dtype=np.float32)
-                        if wav_np.ndim > 1:
-                            wav_np = wav_np.squeeze()
+                    prompt_target = seg_ref_path if (seg_ref_path and os.path.exists(seg_ref_path)) else DEFAULT_LOCAL_REF
+                    wav, current_sr = self.cosy_model.tts(
+                        text=seg_text,
+                        prompt=prompt_target
+                    )
+                    sr = current_sr
+                    if hasattr(wav, 'cpu'):
+                        wav_np = wav.cpu().numpy()
                     else:
-                        clone_kwargs = {
-                            "text": seg_text,
-                            "language": tts_lang,
-                        }
-                        if seg_ref_path and os.path.exists(seg_ref_path):
-                            clone_kwargs["ref_audio"] = seg_ref_path
-                            clone_kwargs["x_vector_only_mode"] = True
-                        wavs, current_sr = self.qwen_model.generate_voice_clone(**clone_kwargs)
-                        sr = current_sr
-                        wav_np = wavs[0]
+                        wav_np = np.array(wav, dtype=np.float32)
+                    if wav_np.ndim > 1:
+                        wav_np = wav_np.squeeze()
 
                     if seg_pause > 0:
                         pause_samples = int(sr * seg_pause)
@@ -424,7 +385,7 @@ class CalmiTTSGPU:
                         print(f"⚡ [{req_id}] FAST-PLAY THÉÂTRE : Téléversement prioritaire du premier segment masterisé (-16 LUFS)...")
                         self._upload_to_supabase(buf0_mastered, target_story_id, target_webhook_id, target_voice_id, f"{req_id}_chunk0")
 
-            elif self.engine == "cosyvoice2":
+            else:
                 # Inférence CosyVoice 2 (ultra-rapide, RTF ~0.2)
                 for idx, chunk_data in enumerate(text_chunks):
                     chunk, pause_before, chunk_instruct = chunk_data
@@ -465,38 +426,6 @@ class CalmiTTSGPU:
                         buf0_mastered = master_audio_bytes(buf0.getvalue(), sr)
                         print(f"⚡ [{req_id}] FAST-PLAY GPU : Téléversement prioritaire du premier bloc masterisé (-16 LUFS)...")
                         self._upload_to_supabase(buf0_mastered, target_story_id, target_webhook_id, target_voice_id, f"{req_id}_chunk0")
-            else:
-                # Inférence Qwen3-TTS de secours
-                for idx, chunk_data in enumerate(text_chunks):
-                    chunk, pause_before, chunk_instruct = chunk_data
-                    t0 = time.time()
-                    
-                    clone_kwargs = {
-                        "text": chunk,
-                        "language": tts_lang,
-                    }
-                    if ref_audio_path and os.path.exists(ref_audio_path):
-                        clone_kwargs["ref_audio"] = ref_audio_path
-
-                    if clean_prompt:
-                        clone_kwargs["ref_text"] = clean_prompt
-                        clone_kwargs["x_vector_only_mode"] = False
-                    else:
-                        clone_kwargs["x_vector_only_mode"] = True
-
-                    if chunk_instruct:
-                        clone_kwargs["instruct"] = chunk_instruct
-
-                    wavs, current_sr = self.qwen_model.generate_voice_clone(**clone_kwargs)
-                    sr = current_sr
-                    
-                    if pause_before > 0:
-                        pause_samples = int(sr * pause_before)
-                        silence = np.zeros(pause_samples, dtype=np.float32)
-                        generated_wavs.append(silence)
-                    
-                    generated_wavs.append(wavs[0])
-                    print(f"  ├─ [Qwen3] Bloc {idx+1}/{len(text_chunks)} ({len(chunk)} chars) généré en {time.time() - t0:.2f}s")
 
         final_wav = np.concatenate(generated_wavs)
         total_time = time.time() - start_inf
