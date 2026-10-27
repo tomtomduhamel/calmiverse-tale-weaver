@@ -54,7 +54,12 @@ Calmiverse est une Progressive Web App (PWA) de génération d'histoires personn
 ### Lecteur d'histoires (StoryReader + ReaderControls)
 - **Interface immersive** avec mode plein écran
 - **Audio TTS & Voice Cloning** intégré avec contrôles (génération via N8nAudioPlayer / Modal GPU / secours OpenAI TTS)
-- **Musique de fond** par objectif (optionnel, désactivable)
+- **Fast-Play Streaming** : Téléversement prioritaire du premier bloc (< 4s) pour démarrage instantané
+- **Bruitages contextuels doux (Sound FX ✨)** : Synthèse procédurale native Web Audio API (passe-bas 3200 Hz, 8 sonorités sommeil)
+- **Soft Fade-out Sommeil** : Fondu progressif feutré sur les 30 dernières secondes
+- **Prolongation Dodo (15 min)** : Maintien de l'ambiance sonore/berceuse pendant 15 min après la fin du conte avec fondu final
+- **Téléchargement prédictif PWA & Cache Routines** : Mise en cache locale IndexedDB automatique des histoires et routines pour écoute hors-ligne
+- **Musique de fond** par objectif (optionnel, désactivable avec réglage du volume)
 - **Temps de lecture dynamique** : calculé avec la vitesse personnalisée du parent (`ReadingSpeedContext`)
 - **Auto-scroll intelligent** avec détection vitesse de lecture (120 mots/min par défaut)
 - **Thème adaptatif** sombre/clair avec préférences utilisateur persistantes
