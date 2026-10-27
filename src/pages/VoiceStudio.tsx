@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import {
   Mic, Trash2, Copy, Plus, Volume2, Share2, Check, Loader2,
   Sparkles, ArrowLeft, Heart, Smartphone, HelpCircle,
-  BookOpen, PawPrint, Feather, Waves, Ghost, FolderPlus, Pencil
+  BookOpen, PawPrint, Feather, Waves, Ghost, FolderPlus, Pencil, Pause
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -65,6 +65,11 @@ export const VoiceStudio: React.FC = () => {
   const audioFormatRef = useRef<{ mimeType: string, ext: string }>({ mimeType: 'audio/webm', ext: 'webm' });
   const testAudioRef = useRef<HTMLAudioElement | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+
+  // ✨ Aperçu IA 5s CosyVoice 2
+  const [previewVoiceId, setPreviewVoiceId] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const aiPreviewAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Distant Invitation State
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -207,11 +212,17 @@ export const VoiceStudio: React.FC = () => {
       testAudioRef.current.pause();
       testAudioRef.current = null;
     }
+    if (aiPreviewAudioRef.current) {
+      aiPreviewAudioRef.current.pause();
+      aiPreviewAudioRef.current = null;
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
     setIsPlayingPreview(false);
     setPlayingVoiceId(null);
+    setPreviewVoiceId(null);
+    setIsPreviewLoading(false);
   };
 
   // Enumerate microphones
@@ -734,6 +745,108 @@ export const VoiceStudio: React.FC = () => {
     }
   };
 
+  // ✨ Aperçu vocal IA (5s) avec le moteur CosyVoice 2 sur GPU
+  const handleAiPreview = async (voice: UserVoice) => {
+    // Si déjà en train de jouer cet aperçu : pause
+    if (previewVoiceId === voice.id && aiPreviewAudioRef.current) {
+      aiPreviewAudioRef.current.pause();
+      aiPreviewAudioRef.current = null;
+      setPreviewVoiceId(null);
+      setIsPreviewLoading(false);
+      return;
+    }
+
+    if (aiPreviewAudioRef.current) {
+      aiPreviewAudioRef.current.pause();
+      aiPreviewAudioRef.current = null;
+    }
+    if (testAudioRef.current) {
+      testAudioRef.current.pause();
+      testAudioRef.current = null;
+      setPlayingVoiceId(null);
+    }
+
+    setPreviewVoiceId(voice.id);
+    setIsPreviewLoading(true);
+
+    try {
+      // 1. Obtenir l'URL signée du clone vocal
+      const { data: signedData, error: signError } = await supabase.storage
+        .from('voice-clones')
+        .createSignedUrl(voice.voice_ref_path, 300);
+
+      if (signError || !signedData?.signedUrl) {
+        throw new Error("Impossible d'accéder au fichier vocal de référence");
+      }
+
+      toast({
+        title: "✨ Synthèse de l'aperçu IA (5s)...",
+        description: "Génération du rendu CosyVoice 2 sur GPU en cours.",
+      });
+
+      // 2. Appel au point de terminaison synchrone de Modal GPU
+      const MODAL_SYNCHRONOUS_URL = "https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize.modal.run";
+      const sampleText = "Bonne nuit mon petit trésor, fais de doux rêves dans les étoiles.";
+
+      const response = await fetch(MODAL_SYNCHRONOUS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: sampleText,
+          voice_ref_url: signedData.signedUrl,
+          ref_text: voice.transcript || "",
+          instruct: "Soft, warm, soothing bedtime story narrator for a child.",
+          voiceId: voice.id,
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur serveur de synthèse (${response.status})`);
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      const audio = new Audio(audioUrl);
+      aiPreviewAudioRef.current = audio;
+      setIsPreviewLoading(false);
+
+      audio.onended = () => {
+        setPreviewVoiceId(null);
+        setIsPreviewLoading(false);
+      };
+
+      audio.onerror = () => {
+        setPreviewVoiceId(null);
+        setIsPreviewLoading(false);
+        toast({
+          title: "Erreur audio",
+          description: "Impossible de lire l'aperçu audio généré.",
+          variant: "destructive"
+        });
+      };
+
+      await audio.play();
+
+      toast({
+        title: "🎙️ Aperçu CosyVoice 2 actif",
+        description: `Lecture de l'échantillon généré pour ${voice.name}.`,
+      });
+
+    } catch (err: any) {
+      console.error("AI Preview error:", err);
+      setPreviewVoiceId(null);
+      setIsPreviewLoading(false);
+      toast({
+        title: "Erreur d'aperçu",
+        description: err.message || "Le service GPU n'a pas pu générer l'aperçu.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Generate distant sharing invitation link
   const handleGenerateInvite = async () => {
     if (!inviteRelation.trim() || !user) return;
@@ -934,31 +1047,63 @@ export const VoiceStudio: React.FC = () => {
                 <CardContent className="pb-3 text-xs text-muted-foreground truncate">
                   "{voice.transcript?.substring(0, 50)}..."
                 </CardContent>
-                <CardFooter className="pt-2 border-t flex justify-between items-center">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className={cn(
-                      "text-xs h-8 text-primary hover:bg-primary-soft/10",
-                      playingVoiceId === voice.id && "text-amber-500 hover:text-amber-600 bg-amber-50"
-                    )}
-                    onClick={() => handleTestListen(voice)}
-                  >
-                    {playingVoiceId === voice.id ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Arrêter
-                      </>
-                    ) : (
-                      <>
-                        <Volume2 className="w-3.5 h-3.5 mr-1" /> Écouter
-                      </>
-                    )}
-                  </Button>
+                <CardFooter className="pt-2 border-t flex justify-between items-center gap-1.5 flex-wrap">
                   <div className="flex items-center gap-1">
+                    {/* Écoute de l'enregistrement original */}
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-xs h-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                      className={cn(
+                        "text-xs h-8 text-muted-foreground hover:text-foreground hover:bg-muted px-2",
+                        playingVoiceId === voice.id && "text-amber-500 hover:text-amber-600 bg-amber-50"
+                      )}
+                      onClick={() => handleTestListen(voice)}
+                      title="Écouter l'enregistrement original de référence"
+                    >
+                      {playingVoiceId === voice.id ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Stop
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3.5 h-3.5 mr-1" /> Original
+                        </>
+                      )}
+                    </Button>
+
+                    {/* ✨ Aperçu CosyVoice 2 IA 5s */}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={cn(
+                        "text-xs h-8 px-2 font-medium border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-all",
+                        previewVoiceId === voice.id && "bg-purple-100 dark:bg-purple-900/40 border-purple-400"
+                      )}
+                      onClick={() => handleAiPreview(voice)}
+                      disabled={isPreviewLoading && previewVoiceId !== voice.id}
+                      title="Écouter une phrase de coucher générée par l'IA CosyVoice 2"
+                    >
+                      {isPreviewLoading && previewVoiceId === voice.id ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-purple-500" /> IA…
+                        </>
+                      ) : previewVoiceId === voice.id ? (
+                        <>
+                          <Pause className="w-3.5 h-3.5 mr-1 text-purple-600" /> Stop IA
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5 mr-1 text-purple-500" /> Aperçu IA
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-0.5">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
                       onClick={() => openEditVoice(voice)}
                       title="Modifier le nom ou le rôle de cette voix"
                     >
@@ -967,7 +1112,7 @@ export const VoiceStudio: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-xs h-8 text-destructive hover:bg-destructive/10"
+                      className="text-xs h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
                       onClick={() => handleDeleteVoice(voice)}
                       title="Supprimer cette voix"
                     >

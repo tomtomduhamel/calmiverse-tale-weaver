@@ -200,7 +200,15 @@ export const resolveSmartVoice = (
     return { voiceId: categoryVoices[0].id, voiceRefUrl: categoryVoices[0].signedUrl || undefined };
   }
 
-  // 3. Attribution automatique d'une voix de synthèse typée selon le profil si aucun clone familial n'est disponible
+  // 3. Fallback sur le narrateur familial s'il est spécifié et actif
+  if (fallbackNarratorVoice?.signedUrl) {
+    return {
+      voiceId: fallbackNarratorVoice.id,
+      voiceRefUrl: fallbackNarratorVoice.signedUrl
+    };
+  }
+
+  // 4. Attribution automatique d'une voix de synthèse typée selon le profil si aucun clone familial n'est disponible
   const TYPED_CHARACTER_VOICES: Record<string, { voiceId: string; instruct?: string }> = {
     magical_creatures: { voiceId: 'standard-french-male', instruct: "Deep, mysterious, gentle creature voice" },
     animal_flying: { voiceId: 'standard-french-female-alt', instruct: "Light, airy, cheerful soaring voice" },
@@ -217,7 +225,7 @@ export const resolveSmartVoice = (
     };
   }
 
-  // 4. Fallback ultime sur le narrateur principal
+  // 5. Fallback ultime sur le narrateur principal
   return {
     voiceId: fallbackNarratorVoice?.id,
     voiceRefUrl: fallbackNarratorVoice?.signedUrl || undefined

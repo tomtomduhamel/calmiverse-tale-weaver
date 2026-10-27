@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import {
   Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX,
-  Moon, Check, Loader2, Sparkles, Download, RefreshCw, ChevronDown, User
+  Moon, Check, Loader2, Sparkles, Download, RefreshCw, ChevronDown, User, Bell
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useN8nAudioGeneration } from '@/hooks/story/audio/useN8nAudioGeneration';
@@ -17,6 +18,7 @@ import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { extractObjectiveValue } from '@/utils/objectiveUtils';
 import { useNavigate } from 'react-router-dom';
+import { soundEffectsEngine, detectContextualSoundEffect } from '@/utils/soundEffectsEngine';
 
 interface IntegratedAudioDeckProps {
   storyId: string;
@@ -59,6 +61,25 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const currentPlayingUrlRef = useRef<string | null>(null);
   const navigate = useNavigate();
 
+  // ✨ Sound FX féeriques doux contextuels
+  const [isSfxEnabled, setIsSfxEnabled] = useState(true);
+  const lastSfxParaIndexRef = useRef<number>(-1);
+
+  // 🌙 Prolongation Dodo (15 min de berceuse après la fin de l'histoire)
+  const [isProlongationEnabled, setIsProlongationEnabled] = useState(true);
+  const [isProlonging, setIsProlonging] = useState(false);
+  const [prolongationSecondsLeft, setProlongationSecondsLeft] = useState(900);
+  const prolongationTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stopProlongation = useCallback(() => {
+    if (prolongationTimerRef.current) {
+      clearInterval(prolongationTimerRef.current);
+      prolongationTimerRef.current = null;
+    }
+    setIsProlonging(false);
+    setProlongationSecondsLeft(900);
+  }, []);
+
   // Browser SpeechSynthesis state
   const [isBrowserSpeaking, setIsBrowserSpeaking] = useState(false);
   const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -72,8 +93,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   useEffect(() => {
     return () => {
       onPlayStateChange?.(false);
+      stopProlongation();
     };
-  }, [onPlayStateChange]);
+  }, [onPlayStateChange, stopProlongation]);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -257,6 +279,29 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     }
   }, [readyStoryAudioFile?.audio_url, isPlaying]);
 
+  // 🌙 Téléchargement Prédictif PWA / Routine : mise en cache locale transparente
+  useEffect(() => {
+    if (readyStoryAudioFile?.audio_url) {
+      const cacheKey = `story_${storyId}`;
+      audioCache.has(cacheKey).then(async (exists) => {
+        if (exists) {
+          setIsOfflineReady(true);
+        } else {
+          try {
+            const signedUrl = await getSignedAudioUrl(readyStoryAudioFile.audio_url);
+            if (signedUrl) {
+              await audioCache.prefetchAndCache(cacheKey, signedUrl);
+              setIsOfflineReady(true);
+              console.log(`🌙 [AudioCache] Histoire ${storyId} pré-téléchargée pour la routine du coucher.`);
+            }
+          } catch (e) {
+            // Silencieux
+          }
+        }
+      });
+    }
+  }, [readyStoryAudioFile?.audio_url, storyId]);
+
   // Synthèse vocale du navigateur (Mode Gratuit)
   const playBrowserParagraph = (index: number) => {
     if (!synthRef.current) return;
@@ -269,6 +314,14 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       setCurrentParagraphIndex(0);
       setProgress(0);
       return;
+    }
+
+    // ✨ Déclenchement feutré du bruitage contextuel s'il est présent
+    if (isSfxEnabled && pText) {
+      const effect = detectContextualSoundEffect(pText);
+      if (effect) {
+        soundEffectsEngine.play(effect);
+      }
     }
 
     const utterance = new SpeechSynthesisUtterance(pText);
@@ -339,6 +392,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
 
   // Lancement / Pause de l'audio
   const handlePlayPause = async () => {
+    if (isProlonging) {
+      stopProlongation();
+    }
+
     // 1. Si un fichier audio prêt existe, on le lance directement
     if (readyStoryAudioFile?.audio_url) {
       if (isPlaying && audioRef.current) {
@@ -382,6 +439,24 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           if (audio.duration) {
             setProgress((audio.currentTime / audio.duration) * 100);
 
+            // ✨ Bruitages contextuels feutrés au fil de la lecture
+            if (isSfxEnabled && paragraphs.length > 0) {
+              const activeParaIdx = Math.min(
+                paragraphs.length - 1,
+                Math.floor((audio.currentTime / audio.duration) * paragraphs.length)
+              );
+              if (activeParaIdx !== lastSfxParaIndexRef.current) {
+                lastSfxParaIndexRef.current = activeParaIdx;
+                const pText = paragraphs[activeParaIdx];
+                if (pText) {
+                  const effect = detectContextualSoundEffect(pText);
+                  if (effect) {
+                    soundEffectsEngine.play(effect);
+                  }
+                }
+              }
+            }
+
             // 🌙 Soft Fade-out Sommeil : fondu progressif imperceptible sur les 30 dernières secondes
             const remaining = audio.duration - audio.currentTime;
             if (remaining > 0 && remaining <= 30) {
@@ -398,7 +473,43 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           setProgress(0);
           setCurrentTime(0);
           audio.volume = 1.0;
-          backgroundSound.setVolume(0.40);
+          lastSfxParaIndexRef.current = -1;
+
+          // 🌙 Prolongation Dodo (15 min) : maintient la berceuse/ambiance pour endormir l'enfant
+          if (isProlongationEnabled && (soundId || objective)) {
+            setIsProlonging(true);
+            setProlongationSecondsLeft(900); // 15 min
+            backgroundSound.setVolume(0.18); // Volume feutré
+
+            if (!backgroundSound.isPlaying) {
+              backgroundSound.togglePlay();
+            }
+
+            if (prolongationTimerRef.current) clearInterval(prolongationTimerRef.current);
+            let seconds = 900;
+            prolongationTimerRef.current = setInterval(() => {
+              seconds -= 1;
+              setProlongationSecondsLeft(seconds);
+
+              // Fondu de sortie imperceptible sur la dernière minute (60s)
+              if (seconds <= 60 && seconds > 0) {
+                const fade = Math.max(0, (seconds / 60) * 0.18);
+                backgroundSound.setVolume(fade);
+              }
+
+              if (seconds <= 0) {
+                if (prolongationTimerRef.current) clearInterval(prolongationTimerRef.current);
+                prolongationTimerRef.current = null;
+                setIsProlonging(false);
+                if (backgroundSound.isPlaying) {
+                  backgroundSound.togglePlay();
+                }
+                backgroundSound.setVolume(0.40);
+              }
+            }, 1000);
+          } else {
+            backgroundSound.setVolume(0.40);
+          }
         };
         audio.onerror = () => {
           toast({
@@ -543,6 +654,21 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
+
+        {/* 🌙 BANNIÈRE PROLONGATION SOMMEIL (15 min) */}
+        {isProlonging && (
+          <div className="px-3 py-1 bg-primary/10 border-b border-primary/20 flex items-center justify-between text-[11px] text-primary">
+            <span className="flex items-center gap-1.5 font-medium animate-pulse">
+              <span>🌙</span> Prolongation dodo active ({formatTime(prolongationSecondsLeft)})
+            </span>
+            <button 
+              onClick={stopProlongation}
+              className="text-[10px] underline hover:opacity-80 ml-2 font-medium"
+            >
+              Arrêter
+            </button>
+          </div>
+        )}
 
         {/* 🌟 2. CONTENUS DE LA CAPSULE ZEN (Hauteur compacte ~52 px) */}
         <div className="h-13 px-3 sm:px-4 flex items-center justify-between gap-2 pt-1">
@@ -736,59 +862,85 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               </Button>
             )}
 
-            {soundId ? (
-              <Popover open={isSoundPopoverOpen} onOpenChange={setIsSoundPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      if (!isSoundPopoverOpen) {
-                        backgroundSound.togglePlay();
-                      }
-                    }}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      setIsSoundPopoverOpen(true);
-                    }}
-                    className={cn(
-                      "h-8.5 w-8.5 rounded-full transition-all",
-                      backgroundSound.isPlaying 
-                        ? "bg-primary/20 text-primary border border-primary/30 shadow-sm" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                    title={backgroundSound.isPlaying ? "Ambiance sonore active (clic pour couper)" : "Activer l'ambiance sonore"}
-                  >
-                    <Moon className={cn("w-4 h-4", backgroundSound.isPlaying && "animate-pulse")} />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent 
-                  side="top" 
-                  align="end" 
-                  className="w-48 p-3 rounded-2xl backdrop-blur-2xl shadow-2xl border bg-background/95 z-[100]"
+            <Popover open={isSoundPopoverOpen} onOpenChange={setIsSoundPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (!isSoundPopoverOpen) {
+                      backgroundSound.togglePlay();
+                    }
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setIsSoundPopoverOpen(true);
+                  }}
+                  className={cn(
+                    "h-8.5 w-8.5 rounded-full transition-all",
+                    backgroundSound.isPlaying 
+                      ? "bg-primary/20 text-primary border border-primary/30 shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                  title={backgroundSound.isPlaying ? "Ambiance sonore active (clic pour couper, réglages au clic droit)" : "Ambiance & Bruitages doux"}
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                      <span>Volume ambiance</span>
-                      <span className="font-mono text-[10px]">{Math.round(backgroundSound.volume * 100)}%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <VolumeX className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                      <Slider
-                        value={[backgroundSound.volume]}
-                        max={1}
-                        step={0.05}
-                        onValueChange={(val) => backgroundSound.setVolume(val[0])}
-                        className="flex-1 cursor-pointer"
-                      />
-                      <Volume2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    </div>
+                  <Moon className={cn("w-4 h-4", backgroundSound.isPlaying && "animate-pulse")} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                side="top" 
+                align="end" 
+                className="w-56 p-3 rounded-2xl backdrop-blur-2xl shadow-2xl border bg-background/95 z-[100] space-y-3"
+              >
+                {/* Volume de l'ambiance */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                    <span>Volume ambiance</span>
+                    <span className="font-mono text-[10px]">{Math.round(backgroundSound.volume * 100)}%</span>
                   </div>
-                </PopoverContent>
-              </Popover>
-            ) : (
-              <div className="w-8.5" />
-            )}
+                  <div className="flex items-center gap-2">
+                    <VolumeX className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <Slider
+                      value={[backgroundSound.volume]}
+                      max={1}
+                      step={0.05}
+                      onValueChange={(val) => backgroundSound.setVolume(val[0])}
+                      className="flex-1 cursor-pointer"
+                    />
+                    <Volume2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  </div>
+                </div>
+
+                {/* Bruitages féeriques contextuels ✨ */}
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-border/40">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="font-medium text-foreground">Bruitages féeriques</span>
+                  </div>
+                  <Switch 
+                    checked={isSfxEnabled} 
+                    onCheckedChange={(checked) => {
+                      setIsSfxEnabled(checked);
+                      soundEffectsEngine.setEnabled(checked);
+                    }}
+                    className="scale-75"
+                  />
+                </div>
+
+                {/* Prolongation Dodo (15 min) 🌙 */}
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <div className="flex items-center gap-1.5">
+                    <Moon className="w-3.5 h-3.5 text-primary" />
+                    <span className="font-medium text-foreground">Prolongation (15 min)</span>
+                  </div>
+                  <Switch 
+                    checked={isProlongationEnabled} 
+                    onCheckedChange={setIsProlongationEnabled}
+                    className="scale-75"
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
         </div>

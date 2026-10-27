@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getSignedAudioUrl } from '@/utils/storageUtils';
+import { audioCache } from '@/utils/audioCache';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -107,6 +109,47 @@ export const useStoryRoutines = () => {
     checkAccess();
     fetchRoutines();
   }, [checkAccess, fetchRoutines]);
+
+  // 🌙 Pré-téléchargement prédictif PWA : met en cache les audios des routines du soir
+  useEffect(() => {
+    if (!routines || routines.length === 0) return;
+
+    const prefetchRoutineAudios = async () => {
+      const storyIds = routines
+        .filter(r => r.is_active && r.last_story_id)
+        .map(r => r.last_story_id as string);
+
+      if (storyIds.length === 0) return;
+
+      try {
+        const { data: audioFiles } = await supabase
+          .from('audio_files')
+          .select('story_id, audio_url')
+          .in('story_id', storyIds)
+          .eq('status', 'ready');
+
+        if (audioFiles && audioFiles.length > 0) {
+          const itemsToCache: { storyId: string; signedUrl: string }[] = [];
+          for (const af of audioFiles) {
+            if (af.audio_url) {
+              const signedUrl = await getSignedAudioUrl(af.audio_url);
+              if (signedUrl) {
+                itemsToCache.push({ storyId: af.story_id, signedUrl });
+              }
+            }
+          }
+
+          if (itemsToCache.length > 0) {
+            await audioCache.prefetchRoutineStories(itemsToCache);
+          }
+        }
+      } catch (err) {
+        console.warn('Pré-téléchargement des routines ignoré:', err);
+      }
+    };
+
+    prefetchRoutineAudios();
+  }, [routines]);
 
   // ── Quota : estimation avant save ─────────────────────────────────────────
   const checkQuota = async (

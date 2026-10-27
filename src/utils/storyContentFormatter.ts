@@ -6,7 +6,7 @@
 /**
  * Regex correspondant aux balises d'émotions audio (ex: [warm], [whisper], [excited], [mysterious], [calm], [sleepy], [instruct: ...])
  */
-export const STORY_EMOTION_TAGS_REGEX = /\[(warm|whisper|excited|mysterious|calm|sleepy|instruct:[^\]]+|[a-zA-Z0-9_\-\s:]+)\]/gi;
+export const STORY_EMOTION_TAGS_REGEX = /\[(warm|whisper|excited|mysterious|calm|sleepy|instruct:[^\]]+|sfx:[^\]]+|[a-zA-Z0-9_\-\s:]+)\]/gi;
 
 /**
  * Supprime de manière transparente toutes les balises d'émotions audio d'un texte d'histoire
@@ -21,6 +21,7 @@ export const stripStoryEmotionTags = (content: string | undefined | null): strin
   return content
     // Supprimer les balises d'émotions
     .replace(STORY_EMOTION_TAGS_REGEX, '')
+    .replace(/[ \t]+([.,])/g, '$1')
     // Nettoyer les espaces superflus en début de ligne
     .replace(/^[ \t]+/gm, '')
     // Nettoyer les espaces multiples consécutifs sur une même ligne

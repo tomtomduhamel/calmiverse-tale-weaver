@@ -179,5 +179,31 @@ export const audioCache = {
     } catch (error) {
       console.error("❌ [AudioCache] Erreur lors du nettoyage du cache :", error);
     }
+  },
+
+  /**
+   * Pré-télécharge de façon prédictive les histoires de routine du coucher
+   * pour qu'elles soient disponibles instantanément sans Wi-Fi ni latence.
+   */
+  async prefetchRoutineStories(
+    items: { storyId: string; signedUrl: string }[]
+  ): Promise<number> {
+    let cachedCount = 0;
+    for (const item of items) {
+      try {
+        const cacheKey = `story_${item.storyId}`;
+        const exists = await this.has(cacheKey);
+        if (!exists && item.signedUrl) {
+          console.log(`🌙 [AudioCache Routine] Pré-chargement prédictif de l'histoire ${item.storyId}...`);
+          const blob = await this.prefetchAndCache(cacheKey, item.signedUrl);
+          if (blob) cachedCount++;
+        } else if (exists) {
+          cachedCount++;
+        }
+      } catch (err) {
+        console.warn(`[AudioCache Routine] Échec préfetch histoire ${item.storyId}:`, err);
+      }
+    }
+    return cachedCount;
   }
 };
