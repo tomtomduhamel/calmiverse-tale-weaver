@@ -13,13 +13,15 @@ from typing import Optional, List, Tuple
 from pydantic import BaseModel
 import modal
 
-# 1. Image Docker Modal avec FFmpeg, CosyVoice 2 (Hi! PARIS EU) et Qwen3-TTS en secours
+# 1. Image Docker Modal avec FFmpeg et CosyVoice 2 (Hi! PARIS EU)
 image = (
     modal.Image.debian_slim(python_version="3.10")
     .apt_install("sox", "libsox-fmt-all", "ffmpeg", "libsndfile1", "git")
     .pip_install(
-        "torch>=2.1.0",
-        "torchaudio",
+        "setuptools<70.0.0",
+        "wheel",
+        "torch==2.3.1",
+        "torchaudio==2.3.1",
         "cosyvoice2-eu",
         "soundfile",
         "pydantic",
@@ -151,13 +153,14 @@ def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) ->
 
 def chunk_text_optimized(
     text: str, 
-    max_chars: int = 1000,
+    max_chars: int = 1100,
     paragraph_pause_sec: float = 1.0,
     chapter_pause_sec: float = 3.0,
     default_instruct: Optional[str] = None,
     enable_sleep_pacing: bool = True
 ) -> List[Tuple[str, float, Optional[str]]]:
-    """Découpe l'histoire avec gestion intelligente des pauses et émotions progressives (Sleep Pacing)"""
+    """Découpe et regroupe intelligemment l'histoire en blocs narratifs optimisés (max_chars ~1100)
+    avec pauses naturelles et progression feutrée du rythme du coucher (Sleep Pacing)."""
     if not text or not text.strip():
         return []
 
@@ -168,54 +171,104 @@ def chunk_text_optimized(
     chapter_pattern = r'^\s*(?:#+\s*|#*\s*(?:chapitre|partie|épisode|prologue|épilogue|introduction|conclusion)\b)'
     tag_pattern = r'^\s*\[(warm|whisper|excited|mysterious|calm|sleepy|instruct:\s*[^\]]+)\]'
 
+    # 1. Prétraitement de chaque paragraphe brut
+    processed_paras = []
     current_instruct = default_instruct
-    chunks_with_pauses = []
 
     for idx, para in enumerate(paragraphs):
         progress = (idx / float(total_paras - 1)) if total_paras > 1 else 0.0
 
         match_tag = re.search(tag_pattern, para, re.IGNORECASE)
+        has_new_tag = False
         if match_tag:
+            has_new_tag = True
             tag_val = match_tag.group(1).strip()
             if tag_val.lower().startswith("instruct:"):
                 current_instruct = tag_val[len("instruct:"):].strip()
             else:
                 current_instruct = EMOTION_MAP.get(tag_val.lower(), default_instruct)
 
-        para_clean_for_detect = re.sub(r'\[.*?\]', '', para).strip()
+        para_clean = re.sub(r'\[.*?\]', '', para).strip()
+        para_clean = re.sub(r'\s+', ' ', para_clean)
+        if not para_clean:
+            continue
+
+        is_chapter = bool(re.match(chapter_pattern, para_clean, re.IGNORECASE))
         
         if idx == 0:
             pause_before = 0.0
+        elif is_chapter:
+            pause_before = chapter_pause_sec
         else:
-            if re.match(chapter_pattern, para_clean_for_detect, re.IGNORECASE):
-                pause_before = chapter_pause_sec
-            else:
-                if enable_sleep_pacing:
-                    if progress < 0.33:
-                        pause_before = paragraph_pause_sec
-                    elif progress < 0.66:
-                        pause_before = paragraph_pause_sec * 1.5
-                    else:
-                        pause_before = paragraph_pause_sec * 2.5
-                else:
+            if enable_sleep_pacing:
+                if progress < 0.33:
                     pause_before = paragraph_pause_sec
+                elif progress < 0.66:
+                    pause_before = paragraph_pause_sec * 1.5
+                else:
+                    pause_before = paragraph_pause_sec * 2.5
+            else:
+                pause_before = paragraph_pause_sec
 
-        final_chunk_instruct = current_instruct
+        instruct = current_instruct
         if enable_sleep_pacing and progress >= 0.66:
             sleep_suffix = ", very slow, soft, sleepy bedtime pace"
-            if final_chunk_instruct:
-                if sleep_suffix not in final_chunk_instruct:
-                    final_chunk_instruct = final_chunk_instruct + sleep_suffix
+            if instruct:
+                if sleep_suffix not in instruct:
+                    instruct = instruct + sleep_suffix
             else:
-                final_chunk_instruct = "Very slow, soft, sleepy bedtime voice"
+                instruct = "Very slow, soft, sleepy bedtime voice"
 
-        para_for_synth = re.sub(r'\[.*?\]', '', para).strip()
-        para_for_synth = re.sub(r'\s+', ' ', para_for_synth)
-        
-        if not para_for_synth:
-            continue
-            
-        chunks_with_pauses.append((para_for_synth, pause_before, final_chunk_instruct))
+        processed_paras.append({
+            "text": para_clean,
+            "pause_before": pause_before,
+            "instruct": instruct,
+            "is_chapter": is_chapter,
+            "has_new_tag": has_new_tag
+        })
+
+    if not processed_paras:
+        return []
+
+    # 2. Regroupement narratif des paragraphes contigus en blocs (évite l'overhead d'inférence de micro-blocs)
+    chunks_with_pauses = []
+    current_group = []
+    current_len = 0
+    current_pause = 0.0
+    current_instruct = None
+
+    for item in processed_paras:
+        p_text = item["text"]
+        p_len = len(p_text)
+
+        # On sépare si :
+        # - L'ajout dépasse la taille maximale max_chars
+        # - C'est un nouveau chapitre
+        # - Ou un changement d'émotion explicite survient
+        should_split = False
+        if current_group:
+            if (current_len + p_len + 2 > max_chars):
+                should_split = True
+            elif item["is_chapter"]:
+                should_split = True
+            elif item["has_new_tag"] and (item["instruct"] != current_instruct):
+                should_split = True
+
+        if should_split:
+            chunks_with_pauses.append(("\n\n".join(current_group), current_pause, current_instruct))
+            current_group = [p_text]
+            current_len = p_len
+            current_pause = item["pause_before"]
+            current_instruct = item["instruct"]
+        else:
+            if not current_group:
+                current_pause = item["pause_before"]
+                current_instruct = item["instruct"]
+            current_group.append(p_text)
+            current_len += p_len + 2
+
+    if current_group:
+        chunks_with_pauses.append(("\n\n".join(current_group), current_pause, current_instruct))
 
     return chunks_with_pauses
 
@@ -244,7 +297,7 @@ class TTSRequest(BaseModel):
     allUserVoices: Optional[list] = None
 
 @app.cls(
-    gpu="L4",
+    gpu=["L4", "A10G"],
     image=image,
     volumes={"/cache": volume},
     timeout=1800,
@@ -414,18 +467,6 @@ class CalmiTTSGPU:
                     speaker_label = seg.get("speakerName") or seg.get("roleCategory") or "Narrateur"
                     print(f"  ├─ [Théâtre] Segment {idx+1}/{len(merged_segments)} ({speaker_label}: {len(seg_text)} chars) généré en {time.time() - t0:.2f}s")
 
-                    # FAST-PLAY THÉÂTRE : Téléversement du premier segment pour lecture instantanée
-                    target_story_id = request.story_id or request.storyId
-                    target_webhook_id = request.webhook_id or request.requestId
-                    target_voice_id = request.voiceId or "multivoice"
-                    if idx == 0 and len(merged_segments) > 1 and target_story_id and target_webhook_id:
-                        buf0 = io.BytesIO()
-                        sf.write(buf0, wav_np, sr, format='WAV')
-                        buf0.seek(0)
-                        buf0_mastered = master_audio_bytes(buf0.getvalue(), sr)
-                        print(f"⚡ [{req_id}] FAST-PLAY THÉÂTRE : Téléversement prioritaire du premier segment masterisé (-16 LUFS)...")
-                        self._upload_to_supabase(buf0_mastered, target_story_id, target_webhook_id, target_voice_id, f"{req_id}_chunk0")
-
             else:
                 # Inférence CosyVoice 2 (ultra-rapide, RTF ~0.2)
                 for idx, chunk_data in enumerate(text_chunks):
@@ -456,17 +497,7 @@ class CalmiTTSGPU:
                     generated_wavs.append(wav_np)
                     print(f"  ├─ [CosyVoice2] Bloc {idx+1}/{len(text_chunks)} ({len(chunk)} chars) généré en {time.time() - t0:.2f}s")
 
-                    # FAST-PLAY : Téléversement immédiat du bloc 1 pour débloquer l'écoute en < 4s
-                    target_story_id = request.story_id or request.storyId
-                    target_webhook_id = request.webhook_id or request.requestId
-                    target_voice_id = request.voiceId or "custom"
-                    if idx == 0 and len(text_chunks) > 1 and target_story_id and target_webhook_id:
-                        buf0 = io.BytesIO()
-                        sf.write(buf0, wav_np, sr, format='WAV')
-                        buf0.seek(0)
-                        buf0_mastered = master_audio_bytes(buf0.getvalue(), sr)
-                        print(f"⚡ [{req_id}] FAST-PLAY GPU : Téléversement prioritaire du premier bloc masterisé (-16 LUFS)...")
-                        self._upload_to_supabase(buf0_mastered, target_story_id, target_webhook_id, target_voice_id, f"{req_id}_chunk0")
+
 
         final_wav = np.concatenate(generated_wavs)
         total_time = time.time() - start_inf
@@ -537,16 +568,22 @@ class CalmiTTSGPU:
     @modal.method()
     def process_async_task(self, request_dict: dict, req_id: str):
         import requests
+        import traceback
         request = TTSRequest(**request_dict)
         print(f"⚙️ [{req_id}] Début du traitement asynchrone GPU...")
-        wav_bytes, sr = self._process_synthesis(request, req_id)
-        
-        target_story_id = request.story_id or request.storyId
-        target_webhook_id = request.webhook_id or request.requestId
-        target_voice_id = request.voiceId or "custom"
+        try:
+            wav_bytes, sr = self._process_synthesis(request, req_id)
+            
+            target_story_id = request.story_id or request.storyId
+            target_webhook_id = request.webhook_id or request.requestId
+            target_voice_id = request.voiceId or "custom"
 
-        print(f"📤 [{req_id}] Téléversement de l'audio complet vers Supabase (storyId: {target_story_id}, requestId: {target_webhook_id})...")
-        self._upload_to_supabase(wav_bytes, target_story_id, target_webhook_id, target_voice_id, f"{req_id}_final")
+            print(f"📤 [{req_id}] Téléversement de l'audio complet vers Supabase (storyId: {target_story_id}, requestId: {target_webhook_id})...")
+            self._upload_to_supabase(wav_bytes, target_story_id, target_webhook_id, target_voice_id, f"{req_id}_final")
+        except Exception as e:
+            print(f"💥 [{req_id}] Erreur critique dans process_async_task: {e}")
+            traceback.print_exc()
+            raise e
 
 
 # ==============================================================================
