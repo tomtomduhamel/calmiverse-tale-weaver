@@ -359,5 +359,24 @@ export const parseStoryToAudioSegments = (
     }
   }
 
-  return segments;
+  // Optimisation majeure : Fusion des segments consécutifs du même locuteur
+  const mergedSegments: AudioSegment[] = [];
+  for (const seg of segments) {
+    if (mergedSegments.length === 0) {
+      mergedSegments.push({ ...seg });
+      continue;
+    }
+    const prev = mergedSegments[mergedSegments.length - 1];
+    const sameVoice = (prev.voiceRefUrl && prev.voiceRefUrl === seg.voiceRefUrl) ||
+                      (prev.voiceId && prev.voiceId === seg.voiceId) ||
+                      (prev.speakerType === 'narrator' && seg.speakerType === 'narrator');
+
+    if (sameVoice && (prev.text.length + seg.text.length < 1200)) {
+      prev.text = `${prev.text}\n\n${seg.text}`;
+    } else {
+      mergedSegments.push({ ...seg });
+    }
+  }
+
+  return mergedSegments;
 };

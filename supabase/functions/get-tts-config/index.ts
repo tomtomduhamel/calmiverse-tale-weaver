@@ -20,7 +20,7 @@ serve(async (req) => {
     let webhookUrl: string;
     let voiceId: string = 'standard-french-female';
     
-    const MODAL_ASYNC_WEBHOOK = "https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize-async.modal.run";
+    const MODAL_ASYNC_WEBHOOK = "https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run";
     const DEFAULT_N8N_WEBHOOK = "https://n8n.srv856374.hstgr.cloud/webhook/d2d88f5d-78c0-49c1-83b8-096d4b21190c";
     const DEFAULT_VPS_KOKORO_WEBHOOK = Deno.env.get('VPS_KOKORO_WEBHOOK_URL') || DEFAULT_N8N_WEBHOOK;
     
@@ -61,8 +61,8 @@ serve(async (req) => {
       JSON.stringify({ 
         error: errorMessage,
         provider: 'modal-gpu', // Fallback par défaut
-        webhookUrl: "https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize-async.modal.run",
-        modalWebhookUrl: "https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize-async.modal.run",
+        webhookUrl: "https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run",
+        modalWebhookUrl: "https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run",
         standardWebhookUrl: "https://n8n.srv856374.hstgr.cloud/webhook/d2d88f5d-78c0-49c1-83b8-096d4b21190c",
         voiceId: 'standard-french-female',
       }),

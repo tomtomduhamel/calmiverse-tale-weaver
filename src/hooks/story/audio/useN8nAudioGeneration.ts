@@ -25,7 +25,7 @@ interface N8nWebhookPayload {
   requestId: string;
 }
 
-const TIMEOUT_DURATION = 18000000; // 5 heures timeout (supporte l'inférence CPU VPS pour toutes les durées d'histoires : 5 min, 10 min, 15 min)
+const TIMEOUT_DURATION = 360000; // 6 minutes max pour la synthèse audio (CosyVoice 2 / Kokoro)
 
 export const useN8nAudioGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -193,6 +193,7 @@ export const useN8nAudioGeneration = () => {
       const requestId = crypto.randomUUID();
       let timeoutId: NodeJS.Timeout;
       let checkInterval: NodeJS.Timeout;
+      let createdAudioFileId: string | null = null;
 
       try {
       // Récupérer la configuration TTS dynamique (Modal GPU pour clones, VPS Kokoro pour voix standard)
@@ -229,6 +230,7 @@ export const useN8nAudioGeneration = () => {
         .single();
 
       if (insertError) throw insertError;
+      createdAudioFileId = audioFile.id;
 
       // 2. Vérification périodique du statut (toutes les 3 secondes)
       checkInterval = setInterval(async () => {
@@ -346,6 +348,7 @@ export const useN8nAudioGeneration = () => {
                 category: v.category || 'narrator_family',
                 category_name: v.category_name || null,
                 signedUrl: signed?.signedUrl || null,
+                voiceRefPath: v.voice_ref_path || null,
                 transcript: v.transcript || ""
               };
             })
@@ -363,6 +366,7 @@ export const useN8nAudioGeneration = () => {
             if (signedData?.signedUrl) {
               payload.isCustomVoice = true;
               payload.voice_ref_url = signedData.signedUrl;
+              payload.voice_ref_path = mainNarratorVoice.voice_ref_path;
               payload.ref_text = mainNarratorVoice.transcript || "";
               console.log("🎙️ [N8nAudio] Main Narrator Voice & Family Voice Catalog attached to payload.", {
                 narratorVoiceId: dynamicVoiceId,
@@ -464,13 +468,31 @@ export const useN8nAudioGeneration = () => {
       if (timeoutId) clearTimeout(timeoutId);
       if (checkInterval) clearInterval(checkInterval);
       
+      // Marquer le fichier créé comme error pour ne jamais bloquer l'interface
+      if (createdAudioFileId) {
+        try {
+          await supabase
+            .from('audio_files')
+            .update({ 
+              status: 'error',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', createdAudioFileId);
+        } catch (dbErr) {
+          console.error('Erreur mise à jour statut error:', dbErr);
+        }
+      }
+      
+      setIsGenerating(false);
+      await fetchAudioFiles(storyId);
+
       toast({
         title: "Erreur audio",
         description: error?.message || "Impossible de générer l'audio",
         variant: "destructive"
       });
-        return null;
-      }
+      return null;
+    }
     }, 20000);
   }, [cleanupStuckFiles, recoverErrorFiles, fetchAudioFiles, toast]);
 

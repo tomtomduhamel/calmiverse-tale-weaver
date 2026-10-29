@@ -107,23 +107,36 @@ def master_audio_bytes(input_wav_bytes: bytes, sr: int = 24000) -> bytes:
         print(f"⚠️ Erreur mastering audio ({e}), utilisation de l'audio direct")
         return input_wav_bytes
 
-def download_and_cache_voice(voice_url: str) -> str:
-    """Télécharge et met en cache l'extrait vocal dans le Volume Modal"""
+def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) -> str:
+    """Télécharge et met en cache l'extrait vocal dans le Volume Modal de manière persistante"""
+    if not voice_url:
+        return "/root/default_ref.wav"
+
     if "user-voices" in voice_url:
         voice_url = voice_url.replace("user-voices", "voice-clones")
 
     cache_dir = "/cache/voices_cache"
     os.makedirs(cache_dir, exist_ok=True)
     
-    url_hash = hashlib.md5(voice_url.encode('utf-8')).hexdigest()
-    cached_wav_path = os.path.join(cache_dir, f"voice_{url_hash}.wav")
+    # Extraire une clé propre et stable (sans token temporaire ni paramètres d'URL signée)
+    clean_base = voice_url.split("?")[0]
+    if voice_key and voice_key.strip():
+        stable_key = re.sub(r'[^a-zA-Z0-9_\-\.]', '_', voice_key.strip())
+    else:
+        file_part = clean_base.split("/")[-1]
+        if file_part and len(file_part) > 3:
+            stable_key = re.sub(r'[^a-zA-Z0-9_\-\.]', '_', file_part)
+        else:
+            stable_key = hashlib.md5(clean_base.encode('utf-8')).hexdigest()
+
+    cached_wav_path = os.path.join(cache_dir, f"voice_{stable_key}.wav")
     
     if os.path.exists(cached_wav_path) and os.path.getsize(cached_wav_path) > 0:
-        print(f"✅ Voix de référence trouvée en cache : {cached_wav_path}")
+        print(f"✅ Voix de référence trouvée en cache pérenne : {cached_wav_path}")
         return cached_wav_path
 
-    temp_dl_path = os.path.join("/tmp", f"dl_{url_hash}")
-    print(f"📥 Téléchargement de la voix de référence : {voice_url}")
+    temp_dl_path = os.path.join("/tmp", f"dl_{stable_key}")
+    print(f"📥 Téléchargement de la voix de référence : {clean_base}")
     
     opener = urllib.request.build_opener()
     opener.addheaders = [('User-Agent', 'Calmi-TTS-Service')]
@@ -209,6 +222,8 @@ def chunk_text_optimized(
 class TTSRequest(BaseModel):
     text: str
     voice_ref_url: Optional[str] = None
+    voice_ref_path: Optional[str] = None
+    voiceRefPath: Optional[str] = None
     ref_text: Optional[str] = None
     instruct: Optional[str] = None
     language: str = "fr"
@@ -233,7 +248,7 @@ class TTSRequest(BaseModel):
     image=image,
     volumes={"/cache": volume},
     timeout=1800,
-    scaledown_window=5,
+    scaledown_window=300,  # 5 minutes warm keep-alive
 )
 class CalmiTTSGPU:
     @modal.enter()
@@ -288,7 +303,8 @@ class CalmiTTSGPU:
         DEFAULT_LOCAL_REF = "/root/default_ref.wav"
         if request.voice_ref_url and request.voice_ref_url.strip():
             try:
-                ref_audio_path = download_and_cache_voice(request.voice_ref_url.strip())
+                v_key = request.voice_ref_path or request.voiceRefPath or request.voice_ref_url
+                ref_audio_path = download_and_cache_voice(request.voice_ref_url.strip(), voice_key=v_key)
             except Exception as e:
                 print(f"⚠️ Erreur téléchargement voix ({e}), fallback sur voix par défaut.")
                 ref_audio_path = DEFAULT_LOCAL_REF if os.path.exists(DEFAULT_LOCAL_REF) else None
@@ -320,21 +336,46 @@ class CalmiTTSGPU:
 
         with torch.inference_mode():
             if request.isMultiVoice and request.segments and len(request.segments) > 0:
-                print(f"🎭 [{req_id}] Théâtre Audio Multi-Voix détecté ({len(request.segments)} répliques/segments) !")
+                print(f"🎭 [{req_id}] Théâtre Audio Multi-Voix détecté ({len(request.segments)} répliques/segments bruts) !")
+                
+                # Optimisation : Fusion des segments consécutifs du même locuteur
+                merged_segments = []
+                for s in request.segments:
+                    stext = s.get("text", "").strip()
+                    if not stext:
+                        continue
+                    s_ref_url = s.get("voiceRefUrl")
+                    s_voice_id = s.get("voiceId")
+                    s_speaker_key = s_ref_url or s_voice_id or "narrator"
+                    
+                    if (merged_segments and 
+                        merged_segments[-1]["speaker_key"] == s_speaker_key and 
+                        (len(merged_segments[-1]["text"]) + len(stext) < 1200)):
+                        merged_segments[-1]["text"] += "\n\n" + stext
+                    else:
+                        merged_segments.append({
+                            **s,
+                            "text": stext,
+                            "speaker_key": s_speaker_key
+                        })
+                
+                print(f"🎭 [{req_id}] Segments optimisés après fusion : {len(merged_segments)} blocs (au lieu de {len(request.segments)})")
                 previous_speaker = None
-                for idx, seg in enumerate(request.segments):
+                
+                for idx, seg in enumerate(merged_segments):
                     seg_text = seg.get("text", "").strip()
                     if not seg_text:
                         continue
 
                     t0 = time.time()
                     seg_ref_url = seg.get("voiceRefUrl")
-                    seg_speaker_key = seg_ref_url or seg.get("voiceId") or "narrator"
+                    seg_speaker_key = seg.get("speaker_key") or "narrator"
+                    seg_ref_path_prop = seg.get("voiceRefPath") or seg.get("voice_ref_path")
 
                     seg_ref_path = None
                     if seg_ref_url and seg_ref_url.strip():
                         try:
-                            seg_ref_path = download_and_cache_voice(seg_ref_url.strip())
+                            seg_ref_path = download_and_cache_voice(seg_ref_url.strip(), voice_key=seg_ref_path_prop or seg_ref_url)
                         except Exception as e:
                             print(f"⚠️ Erreur chargement voix réplique {idx} ({e})")
                             seg_ref_path = ref_audio_path
@@ -371,13 +412,13 @@ class CalmiTTSGPU:
 
                     generated_wavs.append(wav_np)
                     speaker_label = seg.get("speakerName") or seg.get("roleCategory") or "Narrateur"
-                    print(f"  ├─ [Théâtre] Segment {idx+1}/{len(request.segments)} ({speaker_label}: {len(seg_text)} chars) généré en {time.time() - t0:.2f}s")
+                    print(f"  ├─ [Théâtre] Segment {idx+1}/{len(merged_segments)} ({speaker_label}: {len(seg_text)} chars) généré en {time.time() - t0:.2f}s")
 
                     # FAST-PLAY THÉÂTRE : Téléversement du premier segment pour lecture instantanée
                     target_story_id = request.story_id or request.storyId
                     target_webhook_id = request.webhook_id or request.requestId
                     target_voice_id = request.voiceId or "multivoice"
-                    if idx == 0 and len(request.segments) > 1 and target_story_id and target_webhook_id:
+                    if idx == 0 and len(merged_segments) > 1 and target_story_id and target_webhook_id:
                         buf0 = io.BytesIO()
                         sf.write(buf0, wav_np, sr, format='WAV')
                         buf0.seek(0)
@@ -448,7 +489,12 @@ class CalmiTTSGPU:
         return Response(
             content=wav_bytes,
             media_type="audio/wav",
-            headers={"Content-Disposition": f"attachment; filename=calmi_gpu_{req_id}.wav"}
+            headers={
+                "Content-Disposition": f"attachment; filename=calmi_gpu_{req_id}.wav",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization, x-webhook-secret",
+            }
         )
 
     @modal.fastapi_endpoint(method="POST")
@@ -459,8 +505,18 @@ class CalmiTTSGPU:
         effective_story_id = request.story_id or request.storyId
         print(f"🚀 [{req_id}] Requête GPU reçue (Asynchrone). Webhook ID: {effective_webhook_id}, Story ID: {effective_story_id}")
         
+        cors_headers = {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, x-webhook-secret",
+        }
+
         if not effective_webhook_id:
-            return JSONResponse(status_code=400, content={"error": "webhook_id ou requestId est obligatoire pour le mode asynchrone"})
+            return JSONResponse(
+                status_code=400, 
+                content={"error": "webhook_id ou requestId est obligatoire pour le mode asynchrone"},
+                headers=cors_headers
+            )
 
         req_dict = request.model_dump()
         req_dict["webhook_id"] = effective_webhook_id
@@ -474,7 +530,8 @@ class CalmiTTSGPU:
                 "message": "Génération audio lancée sur GPU en arrière-plan.",
                 "request_id": req_id,
                 "webhook_id": effective_webhook_id
-            }
+            },
+            headers=cors_headers
         )
 
     @modal.method()
@@ -490,3 +547,52 @@ class CalmiTTSGPU:
 
         print(f"📤 [{req_id}] Téléversement de l'audio complet vers Supabase (storyId: {target_story_id}, requestId: {target_webhook_id})...")
         self._upload_to_supabase(wav_bytes, target_story_id, target_webhook_id, target_voice_id, f"{req_id}_final")
+
+
+# ==============================================================================
+# CPU FAST-GATEWAY: Répond HTTP 202 en < 300ms sans attendre le cold-start du GPU
+# ==============================================================================
+@app.function(
+    image=image,
+    timeout=60,
+    scaledown_window=60,
+)
+@modal.fastapi_endpoint(method="POST")
+def synthesize_async_fast(request: TTSRequest):
+    from fastapi.responses import JSONResponse
+    req_id = str(uuid.uuid4())[:8]
+    effective_webhook_id = request.webhook_id or request.requestId
+    effective_story_id = request.story_id or request.storyId
+    print(f"⚡ [{req_id}] CPU Fast-Gateway: Réception requête asynchrone ({len(request.text)} chars). Webhook: {effective_webhook_id}")
+    
+    cors_headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, x-webhook-secret",
+    }
+
+    if not effective_webhook_id:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "webhook_id ou requestId est obligatoire"},
+            headers=cors_headers
+        )
+
+    req_dict = request.model_dump()
+    req_dict["webhook_id"] = effective_webhook_id
+    req_dict["story_id"] = effective_story_id
+    
+    # Déclenche le traitement GPU en arrière-plan sans bloquer la réponse HTTP
+    CalmiTTSGPU().process_async_task.spawn(req_dict, req_id)
+
+    return JSONResponse(
+        status_code=202,
+        content={
+            "status": "accepted",
+            "message": "Génération audio lancée sur GPU en arrière-plan.",
+            "request_id": req_id,
+            "webhook_id": effective_webhook_id
+        },
+        headers=cors_headers
+    )
+
