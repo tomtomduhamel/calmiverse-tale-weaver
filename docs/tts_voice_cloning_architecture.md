@@ -43,13 +43,14 @@ L'infrastructure principale de synthèse pour les clones vocaux familiaux s'exé
 * **Moteur de Secours** : `Qwen/Qwen3-TTS-12Hz-0.6B-Base` (activé automatiquement si CosyVoice 2 ne se charge pas).
 * **Temps de génération** : **~2 à 3 minutes** pour une histoire de 10 min (divisé par 4 par rapport à Qwen3 seul).
 
-### B. Endpoints Actifs
-1. **Endpoint Asynchrone Principal (Production)** :
-   - **URL** : `https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize-async.modal.run`
+### B. Endpoints Actifs & Règles Critiques d'Inférence CosyVoice 2
+1. **Endpoint Fast-Gateway Asynchrone Principal (Production)** :
+   - **URL** : `https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run`
    - **Méthode** : `POST`
-   - **Comportement** : Valide la requête, répond immédiatement avec `HTTP 202 Accepted` et lance la tâche `process_async_task` sur GPU L4.
-   - **Fast-Play** : Dès que le 1er bloc est généré (< 4s), il est téléversé en priorité vers Supabase pour débloquer l'écoute instantanée.
-   - **Post-traitement** : Modal envoie automatiquement le fichier audio `.wav` généré vers `https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/upload-audio-from-n8n` avec le secret webhook.
+   - **Comportement** : Conteneur CPU qui valide la requête, répond immédiatement avec `HTTP 202 Accepted` (< 500 ms) sans attendre le cold-start du GPU, et lance la tâche `CalmiTTSGPU().process_async_task.spawn(...)` sur GPU L4/A10G.
+   - **Règle d'Attention (< 80 tokens / ≤ 200 chars par phrase)** : Chaque paragraphe est découpé en phrases courtes via `split_into_clean_sentences` et normalisé avec `frontend.text_normalize(sent, split=True, text_frontend=True)` afin d'éviter tout effondrement d'attention (« langue des Minions »).
+   - **Cache d'Empreinte Vocale (`self.speaker_cache`)** : Les tenseurs Whisper + CampPlus + Mel de la voix de référence (plafonnée à 8 s max) sont extraits une seule fois par voix et conservés en mémoire GPU pour éliminer 100 % de l'overhead ONNX inter-phrases.
+   - **Post-traitement** : Une fois l'histoire complète assemblée et masterisée (-16 LUFS), Modal l'envoie vers `https://ioeihnoxvtpxtqhxklpw.supabase.co/functions/v1/upload-audio-from-n8n` (aucun upload partiel de chunk 0).
 2. **Endpoint Synchrone (Aperçu Studio 5s & Tests Directs)** :
    - **URL** : `https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize.modal.run`
    - **Méthode** : `POST`

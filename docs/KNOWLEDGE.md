@@ -852,3 +852,23 @@ Le système d'amélioration continue relie les retours réels des utilisateurs e
 
 
 
+
+---
+
+## 19. Standards TTS CosyVoice 2, Cache Audio IndexedDB & Synchronisation Mobile (`IntegratedAudioDeck.tsx`)
+
+### 19.1 Fenêtre d'Attention Stricte de CosyVoice 2 (≤ 200 chars / < 80 tokens par phrase)
+- Le modèle `CosyVoice2-0.5B-EU` (`cosyvoice2-eu`) a une limite d'attention d'environ **60 à 80 tokens par passe LLM** (~180 à 220 caractères).
+- Dans `cosyvoice2-eu`, `Cosy2EU.tts()` définit `text_frontend=False` par défaut, ce qui désactive la normalisation linguistique française et le découpage en phrases. Envoyer un bloc de 400 à 1 100 caractères d'un seul tenant provoque un effondrement d'attention (le modèle génère des syllabes françaises inventées, dit « bug de la langue des Minions »).
+- **Règle d'or (`vps-tts-service/modal_app.py`)** :
+  1. Toujours découper chaque paragraphe en phrases courtes (`split_into_clean_sentences`, `max_sentence_chars=200`).
+  2. Toujours normaliser chaque phrase via `frontend.text_normalize(sent, split=True, text_frontend=True)` pour convertir les nombres/abréviations en français et garantir `< 80` tokens.
+  3. Insérer une micro-pause (`0.18s`–`0.20s`) entre les phrases d'un même paragraphe et conserver les pauses progressives `Sleep Pacing` (`1.0s` → `1.5s` → `2.5s`) entre les paragraphes.
+
+### 19.2 Cache GPU de l'Empreinte Vocale (`self.speaker_cache`)
+- Pour éliminer les ~3,5 secondes d'overhead ONNX (`speech_tokenizer_v2.onnx` Whisper + `campplus.onnx`) à chaque phrase, les tenseurs de conditionnement vocal (`flow_prompt_speech_token`, `prompt_speech_feat`, `llm_embedding`, `flow_embedding`) sont extraits **une seule fois par voix** (audio de référence plafonné à 8 secondes max) via `_get_speaker_conditioning(prompt_path)` et conservés en mémoire GPU dans `self.speaker_cache[prompt_path]`.
+- À chaque phrase, un clone superficiel `{**spk_cond, 'text': tts_text_token, 'text_len': tts_text_token_len}` est transmis directement à `self.cosy_model._model.model.tts(**model_input, stream=False, speed=1.0)`.
+
+### 19.3 Synchronisation Bidirectionnelle HTMLAudioElement ↔ MediaSession Mobile & Responsive (`IntegratedAudioDeck.tsx`)
+- **Play/Pause infaillible** : En tête de `handlePlayPause`, vérifier l'état réel de l'élément DOM (`!audioRef.current.paused && !audioRef.current.ended && audioRef.current.currentTime > 0`) en plus de `isPlaying`, attacher `audio.onplay` / `audio.onpause` pour synchroniser l'interface avec le centre de notifications Android/iOS, et verrouiller la phase d'ouverture asynchrone via `isStartingPlaybackRef`.
+- **Responsive Mobile (320px–430px)** : Utiliser exclusivement des classes Tailwind standards (`h-[52px]`, `h-8 w-8 sm:h-9 sm:w-9`) avec `min-w-0 flex-shrink` sur le sélecteur de narrateur et `shrink-0` sur les boutons centraux et icônes de droite (`✓` et `🌙`).

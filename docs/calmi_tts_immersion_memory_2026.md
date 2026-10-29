@@ -14,16 +14,19 @@
 - **Moteur Principal :** **CosyVoice 2 (Hi! PARIS EU)** (`cosyvoice2-eu`) — Clonage vocal zéro-shot haute fidélité pour le français et langues européennes.
 - **Contrainte Dépendances :** `cosyvoice2-eu` impose strictement `transformers==4.40.1`. Ne jamais réintroduire de dépendances conflictuelles (comme `qwen-tts` qui requiert `transformers==4.57.3`).
 - **Endpoints de Production :**
-  - **Asynchrone (Fast-Play & Production) :**
-    `https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize-async.modal.run`
-    - Répond `HTTP 202` en < 1 seconde.
-    - Émet le premier bloc audio (Fast-Play) en < 4 secondes vers Supabase.
-    - Téléverse l'histoire complète masterisée (-16 LUFS) via `upload-audio-from-n8n`.
+  - **Fast-Gateway Asynchrone (Production Unifiée) :**
+    `https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run`
+    - Conteneur CPU ultra-léger qui répond `HTTP 202` en < 500 ms sans bloquer sur le cold-start du GPU.
+    - Délègue en arrière-plan via `.spawn()` à `CalmiTTSGPU.process_async_task`.
+    - Téléverse uniquement l'histoire complète masterisée (-16 LUFS) via `upload-audio-from-n8n` (pas de téléversement partiel du chunk 0 afin d'éviter la mise en cache IndexedDB d'un fichier tronqué).
   - **Synchrone (Aperçu Studio 5s) :**
     `https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize.modal.run`
     - Reçoit `{ text, voice_ref_url, ref_text, instruct }` et retourne directement le binaire `audio/wav`.
+- **Règles Critiques d'Inférence CosyVoice 2 (`modal_app.py`) :**
+  1. **Découpage par phrase courte (≤ 200 chars) + `text_frontend=True`** : `CosyVoice2-0.5B-EU` a une fenêtre d'attention maximale de ~60–80 tokens par passe. Envoyer des blocs de 400–1100 caractères avec `text_frontend=False` provoque un effondrement d'attention (« langue des Minions » / syllabes inventées). Toujours utiliser `split_into_clean_sentences(..., max_sentence_chars=200)` + `frontend.text_normalize(sent, split=True, text_frontend=True)`.
+  2. **Cache GPU de l'empreinte vocale (`self.speaker_cache`)** : Extraire les tenseurs `flow_prompt_speech_token`, `prompt_speech_feat`, `llm_embedding` et `flow_embedding` une seule fois par voix (audio de référence plafonné à 8 s max) via `_get_speaker_conditioning(prompt_path)`. Cela élimine les ~3,5 s d'overhead ONNX (Whisper + CampPlus) entre chaque phrase.
 - **Commandes Déploiement :**
-  Exécuter avec le CLI Modal localisé dans Python310 :
+  Exécuter avec le CLI Modal :
   `modal deploy vps-tts-service/modal_app.py`
 
 ### B. Hostinger VPS (srv856374)
@@ -66,4 +69,14 @@
 ### 4. Téléchargement Prédictif PWA & Cache Routines
 - **Fichiers :** `src/utils/audioCache.ts`, `src/hooks/useStoryRoutines.ts`
 - **Mécanisme :** Dès qu'un fichier audio est prêt ou programmé dans une routine du soir active, il est pré-téléchargé et stocké en Blob dans IndexedDB (`CalmiAudioCache`).
+- **Sécurité & Versionnement du Cache :**
+  - Clé de cache versionnée par le nom du fichier généré (`getAudioCacheKey(storyId, audioUrl)`).
+  - Vérification stricte de l'intégrité (`blob.size >= expectedSize * 0.9`) pour auto-purger tout fragment incomplet.
 - **Bénéfice :** Démarrage instantané 0 seconde au lit, sans coupure et sans dépendance au réseau Wi-Fi.
+
+### 5. Synchronisation Mobile & Responsive de la Capsule Audio (`IntegratedAudioDeck.tsx`)
+- **Synchronisation Native / OS (MediaSession Android & iOS) :**
+  - Vérification prioritaire de l'état réel du DOM (`!audioRef.current.paused`) dans `handlePlayPause` pour garantir que le bouton met toujours en pause un audio actif même en cas de désynchronisation d'état React.
+  - Écouteurs bidirectionnels `audio.onplay` / `audio.onpause` et verrou anti-concurrence `isStartingPlaybackRef`.
+- **Responsive Mobile (320px–430px) :**
+  - Utilisation exclusive de classes Tailwind standards (`h-[52px]`, `h-8 w-8 sm:h-9 sm:w-9`) avec `min-w-0 flex-shrink` sur le sélecteur de voix et `shrink-0` sur les boutons d'action et d'ambiance (`✓` et `🌙`).

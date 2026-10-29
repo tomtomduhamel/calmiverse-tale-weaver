@@ -151,16 +151,61 @@ def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) ->
         
     return converted_wav
 
+def split_into_clean_sentences(text: str, max_sentence_chars: int = 200) -> List[str]:
+    """Découpe un paragraphe en phrases courtes et naturelles (<= 200 chars) pour rester
+    strictement dans la fenêtre d'attention optimale (< 60 tokens) de CosyVoice2-0.5B-EU."""
+    if not text or not text.strip():
+        return []
+
+    # Nettoyage des espaces multiples et tirets de dialogue en début de ligne
+    cleaned = re.sub(r'\s+', ' ', text.strip())
+    cleaned = re.sub(r'^[—–\-]\s*', '', cleaned)
+
+    # 1. Découpage primaire sur la ponctuation forte (. ! ? … ;)
+    raw_sents = re.split(r'(?<=[.!?…;])\s+', cleaned)
+    final_sentences: List[str] = []
+
+    for sent in raw_sents:
+        sent = sent.strip()
+        if not sent:
+            continue
+        if len(sent) <= max_sentence_chars:
+            final_sentences.append(sent)
+        else:
+            # 2. Si une phrase dépasse max_sentence_chars, découper sur les deux-points ou virgules
+            clauses = re.split(r'(?<=[,:])\s+', sent)
+            current_clause = ""
+            for clause in clauses:
+                clause = clause.strip()
+                if not clause:
+                    continue
+                if not current_clause:
+                    current_clause = clause
+                elif len(current_clause) + 1 + len(clause) <= max_sentence_chars:
+                    current_clause += " " + clause
+                else:
+                    if current_clause[-1] not in ".!?…":
+                        current_clause += "."
+                    final_sentences.append(current_clause)
+                    current_clause = clause
+            if current_clause:
+                if current_clause[-1] not in ".!?…":
+                    current_clause += "."
+                final_sentences.append(current_clause)
+
+    return [s for s in final_sentences if re.search(r'[a-zA-ZÀ-ÿ0-9]', s)]
+
+
 def chunk_text_optimized(
     text: str, 
-    max_chars: int = 1100,
+    max_chars: int = 400,
     paragraph_pause_sec: float = 1.0,
     chapter_pause_sec: float = 3.0,
     default_instruct: Optional[str] = None,
     enable_sleep_pacing: bool = True
 ) -> List[Tuple[str, float, Optional[str]]]:
-    """Découpe et regroupe intelligemment l'histoire en blocs narratifs optimisés (max_chars ~1100)
-    avec pauses naturelles et progression feutrée du rythme du coucher (Sleep Pacing)."""
+    """Découpe l'histoire paragraphe par paragraphe avec pauses naturelles et progression
+    feutrée du rythme du coucher (Sleep Pacing)."""
     if not text or not text.strip():
         return []
 
@@ -171,17 +216,14 @@ def chunk_text_optimized(
     chapter_pattern = r'^\s*(?:#+\s*|#*\s*(?:chapitre|partie|épisode|prologue|épilogue|introduction|conclusion)\b)'
     tag_pattern = r'^\s*\[(warm|whisper|excited|mysterious|calm|sleepy|instruct:\s*[^\]]+)\]'
 
-    # 1. Prétraitement de chaque paragraphe brut
-    processed_paras = []
+    chunks_with_pauses: List[Tuple[str, float, Optional[str]]] = []
     current_instruct = default_instruct
 
     for idx, para in enumerate(paragraphs):
         progress = (idx / float(total_paras - 1)) if total_paras > 1 else 0.0
 
         match_tag = re.search(tag_pattern, para, re.IGNORECASE)
-        has_new_tag = False
         if match_tag:
-            has_new_tag = True
             tag_val = match_tag.group(1).strip()
             if tag_val.lower().startswith("instruct:"):
                 current_instruct = tag_val[len("instruct:"):].strip()
@@ -219,56 +261,7 @@ def chunk_text_optimized(
             else:
                 instruct = "Very slow, soft, sleepy bedtime voice"
 
-        processed_paras.append({
-            "text": para_clean,
-            "pause_before": pause_before,
-            "instruct": instruct,
-            "is_chapter": is_chapter,
-            "has_new_tag": has_new_tag
-        })
-
-    if not processed_paras:
-        return []
-
-    # 2. Regroupement narratif des paragraphes contigus en blocs (évite l'overhead d'inférence de micro-blocs)
-    chunks_with_pauses = []
-    current_group = []
-    current_len = 0
-    current_pause = 0.0
-    current_instruct = None
-
-    for item in processed_paras:
-        p_text = item["text"]
-        p_len = len(p_text)
-
-        # On sépare si :
-        # - L'ajout dépasse la taille maximale max_chars
-        # - C'est un nouveau chapitre
-        # - Ou un changement d'émotion explicite survient
-        should_split = False
-        if current_group:
-            if (current_len + p_len + 2 > max_chars):
-                should_split = True
-            elif item["is_chapter"]:
-                should_split = True
-            elif item["has_new_tag"] and (item["instruct"] != current_instruct):
-                should_split = True
-
-        if should_split:
-            chunks_with_pauses.append(("\n\n".join(current_group), current_pause, current_instruct))
-            current_group = [p_text]
-            current_len = p_len
-            current_pause = item["pause_before"]
-            current_instruct = item["instruct"]
-        else:
-            if not current_group:
-                current_pause = item["pause_before"]
-                current_instruct = item["instruct"]
-            current_group.append(p_text)
-            current_len += p_len + 2
-
-    if current_group:
-        chunks_with_pauses.append(("\n\n".join(current_group), current_pause, current_instruct))
+        chunks_with_pauses.append((para_clean, pause_before, instruct))
 
     return chunks_with_pauses
 
@@ -323,7 +316,85 @@ class CalmiTTSGPU:
         from cosyvoice2_eu import load
         self.cosy_model = load()
         self.engine = "cosyvoice2"
+        self.speaker_cache = {}
+        if os.path.exists("/root/default_ref.wav"):
+            with torch.inference_mode():
+                self._get_speaker_conditioning("/root/default_ref.wav")
         print(f"✅ [CalmiTTSGPU] CosyVoice 2 EU prêt sur {self.device.upper()} en {time.time() - start:.2f}s !")
+
+    def _get_speaker_conditioning(self, prompt_path: str) -> dict:
+        """Extrait et met en cache les tenseurs d'empreinte vocale (Whisper + CampPlus + Mel)
+        une seule fois par fichier audio de référence pour éliminer 100% de l'overhead ONNX inter-phrases."""
+        if prompt_path in self.speaker_cache:
+            return self.speaker_cache[prompt_path]
+
+        from cosyvoice.utils.file_utils import load_wav
+        t_spk = time.time()
+        frontend = self.cosy_model._model.frontend
+        sample_rate = self.cosy_model._model.sample_rate
+        prompt_speech_16k = load_wav(prompt_path, 16000)
+
+        # Limiter l'extrait de référence à 8 secondes max (128 000 échantillons à 16kHz)
+        # pour éviter d'alourdir l'attention du décodeur Flow Matching sur chaque phrase
+        max_samples = 16000 * 8
+        if prompt_speech_16k.shape[1] > max_samples:
+            prompt_speech_16k = prompt_speech_16k[:, :max_samples]
+
+        base_input = frontend.frontend_cross_lingual('', prompt_speech_16k, sample_rate, '')
+        base_input.pop('text', None)
+        base_input.pop('text_len', None)
+        self.speaker_cache[prompt_path] = base_input
+        print(f"🎙️ Empreinte vocale extraite et mise en cache GPU ({prompt_path}) en {time.time() - t_spk:.2f}s")
+        return base_input
+
+    def _synthesize_block_fast(self, text: str, prompt_path: str, sentence_pause_sec: float = 0.18) -> Tuple[np.ndarray, int]:
+        """Synthétise un bloc narratif phrase par phrase (<= 200 chars, text_frontend=True)
+        en réutilisant l'empreinte vocale pré-calculée en mémoire GPU."""
+        frontend = self.cosy_model._model.frontend
+        model = self.cosy_model._model.model
+        sr = self.cosy_model.sample_rate
+        spk_cond = self._get_speaker_conditioning(prompt_path)
+
+        raw_sentences = split_into_clean_sentences(text, max_sentence_chars=200)
+        if not raw_sentences:
+            raw_sentences = [text.strip()]
+
+        sentence_wavs = []
+        for s_idx, raw_sent in enumerate(raw_sentences):
+            try:
+                norm_segments = frontend.text_normalize(raw_sent, split=True, text_frontend=True)
+                if not norm_segments:
+                    norm_segments = [raw_sent]
+            except Exception:
+                norm_segments = [raw_sent]
+
+            for seg in norm_segments:
+                seg_clean = seg.strip() if isinstance(seg, str) else ""
+                if not seg_clean:
+                    continue
+                tts_text_token, tts_text_token_len = frontend._extract_text_token(seg_clean)
+                model_input = {
+                    **spk_cond,
+                    'text': tts_text_token,
+                    'text_len': tts_text_token_len,
+                }
+                for model_output in model.tts(**model_input, stream=False, speed=1.0):
+                    wav_tensor = model_output['tts_speech']
+                    if hasattr(wav_tensor, 'cpu'):
+                        w_np = wav_tensor.cpu().numpy()
+                    else:
+                        w_np = np.array(wav_tensor, dtype=np.float32)
+                    if w_np.ndim > 1:
+                        w_np = w_np.squeeze()
+                    sentence_wavs.append(w_np)
+
+            # Légère respiration naturelle entre deux phrases d'un même paragraphe
+            if s_idx < len(raw_sentences) - 1 and sentence_pause_sec > 0:
+                sentence_wavs.append(np.zeros(int(sr * sentence_pause_sec), dtype=np.float32))
+
+        if not sentence_wavs:
+            return np.zeros(int(sr * 0.1), dtype=np.float32), sr
+        return np.concatenate(sentence_wavs), sr
 
     def _upload_to_supabase(self, wav_bytes: bytes, story_id: str, webhook_id: str, voice_id: str, req_id: str):
         import requests
@@ -365,11 +436,12 @@ class CalmiTTSGPU:
             ref_audio_path = DEFAULT_LOCAL_REF if os.path.exists(DEFAULT_LOCAL_REF) else None
 
         paragraph_pause_sec = request.paragraph_pause_ms / 1000.0 if request.paragraph_pause_ms is not None else 1.0
+        sentence_pause_sec = request.sentence_pause_ms / 1000.0 if request.sentence_pause_ms is not None else 0.20
         global_instruct = request.instruct.strip() if request.instruct and request.instruct.strip() else None
 
         text_chunks = chunk_text_optimized(
             request.text, 
-            max_chars=1000,
+            max_chars=400,
             paragraph_pause_sec=paragraph_pause_sec,
             default_instruct=global_instruct
         )
@@ -446,17 +518,12 @@ class CalmiTTSGPU:
                     previous_speaker = seg_speaker_key
 
                     prompt_target = seg_ref_path if (seg_ref_path and os.path.exists(seg_ref_path)) else DEFAULT_LOCAL_REF
-                    wav, current_sr = self.cosy_model.tts(
+                    wav_np, current_sr = self._synthesize_block_fast(
                         text=seg_text,
-                        prompt=prompt_target
+                        prompt_path=prompt_target,
+                        sentence_pause_sec=sentence_pause_sec
                     )
                     sr = current_sr
-                    if hasattr(wav, 'cpu'):
-                        wav_np = wav.cpu().numpy()
-                    else:
-                        wav_np = np.array(wav, dtype=np.float32)
-                    if wav_np.ndim > 1:
-                        wav_np = wav_np.squeeze()
 
                     if seg_pause > 0:
                         pause_samples = int(sr * seg_pause)
@@ -468,25 +535,18 @@ class CalmiTTSGPU:
                     print(f"  ├─ [Théâtre] Segment {idx+1}/{len(merged_segments)} ({speaker_label}: {len(seg_text)} chars) généré en {time.time() - t0:.2f}s")
 
             else:
-                # Inférence CosyVoice 2 (ultra-rapide, RTF ~0.2)
+                # Inférence CosyVoice 2 phrase par phrase avec empreinte vocale pré-cachée en GPU
+                prompt_target = ref_audio_path if (ref_audio_path and os.path.exists(ref_audio_path)) else DEFAULT_LOCAL_REF
                 for idx, chunk_data in enumerate(text_chunks):
                     chunk, pause_before, chunk_instruct = chunk_data
                     t0 = time.time()
 
-                    prompt_target = ref_audio_path if (ref_audio_path and os.path.exists(ref_audio_path)) else DEFAULT_LOCAL_REF
-                    wav, current_sr = self.cosy_model.tts(
+                    wav_np, current_sr = self._synthesize_block_fast(
                         text=chunk,
-                        prompt=prompt_target
+                        prompt_path=prompt_target,
+                        sentence_pause_sec=sentence_pause_sec
                     )
                     sr = current_sr
-
-                    if hasattr(wav, 'cpu'):
-                        wav_np = wav.cpu().numpy()
-                    else:
-                        wav_np = np.array(wav, dtype=np.float32)
-
-                    if wav_np.ndim > 1:
-                        wav_np = wav_np.squeeze()
 
                     # Insertion des silences sur CPU
                     if pause_before > 0:
@@ -495,7 +555,7 @@ class CalmiTTSGPU:
                         generated_wavs.append(silence)
 
                     generated_wavs.append(wav_np)
-                    print(f"  ├─ [CosyVoice2] Bloc {idx+1}/{len(text_chunks)} ({len(chunk)} chars) généré en {time.time() - t0:.2f}s")
+                    print(f"  ├─ [CosyVoice2] Paragraphe {idx+1}/{len(text_chunks)} ({len(chunk)} chars) généré en {time.time() - t0:.2f}s")
 
 
 

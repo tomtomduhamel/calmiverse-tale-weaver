@@ -99,6 +99,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isStartingPlaybackRef = useRef<boolean>(false);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   const { userSettings, updateUserSettings } = useUserSettings();
   const { limits } = useSubscription();
@@ -122,9 +123,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const currentPendingAudioFile = audioFiles.find(
     file => (file.status === 'pending' || file.status === 'processing') && file.story_id === storyId
   );
-  const readyStoryAudioFile = (!currentPendingAudioFile && !isGenerating)
-    ? audioFiles.find(file => file.status === 'ready' && file.audio_url && file.story_id === storyId)
-    : undefined;
+  const readyStoryAudioFile = audioFiles.find(
+    file => !currentPendingAudioFile && !isGenerating && file.status === 'ready' && file.audio_url && file.story_id === storyId
+  );
   const isPremiumMode = (canUsePremiumAudio && (preferredAudioMode === 'premium' || limits?.has_multivoice_audio) && selectedVoiceId !== 'local') || !!readyStoryAudioFile;
 
   // Background Sound Hook
@@ -396,18 +397,31 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       stopProlongation();
     }
 
-    // 1. Si un fichier audio prêt existe, on le lance directement
-    if (readyStoryAudioFile?.audio_url) {
-      if (isPlaying && audioRef.current) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-        return;
-      }
+    // 1. Si l'élément audio natif est réellement en cours de lecture (même si l'état React s'est désynchronisé via Android MediaSession), on met en pause immédiatement
+    const isNativeAudioPlaying = Boolean(
+      audioRef.current && !audioRef.current.paused && !audioRef.current.ended && audioRef.current.currentTime > 0
+    );
 
+    if ((isPlaying || isNativeAudioPlaying) && audioRef.current && readyStoryAudioFile?.audio_url) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      isStartingPlaybackRef.current = false;
+      return;
+    }
+
+    // Empêcher les lancements asynchrones concurrents (double clic pendant le chargement du cache ou de l'URL signée)
+    if (isStartingPlaybackRef.current) {
+      return;
+    }
+
+    // 2. Si un fichier audio prêt existe, on le lance directement
+    if (readyStoryAudioFile?.audio_url) {
       if (isBrowserSpeaking && synthRef.current) {
         synthRef.current.cancel();
         setIsBrowserSpeaking(false);
       }
+
+      isStartingPlaybackRef.current = true;
 
       try {
         let audioUrl = "";
@@ -425,17 +439,31 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           }).catch(() => {});
         }
 
-        const audio = audioRef.current || new Audio();
-        if (audio.src !== audioUrl) {
-          audio.src = audioUrl;
+        if (!audioRef.current) {
+          audioRef.current = new Audio();
         }
-        currentPlayingUrlRef.current = readyStoryAudioFile.audio_url;
-        audioRef.current = audio;
+        const audio = audioRef.current;
+
+        // Ne remplacer audio.src que si le fichier sous-jacent a changé
+        if (currentPlayingUrlRef.current !== readyStoryAudioFile.audio_url || !audio.src) {
+          audio.src = audioUrl;
+          currentPlayingUrlRef.current = readyStoryAudioFile.audio_url;
+        }
         audio.playbackRate = 1.0;
 
+        // Synchronisation bidirectionnelle avec le lecteur natif OS / Android MediaSession
+        audio.onplay = () => setIsPlaying(true);
+        audio.onpause = () => {
+          if (!audio.ended) {
+            setIsPlaying(false);
+          }
+        };
         audio.onloadedmetadata = () => setDuration(audio.duration);
         audio.ontimeupdate = () => {
           setCurrentTime(audio.currentTime);
+          if (!audio.paused && !isPlaying) {
+            setIsPlaying(true);
+          }
           if (audio.duration) {
             setProgress((audio.currentTime / audio.duration) * 100);
 
@@ -518,9 +546,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
             variant: "destructive"
           });
           setIsPlaying(false);
+          isStartingPlaybackRef.current = false;
         };
 
-        if (currentTime > 0 && currentTime < duration) {
+        if (currentTime > 0 && duration > 0 && currentTime < duration && Math.abs(audio.currentTime - currentTime) > 1) {
           audio.currentTime = currentTime;
         }
 
@@ -533,6 +562,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           variant: "destructive"
         });
         setIsPlaying(false);
+      } finally {
+        isStartingPlaybackRef.current = false;
       }
       return;
     }
@@ -671,7 +702,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         )}
 
         {/* 🌟 2. CONTENUS DE LA CAPSULE ZEN (Hauteur compacte ~52 px) */}
-        <div className="h-13 px-3 sm:px-4 flex items-center justify-between gap-2 pt-1">
+        <div className="h-[52px] px-2.5 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-2 pt-1">
           
           {/* GAUCHE : SÉLECTEUR DE NARRATEUR DISCRET */}
           <Popover open={isVoicePopoverOpen} onOpenChange={setIsVoicePopoverOpen}>
@@ -680,19 +711,19 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-8.5 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 shrink-0 transition-all",
+                  "h-8 sm:h-9 px-2 sm:px-2.5 rounded-full text-xs font-medium flex items-center gap-1 sm:gap-1.5 min-w-0 flex-shrink transition-all",
                   isDarkMode 
                     ? "bg-white/5 hover:bg-white/10 text-white border border-white/10" 
                     : "bg-primary-soft/20 hover:bg-primary-soft/40 text-gray-900 border border-primary-soft/30"
                 )}
               >
-                <span className="text-sm">
+                <span className="text-xs sm:text-sm shrink-0">
                   {selectedVoiceId === 'local' ? "🔊" : "🎙️"}
                 </span>
-                <span className="max-w-[85px] sm:max-w-[120px] truncate font-sans">
+                <span className="max-w-[68px] xs:max-w-[85px] sm:max-w-[130px] truncate font-sans">
                   {voiceDisplayName}
                 </span>
-                <ChevronDown className="w-3 h-3 opacity-60 ml-0.5" />
+                <ChevronDown className="w-3 h-3 opacity-60 shrink-0" />
               </Button>
             </PopoverTrigger>
             <PopoverContent 
@@ -761,13 +792,13 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           </Popover>
 
           {/* CENTRE : BOUTON PRINCIPAL PLAY / PAUSE / CRÉER MAGIQUE */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {/* Recul 10s */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => handleSeekRelative(-10)}
-              className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
               title="Reculer de 10 secondes"
             >
               <RotateCcw className="w-4 h-4" />
@@ -776,18 +807,18 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
             {/* Bouton Action Principal */}
             {isAudioProcessing ? (
               // En cours de génération : respiration lumineuse
-              <div className="h-10 px-3.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 flex items-center gap-2 animate-pulse text-xs font-medium">
-                <Loader2 className="w-4 h-4 animate-spin text-amber-600 dark:text-amber-400" />
+              <div className="h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 flex items-center gap-1.5 sm:gap-2 animate-pulse text-xs font-medium shrink-0">
+                <Loader2 className="w-4 h-4 animate-spin text-amber-600 dark:text-amber-400 shrink-0" />
                 <span className="hidden xs:inline">Création…</span>
               </div>
             ) : !isAudioReady && selectedVoiceId !== 'local' ? (
               // Pas encore généré : Bouton Magique "Créer l'audio"
               <Button
                 onClick={handlePlayPause}
-                className="h-10 px-3.5 rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-primary-foreground text-xs font-semibold flex items-center gap-1.5 shadow-md hover:scale-105 transition-all"
+                className="h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-primary-foreground text-xs font-semibold flex items-center gap-1.5 shadow-md hover:scale-105 transition-all shrink-0"
               >
-                <Sparkles className="w-4 h-4" />
-                <span>Créer l'audio</span>
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="truncate">Créer l'audio</span>
               </Button>
             ) : (
               // Audio Prêt ou Synthèse Locale : Gros Bouton Play / Pause
@@ -815,7 +846,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               variant="ghost"
               size="icon"
               onClick={() => handleSeekRelative(10)}
-              className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
               title="Avancer de 10 secondes"
             >
               <RotateCw className="w-4 h-4" />
@@ -851,7 +882,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                   }
                 }}
                 className={cn(
-                  "h-8.5 w-8.5 rounded-full transition-all",
+                  "h-8 w-8 sm:h-9 sm:w-9 rounded-full transition-all shrink-0",
                   isOfflineReady 
                     ? "text-emerald-500 hover:text-emerald-600 bg-emerald-500/10" 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -877,7 +908,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                     setIsSoundPopoverOpen(true);
                   }}
                   className={cn(
-                    "h-8.5 w-8.5 rounded-full transition-all",
+                    "h-8 w-8 sm:h-9 sm:w-9 rounded-full transition-all shrink-0",
                     backgroundSound.isPlaying 
                       ? "bg-primary/20 text-primary border border-primary/30 shadow-sm" 
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
