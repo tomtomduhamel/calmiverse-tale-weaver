@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { idempotencyGuard } from '@/utils/idempotency/idempotencyGuard';
 import { parseStoryToAudioSegments } from '@/utils/storyAudioParser';
+import { audioCache } from '@/utils/audioCache';
 
 interface AudioFile {
   id: string;
@@ -185,7 +186,8 @@ export const useN8nAudioGeneration = () => {
         }
       }
 
-      // Nettoyer et récupérer les fichiers d'abord
+      // Nettoyer le cache local et récupérer les fichiers d'abord
+      await audioCache.invalidateStory(storyId);
       await cleanupStuckFiles(storyId);
       await recoverErrorFiles(storyId);
 
@@ -391,12 +393,11 @@ export const useN8nAudioGeneration = () => {
         console.log("[N8nAudio] Standard voice detected or check skipped.", err);
       }
 
-      // Sélection de l'URL cible : Modal GPU pour clones familiaux & multi-voix, VPS Kokoro pour voix standard
+      // Sélection de l'URL cible : Fast-Gateway Modal GPU asynchrone unifié (< 300ms)
       const isClone = Boolean(payload.isCustomVoice);
-      const targetWebhookUrl = isClone && ttsConfig.modalWebhookUrl
-        ? ttsConfig.modalWebhookUrl
-        : (ttsConfig.standardWebhookUrl || webhookUrl);
-      const targetProviderName = isClone ? 'Modal GPU (Voice Cloning & Théâtre)' : 'VPS Kokoro-82M (Standard Voice)';
+      const FAST_MODAL_WEBHOOK = "https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run";
+      const targetWebhookUrl = ttsConfig?.modalWebhookUrl || ttsConfig?.webhookUrl || FAST_MODAL_WEBHOOK;
+      const targetProviderName = isClone ? 'Modal GPU (Voice Cloning & Théâtre)' : 'Modal GPU (Voix Haute-Fidélité)';
 
       console.log(`📤 [N8nAudio] Envoi vers ${targetProviderName}:`, {
         ...payload,

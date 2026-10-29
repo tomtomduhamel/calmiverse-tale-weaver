@@ -63,14 +63,14 @@ export const calmiPitfallsSchema = z.object({
  */
 export const ttsConfigRuntimeSchema = z.object({
   provider: z.string().default('modal-gpu'),
-  webhookUrl: z.string().default('https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize-async.modal.run'),
-  modalWebhookUrl: z.string().optional().default('https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize-async.modal.run'),
-  voiceId: z.string().nullable().optional().default('9BWtsMINqrJLrRacOk9x'),
+  webhookUrl: z.string().default('https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run'),
+  modalWebhookUrl: z.string().optional().default('https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run'),
+  voiceId: z.string().nullable().optional().default('standard-french-female'),
 }).catch({
   provider: 'modal-gpu',
-  webhookUrl: 'https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize-async.modal.run',
-  modalWebhookUrl: 'https://tomtom-duhamel--calmi-tts-service-calmittsgpu-synthesize-async.modal.run',
-  voiceId: '9BWtsMINqrJLrRacOk9x',
+  webhookUrl: 'https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run',
+  modalWebhookUrl: 'https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run',
+  voiceId: 'standard-french-female',
 });
 
 /**

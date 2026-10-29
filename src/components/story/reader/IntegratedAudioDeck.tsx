@@ -13,7 +13,7 @@ import { useUserSettings } from '@/hooks/settings/useUserSettings';
 import { useSubscription } from '@/hooks/subscription/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { getSignedAudioUrl } from '@/utils/storageUtils';
-import { audioCache } from '@/utils/audioCache';
+import { audioCache, getAudioCacheKey } from '@/utils/audioCache';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { extractObjectiveValue } from '@/utils/objectiveUtils';
@@ -118,13 +118,13 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const defaultMode = (limits?.has_multivoice_audio) ? 'premium' : 'browser';
   const preferredAudioMode = userSettings.readingPreferences?.audioMode ?? defaultMode;
 
-  // Audio file checks
-  const readyStoryAudioFile = audioFiles.find(
-    file => file.status === 'ready' && file.audio_url && file.story_id === storyId
-  );
+  // Audio file checks : privilégier l'état en cours s'il existe pour éviter de rejouer un audio obsolète
   const currentPendingAudioFile = audioFiles.find(
     file => (file.status === 'pending' || file.status === 'processing') && file.story_id === storyId
   );
+  const readyStoryAudioFile = (!currentPendingAudioFile && !isGenerating)
+    ? audioFiles.find(file => file.status === 'ready' && file.audio_url && file.story_id === storyId)
+    : undefined;
   const isPremiumMode = (canUsePremiumAudio && (preferredAudioMode === 'premium' || limits?.has_multivoice_audio) && selectedVoiceId !== 'local') || !!readyStoryAudioFile;
 
   // Background Sound Hook
@@ -282,15 +282,15 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   // 🌙 Téléchargement Prédictif PWA / Routine : mise en cache locale transparente
   useEffect(() => {
     if (readyStoryAudioFile?.audio_url) {
-      const cacheKey = `story_${storyId}`;
-      audioCache.has(cacheKey).then(async (exists) => {
+      const cacheKey = getAudioCacheKey(storyId, readyStoryAudioFile.audio_url);
+      audioCache.has(cacheKey, readyStoryAudioFile.file_size).then(async (exists) => {
         if (exists) {
           setIsOfflineReady(true);
         } else {
           try {
             const signedUrl = await getSignedAudioUrl(readyStoryAudioFile.audio_url);
             if (signedUrl) {
-              await audioCache.prefetchAndCache(cacheKey, signedUrl);
+              await audioCache.prefetchAndCache(cacheKey, signedUrl, readyStoryAudioFile.file_size);
               setIsOfflineReady(true);
               console.log(`🌙 [AudioCache] Histoire ${storyId} pré-téléchargée pour la routine du coucher.`);
             }
@@ -300,7 +300,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         }
       });
     }
-  }, [readyStoryAudioFile?.audio_url, storyId]);
+  }, [readyStoryAudioFile?.audio_url, readyStoryAudioFile?.file_size, storyId]);
 
   // Synthèse vocale du navigateur (Mode Gratuit)
   const playBrowserParagraph = (index: number) => {
@@ -411,8 +411,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
 
       try {
         let audioUrl = "";
-        const cacheKey = `story_${storyId}`;
-        const cachedBlob = await audioCache.get(cacheKey);
+        const cacheKey = getAudioCacheKey(storyId, readyStoryAudioFile.audio_url);
+        const cachedBlob = await audioCache.get(cacheKey, readyStoryAudioFile.file_size);
 
         if (cachedBlob) {
           audioUrl = URL.createObjectURL(cachedBlob);
@@ -420,7 +420,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           const signedUrl = await getSignedAudioUrl(readyStoryAudioFile.audio_url);
           if (!signedUrl) throw new Error("Impossible d'accéder au fichier audio");
           audioUrl = signedUrl;
-          audioCache.prefetchAndCache(cacheKey, signedUrl).then(() => {
+          audioCache.prefetchAndCache(cacheKey, signedUrl, readyStoryAudioFile.file_size).then(() => {
             setIsOfflineReady(true);
           }).catch(() => {});
         }
@@ -831,10 +831,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
                 onClick={async () => {
                   if (readyStoryAudioFile.audio_url) {
                     try {
-                      const cacheKey = `story_${storyId}`;
+                      const cacheKey = getAudioCacheKey(storyId, readyStoryAudioFile.audio_url);
                       const signedUrl = await getSignedAudioUrl(readyStoryAudioFile.audio_url);
                       if (signedUrl) {
-                        await audioCache.prefetchAndCache(cacheKey, signedUrl);
+                        await audioCache.prefetchAndCache(cacheKey, signedUrl, readyStoryAudioFile.file_size);
                         setIsOfflineReady(true);
                         toast({
                           title: "Histoire enregistrée hors-ligne",

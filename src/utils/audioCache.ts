@@ -11,6 +11,17 @@ const DB_VERSION = 1;
 const STORE_NAME = "audios";
 
 /**
+ * Génère une clé de cache déterministe basée sur l'histoire et le fichier audio
+ */
+export function getAudioCacheKey(storyId: string, audioUrl?: string | null): string {
+  if (audioUrl) {
+    const filename = audioUrl.split('/').pop() || audioUrl;
+    return `story_${storyId}_${filename}`;
+  }
+  return `story_${storyId}`;
+}
+
+/**
  * Initialise la base de données IndexedDB
  */
 const initDB = (): Promise<IDBDatabase> => {
@@ -63,9 +74,9 @@ export const audioCache = {
   },
 
   /**
-   * Récupère un fichier audio Blob du cache
+   * Récupère un fichier audio Blob du cache avec validation optionnelle de taille
    */
-  async get(storyId: string): Promise<Blob | null> {
+  async get(storyId: string, expectedSize?: number | null): Promise<Blob | null> {
     try {
       const db = await initDB();
       return new Promise((resolve) => {
@@ -76,7 +87,14 @@ export const audioCache = {
         request.onsuccess = () => {
           const blob = request.result as Blob | undefined;
           if (blob) {
-            console.log(`⚡ [AudioCache] Audio récupéré du cache pour l'histoire : ${storyId}`);
+            // Si une taille attendue est fournie et que le blob est manifestement tronqué (< 75% de la taille attendue)
+            if (expectedSize && expectedSize > 0 && blob.size < expectedSize * 0.75) {
+              console.warn(`⚠️ [AudioCache] Blob en cache tronqué (${blob.size} vs attendu ${expectedSize} octets). Invalidation immédiate.`);
+              this.delete(storyId).catch(() => {});
+              resolve(null);
+              return;
+            }
+            console.log(`⚡ [AudioCache] Audio récupéré du cache pour : ${storyId} (${blob.size} octets)`);
             resolve(blob);
           } else {
             resolve(null);
@@ -84,7 +102,7 @@ export const audioCache = {
         };
 
         request.onerror = () => {
-          console.warn(`⚠️ [AudioCache] Fichier introuvable dans le cache pour l'histoire : ${storyId}`);
+          console.warn(`⚠️ [AudioCache] Fichier introuvable dans le cache pour : ${storyId}`);
           resolve(null);
         };
       });
@@ -97,16 +115,16 @@ export const audioCache = {
   /**
    * Télécharge un audio depuis une URL signée et le met en cache de manière transparente
    */
-  async prefetchAndCache(storyId: string, signedUrl: string): Promise<Blob | null> {
+  async prefetchAndCache(storyId: string, signedUrl: string, expectedSize?: number | null): Promise<Blob | null> {
     try {
-      // 1. Vérifier si l'audio est déjà dans le cache
-      const cachedBlob = await this.get(storyId);
+      // 1. Vérifier si l'audio est déjà dans le cache valide
+      const cachedBlob = await this.get(storyId, expectedSize);
       if (cachedBlob) {
         return cachedBlob;
       }
 
-      // 2. Si absent, le télécharger depuis l'URL signée
-      console.log(`🌐 [AudioCache] Pré-chargement réseau de l'audio pour l'histoire : ${storyId}`);
+      // 2. Si absent ou corrompu, le télécharger depuis l'URL signée
+      console.log(`🌐 [AudioCache] Pré-chargement réseau de l'audio pour : ${storyId}`);
       const response = await fetch(signedUrl);
       if (!response.ok) {
         throw new Error(`Erreur HTTP lors du téléchargement : ${response.status}`);
@@ -126,9 +144,41 @@ export const audioCache = {
   /**
    * Vérifie si un audio est actuellement présent dans le cache
    */
-  async has(storyId: string): Promise<boolean> {
-    const blob = await this.get(storyId);
+  async has(storyId: string, expectedSize?: number | null): Promise<boolean> {
+    const blob = await this.get(storyId, expectedSize);
     return blob !== null;
+  },
+
+  /**
+   * Supprime tous les caches associés à une histoire (toutes versions confondues)
+   */
+  async invalidateStory(storyId: string): Promise<void> {
+    try {
+      const db = await initDB();
+      return new Promise((resolve) => {
+        const transaction = db.transaction([STORE_NAME], "readwrite");
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.openCursor();
+
+        request.onsuccess = (event) => {
+          const cursor = (event.target as IDBRequest).result as IDBCursorWithValue | null;
+          if (cursor) {
+            const key = String(cursor.key);
+            if (key === storyId || key.startsWith(`story_${storyId}`) || key.startsWith(storyId)) {
+              cursor.delete();
+            }
+            cursor.continue();
+          } else {
+            console.log(`🧹 [AudioCache] Cache nettoyé pour l'histoire : ${storyId}`);
+            resolve();
+          }
+        };
+
+        request.onerror = () => resolve();
+      });
+    } catch (error) {
+      console.warn("⚠️ [AudioCache] Erreur invalidateStory :", error);
+    }
   },
 
   /**

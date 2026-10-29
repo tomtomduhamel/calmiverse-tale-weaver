@@ -4,7 +4,7 @@ import { Play, Pause, Volume2, VolumeX, Loader2, Download, RefreshCw, X, Check }
 import { useN8nAudioGeneration } from '@/hooks/story/audio/useN8nAudioGeneration';
 import { useToast } from '@/hooks/use-toast';
 import { getSignedAudioUrl } from '@/utils/storageUtils';
-import { audioCache } from '@/utils/audioCache';
+import { audioCache, getAudioCacheKey } from '@/utils/audioCache';
 
 interface N8nAudioPlayerProps {
   storyId: string;
@@ -53,7 +53,8 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
   // Charger les fichiers audio existants et nettoyer/récupérer les fichiers
   useEffect(() => {
     const loadAndCleanup = async () => {
-      await cleanupStuckFiles(storyId);
+      await audioCache.invalidateStory(storyId);
+    await cleanupStuckFiles(storyId);
       await recoverErrorFiles(storyId);
       await fetchAudioFiles(storyId);
     };
@@ -61,7 +62,9 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
   }, [storyId, fetchAudioFiles, cleanupStuckFiles, recoverErrorFiles]);
 
   // Trouver les fichiers audio pour cette histoire
-  const readyAudioFile = audioFiles.find(file => file.status === 'ready' && file.audio_url);
+  const readyAudioFile = (!pendingAudioFile && !isGenerating)
+    ? audioFiles.find(file => file.status === 'ready' && file.audio_url)
+    : undefined;
   const pendingAudioFile = audioFiles.find(file => file.status === 'pending' || file.status === 'processing');
 
   // Fichier en erreur SANS URL
@@ -75,7 +78,8 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
     const prefetchAudio = async () => {
       if (readyAudioFile?.audio_url) {
         try {
-          const cached = await audioCache.has(storyId);
+          const cacheKey = getAudioCacheKey(storyId, readyAudioFile.audio_url);
+          const cached = await audioCache.has(cacheKey, readyAudioFile.file_size);
           if (cached) {
             setIsOfflineReady(true);
             return;
@@ -84,7 +88,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
           setIsCaching(true);
           const signedUrl = await getSignedAudioUrl(readyAudioFile.audio_url);
           if (signedUrl) {
-            await audioCache.prefetchAndCache(storyId, signedUrl);
+            await audioCache.prefetchAndCache(cacheKey, signedUrl, readyAudioFile.file_size);
             setIsOfflineReady(true);
           }
         } catch (error) {
@@ -98,7 +102,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
     };
 
     prefetchAudio();
-  }, [readyAudioFile?.audio_url, storyId]);
+  }, [readyAudioFile?.audio_url, readyAudioFile?.file_size, storyId]);
 
   // Gérer la lecture audio
   const handlePlayPause = async () => {
@@ -125,7 +129,8 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
       let audioUrl = "";
 
       // 1. Tenter de lire depuis le cache local IndexedDB (fonctionne offline)
-      const cachedBlob = await audioCache.get(storyId);
+      const cacheKey = getAudioCacheKey(storyId, readyAudioFile.audio_url);
+      const cachedBlob = await audioCache.get(cacheKey, readyAudioFile.file_size);
       if (cachedBlob) {
         audioUrl = URL.createObjectURL(cachedBlob);
         console.log("⚡ [N8nAudioPlayer] Lecture de l'audio depuis le cache IndexedDB (Offline)");
@@ -152,7 +157,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
         audioUrl = signedUrl;
 
         // Sauvegarder dans le cache en tâche de fond pour la suite
-        audioCache.prefetchAndCache(storyId, signedUrl).then(() => {
+        audioCache.prefetchAndCache(cacheKey, signedUrl, readyAudioFile.file_size).then(() => {
           setIsOfflineReady(true);
         });
       }
@@ -206,6 +211,7 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
 
   // Rafraîchir les fichiers et récupérer ceux en erreur
   const handleRefresh = async () => {
+    await audioCache.invalidateStory(storyId);
     await cleanupStuckFiles(storyId);
     await recoverErrorFiles(storyId);
     await fetchAudioFiles(storyId);

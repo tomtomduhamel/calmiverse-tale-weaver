@@ -12,42 +12,27 @@ serve(async (req) => {
   }
 
   try {
-    // Récupérer le provider TTS configuré (modal-gpu, vps-hostinger, kokoro)
+    // Récupérer le provider TTS configuré (modal-gpu par défaut pour haute fidélité CosyVoice 2 EU)
     const ttsProvider = Deno.env.get('TTS_PROVIDER') || 'modal-gpu';
     
     console.log(`[get-tts-config] Checking TTS configuration for provider: ${ttsProvider}`);
     
-    let webhookUrl: string;
-    let voiceId: string = 'standard-french-female';
+    const MODAL_ASYNC_WEBHOOK = Deno.env.get('MODAL_TTS_WEBHOOK_URL') || "https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run";
+    const voiceId = 'standard-french-female';
     
-    const MODAL_ASYNC_WEBHOOK = "https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run";
-    const DEFAULT_N8N_WEBHOOK = "https://n8n.srv856374.hstgr.cloud/webhook/d2d88f5d-78c0-49c1-83b8-096d4b21190c";
-    const DEFAULT_VPS_KOKORO_WEBHOOK = Deno.env.get('VPS_KOKORO_WEBHOOK_URL') || DEFAULT_N8N_WEBHOOK;
-    
-    // Sélectionner l'URL webhook selon le provider
-    if (ttsProvider === 'modal-gpu' || ttsProvider === 'modal') {
-      webhookUrl = Deno.env.get('MODAL_TTS_WEBHOOK_URL') || MODAL_ASYNC_WEBHOOK;
-      voiceId = 'standard-french-female';
-    } else if (ttsProvider === 'vps-hostinger' || ttsProvider === 'vps' || ttsProvider === 'kokoro') {
-      webhookUrl = DEFAULT_VPS_KOKORO_WEBHOOK;
-      voiceId = 'standard-french-female';
-    } else {
-      webhookUrl = Deno.env.get('N8N_WEBHOOK_URL') || DEFAULT_N8N_WEBHOOK;
-      voiceId = 'standard-french-female';
-    }
-    
-    if (!webhookUrl) {
-      webhookUrl = MODAL_ASYNC_WEBHOOK;
-    }
+    // Unification : Modal GPU CosyVoice 2 EU gère à la fois les voix standard et les clones personnalisés
+    const webhookUrl = MODAL_ASYNC_WEBHOOK;
+    const modalWebhookUrl = MODAL_ASYNC_WEBHOOK;
+    const standardWebhookUrl = MODAL_ASYNC_WEBHOOK;
     
     console.log(`TTS Config requested - Provider: ${ttsProvider}, URL: ${webhookUrl.substring(0, 45)}...`);
     
     return new Response(
       JSON.stringify({
-        provider: ttsProvider,
+        provider: 'modal-gpu',
         webhookUrl,
-        modalWebhookUrl: Deno.env.get('MODAL_TTS_WEBHOOK_URL') || MODAL_ASYNC_WEBHOOK,
-        standardWebhookUrl: DEFAULT_VPS_KOKORO_WEBHOOK,
+        modalWebhookUrl,
+        standardWebhookUrl,
         voiceId,
       }),
       {
