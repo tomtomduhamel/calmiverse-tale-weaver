@@ -54,6 +54,7 @@ export const CreateSequelButton: React.FC<CreateSequelButtonProps> = ({
     isCreating
   } = useStorySeries();
   const { limits } = useSubscription();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   // Détecter les suites en cours

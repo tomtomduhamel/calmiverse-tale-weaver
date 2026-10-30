@@ -83,6 +83,7 @@ const Welcome: React.FC = () => {
   // Étape 1 : Création express du profil enfant
   const handleCreateChildStep = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     if (!childName.trim()) {
       toast({
         title: "Prénom requis",
@@ -100,6 +101,7 @@ const Welcome: React.FC = () => {
       birthDate.setMonth(birthDate.getMonth() - Math.round(yearsAgo * 12));
 
       const newChildId = await handleAddChild({
+        authorId: user.id,
         name: childName.trim(),
         birthDate,
         gender,

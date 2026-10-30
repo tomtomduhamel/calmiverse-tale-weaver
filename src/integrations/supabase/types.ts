@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.3"
   }
   public: {
     Tables: {
@@ -88,6 +88,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "stories"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audio_files_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "v_story_learning_batch"
+            referencedColumns: ["story_id"]
           },
         ]
       }
@@ -397,6 +404,95 @@ export type Database = {
           },
         ]
       }
+      marketing_publications: {
+        Row: {
+          channel: string
+          created_at: string
+          cta_keyword: string
+          error_message: string | null
+          excerpt: string
+          full_content: string | null
+          id: string
+          ig_container_id: string | null
+          ig_reel_media_id: string | null
+          ig_story_media_id: string | null
+          image_prompt: string | null
+          image_url: string | null
+          publication_type: string
+          published_at: string | null
+          slot: string
+          sound_id: string | null
+          sound_url: string | null
+          status: string
+          target_date: string
+          target_duration_minutes: number
+          theme: string
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          cta_keyword?: string
+          error_message?: string | null
+          excerpt: string
+          full_content?: string | null
+          id?: string
+          ig_container_id?: string | null
+          ig_reel_media_id?: string | null
+          ig_story_media_id?: string | null
+          image_prompt?: string | null
+          image_url?: string | null
+          publication_type?: string
+          published_at?: string | null
+          slot: string
+          sound_id?: string | null
+          sound_url?: string | null
+          status?: string
+          target_date?: string
+          target_duration_minutes?: number
+          theme: string
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          cta_keyword?: string
+          error_message?: string | null
+          excerpt?: string
+          full_content?: string | null
+          id?: string
+          ig_container_id?: string | null
+          ig_reel_media_id?: string | null
+          ig_story_media_id?: string | null
+          image_prompt?: string | null
+          image_url?: string | null
+          publication_type?: string
+          published_at?: string | null
+          slot?: string
+          sound_id?: string | null
+          sound_url?: string | null
+          status?: string
+          target_date?: string
+          target_duration_minutes?: number
+          theme?: string
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_publications_sound_id_fkey"
+            columns: ["sound_id"]
+            isOneToOne: false
+            referencedRelation: "sound_backgrounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       narrative_schemas: {
         Row: {
           created_at: string
@@ -404,6 +500,7 @@ export type Database = {
           id: string
           is_active: boolean
           mechanism: string
+          objective_affinity: string[]
           type: string
         }
         Insert: {
@@ -412,6 +509,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           mechanism: string
+          objective_affinity?: string[]
           type: string
         }
         Update: {
@@ -420,6 +518,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           mechanism?: string
+          objective_affinity?: string[]
           type?: string
         }
         Relationships: []
@@ -573,6 +672,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "stories"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reading_history_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "v_story_learning_batch"
+            referencedColumns: ["story_id"]
           },
         ]
       }
@@ -766,11 +872,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_stories_next_story_id"
+            columns: ["next_story_id"]
+            isOneToOne: false
+            referencedRelation: "v_story_learning_batch"
+            referencedColumns: ["story_id"]
+          },
+          {
             foreignKeyName: "fk_stories_previous_story_id"
             columns: ["previous_story_id"]
             isOneToOne: false
             referencedRelation: "stories"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_stories_previous_story_id"
+            columns: ["previous_story_id"]
+            isOneToOne: false
+            referencedRelation: "v_story_learning_batch"
+            referencedColumns: ["story_id"]
           },
           {
             foreignKeyName: "fk_stories_series_id"
@@ -862,6 +982,186 @@ export type Database = {
             columns: ["story_id"]
             isOneToOne: false
             referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_access_logs_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "v_story_learning_batch"
+            referencedColumns: ["story_id"]
+          },
+        ]
+      }
+      story_critiques: {
+        Row: {
+          actionable_improvements: Json
+          actual_word_count: number | null
+          badge: string
+          calmi_pitfalls: Json
+          content: string
+          created_at: string
+          critique_summary: Json
+          detailed_scores: Json
+          evaluator_model: string | null
+          id: string
+          markdown_report: string | null
+          objective: string | null
+          overall_score: number
+          rewrite_demonstration: Json
+          stats: Json
+          story_id: string | null
+          strengths: Json
+          target_age: string | null
+          target_word_count: number | null
+          title: string
+          updated_at: string
+          verdict: string
+          weaknesses: Json
+        }
+        Insert: {
+          actionable_improvements?: Json
+          actual_word_count?: number | null
+          badge: string
+          calmi_pitfalls?: Json
+          content: string
+          created_at?: string
+          critique_summary?: Json
+          detailed_scores?: Json
+          evaluator_model?: string | null
+          id?: string
+          markdown_report?: string | null
+          objective?: string | null
+          overall_score: number
+          rewrite_demonstration?: Json
+          stats?: Json
+          story_id?: string | null
+          strengths?: Json
+          target_age?: string | null
+          target_word_count?: number | null
+          title: string
+          updated_at?: string
+          verdict: string
+          weaknesses?: Json
+        }
+        Update: {
+          actionable_improvements?: Json
+          actual_word_count?: number | null
+          badge?: string
+          calmi_pitfalls?: Json
+          content?: string
+          created_at?: string
+          critique_summary?: Json
+          detailed_scores?: Json
+          evaluator_model?: string | null
+          id?: string
+          markdown_report?: string | null
+          objective?: string | null
+          overall_score?: number
+          rewrite_demonstration?: Json
+          stats?: Json
+          story_id?: string | null
+          strengths?: Json
+          target_age?: string | null
+          target_word_count?: number | null
+          title?: string
+          updated_at?: string
+          verdict?: string
+          weaknesses?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_critiques_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_critiques_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "v_story_learning_batch"
+            referencedColumns: ["story_id"]
+          },
+        ]
+      }
+      story_routines: {
+        Row: {
+          child_ids: string[] | null
+          created_at: string
+          days_of_week: number[] | null
+          duration_minutes: number
+          fast_story_prompt_key: string | null
+          generate_video: boolean
+          id: string
+          interval_days: number | null
+          is_active: boolean
+          last_run_at: string | null
+          last_skip_reason: string | null
+          last_story_id: string | null
+          mode: string
+          monthly_estimate: number | null
+          next_run_at: string | null
+          objective: string | null
+          schedule_type: string
+          time_of_day: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          child_ids?: string[] | null
+          created_at?: string
+          days_of_week?: number[] | null
+          duration_minutes?: number
+          fast_story_prompt_key?: string | null
+          generate_video?: boolean
+          id?: string
+          interval_days?: number | null
+          is_active?: boolean
+          last_run_at?: string | null
+          last_skip_reason?: string | null
+          last_story_id?: string | null
+          mode: string
+          monthly_estimate?: number | null
+          next_run_at?: string | null
+          objective?: string | null
+          schedule_type: string
+          time_of_day: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          child_ids?: string[] | null
+          created_at?: string
+          days_of_week?: number[] | null
+          duration_minutes?: number
+          fast_story_prompt_key?: string | null
+          generate_video?: boolean
+          id?: string
+          interval_days?: number | null
+          is_active?: boolean
+          last_run_at?: string | null
+          last_skip_reason?: string | null
+          last_story_id?: string | null
+          mode?: string
+          monthly_estimate?: number | null
+          next_run_at?: string | null
+          objective?: string | null
+          schedule_type?: string
+          time_of_day?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_routines_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1034,6 +1334,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "story_shares_copied_story_id_fkey"
+            columns: ["copied_story_id"]
+            isOneToOne: false
+            referencedRelation: "v_story_learning_batch"
+            referencedColumns: ["story_id"]
+          },
+          {
             foreignKeyName: "story_shares_recipient_id_fkey"
             columns: ["recipient_id"]
             isOneToOne: false
@@ -1053,6 +1360,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "stories"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_shares_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "v_story_learning_batch"
+            referencedColumns: ["story_id"]
           },
         ]
       }
@@ -1124,8 +1438,10 @@ export type Database = {
           annual_price_usd: number
           audio_generations_per_month: number
           created_at: string
+          has_auto_creation: boolean
           has_background_music: boolean
           has_community_access: boolean
+          has_multivoice_audio: boolean
           has_priority_access: boolean
           has_story_series: boolean
           id: string
@@ -1141,8 +1457,10 @@ export type Database = {
           annual_price_usd: number
           audio_generations_per_month?: number
           created_at?: string
+          has_auto_creation?: boolean
           has_background_music?: boolean
           has_community_access?: boolean
+          has_multivoice_audio?: boolean
           has_priority_access?: boolean
           has_story_series?: boolean
           id?: string
@@ -1158,8 +1476,10 @@ export type Database = {
           annual_price_usd?: number
           audio_generations_per_month?: number
           created_at?: string
+          has_auto_creation?: boolean
           has_background_music?: boolean
           has_community_access?: boolean
+          has_multivoice_audio?: boolean
           has_priority_access?: boolean
           has_story_series?: boolean
           id?: string
@@ -1414,6 +1734,88 @@ export type Database = {
           },
         ]
       }
+      user_voice_categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          label: string
+          slug: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          label: string
+          slug: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          label?: string
+          slug?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_voice_categories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_voices: {
+        Row: {
+          category: string
+          category_name: string | null
+          created_at: string
+          id: string
+          name: string
+          relation: string
+          transcript: string | null
+          updated_at: string
+          user_id: string
+          voice_ref_path: string
+        }
+        Insert: {
+          category?: string
+          category_name?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          relation: string
+          transcript?: string | null
+          updated_at?: string
+          user_id: string
+          voice_ref_path: string
+        }
+        Update: {
+          category?: string
+          category_name?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          relation?: string
+          transcript?: string | null
+          updated_at?: string
+          user_id?: string
+          voice_ref_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_voices_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           audio_mode: string
@@ -1423,6 +1825,7 @@ export type Database = {
           custom_speed_fast: number | null
           custom_speed_normal: number | null
           custom_speed_slow: number | null
+          dim_screen_on_audio: boolean | null
           email: string
           email_notifications: boolean | null
           firstname: string | null
@@ -1438,6 +1841,7 @@ export type Database = {
           system_notifications: boolean | null
           timezone: string | null
           video_intro_enabled: boolean | null
+          video_orientation: string | null
         }
         Insert: {
           audio_mode?: string
@@ -1447,6 +1851,7 @@ export type Database = {
           custom_speed_fast?: number | null
           custom_speed_normal?: number | null
           custom_speed_slow?: number | null
+          dim_screen_on_audio?: boolean | null
           email: string
           email_notifications?: boolean | null
           firstname?: string | null
@@ -1462,6 +1867,7 @@ export type Database = {
           system_notifications?: boolean | null
           timezone?: string | null
           video_intro_enabled?: boolean | null
+          video_orientation?: string | null
         }
         Update: {
           audio_mode?: string
@@ -1471,6 +1877,7 @@ export type Database = {
           custom_speed_fast?: number | null
           custom_speed_normal?: number | null
           custom_speed_slow?: number | null
+          dim_screen_on_audio?: boolean | null
           email?: string
           email_notifications?: boolean | null
           firstname?: string | null
@@ -1486,6 +1893,7 @@ export type Database = {
           system_notifications?: boolean | null
           timezone?: string | null
           video_intro_enabled?: boolean | null
+          video_orientation?: string | null
         }
         Relationships: []
       }
@@ -1494,6 +1902,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          objective_affinity: string[]
           sensory_keywords: string[]
           sensory_type: string
         }
@@ -1501,6 +1910,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          objective_affinity?: string[]
           sensory_keywords?: string[]
           sensory_type: string
         }
@@ -1508,10 +1918,58 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          objective_affinity?: string[]
           sensory_keywords?: string[]
           sensory_type?: string
         }
         Relationships: []
+      }
+      voice_invitations: {
+        Row: {
+          category: string | null
+          category_name: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          is_used: boolean
+          relation_name: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          category_name?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_used?: boolean
+          relation_name: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          category_name?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_used?: boolean
+          relation_name?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_invitations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -1530,10 +1988,41 @@ export type Database = {
         }
         Relationships: []
       }
+      v_story_learning_batch: {
+        Row: {
+          actionable_improvements: Json | null
+          actual_word_count: number | null
+          calmi_pitfalls: Json | null
+          created_at: string | null
+          critique_badge: string | null
+          critique_id: string | null
+          critique_score: number | null
+          critique_summary: Json | null
+          detailed_scores: Json | null
+          objective: string | null
+          story_id: string | null
+          strengths: Json | null
+          target_age: string | null
+          target_word_count: number | null
+          title: string | null
+          user_comment: string | null
+          user_rating: number | null
+          weaknesses: Json | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_story_share: {
         Args: { p_character_mapping?: Json; p_share_id: string }
+        Returns: Json
+      }
+      check_auto_routine_quota: {
+        Args: {
+          p_candidate_monthly: number
+          p_exclude_routine?: string
+          p_user_id: string
+        }
         Returns: Json
       }
       check_enhanced_rate_limit: {
@@ -1570,8 +2059,89 @@ export type Database = {
         Args: { p_quota_type: string; p_user_id: string }
         Returns: Json
       }
+      claim_due_routines: {
+        Args: { p_limit?: number }
+        Returns: {
+          child_ids: string[] | null
+          created_at: string
+          days_of_week: number[] | null
+          duration_minutes: number
+          fast_story_prompt_key: string | null
+          generate_video: boolean
+          id: string
+          interval_days: number | null
+          is_active: boolean
+          last_run_at: string | null
+          last_skip_reason: string | null
+          last_story_id: string | null
+          mode: string
+          monthly_estimate: number | null
+          next_run_at: string | null
+          objective: string | null
+          schedule_type: string
+          time_of_day: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "story_routines"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      clean_old_auth_logs: {
+        Args: { p_days_to_keep?: number }
+        Returns: {
+          deleted_audit_logs: number
+          deleted_cron_history: number
+          deleted_refresh_tokens: number
+          status: string
+        }[]
+      }
+      clean_old_epub_files: {
+        Args: { p_days_to_keep?: number }
+        Returns: {
+          bucket_id: string
+          deleted_files: number
+          freed_space_mb: number
+          status: string
+        }[]
+      }
+      clean_storage_orphans: {
+        Args: { p_dry_run?: boolean }
+        Returns: {
+          bucket_id: string
+          freed_space_mb: number
+          orphan_files: number
+          status: string
+          total_files: number
+        }[]
+      }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
       cleanup_old_storage_files: { Args: never; Returns: undefined }
+      compute_next_run: {
+        Args: {
+          p_days_of_week: number[]
+          p_from?: string
+          p_interval_days: number
+          p_schedule_type: string
+          p_time_of_day: string
+          p_timezone: string
+        }
+        Returns: string
+      }
+      create_or_update_prompt_v2: {
+        Args: {
+          p_changelog?: string
+          p_content: string
+          p_description: string
+          p_key: string
+          p_title: string
+        }
+        Returns: string
+      }
       create_pending_beta_user: {
         Args: { p_email: string; p_invitation_code?: string; p_user_id: string }
         Returns: Json
@@ -1652,6 +2222,14 @@ export type Database = {
         Args: { p_usage_type: string; p_user_id: string }
         Returns: boolean
       }
+      insert_auto_optimized_prompt_version: {
+        Args: {
+          p_changelog?: string
+          p_new_content: string
+          p_template_key: string
+        }
+        Returns: Json
+      }
       is_admin: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       join_family: { Args: { p_token: string }; Returns: boolean }
@@ -1720,12 +2298,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1749,11 +2327,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1774,11 +2352,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1799,11 +2377,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1816,11 +2394,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

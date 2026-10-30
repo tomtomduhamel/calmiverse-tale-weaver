@@ -134,7 +134,7 @@ export const StoryContent: React.FC<StoryContentProps> = ({
 
     // === MODE PULSATION ===
     // Un seul mot surligné avec fond bien visible + légère mise en valeur
-    if (immersiveMode === 'pulse' || immersiveMode === 'halo') {
+    if (immersiveMode === 'pulse') {
       allBlocks.forEach((blockElement) => {
         const b = blockElement as HTMLElement;
         const pIdx = b.getAttribute('data-paragraph-index');
