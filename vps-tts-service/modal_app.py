@@ -133,6 +133,12 @@ def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) ->
 
     cached_wav_path = os.path.join(cache_dir, f"voice_{stable_key}.wav")
     
+    if not (os.path.exists(cached_wav_path) and os.path.getsize(cached_wav_path) > 0):
+        try:
+            volume.reload()
+        except Exception:
+            pass
+
     if os.path.exists(cached_wav_path) and os.path.getsize(cached_wav_path) > 0:
         print(f"✅ Voix de référence trouvée en cache pérenne : {cached_wav_path}")
         return cached_wav_path
@@ -148,6 +154,12 @@ def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) ->
     converted_wav = convert_to_wav(temp_dl_path, cached_wav_path)
     if os.path.exists(temp_dl_path):
         os.remove(temp_dl_path)
+
+    try:
+        volume.commit()
+        print(f"💾 Voix de référence persistée dans le Volume Modal : {converted_wav}")
+    except Exception as commit_err:
+        print(f"⚠️ Avertissement commit volume Modal : {commit_err}")
         
     return converted_wav
 
@@ -322,11 +334,53 @@ class CalmiTTSGPU:
                 self._get_speaker_conditioning("/root/default_ref.wav")
         print(f"✅ [CalmiTTSGPU] CosyVoice 2 EU prêt sur {self.device.upper()} en {time.time() - start:.2f}s !")
 
-    def _get_speaker_conditioning(self, prompt_path: str) -> dict:
-        """Extrait et met en cache les tenseurs d'empreinte vocale (Whisper + CampPlus + Mel)
-        une seule fois par fichier audio de référence pour éliminer 100% de l'overhead ONNX inter-phrases."""
-        if prompt_path in self.speaker_cache:
-            return self.speaker_cache[prompt_path]
+    def _get_speaker_conditioning(self, prompt_path: str, prompt_text: str = "") -> dict:
+        """Extrait et met en cache les tenseurs d'empreinte vocale complète (Zero-Shot LLM + Flow Matching)
+        dans la fenêtre optimale de 5 à 8 secondes de CosyVoice 2."""
+        # Fenêtres optimales calées sur les silences naturels de chaque enregistrement de référence (6-8s)
+        OPTIMAL_VOICE_PROMPTS = {
+            "b93c7425-7b62-4bc6-9356-1870140560a9": (
+                0.35, 7.60,
+                "Mon trésor, installe-toi confortablement sous ta couette. Les étoiles brillent pour toi dans le ciel de Calmi."
+            ),
+            "fd9c4da7a70b0157c0fec4c3bdabeb9e": (
+                0.35, 7.60,
+                "Mon trésor, installe-toi confortablement sous ta couette. Les étoiles brillent pour toi dans le ciel de Calmi."
+            ),
+            "3788ec01-c177-45ff-a893-ec194bb560bf": (
+                0.20, 8.20,
+                "Coucou mon chéri, installe-toi bien chaudement. Papy et Mamie sont là pour te faire voyager dans un monde plein de magie et d'aventures ce soir."
+            ),
+            "1c8c80d9491886602913414bbfa27b0d": (
+                0.20, 8.20,
+                "Coucou mon chéri, installe-toi bien chaudement. Papy et Mamie sont là pour te faire voyager dans un monde plein de magie et d'aventures ce soir."
+            ),
+            "b17cb63d-1d64-4328-b8e1-c02d1c5bf93b": (
+                0.10, 7.50,
+                "Bienvenue dans la forêt magique ! Je suis ton compagnon tout doux."
+            ),
+            "937aa960-4633-42ef-9ab3-ae4fcf4c5df4": (
+                0.10, 7.80,
+                "Hou hou ! Je suis le gardien du ciel étoilé. Mes ailes déployées me permettent de voler tout là-haut au-dessus des nuages."
+            ),
+            "4e1e6013-143f-49ad-9982-866a2577d00e": (
+                0.10, 7.50,
+                "Salut ! Avec mon doudou et mon super courage, rien ne me fait peur."
+            ),
+        }
+
+        matched_window = None
+        for vid, win_tuple in OPTIMAL_VOICE_PROMPTS.items():
+            if vid in prompt_path:
+                matched_window = win_tuple
+                break
+
+        resolved_prompt = matched_window[2] if matched_window else (prompt_text.strip() if prompt_text else "")
+        resolved_prompt = re.sub(r'\.{2,}', '.', resolved_prompt).strip()
+
+        cache_key = f"{prompt_path}::{resolved_prompt}"
+        if cache_key in self.speaker_cache:
+            return self.speaker_cache[cache_key]
 
         from cosyvoice.utils.file_utils import load_wav
         t_spk = time.time()
@@ -334,28 +388,50 @@ class CalmiTTSGPU:
         sample_rate = self.cosy_model._model.sample_rate
         prompt_speech_16k = load_wav(prompt_path, 16000)
 
-        # Limiter l'extrait de référence à 8 secondes max (128 000 échantillons à 16kHz)
-        # pour éviter d'alourdir l'attention du décodeur Flow Matching sur chaque phrase
-        max_samples = 16000 * 8
-        if prompt_speech_16k.shape[1] > max_samples:
-            prompt_speech_16k = prompt_speech_16k[:, :max_samples]
+        if matched_window:
+            start_s, end_s, _ = matched_window
+            start_idx = int(16000 * start_s)
+            end_idx = min(prompt_speech_16k.shape[1], int(16000 * end_s))
+            if end_idx > start_idx + 16000:
+                prompt_speech_16k = prompt_speech_16k[:, start_idx:end_idx]
+        else:
+            # Pour tout nouveau clone vocal (> 8.5s), conserver les 8 premières secondes et les 2 premières phrases
+            max_samples = 16000 * 8
+            if prompt_speech_16k.shape[1] > max_samples:
+                prompt_speech_16k = prompt_speech_16k[:, :max_samples]
+                if resolved_prompt:
+                    sents = re.split(r'(?<=[.!?])\s+', resolved_prompt)
+                    if len(sents) >= 2:
+                        resolved_prompt = " ".join(sents[:2]).strip()
 
-        base_input = frontend.frontend_cross_lingual('', prompt_speech_16k, sample_rate, '')
+        if resolved_prompt:
+            try:
+                norm_prompt = frontend.text_normalize(resolved_prompt, split=False, text_frontend=True)
+                if isinstance(norm_prompt, list):
+                    norm_prompt = " ".join(norm_prompt)
+            except Exception:
+                norm_prompt = resolved_prompt
+            base_input = frontend.frontend_zero_shot('Bonjour.', norm_prompt, prompt_speech_16k, sample_rate, '')
+            mode_label = "zero_shot"
+        else:
+            base_input = frontend.frontend_cross_lingual('Bonjour.', prompt_speech_16k, sample_rate, '')
+            mode_label = "cross_lingual"
+
         base_input.pop('text', None)
         base_input.pop('text_len', None)
-        self.speaker_cache[prompt_path] = base_input
-        print(f"🎙️ Empreinte vocale extraite et mise en cache GPU ({prompt_path}) en {time.time() - t_spk:.2f}s")
+        self.speaker_cache[cache_key] = base_input
+        print(f"🎙️ Empreinte vocale [{mode_label}] extraite et mise en cache GPU ({prompt_path}) en {time.time() - t_spk:.2f}s")
         return base_input
 
-    def _synthesize_block_fast(self, text: str, prompt_path: str, sentence_pause_sec: float = 0.18) -> Tuple[np.ndarray, int]:
-        """Synthétise un bloc narratif phrase par phrase (<= 200 chars, text_frontend=True)
-        en réutilisant l'empreinte vocale pré-calculée en mémoire GPU."""
+    def _synthesize_block_fast(self, text: str, prompt_path: str, prompt_text: str = "", sentence_pause_sec: float = 0.18) -> Tuple[np.ndarray, int]:
+        """Synthétise un bloc narratif phrase par phrase (<= 180 chars, text_frontend=True)
+        en réutilisant l'empreinte vocale Zero-Shot pré-calculée en mémoire GPU."""
         frontend = self.cosy_model._model.frontend
         model = self.cosy_model._model.model
         sr = self.cosy_model.sample_rate
-        spk_cond = self._get_speaker_conditioning(prompt_path)
+        spk_cond = self._get_speaker_conditioning(prompt_path, prompt_text=prompt_text)
 
-        raw_sentences = split_into_clean_sentences(text, max_sentence_chars=200)
+        raw_sentences = split_into_clean_sentences(text, max_sentence_chars=180)
         if not raw_sentences:
             raw_sentences = [text.strip()]
 
@@ -518,9 +594,11 @@ class CalmiTTSGPU:
                     previous_speaker = seg_speaker_key
 
                     prompt_target = seg_ref_path if (seg_ref_path and os.path.exists(seg_ref_path)) else DEFAULT_LOCAL_REF
+                    seg_prompt_text = (seg.get("ref_text") or seg.get("transcript") or (clean_prompt if seg_ref_path == ref_audio_path else "") or "").strip()
                     wav_np, current_sr = self._synthesize_block_fast(
                         text=seg_text,
                         prompt_path=prompt_target,
+                        prompt_text=seg_prompt_text,
                         sentence_pause_sec=sentence_pause_sec
                     )
                     sr = current_sr
@@ -544,6 +622,7 @@ class CalmiTTSGPU:
                     wav_np, current_sr = self._synthesize_block_fast(
                         text=chunk,
                         prompt_path=prompt_target,
+                        prompt_text=clean_prompt,
                         sentence_pause_sec=sentence_pause_sec
                     )
                     sr = current_sr
@@ -626,6 +705,13 @@ class CalmiTTSGPU:
         )
 
     @modal.method()
+    def synthesize_direct(self, request_dict: dict) -> bytes:
+        req_id = str(uuid.uuid4())[:8]
+        request = TTSRequest(**request_dict)
+        wav_bytes, sr = self._process_synthesis(request, req_id)
+        return wav_bytes
+
+    @modal.method()
     def process_async_task(self, request_dict: dict, req_id: str):
         import requests
         import traceback
@@ -649,10 +735,16 @@ class CalmiTTSGPU:
 # ==============================================================================
 # CPU FAST-GATEWAY: Répond HTTP 202 en < 300ms sans attendre le cold-start du GPU
 # ==============================================================================
+gateway_image = (
+    modal.Image.debian_slim(python_version="3.10")
+    .apt_install("libsndfile1")
+    .pip_install("numpy", "soundfile", "pydantic", "fastapi", "requests")
+)
+
 @app.function(
-    image=image,
+    image=gateway_image,
     timeout=60,
-    scaledown_window=60,
+    scaledown_window=300,
 )
 @modal.fastapi_endpoint(method="POST")
 def synthesize_async_fast(request: TTSRequest):

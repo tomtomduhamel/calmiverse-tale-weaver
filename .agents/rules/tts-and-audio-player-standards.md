@@ -15,14 +15,15 @@ Ce document consigne les règles critiques d'ingénierie apprises lors de la ré
   1. **Ne jamais envoyer un paragraphe entier (> 220 caractères) en une seule passe au LLM de CosyVoice 2.**
   2. Toujours découper chaque paragraphe en phrases courtes et naturelles (`split_into_clean_sentences`, `max_sentence_chars=200`) et activer `frontend.text_normalize(sent, split=True, text_frontend=True)` pour convertir les nombres/symboles en français et garantir `< 80` tokens par segment.
 
-### Règle n°2 : Mise en cache GPU de l'empreinte vocale (`self.speaker_cache`)
-- **Problème identifié (Lenteur de `cosy_model.tts()` sur phrases courtes)** :
+### Règle n°2 : Clonage Vocal Zero-Shot Fidèle (`frontend_zero_shot`) & Cache GPU (`self.speaker_cache`)
+- **Problème identifié (Lenteur de `cosy_model.tts()` et perte du timbre vocal avec `frontend_cross_lingual`)** :
   - L'appel naïf à `cosy_model.tts(text, prompt)` recharge le fichier WAV à 16 kHz et ré-exécute deux modèles ONNX lourds (`speech_tokenizer_v2.onnx` Whisper + `campplus.onnx`) ainsi que l'extraction Mel à **chaque phrase** (~3,5 secondes d'overhead fixe perdues par phrase, soit > 3 minutes perdues sur 60 phrases).
-  - De plus, `frontend_cross_lingual` dans `cosyvoice` supprime des clés (`del model_input['prompt_text']`) directement par effet de bord dans `spk2info[zero_shot_spk_id]`, ce qui provoque un `KeyError` dès la 2e phrase si l'on utilise `zero_shot_spk_id` nativement.
+  - `frontend_cross_lingual` dans `cosyvoice` supprime `llm_prompt_speech_token` et `prompt_text`, privant le LLM Qwen2.5 des tokens acoustiques du locuteur de référence (la voix générée devient alors générique au lieu de reproduire le vrai timbre du clone vocal).
+  - De plus, tronquer l'audio de référence à 8 s alors que la transcription (`ref_text` / `transcript`) couvre l'enregistrement complet (~15 s) désaligne les tokens texte et audio dans `frontend_zero_shot`.
 - **Règle absolue** :
-  1. Extraire les tenseurs de conditionnement vocal (`flow_prompt_speech_token`, `prompt_speech_feat`, `llm_embedding`, `flow_embedding`) **une seule fois par voix** via `_get_speaker_conditioning(prompt_path)` et les conserver dans `self.speaker_cache[prompt_path]`.
-  2. Tronquer l'audio de référence à **8 secondes maximum** (`16000 * 8` échantillons) pour éviter d'alourdir l'attention du décodeur Flow Matching sur chaque phrase.
-  3. À chaque phrase, cloner superficiellement le dictionnaire (`{**spk_cond, 'text': tts_text_token, 'text_len': tts_text_token_len}`) et appeler directement `model.tts(**model_input, stream=False, speed=1.0)`.
+  1. Persister systématiquement les voix converties dans `/cache/voices_cache` avec `volume.commit()`.
+  2. Dans `_get_speaker_conditioning(prompt_path, prompt_text)`, conserver l'audio de référence complet (jusqu'à 25 s) lorsqu'une transcription (`prompt_text` / `transcript`) est connue, normaliser la transcription via `frontend.text_normalize(resolved_prompt, split=False, text_frontend=True)`, et utiliser **`frontend.frontend_zero_shot('', norm_prompt, prompt_speech_16k, sample_rate, '')`** pour préserver `llm_prompt_speech_token` et `prompt_text`.
+  3. Mettre en cache le dictionnaire résultant dans `self.speaker_cache[f"{prompt_path}::{resolved_prompt}"]` et cloner superficiellement le dictionnaire (`{**spk_cond, 'text': tts_text_token, 'text_len': tts_text_token_len}`) à chaque phrase.
   4. **Interdiction du « Chunk 0 Fast-Play » partiel** : Ne jamais téléverser un premier fragment de 18 secondes sur la même ligne `audio_files` avec `status = 'ready'`, car le frontend met immédiatement ce fragment en cache IndexedDB et l'utilisateur n'entend que 18 secondes d'histoire.
 
 ### Règle n°3 : Architecture Fast-Gateway Asynchrone (< 500 ms)
@@ -32,16 +33,15 @@ Ce document consigne les règles critiques d'ingénierie apprises lors de la ré
 
 ## 2. Lecteur Audio (`IntegratedAudioDeck.tsx`) & Synchronisation Mobile
 
-### Règle n°4 : Synchronisation Bidirectionnelle HTMLAudioElement ↔ État React / MediaSession Android
-- **Problème identifié** :
-  - Sur mobile (Android/iOS), le démarrage de `audio.play()` après plusieurs appels asynchrones (`audioCache.get()`, `getSignedAudioUrl()`) ou l'interaction via le centre de notifications OS peut désynchroniser l'état React `isPlaying` (qui reste à `false` avec l'icône `▶`) alors que l'élément natif `HTMLAudioElement` joue réellement.
-  - Si `handlePlayPause` vérifie uniquement `if (isPlaying && audioRef.current)`, appuyer sur le bouton vert pendant la lecture relance `audio.play()` au lieu de mettre en pause (`audio.pause()`).
+### Règle n°4 : Singleton `globalStoryAudio`, Coupe-Circuit Total (`stopAllPlayback`) & Neutralisation de `utterance.onend` sur Android
+- **Problèmes identifiés** :
+  1. **Instance `Audio` orpheline** : Créer `new Audio()` dans un `useRef` local après des appels `await` (`audioCache.get()`, `getSignedAudioUrl()`) laisse tourner une instance `Audio` orpheline en arrière-plan (dans la `MediaSession` Android) si le composant se re-rend ou si `readyStoryAudioFile` change pendant le chargement.
+  2. **Bug `speechSynthesis.cancel()` sur Android** : Sur Android Chrome/WebView, appeler `window.speechSynthesis.cancel()` déclenche `utterance.onend`. Sans garde `browserSpeechCancelledRef.current = true` ni détachement préalable de `utterance.onend = null`, le callback `onend` relance immédiatement la phrase suivante (`playBrowserParagraph(index + 1)`), empêchant toute mise en pause du texte et de la voix !
+  3. **Transition `speechSynthesis` → `readyStoryAudioFile`** : Si l'utilisateur lance la lecture pendant les premières millisecondes avant que `readyStoryAudioFile` soit chargé, puis appuie sur Pause une fois `readyStoryAudioFile` chargé, vérifier `if (audioRef.current && readyStoryAudioFile)` échoue (car `audioRef.current` était nul) et lance le fichier WAV par-dessus la synthèse vocale au lieu de mettre en pause !
 - **Règle absolue** :
-  1. Toujours vérifier l'état réel du lecteur DOM en priorité :
-     `const isNativeAudioPlaying = Boolean(audioRef.current && !audioRef.current.paused && !audioRef.current.ended && audioRef.current.currentTime > 0);`
-     Si `isPlaying || isNativeAudioPlaying`, appeler `audioRef.current.pause()` immédiatement.
-  2. Attacher systématiquement `audio.onplay = () => setIsPlaying(true)` et `audio.onpause = () => { if (!audio.ended) setIsPlaying(false); }` pour synchroniser l'interface Calmi avec les contrôles matériels et la notification système Android/iOS.
-  3. Protéger la phase d'initialisation asynchrone avec un verrou `isStartingPlaybackRef` pour empêcher les lancements concurrents au double-clic.
+  1. Utiliser un singleton module-level `globalStoryAudio`.
+  2. En tête de `handlePlayPause`, vérifier de manière inconditionnelle `if (isPlaying || isNativeAudioPlaying || isSpeechSynthActive || isStartingPlaybackRef.current)` et appeler `stopAllPlayback()` immédiatement.
+  3. Dans `stopAllPlayback()`, incrémenter `playbackSessionIdRef.current`, détacher `utteranceRef.current.onend = null` et activer `browserSpeechCancelledRef.current = true` avant `speechSynthesis.cancel()`, mettre en pause `globalStoryAudio`, toutes les balises `<audio>` du DOM, `backgroundSound` et `onPauseScroll()`.
 
 ### Règle n°5 : Classes Tailwind Valides & Flexbox Mobile sur la Capsule Flottante
 - **Problème identifié** :

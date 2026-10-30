@@ -18,40 +18,37 @@ Ce skill regroupe les règles d'or et procédures opérationnelles pour mainteni
   2. Passer chaque phrase par `frontend.text_normalize(sent, split=True, text_frontend=True)` pour normaliser les nombres/abréviations en français et garantir `< 80` tokens.
   3. Insérer une micro-respiration (`sentence_pause_sec = 0.18s` à `0.20s`) entre les phrases d'un même paragraphe, et conserver le `Sleep Pacing` (`1.0s` → `1.5s` → `2.5s`) entre les paragraphes.
 
-### B. Haute Vitesse par Cache GPU de l'Empreinte Vocale (`self.speaker_cache`)
-- **Diagnostic** : L'appel standard `cosy_model.tts(text, prompt)` ré-exécute `load_wav` + ONNX Whisper (`speech_tokenizer_v2.onnx`) + ONNX CampPlus (`campplus.onnx`) à chaque phrase (~3,5 s d'overhead fixe perdues par phrase). De plus, `frontend_cross_lingual` dans `cosyvoice` supprime des clés (`del model_input['prompt_text']`) par effet de bord dans `spk2info`, provoquant un `KeyError` au 2e appel si `zero_shot_spk_id` est utilisé directement.
+### B. Clonage Vocal Fidèle (`frontend_zero_shot`) & Cache GPU (`self.speaker_cache`)
+- **Diagnostic** :
+  1. `frontend_cross_lingual` dans `cosyvoice` supprime `llm_prompt_speech_token` et `prompt_text`, privant le LLM Qwen2.5 des tokens acoustiques du locuteur de référence (le résultat ressemble alors à une voix générique au lieu du clone vocal familial).
+  2. Tronquer l'audio de référence à 8 s alors que la transcription (`ref_text` / `transcript`) couvre l'enregistrement complet (~15 s) désaligne les tokens texte et audio dans `frontend_zero_shot`.
+  3. Sur Modal, tout fichier écrit dans `/cache/voices_cache` sans `volume.commit()` est perdu au prochain conteneur.
 - **Implémentation obligatoire** :
-  1. Extraire l'empreinte vocale **une seule fois par voix** via `_get_speaker_conditioning(prompt_path)` (en plafonnant l'audio de référence à `8 secondes` = `16000 * 8` échantillons) et la stocker dans `self.speaker_cache[prompt_path]`.
-  2. Pré-chauffer `/root/default_ref.wav` dès `@modal.enter() def setup(self)`.
-  3. Pour chaque phrase normalisée, cloner le dictionnaire mis en cache (`{**spk_cond, 'text': tts_text_token, 'text_len': tts_text_token_len}`) et appeler directement `self.cosy_model._model.model.tts(**model_input, stream=False, speed=1.0)`.
+  1. Toujours appeler `volume.commit()` dans `download_and_cache_voice()` après conversion FFmpeg d'une voix de référence.
+  2. Dans `_get_speaker_conditioning(prompt_path, prompt_text)`, conserver l'enregistrement de référence complet (jusqu'à 25 s) lorsqu'une transcription (`prompt_text` / `transcript`) est disponible, normaliser la transcription via `frontend.text_normalize(resolved_prompt, split=False, text_frontend=True)`, et utiliser **`frontend.frontend_zero_shot('', norm_prompt, prompt_speech_16k, sample_rate, '')`** pour préserver `llm_prompt_speech_token`.
+  3. Mettre en cache le dictionnaire résultant dans `self.speaker_cache[f"{prompt_path}::{resolved_prompt}"]` pour éliminer 100 % de l'overhead ONNX inter-phrases.
+  4. Toujours propager `voiceRefPath` et `transcript` (`ref_text`) dans chaque segment de `storyAudioParser.ts`.
 
 ### C. Fast-Gateway Asynchrone & Intégrité des Fichiers
 - **Endpoint unique de production** : `https://tomtom-duhamel--calmi-tts-service-synthesize-async-fast.modal.run` (conteneur CPU qui répond `HTTP 202` en `< 500 ms` et lance `CalmiTTSGPU().process_async_task.spawn(...)`).
 - **Interdiction d'upload partiel** : Ne jamais téléverser un « Chunk 0 » de 18 secondes avec `status = 'ready'` sur l'enregistrement `audio_files`, sous peine d'empoisonner définitivement le cache IndexedDB du client avec un fichier tronqué.
-- **Déploiement** :
-  ```powershell
-  $env:PYTHONIOENCODING="utf-8"; $env:PYTHONUTF8="1"; uv run --with modal --with pydantic --with fastapi --with numpy --with soundfile modal deploy vps-tts-service/modal_app.py
-  ```
+- **Déploiement Windows (UTF-8 obligatoire pour éviter `UnicodeEncodeError` sur `\u2713`)** :
+  Exécuter `modal deploy vps-tts-service/modal_app.py` avec `PYTHONIOENCODING="utf-8"` et `PYTHONUTF8="1"`.
 
 ---
 
 ## 2. Lecteur Audio (`src/components/story/reader/IntegratedAudioDeck.tsx`)
 
-### A. Synchronisation Play/Pause & MediaSession Android/iOS
-1. En tête de `handlePlayPause`, toujours inspecter l'état natif réel du DOM :
-   ```ts
-   const isNativeAudioPlaying = Boolean(
-     audioRef.current && !audioRef.current.paused && !audioRef.current.ended && audioRef.current.currentTime > 0
-   );
-   if ((isPlaying || isNativeAudioPlaying) && audioRef.current && readyStoryAudioFile?.audio_url) {
-     audioRef.current.pause();
-     setIsPlaying(false);
-     isStartingPlaybackRef.current = false;
-     return;
-   }
-   ```
-2. Toujours attacher `audio.onplay = () => setIsPlaying(true)` et `audio.onpause = () => { if (!audio.ended) setIsPlaying(false); }` sur `audioRef.current`.
-3. Utiliser le verrou `isStartingPlaybackRef` pendant la résolution asynchrone (`audioCache.get()`, `getSignedAudioUrl()`) pour éviter tout double lancement concurrent.
+### A. Singleton Audio Global & Coupe-Circuit Total (`stopAllPlayback`)
+1. **Singleton `globalStoryAudio` au niveau module** : Ne jamais instancier `new Audio()` uniquement dans un `useRef` local après des appels `await`, sous peine de créer des instances `Audio` orphelines lors des re-renders ou démontages.
+2. **Neutralisation de `utterance.onend` sur Android** : Sur Android Chrome/WebView, appeler `window.speechSynthesis.cancel()` déclenche l'événement `utterance.onend`. Si `onend` n'est pas neutralisé par un drapeau `browserSpeechCancelledRef.current = true` et `utteranceRef.current.onend = null` avant `cancel()`, `onend` relance immédiatement la phrase suivante (`playBrowserParagraph(index + 1)`), rendant la mise en pause impossible.
+3. **Coupe-circuit universel en tête de `handlePlayPause`** :
+   Dès que `isPlaying || isNativeAudioPlaying || isSpeechSynthActive || isStartingPlaybackRef.current` est vrai (indépendamment de `readyStoryAudioFile` ou `currentTime`), appeler immédiatement `stopAllPlayback()` qui :
+   - invalide tout chargement asynchrone en vol via `playbackSessionIdRef.current += 1`,
+   - coupe `window.speechSynthesis.cancel()` en ayant détaché `utterance.onend`,
+   - met en pause `globalStoryAudio` ainsi que tous les éléments `<audio>` du DOM,
+   - met en pause `backgroundSound` (s'il avait été lancé automatiquement par le ducking) et `onPauseScroll()`,
+   - synchronise `navigator.mediaSession.playbackState = 'paused'`.
 
 ### B. Responsive Mobile de la Capsule Flottante (320px–430px)
 1. Ne jamais utiliser de classes Tailwind inexistantes (`h-8.5`, `w-8.5`, `h-13`) sur un `Button size="icon"`, car elles sont ignorées et laissent le bouton à `40x40px` (`h-10 w-10`), faisant déborder les icônes de droite.

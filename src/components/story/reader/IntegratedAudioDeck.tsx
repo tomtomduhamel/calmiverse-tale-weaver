@@ -27,6 +27,7 @@ interface IntegratedAudioDeckProps {
   objective?: string | null;
   isDarkMode?: boolean;
   onPlayStateChange?: (isPlaying: boolean) => void;
+  onPauseScroll?: () => void;
 }
 
 interface CustomVoice {
@@ -39,13 +40,28 @@ interface CustomVoice {
   transcript: string | null;
 }
 
+// Singleton HTMLAudioElement au niveau module pour empêcher toute instance Audio orpheline en arrière-plan
+let globalStoryAudio: HTMLAudioElement | null = null;
+let globalPlayingStoryId: string | null = null;
+let globalPlayingUrl: string | null = null;
+
+const getGlobalStoryAudio = (): HTMLAudioElement | null => {
+  if (typeof window === 'undefined' || typeof Audio === 'undefined') return null;
+  if (!globalStoryAudio) {
+    globalStoryAudio = new Audio();
+    globalStoryAudio.preload = 'auto';
+  }
+  return globalStoryAudio;
+};
+
 export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   storyId,
   text,
   soundId,
   objective,
   isDarkMode = false,
-  onPlayStateChange
+  onPlayStateChange,
+  onPauseScroll
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -83,6 +99,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   // Browser SpeechSynthesis state
   const [isBrowserSpeaking, setIsBrowserSpeaking] = useState(false);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+  const browserSpeechCancelledRef = useRef<boolean>(false);
 
   // Synchroniser l'état actif audio avec le parent (assombrissement d'écran / veilleuse)
   useEffect(() => {
@@ -98,8 +115,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   }, [onPlayStateChange, stopProlongation]);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(getGlobalStoryAudio());
   const isStartingPlaybackRef = useRef<boolean>(false);
+  const playbackSessionIdRef = useRef<number>(0);
+  const wasBgAutoStartedRef = useRef<boolean>(false);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   const { userSettings, updateUserSettings } = useUserSettings();
   const { limits } = useSubscription();
@@ -135,17 +154,81 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     autoPlay: false
   });
 
-  // 🎚️ Audio Ducking Intelligent : lance l'ambiance sonore en sourdine sous la voix dès le clic Play
+  // Coupe-circuit total : arrête immédiatement toute source audio (HTMLAudioElement singleton, DOM <audio>, SpeechSynthesis, Ambiance, AutoScroll)
+  const stopAllPlayback = useCallback(() => {
+    // 1. Invalider toute promesse de démarrage en cours (cache IndexedDB / URL signée)
+    playbackSessionIdRef.current += 1;
+    isStartingPlaybackRef.current = false;
+
+    // 2. Couper la synthèse vocale navigateur en neutralisant onend (qui sinon relance la phrase suivante sur Android)
+    browserSpeechCancelledRef.current = true;
+    if (utteranceRef.current) {
+      utteranceRef.current.onstart = null;
+      utteranceRef.current.onend = null;
+      utteranceRef.current.onerror = null;
+      utteranceRef.current = null;
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {}
+    }
+    setIsBrowserSpeaking(false);
+
+    // 3. Mettre en pause le singleton HTMLAudioElement ainsi que tout élément <audio> du document
+    if (globalStoryAudio) {
+      try {
+        globalStoryAudio.pause();
+      } catch {}
+    }
+    if (audioRef.current && audioRef.current !== globalStoryAudio) {
+      try {
+        audioRef.current.pause();
+      } catch {}
+    }
+    if (typeof document !== 'undefined') {
+      document.querySelectorAll('audio').forEach((el) => {
+        try {
+          el.pause();
+        } catch {}
+      });
+    }
+
+    // 4. Arrêter la prolongation et mettre en pause l'ambiance sonore
+    stopProlongation();
+    if (backgroundSound.isPlaying) {
+      backgroundSound.togglePlay();
+    }
+    wasBgAutoStartedRef.current = false;
+
+    // 5. Mettre en pause le défilement automatique du texte s'il est actif
+    onPauseScroll?.();
+
+    // 6. Synchroniser immédiatement l'état React et MediaSession Android/iOS
+    setIsPlaying(false);
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.playbackState = 'paused';
+      } catch {}
+    }
+  }, [backgroundSound, onPauseScroll, stopProlongation]);
+
+  // 🎚️ Audio Ducking Intelligent : lance l'ambiance sonore en sourdine sous la voix dès le clic Play et la coupe en Pause
   useEffect(() => {
     if (isPlaying || isBrowserSpeaking) {
       backgroundSound.setVolume(0.16);
       if (!backgroundSound.isPlaying && (soundId || objective)) {
+        wasBgAutoStartedRef.current = true;
         backgroundSound.togglePlay();
       }
-    } else {
+    } else if (!isProlonging) {
+      if (backgroundSound.isPlaying && wasBgAutoStartedRef.current) {
+        wasBgAutoStartedRef.current = false;
+        backgroundSound.togglePlay();
+      }
       backgroundSound.setVolume(0.40);
     }
-  }, [isPlaying, isBrowserSpeaking, soundId, objective]);
+  }, [isPlaying, isBrowserSpeaking, isProlonging, soundId, objective]);
 
   // 1. Souscription Realtime
   useEffect(() => {
@@ -182,43 +265,70 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     };
   }, [storyId]);
 
-  // 3. Chargement des voix et fichiers audio
+  // 3. Chargement rapide en parallèle des voix et fichiers audio + rattachement au singleton Audio
   useEffect(() => {
-    synthRef.current = window.speechSynthesis;
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      synthRef.current = window.speechSynthesis;
+    }
+
+    const audio = getGlobalStoryAudio();
+    audioRef.current = audio;
+
+    // Si une autre histoire jouait dans le singleton, on l'arrête
+    if (audio && globalPlayingStoryId && globalPlayingStoryId !== storyId) {
+      audio.pause();
+      audio.src = '';
+      globalPlayingStoryId = null;
+      globalPlayingUrl = null;
+      setIsPlaying(false);
+    } else if (audio && globalPlayingStoryId === storyId && !audio.paused && !audio.ended) {
+      // Si la même histoire est déjà en lecture (ex: re-mount du composant), synchroniser l'icône Pause
+      currentPlayingUrlRef.current = globalPlayingUrl;
+      setIsPlaying(true);
+      if (audio.duration) {
+        setDuration(audio.duration);
+        setCurrentTime(audio.currentTime);
+        setProgress((audio.currentTime / audio.duration) * 100);
+      }
+    }
+
+    let isMounted = true;
 
     const loadData = async () => {
       try {
-        await cleanupStuckFiles(storyId);
-        await recoverErrorFiles(storyId);
-        const fetchedFiles = await fetchAudioFiles(storyId);
-
-        // Fetch custom user voices
-        try {
-          const { data, error } = await supabase
+        // Chargement parallèle immédiat des fichiers audio et des voix utilisateur (évite la latence initiale)
+        const [fetchedFiles, voicesRes] = await Promise.all([
+          fetchAudioFiles(storyId),
+          supabase
             .from('user_voices')
-            .select('id, name, relation, category, category_name, voice_ref_path, transcript');
-          if (!error && data) {
-            const allVoices = data as CustomVoice[];
-            setCustomVoices(allVoices);
-            
-            const narrators = allVoices.filter(
-              v => (v.category || 'narrator_family') === 'narrator_family' || v.category?.startsWith('narrator')
-            );
-            
-            const readyFile = fetchedFiles.find(f => f.status === 'ready' && f.audio_url && f.story_id === storyId);
-            if (readyFile) {
-              const matchingVoiceId = (readyFile.voice_id && readyFile.voice_id !== 'local')
-                ? readyFile.voice_id
-                : (narrators.length > 0 ? narrators[0].id : 'local');
-              setSelectedVoiceId(matchingVoiceId);
-            } else if (canUsePremiumAudio && preferredAudioMode === 'premium' && narrators.length > 0) {
-              setSelectedVoiceId(narrators[0].id);
-            } else {
-              setSelectedVoiceId('local');
-            }
+            .select('id, name, relation, category, category_name, voice_ref_path, transcript')
+        ]);
+
+        // Nettoyage en tâche de fond sans bloquer l'affichage
+        cleanupStuckFiles(storyId).catch(() => {});
+        recoverErrorFiles(storyId).catch(() => {});
+
+        if (!isMounted) return;
+
+        if (!voicesRes.error && voicesRes.data) {
+          const allVoices = voicesRes.data as CustomVoice[];
+          setCustomVoices(allVoices);
+
+          const narrators = allVoices.filter(
+            v => (v.category || 'narrator_family') === 'narrator_family' || v.category?.startsWith('narrator')
+          );
+
+          const readyFile = fetchedFiles.find(f => f.status === 'ready' && f.audio_url && f.story_id === storyId);
+          if (readyFile) {
+            const matchingVoiceId = (readyFile.voice_id && readyFile.voice_id !== 'local')
+              ? readyFile.voice_id
+              : (narrators.length > 0 ? narrators[0].id : 'local');
+            setSelectedVoiceId(matchingVoiceId);
+          } else if (canUsePremiumAudio && preferredAudioMode === 'premium' && narrators.length > 0) {
+            setSelectedVoiceId(narrators[0].id);
+          } else {
+            setSelectedVoiceId('local');
           }
-        } catch (err) {
-          console.error('Error fetching custom voices:', err);
         }
       } catch (err) {
         console.error('Error initializing audio deck:', err);
@@ -228,10 +338,28 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     loadData();
 
     return () => {
-      if (synthRef.current) synthRef.current.cancel();
-      if (audioRef.current) audioRef.current.pause();
+      isMounted = false;
+      playbackSessionIdRef.current += 1;
+      isStartingPlaybackRef.current = false;
+      browserSpeechCancelledRef.current = true;
+      if (utteranceRef.current) {
+        utteranceRef.current.onstart = null;
+        utteranceRef.current.onend = null;
+        utteranceRef.current.onerror = null;
+        utteranceRef.current = null;
+      }
+      if (synthRef.current) {
+        try {
+          synthRef.current.cancel();
+        } catch {}
+      }
+      if (globalStoryAudio) {
+        try {
+          globalStoryAudio.pause();
+        } catch {}
+      }
     };
-  }, [storyId, fetchAudioFiles, cleanupStuckFiles, recoverErrorFiles]);
+  }, [storyId]);
 
   // Split text into sentences for browser speech synthesis fallback
   const paragraphs = React.useMemo(() => {
@@ -273,6 +401,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
             audioRef.current.currentTime = preservedTime;
             audioRef.current.play().catch(() => {});
             currentPlayingUrlRef.current = readyStoryAudioFile.audio_url;
+            globalPlayingUrl = readyStoryAudioFile.audio_url;
             console.log("🔄 [FastPlay] Transition fluide vers l'audio complet finalisée !");
           }
         });
@@ -306,6 +435,14 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   // Synthèse vocale du navigateur (Mode Gratuit)
   const playBrowserParagraph = (index: number) => {
     if (!synthRef.current) return;
+
+    // Détacher les callbacks de l'utterance précédente avant cancel() pour éviter que onend ne relance la lecture sur Android
+    if (utteranceRef.current) {
+      utteranceRef.current.onstart = null;
+      utteranceRef.current.onend = null;
+      utteranceRef.current.onerror = null;
+      utteranceRef.current = null;
+    }
     synthRef.current.cancel();
 
     const pText = paragraphs[index];
@@ -316,6 +453,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       setProgress(0);
       return;
     }
+
+    browserSpeechCancelledRef.current = false;
 
     // ✨ Déclenchement feutré du bruitage contextuel s'il est présent
     if (isSfxEnabled && pText) {
@@ -334,6 +473,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     utterance.rate = 1.0;
 
     utterance.onstart = () => {
+      if (browserSpeechCancelledRef.current) return;
       setIsPlaying(true);
       setIsBrowserSpeaking(true);
       const pct = (index / (paragraphs.length - 1 || 1)) * 100;
@@ -341,6 +481,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
     };
 
     utterance.onend = () => {
+      // Sur Android Chrome/WebView, speechSynthesis.cancel() déclenche onend : ne jamais passer au paragraphe suivant si annulé !
+      if (browserSpeechCancelledRef.current) {
+        return;
+      }
       const nextIndex = index + 1;
       if (nextIndex < paragraphs.length) {
         setCurrentParagraphIndex(nextIndex);
@@ -371,15 +515,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       return;
     }
 
-    if (isPlaying) {
-      if (audioRef.current) audioRef.current.pause();
-      if (synthRef.current) synthRef.current.cancel();
-      setIsPlaying(false);
-    }
-    if (isBrowserSpeaking) {
-      if (synthRef.current) synthRef.current.cancel();
-      setIsBrowserSpeaking(false);
-    }
+    stopAllPlayback();
 
     setSelectedVoiceId(value);
     const isCustomVoice = value !== 'local';
@@ -397,41 +533,44 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       stopProlongation();
     }
 
-    // 1. Si l'élément audio natif est réellement en cours de lecture (même si l'état React s'est désynchronisé via Android MediaSession), on met en pause immédiatement
-    const isNativeAudioPlaying = Boolean(
-      audioRef.current && !audioRef.current.paused && !audioRef.current.ended && audioRef.current.currentTime > 0
+    // 1. VÉRIFICATION UNIVERSELLE D'ARRÊT :
+    // Si l'état React indique une lecture, OU si le singleton HTMLAudioElement joue, OU si SpeechSynthesis parle, OU si un chargement est en vol -> COUPE-CIRCUIT TOTAL !
+    const audio = getGlobalStoryAudio();
+    audioRef.current = audio;
+    const isNativeAudioPlaying = Boolean(audio && !audio.paused && !audio.ended);
+    const isSpeechSynthActive = isBrowserSpeaking || Boolean(
+      typeof window !== 'undefined' && (window.speechSynthesis?.speaking || window.speechSynthesis?.pending)
     );
 
-    if ((isPlaying || isNativeAudioPlaying) && audioRef.current && readyStoryAudioFile?.audio_url) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-      isStartingPlaybackRef.current = false;
-      return;
-    }
-
-    // Empêcher les lancements asynchrones concurrents (double clic pendant le chargement du cache ou de l'URL signée)
-    if (isStartingPlaybackRef.current) {
+    if (isPlaying || isNativeAudioPlaying || isSpeechSynthActive || isStartingPlaybackRef.current) {
+      stopAllPlayback();
       return;
     }
 
     // 2. Si un fichier audio prêt existe, on le lance directement
-    if (readyStoryAudioFile?.audio_url) {
-      if (isBrowserSpeaking && synthRef.current) {
-        synthRef.current.cancel();
-        setIsBrowserSpeaking(false);
-      }
-
+    if (readyStoryAudioFile?.audio_url && audio) {
+      const sessionId = ++playbackSessionIdRef.current;
       isStartingPlaybackRef.current = true;
+      // Basculer immédiatement le bouton sur Pause (⏸) pour permettre à l'utilisateur d'annuler même pendant le téléchargement
+      setIsPlaying(true);
 
       try {
         let audioUrl = "";
         const cacheKey = getAudioCacheKey(storyId, readyStoryAudioFile.audio_url);
         const cachedBlob = await audioCache.get(cacheKey, readyStoryAudioFile.file_size);
 
+        // Si l'utilisateur a appuyé sur Pause pendant la lecture du cache IndexedDB, on abandonne immédiatement
+        if (sessionId !== playbackSessionIdRef.current) {
+          return;
+        }
+
         if (cachedBlob) {
           audioUrl = URL.createObjectURL(cachedBlob);
         } else {
           const signedUrl = await getSignedAudioUrl(readyStoryAudioFile.audio_url);
+          if (sessionId !== playbackSessionIdRef.current) {
+            return;
+          }
           if (!signedUrl) throw new Error("Impossible d'accéder au fichier audio");
           audioUrl = signedUrl;
           audioCache.prefetchAndCache(cacheKey, signedUrl, readyStoryAudioFile.file_size).then(() => {
@@ -439,31 +578,42 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           }).catch(() => {});
         }
 
-        if (!audioRef.current) {
-          audioRef.current = new Audio();
-        }
-        const audio = audioRef.current;
-
         // Ne remplacer audio.src que si le fichier sous-jacent a changé
         if (currentPlayingUrlRef.current !== readyStoryAudioFile.audio_url || !audio.src) {
           audio.src = audioUrl;
           currentPlayingUrlRef.current = readyStoryAudioFile.audio_url;
+          globalPlayingUrl = readyStoryAudioFile.audio_url;
+          globalPlayingStoryId = storyId;
         }
         audio.playbackRate = 1.0;
 
         // Synchronisation bidirectionnelle avec le lecteur natif OS / Android MediaSession
-        audio.onplay = () => setIsPlaying(true);
+        audio.onplay = () => {
+          setIsPlaying(true);
+          if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+            try {
+              navigator.mediaSession.playbackState = 'playing';
+              navigator.mediaSession.setActionHandler('pause', () => stopAllPlayback());
+              navigator.mediaSession.setActionHandler('stop', () => stopAllPlayback());
+              navigator.mediaSession.setActionHandler('play', () => {
+                audio.play().catch(() => {});
+              });
+            } catch {}
+          }
+        };
         audio.onpause = () => {
           if (!audio.ended) {
             setIsPlaying(false);
+            if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+              try {
+                navigator.mediaSession.playbackState = 'paused';
+              } catch {}
+            }
           }
         };
         audio.onloadedmetadata = () => setDuration(audio.duration);
         audio.ontimeupdate = () => {
           setCurrentTime(audio.currentTime);
-          if (!audio.paused && !isPlaying) {
-            setIsPlaying(true);
-          }
           if (audio.duration) {
             setProgress((audio.currentTime / audio.duration) * 100);
 
@@ -536,6 +686,10 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               }
             }, 1000);
           } else {
+            if (backgroundSound.isPlaying && wasBgAutoStartedRef.current) {
+              wasBgAutoStartedRef.current = false;
+              backgroundSound.togglePlay();
+            }
             backgroundSound.setVolume(0.40);
           }
         };
@@ -553,39 +707,46 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           audio.currentTime = currentTime;
         }
 
+        if (sessionId !== playbackSessionIdRef.current) {
+          audio.pause();
+          return;
+        }
+
         await audio.play();
+        if (sessionId !== playbackSessionIdRef.current) {
+          audio.pause();
+          return;
+        }
         setIsPlaying(true);
       } catch (err: any) {
-        toast({
-          title: "Erreur de lecture",
-          description: err?.message || "Erreur de lecture audio",
-          variant: "destructive"
-        });
-        setIsPlaying(false);
+        if (sessionId === playbackSessionIdRef.current) {
+          toast({
+            title: "Erreur de lecture",
+            description: err?.message || "Erreur de lecture audio",
+            variant: "destructive"
+          });
+          setIsPlaying(false);
+        }
       } finally {
-        isStartingPlaybackRef.current = false;
+        if (sessionId === playbackSessionIdRef.current) {
+          isStartingPlaybackRef.current = false;
+        }
       }
       return;
     }
 
-    // 2. Si l'audio est déjà en cours de génération
+    // 3. Si l'audio est déjà en cours de génération
     if (currentPendingAudioFile || isGenerating) {
       return;
     }
 
-    // 3. Si c'est une voix locale gratuite
+    // 4. Si c'est une voix locale gratuite
     if (selectedVoiceId === 'local') {
-      if (isBrowserSpeaking && isPlaying) {
-        if (synthRef.current) synthRef.current.cancel();
-        setIsPlaying(false);
-        setIsBrowserSpeaking(false);
-      } else {
-        playBrowserParagraph(currentParagraphIndex);
-      }
+      playBrowserParagraph(currentParagraphIndex);
       return;
     }
 
-    // 4. Lancement de la génération avec Fast-Play auto-play dès que le premier bloc est prêt
+    // 5. Lancement de la génération avec Fast-Play auto-play dès que le premier bloc est prêt
     setAutoPlayRequested(true);
     await generateAudio(storyId, text, selectedVoiceId);
   };

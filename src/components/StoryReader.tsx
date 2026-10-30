@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import type { Story } from "@/types/story";
 import { calculateReadingTime } from "@/utils/readingTime";
@@ -143,6 +142,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         isRead={story.status === 'read'}
         isUpdatingReadStatus={isUpdatingReadStatus}
         onAudioPlayStateChange={setIsAudioPlaying}
+        onPauseScroll={handlePauseScroll}
       />
 
       <StorySummaryDialog 

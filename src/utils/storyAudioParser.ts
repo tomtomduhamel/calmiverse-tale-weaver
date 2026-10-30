@@ -28,6 +28,7 @@ export interface VoiceCatalogItem {
   category: string;
   category_name?: string | null;
   signedUrl: string | null;
+  voiceRefPath?: string | null;
   transcript?: string;
 }
 
@@ -51,6 +52,9 @@ export interface AudioSegment {
   speakerName?: string;
   voiceId?: string;
   voiceRefUrl?: string;
+  voiceRefPath?: string;
+  ref_text?: string;
+  transcript?: string;
   language: string;
   emotion?: string;
   instruct?: string;
@@ -170,11 +174,13 @@ export const resolveSmartVoice = (
   detectedName: string | undefined,
   allUserVoices: VoiceCatalogItem[],
   fallbackNarratorVoice?: VoiceCatalogItem | null
-): { voiceId?: string; voiceRefUrl?: string } => {
+): { voiceId?: string; voiceRefUrl?: string; voiceRefPath?: string; transcript?: string } => {
   if (!allUserVoices || allUserVoices.length === 0) {
     return {
       voiceId: fallbackNarratorVoice?.id,
-      voiceRefUrl: fallbackNarratorVoice?.signedUrl || undefined
+      voiceRefUrl: fallbackNarratorVoice?.signedUrl || undefined,
+      voiceRefPath: fallbackNarratorVoice?.voiceRefPath || undefined,
+      transcript: fallbackNarratorVoice?.transcript || undefined
     };
   }
 
@@ -187,7 +193,12 @@ export const resolveSmartVoice = (
     });
 
     if (nameMatch?.signedUrl) {
-      return { voiceId: nameMatch.id, voiceRefUrl: nameMatch.signedUrl };
+      return {
+        voiceId: nameMatch.id,
+        voiceRefUrl: nameMatch.signedUrl,
+        voiceRefPath: nameMatch.voiceRefPath || undefined,
+        transcript: nameMatch.transcript || undefined
+      };
     }
   }
 
@@ -197,14 +208,21 @@ export const resolveSmartVoice = (
     v.signedUrl
   );
   if (categoryVoices.length > 0) {
-    return { voiceId: categoryVoices[0].id, voiceRefUrl: categoryVoices[0].signedUrl || undefined };
+    return {
+      voiceId: categoryVoices[0].id,
+      voiceRefUrl: categoryVoices[0].signedUrl || undefined,
+      voiceRefPath: categoryVoices[0].voiceRefPath || undefined,
+      transcript: categoryVoices[0].transcript || undefined
+    };
   }
 
   // 3. Fallback sur le narrateur familial s'il est spécifié et actif
   if (fallbackNarratorVoice?.signedUrl) {
     return {
       voiceId: fallbackNarratorVoice.id,
-      voiceRefUrl: fallbackNarratorVoice.signedUrl
+      voiceRefUrl: fallbackNarratorVoice.signedUrl,
+      voiceRefPath: fallbackNarratorVoice.voiceRefPath || undefined,
+      transcript: fallbackNarratorVoice.transcript || undefined
     };
   }
 
@@ -228,7 +246,9 @@ export const resolveSmartVoice = (
   // 5. Fallback ultime sur le narrateur principal
   return {
     voiceId: fallbackNarratorVoice?.id,
-    voiceRefUrl: fallbackNarratorVoice?.signedUrl || undefined
+    voiceRefUrl: fallbackNarratorVoice?.signedUrl || undefined,
+    voiceRefPath: fallbackNarratorVoice?.voiceRefPath || undefined,
+    transcript: fallbackNarratorVoice?.transcript || undefined
   };
 };
 
@@ -305,6 +325,9 @@ export const parseStoryToAudioSegments = (
             roleCategory: 'narrator_family',
             voiceId: fallbackNarrator?.id,
             voiceRefUrl: fallbackNarrator?.signedUrl || undefined,
+            voiceRefPath: fallbackNarrator?.voiceRefPath || undefined,
+            ref_text: fallbackNarrator?.transcript || undefined,
+            transcript: fallbackNarrator?.transcript || undefined,
             language: language,
             emotion: narratorEmotion.emotion,
             instruct: narratorEmotion.instruct
@@ -330,6 +353,9 @@ export const parseStoryToAudioSegments = (
           speakerName: detectedName,
           voiceId: resolved.voiceId,
           voiceRefUrl: resolved.voiceRefUrl,
+          voiceRefPath: resolved.voiceRefPath,
+          ref_text: resolved.transcript,
+          transcript: resolved.transcript,
           language: language,
           emotion: dialogueEmotion.emotion,
           instruct: dialogueEmotion.instruct
@@ -351,6 +377,9 @@ export const parseStoryToAudioSegments = (
           roleCategory: 'narrator_family',
           voiceId: fallbackNarrator?.id,
           voiceRefUrl: fallbackNarrator?.signedUrl || undefined,
+          voiceRefPath: fallbackNarrator?.voiceRefPath || undefined,
+          ref_text: fallbackNarrator?.transcript || undefined,
+          transcript: fallbackNarrator?.transcript || undefined,
           language: language,
           emotion: remainingEmotion.emotion,
           instruct: remainingEmotion.instruct
