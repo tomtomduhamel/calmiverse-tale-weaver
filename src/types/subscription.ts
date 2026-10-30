@@ -31,6 +31,7 @@ export interface SubscriptionLimits {
   has_community_access: boolean;
   max_voice_clones: number;
   has_multivoice_audio: boolean;
+  has_auto_creation?: boolean;
   monthly_price_usd: number;
   annual_price_usd: number;
   created_at: string;

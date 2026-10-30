@@ -122,14 +122,27 @@ export function sanitizeStoryCritique(raw: unknown): StoryCritique {
     detailed_scores: detailedScoresSchema.parse(obj.detailed_scores || {}),
     critique_summary: (obj.critique_summary && typeof obj.critique_summary === 'object') ? obj.critique_summary : {},
     strengths: Array.isArray(obj.strengths) 
-      ? obj.strengths.map((s: any) => critiqueStrengthSchema.parse(s)) 
+      ? obj.strengths.map((s: unknown) => {
+          const parsed = critiqueStrengthSchema.parse(s);
+          return { aspect: parsed.aspect ?? 'Point fort', analysis: parsed.analysis ?? 'Bonne exécution', quote: parsed.quote ?? '' };
+        })
       : [],
     weaknesses: Array.isArray(obj.weaknesses) 
-      ? obj.weaknesses.map((w: any) => critiqueWeaknessSchema.parse(w)) 
+      ? obj.weaknesses.map((w: unknown) => {
+          const parsed = critiqueWeaknessSchema.parse(w);
+          return { issue: parsed.issue ?? 'Point à améliorer', impact: parsed.impact ?? 'Impact modéré', severity: parsed.severity ?? 'mineur', quote: parsed.quote ?? '' };
+        })
       : [],
     calmi_pitfalls: calmiPitfallsSchema.parse(obj.calmi_pitfalls || {}),
     actionable_improvements: Array.isArray(obj.actionable_improvements) 
-      ? obj.actionable_improvements.map(String) 
+      ? obj.actionable_improvements.map((item: unknown, index: number) => {
+          const value = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+          return {
+            priority: typeof value.priority === 'number' ? value.priority : index + 1,
+            target_area: typeof value.target_area === 'string' ? value.target_area : '',
+            recommendation: typeof item === 'string' ? item : String(value.recommendation ?? ''),
+          };
+        })
       : [],
     rewrite_demonstration: (obj.rewrite_demonstration && typeof obj.rewrite_demonstration === 'object') 
       ? obj.rewrite_demonstration 

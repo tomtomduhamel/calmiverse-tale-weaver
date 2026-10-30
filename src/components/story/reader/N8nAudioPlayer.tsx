@@ -62,10 +62,10 @@ export const N8nAudioPlayer: React.FC<N8nAudioPlayerProps> = ({
   }, [storyId, fetchAudioFiles, cleanupStuckFiles, recoverErrorFiles]);
 
   // Trouver les fichiers audio pour cette histoire
+  const pendingAudioFile = audioFiles.find(file => file.status === 'pending' || file.status === 'processing');
   const readyAudioFile = (!pendingAudioFile && !isGenerating)
     ? audioFiles.find(file => file.status === 'ready' && file.audio_url)
     : undefined;
-  const pendingAudioFile = audioFiles.find(file => file.status === 'pending' || file.status === 'processing');
 
   // Fichier en erreur SANS URL
   const errorAudioFile = audioFiles.find(file => file.status === 'error' && !file.audio_url);
