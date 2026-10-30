@@ -9,6 +9,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useN8nAudioGeneration } from '@/hooks/story/audio/useN8nAudioGeneration';
 import { useBackgroundSound } from '@/hooks/story/sound/useBackgroundSound';
+import { pauseGlobalBackgroundAudio, setOnExternalBgPause } from '@/hooks/story/sound/useRobustAudioPlayer';
 import { useUserSettings } from '@/hooks/settings/useUserSettings';
 import { useSubscription } from '@/hooks/subscription/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
@@ -155,63 +156,85 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   });
 
   // Coupe-circuit total : arrête immédiatement toute source audio (HTMLAudioElement singleton, DOM <audio>, SpeechSynthesis, Ambiance, AutoScroll)
+  const isStoppingPlaybackRef = useRef<boolean>(false);
   const stopAllPlayback = useCallback(() => {
-    // 1. Invalider toute promesse de démarrage en cours (cache IndexedDB / URL signée)
-    playbackSessionIdRef.current += 1;
-    isStartingPlaybackRef.current = false;
+    if (isStoppingPlaybackRef.current) return;
+    isStoppingPlaybackRef.current = true;
 
-    // 2. Couper la synthèse vocale navigateur en neutralisant onend (qui sinon relance la phrase suivante sur Android)
-    browserSpeechCancelledRef.current = true;
-    if (utteranceRef.current) {
-      utteranceRef.current.onstart = null;
-      utteranceRef.current.onend = null;
-      utteranceRef.current.onerror = null;
-      utteranceRef.current = null;
-    }
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch {}
-    }
-    setIsBrowserSpeaking(false);
+    try {
+      // 1. Invalider toute promesse de démarrage en cours (cache IndexedDB / URL signée)
+      playbackSessionIdRef.current += 1;
+      isStartingPlaybackRef.current = false;
 
-    // 3. Mettre en pause le singleton HTMLAudioElement ainsi que tout élément <audio> du document
-    if (globalStoryAudio) {
-      try {
-        globalStoryAudio.pause();
-      } catch {}
-    }
-    if (audioRef.current && audioRef.current !== globalStoryAudio) {
-      try {
-        audioRef.current.pause();
-      } catch {}
-    }
-    if (typeof document !== 'undefined') {
-      document.querySelectorAll('audio').forEach((el) => {
+      // 2. Couper la synthèse vocale navigateur en neutralisant onend (qui sinon relance la phrase suivante sur Android)
+      browserSpeechCancelledRef.current = true;
+      if (utteranceRef.current) {
+        utteranceRef.current.onstart = null;
+        utteranceRef.current.onend = null;
+        utteranceRef.current.onerror = null;
+        utteranceRef.current = null;
+      }
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
         try {
-          el.pause();
+          window.speechSynthesis.cancel();
         } catch {}
-      });
-    }
+      }
+      setIsBrowserSpeaking(false);
 
-    // 4. Arrêter la prolongation et mettre en pause l'ambiance sonore
-    stopProlongation();
-    if (backgroundSound.isPlaying) {
-      backgroundSound.togglePlay();
-    }
-    wasBgAutoStartedRef.current = false;
+      // 3. Mettre en pause le singleton HTMLAudioElement ainsi que tout élément <audio> du document
+      if (globalStoryAudio) {
+        try {
+          globalStoryAudio.pause();
+        } catch {}
+      }
+      if (audioRef.current && audioRef.current !== globalStoryAudio) {
+        try {
+          audioRef.current.pause();
+        } catch {}
+      }
+      if (typeof document !== 'undefined') {
+        document.querySelectorAll('audio').forEach((el) => {
+          try {
+            el.pause();
+          } catch {}
+        });
+      }
 
-    // 5. Mettre en pause le défilement automatique du texte s'il est actif
-    onPauseScroll?.();
+      // 4. Arrêter la prolongation et mettre en pause l'ambiance sonore (sans dépendre d'une closure React périmée)
+      stopProlongation();
+      pauseGlobalBackgroundAudio();
+      if (backgroundSound.isPlaying) {
+        backgroundSound.togglePlay();
+      }
+      wasBgAutoStartedRef.current = false;
 
-    // 6. Synchroniser immédiatement l'état React et MediaSession Android/iOS
-    setIsPlaying(false);
-    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
-      try {
-        navigator.mediaSession.playbackState = 'paused';
-      } catch {}
+      // 5. Mettre en pause le défilement automatique du texte s'il est actif
+      onPauseScroll?.();
+
+      // 6. Synchroniser immédiatement l'état React et MediaSession Android/iOS
+      setIsPlaying(false);
+      if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.playbackState = 'paused';
+        } catch {}
+      }
+    } finally {
+      isStoppingPlaybackRef.current = false;
     }
   }, [backgroundSound, onPauseScroll, stopProlongation]);
+
+  const stopAllPlaybackRef = useRef(stopAllPlayback);
+  stopAllPlaybackRef.current = stopAllPlayback;
+
+  // Relier toute pause externe (ex: notification Android qui ciblerait la piste d'ambiance) au coupe-circuit principal
+  useEffect(() => {
+    setOnExternalBgPause(() => {
+      stopAllPlaybackRef.current();
+    });
+    return () => {
+      setOnExternalBgPause(null);
+    };
+  }, []);
 
   // 🎚️ Audio Ducking Intelligent : lance l'ambiance sonore en sourdine sous la voix dès le clic Play et la coupe en Pause
   useEffect(() => {
@@ -593,8 +616,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
             try {
               navigator.mediaSession.playbackState = 'playing';
-              navigator.mediaSession.setActionHandler('pause', () => stopAllPlayback());
-              navigator.mediaSession.setActionHandler('stop', () => stopAllPlayback());
+              navigator.mediaSession.setActionHandler('pause', () => stopAllPlaybackRef.current());
+              navigator.mediaSession.setActionHandler('stop', () => stopAllPlaybackRef.current());
               navigator.mediaSession.setActionHandler('play', () => {
                 audio.play().catch(() => {});
               });
@@ -603,12 +626,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
         };
         audio.onpause = () => {
           if (!audio.ended) {
-            setIsPlaying(false);
-            if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
-              try {
-                navigator.mediaSession.playbackState = 'paused';
-              } catch {}
-            }
+            // Si la pause est déclenchée depuis le volet de notifications Android, l'écran verrouillé ou un casque Bluetooth,
+            // exécuter systématiquement le coupe-circuit complet (musique de fond + auto-scroll + UI)
+            stopAllPlaybackRef.current();
           }
         };
         audio.onloadedmetadata = () => setDuration(audio.duration);

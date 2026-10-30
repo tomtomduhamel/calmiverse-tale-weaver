@@ -1,6 +1,27 @@
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { audioService } from '@/services/audioService';
+
+// Référence globale au lecteur d'ambiance pour permettre un arrêt synchrone garanti (ex: notification Android / stopAllPlayback)
+let globalBgAudioElement: HTMLAudioElement | null = null;
+let isIntentionalBgPause = false;
+let externalBgPauseListener: (() => void) | null = null;
+
+export const setOnExternalBgPause = (cb: (() => void) | null) => {
+  externalBgPauseListener = cb;
+};
+
+export const pauseGlobalBackgroundAudio = () => {
+  if (globalBgAudioElement) {
+    try {
+      isIntentionalBgPause = true;
+      globalBgAudioElement.pause();
+    } catch {} finally {
+      setTimeout(() => {
+        isIntentionalBgPause = false;
+      }, 100);
+    }
+  }
+};
 
 interface RobustAudioPlayerProps {
   soundDetails: any | null;
@@ -42,14 +63,18 @@ export const useRobustAudioPlayer = ({
   const cleanupAudio = useCallback(() => {
     if (audioRef.current) {
       console.log("🎵 [RobustAudioPlayer] Nettoyage audio");
-      audioRef.current.pause();
-      audioRef.current.removeEventListener('loadstart', () => {});
-      audioRef.current.removeEventListener('canplay', () => {});
-      audioRef.current.removeEventListener('play', () => {});
-      audioRef.current.removeEventListener('pause', () => {});
-      audioRef.current.removeEventListener('error', () => {});
-      audioRef.current.src = '';
+      isIntentionalBgPause = true;
+      try {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      } catch {}
+      if (globalBgAudioElement === audioRef.current) {
+        globalBgAudioElement = null;
+      }
       audioRef.current = null;
+      setTimeout(() => {
+        isIntentionalBgPause = false;
+      }, 100);
     }
     isInitializedRef.current = false;
     retryCountRef.current = 0;
@@ -122,6 +147,11 @@ export const useRobustAudioPlayer = ({
       audio.addEventListener('pause', () => {
         console.log(`🎵 [RobustAudioPlayer] Lecture pausée: ${soundDetails.title}`);
         updateState({ isPlaying: false });
+        // Si la pause provient du volet de notification Android / OS et non d'un appel interne,
+        // propager immédiatement l'arrêt au lecteur principal d'histoire !
+        if (!isIntentionalBgPause && externalBgPauseListener) {
+          externalBgPauseListener();
+        }
       });
 
       audio.addEventListener('error', async (e) => {
@@ -154,6 +184,7 @@ export const useRobustAudioPlayer = ({
       });
 
       audioRef.current = audio;
+      globalBgAudioElement = audio;
       audio.src = validatedUrl;
       isInitializedRef.current = true;
 
@@ -183,8 +214,12 @@ export const useRobustAudioPlayer = ({
     }
 
     try {
-      if (state.isPlaying) {
+      if (!audioRef.current.paused || state.isPlaying) {
+        isIntentionalBgPause = true;
         audioRef.current.pause();
+        setTimeout(() => {
+          isIntentionalBgPause = false;
+        }, 100);
       } else {
         audioRef.current.play().catch(err => {
           console.error('🎵 [RobustAudioPlayer] Erreur lecture:', err);
@@ -199,9 +234,13 @@ export const useRobustAudioPlayer = ({
 
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
+      isIntentionalBgPause = true;
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       updateState({ isPlaying: false });
+      setTimeout(() => {
+        isIntentionalBgPause = false;
+      }, 100);
     }
   }, [updateState]);
 
