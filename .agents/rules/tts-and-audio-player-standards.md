@@ -1,10 +1,10 @@
-# Standards TTS CosyVoice 2, Cache Audio & Lecteur Mobile - Calmiverse (v2.0)
+# Standards TTS CosyVoice 2, Chatterbox, Cache Audio & Lecteur Mobile - Calmiverse (v3.0)
 
-Ce document consigne les règles critiques d'ingénierie apprises lors de la résolution des problèmes de synthèse vocale (« langue des Minions » / effondrement d'attention), de timeouts HTTP, de synchronisation MediaSession Android et de responsive mobile sur le lecteur `IntegratedAudioDeck`.
+Ce document consigne les règles critiques d'ingénierie apprises lors de la résolution des problèmes de synthèse vocale (« langue des Minions » / effondrement d'attention, réverbération / boîte de conserve, neutralité émotionnelle), de timeouts HTTP, de synchronisation MediaSession Android et de responsive mobile sur le lecteur `IntegratedAudioDeck`.
 
 ---
 
-## 1. Moteur TTS CosyVoice 2 (`vps-tts-service/modal_app.py`)
+## 1. Moteur TTS CosyVoice 2 & Chatterbox Multilingual (`vps-tts-service/modal_app.py`)
 
 ### Règle n°1 : Fenêtre d'attention stricte (≤ 200 caractères par passe LLM) & `text_frontend=True`
 - **Problème identifié (« Langue des Minions » / Babillage)** :
@@ -28,6 +28,44 @@ Ce document consigne les règles critiques d'ingénierie apprises lors de la ré
 
 ### Règle n°3 : Architecture Fast-Gateway Asynchrone (< 500 ms)
 - Toutes les requêtes TTS (`get-tts-config`) doivent cibler le **CPU Fast-Gateway** (`synthesize_async_fast`), qui répond `HTTP 202 Accepted` en `< 500 ms` et délègue par `.spawn()` au worker GPU `CalmiTTSGPU.process_async_task`, éliminant définitivement les timeouts de cold-start GPU et de passerelle n8n/Supabase.
+
+### Règle n°7 : Assainissement Acoustique, Déréverbération & Chaîne Close-Mic Studio « En Avant »
+- **Problèmes identifiés (Écho, réverbération, son type « boîte de conserve »)** :
+  1. **Clonage de l'acoustique de la pièce** : Les modèles de clonage zero-shot (Chatterbox / CosyVoice) apprennent la réverbération de la pièce de l'enregistrement de référence (réflexions murales, micro de smartphone à distance) et la reproduisent sur chaque mot généré.
+  2. **Pompage de fond par le Loudnorm** : Un compresseur `loudnorm` standard avec une large plage dynamique (`LRA=11`) amplifie de +6 à +12 dB les queues d'écho et le bruit de fond dans les silences entre les mots.
+  3. **Fréquences creuses** : L'effet « boîte de conserve » est une résonance acoustique située à 350–500 Hz combinée à un déficit de clarté/présence à 3–5 kHz.
+- **Règles absolues** :
+  1. **Assèchement du prompt vocal (`convert_to_wav`)** :
+     - Passe-haut à 65 Hz (`highpass=f=65`) : supprime les infra-basses et vibrations sans raboter les graves masculines (85–150 Hz).
+     - Notch anti-box à 420 Hz (`equalizer=f=420:width_type=q:w=1.4:g=-3.5`) : élimine la résonance creuse de pièce avant l'extraction des embeddings.
+     - Expander feutré (`agate=range=0.06:threshold=0.03:ratio=2:attack=20:release=140`) : assèche les réflexions entre les mots.
+     - Préfixe de cache `voice_studio_v3_` pour invalider les anciens extraits réverbérés.
+  2. **Mastering Close-Mic Studio (`master_audio_bytes`)** :
+     - Coupe 450 Hz (-3.0 dB) : élimination du creux boîte de conserve.
+     - Boost de présence à 3.8 kHz (+2.5 dB) : amène la voix au premier plan, droit dans l'oreille.
+     - Air soyeux à 9.5 kHz (+1.5 dB) : clarté des consonnes et de la respiration.
+     - Porte de déréverbération feutrée (`agate=range=0.05:threshold=0.02:ratio=2:attack=15:release=120`) : étouffe les traînes de réverbe résiduelles.
+     - Loudnorm resserré EBU R128 (`loudnorm=I=-16:TP=-1.5:LRA=8:dual_mono=true`).
+
+### Règle n°8 : Préservation de la Ponctuation Expressive & Débridage Émotionnel Dynamique pour Contes d'Enfants
+- **Problèmes identifiés (Voix trop neutre, monotone, manque d'intention)** :
+  1. **Écrasement de la ponctuation dramatique** : Remplacer `!` ou `?` par des virgules dans le normaliseur de texte pour préserver les incises détruisait les repères prosodiques du modèle TTS (qui lit alors une exclamation vive comme une banale phrase subordonnée).
+  2. **Verrouillage statique d'`exaggeration` et `temperature`** : Figer `exaggeration=0.35` (valeur plancher) et `temperature=0.65` écrasait toute dynamique vocale.
+- **Règles absolues** :
+  1. **Préservation absolue des `!` et `?` dans `normalize_french_narrative_text`** :
+     - Remplacer `([!?…])\s*»\s*,?\s*([a-zà-ÿ])` par `\1 \2` sans substituer par des virgules.
+     - Le découpage en phrases (`split_into_clean_sentences`) ne coupe après `[.!?…]` que si le caractère suivant est une majuscule (`(?=[A-ZÀ-Ÿ])`), ce qui conserve l'exclamation et son incise minuscule (`annonce-t-il`, `cria le lapin`) ensemble dans un bloc expressif unique.
+  2. **Modulateur dynamique de prosodie (`resolve_speech_prosody_params`)** :
+     - **Joie / Fête / Excitation** : `exaggeration = 0.80`, `temp = 0.80`
+     - **Colère / Alerte / Indignation** : `exaggeration = 0.85`, `temp = 0.75`, `cfg = 0.65`
+     - **Tristesse / Mélancolie** : `exaggeration = 0.55`, `temp = 0.62`
+     - **Peur / Inquiétude** : `exaggeration = 0.75`, `temp = 0.78`
+     - **Chuchotement** : `exaggeration = 0.45`, `temp = 0.65`
+     - **Narration standard** : `exaggeration = 0.55`, `temp = 0.75`
+     - **Surjeu sur les répliques / dialogues** : bonus systématique de `+0.15` d'`exaggeration` (jusqu'à `0.95`).
+  3. **Transmission de bout en bout** :
+     - Transmettre l'émotion détectée du prompt (`[joy]`, `[angry]`, `[sad]`, `[excited]`, etc.) et du dialogue jusqu'au moteur GPU Modal.
+     - Pré-calculer les conditionnements Chatterbox indexés par `(trimmed_path, exaggeration)` dans `self.chatterbox_cond_cache`.
 
 ---
 
