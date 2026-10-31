@@ -6,8 +6,12 @@ import { parseStoryToAudioSegments, EMOTION_INSTRUCT_MAP, detectEmotionAndInstru
 describe('Balisage Émotionnel Audio & Masquage Strict Côté Lecteur', () => {
   const sampleStoryWithTags = `[warm] Il était une fois, au cœur d'une forêt lumineuse, deux amis inséparables nommés Léo et Maya.
 
-[excited] Soudain, Maya découvrit une petite porte dorée cachée dans le creux d'un vieux chêne !
+[joy] Soudain, Maya découvrit une petite porte dorée cachée dans le creux d'un vieux chêne !
 « Regarde ça, c'est incroyable ! » s'écria Léo avec de grands yeux émerveillés.
+
+[angry] « Qui ose frapper à ma porte ?! » gronda le vieux gnome de l'arbre.
+
+[sad] « Nous pensions trouver un ami... » murmura Léo, les larmes aux yeux.
 
 [mysterious] En poussant la porte, un bruissement délicat se fit entendre dans la pénombre...
 [whisper] « N'aie pas peur », chuchota la fée des sous-bois en apparaissant doucement.
@@ -17,11 +21,13 @@ describe('Balisage Émotionnel Audio & Masquage Strict Côté Lecteur', () => {
 [sleepy] Leurs paupières devinrent agréablement lourdes, et la forêt tout entière s'endormit paisiblement.`;
 
   describe('Nettoyage strict pour l\'utilisateur (stripStoryEmotionTags)', () => {
-    it('supprime toutes les balises d\'émotions standards ([warm], [whisper], [excited], etc.)', () => {
+    it('supprime toutes les balises d\'émotions standards ([warm], [whisper], [joy], [angry], [sad], [excited], etc.)', () => {
       const clean = stripStoryEmotionTags(sampleStoryWithTags);
 
       expect(clean).not.toContain('[warm]');
-      expect(clean).not.toContain('[excited]');
+      expect(clean).not.toContain('[joy]');
+      expect(clean).not.toContain('[angry]');
+      expect(clean).not.toContain('[sad]');
       expect(clean).not.toContain('[mysterious]');
       expect(clean).not.toContain('[whisper]');
       expect(clean).not.toContain('[calm]');
@@ -60,10 +66,22 @@ describe('Balisage Émotionnel Audio & Masquage Strict Côté Lecteur', () => {
   });
 
   describe('Extraction des émotions pour la synthèse TTS (storyAudioParser)', () => {
-    it('détecte correctement les balises explicites et associe l\'instruct en anglais pour Qwen3-TTS', () => {
-      const res = detectEmotionAndInstruct('[excited] Youpi, c\'est parti !');
-      expect(res.emotion).toBe('excited');
-      expect(res.instruct).toBe(EMOTION_INSTRUCT_MAP.excited);
+    it('détecte correctement les balises explicites de joie, colère, tristesse et excitation', () => {
+      const joyRes = detectEmotionAndInstruct('[joy] Youpi, quelle magnifique journée !');
+      expect(joyRes.emotion).toBe('joy');
+      expect(joyRes.instruct).toBe(EMOTION_INSTRUCT_MAP.joy);
+
+      const angryRes = detectEmotionAndInstruct('[angry] Arrêtez immédiatement !');
+      expect(angryRes.emotion).toBe('angry');
+      expect(angryRes.instruct).toBe(EMOTION_INSTRUCT_MAP.angry);
+
+      const sadRes = detectEmotionAndInstruct('[sad] C\'est vraiment trop injuste...');
+      expect(sadRes.emotion).toBe('sad');
+      expect(sadRes.instruct).toBe(EMOTION_INSTRUCT_MAP.sad);
+
+      const excitedRes = detectEmotionAndInstruct('[excited] En route pour l\'aventure !');
+      expect(excitedRes.emotion).toBe('excited');
+      expect(excitedRes.instruct).toBe(EMOTION_INSTRUCT_MAP.excited);
     });
 
     it('détecte les instructions personnalisées [instruct: ...]', () => {
@@ -76,8 +94,14 @@ describe('Balisage Émotionnel Audio & Masquage Strict Côté Lecteur', () => {
       const whisperRes = detectEmotionAndInstruct('« Viens par ici », chuchota le renard.');
       expect(whisperRes.emotion).toBe('whisper');
 
-      const excitedRes = detectEmotionAndInstruct('« On a gagné ! » s\'écria le petit garçon.');
-      expect(excitedRes.emotion).toBe('excited');
+      const angryRes = detectEmotionAndInstruct('« C\'est scandaleux ! » gronda le grand ours avec colère.');
+      expect(angryRes.emotion).toBe('angry');
+
+      const sadRes = detectEmotionAndInstruct('Elle versa de chaudes larmes en constatant la disparition de sa poupée.');
+      expect(sadRes.emotion).toBe('sad');
+
+      const joyRes = detectEmotionAndInstruct('« Youpi, nous avons réussi ! » s\'écria Sophie en sautant de joie.');
+      expect(joyRes.emotion).toBe('joy');
 
       const sleepyRes = detectEmotionAndInstruct('L\'ourson bâilla longuement avant de fermer les yeux.');
       expect(sleepyRes.emotion).toBe('sleepy');
@@ -90,14 +114,15 @@ describe('Balisage Émotionnel Audio & Masquage Strict Côté Lecteur', () => {
 
       // Vérifier qu'aucun segment ne contient de balise dans son text à synthétiser
       segments.forEach((seg) => {
-        expect(seg.text).not.toMatch(/\[(warm|whisper|excited|mysterious|calm|sleepy|instruct:[^\]]+)\]/i);
+        expect(seg.text).not.toMatch(/\[(joy|angry|sad|warm|whisper|excited|mysterious|calm|sleepy|instruct:[^\]]+)\]/i);
         expect(seg.instruct).toBeDefined();
       });
 
       // Vérifier la présence d'instructs variés
       const instructs = segments.map(s => s.instruct);
-      expect(instructs.some(i => i?.includes('Enthusiastic') || i?.includes('cheerful'))).toBe(true);
+      expect(instructs.some(i => i?.includes('joyful') || i?.includes('Enthusiastic'))).toBe(true);
       expect(instructs.some(i => i?.includes('whisper'))).toBe(true);
+      expect(instructs.some(i => i?.includes('indignant'))).toBe(true);
     });
   });
 });

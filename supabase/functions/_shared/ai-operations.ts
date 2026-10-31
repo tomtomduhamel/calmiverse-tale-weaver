@@ -1,4 +1,3 @@
-
 // Interface pour les données d'enfants dans les Edge Functions
 interface ChildData {
   id: string;
@@ -82,7 +81,11 @@ THÉÂTRE AUDIO MULTI-VOIX ET BALISAGE DES PERSONNAGES :
     [Maman]: "N'oublie pas ton sac magique d'explorateur !"
     [Dragon]: "Bienvenue dans ma caverne scintillante..."
 - Les passages narratifs sans dialogue sont interprétés par le Narrateur principal.
-- Favorise les dialogues naturels et vivants entre les personnages.`
+- Favorise les dialogues naturels, vifs et expressifs entre les personnages.
+
+INTENTION DRAMATIQUE, ÉMOTIONS ET JEU D'ACTEUR AUDIO :
+- Pour donner vie à la narration et permettre au moteur vocal de surjouer les émotions (joie, colère, tristesse, peur, chuchotement), insère ponctuellement une balise d'émotion en début de paragraphe ou avant une réplique : [joy], [excited], [angry], [sad], [scared], [whisper], [mysterious], [calm].
+- Utilise une ponctuation expressive riche (points d'exclamation !, questions ?, points de suspension …) car elle dicte directement les intonations, l'énergie et le souffle du moteur audio.`
           },
           {
             role: 'user',

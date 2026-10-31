@@ -13,10 +13,21 @@ export type VoiceCategorySlug =
   | string;
 
 export const EMOTION_INSTRUCT_MAP: Record<string, string> = {
-  warm: "Warm, soothing, gentle bedtime narrator for children.",
+  // Émotions vives et expressives (contes & surjeu d'acteur)
+  joy: "Cheerful, joyful, bright and lively storytelling voice for children.",
+  happy: "Cheerful, joyful, bright and lively storytelling voice for children.",
+  excited: "Enthusiastic, energetic, lively and animated storytelling voice.",
+  playful: "Playful, mischievous, amusing storytelling voice.",
+  angry: "Firm, indignant, dramatic, intense storytelling voice.",
+  colere: "Firm, indignant, dramatic, intense storytelling voice.",
+  sad: "Melancholic, gentle, tender, slightly sorrowful storytelling voice.",
+  triste: "Melancholic, gentle, tender, slightly sorrowful storytelling voice.",
+  scared: "Anxious, startled, breathless storytelling voice.",
+  peur: "Anxious, startled, breathless storytelling voice.",
+  // Ambiances de lecture et coucher
+  warm: "Warm, engaging, gentle bedtime narrator for children.",
   whisper: "Soft, gentle whispering voice, quiet bedtime narrator.",
-  excited: "Enthusiastic, cheerful, joyful storytelling voice for children.",
-  mysterious: "Curious, gentle, mysterious bedtime storytelling voice.",
+  mysterious: "Curious, intriguing, mysterious bedtime storytelling voice.",
   calm: "Calm, peaceful, relaxed storytelling voice.",
   sleepy: "Very slow, soft, sleepy bedtime voice."
 };
@@ -68,7 +79,7 @@ export const detectEmotionAndInstruct = (
   contextAround: string = '',
   fallbackInstruct?: string
 ): { emotion?: string; instruct?: string } => {
-  const tagMatch = rawText.match(/\[(warm|whisper|excited|mysterious|calm|sleepy|instruct:\s*[^\]]+)\]/i);
+  const tagMatch = rawText.match(/\[(joy|happy|excited|playful|angry|colere|sad|triste|scared|peur|warm|whisper|mysterious|calm|sleepy|instruct:\s*[^\]]+)\]/i);
   if (tagMatch) {
     const val = tagMatch[1].trim();
     if (val.toLowerCase().startsWith('instruct:')) {
@@ -82,14 +93,26 @@ export const detectEmotionAndInstruct = (
     };
   }
 
-  // Heuristiques sur verbes d'action et ponctuations
+  // Heuristiques sur verbes d'action, expressions et ponctuations
   const combined = (contextAround + ' ' + rawText).toLowerCase();
   
+  if (/colère|furieu|gronda|s'énerva|tempêta|rage|mécontent|indigné|scandale/i.test(combined)) {
+    return { emotion: 'angry', instruct: EMOTION_INSTRUCT_MAP.angry };
+  }
+  if (/triste|sanglot|pleur|chagrin|déçu|larmes|désolé|peine|déchirant/i.test(combined)) {
+    return { emotion: 'sad', instruct: EMOTION_INSTRUCT_MAP.sad };
+  }
+  if (/peur|panique|effray|trembl|terreur|angoisse|monstre|frémir/i.test(combined)) {
+    return { emotion: 'scared', instruct: EMOTION_INSTRUCT_MAP.scared };
+  }
+  if (/s'exclama|youpi|hourra|génial|sauta de joie|éclata de rire|riant|joyeu|fête|chouette|rigol|drôle/i.test(combined)) {
+    return { emotion: 'joy', instruct: EMOTION_INSTRUCT_MAP.joy };
+  }
+  if (/cria|hurla/i.test(combined) || rawText.includes('!')) {
+    return { emotion: 'excited', instruct: EMOTION_INSTRUCT_MAP.excited };
+  }
   if (/chuchot|murmur|tout bas|à voix basse|chut\b|discrètement|secret/i.test(combined)) {
     return { emotion: 'whisper', instruct: EMOTION_INSTRUCT_MAP.whisper };
-  }
-  if (/s'exclama|s'écria|cria|hurla|youpi|hourra|génial|sauta de joie|éclata de rire|riant/i.test(combined) || rawText.includes('!')) {
-    return { emotion: 'excited', instruct: EMOTION_INSTRUCT_MAP.excited };
   }
   if (/bâill|s'endorm|fatigué|sommeil|paupières lourdes|ronfl|dodo/i.test(combined)) {
     return { emotion: 'sleepy', instruct: EMOTION_INSTRUCT_MAP.sleepy };

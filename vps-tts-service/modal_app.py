@@ -70,10 +70,21 @@ image = image.run_function(
 )
 
 EMOTION_MAP = {
-    "warm": "Warm, soothing, gentle bedtime narrator for children.",
+    # Émotions vives & expressives (contes pour enfants & surjeu)
+    "joy": "Cheerful, joyful, bright and lively storytelling voice for children.",
+    "happy": "Cheerful, joyful, bright and lively storytelling voice for children.",
+    "excited": "Enthusiastic, energetic, lively and animated storytelling voice.",
+    "playful": "Playful, mischievous, amusing storytelling voice.",
+    "angry": "Firm, indignant, dramatic, intense storytelling voice.",
+    "colere": "Firm, indignant, dramatic, intense storytelling voice.",
+    "sad": "Melancholic, gentle, tender, slightly sorrowful storytelling voice.",
+    "triste": "Melancholic, gentle, tender, slightly sorrowful storytelling voice.",
+    "scared": "Anxious, startled, breathless storytelling voice.",
+    "peur": "Anxious, startled, breathless storytelling voice.",
+    # Ambiances de lecture et coucher
+    "warm": "Warm, engaging, gentle bedtime narrator for children.",
     "whisper": "Soft, gentle whispering voice, quiet bedtime narrator.",
-    "excited": "Enthusiastic, cheerful, joyful storytelling voice for children.",
-    "mysterious": "Curious, gentle, mysterious bedtime storytelling voice.",
+    "mysterious": "Curious, intriguing, mysterious bedtime storytelling voice.",
     "calm": "Calm, peaceful, relaxed storytelling voice.",
     "sleepy": "Very slow, soft, sleepy bedtime voice."
 }
@@ -130,9 +141,9 @@ def _int_to_french(n: int) -> str:
 def normalize_french_narrative_text(text: str) -> str:
     """Normaliseur narratif 100% Français :
     - N'utilise JAMAIS le normaliseur anglais (en_tn_model) de CosyVoice.
-    - Nettoie les guillemets français (« ») et tirets cadratins (—) qui cassent la prosodie.
-    - Fusionne naturellement les incises de dialogue (« ... ! » annonce-t-il -> ..., annonce-t-il)
-      pour empêcher les coupures de phrases au milieu d'une réplique.
+    - Préserve scrupuleusement la ponctuation expressive (!, ?, …) indispensable à l'émotion vocale,
+      tout en retirant les guillemets et tirets parasites.
+    - Évite les coupures de phrases au milieu d'une incise de dialogue (ex: « Au secours ! » cria Pierre).
     - Convertit les points-virgules (;) et espaces typographiques français avant ponctuation.
     """
     if not text or not text.strip():
@@ -146,11 +157,13 @@ def normalize_french_narrative_text(text: str) -> str:
     s = re.sub(r'\.{2,}', '…', s)
 
     # 2. Gestion des incises après guillemets fermants ou ponctuation expressive :
-    # Ex: « Je suis Cracrac, chef du tri postal ! » annonce-t-il -> Je suis Cracrac, chef du tri postal, annonce-t-il
-    # Ex: — Peut-être une lettre vivante », répond Joseph -> Peut-être une lettre vivante, répond Joseph
-    s = re.sub(r'[!?…]\s*»\s*,?\s*([a-zàâäéèêëîïôöùûüç])', r', \1', s)
+    # Préserve la ponctuation expressive (! ? …) sans la remplacer par une virgule pour que
+    # Chatterbox module spontanément sa force et hauteur vocale.
+    # Ex: « Je suis Cracrac ! » annonce-t-il -> Je suis Cracrac ! annonce-t-il
+    # Ex: « Qui est là ? » murmure Sophie -> Qui est là ? murmure Sophie
+    s = re.sub(r'([!?…])\s*»\s*,?\s*([a-zàâäéèêëîïôöùûüç])', r'\1 \2', s)
     s = re.sub(r'\s*»\s*,\s*', ', ', s)
-    s = re.sub(r'\s*»\s+([a-zàâäéèêëîïôöùûüç])', r', \1', s)
+    s = re.sub(r'\s*»\s+([a-zàâäéèêëîïôöùûüç])', r' \1', s)
 
     # 3. Suppression propre des guillemets restants (« et ») sans laisser de tokens BPE parasites
     s = re.sub(r':\s*«\s*', ' : ', s)
@@ -181,23 +194,111 @@ def normalize_french_narrative_text(text: str) -> str:
     return s
 
 
+def resolve_speech_prosody_params(
+    text: str,
+    explicit_emotion: Optional[str] = None,
+    is_dialogue: bool = False,
+    progress: float = 0.0,
+    enable_sleep_pacing: bool = False,
+) -> Tuple[float, float, float]:
+    """Calcule dynamiquement (exaggeration, cfg_weight, temperature) pour Chatterbox :
+    - Évite la monotonie et insuffle le relief / surjeu adapté aux contes pour enfants.
+    - Donne plus d'énergie et de présence aux dialogues et passages animés.
+    - Adoucit le rythme en fin d'histoire si le sleep pacing est activé.
+    """
+    clean_text = text.lower()
+    emo = (explicit_emotion or "").lower().strip()
+
+    # Détection heuristique si aucune balise explicite n'est présente
+    if not emo or emo in ["narrator", "custom", "none"]:
+        if re.search(r'\b(s\'exclama|youpi|hourra|génial|sauta de joie|éclata de rire|riant|joyeu|fête|chouette|merveille|rigol|drôle)\b', clean_text) or ('!' in text and any(w in clean_text for w in ["bravo", "super", "incroyable", "regarde", "youpi", "ouah"])):
+            emo = "joy"
+        elif re.search(r'\b(colère|furieu|gronda|s\'énerva|tempêta|rage|mécontent|indigné|scandale)\b', clean_text):
+            emo = "angry"
+        elif re.search(r'\b(triste|sanglot|pleur|chagrin|déçu|larmes|désolé|peine|déchirant)\b', clean_text):
+            emo = "sad"
+        elif re.search(r'\b(peur|panique|effray|trembl|terreur|angoisse|monstre|frémir)\b', clean_text):
+            emo = "scared"
+        elif re.search(r'\b(chuchot|murmur|tout bas|à voix basse|discrètement|secret)\b', clean_text):
+            emo = "whisper"
+        elif re.search(r'\b(mystère|bizarre|étrange|sombre|qui va là|curieux|inconnu)\b', clean_text):
+            emo = "mysterious"
+        elif re.search(r'\b(bâill|s\'endorm|fatigué|sommeil|paupières lourdes|ronfl|dodo)\b', clean_text):
+            emo = "sleepy"
+
+    # Paramètres de base selon l'émotion détectée
+    if emo in ["joy", "happy", "excited", "playful"]:
+        exaggeration = 0.80
+        cfg_weight = 0.50
+        temperature = 0.80
+    elif emo in ["angry", "colere"]:
+        exaggeration = 0.85
+        cfg_weight = 0.65  # Force et directivité accentuées
+        temperature = 0.75
+    elif emo in ["sad", "triste"]:
+        exaggeration = 0.55
+        cfg_weight = 0.50
+        temperature = 0.62
+    elif emo in ["scared", "peur"]:
+        exaggeration = 0.75
+        cfg_weight = 0.55
+        temperature = 0.78
+    elif emo in ["whisper"]:
+        exaggeration = 0.45
+        cfg_weight = 0.50
+        temperature = 0.65
+    elif emo in ["mysterious"]:
+        exaggeration = 0.60
+        cfg_weight = 0.50
+        temperature = 0.70
+    elif emo in ["sleepy"]:
+        exaggeration = 0.40
+        cfg_weight = 0.50
+        temperature = 0.60
+    elif emo in ["calm"]:
+        exaggeration = 0.50
+        cfg_weight = 0.50
+        temperature = 0.70
+    else:
+        # Narration standard : fin de la neutralité monotone (0.55 au lieu de 0.35 !)
+        exaggeration = 0.55
+        cfg_weight = 0.50
+        temperature = 0.75
+
+    # Bonus de surjeu théâtral pour les répliques de personnages
+    if is_dialogue:
+        exaggeration = min(0.95, exaggeration + 0.15)
+        temperature = min(0.85, max(temperature, 0.78))
+
+    # Modulation douce du coucher en fin d'histoire (dernier tiers)
+    if enable_sleep_pacing and progress >= 0.66:
+        exaggeration = max(0.38, exaggeration * 0.80)
+        temperature = max(0.58, temperature * 0.85)
+
+    return (round(exaggeration, 2), round(cfg_weight, 2), round(temperature, 2))
+
+
 def convert_to_wav(input_path: str, output_path: str) -> str:
-    """Convertit l'enregistrement vocal de référence en WAV PCM 24kHz mono PUR.
-    IMPORTANT : On n'applique plus afftdn=nf=-25 ni highpass=f=70 qui déformaient
-    le timbre grave de la voix 'Papa' avec un artefact métallique FFT."""
+    """Convertit l'enregistrement vocal de référence en WAV PCM 24kHz mono PUR studio.
+    Applique un dé-boxage chirurgical à 420Hz et un expanseur doux (agate) pour assécher
+    l'acoustique de la pièce et éliminer l'effet 'boîte de conserve' sans artefact métallique."""
     try:
+        # 1. highpass=f=65 : supprime les infra-basses et bruits de manipulation sans altérer les voix graves
+        # 2. equalizer=f=420:width_type=q:w=1.4:g=-3.5 : élimine la résonance creuse de pièce (anti-box)
+        # 3. agate=range=0.06:threshold=0.03:ratio=2:attack=20:release=140 : assèche les réflexions entre les mots
+        prompt_filter = "highpass=f=65,equalizer=f=420:width_type=q:w=1.4:g=-3.5,agate=range=0.06:threshold=0.03:ratio=2:attack=20:release=140"
         cmd = [
             "ffmpeg", "-y", "-i", input_path,
-            "-af", "highpass=f=45",
+            "-af", prompt_filter,
             "-ar", "24000", "-ac", "1", "-c:a", "pcm_s16le",
             output_path
         ]
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return output_path
     except Exception as e:
-        print(f"⚠️ Erreur conversion FFmpeg ({e}), fallback simple...")
+        print(f"⚠️ Erreur conversion FFmpeg filtrée ({e}), fallback simple...")
         try:
-            cmd = ["ffmpeg", "-y", "-i", input_path, "-ar", "24000", "-ac", "1", "-c:a", "pcm_s16le", output_path]
+            cmd = ["ffmpeg", "-y", "-i", input_path, "-af", "highpass=f=55", "-ar", "24000", "-ac", "1", "-c:a", "pcm_s16le", output_path]
             subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return output_path
         except Exception:
@@ -223,7 +324,12 @@ def _apply_cosine_edges(wav: np.ndarray, sr: int = 24000, fade_in_ms: float = 12
 
 
 def master_audio_bytes(input_wav_bytes: bytes, sr: int = 24000) -> bytes:
-    """Applique un mastering broadcast EBU R128 (-16 LUFS) feutré pour les contes d'enfants"""
+    """Applique un mastering broadcast EBU R128 (-16 LUFS) 'Close-Mic Studio' pour les contes d'enfants :
+    - Coupe les 450Hz (supprime définitivement la boîte de conserve)
+    - Rehausse les 3.8kHz (+2.5dB) pour placer la voix immédiatement 'en avant'
+    - Ajoute de l'air soyeux à 9.5kHz (+1.5dB)
+    - Expander feutré (agate) pour supprimer toute queue d'écho résiduelle entre les phrases
+    - Loudnorm calibré LRA=8 pour éviter tout pompage de fond."""
     import tempfile
     try:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as in_f:
@@ -231,9 +337,17 @@ def master_audio_bytes(input_wav_bytes: bytes, sr: int = 24000) -> bytes:
             in_path = in_f.name
         out_path = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
         
+        audio_filter = (
+            "highpass=f=60,"
+            "equalizer=f=450:width_type=q:w=1.2:g=-3.0,"
+            "equalizer=f=3800:width_type=q:w=1.0:g=+2.5,"
+            "treble=g=+1.5:f=9500,"
+            "agate=range=0.05:threshold=0.02:ratio=2:attack=15:release=120,"
+            "loudnorm=I=-16:TP=-1.5:LRA=8:dual_mono=true"
+        )
         cmd = [
             "ffmpeg", "-y", "-i", in_path,
-            "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+            "-af", audio_filter,
             "-ar", str(sr), "-ac", "1", "-c:a", "pcm_s16le",
             out_path
         ]
@@ -249,7 +363,7 @@ def master_audio_bytes(input_wav_bytes: bytes, sr: int = 24000) -> bytes:
 
 
 def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) -> str:
-    """Télécharge et met en cache l'extrait vocal pur (v2 sans afftdn) dans le Volume Modal"""
+    """Télécharge et met en cache l'extrait vocal pur studio (v3 anti-box) dans le Volume Modal"""
     if not voice_url:
         return "/root/default_ref.wav"
 
@@ -269,8 +383,8 @@ def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) ->
         else:
             stable_key = hashlib.md5(clean_base.encode('utf-8')).hexdigest()
 
-    # Préfixe voice_pure_v2_ pour garantir une empreinte vocale non altérée par l'ancien filtre afftdn
-    cached_wav_path = os.path.join(cache_dir, f"voice_pure_v2_{stable_key}.wav")
+    # Préfixe voice_studio_v3_ pour garantir une empreinte vocale asséchée et dé-boxée
+    cached_wav_path = os.path.join(cache_dir, f"voice_studio_v3_{stable_key}.wav")
     
     if not (os.path.exists(cached_wav_path) and os.path.getsize(cached_wav_path) > 0):
         try:
@@ -279,7 +393,7 @@ def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) ->
             pass
 
     if os.path.exists(cached_wav_path) and os.path.getsize(cached_wav_path) > 0:
-        print(f"✅ Voix de référence pure trouvée en cache pérenne : {cached_wav_path}")
+        print(f"✅ Voix de référence studio trouvée en cache pérenne : {cached_wav_path}")
         return cached_wav_path
 
     temp_dl_path = os.path.join("/tmp", f"dl_{stable_key}")
@@ -296,7 +410,7 @@ def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) ->
 
     try:
         volume.commit()
-        print(f"💾 Voix de référence pure persistée dans le Volume Modal : {converted_wav}")
+        print(f"💾 Voix de référence studio persistée dans le Volume Modal : {converted_wav}")
     except Exception as commit_err:
         print(f"⚠️ Avertissement commit volume Modal : {commit_err}")
         
@@ -354,9 +468,10 @@ def chunk_text_optimized(
     chapter_pause_sec: float = 2.5,
     default_instruct: Optional[str] = None,
     enable_sleep_pacing: bool = True
-) -> List[Tuple[str, float, Optional[str]]]:
-    """Découpe l'histoire paragraphe par paragraphe avec pauses naturelles et progression
-    feutrée du rythme du coucher (Sleep Pacing)."""
+) -> List[Tuple[str, float, Optional[str], Optional[str]]]:
+    """Découpe l'histoire paragraphe par paragraphe avec pauses naturelles, émotion détectée
+    et progression feutrée du rythme du coucher (Sleep Pacing).
+    Retourne [(para_texte, pause_avant, emotion_tag, instruct_str), ...]"""
     if not text or not text.strip():
         return []
 
@@ -365,10 +480,11 @@ def chunk_text_optimized(
     total_paras = len(paragraphs)
     
     chapter_pattern = r'^\s*(?:#+\s*|#*\s*(?:chapitre|partie|épisode|prologue|épilogue|introduction|conclusion)\b)'
-    tag_pattern = r'^\s*\[(warm|whisper|excited|mysterious|calm|sleepy|instruct:\s*[^\]]+)\]'
+    tag_pattern = r'^\s*\[(joy|happy|excited|playful|angry|colere|sad|triste|scared|peur|warm|whisper|mysterious|calm|sleepy|instruct:\s*[^\]]+)\]'
 
-    chunks_with_pauses: List[Tuple[str, float, Optional[str]]] = []
+    chunks_with_pauses: List[Tuple[str, float, Optional[str], Optional[str]]] = []
     current_instruct = default_instruct
+    current_emotion = None
 
     for idx, para in enumerate(paragraphs):
         progress = (idx / float(total_paras - 1)) if total_paras > 1 else 0.0
@@ -378,8 +494,10 @@ def chunk_text_optimized(
             tag_val = match_tag.group(1).strip()
             if tag_val.lower().startswith("instruct:"):
                 current_instruct = tag_val[len("instruct:"):].strip()
+                current_emotion = "custom"
             else:
-                current_instruct = EMOTION_MAP.get(tag_val.lower(), default_instruct)
+                current_emotion = tag_val.lower()
+                current_instruct = EMOTION_MAP.get(current_emotion, default_instruct)
 
         para_clean = re.sub(r'\[.*?\]', '', para).strip()
         para_clean = re.sub(r'\s+', ' ', para_clean)
@@ -412,7 +530,7 @@ def chunk_text_optimized(
             else:
                 instruct = "Very slow, soft, sleepy bedtime voice"
 
-        chunks_with_pauses.append((para_clean, pause_before, instruct))
+        chunks_with_pauses.append((para_clean, pause_before, current_emotion, instruct))
 
     return chunks_with_pauses
 
@@ -564,7 +682,7 @@ class CalmiTTSGPU:
             print(f"⚠️ Erreur découpage prompt {prompt_path}: {e}")
             return prompt_path, (matched_window[2] if matched_window else None)
 
-    def _get_chatterbox_conditionals(self, prompt_path: str, exaggeration: float = 0.35):
+    def _get_chatterbox_conditionals(self, prompt_path: str, exaggeration: float = 0.55):
         """Pré-calcule et met en cache GPU les embeddings vocaux Chatterbox Multilingual pour un locuteur."""
         trimmed_path, _ = self._get_trimmed_prompt_wav(prompt_path)
         cache_key = f"{trimmed_path}::{exaggeration:.2f}"
@@ -575,7 +693,7 @@ class CalmiTTSGPU:
                 exaggeration=exaggeration
             )
             self.chatterbox_cond_cache[cache_key] = copy.deepcopy(self.chatterbox_model.conds)
-            print(f"🎙️ [Chatterbox] Empreinte vocale extraite et cachée ({trimmed_path}) en {time.time() - t0:.2f}s")
+            print(f"🎙️ [Chatterbox] Empreinte vocale extraite et cachée ({trimmed_path}, exag={exaggeration:.2f}) en {time.time() - t0:.2f}s")
         else:
             self.chatterbox_model.conds = copy.deepcopy(self.chatterbox_cond_cache[cache_key])
 
@@ -585,10 +703,11 @@ class CalmiTTSGPU:
         prompt_path: str,
         language_id: str = "fr",
         sentence_pause_sec: float = 0.16,
-        exaggeration: float = 0.35,
+        exaggeration: float = 0.55,
         cfg_weight: float = 0.50,
+        temperature: float = 0.75,
     ) -> Tuple[np.ndarray, int]:
-        """Synthétise un paragraphe en français avec Chatterbox Multilingual + fondu cosinus doux."""
+        """Synthétise un paragraphe en français avec Chatterbox Multilingual + modulation expressive + fondu cosinus doux."""
         self._get_chatterbox_conditionals(prompt_path, exaggeration=exaggeration)
         sr = self.chatterbox_model.sr
 
@@ -605,7 +724,7 @@ class CalmiTTSGPU:
                 language_id=language_id,
                 exaggeration=exaggeration,
                 cfg_weight=cfg_weight,
-                temperature=0.65,
+                temperature=temperature,
             )
             if hasattr(wav_tensor, "cpu"):
                 w_np = wav_tensor.squeeze().cpu().numpy().astype(np.float32)
@@ -707,8 +826,11 @@ class CalmiTTSGPU:
         sentence_pause_sec: float = 0.16,
         language: str = "fr",
         prefer_engine: Optional[str] = None,
+        exaggeration: float = 0.55,
+        cfg_weight: float = 0.50,
+        temperature: float = 0.75,
     ) -> Tuple[np.ndarray, int]:
-        """Route automatiquement vers Chatterbox Multilingual (par défaut) ou CosyVoice2-EU corrigé."""
+        """Route automatiquement vers Chatterbox Multilingual (par défaut) ou CosyVoice2-EU corrigé avec paramètres expressifs."""
         target_engine = (prefer_engine or self.engine or "chatterbox").lower()
         if "chatterbox" in target_engine and self.chatterbox_model is not None:
             try:
@@ -718,8 +840,9 @@ class CalmiTTSGPU:
                     prompt_path=prompt_path,
                     language_id=lang_code,
                     sentence_pause_sec=sentence_pause_sec,
-                    exaggeration=0.35,
-                    cfg_weight=0.50,
+                    exaggeration=exaggeration,
+                    cfg_weight=cfg_weight,
+                    temperature=temperature,
                 )
             except Exception as cb_err:
                 print(f"⚠️ [Chatterbox] Erreur sur bloc ({cb_err}), fallback immédiat sur CosyVoice2-EU corrigé...")
@@ -778,7 +901,8 @@ class CalmiTTSGPU:
             request.text, 
             max_chars=400,
             paragraph_pause_sec=paragraph_pause_sec,
-            default_instruct=global_instruct
+            default_instruct=global_instruct,
+            enable_sleep_pacing=bool(request.enable_sleep_pacing)
         )
 
         clean_prompt = request.ref_text.strip() if request.ref_text else ""
@@ -847,6 +971,19 @@ class CalmiTTSGPU:
 
                     prompt_target = seg_ref_path if (seg_ref_path and os.path.exists(seg_ref_path)) else DEFAULT_LOCAL_REF
                     seg_prompt_text = (seg.get("ref_text") or seg.get("transcript") or (clean_prompt if seg_ref_path == ref_audio_path else "") or "").strip()
+
+                    # Calcul de la dynamique expressive
+                    is_dialogue = seg.get("speakerType") == "dialogue" or seg.get("roleCategory") != "narrator_family"
+                    seg_emotion = seg.get("emotion")
+                    prog = (idx / float(len(merged_segments) - 1)) if len(merged_segments) > 1 else 0.0
+                    exag, cfg_w, temp = resolve_speech_prosody_params(
+                        text=seg_text,
+                        explicit_emotion=seg_emotion,
+                        is_dialogue=is_dialogue,
+                        progress=prog,
+                        enable_sleep_pacing=bool(request.enable_sleep_pacing),
+                    )
+
                     wav_np, current_sr = self._synthesize_block_auto(
                         text=seg_text,
                         prompt_path=prompt_target,
@@ -854,6 +991,9 @@ class CalmiTTSGPU:
                         sentence_pause_sec=sentence_pause_sec,
                         language=request.language,
                         prefer_engine=active_engine,
+                        exaggeration=exag,
+                        cfg_weight=cfg_w,
+                        temperature=temp,
                     )
                     sr = current_sr
 
@@ -864,13 +1004,22 @@ class CalmiTTSGPU:
 
                     generated_wavs.append(wav_np)
                     speaker_label = seg.get("speakerName") or seg.get("roleCategory") or "Narrateur"
-                    print(f"  ├─ [Théâtre/{active_engine}] Segment {idx+1}/{len(merged_segments)} ({speaker_label}: {len(seg_text)} chars) généré en {time.time() - t0:.2f}s")
+                    print(f"  ├─ [Théâtre/{active_engine}] Segment {idx+1}/{len(merged_segments)} ({speaker_label}, exag={exag}, emo={seg_emotion or 'auto'}): {len(seg_text)} chars généré en {time.time() - t0:.2f}s")
 
             else:
                 prompt_target = ref_audio_path if (ref_audio_path and os.path.exists(ref_audio_path)) else DEFAULT_LOCAL_REF
                 for idx, chunk_data in enumerate(text_chunks):
-                    chunk, pause_before, chunk_instruct = chunk_data
+                    chunk, pause_before, chunk_emo, chunk_instruct = chunk_data
                     t0 = time.time()
+
+                    prog = (idx / float(len(text_chunks) - 1)) if len(text_chunks) > 1 else 0.0
+                    exag, cfg_w, temp = resolve_speech_prosody_params(
+                        text=chunk,
+                        explicit_emotion=chunk_emo,
+                        is_dialogue=False,
+                        progress=prog,
+                        enable_sleep_pacing=bool(request.enable_sleep_pacing),
+                    )
 
                     wav_np, current_sr = self._synthesize_block_auto(
                         text=chunk,
@@ -879,6 +1028,9 @@ class CalmiTTSGPU:
                         sentence_pause_sec=sentence_pause_sec,
                         language=request.language,
                         prefer_engine=active_engine,
+                        exaggeration=exag,
+                        cfg_weight=cfg_w,
+                        temperature=temp,
                     )
                     sr = current_sr
 
@@ -888,7 +1040,7 @@ class CalmiTTSGPU:
                         generated_wavs.append(silence)
 
                     generated_wavs.append(wav_np)
-                    print(f"  ├─ [{active_engine.upper()}] Paragraphe {idx+1}/{len(text_chunks)} ({len(chunk)} chars) généré en {time.time() - t0:.2f}s")
+                    print(f"  ├─ [{active_engine.upper()}] Paragraphe {idx+1}/{len(text_chunks)} (exag={exag}, emo={chunk_emo or 'auto'}, {len(chunk)} chars) généré en {time.time() - t0:.2f}s")
 
         final_wav = np.concatenate(generated_wavs)
         total_time = time.time() - start_inf
@@ -898,7 +1050,7 @@ class CalmiTTSGPU:
         sf.write(out_buf, final_wav, sr, format='WAV')
         out_buf.seek(0)
         
-        # Mastering EBU R128 (-16 LUFS)
+        # Mastering EBU R128 (-16 LUFS) Close-Mic Studio
         mastered_audio = master_audio_bytes(out_buf.getvalue(), sr)
         return mastered_audio, sr
 
@@ -1014,7 +1166,7 @@ def synthesize_async_fast(request: TTSRequest):
 
     if not effective_webhook_id:
         return JSONResponse(
-            status_code=400,
+            status_code=400, 
             content={"error": "webhook_id ou requestId est obligatoire"},
             headers=cors_headers
         )
