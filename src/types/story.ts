@@ -163,6 +163,43 @@ import { READING_SPEED_WPM } from '@/utils/readingTime';
 
 export const AVERAGE_WPM = READING_SPEED_WPM;
 
+export interface DurationWordBounds {
+  minWords: number;
+  targetWords: number;
+  maxWords: number;
+}
+
+/**
+ * Calcule les bornes de mots (min, cible, max strict) pour une durée demandée.
+ * Le maxWords est rigoureusement calibré sous la barre des minutes supérieures
+ * pour garantir qu'à l'affichage comme à l'écoute, une histoire de 3 min ne bascule jamais à 4 ou 5 min.
+ */
+export const getDurationWordBounds = (minutes: number, customWpm?: number): DurationWordBounds => {
+  const wpm = customWpm && customWpm >= 50 && customWpm <= 300 ? customWpm : AVERAGE_WPM;
+
+  if (minutes <= 3) {
+    const target = Math.round(wpm * 2.5); // ~300 mots à 120 wpm, ~288 à 115 wpm
+    const min = Math.max(200, Math.round(target * 0.85)); // ~255 mots
+    const max = Math.round(wpm * 2.85); // ~342 mots à 120 wpm, ~328 à 115 wpm
+    return { minWords: min, targetWords: target, maxWords: max };
+  } else if (minutes <= 5) {
+    const target = Math.round(wpm * 4.3); // ~516 mots à 120 wpm
+    const min = Math.round(target * 0.88); // ~454 mots
+    const max = Math.round(wpm * 4.8); // ~576 mots à 120 wpm
+    return { minWords: min, targetWords: target, maxWords: max };
+  } else if (minutes <= 10) {
+    const target = Math.round(wpm * 8.8); // ~1056 mots à 120 wpm
+    const min = Math.round(target * 0.9);
+    const max = Math.round(wpm * 9.6); // ~1152 mots à 120 wpm
+    return { minWords: min, targetWords: target, maxWords: max };
+  } else {
+    const target = Math.round(wpm * 13.0); // ~1560 mots à 120 wpm
+    const min = Math.round(target * 0.9);
+    const max = Math.round(wpm * 14.2); // ~1704 mots à 120 wpm
+    return { minWords: min, targetWords: target, maxWords: max };
+  }
+};
+
 export const estimateWordCountForDuration = (minutes: number, customWpm?: number): number => {
   const wpm = customWpm && customWpm >= 50 && customWpm <= 300 ? customWpm : AVERAGE_WPM;
   const words = Math.round(minutes * wpm);

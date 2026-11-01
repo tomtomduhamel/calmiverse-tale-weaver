@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateReadingTime, formatReadingMinutes, formatAudioDuration } from '@/utils/readingTime';
-import { STORY_DURATION_CONFIG, getStoryDurationConfig, estimateWordCountForDuration } from '@/types/story';
+import { STORY_DURATION_CONFIG, getStoryDurationConfig, estimateWordCountForDuration, getDurationWordBounds } from '@/types/story';
 
 describe('Story Duration & Reading Time Utilities', () => {
   describe('calculateReadingTime', () => {
@@ -87,6 +87,43 @@ describe('Story Duration & Reading Time Utilities', () => {
       expect(estimateWordCountForDuration(3, 90)).toBe(270);
       // Custom WPM (e.g. 150 words/min)
       expect(estimateWordCountForDuration(10, 150)).toBe(1500);
+    });
+
+    it('calculates strict word bounds and ceilings with getDurationWordBounds', () => {
+      // 3 min @ default 120 wpm
+      const bounds3 = getDurationWordBounds(3);
+      expect(bounds3.targetWords).toBe(300);
+      expect(bounds3.minWords).toBe(255);
+      expect(bounds3.maxWords).toBe(342); // strict cap under 350 to never trigger 4/5 min
+
+      // 3 min @ user profile 115 wpm
+      const bounds3User = getDurationWordBounds(3, 115);
+      expect(bounds3User.targetWords).toBe(288);
+      expect(bounds3User.maxWords).toBe(328);
+
+      // 5 min @ 120 wpm
+      const bounds5 = getDurationWordBounds(5);
+      expect(bounds5.targetWords).toBe(516);
+      expect(bounds5.maxWords).toBe(576);
+
+      // 10 min @ 120 wpm
+      const bounds10 = getDurationWordBounds(10);
+      expect(bounds10.targetWords).toBe(1056);
+      expect(bounds10.maxWords).toBe(1152);
+    });
+
+    it('safeguards calculateReadingTime so 3-min express stories never round up to 4 or 5 min', () => {
+      // 340 words with 115 wpm -> 340 / 115 = 2.95 min -> ~3 min
+      const text340 = Array(340).fill('mot').join(' ');
+      expect(calculateReadingTime(text340, 115)).toBe('~3 min de lecture');
+
+      // 355 words with slow reading speed 100 wpm (normally 3.55 -> rounds to 4, but capped to 3)
+      const text355 = Array(355).fill('mot').join(' ');
+      expect(calculateReadingTime(text355, 100)).toBe('~3 min de lecture');
+
+      // 580 words with 100 wpm (normally 5.8 -> rounds to 6, capped to 5)
+      const text580 = Array(580).fill('mot').join(' ');
+      expect(calculateReadingTime(text580, 100)).toBe('~5 min de lecture');
     });
   });
 });

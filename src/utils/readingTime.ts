@@ -26,7 +26,17 @@ export const calculateReadingTime = (text: string | undefined, customWpm?: numbe
 
   // Vitesse de lecture adaptée aux enfants, alignée avec estimateWordCountForDuration
   const wordCount = cleanText.trim().split(/\s+/).length;
-  const minutes = Math.round(wordCount / wpm);
+  let minutes = Math.round(wordCount / wpm);
+
+  // Sécurité d'arrondi et d'affichage : éviter qu'une histoire express (3 min) ne s'affiche à 4 ou 5 min
+  // Si le nombre de mots est dans la tranche express (<= 360 mots), la durée perçue ne doit pas dépasser 3 min
+  if (wordCount <= 360 && minutes > 3) {
+    minutes = 3;
+  } else if (wordCount <= 600 && minutes > 5) {
+    minutes = 5;
+  } else if (wordCount <= 1180 && minutes > 10) {
+    minutes = 10;
+  }
 
   if (minutes < 1) {
     return "< 1 min de lecture";

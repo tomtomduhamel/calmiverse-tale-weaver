@@ -7,6 +7,43 @@
 
 const READING_SPEED_WPM = 120;
 
+export interface DurationWordBounds {
+  minWords: number;
+  targetWords: number;
+  maxWords: number;
+}
+
+/**
+ * Calcule les bornes de mots (min, cible, max strict) pour une durée demandée.
+ * Le maxWords est rigoureusement calibré sous la barre des minutes supérieures
+ * pour garantir qu'à l'affichage comme à l'écoute, une histoire de 3 min ne bascule jamais à 4 ou 5 min.
+ */
+export const getDurationWordBounds = (minutes: number, customWpm?: number): DurationWordBounds => {
+  const wpm = customWpm && customWpm >= 50 && customWpm <= 300 ? customWpm : READING_SPEED_WPM;
+
+  if (minutes <= 3) {
+    const target = Math.round(wpm * 2.5); // ~300 mots à 120 wpm, ~288 à 115 wpm
+    const min = Math.max(200, Math.round(target * 0.85)); // ~255 mots
+    const max = Math.round(wpm * 2.85); // ~342 mots à 120 wpm, ~328 à 115 wpm
+    return { minWords: min, targetWords: target, maxWords: max };
+  } else if (minutes <= 5) {
+    const target = Math.round(wpm * 4.3); // ~516 mots à 120 wpm
+    const min = Math.round(target * 0.88); // ~454 mots
+    const max = Math.round(wpm * 4.8); // ~576 mots à 120 wpm
+    return { minWords: min, targetWords: target, maxWords: max };
+  } else if (minutes <= 10) {
+    const target = Math.round(wpm * 8.8); // ~1056 mots à 120 wpm
+    const min = Math.round(target * 0.9);
+    const max = Math.round(wpm * 9.6); // ~1152 mots à 120 wpm
+    return { minWords: min, targetWords: target, maxWords: max };
+  } else {
+    const target = Math.round(wpm * 13.0); // ~1560 mots à 120 wpm
+    const min = Math.round(target * 0.9);
+    const max = Math.round(wpm * 14.2); // ~1704 mots à 120 wpm
+    return { minWords: min, targetWords: target, maxWords: max };
+  }
+};
+
 export const estimateWordCountForDuration = (minutes: number, customWpm?: number): number => {
   const wpm = customWpm && customWpm >= 50 && customWpm <= 300 ? customWpm : READING_SPEED_WPM;
   const words = Math.round(minutes * wpm);
@@ -215,10 +252,19 @@ export const generateAdvancedStoryPrompt = (
   const vocabularyInstructions = getVocabularyInstructions(analysis.youngestAge);
   const genderInstructions = generateGenderInstructions(analysis);
 
-  const targetWords = options?.targetWordCount ??
-    (options?.durationMinutes ? estimateWordCountForDuration(options.durationMinutes, options.readingSpeed) : 1200);
-  const minWords = Math.round(targetWords * 0.9);
-  const maxWords = Math.round(targetWords * 1.1);
+  const bounds = options?.durationMinutes
+    ? getDurationWordBounds(options.durationMinutes, options.readingSpeed)
+    : options?.targetWordCount
+    ? {
+        minWords: Math.round(options.targetWordCount * 0.9),
+        targetWords: options.targetWordCount,
+        maxWords: Math.round(options.targetWordCount * 1.1),
+      }
+    : { minWords: 1080, targetWords: 1200, maxWords: 1320 };
+
+  const targetWords = bounds.targetWords;
+  const minWords = bounds.minWords;
+  const maxWords = bounds.maxWords;
 
   const startWords = Math.max(60, Math.round(targetWords * 0.25));
   const middleWords = Math.max(100, Math.round(targetWords * 0.5));
@@ -452,13 +498,34 @@ function buildStoryPromptFromTemplate(
   const characterContext = generateCharacterContext(analysis);
   const namesText = buildNamesText(analysis);
 
+  const bounds = params.durationMinutes
+    ? getDurationWordBounds(params.durationMinutes, params.readingSpeed)
+    : targetWordCount
+    ? {
+        minWords: Math.round(targetWordCount * 0.85),
+        targetWords: targetWordCount,
+        maxWords: Math.round(targetWordCount * 1.1),
+      }
+    : null;
+
+  const effectiveTarget = bounds ? bounds.targetWords : (targetWordCount || 1500);
+  const minWords = bounds ? bounds.minWords : Math.round(effectiveTarget * 0.85);
+  const maxWords = bounds ? bounds.maxWords : Math.round(effectiveTarget * 1.1);
+
+  const durationConstraintText = params.durationMinutes
+    ? `⚠️ CONTRAINTE STRICTE DE DURÉE (${params.durationMinutes} MINUTES) : L'histoire complète DOIT impérativement faire entre ${minWords} et ${maxWords} mots (Cible idéale : ${effectiveTarget} mots). Interdiction absolue de dépasser ${maxWords} mots, afin que l'histoire soit lue en exactement ${params.durationMinutes} minutes.`
+    : `⚠️ CONTRAINTE STRICTE DE LONGUEUR : L'histoire complète DOIT faire entre ${minWords} et ${maxWords} mots (Cible : ${effectiveTarget} mots). Ne jamais dépasser ${maxWords} mots.`;
+
   const variables: Record<string, string | number | undefined> = {
     children_names: namesText,
     children_context: characterContext,
     objective: params.objective,
     objective_description: OBJECTIVE_DESCRIPTIONS[params.objective] || params.objective,
     vocabulary_level: getVocabularyInstructions(analysis.youngestAge),
-    target_word_count: targetWordCount?.toString() || "1500",
+    target_word_count: effectiveTarget.toString(),
+    min_word_count: minWords.toString(),
+    max_word_count: maxWords.toString(),
+    duration_constraint: durationConstraintText,
     selected_title: params.selectedTitle,
     duration_minutes: params.durationMinutes?.toString() || "",
     youngest_age: analysis.youngestAge.toString(),
@@ -477,7 +544,15 @@ function buildStoryPromptFromTemplate(
     age_preferred_supports: (variation.ageCognition?.preferred_supports || []).join(", "),
   };
 
-  return replacePromptVariables(template, variables);
+  let prompt = replacePromptVariables(template, variables);
+
+  // Si le template n'inclut pas déjà la contrainte stricte de durée/longueur,
+  // l'ajouter impérativement en fin de prompt pour forcer le respect des bornes
+  if (!prompt.includes(maxWords.toString()) && !prompt.includes("CONTRAINTE STRICTE DE DURÉE")) {
+    prompt += `\n\n${durationConstraintText}`;
+  }
+
+  return prompt;
 }
 
 export interface GuidedParams {
@@ -515,7 +590,8 @@ export async function buildGuidedStoryPayload(supabase: any, params: GuidedParam
   }));
 
   const durationMinutes = params.durationMinutes ?? null;
-  const targetWordCount = durationMinutes ? estimateWordCountForDuration(durationMinutes, userData.readingSpeed) : undefined;
+  const bounds = durationMinutes ? getDurationWordBounds(durationMinutes, userData.readingSpeed) : null;
+  const targetWordCount = bounds ? bounds.targetWords : (durationMinutes ? estimateWordCountForDuration(durationMinutes, userData.readingSpeed) : undefined);
 
   const analysis = analyzeCharacters(children);
   const variation = await selectVariation(supabase, analysis.youngestAge, params.objective);
@@ -659,7 +735,8 @@ export async function buildFastStoryPayload(supabase: any, params: FastParams): 
   const userData = await fetchUserData(supabase, params.userId);
   const prompts = await fetchActivePrompts(supabase);
 
-  const targetWordCount = estimateWordCountForDuration(params.durationMinutes, userData.readingSpeed);
+  const bounds = getDurationWordBounds(params.durationMinutes, userData.readingSpeed);
+  const targetWordCount = bounds.targetWords;
 
   // Le frontend utilise un âge moyen de 6 ans pour la sélection narrative (pas d'enfant ciblé)
   const variation = await selectVariation(supabase, 6, params.fastStoryPromptKey);
@@ -675,9 +752,14 @@ export async function buildFastStoryPayload(supabase: any, params: FastParams): 
     .order("createdat", { ascending: false })
     .limit(5);
 
+  const durationConstraintText = `⚠️ CONTRAINTE STRICTE DE DURÉE (${params.durationMinutes} MINUTES) : L'histoire complète DOIT impérativement faire entre ${bounds.minWords} et ${bounds.maxWords} mots (Cible idéale : ${bounds.targetWords} mots). Interdiction absolue de dépasser ${bounds.maxWords} mots.`;
+
   let storyPrompt = storyPromptRaw
     ? replacePromptVariables(storyPromptRaw, {
-      target_word_count: targetWordCount?.toString() || "1500",
+      target_word_count: bounds.targetWords.toString(),
+      min_word_count: bounds.minWords.toString(),
+      max_word_count: bounds.maxWords.toString(),
+      duration_constraint: durationConstraintText,
       duration_minutes: params.durationMinutes.toString(),
       narrative_schema: variation.narrativeSchema?.type || "",
       narrative_mechanism: variation.narrativeSchema?.mechanism || "",
@@ -690,6 +772,10 @@ export async function buildFastStoryPayload(supabase: any, params: FastParams): 
       ericksonian_pattern: variation.ericksonianTechnique?.linguistic_pattern || "",
     })
     : `Génère une histoire courte (${targetWordCount} mots) pour un enfant d'environ 6 ans, avec un protagoniste surprise adapté au thème : ${params.fastStoryPromptKey}.`;
+
+  if (!storyPrompt.includes(bounds.maxWords.toString()) && !storyPrompt.includes("CONTRAINTE STRICTE DE DURÉE")) {
+    storyPrompt += `\n\n${durationConstraintText}`;
+  }
 
   if (recentStories && recentStories.length > 0) {
     const historyList = recentStories

@@ -250,3 +250,37 @@ describe("Dédoublonnage des histoires (Anti-Répétition Renforcé)", () => {
     });
   });
 });
+
+describe("Calibration de durée et plafonds de mots stricts", () => {
+  it("injecte la contrainte stricte de durée et le plafond max pour une histoire de 3 minutes", async () => {
+    const mockSupabase = createMockSupabase();
+    const payload = await buildGuidedStoryPayload(mockSupabase, {
+      userId: "user-123",
+      objective: "fun",
+      childrenIds: ["child-1"],
+      selectedTitle: "Les Crêpes Volantes",
+      durationMinutes: 3,
+    });
+
+    expect(payload.durationMinutes).toBe(3);
+    // Pour 3 min à 120 wpm : target ~300, max ~342
+    expect(payload.targetWordCount).toBe(300);
+    expect(payload.storyPrompt).toContain("CONTRAINTE STRICTE DE DURÉE (3 MINUTES)");
+    expect(payload.storyPrompt).toContain("342 mots");
+    expect(payload.storyPrompt).toContain("Interdiction absolue de dépasser");
+  });
+
+  it("injecte la contrainte stricte de durée pour une histoire rapide de 5 minutes", async () => {
+    const mockSupabase = createMockSupabase();
+    const payload = await buildFastStoryPayload(mockSupabase, {
+      userId: "user-123",
+      fastStoryPromptKey: "fast_story_fear",
+      durationMinutes: 5,
+    });
+
+    expect(payload.durationMinutes).toBe(5);
+    expect(payload.targetWordCount).toBe(516);
+    expect(payload.storyPrompt).toContain("CONTRAINTE STRICTE DE DURÉE (5 MINUTES)");
+    expect(payload.storyPrompt).toContain("576 mots");
+  });
+});
