@@ -177,7 +177,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         try {
           window.speechSynthesis.cancel();
-        } catch {}
+        } catch { /* ignore */ }
       }
       setIsBrowserSpeaking(false);
 
@@ -185,18 +185,18 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       if (globalStoryAudio) {
         try {
           globalStoryAudio.pause();
-        } catch {}
+        } catch { /* ignore */ }
       }
       if (audioRef.current && audioRef.current !== globalStoryAudio) {
         try {
           audioRef.current.pause();
-        } catch {}
+        } catch { /* ignore */ }
       }
       if (typeof document !== 'undefined') {
         document.querySelectorAll('audio').forEach((el) => {
           try {
             el.pause();
-          } catch {}
+          } catch { /* ignore */ }
         });
       }
 
@@ -216,7 +216,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
         try {
           navigator.mediaSession.playbackState = 'paused';
-        } catch {}
+        } catch { /* ignore */ }
       }
     } finally {
       isStoppingPlaybackRef.current = false;
@@ -374,12 +374,12 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
       if (synthRef.current) {
         try {
           synthRef.current.cancel();
-        } catch {}
+        } catch { /* ignore */ }
       }
       if (globalStoryAudio) {
         try {
           globalStoryAudio.pause();
-        } catch {}
+        } catch { /* ignore */ }
       }
     };
   }, [storyId]);
@@ -621,7 +621,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               navigator.mediaSession.setActionHandler('play', () => {
                 audio.play().catch(() => {});
               });
-            } catch {}
+            } catch { /* ignore */ }
           }
         };
         audio.onpause = () => {

@@ -193,7 +193,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Auto-optimisation continue terminée avec succès via gpt-5.6-terra.\",\n  \"result\": $json\n}",
+        "responseBody": "={{ JSON.stringify({ success: true, message: \"Auto-optimisation continue terminée avec succès via gpt-5.6-terra.\", result: $json }) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",

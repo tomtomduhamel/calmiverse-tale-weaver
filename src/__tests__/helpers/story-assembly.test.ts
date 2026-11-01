@@ -116,9 +116,9 @@ describe("Règles Linguistiques & Vocabulaire par Âge", () => {
     expect(getVocabularyInstructions(14)).toContain("Maximum 3 onomatopées");
   });
 
-  it("impose la règle zéro métaphore superflue et la liste noire pour tous les âges", () => {
+  it("impose la règle du concret et la liste noire pour tous les âges", () => {
     const vocab = getVocabularyInstructions(5);
-    expect(vocab).toContain("RÈGLE ZÉRO MÉTAPHORE SUPERFLUE");
+    expect(vocab).toContain("RÈGLE DU CONCRET ET DU NATUREL");
     expect(vocab).toContain("LISTE NOIRE STRICTE");
     expect(vocab).toContain("irisé");
     expect(vocab).toContain("nacre");
@@ -127,24 +127,22 @@ describe("Règles Linguistiques & Vocabulaire par Âge", () => {
 
   it("interdit formellement le vocabulaire abstrait ou littéraire pour les tout-petits (0-3 ans)", () => {
     const vocab = getVocabularyInstructions(2);
-    expect(vocab).toContain("SYNTAXE TRÈS COURTE");
-    expect(vocab).toContain("5 à 8 mots par phrase MAXIMUM");
-    expect(vocab).toContain("STRUCTURE DIRECTE OBLIGATOIRE");
-    expect(vocab).toContain("INTERDICTION ABSOLUE");
+    expect(vocab).toContain("FLUIDITÉ ET SIMPLICITÉ");
+    expect(vocab).toContain("STRUCTURE VIVANTE");
     expect(vocab).toContain("MOTS DU QUOTIDIEN CONCRET");
   });
 
   it("impose un vocabulaire simple et des verbes d'action pour la maternelle (4-6 ans)", () => {
     const vocab = getVocabularyInstructions(5);
-    expect(vocab).toContain("SYNTAXE COURTE ET VIVANTE");
-    expect(vocab).toContain("8 à 12 mots par phrase MAXIMUM");
-    expect(vocab).toContain("STRUCTURE DIRECTE");
-    expect(vocab).toContain("Verbes d'action concrets");
+    expect(vocab).toContain("SYNTAXE FLUIDE ET MÉLODIEUSE");
+    expect(vocab).toContain("VOCABULAIRE CONCRET ET EXPRESSIF");
+    expect(vocab).toContain("DIALOGUES NATURELS");
   });
 
   it("limite les mots complexes à 2-3 contextualisés pour le primaire (7-8 ans)", () => {
     const vocab = getVocabularyInstructions(7);
-    expect(vocab).toContain("Maximum 2 à 3 mots enrichissants");
+    expect(vocab).toContain("VOCABULAIRE ENRICHISSANT CONTEXTUALISÉ");
+    expect(vocab).toContain("SYNTAXE RICHE ET CAPTIVANTE");
   });
 });
 
@@ -167,8 +165,8 @@ describe("Modèle en 2 Temps & Objectifs Narratifs", () => {
     const prompt = generateAdvancedStoryPrompt("fun", sampleChildren, "Le Grand Bazar de Gribouille");
     expect(prompt).toContain("MODÈLE NARRATIF EN 2 TEMPS");
     expect(prompt).toContain("DYNAMIQUE S'AMUSER (ÉNERGIE HAUTE & RIRE)");
-    expect(prompt).toContain("TRAME NARRATIVE DE CAUSE À EFFET CONTINUE");
-    expect(prompt).toContain("MINI-ENJEU CLAIR DÈS LE DÉPART");
+    expect(prompt).toContain("TRAME NARRATIVE CONTINUE AUTOUR D'UN OBJECTIF UNIQUE");
+    expect(prompt).toContain("MISSION / DÉFI CLAIR DÈS LA PREMIÈRE MINUTE");
     expect(prompt).toContain("ENFANTS ACTEURS & DÉCIDEURS");
     expect(prompt).toContain("INTERDICTION FORMELLE : Ne jamais utiliser de ton lénifiant");
     expect(prompt).toContain("Maximum 3 onomatopées");

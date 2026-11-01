@@ -49,34 +49,32 @@ export const OBJECTIVE_DESCRIPTIONS: Record<string, string> = {
 
 export const getVocabularyInstructions = (youngestAge: number): string => {
   const onomatopoeiaRule = "- RÈGLE DES ONOMATOPÉES : Maximum 3 onomatopées dans TOUTE l'histoire (ex: Hop !, Plouf !, Chut...).";
-  const metaphorRule = "- RÈGLE ZÉRO MÉTAPHORE SUPERFLUE : Maximum 1 à 2 comparaisons physiques simples dans toute l'histoire (ex: 'un ballon gros comme une pastèque'). INTERDICTION FORMELLE des comparaisons poétiques lentes ('comme du miel', 'comme une onde', 'comme une offrande', 'comme un pli dans le ciel'). Raconter l'action avec des verbes directs et vivants.";
+  const metaphorRule = "- RÈGLE DU CONCRET ET DU NATUREL : Maximum 1 à 2 comparaisons physiques simples dans toute l'histoire (ex: 'un ballon gros comme une pastèque'). INTERDICTION FORMELLE des comparaisons poétiques lentes ou nébuleuses ('comme du miel', 'comme une onde', 'comme une offrande', 'comme un pli dans le ciel'). Raconter l'action avec des verbes vivants et des images concrètes.";
   const blacklistRule = "- LISTE NOIRE STRICTE (MOTS PROSCRITS) : Ne JAMAIS utiliser les mots suivants : 'irisé', 'nacre', 'nacré', 'diaphane', 'béatitude', 'onde', 'offrande', 'cérémonieux', 'cérémonieuse', 'murmure machinal', 'alcôve', 'zéphyr', 'lueur feutrée', 'contemplation', 'indicible', 'ineffable', 'volupté'.";
 
   if (youngestAge <= 3) {
-    return `- VOCABULAIRE & SYNTAXE TOUT-PETITS (0-3 ans) :
-* SYNTAXE TRÈS COURTE : 5 à 8 mots par phrase MAXIMUM. 1 seule idée par phrase.
-* STRUCTURE DIRECTE OBLIGATOIRE : Sujet + Verbe + Complément direct (ex: "Léo prend son doudou. Le doudou est tout doux.").
-* INTERDICTION ABSOLUE : Zéro proposition subordonnée relative complexe ("qui", "dont", "alors que..."), zéro vocabulaire abstrait ou littéraire.
-* MOTS DU QUOTIDIEN CONCRET : doudou, chat, pomme, bain, dodo, ballon, lit, bisou, rire, courir.
-* PARAGRAPHES COURTS : 2 phrases courtes par paragraphe maximum pour rythmer la lecture à voix haute.
+    return `- VOCABULAIRE & SYNTAXE TOUT-PETITS (2-3 ans) :
+* FLUIDITÉ ET SIMPLICITÉ : Phrases claires, chaleureuses et faciles à comprendre à l'oral. Éviter le style télégraphique ou les phrases hachées sans verbe ou sans liant.
+* STRUCTURE VIVANTE : Alterner phrases courtes pour l'action et phrases douces pour le décor. Relier les idées naturellement (avec "et", "alors", "quand").
+* MOTS DU QUOTIDIEN CONCRET : Objets familiers, doudous, animaux complices, émotions simples (joie, fierté, surprise).
+* PARAGRAPHES RESPIRANTS : 2 à 4 phrases par paragraphe pour un rythme agréable à la lecture à voix haute.
 ${metaphorRule}
 ${blacklistRule}
 ${onomatopoeiaRule}`;
   } else if (youngestAge <= 6) {
     return `- VOCABULAIRE & SYNTAXE MATERNELLE (4-6 ans) :
-* SYNTAXE COURTE ET VIVANTE : 8 à 12 mots par phrase MAXIMUM.
-* STRUCTURE DIRECTE : Verbes d'action concrets (courir, grimper, cacher, rire, attraper, construire).
-* INTERDICTION FORMELLE : Aucun terme pompeux, précieux ou complexe.
-* DIALOGUES SIMPLES ET SPONTANÉS : Répliques d'enfants naturelles et courtes.
-* PARAGRAPHES AÉRÉS : 2 à 3 phrases par paragraphe.
+* SYNTAXE FLUIDE ET MÉLODIEUSE : Éviter absolument le style haché ou télégraphique. Alterner souplement des phrases vives d'action et des phrases plus amples reliées par des connecteurs logiques ("alors que", "parce que", "pendant que", "c'est ainsi que").
+* VOCABULAIRE CONCRET ET EXPRESSIF : Verbes d'action précis (grimper, bondir, chuchoter, débusquer, bricoler, rire).
+* DIALOGUES NATURELS : De vraies répliques spontanées d'enfants, pleines d'esprit et d'énergie.
+* RYTHME DE LECTURE : Paragraphes bien rythmés adaptés au plaisir d'écouter une vraie histoire riche en péripéties et en émotions.
 ${metaphorRule}
 ${blacklistRule}
 ${onomatopoeiaRule}`;
   } else if (youngestAge <= 9) {
     return `- VOCABULAIRE & SYNTAXE PRIMAIRE (7-9 ans) :
-* SYNTAXE FLUIDE ET CLAIRE : Phrases équilibrées (10 à 15 mots en moyenne).
-* VOCABULAIRE ENRICHISSANT CONTEXTUALISÉ : Maximum 2 à 3 mots enrichissants immédiatement compréhensibles par l'action.
-* INTRIGUE RYTHMÉE : Enchaînement de cause à effet dynamique, esprit de déduction.
+* SYNTAXE RICHE ET CAPTIVANTE : Phrases bien construites avec du rythme, du suspense et de la musicalité.
+* VOCABULAIRE ENRICHISSANT CONTEXTUALISÉ : Mots imagés et précis immédiatement compris grâce à l'action.
+* INTRIGUE SOUTENUE : Enchaînement dynamique de cause à effet, ingéniosité des enfants, répliques percutantes.
 ${metaphorRule}
 ${blacklistRule}
 ${onomatopoeiaRule}`;
@@ -140,11 +138,15 @@ export const analyzeCharacters = (children: AssemblyChild[]): CharacterAnalysis 
   const pets = children.filter((child) => child.gender === "pet");
 
   const ages = childrenWithAges.map((c) => c.age);
-  const youngestAge = ages.length > 0 ? Math.min(...ages) : 0;
+  let rawYoungest = ages.length > 0 ? Math.min(...ages) : 0;
   const oldestAge = ages.length > 0 ? Math.max(...ages) : 0;
   const averageAge = ages.length > 0
     ? Math.round(ages.reduce((sum, age) => sum + age, 0) / ages.length)
     : 0;
+
+  // Sécurisation : si la date de naissance est fictive/récente (âge 0 ou 1) alors qu'il y a des enfants
+  // plus grands ou que la moyenne est >= 3 ans, ajuster l'âge effectif de narration pour éviter le piège 0-3 ans.
+  const youngestAge = (rawYoungest <= 1 && averageAge >= 3) ? averageAge : (rawYoungest <= 1 ? 4 : rawYoungest);
 
   return { children: childrenWithAges, pets, youngestAge, oldestAge, averageAge };
 };
@@ -269,12 +271,13 @@ ${basePrompt}
 
 ${titleInstruction}${characterContext}
 
-TRAME NARRATIVE DE CAUSE À EFFET CONTINUE (INDISPENSABLE POUR LA CAPTATION) :
-- 1. MINI-ENJEU CLAIR DÈS LE DÉPART : Pose un défi ou problème tangible dès la première minute (ex: objet en fuite, compte à rebours, bêtise à réparer avant un événement).
-- 2. ENFANTS ACTEURS & DÉCIDEURS : ${namesText} prennent les initiatives, élaborent les ruses et résolvent le problème. Ils ne sont jamais spectateurs passifs.
-- 3. RÈGLE DU "ET DONC... / MAIS ALORS..." : Chaque action des enfants doit provoquer un rebondissement ou une surprise qui mène à la scène suivante. Pas de déambulation descriptive statique.
-- 4. DIALOGUES VIVANTS : Insérer de vraies répliques spontanées d'enfants.
-- 5. POSTURE DE DÉPART : Si l'objectif est "fun" ou "focus", les protagonistes commencent DEBOUT ou en ACTION (ne jamais les faire démarrer allongés sur le sol ou le lit).
+TRAME NARRATIVE CONTINUE AUTOUR D'UN OBJECTIF UNIQUE (LA QUÊTE DU HÉROS) :
+- 1. MISSION / DÉFI CLAIR DÈS LA PREMIÈRE MINUTE : Dès la scène d'ouverture, les enfants découvrent ou se fixent un OBJECTIF CONCRET et motivant qui servira de fil conducteur à l'histoire entière (ex: retrouver un objet précieux égaré, réparer une machine avant la tombée du jour, percer un mystère, aider un ami en détresse).
+- 2. CONTINUITÉ STRICTE DE L'INTRIGUE : TOUTES les péripéties doivent obligatoirement être des étapes ou des tentatives directes pour accomplir cet objectif unique. Interdiction des digressions éparses ou des gags de maladresse isolés sans rapport avec le but.
+- 3. RÈGLE DU "ET DONC... / MAIS ALORS..." (PROGRESSION DE CAUSE À EFFET) : Chaque action des enfants doit provoquer un rebondissement direct ou un nouvel obstacle à surmonter sur le chemin de l'objectif.
+- 4. ENFANTS ACTEURS & DÉCIDEURS : ${namesText} sont les véritables héros : ils prennent les initiatives, élaborent les ruses et surmontent les obstacles par leur ingéniosité et leur entraide.
+- 5. POSTURE DE DÉPART : Si l'objectif est "fun" ou "focus", les protagonistes commencent DEBOUT ou en PLEINE ACTIVITÉ (jamais allongés passivement sur le sol ou le lit).
+- 6. DÉNOUEMENT TRIOMPHAL : L'histoire s'achève sur l'accomplissement réussi de l'objectif initial, dans la joie et la fierté partagées.
 
 CALIBRAGE DU VOCABULAIRE & RÈGLE DU CONCRET :
 ${vocabularyInstructions}

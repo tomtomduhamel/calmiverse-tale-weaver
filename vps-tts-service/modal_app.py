@@ -70,21 +70,22 @@ image = image.run_function(
 )
 
 EMOTION_MAP = {
-    # Émotions vives & expressives (contes pour enfants & surjeu)
+    # Émotions vives & expressives (contes pour enfants & narration vivante type podcast)
     "joy": "Cheerful, joyful, bright and lively storytelling voice for children.",
     "happy": "Cheerful, joyful, bright and lively storytelling voice for children.",
-    "excited": "Enthusiastic, energetic, lively and animated storytelling voice.",
-    "playful": "Playful, mischievous, amusing storytelling voice.",
+    "excited": "Enthusiastic, energetic, lively, animated and dynamic storytelling voice.",
+    "playful": "Playful, mischievous, dynamic and amusing storytelling voice.",
     "angry": "Firm, indignant, dramatic, intense storytelling voice.",
     "colere": "Firm, indignant, dramatic, intense storytelling voice.",
     "sad": "Melancholic, gentle, tender, slightly sorrowful storytelling voice.",
     "triste": "Melancholic, gentle, tender, slightly sorrowful storytelling voice.",
     "scared": "Anxious, startled, breathless storytelling voice.",
     "peur": "Anxious, startled, breathless storytelling voice.",
-    # Ambiances de lecture et coucher
-    "warm": "Warm, engaging, gentle bedtime narrator for children.",
-    "whisper": "Soft, gentle whispering voice, quiet bedtime narrator.",
-    "mysterious": "Curious, intriguing, mysterious bedtime storytelling voice.",
+    # Ambiances de lecture et narration captivante
+    "narrator": "Dynamic, warm, engaging, lively storytelling voice for children. Clear intonation, captivating rhythm, cheerful presence.",
+    "warm": "Dynamic, warm, engaging, lively storytelling voice for children. Clear intonation, captivating rhythm, cheerful presence.",
+    "whisper": "Soft, gentle whispering voice, quiet storytelling.",
+    "mysterious": "Curious, intriguing, captivating storytelling voice.",
     "calm": "Calm, peaceful, relaxed storytelling voice.",
     "sleepy": "Very slow, soft, sleepy bedtime voice."
 }
@@ -200,20 +201,22 @@ def resolve_speech_prosody_params(
     is_dialogue: bool = False,
     progress: float = 0.0,
     enable_sleep_pacing: bool = False,
+    language: str = "fr",
 ) -> Tuple[float, float, float]:
     """Calcule dynamiquement (exaggeration, cfg_weight, temperature) pour Chatterbox :
-    - Évite la monotonie et insuffle le relief / surjeu adapté aux contes pour enfants.
-    - Donne plus d'énergie et de présence aux dialogues et passages animés.
-    - Adoucit le rythme en fin d'histoire si le sleep pacing est activé.
+    - Évite la monotonie et insuffle le relief / dynamisme podcast adapté aux contes pour enfants.
+    - Donne une voix vivante, expressive, claire et engageante style NotebookLM.
+    - ÉLIMINATION ACCENT ANGLAIS : sur le français, cfg_weight = 0.0 et température plafonnée à 0.65 max
+      pour supprimer tout biais de prononciation américaine tout en garantissant des phonèmes français parfaits.
     """
     clean_text = text.lower()
     emo = (explicit_emotion or "").lower().strip()
 
     # Détection heuristique si aucune balise explicite n'est présente
-    if not emo or emo in ["narrator", "custom", "none"]:
-        if re.search(r'\b(s\'exclama|youpi|hourra|génial|sauta de joie|éclata de rire|riant|joyeu|fête|chouette|merveille|rigol|drôle)\b', clean_text) or ('!' in text and any(w in clean_text for w in ["bravo", "super", "incroyable", "regarde", "youpi", "ouah"])):
+    if not emo or emo in ["narrator", "custom", "none", "warm"]:
+        if re.search(r'\b(s[\'’]exclama|youpi|hourra|génial|sauta de joie|éclata de rire|riant|joyeu|fête|chouette|merveille|rigol|drôle)\b', clean_text) or ('!' in text and any(w in clean_text for w in ["bravo", "super", "incroyable", "regarde", "youpi", "ouah", "attention", "vite"])):
             emo = "joy"
-        elif re.search(r'\b(colère|furieu|gronda|s\'énerva|tempêta|rage|mécontent|indigné|scandale)\b', clean_text):
+        elif re.search(r'\b(colère|furieu|gronda|s[\'’]énerva|tempêta|rage|mécontent|indigné|scandale)\b', clean_text):
             emo = "angry"
         elif re.search(r'\b(triste|sanglot|pleur|chagrin|déçu|larmes|désolé|peine|déchirant)\b', clean_text):
             emo = "sad"
@@ -221,59 +224,54 @@ def resolve_speech_prosody_params(
             emo = "scared"
         elif re.search(r'\b(chuchot|murmur|tout bas|à voix basse|discrètement|secret)\b', clean_text):
             emo = "whisper"
-        elif re.search(r'\b(mystère|bizarre|étrange|sombre|qui va là|curieux|inconnu)\b', clean_text):
+        elif re.search(r'\b(mystère|bizarre|étrange|sombre|qui va là|curieux|inconnu)\b', clean_text) or '?' in text:
             emo = "mysterious"
-        elif re.search(r'\b(bâill|s\'endorm|fatigué|sommeil|paupières lourdes|ronfl|dodo)\b', clean_text):
+        elif re.search(r'\b(bâill|s[\'’]endorm|fatigué|sommeil|paupières lourdes|ronfl|dodo)\b', clean_text):
             emo = "sleepy"
 
-    # Paramètres de base selon l'émotion détectée
+    # Paramètres d'expressivité podcast / conte animé
     if emo in ["joy", "happy", "excited", "playful"]:
-        exaggeration = 0.80
-        cfg_weight = 0.50
-        temperature = 0.80
-    elif emo in ["angry", "colere"]:
         exaggeration = 0.85
-        cfg_weight = 0.65  # Force et directivité accentuées
-        temperature = 0.75
-    elif emo in ["sad", "triste"]:
-        exaggeration = 0.55
-        cfg_weight = 0.50
-        temperature = 0.62
-    elif emo in ["scared", "peur"]:
-        exaggeration = 0.75
-        cfg_weight = 0.55
-        temperature = 0.78
-    elif emo in ["whisper"]:
-        exaggeration = 0.45
-        cfg_weight = 0.50
         temperature = 0.65
-    elif emo in ["mysterious"]:
+    elif emo in ["angry", "colere"]:
+        exaggeration = 0.88
+        temperature = 0.65
+    elif emo in ["sad", "triste"]:
         exaggeration = 0.60
-        cfg_weight = 0.50
-        temperature = 0.70
+        temperature = 0.58
+    elif emo in ["scared", "peur"]:
+        exaggeration = 0.80
+        temperature = 0.64
+    elif emo in ["whisper"]:
+        exaggeration = 0.50
+        temperature = 0.58
+    elif emo in ["mysterious"]:
+        exaggeration = 0.70
+        temperature = 0.62
     elif emo in ["sleepy"]:
         exaggeration = 0.40
-        cfg_weight = 0.50
-        temperature = 0.60
+        temperature = 0.55
     elif emo in ["calm"]:
-        exaggeration = 0.50
-        cfg_weight = 0.50
-        temperature = 0.70
+        exaggeration = 0.60
+        temperature = 0.60
     else:
-        # Narration standard : fin de la neutralité monotone (0.55 au lieu de 0.35 !)
-        exaggeration = 0.55
-        cfg_weight = 0.50
-        temperature = 0.75
+        # Narration vivante, captivante et dynamique NotebookLM style (0.75 au lieu de 0.55 !)
+        exaggeration = 0.75
+        temperature = 0.63
 
-    # Bonus de surjeu théâtral pour les répliques de personnages
+    # CRUCIAL : Sur le français, cfg_weight doit être à 0.0 pour éliminer tout accent américain
+    # (le prior d'entraînement de Chatterbox étant anglophone, une valeur > 0 force un accent américain).
+    cfg_weight = 0.0
+
+    # Surjeu théâtral chaleureux pour les dialogues de personnages
     if is_dialogue:
-        exaggeration = min(0.95, exaggeration + 0.15)
-        temperature = min(0.85, max(temperature, 0.78))
+        exaggeration = min(0.95, exaggeration + 0.12)
+        temperature = min(0.66, max(temperature, 0.62))
 
-    # Modulation douce du coucher en fin d'histoire (dernier tiers)
+    # Modulation douce du coucher uniquement si explicitement demandé (enable_sleep_pacing)
     if enable_sleep_pacing and progress >= 0.66:
         exaggeration = max(0.38, exaggeration * 0.80)
-        temperature = max(0.58, temperature * 0.85)
+        temperature = max(0.55, temperature * 0.85)
 
     return (round(exaggeration, 2), round(cfg_weight, 2), round(temperature, 2))
 
@@ -467,7 +465,7 @@ def chunk_text_optimized(
     paragraph_pause_sec: float = 0.85,
     chapter_pause_sec: float = 2.5,
     default_instruct: Optional[str] = None,
-    enable_sleep_pacing: bool = True
+    enable_sleep_pacing: bool = False
 ) -> List[Tuple[str, float, Optional[str], Optional[str]]]:
     """Découpe l'histoire paragraphe par paragraphe avec pauses naturelles, émotion détectée
     et progression feutrée du rythme du coucher (Sleep Pacing).
@@ -546,7 +544,7 @@ class TTSRequest(BaseModel):
     sentence_pause_ms: Optional[int] = 160
     paragraph_pause_ms: Optional[int] = 850
     chapter_pause_ms: Optional[int] = 2500
-    enable_sleep_pacing: Optional[bool] = True
+    enable_sleep_pacing: Optional[bool] = False
     webhook_id: Optional[str] = None
     story_id: Optional[str] = None
     # Aliases for frontend compatibility
@@ -703,17 +701,23 @@ class CalmiTTSGPU:
         prompt_path: str,
         language_id: str = "fr",
         sentence_pause_sec: float = 0.16,
-        exaggeration: float = 0.55,
-        cfg_weight: float = 0.50,
-        temperature: float = 0.75,
+        exaggeration: float = 0.75,
+        cfg_weight: float = 0.0,
+        temperature: float = 0.65,
     ) -> Tuple[np.ndarray, int]:
-        """Synthétise un paragraphe en français avec Chatterbox Multilingual + modulation expressive + fondu cosinus doux."""
+        """Synthétise un paragraphe en français avec Chatterbox Multilingual + modulation expressive + fondu cosinus doux.
+        Élimine tout accent anglophone grâce à cfg_weight = 0.0 et température contrôlée."""
         self._get_chatterbox_conditionals(prompt_path, exaggeration=exaggeration)
         sr = self.chatterbox_model.sr
 
         raw_sentences = split_into_clean_sentences(text, max_sentence_chars=230)
         if not raw_sentences:
             raw_sentences = [normalize_french_narrative_text(text) or text.strip()]
+
+        # Pour le français, cfg_weight doit impérativement rester à 0.0 pour éliminer tout accent américain
+        is_fr = bool(language_id and language_id.lower().startswith("fr"))
+        effective_cfg = 0.0 if is_fr else cfg_weight
+        effective_temp = min(0.66, max(0.55, temperature)) if is_fr else temperature
 
         sentence_wavs = []
         for s_idx, sent in enumerate(raw_sentences):
@@ -723,8 +727,8 @@ class CalmiTTSGPU:
                 text=sent,
                 language_id=language_id,
                 exaggeration=exaggeration,
-                cfg_weight=cfg_weight,
-                temperature=temperature,
+                cfg_weight=effective_cfg,
+                temperature=effective_temp,
             )
             if hasattr(wav_tensor, "cpu"):
                 w_np = wav_tensor.squeeze().cpu().numpy().astype(np.float32)
@@ -826,9 +830,9 @@ class CalmiTTSGPU:
         sentence_pause_sec: float = 0.16,
         language: str = "fr",
         prefer_engine: Optional[str] = None,
-        exaggeration: float = 0.55,
-        cfg_weight: float = 0.50,
-        temperature: float = 0.75,
+        exaggeration: float = 0.75,
+        cfg_weight: float = 0.0,
+        temperature: float = 0.65,
     ) -> Tuple[np.ndarray, int]:
         """Route automatiquement vers Chatterbox Multilingual (par défaut) ou CosyVoice2-EU corrigé avec paramètres expressifs."""
         target_engine = (prefer_engine or self.engine or "chatterbox").lower()

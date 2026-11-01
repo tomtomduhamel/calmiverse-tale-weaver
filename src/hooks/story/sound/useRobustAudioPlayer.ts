@@ -15,7 +15,9 @@ export const pauseGlobalBackgroundAudio = () => {
     try {
       isIntentionalBgPause = true;
       globalBgAudioElement.pause();
-    } catch {} finally {
+    } catch {
+      /* ignore pause errors */
+    } finally {
       setTimeout(() => {
         isIntentionalBgPause = false;
       }, 100);
@@ -67,7 +69,9 @@ export const useRobustAudioPlayer = ({
       try {
         audioRef.current.pause();
         audioRef.current.src = '';
-      } catch {}
+      } catch {
+        /* ignore cleanup errors */
+      }
       if (globalBgAudioElement === audioRef.current) {
         globalBgAudioElement = null;
       }

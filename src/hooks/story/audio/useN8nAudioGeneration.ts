@@ -26,7 +26,7 @@ interface N8nWebhookPayload {
   requestId: string;
 }
 
-const TIMEOUT_DURATION = 360000; // 6 minutes max pour la synthèse audio (CosyVoice 2 / Kokoro)
+const STUCK_FILE_CUTOFF_MS = 45 * 60 * 1000; // 45 minutes pour ne pas écraser les synthèses longues en cours
 
 export const useN8nAudioGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -61,7 +61,7 @@ export const useN8nAudioGeneration = () => {
   // Nettoyer les anciens fichiers bloqués
   const cleanupStuckFiles = useCallback(async (storyId: string) => {
     try {
-      const cutoffTime = new Date(Date.now() - TIMEOUT_DURATION).toISOString();
+      const cutoffTime = new Date(Date.now() - STUCK_FILE_CUTOFF_MS).toISOString();
       
       const { error } = await supabase
         .from('audio_files')
@@ -285,12 +285,19 @@ export const useN8nAudioGeneration = () => {
         }
       }, 3000);
 
-      // 3. Timeout de sécurité (plus long pour laisser le temps)
+      // 3. Calcul d'un timeout proportionnel à la longueur du texte
+      // Base : 10 minutes (600s), +1 min par tranche de 100 mots au-delà de 500 mots, max 25 minutes.
+      const words = text.trim().split(/\s+/).filter(Boolean).length;
+      const dynamicTimeoutMs = Math.min(
+        Math.max(600_000, 600_000 + Math.ceil(Math.max(0, words - 500) / 100) * 60_000),
+        1_500_000
+      );
+
       timeoutId = setTimeout(async () => {
-        console.log('⏰ [N8nAudio] Timeout atteint');
+        console.log(`⏰ [N8nAudio] Timeout client atteint (${Math.round(dynamicTimeoutMs / 1000)}s) pour l'histoire: ${storyId}`);
         clearInterval(checkInterval);
         
-        // Vérifier une dernière fois avant de marquer comme erreur
+        // Vérifier si le fichier est déjà prêt
         const { data: finalCheck } = await supabase
           .from('audio_files')
           .select('*')
@@ -298,29 +305,37 @@ export const useN8nAudioGeneration = () => {
           .single();
 
         if (finalCheck?.status === 'ready' && finalCheck.audio_url) {
-          // Le fichier est prêt
+          console.log('✅ [N8nAudio] Fichier audio déjà prêt au moment du timeout client');
         } else {
-          // Marquer comme erreur seulement si vraiment pas prêt
-          await supabase
-            .from('audio_files')
-            .update({ 
-              status: 'error',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', audioFile.id);
-
+          // NE PAS marquer en base comme 'error' : Modal GPU / Chatterbox continue de traiter en tâche de fond.
+          // Le Realtime ou le rafraîchissement au retour sur l'onglet chargera le fichier une fois prêt.
+          console.log('⏳ [N8nAudio] Traitement toujours en cours sur GPU Modal. Statut DB préservé.');
           toast({
-            title: "Timeout de génération",
-            description: "La génération audio a pris trop de temps",
-            variant: "destructive"
+            title: "Génération en cours en arrière-plan",
+            description: "L'histoire est longue et la génération vocale se poursuit sur nos serveurs GPU. Votre audio apparaîtra automatiquement dès qu'il sera prêt.",
           });
         }
 
         setIsGenerating(false);
         await fetchAudioFiles(storyId);
-      }, TIMEOUT_DURATION);
+      }, dynamicTimeoutMs);
 
-      // 4. Envoyer la requête à Modal GPU ou VPS Kokoro
+      // 4. Déterminer l'objectif du conte pour le sleep_pacing (uniquement actif si coucher/sommeil)
+      let enableSleepPacing = false;
+      try {
+        const { data: storyRow } = await supabase
+          .from('stories')
+          .select('objective')
+          .eq('id', storyId)
+          .single();
+        const rawObj = typeof storyRow?.objective === 'object' ? (storyRow?.objective as any)?.value || (storyRow?.objective as any)?.name : storyRow?.objective;
+        const objStr = String(rawObj || '').toLowerCase();
+        enableSleepPacing = objStr.includes('sleep') || objStr.includes('coucher') || objStr.includes('sommeil') || objStr.includes('dodo');
+      } catch (objErr) {
+        console.warn("⚠️ [N8nAudio] Impossible de lire l'objectif de l'histoire:", objErr);
+      }
+
+      // Envoyer la requête à Modal GPU ou VPS Kokoro
       const payload: any = {
         text: text,
         storyId,
@@ -328,7 +343,9 @@ export const useN8nAudioGeneration = () => {
         voiceId: dynamicVoiceId,
         requestId,
         webhook_id: requestId,
-        provider: provider
+        provider: provider,
+        language: 'fr',
+        enable_sleep_pacing: enableSleepPacing
       };
 
       // Check if this is a custom user voice clone or multi-voice theatre

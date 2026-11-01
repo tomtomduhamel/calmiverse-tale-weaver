@@ -13,21 +13,22 @@ export type VoiceCategorySlug =
   | string;
 
 export const EMOTION_INSTRUCT_MAP: Record<string, string> = {
-  // Émotions vives et expressives (contes & surjeu d'acteur)
+  // Émotions vives et expressives (contes & surjeu d'acteur type podcast animé)
   joy: "Cheerful, joyful, bright and lively storytelling voice for children.",
   happy: "Cheerful, joyful, bright and lively storytelling voice for children.",
-  excited: "Enthusiastic, energetic, lively and animated storytelling voice.",
-  playful: "Playful, mischievous, amusing storytelling voice.",
+  excited: "Enthusiastic, energetic, lively, animated and dynamic storytelling voice.",
+  playful: "Playful, mischievous, dynamic and amusing storytelling voice.",
   angry: "Firm, indignant, dramatic, intense storytelling voice.",
   colere: "Firm, indignant, dramatic, intense storytelling voice.",
   sad: "Melancholic, gentle, tender, slightly sorrowful storytelling voice.",
   triste: "Melancholic, gentle, tender, slightly sorrowful storytelling voice.",
   scared: "Anxious, startled, breathless storytelling voice.",
   peur: "Anxious, startled, breathless storytelling voice.",
-  // Ambiances de lecture et coucher
-  warm: "Warm, engaging, gentle bedtime narrator for children.",
-  whisper: "Soft, gentle whispering voice, quiet bedtime narrator.",
-  mysterious: "Curious, intriguing, mysterious bedtime storytelling voice.",
+  // Ambiances de lecture et narration podcast captivante
+  narrator: "Dynamic, warm, engaging, lively storytelling voice for children. Clear intonation, captivating rhythm, cheerful presence.",
+  warm: "Dynamic, warm, engaging, lively storytelling voice for children. Clear intonation, captivating rhythm, cheerful presence.",
+  whisper: "Soft, gentle whispering voice, quiet storytelling.",
+  mysterious: "Curious, intriguing, captivating storytelling voice.",
   calm: "Calm, peaceful, relaxed storytelling voice.",
   sleepy: "Very slow, soft, sleepy bedtime voice."
 };
@@ -96,7 +97,7 @@ export const detectEmotionAndInstruct = (
   // Heuristiques sur verbes d'action, expressions et ponctuations
   const combined = (contextAround + ' ' + rawText).toLowerCase();
   
-  if (/colère|furieu|gronda|s'énerva|tempêta|rage|mécontent|indigné|scandale/i.test(combined)) {
+  if (/colère|furieu|gronda|s['’]énerva|tempêta|rage|mécontent|indigné|scandale/i.test(combined)) {
     return { emotion: 'angry', instruct: EMOTION_INSTRUCT_MAP.angry };
   }
   if (/triste|sanglot|pleur|chagrin|déçu|larmes|désolé|peine|déchirant/i.test(combined)) {
@@ -105,16 +106,16 @@ export const detectEmotionAndInstruct = (
   if (/peur|panique|effray|trembl|terreur|angoisse|monstre|frémir/i.test(combined)) {
     return { emotion: 'scared', instruct: EMOTION_INSTRUCT_MAP.scared };
   }
-  if (/s'exclama|youpi|hourra|génial|sauta de joie|éclata de rire|riant|joyeu|fête|chouette|rigol|drôle/i.test(combined)) {
+  if (/s['’]exclama|youpi|hourra|génial|sauta de joie|éclata de rire|riant|joyeu|fête|chouette|rigol|drôle/i.test(combined)) {
     return { emotion: 'joy', instruct: EMOTION_INSTRUCT_MAP.joy };
   }
-  if (/cria|hurla/i.test(combined) || rawText.includes('!')) {
+  if (/cria|hurla|bondit|élança|attrapez|sauvons|vite\b|attention|alerte|urgence/i.test(combined) || rawText.includes('!')) {
     return { emotion: 'excited', instruct: EMOTION_INSTRUCT_MAP.excited };
   }
   if (/chuchot|murmur|tout bas|à voix basse|chut\b|discrètement|secret/i.test(combined)) {
     return { emotion: 'whisper', instruct: EMOTION_INSTRUCT_MAP.whisper };
   }
-  if (/bâill|s'endorm|fatigué|sommeil|paupières lourdes|ronfl|dodo/i.test(combined)) {
+  if (/bâill|s['’]endorm|fatigué|sommeil|paupières lourdes|ronfl|dodo/i.test(combined)) {
     return { emotion: 'sleepy', instruct: EMOTION_INSTRUCT_MAP.sleepy };
   }
   if (/mystère|bizarre|étrange|sombre|qui va là|curieux|inconnu/i.test(combined) || rawText.includes('?')) {
@@ -127,66 +128,207 @@ export const detectEmotionAndInstruct = (
   return { emotion: 'warm', instruct: fallbackInstruct || EMOTION_INSTRUCT_MAP.warm };
 };
 
+export interface DiscoveredCharacter {
+  name: string;
+  category: VoiceCategorySlug;
+  voiceId?: string;
+  baseType?: string;
+}
+
+/**
+ * Analyse l'histoire pour indexer les personnages nommés et les mapper à leurs archétypes vocaux
+ */
+export const buildCharacterIndex = (
+  content: string,
+  userVoices: VoiceCatalogItem[] = []
+): Map<string, DiscoveredCharacter> => {
+  const index = new Map<string, DiscoveredCharacter>();
+
+  // 1. Ajouter les voix explicites du catalogue utilisateur
+  for (const v of userVoices) {
+    if (v.name) {
+      index.set(v.name.toLowerCase(), { name: v.name, category: v.category as VoiceCategorySlug, voiceId: v.id });
+    }
+    if (v.relation) {
+      const cleanRel = v.relation.replace(/\(.*?\)/g, '').trim().toLowerCase();
+      if (cleanRel) {
+        index.set(cleanRel, { name: v.name, category: v.category as VoiceCategorySlug, voiceId: v.id });
+      }
+      const insideParen = v.relation.match(/\((.*?)\)/);
+      if (insideParen && insideParen[1]) {
+        index.set(insideParen[1].trim().toLowerCase(), { name: v.name, category: v.category as VoiceCategorySlug, voiceId: v.id });
+      }
+    }
+  }
+
+  // Alias standards de la famille
+  if (!index.has('papa')) index.set('papa', { name: 'Papa', category: 'narrator_family' });
+  if (!index.has('maman')) index.set('maman', { name: 'Maman', category: 'narrator_family' });
+  if (!index.has('mamie')) index.set('mamie', { name: 'Mamie Onix', category: 'narrator_family' });
+  if (!index.has('mamie onix')) index.set('mamie onix', { name: 'Mamie Onix', category: 'narrator_family' });
+  if (!index.has('mamy')) index.set('mamy', { name: 'Mamie Onix', category: 'narrator_family' });
+  if (!index.has('papi')) index.set('papi', { name: 'Papi', category: 'narrator_family' });
+  if (!index.has('papy')) index.set('papy', { name: 'Papi', category: 'narrator_family' });
+
+  // 2. Découverte des personnages nommés dans le récit (ex: "un ours brun nommé Biscotin")
+  const patterns = [
+    /\b(?:un|une|le|la|l['’])\s*(ours|ourson|chien|chiot|chat|chaton|lapin|renard|loup|écureuil|hérisson)\b(?:\s+[a-zà-ÿ]+){0,2}\s+(?:nommé|nommée|appelé|appelée)\s+([A-ZÀ-ÿ][a-zà-ÿ]+)/gi,
+    /\b(?:un|une|le|la|l['’])\s*(oiseau|chouette|hibou|aigle|papillon|corbeau)\b(?:\s+[a-zà-ÿ]+){0,2}\s+(?:nommé|nommée|appelé|appelée)\s+([A-ZÀ-ÿ][a-zà-ÿ]+)/gi,
+    /\b(?:un|une|le|la|l['’])\s*(dauphin|baleine|poisson|requin|tortue)\b(?:\s+[a-zà-ÿ]+){0,2}\s+(?:nommé|nommée|appelé|appelée)\s+([A-ZÀ-ÿ][a-zà-ÿ]+)/gi,
+    /\b(?:un|une|le|la|l['’])\s*(monstre|dragon|robot|lutin|fée|sorcier|sorcière)\b(?:\s+[a-zà-ÿ]+){0,2}\s+(?:nommé|nommée|appelé|appelée)\s+([A-ZÀ-ÿ][a-zà-ÿ]+)/gi,
+    /\bl['’](ours|ourson|oiseau|aigle)\s+([A-ZÀ-ÿ][a-zà-ÿ]+)/gi
+  ];
+
+  for (const pat of patterns) {
+    let m: RegExpExecArray | null;
+    while ((m = pat.exec(content)) !== null) {
+      const type = m[1].toLowerCase();
+      const charName = m[2].trim();
+      let category: VoiceCategorySlug = 'children';
+      if (/ours|chien|chat|lapin|renard|loup|écureuil|hérisson/.test(type)) category = 'animal_land';
+      else if (/oiseau|chouette|hibou|aigle|papillon|corbeau/.test(type)) category = 'animal_flying';
+      else if (/dauphin|baleine|poisson|requin|tortue/.test(type)) category = 'animal_aquatic';
+      else if (/monstre|dragon|robot|lutin|fée|sorcier/.test(type)) category = 'magical_creatures';
+
+      index.set(charName.toLowerCase(), { name: charName, category, baseType: type });
+    }
+  }
+
+  return index;
+};
+
+/**
+ * Extrait le nom du locuteur à partir des incises narratives précédant ou suivant le dialogue
+ */
+export const extractSpeakerFromContext = (
+  contextBefore: string,
+  contextAfter: string,
+  characterIndex: Map<string, DiscoveredCharacter>,
+  allUserVoices: VoiceCatalogItem[]
+): string | undefined => {
+  // 1. Tag explicite de dialogue : [Papa]: ou [Mamie Onix]
+  const tagBefore = contextBefore.match(/\[([A-Za-zÀ-ÿ0-9\s_-]+)\]\s*:?\s*$/);
+  if (tagBefore) return tagBefore[1].trim();
+
+  // 2. Verbe incise précédent : "Gustave s’exclame en riant :" ou "Papa crie :" ou "Biscotin grogne :"
+  const preVerb = contextBefore.match(/([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)?)\s+(?:dit|demande|s['’](?:exclame|écrie|étonne|inquiète|amuse|élance|agite)|répond|ajoute|appelle|grogne|souffle|chuchote|crie|hurle|piaille|roucoule|rugit|soupire|insiste|reprend|pense|lance|rétorque|sourit)\b[^:«"]*:\s*$/i);
+  if (preVerb) return preVerb[1].trim();
+
+  // 2b. Sujet de la phrase précédant immédiatement le dialogue : e.g. "Joseph s'accroupit pour regarder les roues."
+  const preSubject = contextBefore.match(/([A-ZÀ-ÿ][a-zà-ÿ]+)\s+[a-zà-ÿ'’\s]+[.!?…]\s*$/i);
+  if (preSubject) {
+    const candidate = preSubject[1].trim();
+    if (characterIndex.has(candidate.toLowerCase())) {
+      return candidate;
+    }
+  }
+
+  // 3. Présentation précédente : "C’est Mamie Onix qui encourage"
+  const prePres = contextBefore.match(/(?:C['’]est|Voici)\s+([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)?)\s+qui\b/i);
+  if (prePres) return prePres[1].trim();
+
+  // 4. Verbe incise suivant : "» appelle Papa, la voix..." ou "» grogne Biscotin." ou "» piaille l'oiseau"
+  const postIncise = contextAfter.match(/^\s*(?:[—\-]\s*)?(?:dit|demande|s['’](?:exclame|écrie|étonne|inquiète|amuse)|répond|ajoute|appelle|grogne|souffle|chuchote|crie|hurle|piaille|roucoule|rugit|soupire|insiste|reprend|pense|lance|rétorque)\s+(?:le\s+|la\s+|l['’]|un\s+|une\s+)?([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)?)/i);
+  if (postIncise) return postIncise[1].trim();
+
+  // 5. Présentation suivante : "» C’est Mamie Onix qui encourage"
+  const postPres = contextAfter.match(/^\s*(?:[—\-]\s*)?(?:C['’]est|Voici)\s+([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)?)\s+qui\b/i);
+  if (postPres) return postPres[1].trim();
+
+  // 6. Présence du nom d'un personnage connu dans le contexte immédiat
+  const combined = (contextBefore + ' ' + contextAfter).toLowerCase();
+  for (const [key, info] of characterIndex.entries()) {
+    const reg = new RegExp(`\\b${key}\\b`, 'i');
+    if (reg.test(combined)) {
+      return info.name;
+    }
+  }
+
+  return undefined;
+};
+
 /**
  * Tente d'identifier la catégorie de rôle et le nom du personnage dans un dialogue
  */
 export const detectCharacterCategoryAndName = (
   dialogueText: string,
-  contextAround: string = ''
-): { category: VoiceCategorySlug; detectedName?: string } => {
+  contextAround: string = '',
+  speakerName?: string,
+  characterIndex?: Map<string, DiscoveredCharacter>
+): { category: VoiceCategorySlug; detectedName?: string; baseType?: string } => {
+  // 1. Si le locuteur a été extrait et existe dans l'index
+  if (speakerName && characterIndex) {
+    const sKey = speakerName.toLowerCase();
+    if (characterIndex.has(sKey)) {
+      const charInfo = characterIndex.get(sKey)!;
+      return { category: charInfo.category, detectedName: charInfo.name, baseType: charInfo.baseType };
+    }
+  }
+
   const combined = (contextAround + ' ' + dialogueText).toLowerCase();
 
-  // 1. Détection Monstres et créatures magiques
-  if (/monstre|troll|géant|lutin|fée|robot|extraterrestre|sorcier|sorcière|gnome|dragon magique|créature/i.test(combined)) {
+  // 2. Adultes & membres de la famille
+  if (/\b(papa|père|pere|daddy|father)\b/i.test(combined)) {
+    return { category: 'narrator_family', detectedName: 'Papa' };
+  }
+  if (/\b(maman|mère|mere|mommy|mother)\b/i.test(combined)) {
+    return { category: 'narrator_family', detectedName: 'Maman' };
+  }
+  if (/\b(mamie|mamy|onix|grand-mère|grand-maman|grand-mere)\b/i.test(combined)) {
+    return { category: 'narrator_family', detectedName: 'Mamie Onix' };
+  }
+  if (/\b(papi|papy|grand-père|grand-pere)\b/i.test(combined)) {
+    return { category: 'narrator_family', detectedName: 'Papi' };
+  }
+
+  // 3. Détection Monstres et créatures magiques
+  if (/\b(monstre|troll|géant|lutin|fée|robot|extraterrestre|sorcier|sorcière|gnome|dragon magique|créature)\b/i.test(combined)) {
     let detectedName = 'Monstre / Créature magique';
-    if (/robot/i.test(combined)) detectedName = 'Robot';
-    else if (/fée/i.test(combined)) detectedName = 'Fée';
-    else if (/troll/i.test(combined)) detectedName = 'Troll';
-    else if (/lutin/i.test(combined)) detectedName = 'Lutin';
-    else if (/monstre/i.test(combined)) detectedName = 'Monstre';
+    if (/\brobot\b/i.test(combined)) detectedName = 'Robot';
+    else if (/\bfée\b/i.test(combined)) detectedName = 'Fée';
+    else if (/\btroll\b/i.test(combined)) detectedName = 'Troll';
+    else if (/\blutin\b/i.test(combined)) detectedName = 'Lutin';
+    else if (/\bmonstre\b/i.test(combined)) detectedName = 'Monstre';
     return { category: 'magical_creatures', detectedName };
   }
 
-  // 2. Détection Animaux volants et célestes
-  if (/chouette|hibou|oiseau|aigle|papillon|dragon volant|faucon|pigeon|corbeau|oisillon|hirondelle/i.test(combined)) {
+  // 4. Détection Animaux volants et célestes
+  if (/\b(chouette|hibou|oiseau|aigle|papillon|dragon volant|faucon|pigeon|corbeau|oisillon|hirondelle)\b/i.test(combined)) {
     let detectedName = 'Oiseau';
-    if (/chouette|hibou/i.test(combined)) detectedName = 'Chouette';
-    else if (/aigle/i.test(combined)) detectedName = 'Aigle';
-    else if (/dragon/i.test(combined)) detectedName = 'Dragon';
+    if (/\b(chouette|hibou)\b/i.test(combined)) detectedName = 'Chouette';
+    else if (/\baigle\b/i.test(combined)) detectedName = 'Aigle';
     return { category: 'animal_flying', detectedName };
   }
 
-  // 3. Détection Animaux marins et aquatiques
-  if (/dauphin|baleine|poisson|requin|tortue de mer|pieuvre|sirène|phoque|crabe|étoile de mer|méduse/i.test(combined)) {
+  // 5. Détection Animaux marins et aquatiques
+  if (/\b(dauphin|baleine|poisson|requin|tortue de mer|pieuvre|sirène|phoque|crabe|étoile de mer|méduse)\b/i.test(combined)) {
     let detectedName = 'Dauphin';
-    if (/baleine/i.test(combined)) detectedName = 'Baleine';
-    else if (/requin/i.test(combined)) detectedName = 'Requin';
-    else if (/sirène/i.test(combined)) detectedName = 'Sirène';
-    else if (/poisson/i.test(combined)) detectedName = 'Poisson';
+    if (/\bbaleine\b/i.test(combined)) detectedName = 'Baleine';
+    else if (/\brequin\b/i.test(combined)) detectedName = 'Requin';
     return { category: 'animal_aquatic', detectedName };
   }
 
-  // 4. Détection Animaux terrestres
-  if (/ours|ourson|chien|chiot|chat|chaton|lapin|renard|cerf|biche|lion|loup|peluche|doudou|écureuil|souris|hérisson/i.test(combined)) {
+  // 6. Détection Animaux terrestres (avec délimiteurs \b stricts pour éviter les faux positifs comme "toujours")
+  if (/\b(ours|ourson|chien|chiot|chat|chaton|lapin|renard|cerf|biche|lion|loup|peluche|doudou|écureuil|souris|hérisson)\b/i.test(combined)) {
     let detectedName = 'Animal terrestre';
-    if (/ours|ourson/i.test(combined)) detectedName = 'Ours';
-    else if (/renard/i.test(combined)) detectedName = 'Renard';
-    else if (/loup/i.test(combined)) detectedName = 'Loup';
-    else if (/chien|chiot/i.test(combined)) detectedName = 'Chien';
-    else if (/chat|chaton/i.test(combined)) detectedName = 'Chat';
-    else if (/lapin/i.test(combined)) detectedName = 'Lapin';
+    if (/\b(ours|ourson)\b/i.test(combined)) detectedName = 'Ours';
+    else if (/\brenard\b/i.test(combined)) detectedName = 'Renard';
+    else if (/\bloup\b/i.test(combined)) detectedName = 'Loup';
+    else if (/\b(chien|chiot)\b/i.test(combined)) detectedName = 'Chien';
+    else if (/\b(chat|chaton)\b/i.test(combined)) detectedName = 'Chat';
+    else if (/\blapin\b/i.test(combined)) detectedName = 'Lapin';
     return { category: 'animal_land', detectedName };
   }
 
-  // 5. Détection Enfants
-  if (/fille|fillette|princesse|soeur|garçon|petit homme|prince|frère|enfant|bébé/i.test(combined)) {
+  // 7. Détection Enfants
+  if (/\b(fille|fillette|princesse|soeur|garçon|petit homme|prince|frère|enfant|bébé)\b/i.test(combined)) {
     let detectedName = 'Enfant';
-    if (/fille|fillette|princesse|soeur/i.test(combined)) detectedName = 'Petite Fille';
-    else if (/garçon|petit homme|prince|frère/i.test(combined)) detectedName = 'Petit Garçon';
+    if (/\b(fille|fillette|princesse|soeur)\b/i.test(combined)) detectedName = 'Petite Fille';
+    else if (/\b(garçon|petit homme|prince|frère)\b/i.test(combined)) detectedName = 'Petit Garçon';
     return { category: 'children', detectedName };
   }
 
-  return { category: 'children', detectedName: 'Personnage' };
+  return { category: 'children', detectedName: speakerName || 'Personnage' };
 };
 
 /**
@@ -196,7 +338,8 @@ export const resolveSmartVoice = (
   category: VoiceCategorySlug,
   detectedName: string | undefined,
   allUserVoices: VoiceCatalogItem[],
-  fallbackNarratorVoice?: VoiceCatalogItem | null
+  fallbackNarratorVoice?: VoiceCatalogItem | null,
+  baseType?: string
 ): { voiceId?: string; voiceRefUrl?: string; voiceRefPath?: string; transcript?: string } => {
   if (!allUserVoices || allUserVoices.length === 0) {
     return {
@@ -212,7 +355,7 @@ export const resolveSmartVoice = (
     const cleanTarget = detectedName.toLowerCase();
     const nameMatch = allUserVoices.find(v => {
       const vName = (v.name + ' ' + v.relation).toLowerCase();
-      return vName.includes(cleanTarget) || cleanTarget.includes(v.relation.toLowerCase());
+      return vName.includes(cleanTarget) || cleanTarget.includes(v.name.toLowerCase()) || cleanTarget.includes(v.relation.toLowerCase());
     });
 
     if (nameMatch?.signedUrl) {
@@ -225,7 +368,23 @@ export const resolveSmartVoice = (
     }
   }
 
-  // 2. Recherche par catégorie exacte
+  // 2. Recherche par type animal de base découvert (ex: Biscotin -> ours -> Voix Ours)
+  if (baseType) {
+    const bMatch = allUserVoices.find(v => {
+      const vText = (v.name + ' ' + v.relation).toLowerCase();
+      return vText.includes(baseType.toLowerCase());
+    });
+    if (bMatch?.signedUrl) {
+      return {
+        voiceId: bMatch.id,
+        voiceRefUrl: bMatch.signedUrl,
+        voiceRefPath: bMatch.voiceRefPath || undefined,
+        transcript: bMatch.transcript || undefined
+      };
+    }
+  }
+
+  // 3. Recherche par catégorie exacte
   const categoryVoices = allUserVoices.filter(v => 
     (v.category === category || (category === 'children' && (v.category === 'child_boy' || v.category === 'child_girl'))) && 
     v.signedUrl
@@ -239,7 +398,7 @@ export const resolveSmartVoice = (
     };
   }
 
-  // 3. Fallback sur le narrateur familial s'il est spécifié et actif
+  // 4. Si une voix de narrateur (ex: parent) avec référence audio est disponible, fallback dessus
   if (fallbackNarratorVoice?.signedUrl) {
     return {
       voiceId: fallbackNarratorVoice.id,
@@ -249,7 +408,7 @@ export const resolveSmartVoice = (
     };
   }
 
-  // 4. Attribution automatique d'une voix de synthèse typée selon le profil si aucun clone familial n'est disponible
+  // 5. Attribution automatique d'une voix de synthèse typée selon le profil si aucun clone n'est disponible
   const TYPED_CHARACTER_VOICES: Record<string, { voiceId: string; instruct?: string }> = {
     magical_creatures: { voiceId: 'standard-french-male', instruct: "Deep, mysterious, gentle creature voice" },
     animal_flying: { voiceId: 'standard-french-female-alt', instruct: "Light, airy, cheerful soaring voice" },
@@ -266,7 +425,7 @@ export const resolveSmartVoice = (
     };
   }
 
-  // 5. Fallback ultime sur le narrateur principal
+  // 6. Fallback ultime sur le narrateur principal
   return {
     voiceId: fallbackNarratorVoice?.id,
     voiceRefUrl: fallbackNarratorVoice?.signedUrl || undefined,
@@ -317,6 +476,9 @@ export const parseStoryToAudioSegments = (
   const dialogueRegex = /(«[^»]+»|"[^"]+"|^[—\-]\s*[^.\n]+)/gm;
   const paragraphs = content.split(/\n\s*\n/);
 
+  // Indexation globale des personnages de l'histoire et du catalogue
+  const characterIndex = buildCharacterIndex(content, allUserVoices);
+
   const fallbackNarrator = allUserVoices.find(v => v.id === mainNarratorVoiceId) 
     || allUserVoices.find(v => v.category === 'narrator_family' || v.category === 'narrator')
     || allUserVoices[0] 
@@ -332,6 +494,7 @@ export const parseStoryToAudioSegments = (
     let lastIndex = 0;
     let match: RegExpExecArray | null;
     const localRegex = new RegExp(dialogueRegex.source, 'gm');
+    let lastSpeakerInPara: string | undefined = undefined;
 
     while ((match = localRegex.exec(trimmed)) !== null) {
       const matchIndex = match.index;
@@ -364,16 +527,27 @@ export const parseStoryToAudioSegments = (
       const cleanDialogueText = stripStoryEmotionTags(dialogueText);
 
       if (cleanDialogueText.length > 0) {
-        const contextAround = trimmed.substring(Math.max(0, matchIndex - 60), Math.min(trimmed.length, matchIndex + rawDialogueMatch.length + 60));
-        const { category, detectedName } = detectCharacterCategoryAndName(cleanDialogueText, contextAround);
-        const resolved = resolveSmartVoice(category, detectedName, allUserVoices, fallbackNarrator);
+        const contextBefore = trimmed.substring(Math.max(0, matchIndex - 80), matchIndex);
+        const contextAfter = trimmed.substring(matchIndex + rawDialogueMatch.length, Math.min(trimmed.length, matchIndex + rawDialogueMatch.length + 80));
+        const contextAround = contextBefore + ' ' + contextAfter;
+
+        let speaker = extractSpeakerFromContext(contextBefore, contextAfter, characterIndex, allUserVoices);
+        if (!speaker && lastSpeakerInPara) {
+          speaker = lastSpeakerInPara;
+        }
+        if (speaker) {
+          lastSpeakerInPara = speaker;
+        }
+
+        const { category, detectedName, baseType } = detectCharacterCategoryAndName(cleanDialogueText, contextAround, speaker, characterIndex);
+        const resolved = resolveSmartVoice(category, detectedName, allUserVoices, fallbackNarrator, baseType);
         const dialogueEmotion = detectEmotionAndInstruct(rawDialogueMatch, contextAround, paraEmotion.instruct);
 
         segments.push({
           text: cleanDialogueText,
           speakerType: 'dialogue',
           roleCategory: category,
-          speakerName: detectedName,
+          speakerName: detectedName || speaker,
           voiceId: resolved.voiceId,
           voiceRefUrl: resolved.voiceRefUrl,
           voiceRefPath: resolved.voiceRefPath,
