@@ -280,6 +280,12 @@ export const detectCharacterCategoryAndName = (
   if (/\b(papi|papy|grand-père|grand-pere)\b/i.test(combined)) {
     return { category: 'narrator_family', detectedName: 'Papi' };
   }
+  if (/\b(monsieur|m\.|chef|docteur|capitaine|maître|maitre|voisin|marchand|boulanger|policier|pompier|roi|fermier|jardinier)\b/i.test(combined) || (speakerName && /\b(monsieur|chef|capitaine|roi)\b/i.test(speakerName))) {
+    return { category: 'narrator_family', detectedName: speakerName || 'Monsieur' };
+  }
+  if (/\b(madame|mme|maîtresse|maitresse|voisine|marchande|boulangère|reine|fermière)\b/i.test(combined) || (speakerName && /\b(madame|reine)\b/i.test(speakerName))) {
+    return { category: 'narrator_family', detectedName: speakerName || 'Madame' };
+  }
 
   // 3. Détection Monstres et créatures magiques
   if (/\b(monstre|troll|géant|lutin|fée|robot|extraterrestre|sorcier|sorcière|gnome|dragon magique|créature)\b/i.test(combined)) {
@@ -384,11 +390,34 @@ export const resolveSmartVoice = (
     }
   }
 
-  // 3. Recherche par catégorie exacte
-  const categoryVoices = allUserVoices.filter(v => 
-    (v.category === category || (category === 'children' && (v.category === 'child_boy' || v.category === 'child_girl'))) && 
-    v.signedUrl
-  );
+  // 3. Recherche par catégorie avec filtrage strict de cohérence de genre (anti-inversion Papa/Mamie/Garçon/Fille)
+  const isFemaleCharacter = detectedName ? /\b(mamie|mamy|maman|mère|mere|madame|mme|reine|femme|fille|fillette|soeur|princesse|onix)\b/i.test(detectedName) : false;
+  const isMaleCharacter = detectedName ? /\b(papa|père|pere|papi|papy|monsieur|m\.|roi|homme|chef|garçon|frère|prince)\b/i.test(detectedName) : false;
+
+  const categoryVoices = allUserVoices.filter(v => {
+    if (!v.signedUrl) return false;
+    
+    if (category === 'children') {
+      const vText = (v.name + ' ' + (v.relation || '')).toLowerCase();
+      const isVoiceFemale = v.category === 'child_girl' || /\b(fille|fillette|soeur|princesse)\b/i.test(vText);
+      const isVoiceMale = v.category === 'child_boy' || /\b(garçon|garcon|frère|prince)\b/i.test(vText);
+      if (isFemaleCharacter && isVoiceMale && !isVoiceFemale) return false;
+      if (isMaleCharacter && isVoiceFemale && !isVoiceMale) return false;
+      return v.category === 'children' || v.category === 'child_boy' || v.category === 'child_girl';
+    }
+
+    if (category === 'narrator_family') {
+      if (v.category !== 'narrator_family') return false;
+      const vText = (v.name + ' ' + (v.relation || '')).toLowerCase();
+      const isVoiceFemale = /\b(mamie|mamy|maman|mère|mere|onix|madame|femme)\b/i.test(vText);
+      const isVoiceMale = /\b(papa|père|pere|papi|papy|monsieur|homme)\b/i.test(vText);
+      if (isFemaleCharacter && isVoiceMale && !isVoiceFemale) return false;
+      if (isMaleCharacter && isVoiceFemale && !isVoiceMale) return false;
+      return true;
+    }
+
+    return v.category === category;
+  });
   if (categoryVoices.length > 0) {
     return {
       voiceId: categoryVoices[0].id,

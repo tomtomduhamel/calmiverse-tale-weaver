@@ -284,7 +284,7 @@ def convert_to_wav(input_path: str, output_path: str) -> str:
         # 1. highpass=f=65 : supprime les infra-basses et bruits de manipulation sans altérer les voix graves
         # 2. equalizer=f=420:width_type=q:w=1.4:g=-3.5 : élimine la résonance creuse de pièce (anti-box)
         # 3. agate=range=0.06:threshold=0.03:ratio=2:attack=20:release=140 : assèche les réflexions entre les mots
-        prompt_filter = "highpass=f=65,equalizer=f=420:width_type=q:w=1.4:g=-3.5,agate=range=0.06:threshold=0.03:ratio=2:attack=20:release=140"
+        prompt_filter = "highpass=f=65,equalizer=f=420:width_type=q:w=1.4:g=-3.5"
         cmd = [
             "ffmpeg", "-y", "-i", input_path,
             "-af", prompt_filter,
@@ -321,6 +321,21 @@ def _apply_cosine_edges(wav: np.ndarray, sr: int = 24000, fade_in_ms: float = 12
     return out
 
 
+
+def _create_natural_pause(samples: int, sr: int = 24000) -> np.ndarray:
+    """Génère un silence respirant et feutré sans saut numérique ni clic de conversion DAC."""
+    if samples <= 0:
+        return np.zeros(0, dtype=np.float32)
+    # Bruit feutré studio inaudible (-75 dB) pour maintenir la continuité du convertisseur DAC
+    noise = np.random.normal(0, 1e-4, samples).astype(np.float32)
+    fade_len = min(int(sr * 0.008), samples // 4)
+    if fade_len > 1:
+        fade_in = 0.5 * (1.0 - np.cos(np.linspace(0.0, np.pi, fade_len, dtype=np.float32)))
+        noise[:fade_len] *= fade_in
+        fade_out = 0.5 * (1.0 + np.cos(np.linspace(0.0, np.pi, fade_len, dtype=np.float32)))
+        noise[-fade_len:] *= fade_out
+    return noise
+
 def master_audio_bytes(input_wav_bytes: bytes, sr: int = 24000) -> bytes:
     """Applique un mastering broadcast EBU R128 (-16 LUFS) 'Close-Mic Studio' pour les contes d'enfants :
     - Coupe les 450Hz (supprime définitivement la boîte de conserve)
@@ -340,7 +355,6 @@ def master_audio_bytes(input_wav_bytes: bytes, sr: int = 24000) -> bytes:
             "equalizer=f=450:width_type=q:w=1.2:g=-3.0,"
             "equalizer=f=3800:width_type=q:w=1.0:g=+2.5,"
             "treble=g=+1.5:f=9500,"
-            "agate=range=0.05:threshold=0.02:ratio=2:attack=15:release=120,"
             "loudnorm=I=-16:TP=-1.5:LRA=8:dual_mono=true"
         )
         cmd = [
@@ -739,7 +753,7 @@ class CalmiTTSGPU:
             sentence_wavs.append(w_np)
 
             if s_idx < len(raw_sentences) - 1 and sentence_pause_sec > 0:
-                sentence_wavs.append(np.zeros(int(sr * sentence_pause_sec), dtype=np.float32))
+                sentence_wavs.append(_create_natural_pause(int(sr * sentence_pause_sec), sr=sr))
 
         if not sentence_wavs:
             return np.zeros(int(sr * 0.1), dtype=np.float32), sr
@@ -781,7 +795,7 @@ class CalmiTTSGPU:
         print(f"🎙️ [CosyVoice2-EU] Empreinte vocale [{mode_label}] extraite ({trimmed_path}) en {time.time() - t_spk:.2f}s")
         return base_input
 
-    def _synthesize_block_fast(self, text: str, prompt_path: str, prompt_text: str = "", sentence_pause_sec: float = 0.16) -> Tuple[np.ndarray, int]:
+    def _synthesize_block_fast(self, text: str, prompt_path: str, prompt_text: str = "", sentence_pause_sec: float = 0.16, speed: float = 1.0) -> Tuple[np.ndarray, int]:
         """Synthétise un bloc narratif phrase par phrase avec CosyVoice 2 EU (SANS en_tn_model anglais,
         avec normalisation narrative française et fondu cosinus aux jonctions)."""
         frontend = self.cosy_model._model.frontend
@@ -803,7 +817,7 @@ class CalmiTTSGPU:
                 'text': tts_text_token,
                 'text_len': tts_text_token_len,
             }
-            for model_output in model.tts(**model_input, stream=False, speed=1.0):
+            for model_output in model.tts(**model_input, stream=False, speed=speed):
                 wav_tensor = model_output['tts_speech']
                 if hasattr(wav_tensor, 'cpu'):
                     w_np = wav_tensor.cpu().numpy()
@@ -814,9 +828,9 @@ class CalmiTTSGPU:
                 w_np = _apply_cosine_edges(w_np, sr=sr, fade_in_ms=12.0, fade_out_ms=18.0)
                 sentence_wavs.append(w_np)
 
-            # Légère respiration naturelle entre deux phrases d'un même paragraphe
+            # Légère respiration naturelle feutrée entre deux phrases
             if s_idx < len(raw_sentences) - 1 and sentence_pause_sec > 0:
-                sentence_wavs.append(np.zeros(int(sr * sentence_pause_sec), dtype=np.float32))
+                sentence_wavs.append(_create_natural_pause(int(sr * sentence_pause_sec), sr=sr))
 
         if not sentence_wavs:
             return np.zeros(int(sr * 0.1), dtype=np.float32), sr
@@ -834,9 +848,36 @@ class CalmiTTSGPU:
         cfg_weight: float = 0.0,
         temperature: float = 0.65,
     ) -> Tuple[np.ndarray, int]:
-        """Route automatiquement vers Chatterbox Multilingual (par défaut) ou CosyVoice2-EU corrigé avec paramètres expressifs."""
-        target_engine = (prefer_engine or self.engine or "chatterbox").lower()
-        if "chatterbox" in target_engine and self.chatterbox_model is not None:
+        """Route automatiquement vers le meilleur moteur neural :
+        - Pour le français : priorité absolue à CosyVoice 2 EU (Hi! PARIS) pour un accent français 100% natif, zéro accent anglophone et prosodie vivante.
+        - Si explicitement demandé (prefer_engine='chatterbox') ou en fallback : Chatterbox Multilingual."""
+        target_engine = (prefer_engine or "").lower()
+        is_french = bool(language and language.lower().startswith("fr"))
+
+        # Calcul de la vitesse dynamique selon l'exagération / émotion
+        dynamic_speed = 1.0
+        if exaggeration >= 0.80:
+            dynamic_speed = 1.04 # Ton vif, joyeux et dynamique (fun/excited)
+        elif exaggeration <= 0.45:
+            dynamic_speed = 0.93 # Ton doux et berçant (sommeil/sleepy)
+        elif exaggeration <= 0.60:
+            dynamic_speed = 0.97 # Ton détendu (relax/calm)
+
+        # 1. En français : CosyVoice 2 EU en priorité si disponible (zéro accent anglophone)
+        if (is_french or "cosy" in target_engine) and self.cosy_model is not None and "chatterbox" not in target_engine:
+            try:
+                return self._synthesize_block_fast(
+                    text=text,
+                    prompt_path=prompt_path,
+                    prompt_text=prompt_text,
+                    sentence_pause_sec=sentence_pause_sec,
+                    speed=dynamic_speed,
+                )
+            except Exception as cv_err:
+                print(f"⚠️ [CosyVoice2-EU] Erreur sur bloc ({cv_err}), fallback sur Chatterbox...")
+
+        # 2. Moteur alternatif / Fallback : Chatterbox Multilingual
+        if self.chatterbox_model is not None:
             try:
                 lang_code = (language or "fr").lower()[:2]
                 return self._synthesize_block_chatterbox(
@@ -849,13 +890,15 @@ class CalmiTTSGPU:
                     temperature=temperature,
                 )
             except Exception as cb_err:
-                print(f"⚠️ [Chatterbox] Erreur sur bloc ({cb_err}), fallback immédiat sur CosyVoice2-EU corrigé...")
+                print(f"⚠️ [Chatterbox] Erreur sur bloc ({cb_err})")
 
+        # 3. Dernier recours : CosyVoice2-EU
         return self._synthesize_block_fast(
             text=text,
             prompt_path=prompt_path,
             prompt_text=prompt_text,
             sentence_pause_sec=sentence_pause_sec,
+            speed=dynamic_speed,
         )
 
     def _upload_to_supabase(self, wav_bytes: bytes, story_id: str, webhook_id: str, voice_id: str, req_id: str):
@@ -1003,7 +1046,7 @@ class CalmiTTSGPU:
 
                     if seg_pause > 0:
                         pause_samples = int(sr * seg_pause)
-                        silence = np.zeros(pause_samples, dtype=np.float32)
+                        silence = _create_natural_pause(pause_samples, sr=sr)
                         generated_wavs.append(silence)
 
                     generated_wavs.append(wav_np)
@@ -1040,7 +1083,7 @@ class CalmiTTSGPU:
 
                     if pause_before > 0:
                         pause_samples = int(sr * pause_before)
-                        silence = np.zeros(pause_samples, dtype=np.float32)
+                        silence = _create_natural_pause(pause_samples, sr=sr)
                         generated_wavs.append(silence)
 
                     generated_wavs.append(wav_np)

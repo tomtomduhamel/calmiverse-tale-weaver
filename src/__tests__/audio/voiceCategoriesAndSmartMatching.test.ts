@@ -178,6 +178,48 @@ describe('Studio des Voix & Attribution Intelligente', () => {
       expect(match.voiceId).toBe('voice_papa_narrator');
       expect(match.voiceRefUrl).toBe('https://storage.supabase/papa.wav');
     });
+
+    it('devrait garantir la cohérence de genre et ne jamais attribuer une voix de Mamie à Papa ou inversement', () => {
+      const familyVoices: VoiceCatalogItem[] = [
+        {
+          id: 'voice_mamie_first',
+          name: 'Voix de Mamie Onix',
+          relation: 'Mamie Onix',
+          category: 'narrator_family',
+          signedUrl: 'https://storage.supabase/mamie.wav'
+        },
+        {
+          id: 'voice_papa_second',
+          name: 'Papa',
+          relation: 'Narrateur (Papa)',
+          category: 'narrator_family',
+          signedUrl: 'https://storage.supabase/papa.wav'
+        },
+        {
+          id: 'voice_boy_only',
+          name: 'Jeune garçon',
+          relation: 'Enfant Garçon',
+          category: 'children',
+          signedUrl: 'https://storage.supabase/garcon.wav'
+        }
+      ];
+
+      // Même si Mamie est la première voix de 'narrator_family', Papa doit recevoir la voix de Papa !
+      const papaMatch = resolveSmartVoice('narrator_family', 'Papa', familyVoices, familyVoices[1]);
+      expect(papaMatch.voiceId).toBe('voice_papa_second');
+
+      // Un personnage adulte masculin comme "Monsieur Tuba" ne doit PAS recevoir la voix de Mamie
+      const monsieurMatch = resolveSmartVoice('narrator_family', 'Monsieur Tuba', familyVoices, familyVoices[1]);
+      expect(monsieurMatch.voiceId).toBe('voice_papa_second');
+
+      // Mamie doit bien recevoir la voix de Mamie
+      const mamieMatch = resolveSmartVoice('narrator_family', 'Mamie', familyVoices, familyVoices[1]);
+      expect(mamieMatch.voiceId).toBe('voice_mamie_first');
+
+      // Une petite fille ne doit PAS recevoir la voix d'un jeune garçon si aucun clone fille n'existe
+      const girlMatch = resolveSmartVoice('children', 'Petite Fille', familyVoices, familyVoices[1]);
+      expect(girlMatch.voiceId).toBe('voice_papa_second'); // fallback sur le narrateur au lieu de dénaturer avec une voix de garçon
+    });
   });
 
   describe('4. Découpage Intégral d\'une Histoire Multi-Voix', () => {
