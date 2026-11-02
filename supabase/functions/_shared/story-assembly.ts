@@ -777,6 +777,22 @@ export async function buildFastStoryPayload(supabase: any, params: FastParams): 
     storyPrompt += `\n\n${durationConstraintText}`;
   }
 
+  const fastStoryTitleDirective = `\n\n🎨 CONSIGNES STRICTES POUR LE TITRE DE L'HISTOIRE RAPIDE (CHAMP "title") :
+Tu dois inventer un titre court (2 à 5 mots), poétique et captivant.
+INTERDICTIONS ABSOLUES :
+- INTERDICTION FORMELLE du schéma répétitif « [Nom] de/du/des/d' [Nom] » (ex. INTERDIT : « Le ravin des cerfs-volants », « La mosaïque de la tortue », « Les balises du gymnase », « Le pont des parapluies », « Le secret du bois », « La quête des glands »).
+- INTERDICTION FORMELLE du schéma « [Objet] dans [Lieu] » (ex: « Le chat dans le placard », « La boussole dans la soupe », « Le phare dans l'armoire »).
+- ZÉRO adjectif laudatif (magique, merveilleux, génial, incroyable, féerique).
+- ZÉRO prénom d'enfant et ZÉRO construction « qui + verbe » (ex: « Le chat qui dort »).
+- Respecter strictement la casse française : une majuscule au premier mot uniquement (« Le renardeau timide » et JAMAIS « Le Renardeau Timide »).
+
+STRUCTURES OBLIGATOIRES POUR LE TITRE (choisis l'une de ces 3 structures précises) :
+1. Verbe d'action : [Verbe à l'infinitif/impératif] + [Complément direct] (ex : « Suivre la coccinelle bleue », « Réveiller la colline », « Écouter la nuit tiède », « Attraper le vent frais »).
+2. Groupe nominal pur SANS aucun « de » : [Article] + [Nom] + [Adjectif sensoriel/concret/couleur] (ex : « Le galet tiède », « La cabane endormie », « Un souffle orange », « Le sentier silencieux », « La boîte jaune »).
+3. Préposition temporelle/spatiale hors de/dans : [Sous / Avant / Derrière / Quand...] (ex : « Sous le grand rideau », « Avant la première pluie », « Derrière les fougères », « Quand le soir arrive »).`;
+
+  storyPrompt += fastStoryTitleDirective;
+
   if (recentStories && recentStories.length > 0) {
     const historyList = recentStories
       .map((s: any, idx: number) => `- "${s.title}" : ${s.summary || "Pas de résumé."}`)
@@ -785,6 +801,7 @@ export async function buildFastStoryPayload(supabase: any, params: FastParams): 
 Voici les titres et résumés des dernières histoires générées pour cet utilisateur. Tu dois ABSOLUMENT créer un scénario, des rebondissements, des personnages secondaires et un univers narratif différents de ceux-ci.
 INTERDICTIONS STRICTES DE REDONDANCE :
 - Varier le décor principal, les acolytes et le type de résolution.
+- INTERDICTION FORMELLE de reproduire la structure grammaticale des titres précédents ci-dessus (notamment les compléments du nom en de/du/des). Tu dois employer un moule syntaxique totalement différent.
 Historique récent :
 ${historyList}`;
   }
