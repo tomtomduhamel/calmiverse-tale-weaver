@@ -227,9 +227,21 @@ export const extractSpeakerFromContext = (
   const prePres = contextBefore.match(/(?:C['’]est|Voici)\s+([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)?)\s+qui\b/i);
   if (prePres) return prePres[1].trim();
 
-  // 4. Verbe incise suivant : "» appelle Papa, la voix..." ou "» grogne Biscotin." ou "» piaille l'oiseau"
-  const postIncise = contextAfter.match(/^\s*(?:[—\-]\s*)?(?:dit|demande|s['’](?:exclame|écrie|étonne|inquiète|amuse)|répond|ajoute|appelle|grogne|souffle|chuchote|crie|hurle|piaille|roucoule|rugit|soupire|insiste|reprend|pense|lance|rétorque)\s+(?:le\s+|la\s+|l['’]|un\s+|une\s+)?([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)?)/i);
+  // 4. Verbe incise suivant : "», dit Papa" ou "», lance coach Bison" ou "» grogne Biscotin."
+  const postIncise = contextAfter.match(/^\s*[,;—\-\.]?\s*(?:dit|demande|s['’](?:exclame|écrie|étonne|inquiète|amuse)|répond|ajoute|appelle|grogne|souffle|chuchote|crie|hurle|piaille|roucoule|rugit|soupire|insiste|reprend|pense|lance|rétorque|sourit)\s+(?:le\s+|la\s+|l['’]|un\s+|une\s+)?([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)?)/i);
   if (postIncise) return postIncise[1].trim();
+
+  // 4b. Verbe incise avec pronom : "», dit-il en souriant" ou "», répondit-elle"
+  const pronounIncise = contextAfter.match(/^\s*[,;—\-\.]?\s*(?:dit|demande|lance|répond|souffle|sourit|ajoute|chuchote|crie|s['’]exclame|s['’]écrie)-(il|elle|on)\b/i);
+  if (pronounIncise) {
+    const pronoun = pronounIncise[1].toLowerCase();
+    // Chercher le sujet de la phrase précédente dans contextBefore
+    const lastPreSubject = contextBefore.match(/(?:le\s+|la\s+|l['’]|un\s+|une\s+)?([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)?)\s+[a-zà-ÿ'’\s,]+[.!?…]\s*$/i);
+    if (lastPreSubject) {
+      return lastPreSubject[1].trim();
+    }
+    return pronoun === 'elle' ? 'Personnage Féminin' : 'Personnage Masculin';
+  }
 
   // 5. Présentation suivante : "» C’est Mamie Onix qui encourage"
   const postPres = contextAfter.match(/^\s*(?:[—\-]\s*)?(?:C['’]est|Voici)\s+([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)?)\s+qui\b/i);
@@ -280,10 +292,10 @@ export const detectCharacterCategoryAndName = (
   if (/\b(papi|papy|grand-père|grand-pere)\b/i.test(combined)) {
     return { category: 'narrator_family', detectedName: 'Papi' };
   }
-  if (/\b(monsieur|m\.|chef|docteur|capitaine|maître|maitre|voisin|marchand|boulanger|policier|pompier|roi|fermier|jardinier)\b/i.test(combined) || (speakerName && /\b(monsieur|chef|capitaine|roi)\b/i.test(speakerName))) {
+  if (/\b(monsieur|m\.|chef|docteur|capitaine|maître|maitre|voisin|marchand|boulanger|policier|pompier|roi|fermier|jardinier|coach|entraîneur|entraineur|professeur|prof|directeur|arbitre)\b/i.test(combined) || (speakerName && /\b(monsieur|chef|capitaine|roi|coach|bison)\b/i.test(speakerName))) {
     return { category: 'narrator_family', detectedName: speakerName || 'Monsieur' };
   }
-  if (/\b(madame|mme|maîtresse|maitresse|voisine|marchande|boulangère|reine|fermière)\b/i.test(combined) || (speakerName && /\b(madame|reine)\b/i.test(speakerName))) {
+  if (/\b(madame|mme|maîtresse|maitresse|voisine|marchande|boulangère|reine|fermière|coach|entraîneuse|professeure|directrice)\b/i.test(combined) || (speakerName && /\b(madame|reine|maîtresse)\b/i.test(speakerName))) {
     return { category: 'narrator_family', detectedName: speakerName || 'Madame' };
   }
 
@@ -391,16 +403,20 @@ export const resolveSmartVoice = (
   }
 
   // 3. Recherche par catégorie avec filtrage strict de cohérence de genre (anti-inversion Papa/Mamie/Garçon/Fille)
-  const isFemaleCharacter = detectedName ? /\b(mamie|mamy|maman|mère|mere|madame|mme|reine|femme|fille|fillette|soeur|princesse|onix)\b/i.test(detectedName) : false;
-  const isMaleCharacter = detectedName ? /\b(papa|père|pere|papi|papy|monsieur|m\.|roi|homme|chef|garçon|frère|prince)\b/i.test(detectedName) : false;
+  const stripAccents = (str: string): string =>
+    (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const cleanDetected = stripAccents(detectedName || '');
+  const isFemaleCharacter = cleanDetected ? /\b(mamie|mamy|maman|mere|madame|mme|reine|femme|fille|fillette|soeur|princesse|onix|zoe|lea|chloe|emma|camille|jade|louise|alice|lola|manon|sarah|eva|rose|mia|lina|ambre|mila|anna|lucie|juliette|ines|jeanne|clara|lena|maelys|victoire|agathe|maya|lise|solene)\b/.test(cleanDetected) : false;
+  const isMaleCharacter = cleanDetected ? /\b(papa|pere|papi|papy|monsieur|m\.|roi|homme|chef|garcon|frere|prince|sami|lucas|hugo|leo|gabriel|jules|arthur|louis|raphael|noah|adam|mael|paul|nathan|tom|sacha|theo|ethan|timeo|nolhan|bastien|maxime|coach|bison|entraineur|professeur|directeur)\b/.test(cleanDetected) : false;
 
   const categoryVoices = allUserVoices.filter(v => {
     if (!v.signedUrl) return false;
     
     if (category === 'children') {
-      const vText = (v.name + ' ' + (v.relation || '')).toLowerCase();
-      const isVoiceFemale = v.category === 'child_girl' || /\b(fille|fillette|soeur|princesse)\b/i.test(vText);
-      const isVoiceMale = v.category === 'child_boy' || /\b(garçon|garcon|frère|prince)\b/i.test(vText);
+      const vClean = stripAccents(v.name + ' ' + (v.relation || ''));
+      const isVoiceFemale = v.category === 'child_girl' || /\b(fille|fillette|soeur|princesse)\b/.test(vClean);
+      const isVoiceMale = v.category === 'child_boy' || /\b(garcon|frere|prince)\b/.test(vClean);
       if (isFemaleCharacter && isVoiceMale && !isVoiceFemale) return false;
       if (isMaleCharacter && isVoiceFemale && !isVoiceMale) return false;
       return v.category === 'children' || v.category === 'child_boy' || v.category === 'child_girl';
@@ -408,9 +424,9 @@ export const resolveSmartVoice = (
 
     if (category === 'narrator_family') {
       if (v.category !== 'narrator_family') return false;
-      const vText = (v.name + ' ' + (v.relation || '')).toLowerCase();
-      const isVoiceFemale = /\b(mamie|mamy|maman|mère|mere|onix|madame|femme)\b/i.test(vText);
-      const isVoiceMale = /\b(papa|père|pere|papi|papy|monsieur|homme)\b/i.test(vText);
+      const vClean = stripAccents(v.name + ' ' + (v.relation || ''));
+      const isVoiceFemale = /\b(mamie|mamy|maman|mere|onix|madame|femme)\b/.test(vClean);
+      const isVoiceMale = /\b(papa|pere|papi|papy|monsieur|homme|coach|bison|entraineur)\b/.test(vClean);
       if (isFemaleCharacter && isVoiceMale && !isVoiceFemale) return false;
       if (isMaleCharacter && isVoiceFemale && !isVoiceMale) return false;
       return true;

@@ -276,6 +276,44 @@ def resolve_speech_prosody_params(
     return (round(exaggeration, 2), round(cfg_weight, 2), round(temperature, 2))
 
 
+def format_cosy_styled_text(
+    text: str,
+    emotion: Optional[str] = None,
+    is_dialogue: bool = False,
+    enable_sleep_pacing: bool = False,
+    progress: float = 0.0
+) -> str:
+    """Injecte la consigne de style narrative avant le token spécial <|endofprompt|> pour CosyVoice 2 EU.
+    Permet une diction théâtrale vivante, chaleureuse et captivante sans aucun accent américain."""
+    clean_text = normalize_french_narrative_text(text) or text.strip()
+
+    style_desc = None
+    if enable_sleep_pacing and progress >= 0.65:
+        style_desc = "Speak very softly, slowly, and soothingly in a comforting bedtime whispering voice."
+    elif emotion:
+        emo_key = emotion.lower().strip()
+        if emo_key in ["joy", "happy", "joyeux", "joie"]:
+            style_desc = "Speak cheerfully, brightly, with a warm smile and playful energy for children."
+        elif emo_key in ["excited", "enthousiaste", "excite"]:
+            style_desc = "Speak enthusiastically, with lively energy, excitement, and bright curiosity."
+        elif emo_key in ["mysterious", "mysterieux", "suspense"]:
+            style_desc = "Speak in a hushed, captivating, mysterious storytelling tone."
+        elif emo_key in ["sad", "triste", "tendresse"]:
+            style_desc = "Speak with gentle warmth, tender empathy, and reassuring comfort."
+        elif emo_key in ["whisper", "chuchotement"]:
+            style_desc = "Speak softly in a quiet, warm, whispering bedtime voice."
+        elif emo_key in ["calm", "calme", "doux", "relax"]:
+            style_desc = "Speak calmly, peacefully, and smoothly with gentle storytelling rhythm."
+
+    if not style_desc:
+        if is_dialogue:
+            style_desc = "Speak expressively with natural character acting and engaging lively intonation."
+        else:
+            style_desc = "Speak warmly, expressively, and captivatingly like a loving parent reading a bedtime story to a child."
+
+    return f"{style_desc}. <|endofprompt|> {clean_text}"
+
+
 def convert_to_wav(input_path: str, output_path: str) -> str:
     """Convertit l'enregistrement vocal de référence en WAV PCM 24kHz mono PUR studio.
     Applique un dé-boxage chirurgical à 420Hz et un expanseur doux (agate) pour assécher
@@ -303,15 +341,15 @@ def convert_to_wav(input_path: str, output_path: str) -> str:
             return input_path
 
 
-def _apply_cosine_edges(wav: np.ndarray, sr: int = 24000, fade_in_ms: float = 12.0, fade_out_ms: float = 18.0) -> np.ndarray:
-    """Applique un fondu cosinus doux en entrée et sortie de phrase pour éliminer
-    tout clic de phase ou coupure brusque lors des enchaînements de phrases."""
+def _apply_cosine_edges(wav: np.ndarray, sr: int = 24000, fade_in_ms: float = 2.5, fade_out_ms: float = 3.5) -> np.ndarray:
+    """Applique un micro-fondu cosinus ultra-court (2.5-3.5ms) en entrée et sortie de phrase.
+    Garantit l'absence de clic numérique DAC / discontinuité DC sans tronquer les consonnes d'attaque."""
     if wav is None or wav.size == 0:
         return wav
     out = wav.astype(np.float32, copy=True)
     n = out.shape[0]
-    fi = min(int(sr * (fade_in_ms / 1000.0)), n // 4)
-    fo = min(int(sr * (fade_out_ms / 1000.0)), n // 4)
+    fi = min(int(sr * (fade_in_ms / 1000.0)), n // 8)
+    fo = min(int(sr * (fade_out_ms / 1000.0)), n // 8)
     if fi > 1:
         curve_in = 0.5 * (1.0 - np.cos(np.linspace(0.0, np.pi, fi, dtype=np.float32)))
         out[:fi] *= curve_in
@@ -321,20 +359,11 @@ def _apply_cosine_edges(wav: np.ndarray, sr: int = 24000, fade_in_ms: float = 12
     return out
 
 
-
 def _create_natural_pause(samples: int, sr: int = 24000) -> np.ndarray:
-    """Génère un silence respirant et feutré sans saut numérique ni clic de conversion DAC."""
+    """Génère un silence numérique pur (zéro absolu) sans injection de bruit blanc parasite."""
     if samples <= 0:
         return np.zeros(0, dtype=np.float32)
-    # Bruit feutré studio inaudible (-75 dB) pour maintenir la continuité du convertisseur DAC
-    noise = np.random.normal(0, 1e-4, samples).astype(np.float32)
-    fade_len = min(int(sr * 0.008), samples // 4)
-    if fade_len > 1:
-        fade_in = 0.5 * (1.0 - np.cos(np.linspace(0.0, np.pi, fade_len, dtype=np.float32)))
-        noise[:fade_len] *= fade_in
-        fade_out = 0.5 * (1.0 + np.cos(np.linspace(0.0, np.pi, fade_len, dtype=np.float32)))
-        noise[-fade_len:] *= fade_out
-    return noise
+    return np.zeros(samples, dtype=np.float32)
 
 def master_audio_bytes(input_wav_bytes: bytes, sr: int = 24000) -> bytes:
     """Applique un mastering broadcast EBU R128 (-16 LUFS) 'Close-Mic Studio' pour les contes d'enfants :
@@ -652,7 +681,13 @@ class CalmiTTSGPU:
             self.cosy_model = load()
             if os.path.exists("/root/default_ref.wav"):
                 with torch.inference_mode():
-                    self._get_speaker_conditioning("/root/default_ref.wav")
+                    try:
+                        self.cosy_model.tts(
+                            text="Speak warmly. <|endofprompt|> Bonjour mon enfant.",
+                            prompt="/root/default_ref.wav"
+                        )
+                    except Exception as warmup_err:
+                        print(f"ℹ️ Warmup CosyVoice 2 EU ({warmup_err})")
             print(f"✅ [CalmiTTSGPU] CosyVoice 2 EU prêt sur {self.device.upper()} en {time.time() - start:.2f}s !")
         except Exception as cv_err:
             print(f"⚠️ [CalmiTTSGPU] Erreur chargement CosyVoice 2 EU : {cv_err}")
@@ -749,7 +784,7 @@ class CalmiTTSGPU:
             else:
                 w_np = np.array(wav_tensor, dtype=np.float32).squeeze()
 
-            w_np = _apply_cosine_edges(w_np, sr=sr, fade_in_ms=12.0, fade_out_ms=18.0)
+            w_np = _apply_cosine_edges(w_np, sr=sr, fade_in_ms=2.5, fade_out_ms=3.5)
             sentence_wavs.append(w_np)
 
             if s_idx < len(raw_sentences) - 1 and sentence_pause_sec > 0:
@@ -759,81 +794,85 @@ class CalmiTTSGPU:
             return np.zeros(int(sr * 0.1), dtype=np.float32), sr
         return np.concatenate(sentence_wavs), sr
 
-    def _get_speaker_conditioning(self, prompt_path: str, prompt_text: str = "") -> dict:
-        """Extrait et met en cache les tenseurs d'empreinte vocale complète pour CosyVoice 2 EU
-        SANS le normaliseur anglais (text_frontend=False)."""
-        trimmed_path, win_transcript = self._get_trimmed_prompt_wav(prompt_path)
-        resolved_prompt = win_transcript if win_transcript else (prompt_text.strip() if prompt_text else "")
-        resolved_prompt = normalize_french_narrative_text(resolved_prompt)
+    def _synthesize_block_cosy(
+        self,
+        text: str,
+        prompt_path: str,
+        emotion: Optional[str] = None,
+        is_dialogue: bool = False,
+        enable_sleep_pacing: bool = False,
+        progress: float = 0.0,
+        sentence_pause_sec: float = 0.20,
+    ) -> Tuple[np.ndarray, int]:
+        """Synthétise un bloc narratif avec CosyVoice 2 EU (Hi! PARIS) via l'API officielle native cosy.tts(),
+        avec injection de prompt de style émotionnel (<|endofprompt|>) et fondu anti-clic ultra-court (2.5ms)."""
+        trimmed_prompt, _ = self._get_trimmed_prompt_wav(prompt_path)
+        prompt_wav_to_use = trimmed_prompt if (trimmed_prompt and os.path.exists(trimmed_prompt)) else prompt_path
+        if not (prompt_wav_to_use and os.path.exists(prompt_wav_to_use)):
+            prompt_wav_to_use = "/root/default_ref.wav"
 
-        cache_key = f"{trimmed_path}::{resolved_prompt}"
-        if cache_key in self.speaker_cache:
-            return self.speaker_cache[cache_key]
-
-        from cosyvoice.utils.file_utils import load_wav
-        t_spk = time.time()
-        frontend = self.cosy_model._model.frontend
-        sample_rate = self.cosy_model._model.sample_rate
-        prompt_speech_16k = load_wav(trimmed_path, 16000)
-
-        if not win_transcript and resolved_prompt:
-            sents = re.split(r'(?<=[.!?])\s+', resolved_prompt)
-            if len(sents) >= 2:
-                resolved_prompt = " ".join(sents[:2]).strip()
-
-        if resolved_prompt:
-            # IMPORTANT : Ne jamais appeler frontend.text_normalize(..., text_frontend=True) qui est en anglais !
-            base_input = frontend.frontend_zero_shot('Bonjour.', resolved_prompt, prompt_speech_16k, sample_rate, '')
-            mode_label = "zero_shot_fr_pure"
-        else:
-            base_input = frontend.frontend_cross_lingual('Bonjour.', prompt_speech_16k, sample_rate, '')
-            mode_label = "cross_lingual"
-
-        base_input.pop('text', None)
-        base_input.pop('text_len', None)
-        self.speaker_cache[cache_key] = base_input
-        print(f"🎙️ [CosyVoice2-EU] Empreinte vocale [{mode_label}] extraite ({trimmed_path}) en {time.time() - t_spk:.2f}s")
-        return base_input
-
-    def _synthesize_block_fast(self, text: str, prompt_path: str, prompt_text: str = "", sentence_pause_sec: float = 0.16, speed: float = 1.0) -> Tuple[np.ndarray, int]:
-        """Synthétise un bloc narratif phrase par phrase avec CosyVoice 2 EU (SANS en_tn_model anglais,
-        avec normalisation narrative française et fondu cosinus aux jonctions)."""
-        frontend = self.cosy_model._model.frontend
-        model = self.cosy_model._model.model
-        sr = self.cosy_model.sample_rate
-        spk_cond = self._get_speaker_conditioning(prompt_path, prompt_text=prompt_text)
-
-        raw_sentences = split_into_clean_sentences(text, max_sentence_chars=210)
+        # Découpe en phrases naturelles (max ~240 chars par phrase pour une diction fluide)
+        raw_sentences = split_into_clean_sentences(text, max_sentence_chars=240)
         if not raw_sentences:
             raw_sentences = [normalize_french_narrative_text(text) or text.strip()]
 
         sentence_wavs = []
-        for s_idx, clean_sent in enumerate(raw_sentences):
-            if not clean_sent:
+        sr = 24000
+
+        for s_idx, sent in enumerate(raw_sentences):
+            if not sent or not sent.strip():
                 continue
-            tts_text_token, tts_text_token_len = frontend._extract_text_token(clean_sent)
-            model_input = {
-                **spk_cond,
-                'text': tts_text_token,
-                'text_len': tts_text_token_len,
-            }
-            for model_output in model.tts(**model_input, stream=False, speed=speed):
-                wav_tensor = model_output['tts_speech']
-                if hasattr(wav_tensor, 'cpu'):
+
+            styled_input = format_cosy_styled_text(
+                text=sent,
+                emotion=emotion,
+                is_dialogue=is_dialogue,
+                enable_sleep_pacing=enable_sleep_pacing,
+                progress=progress,
+            )
+
+            try:
+                # Appel direct à l'API officielle de CosyVoice 2 EU
+                wav_tensor, current_sr = self.cosy_model.tts(
+                    text=styled_input,
+                    prompt=prompt_wav_to_use,
+                )
+                sr = current_sr
+                if hasattr(wav_tensor, "cpu"):
                     w_np = wav_tensor.cpu().numpy()
                 else:
                     w_np = np.array(wav_tensor, dtype=np.float32)
+
                 if w_np.ndim > 1:
                     w_np = w_np.squeeze()
-                w_np = _apply_cosine_edges(w_np, sr=sr, fade_in_ms=12.0, fade_out_ms=18.0)
+
+                # Micro-fondu ultra-court (2.5ms / 3.5ms) sans tronquer les consonnes
+                w_np = _apply_cosine_edges(w_np, sr=sr, fade_in_ms=2.5, fade_out_ms=3.5)
                 sentence_wavs.append(w_np)
 
-            # Légère respiration naturelle feutrée entre deux phrases
-            if s_idx < len(raw_sentences) - 1 and sentence_pause_sec > 0:
-                sentence_wavs.append(_create_natural_pause(int(sr * sentence_pause_sec), sr=sr))
+                # Silence numérique pur (zéro) entre les phrases
+                if s_idx < len(raw_sentences) - 1 and sentence_pause_sec > 0:
+                    sentence_wavs.append(_create_natural_pause(int(sr * sentence_pause_sec), sr=sr))
+
+            except Exception as e:
+                print(f"⚠️ Erreur CosyVoice 2 EU sur phrase: {sent[:40]}... ({e})")
+                # Fallback interne sur phrase brute sans préfixe
+                try:
+                    clean_raw = normalize_french_narrative_text(sent)
+                    wav_tensor, current_sr = self.cosy_model.tts(
+                        text=clean_raw,
+                        prompt=prompt_wav_to_use,
+                    )
+                    sr = current_sr
+                    w_np = wav_tensor.cpu().numpy().squeeze() if hasattr(wav_tensor, "cpu") else np.array(wav_tensor, dtype=np.float32).squeeze()
+                    w_np = _apply_cosine_edges(w_np, sr=sr, fade_in_ms=2.5, fade_out_ms=3.5)
+                    sentence_wavs.append(w_np)
+                except Exception as fallback_err:
+                    print(f"❌ Échec phrase CosyVoice 2 ({fallback_err})")
 
         if not sentence_wavs:
             return np.zeros(int(sr * 0.1), dtype=np.float32), sr
+
         return np.concatenate(sentence_wavs), sr
 
     def _synthesize_block_auto(
@@ -841,42 +880,38 @@ class CalmiTTSGPU:
         text: str,
         prompt_path: str,
         prompt_text: str = "",
-        sentence_pause_sec: float = 0.16,
+        sentence_pause_sec: float = 0.20,
         language: str = "fr",
         prefer_engine: Optional[str] = None,
-        exaggeration: float = 0.75,
-        cfg_weight: float = 0.0,
+        emotion: Optional[str] = None,
+        is_dialogue: bool = False,
+        enable_sleep_pacing: bool = False,
+        progress: float = 0.0,
+        exaggeration: float = 0.65,
+        cfg_weight: float = 0.35,
         temperature: float = 0.65,
     ) -> Tuple[np.ndarray, int]:
-        """Route automatiquement vers le meilleur moteur neural :
-        - Pour le français : priorité absolue à CosyVoice 2 EU (Hi! PARIS) pour un accent français 100% natif, zéro accent anglophone et prosodie vivante.
+        """Route automatiquement vers le meilleur moteur vocal :
+        - Pour le français (par défaut) : CosyVoice 2 EU officiel avec prompt de style expressif et zéro accent.
         - Si explicitement demandé (prefer_engine='chatterbox') ou en fallback : Chatterbox Multilingual."""
         target_engine = (prefer_engine or "").lower()
-        is_french = bool(language and language.lower().startswith("fr"))
 
-        # Calcul de la vitesse dynamique selon l'exagération / émotion
-        dynamic_speed = 1.0
-        if exaggeration >= 0.80:
-            dynamic_speed = 1.04 # Ton vif, joyeux et dynamique (fun/excited)
-        elif exaggeration <= 0.45:
-            dynamic_speed = 0.93 # Ton doux et berçant (sommeil/sleepy)
-        elif exaggeration <= 0.60:
-            dynamic_speed = 0.97 # Ton détendu (relax/calm)
-
-        # 1. En français : CosyVoice 2 EU en priorité si disponible (zéro accent anglophone)
-        if (is_french or "cosy" in target_engine) and self.cosy_model is not None and "chatterbox" not in target_engine:
+        # 1. En priorité absolue : CosyVoice 2 EU officiel si disponible
+        if self.cosy_model is not None and "chatterbox" not in target_engine:
             try:
-                return self._synthesize_block_fast(
+                return self._synthesize_block_cosy(
                     text=text,
                     prompt_path=prompt_path,
-                    prompt_text=prompt_text,
+                    emotion=emotion,
+                    is_dialogue=is_dialogue,
+                    enable_sleep_pacing=enable_sleep_pacing,
+                    progress=progress,
                     sentence_pause_sec=sentence_pause_sec,
-                    speed=dynamic_speed,
                 )
             except Exception as cv_err:
                 print(f"⚠️ [CosyVoice2-EU] Erreur sur bloc ({cv_err}), fallback sur Chatterbox...")
 
-        # 2. Moteur alternatif / Fallback : Chatterbox Multilingual
+        # 2. Secours ou demande explicite : Chatterbox Multilingual
         if self.chatterbox_model is not None:
             try:
                 lang_code = (language or "fr").lower()[:2]
@@ -892,13 +927,15 @@ class CalmiTTSGPU:
             except Exception as cb_err:
                 print(f"⚠️ [Chatterbox] Erreur sur bloc ({cb_err})")
 
-        # 3. Dernier recours : CosyVoice2-EU
-        return self._synthesize_block_fast(
+        # 3. Dernier recours : CosyVoice 2 EU
+        return self._synthesize_block_cosy(
             text=text,
             prompt_path=prompt_path,
-            prompt_text=prompt_text,
+            emotion=emotion,
+            is_dialogue=is_dialogue,
+            enable_sleep_pacing=enable_sleep_pacing,
+            progress=progress,
             sentence_pause_sec=sentence_pause_sec,
-            speed=dynamic_speed,
         )
 
     def _upload_to_supabase(self, wav_bytes: bytes, story_id: str, webhook_id: str, voice_id: str, req_id: str):
@@ -1038,6 +1075,10 @@ class CalmiTTSGPU:
                         sentence_pause_sec=sentence_pause_sec,
                         language=request.language,
                         prefer_engine=active_engine,
+                        emotion=seg_emotion,
+                        is_dialogue=is_dialogue,
+                        enable_sleep_pacing=bool(request.enable_sleep_pacing),
+                        progress=prog,
                         exaggeration=exag,
                         cfg_weight=cfg_w,
                         temperature=temp,
@@ -1075,6 +1116,10 @@ class CalmiTTSGPU:
                         sentence_pause_sec=sentence_pause_sec,
                         language=request.language,
                         prefer_engine=active_engine,
+                        emotion=chunk_emo,
+                        is_dialogue=False,
+                        enable_sleep_pacing=bool(request.enable_sleep_pacing),
+                        progress=prog,
                         exaggeration=exag,
                         cfg_weight=cfg_w,
                         temperature=temp,

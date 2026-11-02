@@ -6,26 +6,27 @@ Ce document consigne les règles critiques d'ingénierie apprises lors de la ré
 
 ## 1. Moteur TTS CosyVoice 2 EU & Chatterbox Multilingual (`vps-tts-service/modal_app.py`)
 
-### Règle n°1 : Priorité Absolue à CosyVoice 2 EU pour le Français (Zéro Accent Anglophone)
-- **Problème identifié (Accent anglophone & monotonie de Chatterbox)** :
-  Chatterbox Multilingual est basé sur des données pré-entraînées majoritairement anglophones (LibriSpeech/VCTK). Même avec `cfg_weight = 0.0`, il conserve une prosodie plate et une coloration phonétique anglaise sur le français.
-- **Règle absolue** :
-  1. Pour tout texte en langue française (`language == 'fr'`), le moteur **CosyVoice 2 EU** (développé par l'institut de recherche français Hi! PARIS) est prioritaire à 100 %.
-  2. Il offre une phonétique française native, des courbes mélodiques chantantes pour enfants et un clonage zero-shot fidèle.
-  3. Chatterbox Multilingual est conservé en fallback automatique ou si explicitement requis (`prefer_engine='chatterbox'`).
-  4. Modulation dynamique de vitesse (`speed`) dans CosyVoice 2 selon l'émotion :
-     - `1.04` pour l'action vive, le rire et la joie (`excited`, `fun`),
-     - `0.93` pour l'apaisement du coucher (`sleepy`),
-     - `0.97` pour la détente (`calm`),
-     - `1.0` par défaut.
-
-### Règle n°2 : Élimination des Bruits Parasites & Clacs Numériques (Zéro Agate / Silence Feutré Studio)
-- **Problème identifié (Claquements de noise-gate et clics de coupure numérique)** :
-  1. L'application du filtre FFmpeg `agate` (noise-gate dynamique) refermait brutalement le signal sur les fins de mots et s'ouvrait en 15 ms, créant des bruits parasites (« clics » ou « pops » de coupure) perçus comme des bugs.
-  2. L'insertion de silences numériques purs (`np.zeros`, $-\infty\text{ dB}$) entre les phrases produisait des micro-sauts de phase lors du décodage DAC.
+### Règle n°1 : Exécution Native de CosyVoice 2 EU avec Style Prompts (Zéro Accent Anglophone)
 - **Règles absolues** :
-  1. **Interdiction formelle du filtre `agate`** dans `master_audio_bytes` et `convert_to_wav`.
-  2. **Silences naturels feutrés (`_create_natural_pause`)** : générer un micro-bruit feutré studio inaudible (à $-75\text{ dB}$) avec fondu cosinus doux (8 ms) en entrée/sortie pour maintenir la continuité acoustique entre chaque phrase et chaque réplique sans le moindre clac.
+  1. Pour tout texte en langue française (`language == 'fr'`), le moteur **CosyVoice 2 EU** (Hi! PARIS / Polytechnique) est exécuté via son API officielle native :
+     ```python
+     wav_tensor, sr = self.cosy_model.tts(text=styled_input, prompt=prompt_wav)
+     ```
+  2. **Interdiction formelle de contourner l'API officielle** : Ne jamais vider les dictionnaires de tenseurs internes (`base_input.pop('text')`) avec un mot factice (`'Bonjour.'`), ce qui détruit le clonage vocal zero-shot.
+  3. **Contrôle d'émotion et de style narratif par prompt (`<|endofprompt|>`)** :
+     - Conte du coucher : `"Speak very softly, slowly, and soothingly in a comforting bedtime whispering voice. <|endofprompt|> ..."`
+     - Joie / Entrain : `"Speak cheerfully, brightly, with a warm smile and playful energy for children. <|endofprompt|> ..."`
+     - Aventure / Curiosité : `"Speak enthusiastically, with lively energy, excitement, and bright curiosity. <|endofprompt|> ..."`
+     - Dialogue théâtral : `"Speak expressively with natural character acting and engaging lively intonation. <|endofprompt|> ..."`
+  4. Chatterbox Multilingual est conservé uniquement en pur secours technique.
+
+### Règle n°2 : Élimination des Bruits Parasites & Silences Numériques Purs
+- **Problème identifié (Souffle de coupure et hachoir de mots)** :
+  1. L'injection de bruit blanc aléatoire (`np.random.normal`) dans les pauses créait un souffle audible qui s'allumait et s'éteignait brusquement (effet « micro qui coupe et se rallume »).
+  2. Des fondus d'attaque trop lents (12 ms) rognaient les consonnes d'attaque (« p », « t », « b »).
+- **Règles absolues** :
+  1. **Silences de pause purs (`_create_natural_pause`)** : Silence numérique absolu à 0 dB (`np.zeros(..., dtype=np.float32)`).
+  2. **Micro-fondus d'attaque ultra-courts (2.5 ms / 3.5 ms)** : `_apply_cosine_edges` applique un micro-lissage cosinus de 2.5 ms en entrée et 3.5 ms en sortie. Cela élimine 100 % des clics DC de conversion DAC sans jamais rogner les consonnes d'attaque.
   3. Chaîne de mastering broadcast EBU R128 (-16 LUFS) :
      - Coupe-bas 60 Hz (`highpass=f=60`)
      - Dé-boxage chirurgical à 450 Hz (`equalizer=f=450:width_type=q:w=1.2:g=-3.0`)

@@ -11,13 +11,14 @@ Ce skill regroupe les règles d'or et procédures opérationnelles pour mainteni
 
 ## 1. Moteur TTS Modal GPU (`vps-tts-service/modal_app.py`)
 
-### A. Élimination Totale des Bruits Parasites & Clacs Numériques (Zéro Agate / Silence Feutré)
+### A. Élimination Totale des Bruits Parasites & Silences Numériques Purs
 - **Diagnostic critique** :
-  1. Le filtre FFmpeg `agate` (noise-gate dynamique) s'ouvrait en 15 ms et se refermait brutalement sur chaque fin de mot, souffle ou voyelle douce, produisant des claquements, bruits parasites et artéfacts de pompage perçus comme des bogues par l'utilisateur.
-  2. L'insertion de silences numériques purs (`np.zeros`, $-\infty\text{ dB}$) entre les phrases ou segments provoquait des sauts de phase et des coupures sèches lors du décodage DAC.
+  1. Le filtre FFmpeg `agate` (noise-gate dynamique) hachait la voix et produisait des artéfacts de pompage.
+  2. L'injection de bruit blanc aléatoire (`np.random.normal`) dans les pauses générait un souffle/grésillement audible qui s'allumait et s'éteignait brusquement entre chaque phrase (effet « micro qui coupe et se rallume »).
+  3. Des fondus d'attaque trop lents (12 ms) tronquaient les consonnes initiales (« p », « t », « b »).
 - **Règles d'or & Implémentation obligatoire** :
-  1. **Interdiction formelle du filtre `agate`** dans `master_audio_bytes` et `convert_to_wav`.
-  2. **Silences naturels feutrés (`_create_natural_pause`)** : générer un micro-bruit feutré studio inaudible (à $-75\text{ dB}$) avec fondu cosinus doux (8 ms) en entrée/sortie pour maintenir la continuité acoustique entre chaque phrase et chaque réplique sans le moindre clac.
+  1. **Interdiction formelle du bruit blanc aléatoire** : Les silences de pause (`_create_natural_pause`) utilisent un vrai silence numérique à zéro absolu (`np.zeros(..., dtype=np.float32)`).
+  2. **Micro-fondus d'attaque ultra-courts (2.5 ms / 3.5 ms)** : `_apply_cosine_edges` applique un micro-lissage cosinus de 2.5 ms en entrée et 3.5 ms en sortie. Cela élimine 100 % des clics DC de conversion DAC sans jamais rogner les consonnes d'attaque.
   3. Chaîne de mastering broadcast EBU R128 (-16 LUFS) :
      - Coupe-bas 60 Hz (`highpass=f=60`)
      - Dé-boxage chirurgical à 450 Hz (`equalizer=f=450:width_type=q:w=1.2:g=-3.0`)
@@ -25,17 +26,21 @@ Ce skill regroupe les règles d'or et procédures opérationnelles pour mainteni
      - Air soyeux à 9.5 kHz (`treble=g=+1.5:f=9500`)
      - Normalisation loudness EBU R128 (`loudnorm=I=-16:TP=-1.5:LRA=8:dual_mono=true`).
 
-### B. Moteur Vocal Français Natif (CosyVoice 2 EU) & Élimination de l'Accent Anglophone
+### B. Moteur Vocal Français Natif (CosyVoice 2 EU) & API Officielle Native
 - **Diagnostic critique** :
-  Chatterbox Multilingual est initialisé sur des priors anglophones. Même avec `cfg_weight = 0.0`, la prosodie française peut rester atone ou trahir un léger accent anglo-saxon.
-- **Solution & Routage obligatoire (`_synthesize_block_auto`)** :
-  1. Pour tout texte français (`language == 'fr'`), le moteur **CosyVoice 2 EU** (conçu par le laboratoire français Hi! PARIS) est prioritaire à 100 %.
-  2. CosyVoice 2 EU offre un accent français irréprochable, une prosodie chantante naturelle et un clonage zero-shot fidèle.
-  3. Chatterbox Multilingual est conservé en solution de repli (fallback automatique) ou si explicitement requis (`prefer_engine='chatterbox'`).
-  4. Modulation dynamique de vitesse (`speed`) dans CosyVoice 2 :
-     - `1.04` pour les moments de joie/rire/action vive (`excited`, `fun`),
-     - `0.93` pour l'accompagnement du coucher (`sleepy`),
-     - `0.97` pour la relaxation (`calm`).
+  Le contournement des méthodes officielles via le dépouillement des tenseurs privés (`base_input.pop('text')` avec un prompt factice 'Bonjour.') détruisait complètement l'empreinte vocale et produisait une voix méconnaissable et robotique.
+- **Solution & Implémentation obligatoire (`cosy.tts` officiel)** :
+  1. Pour tout texte français (`language == 'fr'`), le moteur **CosyVoice 2 EU** (Hi! PARIS / Polytechnique) est exécuté via son API officielle native :
+     ```python
+     wav_tensor, sr = self.cosy_model.tts(text=styled_input, prompt=prompt_wav)
+     ```
+  2. **Contrôle d'émotion et de style narratif par prompt (`<|endofprompt|>`)** :
+     - Conte du coucher : `"Speak very softly, slowly, and soothingly in a comforting bedtime whispering voice. <|endofprompt|> ..."`
+     - Joie / Entrain : `"Speak cheerfully, brightly, with a warm smile and playful energy for children. <|endofprompt|> ..."`
+     - Aventure / Émerveillement : `"Speak enthusiastically, with lively energy, excitement, and bright curiosity. <|endofprompt|> ..."`
+     - Dialogue théâtral : `"Speak expressively with natural character acting and engaging lively intonation. <|endofprompt|> ..."`
+  3. **Zéro accent américain** : CosyVoice 2 EU est entraîné nativement sur des corpus français, garantissant une prononciation naturelle parfaite.
+  4. Chatterbox Multilingual est conservé en pur secours technique.
 
 ### C. Normalisation Narrative 100 % Française & Découpage Prudent
 - **Normalisation (`normalize_french_narrative_text`)** :

@@ -219,6 +219,14 @@ describe('Studio des Voix & Attribution Intelligente', () => {
       // Une petite fille ne doit PAS recevoir la voix d'un jeune garçon si aucun clone fille n'existe
       const girlMatch = resolveSmartVoice('children', 'Petite Fille', familyVoices, familyVoices[1]);
       expect(girlMatch.voiceId).toBe('voice_papa_second'); // fallback sur le narrateur au lieu de dénaturer avec une voix de garçon
+
+      // Coach Bison (adulte masculin) doit recevoir la voix du narrateur adulte masculin et JAMAIS Mamie ou un jeune garçon
+      const coachMatch = resolveSmartVoice('narrator_family', 'Coach Bison', familyVoices, familyVoices[1]);
+      expect(coachMatch.voiceId).toBe('voice_papa_second');
+
+      // Zoé (prénom de fillette) ne doit JAMAIS recevoir la voix d'un jeune garçon si seul un garçon est disponible
+      const zoeMatch = resolveSmartVoice('children', 'Zoé', familyVoices, familyVoices[1]);
+      expect(zoeMatch.voiceId).toBe('voice_papa_second');
     });
   });
 
@@ -301,6 +309,53 @@ Tout le monde ferma les yeux pour passer une nuit paisible.`;
       expect(finalNarrator.speakerType).toBe('narrator');
       expect(finalNarrator.voiceId).toBe('voice_maman');
       expect(finalNarrator.text).toContain('Tout le monde ferma les yeux');
+    });
+
+    it('devrait segmenter l\'histoire du gymnase sans jamais attribuer la voix de garçon à Zoé ou à Coach Bison', () => {
+      const storyText = `Zoé arrive debout au gymnase des Cerceaux, son voisin Sami à ses côtés. Le coach Bison lui passe un bracelet bleu au poignet. « Ton énergie va nous servir », dit-il en souriant.
+Sami crie : « Regarde tes pieds ! »
+Zoé sourit, les yeux brillants : « Quand je bouge vite, je peux aussi choisir mon chemin ! »`;
+
+      const userVoices: VoiceCatalogItem[] = [
+        {
+          id: 'voice_mamie',
+          name: 'Voix de Mamie Onix',
+          relation: 'Mamie Onix',
+          category: 'narrator_family',
+          signedUrl: 'https://storage.supabase/mamie.wav'
+        },
+        {
+          id: 'voice_papa',
+          name: 'Papa',
+          relation: 'Narrateur (Papa)',
+          category: 'narrator_family',
+          signedUrl: 'https://storage.supabase/papa.wav'
+        },
+        {
+          id: 'voice_garcon',
+          name: 'Jeune garçon',
+          relation: 'Enfant Garçon',
+          category: 'children',
+          signedUrl: 'https://storage.supabase/garcon.wav'
+        }
+      ];
+
+      const segments = parseStoryToAudioSegments(storyText, userVoices, 'voice_papa');
+
+      // 1. Dialogue Coach Bison -> doit aller au narrateur adulte Papa (jamais à Jeune garçon ni Mamie)
+      const coachSeg = segments.find(s => s.text.includes('Ton énergie va nous servir'));
+      expect(coachSeg).toBeDefined();
+      expect(coachSeg?.voiceId).toBe('voice_papa');
+
+      // 2. Dialogue Zoé (petite fille) -> ne doit JAMAIS aller à Jeune garçon, fallback sur Narrateur Papa
+      const zoeSeg = segments.find(s => s.text.includes('Quand je bouge vite'));
+      expect(zoeSeg).toBeDefined();
+      expect(zoeSeg?.voiceId).toBe('voice_papa');
+
+      // 3. Dialogue Sami (garçon) -> peut aller à Jeune garçon
+      const samiSeg = segments.find(s => s.text.includes('Regarde tes pieds'));
+      expect(samiSeg).toBeDefined();
+      expect(samiSeg?.voiceId).toBe('voice_garcon');
     });
   });
 
