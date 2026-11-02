@@ -375,27 +375,33 @@ export const useN8nAudioGeneration = () => {
 
           payload.allUserVoices = voicesWithSignedUrls.filter(v => v.signedUrl);
 
-          // Voice selected specifically as the Main Narrator
-          const mainNarratorVoice = userVoices.find(v => v.id === dynamicVoiceId);
-          if (mainNarratorVoice) {
+          // 🎙️ Lecture Vivante Unifiée (Continuous Storytelling) :
+          // La voix choisie (voix clonée du narrateur / parent) porte l'intégralité du récit et des dialogues
+          // avec une prosodie fluide et continue, sans découpage artificiel ni silences saccadés entre les répliques.
+          const selectedVoice = userVoices.find(v => v.id === dynamicVoiceId) 
+            || userVoices.find(v => v.category === 'narrator_family' || v.category === 'narrator')
+            || userVoices[0];
+
+          if (selectedVoice) {
             const { data: signedData } = await supabase.storage
               .from('voice-clones')
-              .createSignedUrl(mainNarratorVoice.voice_ref_path, 3600);
+              .createSignedUrl(selectedVoice.voice_ref_path, 3600);
 
             if (signedData?.signedUrl) {
               payload.isCustomVoice = true;
               payload.voice_ref_url = signedData.signedUrl;
-              payload.voice_ref_path = mainNarratorVoice.voice_ref_path;
-              payload.ref_text = mainNarratorVoice.transcript || "";
-              console.log("🎙️ [N8nAudio] Main Narrator Voice & Family Voice Catalog attached to payload.", {
-                narratorVoiceId: dynamicVoiceId,
-                totalFamilyVoices: payload.allUserVoices.length
+              payload.voice_ref_path = selectedVoice.voice_ref_path;
+              payload.ref_text = selectedVoice.transcript || "";
+              console.log("🎙️ [N8nAudio] Lecture Vivante Unifiée active avec la voix:", selectedVoice.name, {
+                voiceId: selectedVoice.id,
+                isCustomVoice: true
               });
             }
           }
 
-          // Analyse théâtrale multi-voix automatique
-          if (payload.allUserVoices.length > 0) {
+          // Théâtre multi-voix : uniquement si explicitement demandé (ex: mode 'theatre_multivoice')
+          const isTheatreExplicitlyRequested = dynamicVoiceId === 'theatre_multivoice';
+          if (isTheatreExplicitlyRequested && payload.allUserVoices.length > 1) {
             const parsedSegments = parseStoryToAudioSegments(text, payload.allUserVoices, dynamicVoiceId);
             const distinctSpeakers = new Set(parsedSegments.map(s => s.voiceRefUrl || s.voiceId).filter(Boolean));
             if (distinctSpeakers.size > 1) {

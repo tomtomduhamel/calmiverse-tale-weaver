@@ -655,15 +655,8 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
               }
             }
 
-            // 🌙 Soft Fade-out Sommeil : fondu progressif imperceptible sur les 30 dernières secondes
-            const remaining = audio.duration - audio.currentTime;
-            if (remaining > 0 && remaining <= 30) {
-              const fadeRatio = Math.max(0, remaining / 30);
-              audio.volume = fadeRatio;
-              backgroundSound.setVolume(fadeRatio * 0.16);
-            } else if (remaining > 30) {
-              audio.volume = 1.0;
-            }
+            // Volume constant à 100% jusqu'à la dernière syllabe
+            audio.volume = 1.0;
           }
         };
         audio.onended = () => {
@@ -673,8 +666,9 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
           audio.volume = 1.0;
           lastSfxParaIndexRef.current = -1;
 
-          // 🌙 Prolongation Dodo (15 min) : maintient la berceuse/ambiance pour endormir l'enfant
-          if (isProlongationEnabled && (soundId || objective)) {
+          // 🌙 Prolongation Dodo (15 min) : activée uniquement si l'objectif est le sommeil/coucher ou si une musique d'ambiance a été choisie
+          const isSleepObjective = typeof objective === 'string' && /sleep|sommeil|coucher|dodo/i.test(objective);
+          if (isProlongationEnabled && (soundId || isSleepObjective)) {
             setIsProlonging(true);
             setProlongationSecondsLeft(900); // 15 min
             backgroundSound.setVolume(0.18); // Volume feutré
