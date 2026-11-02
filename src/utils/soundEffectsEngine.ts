@@ -21,7 +21,7 @@ class BedtimeSoundEffectsEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private filterNode: BiquadFilterNode | null = null;
-  private isEnabled: boolean = true;
+  private isEnabled: boolean = false;
   private lastTriggeredTime: number = 0;
   private COOLDOWN_MS = 6000; // Pas plus d'un effet toutes les 6 secondes pour préserver le calme
 

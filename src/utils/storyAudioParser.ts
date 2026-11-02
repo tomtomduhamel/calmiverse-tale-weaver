@@ -547,8 +547,13 @@ export const parseStoryToAudioSegments = (
       // Texte du narrateur avant le dialogue
       if (matchIndex > lastIndex) {
         const rawNarratorText = trimmed.substring(lastIndex, matchIndex).trim();
-        const cleanNarratorText = stripStoryEmotionTags(rawNarratorText);
-        if (cleanNarratorText.length > 0) {
+        let cleanNarratorText = stripStoryEmotionTags(rawNarratorText);
+        cleanNarratorText = cleanNarratorText.replace(/^[,\s:;—–\.\?!]+/, '').trim();
+        cleanNarratorText = cleanNarratorText.replace(/[,:;—–\s]+$/, '.').trim();
+        if (cleanNarratorText.length > 0 && /[a-zA-ZÀ-ÿ0-9]/.test(cleanNarratorText)) {
+          if (cleanNarratorText[0].toLowerCase() === cleanNarratorText[0] && cleanNarratorText[0].toUpperCase() !== cleanNarratorText[0]) {
+            cleanNarratorText = cleanNarratorText.charAt(0).toUpperCase() + cleanNarratorText.slice(1);
+          }
           const narratorEmotion = detectEmotionAndInstruct(rawNarratorText, '', paraEmotion.instruct);
           segments.push({
             text: cleanNarratorText,
@@ -569,9 +574,10 @@ export const parseStoryToAudioSegments = (
       // Texte du dialogue
       const rawDialogueMatch = match[0];
       const dialogueText = rawDialogueMatch.replace(/^[«"——-]\s*|\s*[»"]$/g, '').trim();
-      const cleanDialogueText = stripStoryEmotionTags(dialogueText);
+      let cleanDialogueText = stripStoryEmotionTags(dialogueText);
+      cleanDialogueText = cleanDialogueText.replace(/^[,\s:;—–]+/, '').trim();
 
-      if (cleanDialogueText.length > 0) {
+      if (cleanDialogueText.length > 0 && /[a-zA-ZÀ-ÿ0-9]/.test(cleanDialogueText)) {
         const contextBefore = trimmed.substring(Math.max(0, matchIndex - 80), matchIndex);
         const contextAfter = trimmed.substring(matchIndex + rawDialogueMatch.length, Math.min(trimmed.length, matchIndex + rawDialogueMatch.length + 80));
         const contextAround = contextBefore + ' ' + contextAfter;
@@ -610,8 +616,13 @@ export const parseStoryToAudioSegments = (
     // Texte restant dans le paragraphe
     if (lastIndex < trimmed.length) {
       const rawRemainingNarratorText = trimmed.substring(lastIndex).trim();
-      const cleanRemainingNarratorText = stripStoryEmotionTags(rawRemainingNarratorText);
-      if (cleanRemainingNarratorText.length > 0) {
+      let cleanRemainingNarratorText = stripStoryEmotionTags(rawRemainingNarratorText);
+      cleanRemainingNarratorText = cleanRemainingNarratorText.replace(/^[,\s:;—–\.\?!]+/, '').trim();
+      cleanRemainingNarratorText = cleanRemainingNarratorText.replace(/[,:;—–\s]+$/, '.').trim();
+      if (cleanRemainingNarratorText.length > 0 && /[a-zA-ZÀ-ÿ0-9]/.test(cleanRemainingNarratorText)) {
+        if (cleanRemainingNarratorText[0].toLowerCase() === cleanRemainingNarratorText[0] && cleanRemainingNarratorText[0].toUpperCase() !== cleanRemainingNarratorText[0]) {
+          cleanRemainingNarratorText = cleanRemainingNarratorText.charAt(0).toUpperCase() + cleanRemainingNarratorText.slice(1);
+        }
         const remainingEmotion = detectEmotionAndInstruct(rawRemainingNarratorText, '', paraEmotion.instruct);
         segments.push({
           text: cleanRemainingNarratorText,

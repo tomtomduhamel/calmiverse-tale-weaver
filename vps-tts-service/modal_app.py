@@ -142,10 +142,11 @@ def _int_to_french(n: int) -> str:
 def normalize_french_narrative_text(text: str) -> str:
     """Normaliseur narratif 100% Français :
     - N'utilise JAMAIS le normaliseur anglais (en_tn_model) de CosyVoice.
-    - Préserve scrupuleusement la ponctuation expressive (!, ?, …) indispensable à l'émotion vocale,
-      tout en retirant les guillemets et tirets parasites.
-    - Évite les coupures de phrases au milieu d'une incise de dialogue (ex: « Au secours ! » cria Pierre).
-    - Convertit les points-virgules (;) et espaces typographiques français avant ponctuation.
+    - Élimine toute ponctuation parasite en début de phrase (, : ; -)
+    - Normalise les deux-points (:), points-virgules (;) et points de suspension (...)
+      vers des virgules ou points naturels selon le contexte.
+    - Supprime les doubles ponctuations (,. ou :. ou ..) provoquant des clics ou silences bizarres.
+    - Convertit les nombres isolés (0..9999) en toutes lettres en français.
     """
     if not text or not text.strip():
         return ""
@@ -155,31 +156,41 @@ def normalize_french_narrative_text(text: str) -> str:
     s = s.replace("\u00a0", " ").replace("\u202f", " ").replace("\u2009", " ")
     s = s.replace("’", "'").replace("‘", "'").replace("`", "'")
     s = s.replace("“", "«").replace("”", "»")
-    s = re.sub(r'\.{2,}', '…', s)
 
-    # 2. Gestion des incises après guillemets fermants ou ponctuation expressive :
-    # Préserve la ponctuation expressive (! ? …) sans la remplacer par une virgule pour que
-    # Chatterbox module spontanément sa force et hauteur vocale.
-    # Ex: « Je suis Cracrac ! » annonce-t-il -> Je suis Cracrac ! annonce-t-il
-    # Ex: « Qui est là ? » murmure Sophie -> Qui est là ? murmure Sophie
-    s = re.sub(r'([!?…])\s*»\s*,?\s*([a-zàâäéèêëîïôöùûüç])', r'\1 \2', s)
+    # 2. Gestion des points de suspension et ellipses :
+    # Si suivi d'une minuscule -> virgule douce ; si majuscule ou fin -> point
+    s = re.sub(r'(?:…|\.{3,})\s*(?=[a-zàâäéèêëîïôöùûüç])', ', ', s)
+    s = re.sub(r'(?:…|\.{2,})', '. ', s)
+
+    # 3. Gestion des incises après guillemets fermants ou ponctuation expressive
+    s = re.sub(r'([!?])\s*»\s*,?\s*([a-zàâäéèêëîïôöùûüç])', r'\1 \2', s)
     s = re.sub(r'\s*»\s*,\s*', ', ', s)
     s = re.sub(r'\s*»\s+([a-zàâäéèêëîïôöùûüç])', r' \1', s)
 
-    # 3. Suppression propre des guillemets restants (« et ») sans laisser de tokens BPE parasites
-    s = re.sub(r':\s*«\s*', ' : ', s)
+    # 4. Suppression propre des guillemets restants (« et »)
+    s = re.sub(r':\s*«\s*', ', ', s)
     s = s.replace("«", "").replace("»", "")
 
-    # 4. Tirets de dialogue en début de phrase et tirets d'incise au milieu
+    # 5. Tirets de dialogue et d'incise
     s = re.sub(r'(?:^|(?<=\s))[—–]\s*', '', s)
     s = re.sub(r'\s+[—–]\s+', ', ', s)
 
-    # 5. Points-virgules français (souvent mal lus par les modèles TTS) :
-    # S'il est suivi d'une majuscule -> point (.) ; s'il est suivi d'une minuscule -> virgule (,)
+    # 6. Points-virgules et deux-points :
+    # Si suivi d'une majuscule -> point (.) ; si suivi d'une minuscule -> virgule (,)
     s = re.sub(r'\s*;\s*(?=[A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ])', '. ', s)
     s = re.sub(r'\s*;\s*', ', ', s)
+    s = re.sub(r'\s*:\s*(?=[A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ])', '. ', s)
+    s = re.sub(r'\s*:\s*', ', ', s)
 
-    # 6. Conversion des nombres isolés (0..9999) en toutes lettres en français
+    # 7. Suppression des doubles ponctuations parasites (ex: ,. ou :. ou ,, ou ..)
+    s = re.sub(r'[,:;]\s*([.!?])', r'\1', s)
+    s = re.sub(r'([.!?])\s*[,:;]', r'\1 ', s)
+    s = re.sub(r',+', ',', s)
+    s = re.sub(r'\.+', '.', s)
+    s = re.sub(r'!+', '!', s)
+    s = re.sub(r'\?+', '?', s)
+
+    # 8. Conversion des nombres isolés (0..9999) en toutes lettres en français
     def _replace_num(match):
         try:
             val = int(match.group(0))
@@ -189,9 +200,15 @@ def normalize_french_narrative_text(text: str) -> str:
 
     s = re.sub(r'\b\d{1,4}\b', _replace_num, s)
 
-    # 7. Suppression de l'espace typographique français avant (! ? : , .) pour coller au tokenizer BPE
+    # 9. Nettoyage des espaces et suppression de ponctuation initiale parasite
     s = re.sub(r'\s+([,!?:.])', r'\1', s)
+    s = re.sub(r'^[,\s:;–—.-]+', '', s)
     s = re.sub(r'\s+', ' ', s).strip()
+
+    # 10. Majuscule initiale propre si la phrase démarre par une minuscule
+    if s and s[0].isalpha() and s[0].islower():
+        s = s[0].upper() + s[1:]
+
     return s
 
 
@@ -367,11 +384,11 @@ def _create_natural_pause(samples: int, sr: int = 24000) -> np.ndarray:
 
 def master_audio_bytes(input_wav_bytes: bytes, sr: int = 24000) -> bytes:
     """Applique un mastering broadcast EBU R128 (-16 LUFS) 'Close-Mic Studio' pour les contes d'enfants :
-    - Coupe les 450Hz (supprime définitivement la boîte de conserve)
-    - Rehausse les 3.8kHz (+2.5dB) pour placer la voix immédiatement 'en avant'
-    - Ajoute de l'air soyeux à 9.5kHz (+1.5dB)
-    - Expander feutré (agate) pour supprimer toute queue d'écho résiduelle entre les phrases
-    - Loudnorm calibré LRA=8 pour éviter tout pompage de fond."""
+    - Coupe les infra-basses sous 60Hz
+    - Atténue les 450Hz (-3.0dB) pour supprimer la résonance creuse de pièce
+    - Présence vocale douce à 3.2kHz (+0.8dB) sans agressivité ni sibilance
+    - Pas de boost aigu artificiel pour éliminer tout souffle de micro et bruits de salive
+    - Normalisation broadcast douce EBU R128 (-16 LUFS, LRA=8)."""
     import tempfile
     try:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as in_f:
@@ -382,8 +399,7 @@ def master_audio_bytes(input_wav_bytes: bytes, sr: int = 24000) -> bytes:
         audio_filter = (
             "highpass=f=60,"
             "equalizer=f=450:width_type=q:w=1.2:g=-3.0,"
-            "equalizer=f=3800:width_type=q:w=1.0:g=+2.5,"
-            "treble=g=+1.5:f=9500,"
+            "equalizer=f=3200:width_type=q:w=1.0:g=+0.8,"
             "loudnorm=I=-16:TP=-1.5:LRA=8:dual_mono=true"
         )
         cmd = [
@@ -458,46 +474,62 @@ def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) ->
     return converted_wav
 
 
-def split_into_clean_sentences(text: str, max_sentence_chars: int = 230) -> List[str]:
-    """Découpe un paragraphe en phrases françaises complètes et naturelles après normalisation narrative.
-    Ne coupe JAMAIS avant une minuscule d'incise (ex: '! annonce-t-il' ou '? demande Joseph')."""
+def split_into_clean_sentences(text: str, max_sentence_chars: int = 380) -> List[str]:
+    """Découpe un paragraphe en blocs narratifs cohérents et naturels (max ~380 chars).
+    Préserve l'unité de la phrase et du paragraphe pour éviter le hachage saccadé."""
     cleaned = normalize_french_narrative_text(text)
     if not cleaned:
         return []
 
-    # 1. Découpage uniquement lorsque la ponctuation forte (. ! ? …) est suivie d'une majuscule
-    raw_sents = re.split(r'(?<=[.!?…])\s+(?=[A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ])', cleaned)
+    # 1. Si le texte entier tient dans max_sentence_chars, le conserver en UN SEUL BLOC
+    # Cela permet à CosyVoice de dérouler une prosodie et respiration naturelle sans coupures artificielles.
+    if len(cleaned) <= max_sentence_chars:
+        return [cleaned]
+
+    # 2. Découpage aux fins de phrases fortes (. ! ?) suivies d'une majuscule
+    raw_sents = re.split(r'(?<=[.!?])\s+(?=[A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ])', cleaned)
     final_sentences: List[str] = []
+    current_buf = ""
 
     for sent in raw_sents:
         sent = sent.strip()
         if not sent:
             continue
-        if len(sent) <= max_sentence_chars:
-            if sent[-1] not in ".!?…":
-                sent += "."
-            final_sentences.append(sent)
+        if not current_buf:
+            current_buf = sent
+        elif len(current_buf) + 1 + len(sent) <= max_sentence_chars:
+            current_buf += " " + sent
         else:
-            # 2. Si une phrase est très longue (> max_sentence_chars), découper proprement aux virgules/deux-points
-            clauses = re.split(r'(?<=[,:])\s+', sent)
-            current_clause = ""
-            for clause in clauses:
-                clause = clause.strip()
-                if not clause:
+            final_sentences.append(current_buf)
+            current_buf = sent
+
+    if current_buf:
+        # Si une phrase isolée dépasse encore max_sentence_chars, découpage propre aux virgules
+        if len(current_buf) > max_sentence_chars:
+            clauses = re.split(r'(?<=[,])\s+', current_buf)
+            sub_buf = ""
+            for cl in clauses:
+                cl = cl.strip()
+                if not cl:
                     continue
-                if not current_clause:
-                    current_clause = clause
-                elif len(current_clause) + 1 + len(clause) <= max_sentence_chars:
-                    current_clause += " " + clause
+                if not sub_buf:
+                    sub_buf = cl
+                elif len(sub_buf) + 1 + len(cl) <= max_sentence_chars:
+                    sub_buf += " " + cl
                 else:
-                    if current_clause[-1] not in ".!?…":
-                        current_clause += "."
-                    final_sentences.append(current_clause)
-                    current_clause = clause
-            if current_clause:
-                if current_clause[-1] not in ".!?…":
-                    current_clause += "."
-                final_sentences.append(current_clause)
+                    # Nettoyage rigoureux : évite tout ',.' ou ':.' parasite
+                    sub_buf = sub_buf.rstrip(",:; ")
+                    if sub_buf and sub_buf[-1] not in ".!?":
+                        sub_buf += "."
+                    final_sentences.append(sub_buf)
+                    sub_buf = cl
+            if sub_buf:
+                sub_buf = sub_buf.rstrip(",:; ")
+                if sub_buf and sub_buf[-1] not in ".!?":
+                    sub_buf += "."
+                final_sentences.append(sub_buf)
+        else:
+            final_sentences.append(current_buf)
 
     return [s for s in final_sentences if re.search(r'[a-zA-ZÀ-ÿ0-9]', s)]
 
@@ -805,14 +837,14 @@ class CalmiTTSGPU:
         sentence_pause_sec: float = 0.20,
     ) -> Tuple[np.ndarray, int]:
         """Synthétise un bloc narratif avec CosyVoice 2 EU (Hi! PARIS) via l'API officielle native cosy.tts(),
-        avec injection de prompt de style émotionnel (<|endofprompt|>) et fondu anti-clic ultra-court (2.5ms)."""
+        avec respect strict de la prosodie française naturelle et fondu anti-clic ultra-court (2.5ms)."""
         trimmed_prompt, _ = self._get_trimmed_prompt_wav(prompt_path)
         prompt_wav_to_use = trimmed_prompt if (trimmed_prompt and os.path.exists(trimmed_prompt)) else prompt_path
         if not (prompt_wav_to_use and os.path.exists(prompt_wav_to_use)):
             prompt_wav_to_use = "/root/default_ref.wav"
 
-        # Découpe en phrases naturelles (max ~240 chars par phrase pour une diction fluide)
-        raw_sentences = split_into_clean_sentences(text, max_sentence_chars=240)
+        # Découpe en blocs narratifs cohérents et fluides (max ~380 chars par bloc pour une diction naturelle)
+        raw_sentences = split_into_clean_sentences(text, max_sentence_chars=380)
         if not raw_sentences:
             raw_sentences = [normalize_french_narrative_text(text) or text.strip()]
 
@@ -823,18 +855,15 @@ class CalmiTTSGPU:
             if not sent or not sent.strip():
                 continue
 
-            styled_input = format_cosy_styled_text(
-                text=sent,
-                emotion=emotion,
-                is_dialogue=is_dialogue,
-                enable_sleep_pacing=enable_sleep_pacing,
-                progress=progress,
-            )
+            # Texte pur nettoyé sans injection de <|endofprompt|> dans le flux de génération
+            clean_input = normalize_french_narrative_text(sent)
+            if not clean_input:
+                continue
 
             try:
                 # Appel direct à l'API officielle de CosyVoice 2 EU
                 wav_tensor, current_sr = self.cosy_model.tts(
-                    text=styled_input,
+                    text=clean_input,
                     prompt=prompt_wav_to_use,
                 )
                 sr = current_sr
@@ -850,17 +879,15 @@ class CalmiTTSGPU:
                 w_np = _apply_cosine_edges(w_np, sr=sr, fade_in_ms=2.5, fade_out_ms=3.5)
                 sentence_wavs.append(w_np)
 
-                # Silence numérique pur (zéro) entre les phrases
+                # Silence numérique pur (zéro) entre les blocs
                 if s_idx < len(raw_sentences) - 1 and sentence_pause_sec > 0:
                     sentence_wavs.append(_create_natural_pause(int(sr * sentence_pause_sec), sr=sr))
 
             except Exception as e:
-                print(f"⚠️ Erreur CosyVoice 2 EU sur phrase: {sent[:40]}... ({e})")
-                # Fallback interne sur phrase brute sans préfixe
+                print(f"⚠️ Erreur CosyVoice 2 EU sur bloc: {clean_input[:40]}... ({e})")
                 try:
-                    clean_raw = normalize_french_narrative_text(sent)
                     wav_tensor, current_sr = self.cosy_model.tts(
-                        text=clean_raw,
+                        text=clean_input,
                         prompt=prompt_wav_to_use,
                     )
                     sr = current_sr
@@ -868,7 +895,7 @@ class CalmiTTSGPU:
                     w_np = _apply_cosine_edges(w_np, sr=sr, fade_in_ms=2.5, fade_out_ms=3.5)
                     sentence_wavs.append(w_np)
                 except Exception as fallback_err:
-                    print(f"❌ Échec phrase CosyVoice 2 ({fallback_err})")
+                    print(f"❌ Échec bloc CosyVoice 2 ({fallback_err})")
 
         if not sentence_wavs:
             return np.zeros(int(sr * 0.1), dtype=np.float32), sr

@@ -79,7 +79,7 @@ export const IntegratedAudioDeck: React.FC<IntegratedAudioDeckProps> = ({
   const navigate = useNavigate();
 
   // ✨ Sound FX féeriques doux contextuels
-  const [isSfxEnabled, setIsSfxEnabled] = useState(true);
+  const [isSfxEnabled, setIsSfxEnabled] = useState(false);
   const lastSfxParaIndexRef = useRef<number>(-1);
 
   // 🌙 Prolongation Dodo (15 min de berceuse après la fin de l'histoire)
