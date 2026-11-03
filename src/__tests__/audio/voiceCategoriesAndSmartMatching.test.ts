@@ -2,7 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { 
   DEFAULT_VOICE_CATEGORIES, 
   SLOTS_PER_SECTION,
-  VoiceCategoryConfig 
+  VoiceCategoryConfig,
+  VOICE_EMOTION_CONFIGS,
+  detectStoryEmotion,
+  VoiceEmotionStyle,
+  UserVoice
 } from '../../types/voices';
 import { 
   detectCharacterCategoryAndName, 
@@ -356,6 +360,126 @@ Zoé sourit, les yeux brillants : « Quand je bouge vite, je peux aussi choisir 
       const samiSeg = segments.find(s => s.text.includes('Regarde tes pieds'));
       expect(samiSeg).toBeDefined();
       expect(samiSeg?.voiceId).toBe('voice_garcon');
+    });
+  });
+
+  describe('5. Multi-Style Voice Enrollment & Smart Emotion Routing', () => {
+    it('devrait configurer exactement 3 prises émotionnelles (calm, adventure, joy)', () => {
+      const styles = Object.keys(VOICE_EMOTION_CONFIGS) as VoiceEmotionStyle[];
+      expect(styles).toEqual(['calm', 'adventure', 'joy']);
+
+      styles.forEach(style => {
+        const cfg = VOICE_EMOTION_CONFIGS[style];
+        expect(cfg.id).toBe(style);
+        expect(cfg.label).toBeDefined();
+        expect(cfg.emoji).toBeDefined();
+        expect(cfg.promptDescription.length).toBeGreaterThan(15);
+        expect(cfg.defaultTranscript.length).toBeGreaterThan(25);
+        expect(cfg.matchingObjectives.length).toBeGreaterThan(0);
+      });
+    });
+
+    it('devrait router intelligemment les objectifs d\'histoire vers la bonne émotion', () => {
+      // 1. Coucher & Sommeil -> calm
+      expect(detectStoryEmotion('coucher')).toBe('calm');
+      expect(detectStoryEmotion('sommeil profond')).toBe('calm');
+      expect(detectStoryEmotion('dodo paisible')).toBe('calm');
+      expect(detectStoryEmotion('relaxation')).toBe('calm');
+      expect(detectStoryEmotion(undefined)).toBe('calm');
+      expect(detectStoryEmotion(null)).toBe('calm');
+      expect(detectStoryEmotion('objectif_inconnu')).toBe('calm');
+
+      // 2. Aventure, Courage & Action -> adventure
+      expect(detectStoryEmotion('courage face au noir')).toBe('adventure');
+      expect(detectStoryEmotion('exploration spatiale')).toBe('adventure');
+      expect(detectStoryEmotion('defi sportif')).toBe('adventure');
+      expect(detectStoryEmotion('curiosite')).toBe('adventure');
+      expect(detectStoryEmotion('autonomie')).toBe('adventure');
+
+      // 3. Fête, Humour & Joie -> joy
+      expect(detectStoryEmotion('joie et rires')).toBe('joy');
+      expect(detectStoryEmotion('fete magique')).toBe('joy');
+      expect(detectStoryEmotion('humour et farces')).toBe('joy');
+      expect(detectStoryEmotion('partage entre amis')).toBe('joy');
+      expect(detectStoryEmotion('fun')).toBe('joy');
+    });
+
+    it('devrait sélectionner l\'échantillon émotionnel enrichi s\'il existe, avec fallback garanti sur calm / base', () => {
+      const papaVoice: UserVoice = {
+        id: 'voice_papa',
+        user_id: 'user_1',
+        name: 'Papa',
+        relation: 'Narrateur (Papa)',
+        category: 'narrator_family',
+        voice_ref_path: 'user_1/papa_base.webm',
+        transcript: 'Mon trésor, installe-toi confortablement...',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        emotional_samples: {
+          calm: {
+            voice_ref_path: 'user_1/papa_calm.webm',
+            transcript: 'Mon trésor, installe-toi confortablement...'
+          },
+          adventure: {
+            voice_ref_path: 'user_1/papa_adventure.webm',
+            transcript: 'Regarde là-bas ! Le chemin secret s\'illumine...'
+          }
+          // Note : joy n'est pas encore enregistré
+        }
+      };
+
+      // Fonction simulant le routeur de useN8nAudioGeneration
+      const resolveVoiceSample = (voice: UserVoice, objective: string) => {
+        const detected = detectStoryEmotion(objective);
+        const samples = voice.emotional_samples as Record<string, any> | null;
+        if (samples && samples[detected]?.voice_ref_path) {
+          return {
+            path: samples[detected].voice_ref_path,
+            emotion: detected
+          };
+        }
+        if (samples && samples.calm?.voice_ref_path) {
+          return {
+            path: samples.calm.voice_ref_path,
+            emotion: 'calm'
+          };
+        }
+        return {
+          path: voice.voice_ref_path,
+          emotion: 'calm'
+        };
+      };
+
+      // 1. Pour un conte d'aventure -> sélectionne la prise aventure
+      const adventureResult = resolveVoiceSample(papaVoice, 'courage et exploration');
+      expect(adventureResult.path).toBe('user_1/papa_adventure.webm');
+      expect(adventureResult.emotion).toBe('adventure');
+
+      // 2. Pour un conte de coucher -> sélectionne la prise calm
+      const calmResult = resolveVoiceSample(papaVoice, 'sommeil paisible');
+      expect(calmResult.path).toBe('user_1/papa_calm.webm');
+      expect(calmResult.emotion).toBe('calm');
+
+      // 3. Pour un conte joyeux (pas encore de prise joy) -> fallback gracieux sur calm
+      const joyResult = resolveVoiceSample(papaVoice, 'fete et rires');
+      expect(joyResult.path).toBe('user_1/papa_calm.webm');
+      expect(joyResult.emotion).toBe('calm');
+
+      // 4. Pour une voix vintage (sans emotional_samples) -> fallback transparent sur voice_ref_path
+      const vintageVoice: UserVoice = {
+        id: 'voice_vintage',
+        user_id: 'user_1',
+        name: 'Voix Ancienne',
+        relation: 'Narrateur',
+        category: 'narrator_family',
+        voice_ref_path: 'user_1/vintage.webm',
+        transcript: 'Histoire ancienne...',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      const vintageResult = resolveVoiceSample(vintageVoice, 'action et defi');
+      expect(vintageResult.path).toBe('user_1/vintage.webm');
+      expect(vintageResult.emotion).toBe('calm');
     });
   });
 

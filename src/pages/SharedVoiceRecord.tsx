@@ -339,6 +339,14 @@ export const SharedVoiceRecord: React.FC = () => {
       if (uploadError) throw uploadError;
 
       // 2. Insert voice metadata inside DB
+      const initialSamples = {
+        calm: {
+          voice_ref_path: filePath,
+          transcript: getTranscriptText(),
+          recorded_at: new Date().toISOString()
+        }
+      };
+
       const { error: dbError } = await supabase
         .from('user_voices')
         .insert({
@@ -349,7 +357,8 @@ export const SharedVoiceRecord: React.FC = () => {
           transcript: getTranscriptText(),
           relation: invitation.relation_name,
           category: invitation.category || 'narrator_family',
-          category_name: invitation.category_name || null
+          category_name: invitation.category_name || null,
+          emotional_samples: initialSamples
         });
 
       if (dbError) throw dbError;

@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { idempotencyGuard } from '@/utils/idempotency/idempotencyGuard';
 import { parseStoryToAudioSegments } from '@/utils/storyAudioParser';
 import { audioCache } from '@/utils/audioCache';
+import { detectStoryEmotion, VoiceEmotionStyle } from '@/types/voices';
 
 interface AudioFile {
   id: string;
@@ -320,7 +321,9 @@ export const useN8nAudioGeneration = () => {
         await fetchAudioFiles(storyId);
       }, dynamicTimeoutMs);
 
-      // 4. Déterminer l'objectif du conte pour le sleep_pacing (uniquement actif si coucher/sommeil)
+      // 4. Déterminer l'objectif du conte pour le sleep_pacing et le routage émotionnel du clone vocal
+      let storyObjective = '';
+      let detectedEmotion: VoiceEmotionStyle = 'calm';
       let enableSleepPacing = false;
       try {
         const { data: storyRow } = await supabase
@@ -329,8 +332,9 @@ export const useN8nAudioGeneration = () => {
           .eq('id', storyId)
           .single();
         const rawObj = typeof storyRow?.objective === 'object' ? (storyRow?.objective as any)?.value || (storyRow?.objective as any)?.name : storyRow?.objective;
-        const objStr = String(rawObj || '').toLowerCase();
-        enableSleepPacing = objStr.includes('sleep') || objStr.includes('coucher') || objStr.includes('sommeil') || objStr.includes('dodo');
+        storyObjective = String(rawObj || '').toLowerCase();
+        detectedEmotion = detectStoryEmotion(storyObjective);
+        enableSleepPacing = storyObjective.includes('sleep') || storyObjective.includes('coucher') || storyObjective.includes('sommeil') || storyObjective.includes('dodo');
       } catch (objErr) {
         console.warn("⚠️ [N8nAudio] Impossible de lire l'objectif de l'histoire:", objErr);
       }
@@ -345,7 +349,8 @@ export const useN8nAudioGeneration = () => {
         webhook_id: requestId,
         provider: provider,
         language: 'fr',
-        enable_sleep_pacing: enableSleepPacing
+        enable_sleep_pacing: enableSleepPacing,
+        emotion_style: detectedEmotion
       };
 
       // Check if this is a custom user voice clone or multi-voice theatre
@@ -357,9 +362,17 @@ export const useN8nAudioGeneration = () => {
         if (userVoices && userVoices.length > 0) {
           const voicesWithSignedUrls = await Promise.all(
             userVoices.map(async (v) => {
+              const samples = v.emotional_samples as Record<string, any> | null;
+              const charPath = (samples && samples[detectedEmotion]?.voice_ref_path)
+                ? samples[detectedEmotion].voice_ref_path
+                : v.voice_ref_path;
+              const charTranscript = (samples && samples[detectedEmotion]?.transcript)
+                ? samples[detectedEmotion].transcript
+                : (v.transcript || "");
+
               const { data: signed } = await supabase.storage
                 .from('voice-clones')
-                .createSignedUrl(v.voice_ref_path, 3600);
+                .createSignedUrl(charPath, 3600);
               return {
                 id: v.id,
                 name: v.name,
@@ -367,33 +380,61 @@ export const useN8nAudioGeneration = () => {
                 category: v.category || 'narrator_family',
                 category_name: v.category_name || null,
                 signedUrl: signed?.signedUrl || null,
-                voiceRefPath: v.voice_ref_path || null,
-                transcript: v.transcript || ""
+                voiceRefPath: charPath || null,
+                transcript: charTranscript
               };
             })
           );
 
           payload.allUserVoices = voicesWithSignedUrls.filter(v => v.signedUrl);
 
-          // 🎙️ Lecture Vivante Unifiée (Continuous Storytelling) :
-          // La voix choisie (voix clonée du narrateur / parent) porte l'intégralité du récit et des dialogues
-          // avec une prosodie fluide et continue, sans découpage artificiel ni silences saccadés entre les répliques.
+          // 🎙️ Lecture Vivante Unifiée (Continuous Storytelling) & Multi-Style Voice Enrollment :
+          // La voix choisie porte l'intégralité du récit avec l'échantillon d'émotion correspondant
+          // à l'objectif de l'histoire (Douceur/Coucher, Énergie/Aventure, ou Joie/Rires).
           const selectedVoice = userVoices.find(v => v.id === dynamicVoiceId) 
             || userVoices.find(v => v.category === 'narrator_family' || v.category === 'narrator')
             || userVoices[0];
 
           if (selectedVoice) {
+            const emotionalSamples = selectedVoice.emotional_samples as Record<string, any> | null;
+            let effectivePath = selectedVoice.voice_ref_path;
+            let effectiveTranscript = selectedVoice.transcript || "";
+            let effectiveEmotion: VoiceEmotionStyle = 'calm';
+
+            if (emotionalSamples && emotionalSamples[detectedEmotion]?.voice_ref_path) {
+              effectivePath = emotionalSamples[detectedEmotion].voice_ref_path;
+              effectiveTranscript = emotionalSamples[detectedEmotion].transcript || effectiveTranscript;
+              effectiveEmotion = detectedEmotion;
+              console.log(`🎯 [N8nAudio] Prise vocale émotionnelle '${detectedEmotion}' active pour ${selectedVoice.name} (Objectif: ${storyObjective || 'générique'})`);
+            } else if (emotionalSamples && emotionalSamples['calm']?.voice_ref_path) {
+              effectivePath = emotionalSamples['calm'].voice_ref_path;
+              effectiveTranscript = emotionalSamples['calm'].transcript || effectiveTranscript;
+              effectiveEmotion = 'calm';
+            }
+
             const { data: signedData } = await supabase.storage
               .from('voice-clones')
-              .createSignedUrl(selectedVoice.voice_ref_path, 3600);
+              .createSignedUrl(effectivePath, 3600);
 
             if (signedData?.signedUrl) {
               payload.isCustomVoice = true;
               payload.voice_ref_url = signedData.signedUrl;
-              payload.voice_ref_path = selectedVoice.voice_ref_path;
-              payload.ref_text = selectedVoice.transcript || "";
+              payload.voice_ref_path = effectivePath;
+              payload.ref_text = effectiveTranscript;
+              payload.emotion_style = effectiveEmotion;
+
+              const emotionInstructs: Record<VoiceEmotionStyle, string> = {
+                calm: "Soft, warm, soothing bedtime story narrator for a child.",
+                adventure: "Energetic, brave, engaging adventure story narrator for a child.",
+                joy: "Happy, cheerful, smiling and warm story narrator for a child."
+              };
+              payload.instruct = emotionInstructs[effectiveEmotion] || emotionInstructs.calm;
+
               console.log("🎙️ [N8nAudio] Lecture Vivante Unifiée active avec la voix:", selectedVoice.name, {
                 voiceId: selectedVoice.id,
+                emotionStyle: effectiveEmotion,
+                voiceRefPath: effectivePath,
+                instruct: payload.instruct,
                 isCustomVoice: true
               });
             }

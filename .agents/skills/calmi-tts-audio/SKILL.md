@@ -97,3 +97,29 @@ Ce skill regroupe l'ensemble des règles d'or, garde-fous acoustiques et procéd
 - **10 minutes (Moyenne)** : Cible = ~1050 mots, Min = 950 mots, **Plafond strict Max = 1140 mots**.
 - **15 minutes (Longue)** : Cible = ~1550 mots, Min = 1450 mots, **Plafond strict Max = 1750 mots**.
 - Sécurité d'affichage (`calculateReadingTime`) : si un texte fait $\le 360$ mots, son affichage est rigoureusement capé à `~3 min de lecture`.
+
+---
+
+## 5. Multi-Style Voice Enrollment & Routage Émotionnel Intelligent
+
+### A. Les 3 Prises Émotionnelles pour une Seule Voix
+1. 🌙 **Douceur & Coucher (`calm`)** (15s) :
+   - Émotion posée, feutrée, réconfortante, presque chuchotée.
+   - Activée pour les objectifs : `sleep`, `sommeil`, `coucher`, `dodo`, `calme`, `detente`, `repos`.
+2. ⚡ **Énergie & Aventure (`adventure`)** (15s) :
+   - Intonation dynamique, curieuse, entraînante et héroïque.
+   - Activée pour les objectifs : `courage`, `autonomie`, `curiosite`, `action`, `defi`, `exploration`, `peur`.
+3. ☀️ **Joie & Rires (`joy`)** (15s) :
+   - Ton chaleureux, souriant, complice et rieur.
+   - Activée pour les objectifs : `fun`, `joie`, `humour`, `rire`, `fete`, `partage`, `amitie`.
+
+### B. Routage Émotionnel Intelligent & Fallback Gracieux (`useN8nAudioGeneration.ts`)
+- `detectStoryEmotion(storyObjective)` identifie l'émotion dominante de l'histoire.
+- Si la voix de l'utilisateur dispose de la prise correspondante dans `emotional_samples[emotion]` :
+  - L'URL signée de cet échantillon et son transcript dédié sont injectés dans `payload.voice_ref_url` et `payload.ref_text`.
+  - L'instruction de synthèse (`payload.instruct`) est alignée sur l'émotion (`Soft bedtime...`, `Energetic adventure...`, ou `Happy cheerful...`).
+- **Règle de résilience absolue (Backward-Compatibility)** :
+  - Si la prise spécifique n'a pas encore été enregistrée, le routeur bascule automatiquement vers `emotional_samples.calm` puis vers `voice_ref_path` d'origine.
+  - Zéro plantage, zéro écran d'erreur pour les voix existantes ou incomplètes.
+- **Enrichissement direct depuis le Voice Studio** :
+  - Les utilisateurs peuvent ajouter `+ ⚡ Aventure` ou `+ ☀️ Joie` en 15 secondes sur n'importe quelle voix existante sans devoir la recréer.

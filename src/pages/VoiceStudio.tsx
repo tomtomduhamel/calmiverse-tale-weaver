@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import {
   Mic, Trash2, Copy, Plus, Volume2, Share2, Check, Loader2,
   Sparkles, ArrowLeft, Heart, Smartphone, HelpCircle,
-  BookOpen, PawPrint, Feather, Waves, Ghost, FolderPlus, Pencil, Pause
+  BookOpen, PawPrint, Feather, Waves, Ghost, FolderPlus, Pencil, Pause,
+  Moon, Compass, Smile
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -19,7 +20,10 @@ import {
   CustomVoiceCategory, 
   DEFAULT_VOICE_CATEGORIES, 
   SLOTS_PER_SECTION,
-  VoiceCategoryConfig 
+  VoiceCategoryConfig,
+  VoiceEmotionStyle,
+  VoiceEmotionalSample,
+  VOICE_EMOTION_CONFIGS
 } from '@/types/voices';
 import { cn } from '@/lib/utils';
 
@@ -44,6 +48,12 @@ export const VoiceStudio: React.FC = () => {
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+
+  // 🎭 Multi-Style Voice Enrollment (3 prises d'émotions)
+  const [activeEmotionStyle, setActiveEmotionStyle] = useState<VoiceEmotionStyle>('calm');
+  const [enrichingVoice, setEnrichingVoice] = useState<UserVoice | null>(null);
+  const [playingEmotion, setPlayingEmotion] = useState<{ voiceId: string; emotion: VoiceEmotionStyle } | null>(null);
+  const emotionalAudioRef = useRef<HTMLAudioElement | null>(null);
   
   // Custom Category Creation State
   const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
@@ -111,11 +121,49 @@ export const VoiceStudio: React.FC = () => {
     }
   };
 
-  // Guided transcripts depending on relationship or character role
-  const getTranscriptText = (catSlug?: string) => {
+  // Guided transcripts depending on relationship, character role and emotional style
+  const getTranscriptText = (catSlug?: string, emotionStyle: VoiceEmotionStyle = activeEmotionStyle, customRole?: string) => {
     const targetSlug = catSlug || targetCategorySlug;
-    const norm = relationName.trim().toLowerCase();
+    const norm = (customRole || relationName).trim().toLowerCase();
 
+    // 1. Textes adaptés pour le style Aventure & Énergie ⚡
+    if (emotionStyle === 'adventure') {
+      if (norm.includes('ours')) {
+        return "Regarde ces hautes cimes ! Avec mes grosses pattes et mon grand courage, je t'emmène explorer la montagne magique. Rien ne peut nous arrêter, suis-moi !";
+      }
+      if (norm.includes('volant') || norm.includes('oiseau') || norm.includes('chouette') || norm.includes('aigle')) {
+        return "Déploie tes ailes avec moi ! Un grand coup de vent s'élève vers les nuages dorés. Accroche-toi, nous plongeons au cœur d'une incroyable découverte céleste !";
+      }
+      if (norm.includes('aquatique') || norm.includes('dauphin') || norm.includes('baleine')) {
+        return "Nage avec moi au-delà du récif secret ! Un trésor étincelant est caché au fond de la caverne des coraux. Allez, retiens ton souffle, en avant l'aventure !";
+      }
+      if (norm.includes('maman') || norm.includes('mère')) {
+        return "Allez mon grand aventurier, enfile tes bottes et prends ta cape magique ! Aujourd'hui nous partons explorer les collines secrètes, je suis avec toi et nous allons tout réussir ensemble !";
+      }
+      if (norm.includes('papa') || norm.includes('père')) {
+        return "Regarde là-bas ! Le chemin secret s'illumine à travers la forêt enchantée. Prends mon sac à dos et suis-moi : aujourd'hui, nous partons à l'aventure et rien ne pourra nous arrêter !";
+      }
+      return VOICE_EMOTION_CONFIGS.adventure.defaultTranscript;
+    }
+
+    // 2. Textes adaptés pour le style Joie & Rires ☀️
+    if (emotionStyle === 'joy') {
+      if (norm.includes('ours')) {
+        return "Haha ! Regarde comme je glisse sur la mousse du sous-bois ! Viens, on va ramasser des baies sucrées et rire avec tous les écureuils de la clairière !";
+      }
+      if (norm.includes('lutin') || norm.includes('troll') || norm.includes('monstre')) {
+        return "Hihihi ! Chatouille sur le bout du nez ! J'ai caché des confettis magiques dans les arbres, prépare-toi pour une pluie de fous rires !";
+      }
+      if (norm.includes('maman') || norm.includes('mère')) {
+        return "Oh quel bonheur cette journée avec toi ! Regarde ces bulles de savon multicolores qui s'envolent au soleil. Allez viens, on danse, on rit et on fait la fête ensemble !";
+      }
+      if (norm.includes('papa') || norm.includes('père')) {
+        return "Oh quelle journée formidable ! Tu as vu ce petit écureuil farceur qui jongle avec les noisettes ? Allez viens, on va bien s'amuser, rire et partager de super moments ensemble !";
+      }
+      return VOICE_EMOTION_CONFIGS.joy.defaultTranscript;
+    }
+
+    // 3. Textes pour le style Douceur / Coucher 🌙
     if (targetSlug === 'animal_flying' || norm.includes('volant') || norm.includes('oiseau') || norm.includes('chouette') || norm.includes('hibou')) {
       return "Hou hou ! Je suis le gardien du ciel étoilé. Mes ailes déployées me permettent de voler tout là-haut au-dessus des nuages. Suis-moi dans les étoiles pour un voyage magique ce soir !";
     }
@@ -142,7 +190,7 @@ export const VoiceStudio: React.FC = () => {
     }
     
     const catConfig = allCategories.find((c) => c.id === targetSlug);
-    return catConfig?.defaultTranscript || "Bienvenue dans Calmi, je m'apprête à te raconter une histoire merveilleuse pour t'endormir paisiblement. Respire calmement, écoute ma voix t'emmener dans les étoiles, et laisse tes rêves s'envoler doucement...";
+    return catConfig?.defaultTranscript || VOICE_EMOTION_CONFIGS.calm.defaultTranscript;
   };
 
   const fetchVoicesAndCategories = async () => {
@@ -200,6 +248,8 @@ export const VoiceStudio: React.FC = () => {
     setAudioBlob(null);
     setAudioUrl(null);
     setRecordingStep('info');
+    setEnrichingVoice(null);
+    setActiveEmotionStyle('calm');
   };
 
   const cleanupAudioResources = () => {
@@ -216,11 +266,16 @@ export const VoiceStudio: React.FC = () => {
       aiPreviewAudioRef.current.pause();
       aiPreviewAudioRef.current = null;
     }
+    if (emotionalAudioRef.current) {
+      emotionalAudioRef.current.pause();
+      emotionalAudioRef.current = null;
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
     setIsPlayingPreview(false);
     setPlayingVoiceId(null);
+    setPlayingEmotion(null);
     setPreviewVoiceId(null);
     setIsPreviewLoading(false);
   };
@@ -273,8 +328,68 @@ export const VoiceStudio: React.FC = () => {
 
     setTargetCategorySlug(categorySlug);
     setRelationName('');
+    setEnrichingVoice(null);
+    setActiveEmotionStyle('calm');
     setRecordingStep('info');
     setIsRecordingModalOpen(true);
+  };
+
+  // Open modal to record an emotional take for an existing voice (Multi-Style Enrollment)
+  const openEnrichModal = (voice: UserVoice, emotion: VoiceEmotionStyle) => {
+    cleanupAudioResources();
+    setEnrichingVoice(voice);
+    setTargetCategorySlug(voice.category || 'narrator_family');
+    setRelationName(voice.relation);
+    setActiveEmotionStyle(emotion);
+    setRecordingStep('info');
+    setIsRecordingModalOpen(true);
+  };
+
+  // Play a specific emotional sample of a voice
+  const handlePlayEmotionalSample = async (voice: UserVoice, emotion: VoiceEmotionStyle, path: string) => {
+    if (playingEmotion?.voiceId === voice.id && playingEmotion?.emotion === emotion && emotionalAudioRef.current) {
+      emotionalAudioRef.current.pause();
+      emotionalAudioRef.current = null;
+      setPlayingEmotion(null);
+      return;
+    }
+
+    cleanupAudioResources();
+
+    try {
+      const { data } = await supabase.storage
+        .from('voice-clones')
+        .createSignedUrl(path, 60);
+
+      if (data?.signedUrl) {
+        const audio = new Audio(data.signedUrl);
+        emotionalAudioRef.current = audio;
+        setPlayingEmotion({ voiceId: voice.id, emotion });
+
+        audio.onended = () => {
+          setPlayingEmotion(null);
+        };
+
+        audio.onerror = () => {
+          setPlayingEmotion(null);
+          toast({
+            title: "Erreur de lecture",
+            description: "Impossible de lire cet échantillon vocal.",
+            variant: "destructive"
+          });
+        };
+
+        await audio.play();
+        const cfg = VOICE_EMOTION_CONFIGS[emotion];
+        toast({
+          title: `Écoute : ${cfg.label}`,
+          description: `Échantillon vocal de ${voice.name}`,
+        });
+      }
+    } catch (err) {
+      console.error('Play emotional sample error:', err);
+      setPlayingEmotion(null);
+    }
   };
 
   // Open invitation modal with preselected category
@@ -599,14 +714,70 @@ export const VoiceStudio: React.FC = () => {
     }
   };
 
-  // Upload Voice to Supabase
+  // Upload Voice to Supabase (Création ou Enrichissement Multi-Style)
   const handleSaveVoice = async () => {
     if (!audioBlob || !relationName.trim() || !user) return;
     setRecordingStep('uploading');
 
     try {
-      const voiceId = crypto.randomUUID();
       const format = audioFormatRef.current;
+      const emoConfig = VOICE_EMOTION_CONFIGS[activeEmotionStyle];
+      const transcript = getTranscriptText(targetCategorySlug, activeEmotionStyle, relationName);
+
+      // CAS A : Enrichissement d'une voix existante avec une nouvelle émotion
+      if (enrichingVoice) {
+        const filePath = `${user.id}/${enrichingVoice.id}_${activeEmotionStyle}.${format.ext}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('voice-clones')
+          .upload(filePath, audioBlob, {
+            contentType: format.mimeType || audioBlob.type || 'audio/webm',
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) throw uploadError;
+
+        const currentSamples = (enrichingVoice.emotional_samples || {}) as Record<string, any>;
+        const updatedSamples = {
+          ...currentSamples,
+          [activeEmotionStyle]: {
+            voice_ref_path: filePath,
+            transcript: transcript,
+            recorded_at: new Date().toISOString()
+          }
+        };
+
+        const updatePayload: any = {
+          emotional_samples: updatedSamples,
+          updated_at: new Date().toISOString()
+        };
+
+        // Si on met à jour la prise 'calm', on maintient aussi le champ racine voice_ref_path
+        if (activeEmotionStyle === 'calm') {
+          updatePayload.voice_ref_path = filePath;
+          updatePayload.transcript = transcript;
+        }
+
+        const { error: dbError } = await supabase
+          .from('user_voices')
+          .update(updatePayload)
+          .eq('id', enrichingVoice.id);
+
+        if (dbError) throw dbError;
+
+        toast({
+          title: `🎉 Prise « ${emoConfig.label} » ajoutée !`,
+          description: `La ${enrichingVoice.name} s'adaptera désormais aux récits de type ${emoConfig.label.toLowerCase()}.`,
+        });
+
+        closeRecordingModal();
+        await fetchVoicesAndCategories();
+        return;
+      }
+
+      // CAS B : Nouvelle voix personnalisée
+      const voiceId = crypto.randomUUID();
       const filePath = `${user.id}/${voiceId}.${format.ext}`;
       const activeCat = allCategories.find((c) => c.id === targetCategorySlug);
 
@@ -621,7 +792,16 @@ export const VoiceStudio: React.FC = () => {
 
       if (uploadError) throw uploadError;
 
-      // 2. Save metadata in DB
+      // 2. Initialiser emotional_samples avec cette première prise
+      const initialSamples = {
+        [activeEmotionStyle]: {
+          voice_ref_path: filePath,
+          transcript: transcript,
+          recorded_at: new Date().toISOString()
+        }
+      };
+
+      // 3. Save metadata in DB
       const { error: dbError } = await supabase
         .from('user_voices')
         .insert({
@@ -629,17 +809,18 @@ export const VoiceStudio: React.FC = () => {
           user_id: user.id,
           name: `Voix de ${relationName}`,
           voice_ref_path: filePath,
-          transcript: getTranscriptText(targetCategorySlug),
+          transcript: transcript,
           relation: relationName,
           category: targetCategorySlug,
-          category_name: activeCat?.label || null
+          category_name: activeCat?.label || null,
+          emotional_samples: initialSamples
         });
 
       if (dbError) throw dbError;
 
       toast({
         title: "🎉 Clone vocal créé !",
-        description: `La voix de « ${relationName} » est prête dans la section ${activeCat?.label || 'du Studio'}.`,
+        description: `La voix de « ${relationName} » est prête (${emoConfig.label}). Vous pouvez ajouter d'autres émotions à tout moment.`,
       });
 
       closeRecordingModal();
@@ -667,9 +848,18 @@ export const VoiceStudio: React.FC = () => {
 
       if (dbError) throw dbError;
 
+      // Nettoyer tous les fichiers de stockage associés (échantillon principal + variantes émotionnelles)
+      const samples = (voice.emotional_samples || {}) as Record<string, any>;
+      const pathsToRemove = [voice.voice_ref_path];
+      Object.values(samples).forEach((s: any) => {
+        if (s?.voice_ref_path && !pathsToRemove.includes(s.voice_ref_path)) {
+          pathsToRemove.push(s.voice_ref_path);
+        }
+      });
+
       await supabase.storage
         .from('voice-clones')
-        .remove([voice.voice_ref_path]);
+        .remove(pathsToRemove);
 
       toast({
         title: "Voix supprimée",
@@ -1044,8 +1234,64 @@ export const VoiceStudio: React.FC = () => {
                     <Heart className="w-5 h-5 text-red-400 fill-red-400/20 shrink-0" />
                   </div>
                 </CardHeader>
-                <CardContent className="pb-3 text-xs text-muted-foreground truncate">
-                  "{voice.transcript?.substring(0, 50)}..."
+                <CardContent className="pb-3 text-xs space-y-2.5">
+                  {/* Prises émotionnelles Multi-Style */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {(['calm', 'adventure', 'joy'] as VoiceEmotionStyle[]).map((emo) => {
+                      const cfg = VOICE_EMOTION_CONFIGS[emo];
+                      const samples = (voice.emotional_samples || {}) as Record<string, any>;
+                      const sample = samples[emo] || (emo === 'calm' ? { voice_ref_path: voice.voice_ref_path, transcript: voice.transcript } : null);
+                      const isRecorded = Boolean(sample?.voice_ref_path);
+                      const isPlaying = playingEmotion?.voiceId === voice.id && playingEmotion?.emotion === emo;
+
+                      return (
+                        <div
+                          key={emo}
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border transition-all",
+                            isRecorded
+                              ? "bg-primary-soft/10 border-primary/20 text-foreground font-medium"
+                              : "border-dashed border-muted-foreground/30 text-muted-foreground bg-muted/10 hover:border-primary/40"
+                          )}
+                        >
+                          <span>{cfg.emoji}</span>
+                          <span>{cfg.label.split('&')[0].trim()}</span>
+                          {isRecorded ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePlayEmotionalSample(voice, emo, sample.voice_ref_path);
+                              }}
+                              className="ml-0.5 p-0.5 text-muted-foreground hover:text-primary transition-colors"
+                              title={`Écouter la prise « ${cfg.label} »`}
+                            >
+                              {isPlaying ? (
+                                <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                              ) : (
+                                <Volume2 className="w-3 h-3" />
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEnrichModal(voice, emo);
+                              }}
+                              className="ml-0.5 text-[10px] text-primary hover:underline font-bold"
+                              title={`Enregistrer la prise « ${cfg.label} »`}
+                            >
+                              +
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-muted-foreground truncate italic">
+                    "{voice.transcript?.substring(0, 48)}..."
+                  </p>
                 </CardContent>
                 <CardFooter className="pt-2 border-t flex justify-between items-center gap-1.5 flex-wrap">
                   <div className="flex items-center gap-1">
@@ -1216,67 +1462,134 @@ export const VoiceStudio: React.FC = () => {
         </div>
       </div>
 
-      {/* 🔴 1. MODALE D'ENREGISTREMENT PAS-À-PAS */}
+      {/* 🔴 1. MODALE D'ENREGISTREMENT PAS-À-PAS & MULTI-STYLE */}
       <Dialog open={isRecordingModalOpen} onOpenChange={closeRecordingModal}>
         <DialogContent className="max-w-md p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Mic className="h-5 w-5 text-primary" />
-              Créer votre voix personnalisée
+              {enrichingVoice ? (
+                <>
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Enrichir : {enrichingVoice.name}
+                </>
+              ) : (
+                <>
+                  <Mic className="h-5 w-5 text-primary" />
+                  Créer votre voix personnalisée
+                </>
+              )}
             </DialogTitle>
             <DialogDescription>
-              Enregistrez un échantillon de 15 secondes pour la section <strong>{allCategories.find(c => c.id === targetCategorySlug)?.label}</strong>.
+              {enrichingVoice ? (
+                <>
+                  Ajoutez la prise vocale <strong>{VOICE_EMOTION_CONFIGS[activeEmotionStyle].label}</strong> ({VOICE_EMOTION_CONFIGS[activeEmotionStyle].tagline.toLowerCase()}).
+                </>
+              ) : (
+                <>
+                  Enregistrez un échantillon guidé de 15 secondes pour la section <strong>{allCategories.find(c => c.id === targetCategorySlug)?.label}</strong>.
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
 
-          {/* ÉTAPE 1 : Choix de la relation et du rôle */}
+          {/* ÉTAPE 1 : Choix de l'intonation, rôle et microphone */}
           {recordingStep === 'info' && (
             <div className="space-y-4 py-2">
               
-              {/* Category Selector */}
+              {/* Sélecteur d'Intonation & Émotion Multi-Style */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Catégorie
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                  <span>Intonation & Émotion</span>
+                  <span className="text-[11px] font-normal lowercase text-muted-foreground">
+                    {VOICE_EMOTION_CONFIGS[activeEmotionStyle].tagline}
+                  </span>
                 </label>
-                <select
-                  value={targetCategorySlug}
-                  onChange={(e) => setTargetCategorySlug(e.target.value)}
-                  className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  {allCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.emoji} {cat.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['calm', 'adventure', 'joy'] as VoiceEmotionStyle[]).map((emo) => {
+                    const cfg = VOICE_EMOTION_CONFIGS[emo];
+                    const isSelected = activeEmotionStyle === emo;
+                    const samples = (enrichingVoice?.emotional_samples || {}) as Record<string, any>;
+                    const isRecorded = enrichingVoice ? Boolean(samples[emo]?.voice_ref_path || (emo === 'calm' && enrichingVoice.voice_ref_path)) : false;
+
+                    return (
+                      <button
+                        key={emo}
+                        type="button"
+                        onClick={() => setActiveEmotionStyle(emo)}
+                        className={cn(
+                          "flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all",
+                          isSelected
+                            ? "border-primary bg-primary-soft/20 text-primary font-bold shadow-sm ring-1 ring-primary/40"
+                            : "border-border hover:bg-muted/60 text-muted-foreground"
+                        )}
+                      >
+                        <span className="text-xl">{cfg.emoji}</span>
+                        <span className="text-xs mt-1 leading-tight font-semibold">{cfg.label.split('&')[0].trim()}</span>
+                        {isRecorded ? (
+                          <span className="text-[9px] text-green-600 dark:text-green-400 font-medium mt-0.5">
+                            ✓ Prêt
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-muted-foreground mt-0.5">
+                            15s
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-muted-foreground italic pt-0.5">
+                  💡 {VOICE_EMOTION_CONFIGS[activeEmotionStyle].promptDescription}
+                </p>
               </div>
 
-              {/* Character Role Name */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Nom du personnage ou rôle
-                </label>
-                <Input
-                  placeholder="Ex: L'Ours doux, Le Petit Renard, Papa, Monstre rigolo..."
-                  value={relationName}
-                  onChange={(e) => setRelationName(e.target.value)}
-                  className="w-full"
-                />
-                
-                {/* Suggestions chips for target category */}
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {(allCategories.find(c => c.id === targetCategorySlug)?.defaultRoles || []).map((role) => (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => setRelationName(role)}
-                      className="text-[11px] bg-muted/60 hover:bg-primary-soft/20 hover:text-primary px-2.5 py-1 rounded-full border transition-colors"
+              {/* Si nouvelle voix : Category Selector & Role Input */}
+              {!enrichingVoice && (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Catégorie
+                    </label>
+                    <select
+                      value={targetCategorySlug}
+                      onChange={(e) => setTargetCategorySlug(e.target.value)}
+                      className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     >
-                      {role}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                      {allCategories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.emoji} {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Nom du personnage ou rôle
+                    </label>
+                    <Input
+                      placeholder="Ex: Papa, Maman, L'Ours doux, Chouette..."
+                      value={relationName}
+                      onChange={(e) => setRelationName(e.target.value)}
+                      className="w-full"
+                    />
+                    
+                    {/* Suggestions chips for target category */}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {(allCategories.find(c => c.id === targetCategorySlug)?.defaultRoles || []).map((role) => (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => setRelationName(role)}
+                          className="text-[11px] bg-muted/60 hover:bg-primary-soft/20 hover:text-primary px-2.5 py-1 rounded-full border transition-colors"
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Microphone choice */}
               {devices.length > 0 && (
@@ -1298,10 +1611,11 @@ export const VoiceStudio: React.FC = () => {
                 </div>
               )}
 
-              <div className="text-xs text-muted-foreground space-y-1.5 leading-relaxed bg-muted/30 p-3 rounded-lg border">
-                <p className="font-semibold text-foreground">Comment ça marche ?</p>
-                <p>1. Lisez à voix haute le court texte guidé de 15 secondes.</p>
-                <p>2. Le système modélise votre voix et l'attribue aux dialogues du personnage dans le livre audio.</p>
+              <div className="text-xs text-muted-foreground space-y-1 leading-relaxed bg-muted/30 p-3 rounded-lg border">
+                <p className="font-semibold text-foreground">Multi-Style Voice Enrollment</p>
+                <p>
+                  Enregistrez chaque émotion (Douceur, Aventure, Joie) pour que vos récits s'adaptent naturellement à l'action.
+                </p>
               </div>
 
               <DialogFooter>
@@ -1310,7 +1624,7 @@ export const VoiceStudio: React.FC = () => {
                   disabled={!relationName.trim()}
                   className="w-full flex items-center gap-2"
                 >
-                  <Mic className="w-4 h-4" /> Commencer à parler
+                  <Mic className="w-4 h-4" /> Commencer à parler ({VOICE_EMOTION_CONFIGS[activeEmotionStyle].emoji})
                 </Button>
               </DialogFooter>
             </div>
@@ -1350,11 +1664,17 @@ export const VoiceStudio: React.FC = () => {
               </div>
 
               <div className="bg-primary-soft/10 p-4 rounded-xl border border-primary/10 text-left">
-                <p className="text-xs text-primary font-bold uppercase tracking-wider mb-2">
-                  Lisez ce texte avec l'intonation du personnage :
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-primary font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <span>{VOICE_EMOTION_CONFIGS[activeEmotionStyle].emoji}</span>
+                    <span>Intonation {VOICE_EMOTION_CONFIGS[activeEmotionStyle].label} :</span>
+                  </p>
+                </div>
                 <p className="text-sm font-medium leading-relaxed italic text-foreground">
-                  "{getTranscriptText(targetCategorySlug)}"
+                  "{getTranscriptText(targetCategorySlug, activeEmotionStyle, relationName)}"
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-2 italic">
+                  💡 {VOICE_EMOTION_CONFIGS[activeEmotionStyle].promptDescription}
                 </p>
               </div>
 
@@ -1375,8 +1695,11 @@ export const VoiceStudio: React.FC = () => {
             <div className="space-y-4 py-2 text-center">
               <Heart className="w-12 h-12 text-primary mx-auto animate-glow-pulse" />
               <div>
-                <h4 className="font-bold text-base">Enregistrement capturé !</h4>
-                <p className="text-xs text-muted-foreground">
+                <h4 className="font-bold text-base flex items-center justify-center gap-1.5">
+                  <span>{VOICE_EMOTION_CONFIGS[activeEmotionStyle].emoji}</span>
+                  <span>Prise {VOICE_EMOTION_CONFIGS[activeEmotionStyle].label} capturée !</span>
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">
                   Écoutez votre échantillon de voix avant de le sauvegarder.
                 </p>
               </div>
@@ -1404,7 +1727,7 @@ export const VoiceStudio: React.FC = () => {
                   onClick={handleSaveVoice}
                   className="flex-1"
                 >
-                  Enregistrer ma voix
+                  {enrichingVoice ? 'Enregistrer cette prise' : 'Enregistrer ma voix'}
                 </Button>
               </div>
             </div>

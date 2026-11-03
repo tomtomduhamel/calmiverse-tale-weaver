@@ -1,3 +1,12 @@
+export type VoiceEmotionStyle = 'calm' | 'adventure' | 'joy';
+
+export interface VoiceEmotionalSample {
+  voice_ref_path: string;
+  transcript: string;
+  recorded_at?: string;
+  duration_seconds?: number;
+}
+
 export interface UserVoice {
   id: string;
   user_id: string;
@@ -10,6 +19,7 @@ export interface UserVoice {
   avatar_url?: string | null;
   created_at: string;
   updated_at: string;
+  emotional_samples?: Partial<Record<VoiceEmotionStyle, VoiceEmotionalSample>> | null;
 }
 
 export interface CustomVoiceCategory {
@@ -102,3 +112,60 @@ export const DEFAULT_VOICE_CATEGORIES: VoiceCategoryConfig[] = [
     defaultTranscript: "Bip boup ! Groaar tout doux ! Ne t'inquiète pas, je suis un monstre très gentil venu d'une lointaine planète magique pour te faire rire et t'accompagner au pays des merveilles !"
   }
 ];
+
+export interface VoiceEmotionConfig {
+  id: VoiceEmotionStyle;
+  label: string;
+  icon: string;
+  emoji: string;
+  tagline: string;
+  promptDescription: string;
+  matchingObjectives: string[];
+  defaultTranscript: string;
+}
+
+export const VOICE_EMOTION_CONFIGS: Record<VoiceEmotionStyle, VoiceEmotionConfig> = {
+  calm: {
+    id: 'calm',
+    label: 'Douceur & Coucher',
+    icon: 'Moon',
+    emoji: '🌙',
+    tagline: 'Pour endormir, apaiser et rassurer',
+    promptDescription: 'Parlez d\'une voix douce, posée, presque chuchotée et réconfortante.',
+    matchingObjectives: ['sleep', 'sommeil', 'coucher', 'dodo', 'calme', 'detente', 'relaxation', 'repos', 'apaisement', 'nuit'],
+    defaultTranscript: "Mon trésor, installe-toi confortablement sous ta couette. Les étoiles brillent pour toi dans le ciel de Calmi. Écoute cette jolie histoire, laisse-toi bercer par mes paroles et fais de beaux rêves paisibles..."
+  },
+  adventure: {
+    id: 'adventure',
+    label: 'Énergie & Aventure',
+    icon: 'Compass',
+    emoji: '⚡',
+    tagline: 'Pour le courage, la curiosité et l\'action',
+    promptDescription: 'Parlez avec dynamisme, enthousiasme et une voix claire et entraînante.',
+    matchingObjectives: ['courage', 'autonomie', 'curiosite', 'action', 'defi', 'exploration', 'peur', 'confiance', 'decouverte', 'aventure'],
+    defaultTranscript: "Regarde là-bas ! Le chemin secret s'illumine à travers la forêt enchantée. Prends ton courage et suis-moi : aujourd'hui, nous partons à l'aventure et rien ne pourra nous arrêter !"
+  },
+  joy: {
+    id: 'joy',
+    label: 'Joie & Rires',
+    icon: 'Smile',
+    emoji: '☀️',
+    tagline: 'Pour les contes drôles, le partage et la fête',
+    promptDescription: 'Parlez avec un grand sourire dans la voix, sur un ton chaleureux et complice.',
+    matchingObjectives: ['fun', 'joie', 'humour', 'rire', 'fete', 'partage', 'amitie', 'famille', 'fête'],
+    defaultTranscript: "Oh quelle journée formidable ! Tu as vu ce petit écureuil qui jongle avec les noisettes ? Allez viens, on va bien s'amuser, rire et partager de super moments ensemble !"
+  }
+};
+
+export function detectStoryEmotion(objective?: string | null): VoiceEmotionStyle {
+  if (!objective) return 'calm';
+  const norm = objective.toLowerCase();
+  
+  for (const style of ['adventure', 'joy'] as const) {
+    const config = VOICE_EMOTION_CONFIGS[style];
+    if (config.matchingObjectives.some(kw => norm.includes(kw))) {
+      return style;
+    }
+  }
+  return 'calm';
+}

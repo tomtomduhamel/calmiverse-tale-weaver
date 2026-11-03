@@ -1781,6 +1781,7 @@ export type Database = {
           updated_at: string
           user_id: string
           voice_ref_path: string
+          emotional_samples: Json | null
         }
         Insert: {
           category?: string
@@ -1793,6 +1794,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           voice_ref_path: string
+          emotional_samples?: Json | null
         }
         Update: {
           category?: string
@@ -1805,6 +1807,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           voice_ref_path?: string
+          emotional_samples?: Json | null
         }
         Relationships: [
           {
