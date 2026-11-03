@@ -168,21 +168,31 @@ def normalize_french_narrative_text(text: str) -> str:
     s = re.sub(r'\s*»\s+([a-zàâäéèêëîïôöùûüç])', r' \1', s)
 
     # 4. Suppression propre des guillemets restants (« et »)
-    s = re.sub(r':\s*«\s*', ', ', s)
+    s = re.sub(r':\s*«\s*', ' : ', s)
     s = s.replace("«", "").replace("»", "")
 
-    # 5. Tirets de dialogue et d'incise
+    # 5. Protection des onomatopées isolées (ex: Cling ! Un son -> Cling, un son)
+    # Évite qu'une onomatopée devienne une micro-phrase de 1 mot (qui produit un glitch acoustique)
+    def _attach_onomatopoeia(m):
+        ono = m.group(1)
+        next_char = m.group(2).lower()
+        return f"{ono}, {next_char}"
+
+    s = re.sub(r'\b(Cling|Ding|Ploc|Clac|Clic|Boum|Hop|Crac|Tchou|Bim)\s*!\s*([A-ZÀ-Ÿ])', _attach_onomatopoeia, s, flags=re.IGNORECASE)
+
+    # 6. Tirets de dialogue et d'incise
     s = re.sub(r'(?:^|(?<=\s))[—–]\s*', '', s)
     s = re.sub(r'\s+[—–]\s+', ', ', s)
 
-    # 6. Points-virgules et deux-points :
-    # Si suivi d'une majuscule -> point (.) ; si suivi d'une minuscule -> virgule (,)
-    s = re.sub(r'\s*;\s*(?=[A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ])', '. ', s)
-    s = re.sub(r'\s*;\s*', ', ', s)
-    s = re.sub(r'\s*:\s*(?=[A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ])', '. ', s)
-    s = re.sub(r'\s*:\s*', ', ', s)
+    # 7. Points-virgules et deux-points :
+    # Les points-virgules deviennent des points nets pour donner du souffle
+    s = re.sub(r'\s*;\s*', '. ', s)
+    # Deux-points au milieu de phrase sans majuscule -> virgule
+    s = re.sub(r'\s*:\s*(?=[a-zàâäéèêëîïôöùûüç])', ', ', s)
+    # Deux-points avant citation ou majuscule -> deux-points
+    s = re.sub(r'\s*:\s*(?=[A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ])', ': ', s)
 
-    # 7. Suppression des doubles ponctuations parasites (ex: ,. ou :. ou ,, ou ..)
+    # 8. Suppression des doubles ponctuations parasites (ex: ,. ou :. ou ,, ou ..)
     s = re.sub(r'[,:;]\s*([.!?])', r'\1', s)
     s = re.sub(r'([.!?])\s*[,:;]', r'\1 ', s)
     s = re.sub(r',+', ',', s)
@@ -333,13 +343,13 @@ def format_cosy_styled_text(
 
 def convert_to_wav(input_path: str, output_path: str) -> str:
     """Convertit l'enregistrement vocal de référence en WAV PCM 24kHz mono PUR studio.
-    Applique un dé-boxage chirurgical à 420Hz et un expanseur doux (agate) pour assécher
-    l'acoustique de la pièce et éliminer l'effet 'boîte de conserve' sans artefact métallique."""
+    Nettoie le bruit de fond du micro smartphone, rogne les clics initiaux et dé-boxe à 420Hz."""
     try:
-        # 1. highpass=f=65 : supprime les infra-basses et bruits de manipulation sans altérer les voix graves
-        # 2. equalizer=f=420:width_type=q:w=1.4:g=-3.5 : élimine la résonance creuse de pièce (anti-box)
-        # 3. agate=range=0.06:threshold=0.03:ratio=2:attack=20:release=140 : assèche les réflexions entre les mots
-        prompt_filter = "highpass=f=65,equalizer=f=420:width_type=q:w=1.4:g=-3.5"
+        # 1. silenceremove : supprime le clic de doigt sur l'écran ou le souffle avant le premier mot
+        # 2. afftdn=nr=10:nf=-38 : élimine 10dB de bruit de fond stationnaire (souffle de pré-ampli micro, clim)
+        # 3. highpass=f=70 : coupe les infra-basses et résonances de manipulation du téléphone
+        # 4. equalizer=f=420:width_type=q:w=1.4:g=-3.0 : assèche la résonance de pièce
+        prompt_filter = "silenceremove=start_periods=1:start_duration=0.06:start_threshold=-40dB,afftdn=nr=10:nf=-38:tn=1,highpass=f=70,equalizer=f=420:width_type=q:w=1.4:g=-3.0"
         cmd = [
             "ffmpeg", "-y", "-i", input_path,
             "-af", prompt_filter,
@@ -440,8 +450,8 @@ def download_and_cache_voice(voice_url: str, voice_key: Optional[str] = None) ->
         else:
             stable_key = hashlib.md5(clean_base.encode('utf-8')).hexdigest()
 
-    # Préfixe voice_studio_v3_ pour garantir une empreinte vocale asséchée et dé-boxée
-    cached_wav_path = os.path.join(cache_dir, f"voice_studio_v3_{stable_key}.wav")
+    # Préfixe voice_studio_v4_ pour garantir une empreinte vocale dé-bruitée (afftdn), nettoyée et dé-boxée
+    cached_wav_path = os.path.join(cache_dir, f"voice_studio_v4_{stable_key}.wav")
     
     if not (os.path.exists(cached_wav_path) and os.path.getsize(cached_wav_path) > 0):
         try:
@@ -531,13 +541,27 @@ def split_into_clean_sentences(text: str, max_sentence_chars: int = 380) -> List
         else:
             final_sentences.append(current_buf)
 
-    return [s for s in final_sentences if re.search(r'[a-zA-ZÀ-ÿ0-9]', s)]
+    # 3. Fusion impérative de toute micro-phrase (< 25 caractères) avec sa voisine
+    # Évite qu'un mot isolé (ex: 'Cling !', 'En effet.', 'Puis silence.') soit envoyé seul au modèle
+    packed_sentences: List[str] = []
+    for s in final_sentences:
+        s = s.strip()
+        if not s:
+            continue
+        if packed_sentences and len(packed_sentences[-1]) < 25:
+            packed_sentences[-1] = packed_sentences[-1] + " " + s
+        elif packed_sentences and len(s) < 25 and len(packed_sentences[-1]) + 1 + len(s) <= max_sentence_chars:
+            packed_sentences[-1] = packed_sentences[-1] + " " + s
+        else:
+            packed_sentences.append(s)
+
+    return [s for s in packed_sentences if re.search(r'[a-zA-ZÀ-ÿ0-9]', s)]
 
 
 def chunk_text_optimized(
     text: str, 
     max_chars: int = 400,
-    paragraph_pause_sec: float = 0.85,
+    paragraph_pause_sec: float = 0.45,
     chapter_pause_sec: float = 2.5,
     default_instruct: Optional[str] = None,
     enable_sleep_pacing: bool = False
@@ -617,7 +641,7 @@ class TTSRequest(BaseModel):
     instruct: Optional[str] = None
     language: str = "fr"
     sentence_pause_ms: Optional[int] = 160
-    paragraph_pause_ms: Optional[int] = 850
+    paragraph_pause_ms: Optional[int] = 450
     chapter_pause_ms: Optional[int] = 2500
     enable_sleep_pacing: Optional[bool] = False
     webhook_id: Optional[str] = None
@@ -1004,7 +1028,7 @@ class CalmiTTSGPU:
         else:
             ref_audio_path = DEFAULT_LOCAL_REF if os.path.exists(DEFAULT_LOCAL_REF) else None
 
-        paragraph_pause_sec = request.paragraph_pause_ms / 1000.0 if request.paragraph_pause_ms is not None else 0.85
+        paragraph_pause_sec = request.paragraph_pause_ms / 1000.0 if request.paragraph_pause_ms is not None else 0.45
         sentence_pause_sec = request.sentence_pause_ms / 1000.0 if request.sentence_pause_ms is not None else 0.16
         global_instruct = request.instruct.strip() if request.instruct and request.instruct.strip() else None
 
